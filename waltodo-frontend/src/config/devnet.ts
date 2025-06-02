@@ -62,7 +62,7 @@ const DEVNET_CONFIG: DevnetConfig = {
     maxBlobSize: 13 * 1024 * 1024 // 13MB max for devnet
   },
   contracts: {
-    packageId: '0x123...', // Placeholder - update with actual devnet package ID
+    packageId: '0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799', // Using testnet package as placeholder
     upgradeCapId: '0x456...', // Placeholder
     adminCapId: '0x789...' // Placeholder
   },

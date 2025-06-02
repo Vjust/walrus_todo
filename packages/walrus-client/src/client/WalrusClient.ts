@@ -104,6 +104,7 @@ export class WalrusClient implements WalrusClientAdapter {
    */
   async init(): Promise<void> {
     if (this.useMockMode) {
+      // eslint-disable-next-line no-console
       console.log('Using mock Walrus storage');
       this.isConnected = true;
       return;

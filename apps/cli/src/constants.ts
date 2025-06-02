@@ -12,6 +12,7 @@ if (typeof process.env.ENV_CONFIG_INITIALIZED === 'undefined' && process.env.NOD
     process.env.ENV_CONFIG_INITIALIZED = 'true';
   } catch (error) {
     // If environment configuration fails, continue with defaults
+    // eslint-disable-next-line no-console
     console.warn('Failed to initialize environment configuration, using defaults:', error);
     process.env.ENV_CONFIG_INITIALIZED = 'true';
   }
@@ -28,7 +29,7 @@ export const CLI_CONFIG = {
 } as const;
 
 // Safe getEnv wrapper for test environments
-const safeGetEnv = (key: any, defaultValue: any = '') => {
+const safeGetEnv = (key: string, defaultValue: unknown = '') => {
   try {
     return getEnv(key);
   } catch {

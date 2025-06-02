@@ -124,8 +124,8 @@
   "prefer_related_applications": false,
   "protocol_handlers": [
     {
-      "protocol": "web+waltodo",
-      "url": "/todo/%s"
+      "protocol": "web+todonft",
+      "url": "/nft/%s"
     }
   ],
   "edge_side_panel": {

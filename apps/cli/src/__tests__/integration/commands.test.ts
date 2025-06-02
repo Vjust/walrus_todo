@@ -1,16 +1,14 @@
 import { TodoService } from '../../services/todoService';
-import { WalrusStorage, createWalrusStorage } from '../../utils/walrus-storage';
-import { configService } from '../../services/config-service';
+import { createWalrusStorage } from '../../utils/walrus-storage';
 import { createMockTodo } from '../helpers/test-utils';
 import { Todo } from '../../types/todo';
 
 describe('CLI Commands Integration Tests', () => {
   let todoService: TodoService;
-  let walrusStorage: WalrusStorage;
 
   beforeAll(async () => {
     // Setup real service instances in test mode
-    walrusStorage = createWalrusStorage('testnet', true); // Force mock mode for tests
+    createWalrusStorage('testnet', true); // Force mock mode for tests
     todoService = new TodoService();
   });
 
@@ -101,7 +99,7 @@ describe('CLI Commands Integration Tests', () => {
       expect(addedTodo.id).toBeDefined();
 
       // Create new service instance (simulating restart)
-      const newWalrusStorage = createWalrusStorage('testnet', true);
+      createWalrusStorage('testnet', true);
       const newTodoService = new TodoService();
 
       // Should be able to retrieve the todo

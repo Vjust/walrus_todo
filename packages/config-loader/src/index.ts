@@ -55,6 +55,15 @@ export async function loadCurrentNetworkConfig(options?: import('./types.js').Co
 }
 
 /**
+ * Alias for loadCurrentNetworkConfig - for backward compatibility
+ * 
+ * @param options - Configuration loader options
+ */
+export async function loadConfig(options?: import('./types.js').ConfigLoaderOptions) {
+  return loadCurrentNetworkConfig(options);
+}
+
+/**
  * Get network name from environment variables
  */
 function getNetworkFromEnvironment(): string {

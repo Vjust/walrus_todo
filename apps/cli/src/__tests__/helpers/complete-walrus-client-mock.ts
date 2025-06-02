@@ -1,18 +1,10 @@
 import type { WalrusClientExt } from '../../types/client';
 import type { BlobInfo, BlobObject, BlobMetadataShape } from '../../types/walrus';
 import type {
-  StandardBlobObject,
-  StandardBlobInfo,
-  StandardBlobMetadata,
   MockBlobRecord,
-  BlobObjectFactory,
-  BlobMetadataFactory,
 } from '../../types/mocks/shared-types';
 import {
   createMockBlobMetadata,
-  createMockBlobObject,
-  createMockBlobInfo,
-  createMockBlobRecord,
 } from '../../types/mocks/factories';
 import { createMemoryEfficientMock, cleanupMocks } from './memory-utils';
 
@@ -108,8 +100,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     // Improved readBlob that checks mock storage
     readBlob: jest
       .fn()
-      .mockImplementation(async (params: { blobId: string }) => {
-        const record = mockBlobStorage[params.blobId];
+      .mockImplementation(async (_params: { blobId: string }) => {
+        const record = mockBlobStorage[_params.blobId];
         if (record) {
           return record.data;
         }
@@ -194,8 +186,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     // Improved getBlobObject that uses mock storage
     getBlobObject: jest
       .fn()
-      .mockImplementation(async (params: { blobId: string }) => {
-        const record = mockBlobStorage[params.blobId];
+      .mockImplementation(async (_params: { blobId: string }) => {
+        const record = mockBlobStorage[_params.blobId];
         if (record) {
           return {
             blob_id: record.blobId,
@@ -213,8 +205,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
 
         // Default fallback
         return {
-          blob_id: params.blobId,
-          id: { id: params.blobId },
+          blob_id: _params.blobId,
+          id: { id: _params.blobId },
           registered_epoch: 100,
           cert_epoch: 150,
           size: '1024',
@@ -233,8 +225,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     // Improved getBlobMetadata that uses mock storage
     getBlobMetadata: jest
       .fn()
-      .mockImplementation(async (params: { blobId: string }) => {
-        const record = mockBlobStorage[params.blobId];
+      .mockImplementation(async (_params: { blobId: string }) => {
+        const record = mockBlobStorage[_params.blobId];
         if (record) {
           return record.metadata;
         }
@@ -245,8 +237,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     // Improved verifyPoA that checks certification status
     verifyPoA: jest
       .fn()
-      .mockImplementation(async (params: { blobId: string }) => {
-        const record = mockBlobStorage[params.blobId];
+      .mockImplementation(async (_params: { blobId: string }) => {
+        const record = mockBlobStorage[_params.blobId];
         if (record) {
           // PoA is complete if blob is certified
           return (
@@ -282,8 +274,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     // Improved getStorageProviders that can simulate different provider counts
     getStorageProviders: jest
       .fn()
-      .mockImplementation(async (params: { blobId: string }) => {
-        const record = mockBlobStorage[params.blobId];
+      .mockImplementation(async (_params: { blobId: string }) => {
+        const record = mockBlobStorage[_params.blobId];
         if (record) {
           // Return a variable number of providers based on blob characteristics
           const baseProviders = [

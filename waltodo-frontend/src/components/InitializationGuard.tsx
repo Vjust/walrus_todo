@@ -1,7 +1,7 @@
 'use client';
 
 import React, { ReactNode, useState, useEffect } from 'react';
-import { useAppInitialization } from '@/app/ClientOnlyRoot';
+import { useAppInitialization } from '@/contexts/AppInitializationContext';
 
 interface InitializationGuardProps {
   children: ReactNode;

@@ -588,7 +588,8 @@ async function main() {
 }
 
 // Export for testing
-export { ResourceMonitoringAnalyzer, AnalysisResults, MonitoringMetrics };
+export { ResourceMonitoringAnalyzer };
+export type { AnalysisResults, MonitoringMetrics };
 
 // Run if called directly
 if (require.main === module) {

@@ -1,5 +1,5 @@
-# WalTodo Robots.txt
-# https://waltodo.app
+# TodoNFT Robots.txt
+# https://todonft.walrus.site
 
 User-agent: *
 Allow: /
@@ -8,9 +8,17 @@ Disallow: /_next/
 Disallow: /walrus/
 Disallow: /test/
 Disallow: /init-test/
+Disallow: /examples/
+
+# Promote important pages
+Allow: /create-nft/
+Allow: /nft-gallery/
+Allow: /nft-demo/
+Allow: /nft-stats/
+Allow: /dashboard/
 
 # Sitemaps
-Sitemap: https://waltodo.app/sitemap.xml
+Sitemap: https://todonft.walrus.site/sitemap.xml
 
 # Crawl-delay for responsible crawling
 Crawl-delay: 1

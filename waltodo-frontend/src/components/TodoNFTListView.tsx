@@ -335,6 +335,10 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
   filters,
   className = '',
 }) => {
+  // ALL HOOKS MUST BE CALLED AT TOP LEVEL - NO CONDITIONAL HOOKS
+  // SSR/Hydration safety
+  const [mounted, setMounted] = useState(false);
+  
   // State management
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -350,7 +354,7 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
   const walletContext = useWalletContext();
   const account = walletContext?.account;
 
-  // Column definitions
+  // Column definitions - moved before early returns
   const columnHelper = createColumnHelper<TodoNFTDisplay>();
 
   const columns = useMemo(() => [
@@ -510,7 +514,7 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
     }),
   ], [columnHelper, account?.address, onComplete, onTransfer, isProcessing]);
 
-  // Create table instance
+  // Create table instance - moved before early returns
   const table = useReactTable({
     data: nfts,
     columns,
@@ -538,7 +542,7 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
     enableMultiRowSelection: true,
   });
 
-  // Virtualization for better performance
+  // Virtualization for better performance - moved before early returns
   const { rows } = table.getRowModel();
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -546,6 +550,11 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
     estimateSize: () => 72,
     overscan: 10,
   });
+
+  // SSR/Hydration safety - prevent rendering until client-side mounted
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -586,6 +595,11 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [table, rows]);
+
+  // Early returns after all hooks are called
+  if (!mounted) {
+    return <TodoNFTListSkeleton />;
+  }
 
   // Bulk actions
   const handleBulkComplete = async () => {
@@ -880,6 +894,32 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
           </button>
         </div>
       )}
+    </div>
+  );
+};
+
+// Skeleton component for loading state during hydration
+function TodoNFTListSkeleton() {
+  return (
+    <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
+        </div>
+      </div>
+      <div className="p-4">
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex space-x-3 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

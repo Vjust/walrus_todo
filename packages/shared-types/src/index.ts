@@ -5,12 +5,12 @@
  */
 
 // Export all todo types
-export * from './todo';
+export type * from './todo';
 
 // API types removed - using blockchain-first architecture
 
 // Export all blockchain types except the ones we need to handle separately
-export {
+export type {
   Network,
   SuiAddress,
   SuiTransaction,
@@ -30,7 +30,29 @@ export {
 } from './blockchain';
 
 // Export blockchain TodoCreatedEvent with a specific name
-export { TodoCreatedEvent as TodoCreatedBlockchainEvent } from './blockchain';
+export type { TodoCreatedEvent as TodoCreatedBlockchainEvent } from './blockchain';
 
-// Export all storage types
-export * from './storage';
+// Export all storage types - mix of types and enums
+export type {
+  StorageConfig,
+  LocalStorageConfig,
+  WalrusStorageConfig,
+  BlockchainStorageConfig,
+  WalrusBlob,
+  WalrusStoreResponse,
+  StorageOperationResult,
+  StorageStats,
+  BatchStorageOperation,
+  BatchStorageOptions,
+  BatchProgress,
+  BatchStorageResult,
+  StorageMigration,
+  MigrationOptions,
+  StorageReuseEntry,
+  StorageOptimizationResult,
+  FileUpload,
+  ImageUpload,
+  CacheEntry,
+  CacheStats
+} from './storage';
+export { StorageLocation } from './storage';

@@ -191,12 +191,38 @@ function getCurrentNetwork(): string {
  */
 export async function loadNetworkConfig(network: string): Promise<AppConfig | null> {
   try {
-    // Try to load the JSON configuration file from public directory
-    const configResponse = await fetch(`/config/${network}.json`);
-    if (configResponse.ok) {
-      const config = await configResponse.json();
-      console.log(`Loaded runtime configuration for ${network}`);
-      return transformConfigFormat(config);
+    // For static export builds, we need to handle config loading differently
+    // Check if we're in a build context or if fetch is not available
+    const isBuildTime = typeof window === 'undefined' && process.env.NODE_ENV === 'production';
+    
+    if (isBuildTime) {
+      // During static export, try to import config directly
+      try {
+        const configPath = `../public/config/${network}.json`;
+        const fs = require('fs');
+        const path = require('path');
+        const configFile = path.join(process.cwd(), 'public', 'config', `${network}.json`);
+        
+        if (fs.existsSync(configFile)) {
+          const configData = fs.readFileSync(configFile, 'utf8');
+          const config = JSON.parse(configData);
+          console.log(`Loaded build-time configuration for ${network}`);
+          return transformConfigFormat(config);
+        }
+      } catch (buildError) {
+        console.warn(`Failed to load build-time config for ${network}:`, buildError);
+      }
+    } else {
+      // Runtime loading for browser
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const configUrl = `${baseUrl}/config/${network}.json`;
+      
+      const configResponse = await fetch(configUrl);
+      if (configResponse.ok) {
+        const config = await configResponse.json();
+        console.log(`Loaded runtime configuration for ${network}`);
+        return transformConfigFormat(config);
+      }
     }
   } catch (error) {
     console.warn(`Failed to load runtime config for ${network}:`, error);

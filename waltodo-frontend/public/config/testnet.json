@@ -13,6 +13,7 @@
     "chainId": "4c78adac"
   },
   "walrus": {
+    "packageId": "0xd84704c17fc870b8764832c535aa6b11f21a95cd6f5bb38a9b07d2cf42220c66",
     "networkUrl": "https://wal.testnet.sui.io",
     "publisherUrl": "https://publisher-testnet.walrus.site",
     "aggregatorUrl": "https://aggregator-testnet.walrus.site",
@@ -34,14 +35,14 @@
     "networkSwitchingEnabled": true
   },
   "deployment": {
-    "packageId": "0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b",
+    "packageId": "0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799",
     "digest": "unknown",
-    "timestamp": "2025-05-30T00:00:00.000Z",
+    "timestamp": "2025-06-01T10:00:00.000Z",
     "deployerAddress": "0xca793690985183dc8e2180fd059d76f3b0644f5c2ecd3b01cdebe7d40b0cca39"
   },
   "contracts": {
     "todoNft": {
-      "packageId": "0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b",
+      "packageId": "0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799",
       "moduleName": "todo_nft",
       "structName": "TodoNFT"
     }

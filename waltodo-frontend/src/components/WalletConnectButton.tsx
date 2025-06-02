@@ -13,7 +13,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
+import { useSafeWallet } from '@/hooks/useSafeWallet';
+import { useMounted } from '@/hooks/useMounted';
 import { analytics } from '@/lib/analytics';
+import { WalletButtonSkeleton, NoWalletFallback } from './WalletSkeleton';
+import WalletErrorBoundary from './WalletErrorBoundary';
+import { useSafeBrowserAPI } from './SSRSafe';
 
 interface WalletConnectButtonProps {
   className?: string;
@@ -26,116 +31,37 @@ function WalletConnectButton({
   variant = 'primary',
   size = 'md'
 }: WalletConnectButtonProps) {
-  const walletContext = useClientSafeWallet();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [hasWallet, setHasWallet] = useState(false);
-  const [detectedWallets, setDetectedWallets] = useState<string[]>([]);
+  return (
+    <WalletErrorBoundary
+      fallback={<NoWalletFallback variant="minimal" className={className} />}
+      className={className}
+    >
+      <WalletConnectButtonContent 
+        className={className}
+        variant={variant}
+        size={size}
+      />
+    </WalletErrorBoundary>
+  );
+}
 
-  // Handle client-side mounting
-  useEffect(() => {
-    setMounted(true);
-    // Check for wallet availability only on client
-    if (typeof window !== 'undefined') {
-      // Check if any wallet extensions are installed
-      const checkWallets = () => {
-        const detected: string[] = [];
-        
-        // Primary: Check for Wallet Standard implementation (modern 2024/2025 approach)
-        try {
-          // Check for wallet standard registry in window
-          const walletRegistry = (window as any).wallets || (window as any).getWallets;
-          
-          if (typeof walletRegistry === 'function') {
-            const wallets = walletRegistry();
-            if (wallets && wallets.get) {
-              const availableWallets = wallets.get();
-              availableWallets.forEach((wallet: any) => {
-                if (wallet.name) {
-                  // Normalize wallet names for consistency
-                  let walletName = wallet.name;
-                  if (walletName.toLowerCase().includes('sui wallet')) {
-                    walletName = 'Slush Wallet';
-                  }
-                  detected.push(walletName);
-                }
-              });
-            }
-          }
-          
-          // Also check for wallet standard events registry
-          if ((window as any).addEventListener && detected.length === 0) {
-            // Some wallets register through events, check if any wallet standard events exist
-            const hasWalletStandard = (window as any).dispatchEvent && 
-                                     typeof (window as any).CustomEvent === 'function';
-            if (hasWalletStandard) {
-              console.debug('[WalletConnect] Wallet standard event system detected');
-            }
-          }
-        } catch (error) {
-          // Fallback to manual detection if wallet standard fails
-          console.debug('[WalletConnect] Wallet standard detection failed, using fallback:', error);
-        }
-        
-        // Fallback: Manual detection for specific wallet injections
-        if (detected.length === 0) {
-          // Check for Slush wallet (current official Sui wallet 2024/2025)
-          // Multiple injection patterns for maximum compatibility
-          if ((window as any).sui || (window as any).slush || (window as any).suiWallet) {
-            // Prefer "Slush Wallet" as the current official name
-            detected.push('Slush Wallet');
-          }
-          
-          // Check for other popular Sui ecosystem wallets with updated patterns
-          if ((window as any).suiet || (window as any).SuietWallet) {
-            detected.push('Suiet');
-          }
-          
-          if ((window as any).martian || (window as any).MartianWallet) {
-            detected.push('Martian');
-          }
-          
-          if ((window as any).ethos || (window as any).EthosWallet) {
-            detected.push('Ethos');
-          }
-          
-          if ((window as any).glass || (window as any).GlassWallet) {
-            detected.push('Glass');
-          }
-          
-          // Check for newer wallets in the Sui ecosystem
-          if ((window as any).navi) {
-            detected.push('Navi');
-          }
-          
-          if ((window as any).surf) {
-            detected.push('Surf');
-          }
-          
-          // Generic wallet standard fallback
-          if ((window as any).wallet && !(window as any).sui) {
-            detected.push('Generic Wallet');
-          }
-        }
-        
-        setDetectedWallets(detected);
-        setHasWallet(detected.length > 0);
-        
-        // Log detected wallets for debugging
-        if (detected.length > 0) {
-          console.log('[WalletConnect] Detected wallets:', detected);
-        } else {
-          console.debug('[WalletConnect] No wallets detected');
-        }
-      };
-      
-      checkWallets();
-      // Also check after delays as some wallets inject asynchronously
-      setTimeout(checkWallets, 500);
-      setTimeout(checkWallets, 1000);
-      setTimeout(checkWallets, 2000);
-    }
-  }, []);
+function WalletConnectButtonContent({ 
+  className = '', 
+  variant = 'primary',
+  size = 'md'
+}: WalletConnectButtonProps) {
+  // ALL HOOKS MUST BE CALLED AT TOP LEVEL - NO CONDITIONAL HOOKS
+  const walletContext = useClientSafeWallet();
+  const { hasWallet, detectedWallets, isLoaded: walletLoaded } = useSafeWallet();
+  const mounted = useMounted();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Move useSafeBrowserAPI to top level
+  const { data: performance, isLoaded: perfLoaded } = useSafeBrowserAPI(
+    () => window.performance,
+    { now: () => Date.now() },
+    []
+  );
 
   const getSizeClasses = (size: 'sm' | 'md' | 'lg') => {
     switch (size) {
@@ -148,31 +74,15 @@ function WalletConnectButton({
     }
   };
   
-  // Handle SSR and initialization phase
-  if (!mounted || !walletContext) {
-    return (
-      <button 
-        className={`
-          inline-flex items-center justify-center
-          bg-gray-500 text-white
-          px-4 py-2 rounded-md
-          text-sm font-medium
-          cursor-not-allowed opacity-50
-          ${getSizeClasses(size)}
-          ${className}
-        `}
-        disabled
-      >
-        <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        Loading...
-      </button>
-    );
+  // Handle SSR and initialization phase - early return after hooks
+  if (!mounted || !walletContext || !walletLoaded) {
+    return <WalletButtonSkeleton size={size} className={className} />;
   }
 
   const { connected, connecting, address, connect, disconnect, error, name } = walletContext;
 
   const handleConnect = () => {
-    const connectStartTime = performance.now();
+    const connectStartTime = perfLoaded ? performance.now() : Date.now();
     
     if (!hasWallet) {
       // Safe analytics tracking with null check
@@ -184,8 +94,10 @@ function WalletConnectButton({
         });
       }
       
-      // Redirect to Slush wallet (the official Sui wallet - current 2024/2025 Chrome store URL)
-      window.open('https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
+      // Safely open wallet installation page
+      if (typeof window !== 'undefined' && window.open) {
+        window.open('https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
+      }
       return;
     }
     
@@ -197,7 +109,7 @@ function WalletConnectButton({
         action: 'connect',
         wallet: name || detectedWallets[0] || undefined,
         success: false, // Will be updated on success
-        duration: performance.now() - connectStartTime,
+        duration: (perfLoaded ? performance.now() : Date.now()) - connectStartTime,
       });
     }
   };
@@ -296,8 +208,22 @@ function WalletConnectButton({
               <div className="p-2">
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(address);
-                    // You could add a toast notification here
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      navigator.clipboard.writeText(address).catch((err) => {
+                        console.warn('Failed to copy address:', err);
+                        // Fallback for older browsers
+                        const textArea = document.createElement('textarea');
+                        textArea.value = address;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                          document.execCommand('copy');
+                        } catch (fallbackErr) {
+                          console.warn('Fallback copy failed:', fallbackErr);
+                        }
+                        document.body.removeChild(textArea);
+                      });
+                    }
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center"
                 >

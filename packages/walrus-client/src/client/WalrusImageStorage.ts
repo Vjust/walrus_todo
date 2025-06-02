@@ -351,6 +351,7 @@ export class WalrusImageStorage extends WalrusClient {
     assertNode('Default image path resolution');
     
     // This would need to be configured based on the actual asset location
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const path = require('path');
     return path.join(process.cwd(), 'assets', 'todo_bottle.jpeg');
   }

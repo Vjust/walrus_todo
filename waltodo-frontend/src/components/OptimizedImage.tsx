@@ -247,6 +247,8 @@ export function ProgressiveImage({
   const [currentSrc, setCurrentSrc] = useState(thumbnail || '');
   
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     // Load thumbnail first if provided
     if (thumbnail && !isLoaded) {
       const img = new window.Image();

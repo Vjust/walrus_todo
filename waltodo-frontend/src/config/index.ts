@@ -5,15 +5,17 @@
 
 import TESTNET_CONFIG from './testnet';
 import DEVNET_CONFIG from './devnet';
+import MAINNET_CONFIG from './mainnet';
 
-export type NetworkName = 'testnet' | 'devnet';
+export type NetworkName = 'mainnet' | 'testnet' | 'devnet';
 
 export const NETWORK_CONFIGS = {
+  mainnet: MAINNET_CONFIG,
   testnet: TESTNET_CONFIG,
   devnet: DEVNET_CONFIG,
 } as const;
 
-export { TESTNET_CONFIG, DEVNET_CONFIG };
+export { MAINNET_CONFIG, TESTNET_CONFIG, DEVNET_CONFIG };
 
 // Network endpoint health check
 export interface NetworkHealthStatus {
@@ -25,10 +27,10 @@ export interface NetworkHealthStatus {
 }
 
 // Enhanced network configuration type - use a union of actual configs
-export type NetworkConfig = typeof TESTNET_CONFIG | typeof DEVNET_CONFIG;
+export type NetworkConfig = typeof MAINNET_CONFIG | typeof TESTNET_CONFIG | typeof DEVNET_CONFIG;
 
 // Network switching utilities
-export const SUPPORTED_NETWORKS: NetworkName[] = ['testnet', 'devnet'];
+export const SUPPORTED_NETWORKS: NetworkName[] = ['mainnet', 'testnet', 'devnet'];
 
 /**
  * Get configuration for a specific network with validation
@@ -114,16 +116,46 @@ export async function validateNetworkEndpoint(network: NetworkName): Promise<Net
 }
 
 /**
+ * Detect environment type for automatic network selection
+ */
+export function detectEnvironmentNetwork(): NetworkName {
+  // Check for explicit environment variable first
+  const explicitNetwork = process.env.NEXT_PUBLIC_NETWORK;
+  if (explicitNetwork && isNetworkSupported(explicitNetwork)) {
+    return explicitNetwork;
+  }
+  
+  // Auto-detect based on environment indicators
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isDev = process.env.NODE_ENV === 'development';
+  const isVercel = process.env.VERCEL === '1';
+  const domain = typeof window !== 'undefined' ? window.location.hostname : '';
+  
+  // Production domains should use mainnet
+  if (isProduction && (domain.includes('walrus-todo.') || domain.includes('waltodo.')) && !domain.includes('test')) {
+    return 'mainnet';
+  }
+  
+  // Testnet for staging/test environments
+  if (domain.includes('test') || domain.includes('staging') || isVercel) {
+    return 'testnet';
+  }
+  
+  // Development defaults to testnet for safety
+  return isDev ? 'testnet' : 'testnet';
+}
+
+/**
  * Get current network configuration from environment
  * Safe for both SSR and client-side rendering with enhanced validation
  */
 export function getCurrentNetworkConfig(): NetworkConfig {
-  // NEXT_PUBLIC_ variables are available on both server and client with same values
-  const envNetwork = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
-  const network = isNetworkSupported(envNetwork) ? envNetwork : 'testnet';
+  // Try auto-detection first
+  const detectedNetwork = detectEnvironmentNetwork();
+  const network = isNetworkSupported(detectedNetwork) ? detectedNetwork : 'testnet';
   
-  if (envNetwork !== network) {
-    console.warn(`Invalid network '${envNetwork}' in environment, falling back to '${network}'`);
+  if (detectedNetwork !== network) {
+    console.warn(`Invalid network '${detectedNetwork}' detected, falling back to '${network}'`);
   }
   
   return getNetworkConfig(network);
@@ -133,8 +165,8 @@ export function getCurrentNetworkConfig(): NetworkConfig {
  * Get current network name safely with validation
  */
 export function getCurrentNetworkName(): NetworkName {
-  const envNetwork = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
-  return isNetworkSupported(envNetwork) ? envNetwork : 'testnet';
+  const detectedNetwork = detectEnvironmentNetwork();
+  return isNetworkSupported(detectedNetwork) ? detectedNetwork : 'testnet';
 }
 
 /**

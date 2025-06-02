@@ -1,0 +1,27 @@
+import '@/styles/globals.css';
+import type { Metadata } from 'next';
+import { ReactNode } from 'react';
+
+export const metadata: Metadata = {
+  title: 'WalTodo',
+  description: 'Decentralized task management',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <html lang='en'>
+      <body className='font-sans min-h-screen bg-gray-50'>
+        {children}
+      </body>
+    </html>
+  );
+}

@@ -454,6 +454,7 @@ function NetworkSwitcher({
 
 // Main TodoNFT management component
 export default function BlockchainTodoManager() {
+  const [mounted, setMounted] = useState(false);
   const walletContext = useWalletContext();
   const connected = walletContext?.connected || false;
   const connecting = walletContext?.connecting || false;
@@ -461,6 +462,15 @@ export default function BlockchainTodoManager() {
   const { state, actions, network, isWalletReady } = useSuiTodos();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // SSR/Hydration safety
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <BlockchainTodoManagerSkeleton />;
+  }
 
   if (!connected && !connecting) {
     return (
@@ -604,6 +614,24 @@ export default function BlockchainTodoManager() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Skeleton component for loading state during hydration
+function BlockchainTodoManagerSkeleton() {
+  return (
+    <div className='max-w-4xl mx-auto p-6'>
+      <div className='bg-white p-6 rounded-lg shadow-md'>
+        <div className='flex justify-center items-center py-12'>
+          <div className='w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin'></div>
+          <div className='ml-4'>
+            <p className='text-sm text-gray-500 animate-pulse'>
+              Initializing blockchain manager...
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

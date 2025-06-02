@@ -1,0 +1,412 @@
+name: Deploy to Walrus Sites
+
+on:
+  # Trigger deployment on releases
+  release:
+    types: [published]
+  
+  # Allow manual deployment
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to deploy to'
+        required: true
+        default: 'testnet'
+        type: choice
+        options:
+          - testnet
+          - mainnet
+      force_rebuild:
+        description: 'Force rebuild'
+        required: false
+        default: false
+        type: boolean
+
+  # Trigger on pushes to main branch (testnet deployment)
+  push:
+    branches:
+      - main
+    paths:
+      - 'waltodo-frontend/**'
+      - '.github/workflows/deploy-walrus.yml'
+
+  # Trigger on pulls to main branch for testing
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'waltodo-frontend/**'
+      - '.github/workflows/deploy-walrus.yml'
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '10.11.0'
+
+jobs:
+  # Build and test job
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.should-deploy.outputs.deploy }}
+      target-network: ${{ steps.determine-network.outputs.network }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linting
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        run: pnpm run lint
+        continue-on-error: true
+
+      - name: Build application
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        run: pnpm run build:export
+
+      - name: Validate build output
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        run: |
+          if [ ! -d "out" ]; then
+            echo "Build directory 'out' not found"
+            exit 1
+          fi
+          
+          if [ -z "$(ls -A out)" ]; then
+            echo "Build directory is empty"
+            exit 1
+          fi
+          
+          # Check for essential files
+          if [ ! -f "out/index.html" ]; then
+            echo "index.html not found in build output"
+            exit 1
+          fi
+          
+          # Calculate and display build size
+          BUILD_SIZE=$(du -sh out | cut -f1)
+          echo "Build size: $BUILD_SIZE"
+          
+          # Check if build is too large (>200MB)
+          SIZE_BYTES=$(du -s out | cut -f1)
+          if [ $SIZE_BYTES -gt 204800 ]; then
+            echo "Warning: Build size is quite large ($BUILD_SIZE)"
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: walrus-site-build
+          path: ./waltodo-frontend/walrus-site-waltodo/out
+          retention-days: 7
+
+      - name: Determine deployment network
+        id: determine-network
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "network=mainnet" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "network=${{ inputs.network }}" >> $GITHUB_OUTPUT
+          else
+            echo "network=testnet" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Should deploy?
+        id: should-deploy
+        run: |
+          # Deploy on releases, manual triggers, and pushes to main (but not PRs)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "deploy=false" >> $GITHUB_OUTPUT
+          else
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          fi
+
+  # Deployment job
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: needs.build-and-test.outputs.should-deploy == 'true'
+    
+    environment: 
+      name: ${{ needs.build-and-test.outputs.target-network }}
+      url: ${{ steps.deploy.outputs.site-url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: walrus-site-build
+          path: ./waltodo-frontend/walrus-site-waltodo/out
+
+      - name: Install site-builder CLI
+        run: |
+          # Download and install site-builder
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            x86_64) ARCH="x64" ;;
+            aarch64) ARCH="arm64" ;;
+          esac
+          
+          DOWNLOAD_URL="https://github.com/MystenLabs/walrus-sites/releases/latest/download/site-builder-linux-${ARCH}.tar.gz"
+          
+          echo "Downloading site-builder from: $DOWNLOAD_URL"
+          curl -L -o site-builder.tar.gz "$DOWNLOAD_URL"
+          tar -xzf site-builder.tar.gz
+          
+          # Find and install the binary
+          BINARY=$(find . -name "site-builder*" -type f -executable | head -1)
+          sudo cp "$BINARY" /usr/local/bin/site-builder
+          sudo chmod +x /usr/local/bin/site-builder
+          
+          # Verify installation
+          site-builder --version
+
+      - name: Setup Walrus configuration
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        env:
+          NETWORK: ${{ needs.build-and-test.outputs.target-network }}
+        run: |
+          mkdir -p ~/.walrus
+          
+          # Create configuration based on network
+          if [ "$NETWORK" = "mainnet" ]; then
+            cat > ~/.walrus/client_config.yaml << EOF
+          # Walrus Client Configuration - Mainnet
+          api_base_url: "https://publisher.walrus.space"
+          aggregator_url: "https://aggregator.walrus.space"
+          sui_rpc_url: "https://fullnode.mainnet.sui.io:443"
+          sui_ws_url: "wss://fullnode.mainnet.sui.io:443"
+          
+          site_publisher_config:
+            package_id: "0x1f3f67151a0e3d7f0a0d0a7a3a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a"
+            publisher_id: "0x2f3f67151a0e3d7f0a0d0a7a3a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a"
+          
+          default_epochs: 5
+          max_redirect_depth: 3
+          EOF
+          else
+            cat > ~/.walrus/client_config.yaml << EOF
+          # Walrus Client Configuration - Testnet
+          api_base_url: "https://publisher-devnet.walrus.space"
+          aggregator_url: "https://aggregator-devnet.walrus.space"
+          sui_rpc_url: "https://fullnode.devnet.sui.io:443"
+          sui_ws_url: "wss://fullnode.devnet.sui.io:443"
+          
+          site_publisher_config:
+            package_id: "0x1f3f67151a0e3d7f0a0d0a7a3a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a"
+            publisher_id: "0x2f3f67151a0e3d7f0a0d0a7a3a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a"
+          
+          default_epochs: 5
+          max_redirect_depth: 3
+          EOF
+          fi
+
+      - name: Setup wallet keystore
+        env:
+          WALLET_KEYSTORE: ${{ secrets.WALLET_KEYSTORE }}
+          NETWORK: ${{ needs.build-and-test.outputs.target-network }}
+        run: |
+          if [ -z "$WALLET_KEYSTORE" ]; then
+            echo "Error: WALLET_KEYSTORE secret not configured for $NETWORK"
+            echo "Please add your wallet keystore to repository secrets"
+            exit 1
+          fi
+          
+          # Create wallet directory and keystore
+          mkdir -p ~/.walrus/wallets
+          echo "$WALLET_KEYSTORE" | base64 -d > ~/.walrus/wallets/deployment.keystore
+          chmod 600 ~/.walrus/wallets/deployment.keystore
+
+      - name: Create sites configuration
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        env:
+          NETWORK: ${{ needs.build-and-test.outputs.target-network }}
+        run: |
+          cat > sites-config.yaml << EOF
+          # Walrus Sites Configuration for WalTodo Frontend
+          # Deployed via GitHub Actions
+          
+          waltodo-app:
+            source: "./out"
+            network: "$NETWORK"
+            headers:
+              "/*":
+                - "Cache-Control: public, max-age=3600"
+                - "X-Content-Type-Options: nosniff"
+                - "X-Frame-Options: DENY"
+                - "X-XSS-Protection: 1; mode=block"
+                - "Referrer-Policy: strict-origin-when-cross-origin"
+            redirects:
+              - from: "/api/*"
+                to: "https://api.waltodo.com/api/*"
+                status: 307
+            error_pages:
+              404: "/404.html"
+          EOF
+
+      - name: Deploy to Walrus Sites
+        id: deploy
+        working-directory: ./waltodo-frontend/walrus-site-waltodo
+        env:
+          NETWORK: ${{ needs.build-and-test.outputs.target-network }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild || 'false' }}
+        run: |
+          echo "Deploying WalTodo frontend to Walrus Sites ($NETWORK)..."
+          
+          # Prepare deployment command
+          DEPLOY_CMD="site-builder deploy --network $NETWORK --config sites-config.yaml"
+          
+          # Add wallet if available
+          if [ -f ~/.walrus/wallets/deployment.keystore ]; then
+            DEPLOY_CMD="$DEPLOY_CMD --wallet ~/.walrus/wallets/deployment.keystore"
+          fi
+          
+          # Execute deployment
+          echo "Running: $DEPLOY_CMD"
+          DEPLOYMENT_OUTPUT=$(eval "$DEPLOY_CMD" 2>&1)
+          DEPLOYMENT_STATUS=$?
+          
+          echo "$DEPLOYMENT_OUTPUT"
+          
+          if [ $DEPLOYMENT_STATUS -ne 0 ]; then
+            echo "Deployment failed with status $DEPLOYMENT_STATUS"
+            exit 1
+          fi
+          
+          # Extract site URL
+          SITE_URL=$(echo "$DEPLOYMENT_OUTPUT" | grep -oE 'https://[a-zA-Z0-9.-]+\.walrus\.site' | head -1)
+          
+          if [ -n "$SITE_URL" ]; then
+            echo "site-url=$SITE_URL" >> $GITHUB_OUTPUT
+            echo "Site deployed successfully at: $SITE_URL"
+            
+            # Save URL for summary
+            echo "SITE_URL=$SITE_URL" >> $GITHUB_ENV
+          else
+            echo "Warning: Could not extract site URL from deployment output"
+          fi
+
+      - name: Create deployment summary
+        if: always()
+        run: |
+          {
+            echo "# Walrus Sites Deployment Summary"
+            echo ""
+            echo "**Network:** ${{ needs.build-and-test.outputs.target-network }}"
+            echo "**Trigger:** ${{ github.event_name }}"
+            echo "**Commit:** ${{ github.sha }}"
+            echo "**Actor:** ${{ github.actor }}"
+            echo ""
+            
+            if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+              echo "✅ **Status:** Deployment successful"
+              if [ -n "${SITE_URL:-}" ]; then
+                echo "🌐 **Site URL:** ${SITE_URL}"
+              fi
+            else
+              echo "❌ **Status:** Deployment failed"
+            fi
+            
+            echo ""
+            echo "**Build Details:**"
+            echo "- Node.js: ${{ env.NODE_VERSION }}"
+            echo "- pnpm: ${{ env.PNPM_VERSION }}"
+            
+            if [ -d "./waltodo-frontend/walrus-site-waltodo/out" ]; then
+              BUILD_SIZE=$(du -sh ./waltodo-frontend/walrus-site-waltodo/out 2>/dev/null | cut -f1 || echo "Unknown")
+              echo "- Build size: $BUILD_SIZE"
+            fi
+            
+            echo ""
+            echo "**Deployment Configuration:**"
+            echo "- Site name: waltodo-app"
+            echo "- Force rebuild: ${{ inputs.force_rebuild || 'false' }}"
+            
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Post deployment notification
+        if: success() && env.SITE_URL != ''
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const network = '${{ needs.build-and-test.outputs.target-network }}';
+            const siteUrl = process.env.SITE_URL;
+            const eventName = '${{ github.event_name }}';
+            
+            let title, body;
+            
+            if (eventName === 'release') {
+              title = `🚀 WalTodo frontend deployed to ${network}`;
+              body = `The WalTodo frontend has been successfully deployed to Walrus Sites (${network}) for release ${{ github.event.release.tag_name }}.\n\n🌐 **Site URL:** ${siteUrl}`;
+            } else {
+              title = `✅ WalTodo frontend deployed to ${network}`;
+              body = `The WalTodo frontend has been successfully deployed to Walrus Sites (${network}).\n\n🌐 **Site URL:** ${siteUrl}`;
+            }
+            
+            // For releases, create a comment on the release
+            if (eventName === 'release') {
+              github.rest.repos.createReleaseComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: '${{ github.event.release.id }}',
+                body: body
+              });
+            }
+
+  # Cleanup job (runs after deployment regardless of success/failure)
+  cleanup:
+    needs: [build-and-test, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Clean up artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Optional: Clean up old artifacts to save storage
+            console.log('Cleanup completed');
+
+# Security note: This workflow requires the following repository secrets:
+# - WALLET_KEYSTORE (base64 encoded wallet keystore for the target network)
+#
+# For different networks, you can use environment-specific secrets:
+# - WALLET_KEYSTORE_TESTNET
+# - WALLET_KEYSTORE_MAINNET

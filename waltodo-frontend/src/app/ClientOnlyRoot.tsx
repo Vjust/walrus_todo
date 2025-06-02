@@ -1,84 +1,87 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState, createContext, useContext, Suspense } from 'react';
-import { AppWalletProvider } from '@/contexts/WalletContext';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { initializeSuiClient, isSuiClientInitialized } from '@/lib/sui-client';
+
+interface AppInitializationContextType {
+  isAppReady: boolean;
+  isSuiClientReady: boolean;
+  initializationError: string | null;
+}
+
+// Safe default context value for SSR and initialization
+const createSafeDefaultAppContext = (): AppInitializationContextType => ({
+  isAppReady: false,
+  isSuiClientReady: false,
+  initializationError: null,
+});
+
+const AppInitializationContext = createContext<AppInitializationContextType>(createSafeDefaultAppContext());
+
+// Hook to use app initialization context
+export const useAppInitialization = () => {
+  const context = useContext(AppInitializationContext);
+  if (!context) {
+    // Return safe defaults instead of throwing during SSR/initialization phase
+    return createSafeDefaultAppContext();
+  }
+  return context;
+};
 
 interface ClientOnlyRootProps {
   children: ReactNode;
 }
 
-// Initialization context to track the overall app readiness
-interface AppInitializationContextType {
-  isClientReady: boolean;
-  isSuiClientReady: boolean;
-  isAppReady: boolean;
-  initializationError: string | null;
-}
-
-// Default context value to ensure consistency across SSR and client renders
-const defaultContextValue: AppInitializationContextType = {
-  isClientReady: false,
-  isSuiClientReady: false,
-  isAppReady: false,
-  initializationError: null,
-};
-
-const AppInitializationContext = createContext<AppInitializationContextType>(defaultContextValue);
-
-export const useAppInitialization = () => {
-  const context = useContext(AppInitializationContext);
-  return context || defaultContextValue;
-};
-
+// Client-only initialization provider
 export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
-  // Simple state management to prevent hydration issues
-  const [isClientReady, setIsClientReady] = useState(false);
-  const [suiClientReady, setSuiClientReady] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(false);
+  const [isSuiClientReady, setIsSuiClientReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
-  // Derived state for overall app readiness
-  const isAppReady = isClientReady && suiClientReady && mounted;
-
-  // Initialize after mounting - fix hydration issues
+  // Client-side initialization effect
   useEffect(() => {
-    // Use a timeout to ensure proper client-side initialization
-    const timeout = setTimeout(() => {
-      setMounted(true);
-      setIsClientReady(true);
-      setSuiClientReady(true);
-    }, 0);
+    setIsClient(true);
+    setIsAppReady(true);
+    
+    // Initialize Sui client
+    const initializeApp = async () => {
+      try {
+        if (!isSuiClientInitialized()) {
+          await initializeSuiClient('testnet');
+        }
+        setIsSuiClientReady(true);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize Sui client';
+        setInitializationError(errorMessage);
+        console.warn('[ClientOnlyRoot] Sui client initialization failed:', error);
+      }
+    };
 
-    return () => clearTimeout(timeout);
+    // Delay initialization to ensure proper hydration
+    const timeoutId = setTimeout(initializeApp, 500);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
-  const initializationContextValue: AppInitializationContextType = {
-    isClientReady,
-    isSuiClientReady: suiClientReady,
-    isAppReady,
-    initializationError,
+  const contextValue: AppInitializationContextType = {
+    isAppReady: isClient ? isAppReady : false,
+    isSuiClientReady: isClient ? isSuiClientReady : false,
+    initializationError: isClient ? initializationError : null,
   };
 
-  // Don't render anything until mounted to prevent hydration issues
-  if (!mounted) {
+  if (!isClient) {
+    // Render with safe default context during SSR
     return (
-      <div style={{ display: 'none' }}>
-        {/* Hidden during SSR to prevent hydration mismatch */}
-      </div>
+      <AppInitializationContext.Provider value={createSafeDefaultAppContext()}>
+        {children}
+      </AppInitializationContext.Provider>
     );
   }
 
   return (
-    <div suppressHydrationWarning>
-      <AppInitializationContext.Provider value={initializationContextValue}>
-        <AppWalletProvider>
-          <Suspense fallback={<div>Loading...</div>}>
-            <div>
-              {children}
-            </div>
-          </Suspense>
-        </AppWalletProvider>
-      </AppInitializationContext.Provider>
-    </div>
+    <AppInitializationContext.Provider value={contextValue}>
+      {children}
+    </AppInitializationContext.Provider>
   );
 }

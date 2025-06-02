@@ -407,7 +407,7 @@ View your updated NFT:
         }).toThrow('Wallet access denied: user cancelled transaction');
       });
 
-      it('should handle contract not deployed error', () => {
+      it('should handle contract not deployed error during complete', () => {
         (execSync as jest.Mock).mockImplementation(() => {
           throw new Error(
             'Smart contract not deployed on the configured network'
@@ -968,7 +968,7 @@ Nothing to sync.`);
         expect(result).toContain('Nothing to sync');
       });
 
-      it('should handle corrupted blob data', () => {
+      it('should handle corrupted blob data during sync', () => {
         (execSync as jest.Mock).mockImplementation(() => {
           throw new Error('Failed to parse blob data: Invalid JSON');
         });
@@ -1056,7 +1056,7 @@ Details:
         }).toThrow('Request timeout while connecting to Walrus network');
       });
 
-      it('should handle corrupted blob data', () => {
+      it('should handle corrupted blob data during retrieve', () => {
         (execSync as jest.Mock).mockImplementation(() => {
           throw new Error(
             'Failed to retrieve todo from Walrus with blob ID 0x123456789abcdef: Invalid JSON format'
@@ -1203,7 +1203,7 @@ No retrieval identifier specified`;
         );
       });
 
-      it('should handle contract not deployed error', () => {
+      it('should handle contract not deployed error during retrieve', () => {
         (execSync as jest.Mock).mockImplementation(() => {
           throw new Error(
             'Contract not deployed. Please run "waltodo deploy --network testnet" first.'

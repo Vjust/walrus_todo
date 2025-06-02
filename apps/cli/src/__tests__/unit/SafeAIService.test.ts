@@ -17,8 +17,6 @@ jest.mock('../../services/ai/aiService');
 
 describe('SafeAIService', () => {
   let safeAIService: SafeAIService;
-  let aiService: AIService;
-  let logger: Logger;
   let mockLogger: jest.Mocked<Logger>;
   let mockAIService: jest.Mocked<AIService>;
 
@@ -104,8 +102,6 @@ describe('SafeAIService', () => {
 
     // Nullify references to help garbage collection
     safeAIService = null as any;
-    aiService = null as any;
-    logger = null as any;
     mockLogger = null as any;
     mockAIService = null as any;
   });

@@ -5,7 +5,6 @@ import type { Todo } from '../types/todo';
 import type { Mocked } from 'jest-mock';
 
 // Use existing mocks from global setup
-const MockedWalrusStorage = WalrusStorage as jest.Mocked<typeof WalrusStorage>;
 
 describe('store command', () => {
   let todoService: TodoService;

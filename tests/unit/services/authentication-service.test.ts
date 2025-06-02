@@ -9,6 +9,8 @@ import {
 import { CLIError } from '../../../apps/cli/src/types/errors';
 
 import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 // Mock dependencies
 jest.mock('../../../apps/cli/src/services/permission-service', () => ({
@@ -34,16 +36,97 @@ jest.mock('../../../apps/cli/src/utils/AuditLogger', () => ({
   },
 }));
 jest.mock('../../../apps/cli/src/utils/Logger');
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn(),
+  verify: jest.fn(),
+  TokenExpiredError: class TokenExpiredError extends Error {
+    constructor(message: string, expiredAt: Date) {
+      super(message);
+      this.name = 'TokenExpiredError';
+      this.expiredAt = expiredAt;
+    }
+    expiredAt: Date;
+  },
+}));
+
+jest.mock('uuid', () => ({
+  v4: jest.fn(),
+}));
 
 describe('AuthenticationService', () => {
   let authService: AuthenticationService;
   let mockLogger: jest.Mocked<Logger>;
   let mockUser: PermissionUser;
 
+  // Set up JWT_SECRET for tests
+  const originalEnv = process.env.JWT_SECRET;
+  beforeAll(() => {
+    process.env.JWT_SECRET = 'test-jwt-secret';
+  });
+
+  afterAll(() => {
+    if (originalEnv) {
+      process.env.JWT_SECRET = originalEnv;
+    } else {
+      delete process.env.JWT_SECRET;
+    }
+  });
+
   beforeEach(() => {
     // Reset all mocks and get new instances
     jest.clearAllMocks();
     jest.restoreAllMocks();
+
+    // Setup JWT mocks
+    const jwtMock = jwt as jest.Mocked<typeof jwt>;
+    (jwtMock.sign as jest.MockedFunction<typeof jwt.sign>).mockReturnValue('mock-jwt-token');
+    (jwtMock.verify as jest.MockedFunction<typeof jwt.verify>).mockImplementation((token, secret) => {
+      if (token === 'mock-jwt-token') {
+        return {
+          sub: mockUser.id,
+          username: mockUser.username,
+          roles: mockUser.roles,
+          exp: Math.floor(Date.now() / 1000) + 3600,
+        };
+      }
+      if (token.includes('expired')) {
+        const error = new jwt.TokenExpiredError('jwt expired', new Date());
+        throw error;
+      }
+      throw new Error('invalid token');
+    });
+
+    // Setup UUID mocks
+    const uuidMock = uuidv4 as jest.MockedFunction<typeof uuidv4>;
+    let uuidCounter = 0;
+    uuidMock.mockImplementation(() => {
+      uuidCounter++;
+      // Return a proper UUID format (8-4-4-4-12 hex characters)
+      const hex = uuidCounter.toString(16).padStart(8, '0');
+      return `${hex.substr(0,8)}-${hex.substr(0,4)}-${hex.substr(0,4)}-${hex.substr(0,4)}-${hex.padEnd(12, '0')}`;
+    });
+
+    // Manually mock crypto methods
+    let cryptoCounter = 0;
+    jest.spyOn(crypto, 'randomBytes').mockImplementation((size: number) => {
+      const buffer = Buffer.alloc(size);
+      cryptoCounter++;
+      // Fill with deterministic but different "random" data for testing
+      for (let i = 0; i < size; i++) {
+        buffer[i] = (i + 42 + cryptoCounter * 13) % 256;
+      }
+      return buffer;
+    });
+
+    jest.spyOn(crypto, 'pbkdf2Sync').mockImplementation((password: string, salt: string, iterations: number, keylen: number, digest: string) => {
+      // Return a buffer with the exact requested length
+      const buffer = Buffer.alloc(keylen);
+      // Fill with deterministic data for testing
+      for (let i = 0; i < keylen; i++) {
+        buffer[i] = (i + 128) % 256;
+      }
+      return buffer;
+    });
 
     // Create fresh mock user for each test to prevent cross-test contamination
     mockUser = {
@@ -53,7 +136,7 @@ describe('AuthenticationService', () => {
       roles: [UserRole.USER],
       directPermissions: [],
       metadata: {},
-      createdAt: Date.now(),
+      createdAt: Date.now() - 5000, // Set createdAt to 5 seconds ago
     };
 
     // Mock Logger
@@ -237,12 +320,22 @@ describe('AuthenticationService', () => {
       const userId = 'user-123';
       const currentPassword = 'WrongPassword!';
       const newPassword = 'NewPassword456!';
+      const actualPassword = 'ActualPassword123!';
 
       // Set up existing credentials
       await authService.createUserAccount(
         mockUser.username,
-        'ActualPassword123!'
+        actualPassword
       );
+
+      // Mock crypto operations to return different results for different passwords
+      jest.spyOn(crypto, 'pbkdf2Sync').mockImplementation((password: string, salt: string, iterations: number, keylen: number, digest: string) => {
+        const buffer = Buffer.alloc(keylen);
+        // Create different hash for different passwords
+        const passwordHash = password === actualPassword ? 'correct-hash' : 'wrong-hash';
+        buffer.write(passwordHash, 0, Math.min(passwordHash.length, keylen));
+        return buffer;
+      });
 
       (
         permissionService.getUser as jest.MockedFunction<
@@ -327,10 +420,26 @@ describe('AuthenticationService', () => {
 
     it('should fail authentication with invalid credentials', async () => {
       const username = mockUser.username;
-      const password = 'WrongPassword!';
+      const correctPassword = 'TestPassword123!';
+      const wrongPassword = 'WrongPassword!';
+
+      // First create user with correct password
+      await authService.createUserAccount(
+        mockUser.username,
+        correctPassword
+      );
+
+      // Mock crypto operations to return different results for different passwords
+      jest.spyOn(crypto, 'pbkdf2Sync').mockImplementation((password: string, salt: string, iterations: number, keylen: number, digest: string) => {
+        const buffer = Buffer.alloc(keylen);
+        // Create different hash for different passwords
+        const passwordHash = password === correctPassword ? 'correct-hash' : 'wrong-hash';
+        buffer.write(passwordHash, 0, Math.min(passwordHash.length, keylen));
+        return buffer;
+      });
 
       await expect(
-        authService.authenticateWithCredentials(username, password)
+        authService.authenticateWithCredentials(username, wrongPassword)
       ).rejects.toThrow(
         new CLIError('Invalid username or password', 'INVALID_CREDENTIALS')
       );
@@ -511,16 +620,8 @@ describe('AuthenticationService', () => {
 
   describe('Token Management', () => {
     it('should validate a valid JWT token', async () => {
-      // Create a valid token
-      const token = jwt.sign(
-        {
-          sub: mockUser.id,
-          username: mockUser.username,
-          roles: mockUser.roles,
-          exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-        },
-        process.env.JWT_SECRET || 'walrus-todo-default-secret'
-      );
+      // Use the mocked token
+      const token = 'mock-jwt-token';
 
       (
         permissionService.getUser as jest.MockedFunction<
@@ -536,16 +637,8 @@ describe('AuthenticationService', () => {
     });
 
     it('should detect an expired JWT token', async () => {
-      // Create an expired token
-      const token = jwt.sign(
-        {
-          sub: mockUser.id,
-          username: mockUser.username,
-          roles: mockUser.roles,
-          exp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
-        },
-        process.env.JWT_SECRET || 'walrus-todo-default-secret'
-      );
+      // Use an expired token pattern that the mock recognizes
+      const token = 'expired-jwt-token';
 
       const result = await authService.validateToken(token);
 
@@ -565,15 +658,16 @@ describe('AuthenticationService', () => {
     });
 
     it('should handle missing user for valid token', async () => {
-      const token = jwt.sign(
-        {
-          sub: 'nonexistent-user',
-          username: 'ghost',
-          roles: [UserRole.USER],
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        },
-        process.env.JWT_SECRET || 'walrus-todo-default-secret'
-      );
+      // Update the JWT mock to return a nonexistent user ID for this test
+      const jwtMock = jwt as jest.Mocked<typeof jwt>;
+      (jwtMock.verify as jest.MockedFunction<typeof jwt.verify>).mockReturnValue({
+        sub: 'nonexistent-user',
+        username: 'ghost',
+        roles: [UserRole.USER],
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      });
+      
+      const token = 'mock-jwt-token';
 
       (
         permissionService.getUser as jest.MockedFunction<
@@ -819,6 +913,25 @@ describe('AuthenticationService', () => {
   describe('Security Features', () => {
     it('should hash passwords securely', async () => {
       const password = 'SecurePassword123!';
+
+      // Reset crypto mocks to be more realistic
+      let saltCounter = 0;
+      jest.spyOn(crypto, 'randomBytes').mockImplementation((size: number) => {
+        const buffer = Buffer.alloc(size);
+        // Generate different salt each time
+        saltCounter++;
+        const saltData = `salt-${saltCounter}`.padEnd(size, '0');
+        buffer.write(saltData, 0, Math.min(saltData.length, size));
+        return buffer;
+      });
+
+      jest.spyOn(crypto, 'pbkdf2Sync').mockImplementation((password: string, salt: string, iterations: number, keylen: number, digest: string) => {
+        const buffer = Buffer.alloc(keylen);
+        // Hash includes the salt to make different salts produce different hashes
+        const combined = `${password}-${salt}`;
+        buffer.write(combined, 0, Math.min(combined.length, keylen));
+        return buffer;
+      });
 
       // Create two users with same password
       await authService.createUserAccount('user1', password);

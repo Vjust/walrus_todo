@@ -80,6 +80,7 @@ export async function loadNetworkConfig(
       };
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.warn(`Failed to load config file for ${network}:`, error);
   }
 
@@ -92,6 +93,7 @@ export async function loadNetworkConfig(
       cacheConfig(cacheKey, fallbackConfig, 'fallback');
     }
 
+    // eslint-disable-next-line no-console
     console.warn(
       `Using fallback configuration for ${network}. ` +
       'Run CLI deployment to generate proper config.'
@@ -229,6 +231,7 @@ function validateConfig(config: AppConfig): void {
   }
 
   if (!config.deployment.packageId || config.deployment.packageId === '0x0') {
+    // eslint-disable-next-line no-console
     console.warn('Package ID not set - blockchain features may not work properly');
   }
 }

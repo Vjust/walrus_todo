@@ -26,7 +26,7 @@ export interface Notification {
   title: string;
   message: string;
   timestamp: Date;
-  data?: any;
+  data?: unknown;
   persistent?: boolean;
 }
 
@@ -42,35 +42,35 @@ export class NotificationSystem extends EventEmitter {
   /**
    * Send an info notification
    */
-  info(title: string, message: string, data?: any): string {
+  info(title: string, message: string, data?: unknown): string {
     return this.createNotification('info', title, message, data);
   }
 
   /**
    * Send a success notification
    */
-  success(title: string, message: string, data?: any): string {
+  success(title: string, message: string, data?: unknown): string {
     return this.createNotification('success', title, message, data);
   }
 
   /**
    * Send a warning notification
    */
-  warning(title: string, message: string, data?: any): string {
+  warning(title: string, message: string, data?: unknown): string {
     return this.createNotification('warning', title, message, data);
   }
 
   /**
    * Send an error notification
    */
-  error(title: string, message: string, data?: any): string {
+  error(title: string, message: string, data?: unknown): string {
     return this.createNotification('error', title, message, data);
   }
 
   /**
    * Send a progress notification
    */
-  progress(title: string, message: string, data?: any): string {
+  progress(title: string, message: string, data?: unknown): string {
     return this.createNotification('progress', title, message, data);
   }
 
@@ -239,7 +239,7 @@ export class NotificationSystem extends EventEmitter {
     type: Notification['type'],
     title: string,
     message: string,
-    data?: any,
+    data?: unknown,
     persistent?: boolean
   ): string {
     const id = `notification-${++this.notificationCounter}-${Date.now()}`;
@@ -380,13 +380,13 @@ export class NotificationSystem extends EventEmitter {
   private getJobDisplayName(job: QueueJob): string {
     switch (job.type) {
       case 'todo':
-        const todo = job.data as any;
+        const todo = job.data as { title?: string };
         return todo.title || 'Unknown Todo';
       case 'todo-list':
-        const list = job.data as any;
+        const list = job.data as { name?: string; todos?: unknown[] };
         return `${list.name} (${list.todos?.length || 0} todos)`;
       case 'blob':
-        const blob = job.data as any;
+        const blob = job.data as { fileName?: string };
         return blob.fileName || 'Unknown Blob';
       default:
         return 'Unknown Upload';
@@ -445,18 +445,18 @@ export function getGlobalNotificationSystem(): NotificationSystem {
  * Quick notification functions for common use cases
  */
 export const notify = {
-  info: (title: string, message: string, data?: any) =>
+  info: (title: string, message: string, data?: unknown) =>
     getGlobalNotificationSystem().info(title, message, data),
 
-  success: (title: string, message: string, data?: any) =>
+  success: (title: string, message: string, data?: unknown) =>
     getGlobalNotificationSystem().success(title, message, data),
 
-  warning: (title: string, message: string, data?: any) =>
+  warning: (title: string, message: string, data?: unknown) =>
     getGlobalNotificationSystem().warning(title, message, data),
 
-  error: (title: string, message: string, data?: any) =>
+  error: (title: string, message: string, data?: unknown) =>
     getGlobalNotificationSystem().error(title, message, data),
 
-  progress: (title: string, message: string, data?: any) =>
+  progress: (title: string, message: string, data?: unknown) =>
     getGlobalNotificationSystem().progress(title, message, data),
 };
