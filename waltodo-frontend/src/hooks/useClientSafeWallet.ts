@@ -54,6 +54,37 @@ export function useClientSafeWallet() {
   }
 
   // Return actual wallet context when client is ready
+  if (!walletContext) {
+    // Return safe defaults if wallet context is null
+    return {
+      connected: false,
+      connecting: false,
+      account: null,
+      address: null,
+      chainId: null,
+      name: null,
+      network: 'testnet',
+      error: null,
+      isLoading: false,
+      connect: () => {},
+      disconnect: () => {},
+      signAndExecuteTransaction: async () => { throw new Error('Wallet not initialized'); },
+      clearError: () => {},
+      openModal: () => {},
+      closeModal: () => {},
+      resetSession: () => {},
+      resetActivityTimer: () => {},
+      switchNetwork: () => {},
+      addTransaction: () => {},
+      trackTransaction: async () => { throw new Error('Wallet not initialized'); },
+      sessionExpired: false,
+      lastActivity: 0,
+      transactionHistory: [],
+      currentNetwork: 'testnet',
+      isModalOpen: false,
+    };
+  }
+  
   return {
     ...walletContext,
     isLoading: false,

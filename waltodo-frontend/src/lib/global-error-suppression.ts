@@ -1,6 +1,6 @@
 /**
- * Global error suppression for known third-party library issues
- * This prevents console spam from expected errors in wallet libraries
+ * Reduced error suppression for wallet debugging
+ * Only suppresses the most critical spam while allowing wallet detection errors to surface
  */
 
 export function setupGlobalErrorSuppression() {
@@ -13,134 +13,185 @@ export function setupGlobalErrorSuppression() {
   const originalWarn = console.warn;
   const originalLog = console.log;
 
-  // List of error patterns to suppress (reduce noise)
-  const suppressedErrorPatterns = [
-    'Access to storage is not allowed from this context',
-    'localStorage',
-    'sessionStorage',
-    'select failed: wallet',
-    'UNKNOWN_ERROR',
-    'KIT.UNKNOWN_ERROR',
-    'wallet Slush is not available',
-    'all wallets are listed here: []',
-    'Wallet Standard has already been loaded',
-    'Could not determine how to get wallets from wallet kit',
-    'Not saving wallet info - wallet not in available list',
-    'Auto-reconnect disabled',
-    'Failed to load resource: the server responded with a status of 404',
-    'Error storing todo on blockchain',
-    'Failed to create todo: Error: Wallet not connected',
+  // Debug flag for wallet-related logging
+  const WALLET_DEBUG = process.env.NODE_ENV === 'development' || window.localStorage?.getItem('wallet-debug') === 'true';
+
+  // Reduced list - only suppress the most critical spam
+  const criticalSuppressionPatterns = [
+    // Browser extension injection warnings (pure spam)
     'overrideMethod',
     'installHook.js',
     'hook.js',
-    'Would execute transaction with dApp Kit',
-    'Todo created successfully',
-    'dApp.connect',
-    'query #1',
-    'query #2',
-    'query #3',
-    'dapp-interface.js',
     'opcgpfmipidbgpenhmajoajpbobppdil',
     'chrome-extension://',
+    
+    // Known third-party library debug noise
+    'dapp-interface.js',
     '[[ << query #',
     'Error: [[ << query #',
   ];
 
-  // Enhanced console.error that filters known issues
+  // Wallet-related patterns that we now want to see (for debugging)
+  const walletPatterns = [
+    'wallet',
+    'Wallet',
+    'WALLET',
+    'slush',
+    'Slush',
+    'SLUSH',
+    'sui',
+    'Sui',
+    'SUI',
+  ];
+
+  // Enhanced console.error with wallet debugging
   console.error = (...args: any[]) => {
     const errorString = args.join(' ');
 
-    // Check if this is a known, expected error
-    const isKnownError = suppressedErrorPatterns.some(pattern =>
+    // Check if this is critical spam that should be suppressed
+    const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
       errorString.includes(pattern)
     );
 
-    if (isKnownError) {
-      // Completely suppress known errors to clean up console
+    if (isCriticalSpam) {
+      return; // Suppress critical spam
+    }
+
+    // Check if this is wallet-related
+    const isWalletRelated = walletPatterns.some(pattern =>
+      errorString.toLowerCase().includes(pattern.toLowerCase())
+    );
+
+    if (isWalletRelated && WALLET_DEBUG) {
+      // Add debug prefix for wallet errors
+      originalError('[WALLET-DEBUG]', ...args);
       return;
     }
 
-    // For genuine errors, use original console.error
+    // For all other errors, use original console.error
     originalError(...args);
   };
 
-  // Enhanced console.warn that filters known issues
+  // Enhanced console.warn with wallet debugging
   console.warn = (...args: any[]) => {
     const warnString = args.join(' ');
 
-    // Check if this is a known, expected warning
-    const isKnownWarning = suppressedErrorPatterns.some(pattern =>
+    // Check if this is critical spam that should be suppressed
+    const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
       warnString.includes(pattern)
     );
 
-    if (isKnownWarning) {
-      // Completely suppress known warnings to clean up console
+    if (isCriticalSpam) {
+      return; // Suppress critical spam
+    }
+
+    // Check if this is wallet-related
+    const isWalletRelated = walletPatterns.some(pattern =>
+      warnString.toLowerCase().includes(pattern.toLowerCase())
+    );
+
+    if (isWalletRelated && WALLET_DEBUG) {
+      // Add debug prefix for wallet warnings
+      originalWarn('[WALLET-DEBUG]', ...args);
       return;
     }
 
-    // For genuine warnings, use original console.warn
+    // For all other warnings, use original console.warn
     originalWarn(...args);
   };
 
-  // Enhanced console.log that filters repetitive debug messages
+  // Reduced console.log filtering - only suppress critical spam
   console.log = (...args: any[]) => {
     const logString = args.join(' ');
 
-    // Check if this is repetitive debug logging
-    const isRepetitiveLog = suppressedErrorPatterns.some(pattern =>
+    // Check if this is critical spam that should be suppressed
+    const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
       logString.includes(pattern)
     );
 
-    if (isRepetitiveLog) {
-      // Completely suppress repetitive logs to clean up console
+    if (isCriticalSpam) {
+      return; // Suppress critical spam
+    }
+
+    // Check if this is wallet-related
+    const isWalletRelated = walletPatterns.some(pattern =>
+      logString.toLowerCase().includes(pattern.toLowerCase())
+    );
+
+    if (isWalletRelated && WALLET_DEBUG) {
+      // Add debug prefix for wallet logs
+      originalLog('[WALLET-DEBUG]', ...args);
       return;
     }
 
-    // For genuine logs, use original console.log
+    // For all other logs, use original console.log
     originalLog(...args);
   };
 
-  // Global error handler for uncaught errors
+  // Reduced global error handler - only suppress critical spam
   const globalErrorHandler = (event: ErrorEvent) => {
     const errorMessage = event.error?.message || event.message || '';
 
-    // Check if this is a known error pattern
-    const isKnownError = suppressedErrorPatterns.some(pattern =>
+    // Check if this is critical spam that should be suppressed
+    const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
       errorMessage.includes(pattern)
     );
 
-    if (isKnownError) {
-      console.warn('[Global Error Suppressed]', errorMessage);
+    if (isCriticalSpam) {
       event.preventDefault();
       return;
     }
 
-    // Let genuine errors through
-    console.error('[Global Error]', event.error || event.message);
+    // Check if this is wallet-related
+    const isWalletRelated = walletPatterns.some(pattern =>
+      errorMessage.toLowerCase().includes(pattern.toLowerCase())
+    );
+
+    if (isWalletRelated && WALLET_DEBUG) {
+      originalError('[WALLET-DEBUG] [Global Error]', event.error || event.message);
+      return;
+    }
+
+    // Let all other errors through
+    originalError('[Global Error]', event.error || event.message);
   };
 
-  // Global unhandled promise rejection handler
+  // Reduced global unhandled promise rejection handler
   const globalRejectionHandler = (event: PromiseRejectionEvent) => {
     const rejectionMessage = String(event.reason);
 
-    // Check if this is a known error pattern
-    const isKnownError = suppressedErrorPatterns.some(pattern =>
+    // Check if this is critical spam that should be suppressed
+    const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
       rejectionMessage.includes(pattern)
     );
 
-    if (isKnownError) {
-      console.warn('[Global Rejection Suppressed]', rejectionMessage);
+    if (isCriticalSpam) {
       event.preventDefault();
       return;
     }
 
-    // Let genuine rejections through
-    console.error('[Global Rejection]', event.reason);
+    // Check if this is wallet-related
+    const isWalletRelated = walletPatterns.some(pattern =>
+      rejectionMessage.toLowerCase().includes(pattern.toLowerCase())
+    );
+
+    if (isWalletRelated && WALLET_DEBUG) {
+      originalError('[WALLET-DEBUG] [Global Rejection]', event.reason);
+      return;
+    }
+
+    // Let all other rejections through
+    originalError('[Global Rejection]', event.reason);
   };
 
   // Add global event listeners
   window.addEventListener('error', globalErrorHandler);
   window.addEventListener('unhandledrejection', globalRejectionHandler);
+
+  // Log wallet debug status
+  if (WALLET_DEBUG) {
+    originalLog('[WALLET-DEBUG] Wallet debugging enabled. Set localStorage.wallet-debug = "false" to disable.');
+  }
 
   // Return cleanup function
   return () => {

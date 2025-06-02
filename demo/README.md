@@ -203,7 +203,7 @@ waltodo sync --status
 top -p $(pgrep -f "node")
 
 # Profile API performance
-curl -w "@curl-format.txt" http://localhost:3001/api/todos
+curl -w "@curl-format.txt" http://localhost:3001/api/v1/todos
 
 # Check frontend bundle size
 pnpm analyze

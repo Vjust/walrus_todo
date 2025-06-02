@@ -4,9 +4,11 @@
  */
 
 // This file requires React as a peer dependency
-let React: any;
+import type * as ReactType from 'react';
+
+let React: typeof ReactType | undefined;
 try {
-  React = require('react');
+  React = require('react') as typeof ReactType;
 } catch {
   // React not available - hooks will throw runtime error if used
 }
@@ -17,7 +19,8 @@ import type {
   WalrusTodoCreateResult,
   WalrusTodoUploadOptions,
   WalrusNetwork,
-  UniversalSigner
+  UniversalSigner,
+  StorageCostEstimate
 } from '../types';
 import { WalrusClientError } from '../errors';
 
@@ -61,7 +64,7 @@ export interface UseWalrusStorageReturn extends WalrusStorageState {
   getTodoStorageInfo: (walrusBlobId: string) => Promise<{
     exists: boolean;
     blobInfo?: any;
-    storageCost?: { total: bigint; storage: bigint; write: bigint };
+    storageCost?: StorageCostEstimate;
   } | null>;
 
   estimateStorageCosts: (
@@ -110,7 +113,7 @@ export function useWalrusStorage(
   } = options;
 
   // State management
-  const [state, setState] = React.useState<WalrusStorageState>({
+  const [state, setState] = React!.useState<WalrusStorageState>({
     loading: false,
     uploading: false,
     downloading: false,
@@ -123,15 +126,15 @@ export function useWalrusStorage(
   });
 
   // Walrus storage instance
-  const walrusStorageRef = React.useRef<WalrusTodoStorage | null>(null);
+  const walrusStorageRef = React!.useRef<WalrusTodoStorage | null>(null);
 
   // Initialize storage
-  React.useEffect(() => {
+  React!.useEffect(() => {
     walrusStorageRef.current = new WalrusTodoStorage(network);
   }, [network]);
 
   // Get current storage instance
-  const getStorage = React.useCallback((): WalrusTodoStorage => {
+  const getStorage = React!.useCallback((): WalrusTodoStorage => {
     if (!walrusStorageRef.current) {
       walrusStorageRef.current = new WalrusTodoStorage(network);
     }
@@ -139,7 +142,7 @@ export function useWalrusStorage(
   }, [network]);
 
   // Helper function to handle errors
-  const handleError = React.useCallback(
+  const handleError = React!.useCallback(
     (error: unknown, operation: string): WalrusClientError => {
       let walrusError: WalrusClientError;
 
@@ -153,15 +156,15 @@ export function useWalrusStorage(
         );
       }
 
-      setState(prev => ({ ...prev, error: walrusError, loading: false }));
+      setState((prev: WalrusStorageState) => ({ ...prev, error: walrusError, loading: false }));
       return walrusError;
     },
     []
   );
 
   // Helper function to update progress
-  const updateProgress = React.useCallback((message: string, progress: number) => {
-    setState(prev => ({
+  const updateProgress = React!.useCallback((message: string, progress: number) => {
+    setState((prev: WalrusStorageState) => ({
       ...prev,
       progressMessage: message,
       progress: Math.max(0, Math.min(100, progress)),
@@ -169,12 +172,12 @@ export function useWalrusStorage(
   }, []);
 
   // Create todo operation
-  const createTodo = React.useCallback(
+  const createTodo = React!.useCallback(
     async (
       todo: Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>,
       options: WalrusTodoUploadOptions = {}
     ): Promise<WalrusTodoCreateResult | null> => {
-      setState(prev => ({
+      setState((prev: WalrusStorageState) => ({
         ...prev,
         uploading: true,
         loading: true,
@@ -196,7 +199,7 @@ export function useWalrusStorage(
           }
         );
 
-        setState(prev => ({
+        setState((prev: WalrusStorageState) => ({
           ...prev,
           uploading: false,
           loading: false,
@@ -206,7 +209,7 @@ export function useWalrusStorage(
 
         return result;
       } catch (error) {
-        setState(prev => ({ ...prev, uploading: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, uploading: false }));
         handleError(error, 'Create Todo');
         return null;
       }
@@ -215,9 +218,9 @@ export function useWalrusStorage(
   );
 
   // Retrieve todo operation
-  const retrieveTodo = React.useCallback(
+  const retrieveTodo = React!.useCallback(
     async (walrusBlobId: string): Promise<WalrusTodo | null> => {
-      setState(prev => ({
+      setState((prev: WalrusStorageState) => ({
         ...prev,
         downloading: true,
         loading: true,
@@ -227,9 +230,9 @@ export function useWalrusStorage(
 
       try {
         const storage = getStorage();
-        const result = await storage.retrieveTodo(walrusBlobId);
+        const result = await storage.retrieveWalrusTodo(walrusBlobId);
 
-        setState(prev => ({
+        setState((prev: WalrusStorageState) => ({
           ...prev,
           downloading: false,
           loading: false,
@@ -238,7 +241,7 @@ export function useWalrusStorage(
 
         return result;
       } catch (error) {
-        setState(prev => ({ ...prev, downloading: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, downloading: false }));
         handleError(error, 'Retrieve Todo');
         return null;
       }
@@ -247,12 +250,12 @@ export function useWalrusStorage(
   );
 
   // Update todo operation
-  const updateTodo = React.useCallback(
+  const updateTodo = React!.useCallback(
     async (
       todo: WalrusTodo,
       options: Partial<WalrusTodoUploadOptions> = {}
     ): Promise<boolean> => {
-      setState(prev => ({
+      setState((prev: WalrusStorageState) => ({
         ...prev,
         uploading: true,
         loading: true,
@@ -262,9 +265,9 @@ export function useWalrusStorage(
 
       try {
         const storage = getStorage();
-        await storage.updateTodo(todo, signer, options);
+        await storage.updateWalrusTodo(todo, signer, options);
 
-        setState(prev => ({
+        setState((prev: WalrusStorageState) => ({
           ...prev,
           uploading: false,
           loading: false,
@@ -273,7 +276,7 @@ export function useWalrusStorage(
 
         return true;
       } catch (error) {
-        setState(prev => ({ ...prev, uploading: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, uploading: false }));
         handleError(error, 'Update Todo');
         return false;
       }
@@ -282,9 +285,9 @@ export function useWalrusStorage(
   );
 
   // Delete todo operation
-  const deleteTodo = React.useCallback(
+  const deleteTodo = React!.useCallback(
     async (walrusBlobId: string): Promise<boolean> => {
-      setState(prev => ({
+      setState((prev: WalrusStorageState) => ({
         ...prev,
         deleting: true,
         loading: true,
@@ -296,7 +299,7 @@ export function useWalrusStorage(
         const storage = getStorage();
         await storage.delete(walrusBlobId, signer);
 
-        setState(prev => ({
+        setState((prev: WalrusStorageState) => ({
           ...prev,
           deleting: false,
           loading: false,
@@ -305,7 +308,7 @@ export function useWalrusStorage(
 
         return true;
       } catch (error) {
-        setState(prev => ({ ...prev, deleting: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, deleting: false }));
         handleError(error, 'Delete Todo');
         return false;
       }
@@ -314,12 +317,12 @@ export function useWalrusStorage(
   );
 
   // Create multiple todos
-  const createMultipleTodos = React.useCallback(
+  const createMultipleTodos = React!.useCallback(
     async (
       todos: Array<Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>>,
       options: WalrusTodoUploadOptions = {}
     ): Promise<WalrusTodoCreateResult[]> => {
-      setState(prev => ({
+      setState((prev: WalrusStorageState) => ({
         ...prev,
         uploading: true,
         loading: true,
@@ -341,7 +344,7 @@ export function useWalrusStorage(
           }
         );
 
-        setState(prev => ({
+        setState((prev: WalrusStorageState) => ({
           ...prev,
           uploading: false,
           loading: false,
@@ -351,7 +354,7 @@ export function useWalrusStorage(
 
         return results;
       } catch (error) {
-        setState(prev => ({ ...prev, uploading: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, uploading: false }));
         handleError(error, 'Create Multiple Todos');
         return [];
       }
@@ -360,15 +363,15 @@ export function useWalrusStorage(
   );
 
   // Get todo storage info
-  const getTodoStorageInfo = React.useCallback(
+  const getTodoStorageInfo = React!.useCallback(
     async (walrusBlobId: string) => {
-      setState(prev => ({ ...prev, loading: true, error: null }));
+      setState((prev: WalrusStorageState) => ({ ...prev, loading: true, error: null }));
 
       try {
         const storage = getStorage();
-        const result = await storage.getStorageInfo(walrusBlobId);
+        const result = await storage.getTodoStorageInfo(walrusBlobId);
 
-        setState(prev => ({ ...prev, loading: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, loading: false }));
         return result;
       } catch (error) {
         handleError(error, 'Get Storage Info');
@@ -379,12 +382,12 @@ export function useWalrusStorage(
   );
 
   // Estimate storage costs
-  const estimateStorageCosts = React.useCallback(
+  const estimateStorageCosts = React!.useCallback(
     async (
       todos: Array<Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>>,
       epochs: number = 5
     ) => {
-      setState(prev => ({ ...prev, loading: true, error: null }));
+      setState((prev: WalrusStorageState) => ({ ...prev, loading: true, error: null }));
 
       try {
         const storage = getStorage();
@@ -402,7 +405,7 @@ export function useWalrusStorage(
           });
         }
 
-        setState(prev => ({ ...prev, loading: false }));
+        setState((prev: WalrusStorageState) => ({ ...prev, loading: false }));
         return { totalCost, totalSize, perTodoCost };
       } catch (error) {
         handleError(error, 'Estimate Storage Costs');
@@ -413,34 +416,34 @@ export function useWalrusStorage(
   );
 
   // Refresh WAL balance
-  const refreshWalBalance = React.useCallback(async () => {
+  const refreshWalBalance = React!.useCallback(async () => {
     try {
       const storage = getStorage();
       const balance = await storage.getWalBalance();
-      setState(prev => ({ ...prev, walBalance: balance }));
+      setState((prev: WalrusStorageState) => ({ ...prev, walBalance: balance }));
     } catch (error) {
       console.warn('Failed to refresh WAL balance:', error);
     }
   }, [getStorage]);
 
   // Refresh storage usage
-  const refreshStorageUsage = React.useCallback(async () => {
+  const refreshStorageUsage = React!.useCallback(async () => {
     try {
       const storage = getStorage();
       const usage = await storage.getStorageUsage();
-      setState(prev => ({ ...prev, storageUsage: usage }));
+      setState((prev: WalrusStorageState) => ({ ...prev, storageUsage: usage }));
     } catch (error) {
       console.warn('Failed to refresh storage usage:', error);
     }
   }, [getStorage]);
 
   // Clear error state
-  const clearError = React.useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
+  const clearError = React!.useCallback(() => {
+    setState((prev: WalrusStorageState) => ({ ...prev, error: null }));
   }, []);
 
   // Reset all state
-  const reset = React.useCallback(() => {
+  const reset = React!.useCallback(() => {
     setState({
       loading: false,
       uploading: false,
@@ -455,7 +458,7 @@ export function useWalrusStorage(
   }, []);
 
   // Auto-refresh balance and usage
-  React.useEffect(() => {
+  React!.useEffect(() => {
     if (autoRefreshBalance) {
       refreshWalBalance();
     }
@@ -471,6 +474,8 @@ export function useWalrusStorage(
 
       return () => clearInterval(interval);
     }
+    
+    return undefined;
   }, [
     autoRefreshBalance,
     autoRefreshUsage,

@@ -285,8 +285,9 @@ export class WalrusImageStorage extends WalrusClient {
       const marker = buffer[offset + 1];
       
       // Start of Frame markers
-      if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) ||
-          (marker >= 0xC9 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF)) {
+      if (marker !== undefined && 
+          ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) ||
+          (marker >= 0xC9 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF))) {
         if (offset + 9 > buffer.length) throw new Error('Invalid JPEG SOF');
         const height = buffer.readUInt16BE(offset + 5);
         const width = buffer.readUInt16BE(offset + 7);

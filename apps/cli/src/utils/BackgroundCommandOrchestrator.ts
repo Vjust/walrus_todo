@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -576,7 +576,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     const possiblePaths = [
       path.join(process.cwd(), 'bin', 'run'),
       path.join(process.cwd(), 'bin', 'run.js'),
-      'waltodo',
+      path.join(process.cwd(), 'bin', 'run-enhanced.js'),
+      'waltodo', // This should resolve via PATH
       'npx waltodo',
     ];
 
@@ -586,8 +587,28 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       }
     }
 
-    // Default to node with the run script
-    return 'node';
+    // For global installations, prefer the waltodo command
+    try {
+      // Check if waltodo is available in PATH
+      execSync('which waltodo', { stdio: 'ignore' });
+      return 'waltodo';
+    } catch {
+      // Fall through to default
+    }
+
+    // Default to node with the run script - but use the correct path
+    const runScriptPath = path.join(process.cwd(), 'bin', 'run-enhanced.js');
+    if (fs.existsSync(runScriptPath)) {
+      return `node ${runScriptPath}`;
+    }
+    
+    // Last resort - use the built CLI directly
+    const builtCliPath = path.join(process.cwd(), 'apps', 'cli', 'dist', 'index.js');
+    if (fs.existsSync(builtCliPath)) {
+      return `node ${builtCliPath}`;
+    }
+
+    return 'waltodo'; // Final fallback
   }
 
   /**

@@ -21,10 +21,29 @@ export class WalrusTodoStorage extends WalrusClient {
   constructor(network: WalrusNetwork = 'testnet', options?: { useMockMode?: boolean }) {
     super({ network, ...options });
   }
+
+  /**
+   * Store a todo on Walrus (alias for storeTodo for backwards compatibility)
+   */
+  async store(
+    todo: WalrusTodo | Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>,
+    signer?: UniversalSigner,
+    options: WalrusTodoUploadOptions = {}
+  ): Promise<WalrusUploadResponse> {
+    return this.storeWalrusTodo(todo, signer, options);
+  }
+
+  /**
+   * Retrieve a todo from Walrus (alias for retrieveTodo for backwards compatibility)
+   */
+  async retrieve(walrusBlobId: string): Promise<WalrusTodo> {
+    return this.retrieveWalrusTodo(walrusBlobId);
+  }
+
   /**
    * Store a todo on Walrus with comprehensive metadata
    */
-  async storeTodo(
+  async storeWalrusTodo(
     todo: WalrusTodo | Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>,
     signer?: UniversalSigner,
     options: WalrusTodoUploadOptions = {}
@@ -64,7 +83,7 @@ export class WalrusTodoStorage extends WalrusClient {
   /**
    * Retrieve a todo from Walrus storage
    */
-  async retrieveTodo(walrusBlobId: string): Promise<WalrusTodo> {
+  async retrieveWalrusTodo(walrusBlobId: string): Promise<WalrusTodo> {
     try {
       const todoData = await this.downloadJson<WalrusTodo>(walrusBlobId);
       
@@ -92,7 +111,7 @@ export class WalrusTodoStorage extends WalrusClient {
   /**
    * Update a todo (creates new blob, as Walrus is immutable)
    */
-  async updateTodo(
+  async updateWalrusTodo(
     todo: WalrusTodo,
     signer?: UniversalSigner,
     options: Partial<WalrusTodoUploadOptions> = {}
@@ -102,7 +121,7 @@ export class WalrusTodoStorage extends WalrusClient {
       updatedAt: Date.now(),
     };
 
-    return this.storeTodo(updatedTodo, signer, {
+    return this.storeWalrusTodo(updatedTodo, signer, {
       ...options,
       attributes: {
         ...options.attributes,
@@ -127,9 +146,9 @@ export class WalrusTodoStorage extends WalrusClient {
     options.onProgress?.('Uploading to Walrus storage...', 25);
 
     // Store todo on Walrus
-    const walrusResult = await this.storeTodo(todo, signer, {
+    const walrusResult = await this.storeWalrusTodo(todo, signer, {
       ...options,
-      onProgress: progress => options.onProgress?.('Uploading...', 25 + progress * 0.5),
+      onProgress: (message, progress) => options.onProgress?.('Uploading...', 25 + progress * 0.5),
     });
 
     // Update todo with Walrus information
@@ -174,9 +193,13 @@ export class WalrusTodoStorage extends WalrusClient {
       suiObjectId: todo.suiObjectId,
       storageSize: walrusResult.size,
       storageEpochs: options.epochs || 5,
-      storageCost,
+      storageCost: {
+        total: storageCost.totalCost,
+        storage: storageCost.storageCost,
+        write: storageCost.writeCost,
+      },
       uploadTimestamp: Date.now(),
-      expiresAt: walrusResult.expiresAt,
+      expiresAt: walrusResult.transactionId ? Date.now() + (options.epochs || 5) * 7 * 24 * 60 * 60 * 1000 : undefined,
     };
 
     return {
@@ -200,6 +223,8 @@ export class WalrusTodoStorage extends WalrusClient {
     
     for (let i = 0; i < todos.length; i++) {
       const todo = todos[i];
+      if (!todo) continue; // Skip undefined entries
+      
       options.onProgress?.(
         `Creating todo ${i + 1} of ${todos.length}: ${todo.title}`,
         (i / todos.length) * 100
@@ -361,28 +386,32 @@ export class WalrusTodoStorage extends WalrusClient {
    * Store todo using the legacy Todo interface (consolidated from CLI)
    */
   async storeTodoLegacy(todo: Todo, epochs: number = 5): Promise<string> {
-    return super.storeTodo(todo, epochs);
+    const walrusTodo = this.convertToWalrusTodo(todo);
+    const result = await this.storeWalrusTodo(walrusTodo, undefined, { epochs });
+    return result.blobId;
   }
 
   /**
    * Store todo list using the legacy TodoList interface
    */
   async storeTodoListLegacy(list: TodoList, epochs: number = 5): Promise<string> {
-    return super.storeList(list, epochs);
+    const result = await this.uploadJson(list, { epochs });
+    return result.blobId;
   }
 
   /**
    * Retrieve todo using the legacy Todo interface
    */
   async retrieveTodoLegacy(blobId: string): Promise<Todo> {
-    return super.retrieveTodo(blobId);
+    const walrusTodo = await this.retrieveWalrusTodo(blobId);
+    return this.convertToTodo(walrusTodo);
   }
 
   /**
    * Retrieve todo list using the legacy TodoList interface
    */
   async retrieveListLegacy(blobId: string): Promise<TodoList> {
-    return super.retrieveList(blobId);
+    return await this.downloadJson<TodoList>(blobId);
   }
 
   /**
@@ -510,12 +539,6 @@ export class WalrusTodoStorage extends WalrusClient {
     }
   }
 
-  /**
-   * Get client instance for direct access
-   */
-  getClient(): WalrusClient {
-    return this;
-  }
 
   /**
    * Create NFT for todo (placeholder - would need actual Sui integration)

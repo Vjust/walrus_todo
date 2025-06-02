@@ -1,8 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '../test-utils';
 import { TransactionHistory } from '../../src/components/TransactionHistory';
 import { useWalletContext } from '../../src/contexts/WalletContext';
 import type { TransactionRecord } from '../../src/contexts/WalletContext';
+
+// Import centralized mocks
+import '../mocks';
 
 // Mock wallet context
 jest.mock('../../src/contexts/WalletContext', () => ({

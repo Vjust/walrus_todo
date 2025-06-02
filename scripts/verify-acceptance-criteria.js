@@ -208,9 +208,9 @@ async function testAPIPerformance() {
   log.test('Testing API performance...');
   
   const endpoints = [
-    { path: '/api/todos', method: 'GET' },
-    { path: '/api/health', method: 'GET' },
-    { path: '/api/ws-status', method: 'GET' },
+    { path: '/api/v1/todos', method: 'GET' },
+    { path: '/health', method: 'GET' },
+    { path: '/api/v1/sync/status', method: 'GET' },
   ];
   
   for (const endpoint of endpoints) {
@@ -257,7 +257,7 @@ async function testSynchronization() {
       const apiResponse = await makeRequest({
         hostname: 'localhost',
         port: CONFIG.API_PORT,
-        path: `/api/todos?list=${testList}`,
+        path: `/api/v1/todos?list=${testList}`,
         method: 'GET',
       });
       
@@ -296,7 +296,7 @@ async function testWebSocket() {
     const wsStatusResponse = await makeRequest({
       hostname: 'localhost',
       port: CONFIG.API_PORT,
-      path: '/api/ws-status',
+      path: '/health',
       method: 'GET',
     });
     

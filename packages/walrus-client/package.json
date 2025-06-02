@@ -1,6 +1,7 @@
 {
   "name": "@waltodo/walrus-client",
   "version": "1.0.0",
+  "type": "module",
   "description": "Unified Walrus Protocol client for Node.js and browser environments",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -49,7 +50,7 @@
     }
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/jest": "^29.5.12",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { spawn } = require('child_process');
-const getPort = require('get-port').default;
+const { default: getPort } = require('get-port');
 
 async function startWithAvailablePort() {
   try {

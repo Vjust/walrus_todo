@@ -1,6 +1,9 @@
 // Import Jest DOM extensions
 import '@testing-library/jest-dom';
 
+// Import our common test setup
+import './__tests__/setup';
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter: () => ({

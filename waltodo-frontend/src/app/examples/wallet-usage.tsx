@@ -5,11 +5,19 @@
  */
 
 import { useState } from 'react';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { ClientSafeWallet } from '@/components/ClientSafeWallet';
 import { storeTodoOnBlockchain } from '@/lib/todo-service';
 import { TransactionHistory } from '@/components/TransactionHistory';
 
 export default function WalletUsageExample() {
+  return (
+    <ClientSafeWallet>
+      {(wallet) => <WalletUsageExampleContent wallet={wallet} />}
+    </ClientSafeWallet>
+  );
+}
+
+function WalletUsageExampleContent({ wallet }: { wallet: any }) {
   const {
     connected,
     address,
@@ -19,7 +27,7 @@ export default function WalletUsageExample() {
     disconnect,
     switchNetwork,
     trackTransaction,
-  } = useWalletContext();
+  } = wallet;
 
   const [transactionStatus, setTransactionStatus] = useState<
     'idle' | 'pending' | 'success' | 'error'

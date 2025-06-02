@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { AppWalletProvider } from '../../src/contexts/WalletContext';
-import { WalletConnectButton } from '../../src/components/WalletConnectButton';
+import WalletConnectButton from '../../src/components/WalletConnectButton';
 import { TransactionHistory } from '../../src/components/TransactionHistory';
 import { SessionTimeoutWarning } from '../../src/components/SessionTimeoutWarning';
 

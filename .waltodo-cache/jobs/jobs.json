@@ -59,9 +59,82 @@
     "progress": 0,
     "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748482855259_msiw16.log",
     "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748482855259_msiw16.out",
-    "metadata": {},
+    "metadata": {
+      "notificationShown": true,
+      "notifiedAt": 1748553513196
+    },
     "pid": 71922,
     "endTime": 1748482855291,
+    "errorMessage": "Process exited with code: 1"
+  },
+  {
+    "id": "job_1748649002544_ygzkwv",
+    "command": "list",
+    "args": [],
+    "flags": {
+      "debug": false,
+      "network": "testnet",
+      "verbose": false,
+      "output": "text",
+      "timeout": 30,
+      "force": false,
+      "quiet": false,
+      "background": false,
+      "bg": false,
+      "foreground": false,
+      "fg": false,
+      "compact": true,
+      "sync": false,
+      "stream": false,
+      "watch": false
+    },
+    "status": "failed",
+    "startTime": 1748649002546,
+    "progress": 0,
+    "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748649002544_ygzkwv.log",
+    "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748649002544_ygzkwv.out",
+    "metadata": {
+      "notificationShown": true,
+      "notifiedAt": 1748649032878
+    },
+    "pid": 47182,
+    "endTime": 1748649002574,
+    "errorMessage": "Process exited with code: 1"
+  },
+  {
+    "id": "job_1748649043525_tq3md3",
+    "command": "list",
+    "args": [
+      "default"
+    ],
+    "flags": {
+      "debug": false,
+      "network": "testnet",
+      "verbose": false,
+      "output": "text",
+      "timeout": 30,
+      "force": false,
+      "quiet": false,
+      "background": false,
+      "bg": false,
+      "foreground": false,
+      "fg": false,
+      "compact": true,
+      "sync": false,
+      "stream": false,
+      "watch": false
+    },
+    "status": "failed",
+    "startTime": 1748649043527,
+    "progress": 0,
+    "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748649043525_tq3md3.log",
+    "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748649043525_tq3md3.out",
+    "metadata": {
+      "notificationShown": true,
+      "notifiedAt": 1748649049473
+    },
+    "pid": 47353,
+    "endTime": 1748649043552,
     "errorMessage": "Process exited with code: 1"
   }
 ]

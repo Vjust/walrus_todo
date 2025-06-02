@@ -194,7 +194,7 @@ test_cli_command "./bin/run.js add 'Demo todo from CLI' --list='convergence-demo
 # Check if todo appears in frontend API
 sleep 1
 end_time=$(date +%s)
-test_api_endpoint "/api/todos?list=convergence-demo" "200" "Frontend API reflects CLI changes"
+test_api_endpoint "/api/v1/todos?list=convergence-demo" "200" "Frontend API reflects CLI changes"
 validate_sync_timing "CLI → Frontend" $start_time $end_time
 
 echo ""
@@ -204,11 +204,11 @@ log_info "Test 2: Frontend → CLI synchronization"
 start_time=$(date +%s)
 
 # Get the todo ID from the API
-todo_id=$(curl -s "http://localhost:$API_PORT/api/todos?list=convergence-demo" | jq -r '.[0].id')
+todo_id=$(curl -s "http://localhost:$API_PORT/api/v1/todos?list=convergence-demo" | jq -r '.[0].id')
 
 if [ "$todo_id" != "null" ] && [ "$todo_id" != "" ]; then
     # Complete via API
-    curl -s -X PATCH "http://localhost:$API_PORT/api/todos/$todo_id" \
+    curl -s -X PATCH "http://localhost:$API_PORT/api/v1/todos/$todo_id" \
         -H "Content-Type: application/json" \
         -d '{"completed": true}' > /dev/null
     
@@ -262,7 +262,7 @@ echo "==================================\n"
 log_info "Testing WebSocket event broadcasting"
 
 # Test WebSocket connection
-if curl -s "http://localhost:$API_PORT/api/ws-status" | jq -r '.connected' | grep -q "true"; then
+if curl -s "http://localhost:$API_PORT/health" | jq -r '.websocket.enabled' | grep -q "true"; then
     log_success "✓ WebSocket server is active"
 else
     log_warning "⚠ WebSocket server status unclear"
@@ -306,7 +306,7 @@ fi
 
 # Test API response time
 start_time=$(date +%s%N)
-curl -s "http://localhost:$API_PORT/api/todos" > /dev/null
+curl -s "http://localhost:$API_PORT/api/v1/todos" > /dev/null
 end_time=$(date +%s%N)
 api_time=$((($end_time - $start_time) / 1000000))
 

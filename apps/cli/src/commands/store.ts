@@ -9,7 +9,7 @@ import { createCache } from '../utils/performance-cache';
 import { Todo } from '../types/todo';
 import { BatchUploader } from '../utils/batch-uploader';
 import { getGlobalUploadQueue } from '../utils/upload-queue';
-import { performanceMonitor } from '../utils/PerformanceMonitor';
+import { performanceMonitor, jobManager } from '../utils/PerformanceMonitor';
 import {
   createBackgroundOperationsManager,
   BackgroundUtils,
@@ -17,7 +17,8 @@ import {
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as pRetry from 'p-retry';
+import { spawn } from 'child_process';
+import pRetry from 'p-retry';
 
 /**
  * @class StoreCommand
@@ -141,13 +142,14 @@ export default class StoreCommand extends BaseCommand {
     ttlMs: 3600000, // 1 hour
     persistenceDir: '.walrus/cache/uploads',
   });
+  private uploadQueue = getGlobalUploadQueue();
 
   async run() {
     const { args, flags } = await this.parse(StoreCommand);
 
     // Check for background operation
     if (flags.background) {
-      return this.runInBackground(args, flags);
+      return this.runInBackgroundLegacy(args, flags);
     }
 
     // Smart argument parsing - support both positional and flag syntax
@@ -182,7 +184,7 @@ export default class StoreCommand extends BaseCommand {
 
       if (!args.list && !flags.list) {
         throw new CLIError(
-          `Please specify a list name. Available lists: ${allLists.map(l => l.name).join(', ')}\n` +
+          `Please specify a list name. Available lists: ${allLists.join(', ')}\n` +
             `Usage: waltodo store <list-name> [todo-id-or-title]`,
           'LIST_REQUIRED'
         );
@@ -292,179 +294,6 @@ export default class StoreCommand extends BaseCommand {
     }
   }
 
-  /**
-   * Run store operation in background (non-blocking)
-   */
-  private async runInBackground(args: any, flags: any): Promise<void> {
-    const operationId = performanceMonitor.startOperation(
-      `background-store-${Date.now()}`,
-      'background-store'
-    );
-
-    try {
-      // Create background operations manager
-      const backgroundOps = await createBackgroundOperationsManager();
-
-      // Smart argument parsing - support both positional and flag syntax
-      const listName = args.list || flags.list || 'default';
-      const todoIdentifier = args.todo || flags.todo;
-      let storeAll = flags.all;
-
-      // If no specific todo is provided and --all isn't explicitly set, default to storing all
-      if (!todoIdentifier && !storeAll) {
-        storeAll = true;
-      }
-
-      // Validate arguments
-      if (todoIdentifier && storeAll) {
-        throw new CLIError(
-          'Cannot specify both a specific todo and --all flag',
-          'INVALID_FLAGS'
-        );
-      }
-
-      // Load todo list
-      const list = await this.todoService.getList(listName);
-      if (!list) {
-        throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
-      }
-
-      // Determine which todos to store
-      let todosToStore: Todo[] = [];
-
-      if (storeAll) {
-        todosToStore = list.todos;
-        if (todosToStore.length === 0) {
-          throw new CLIError(
-            `No todos found in list "${listName}"`,
-            'NO_TODOS_FOUND'
-          );
-        }
-      } else {
-        const todo = list.todos.find(
-          t => t.id === todoIdentifier || t.title === todoIdentifier
-        );
-        if (!todo) {
-          const availableTodos = list.todos
-            .map(t => `${t.id}: ${t.title}`)
-            .join('\n  ');
-          throw new CLIError(
-            `Todo "${todoIdentifier}" not found in list "${listName}"\n` +
-              `Available todos:\n  ${availableTodos}`,
-            'TODO_NOT_FOUND'
-          );
-        }
-        todosToStore = [todo];
-      }
-
-      this.log(
-        chalk.cyan(
-          `🚀 Starting background upload for ${todosToStore.length} todo(s) from list "${listName}"`
-        )
-      );
-
-      // Create non-blocking upload operation
-      const uploadHandle = await BackgroundUtils.createNonBlockingUpload(
-        backgroundOps,
-        todosToStore,
-        {
-          epochs: flags.epochs,
-          network: flags.network || 'testnet',
-          batchSize: flags['batch-size'],
-          priority: todosToStore.length > 5 ? 'high' : 'normal',
-          onProgress: flags['show-progress']
-            ? (operationId, progress) => {
-                if (flags.wait) {
-                  process.stdout.write(
-                    `\r📊 Progress: ${progress.toFixed(1)}%`
-                  );
-                }
-              }
-            : undefined,
-          onComplete: (operationId, result) => {
-            this.log(
-              chalk.green(
-                `\n✅ Background upload completed! Operation ID: ${operationId}`
-              )
-            );
-            this.displayBackgroundResults(result, todosToStore.length);
-          },
-          onError: (operationId, error) => {
-            this.log(
-              chalk.red(
-                `\n❌ Background upload failed! Operation ID: ${operationId}`
-              )
-            );
-            this.log(chalk.red(`Error: ${error.message}`));
-          },
-        }
-      );
-
-      this.log('');
-      this.log(chalk.white.bold('Background Upload Details:'));
-      this.log(
-        chalk.white(`  Operation ID: ${chalk.yellow(uploadHandle.operationId)}`)
-      );
-      this.log(
-        chalk.white(`  Todos queued: ${chalk.cyan(todosToStore.length)}`)
-      );
-      this.log(
-        chalk.white(`  Network: ${chalk.cyan(flags.network || 'testnet')}`)
-      );
-      this.log(chalk.white(`  Epochs: ${chalk.cyan(flags.epochs || 5)}`));
-      this.log('');
-
-      if (flags.wait) {
-        this.log(
-          chalk.yellow('⏳ Waiting for background operation to complete...')
-        );
-        this.log('');
-
-        try {
-          if (flags['show-progress']) {
-            await uploadHandle.waitForCompletion();
-          } else {
-            const result = await uploadHandle.waitForCompletion();
-            this.displayBackgroundResults(result, todosToStore.length);
-          }
-        } catch (error) {
-          throw new CLIError(
-            `Background operation failed: ${error instanceof Error ? error.message : String(error)}`,
-            'BACKGROUND_OPERATION_FAILED'
-          );
-        }
-      } else {
-        this.log(chalk.white.bold('Monitor Progress:'));
-        this.log(
-          chalk.white(
-            `  Check status: ${chalk.cyan(`waltodo status ${uploadHandle.operationId}`)}`
-          )
-        );
-        this.log(
-          chalk.white(
-            `  Cancel operation: ${chalk.cyan(`waltodo cancel ${uploadHandle.operationId}`)}`
-          )
-        );
-        this.log('');
-        this.log(
-          chalk.green(
-            'Background upload started successfully! Your terminal is now free to use.'
-          )
-        );
-        this.log(chalk.gray('The upload will continue in the background.'));
-      }
-
-      performanceMonitor.endOperation(operationId, 'background-store', true, {
-        todosCount: todosToStore.length,
-        waitForCompletion: flags.wait,
-      });
-    } catch (error) {
-      performanceMonitor.endOperation(operationId, 'background-store', false, {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  }
 
   /**
    * Display results from background operation
@@ -696,7 +525,7 @@ export default class StoreCommand extends BaseCommand {
           `Successful: ${chalk.green(result.successful.length)}`,
           `Failed: ${chalk.red(result.failed.length)}`,
           `Cache hits: ${chalk.yellow(0)}`, // Cache logic handled by BatchUploader internally
-          `Time taken: ${chalk.cyan(this.formatDuration(duration))}`,
+          `Time taken: ${chalk.cyan(this.formatDurationLocal(duration))}`,
           `Network: ${chalk.cyan(options.network || 'testnet')}`,
           `Epochs: ${chalk.cyan(options.epochs || 5)}`,
         ].join('\n')
@@ -980,10 +809,11 @@ export default class StoreCommand extends BaseCommand {
     this.log('');
   }
 
+
   /**
    * Format duration in human-readable format
    */
-  private formatDuration(ms: number): string {
+  private formatDurationLocal(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
@@ -1034,9 +864,7 @@ export default class StoreCommand extends BaseCommand {
       if (fs.existsSync(blobMappingsFile)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
-          const contentStr =
-            typeof content === 'string' ? content : content.toString('utf8');
-          mappings = JSON.parse(contentStr);
+          mappings = JSON.parse(content);
         } catch (error) {
           this.warning(
             `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`
@@ -1063,9 +891,9 @@ export default class StoreCommand extends BaseCommand {
   }
 
   /**
-   * Run store operation in background
+   * Run store operation in background (non-blocking)
    */
-  private async runInBackground(args: any, flags: any): Promise<void> {
+  private async runInBackgroundLegacy(args: any, flags: any): Promise<void> {
     // Create background job
     const commandArgs = [];
 

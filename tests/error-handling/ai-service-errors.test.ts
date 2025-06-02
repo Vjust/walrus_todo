@@ -37,7 +37,7 @@ describe('AI Service Error Handling', () => {
     mockAdapter = createMockAIModelAdapter();
 
     // Initialize the AI service with mock adapter
-    aiService = new AIService('test-api-key');
+    aiService = new AIService(undefined, 'test-api-key-12345');
     (
       aiService as unknown as { modelAdapter: typeof mockAdapter }
     ).modelAdapter = mockAdapter;

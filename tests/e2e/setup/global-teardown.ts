@@ -1,55 +1,40 @@
-import { FullConfig } from '@playwright/test';
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+import { existsSync, rmSync } from 'fs';
+import path from 'path';
 
-/**
- * Global teardown for Playwright E2E tests
- * Cleans up test data and generates reports
- */
-async function globalTeardown(config: FullConfig) {
-  const projectRoot = path.join(__dirname, '../../..');
+export default async function globalTeardown() {
+  console.log('\n🧹 Cleaning up integration test environment...\n');
 
-  console.log('🧹 Cleaning up E2E test environment...');
+  const rootDir = path.join(__dirname, '../../..');
 
+  // Clean up test artifacts
+  const cleanupPaths = [
+    'test-artifacts',
+    'Todos/todos.json',
+    'logs/test.log',
+  ];
+
+  cleanupPaths.forEach(relativePath => {
+    const fullPath = path.join(rootDir, relativePath);
+    if (existsSync(fullPath)) {
+      try {
+        rmSync(fullPath, { recursive: true, force: true });
+        console.log(`✅ Cleaned up: ${relativePath}`);
+      } catch (error) {
+        console.warn(`⚠️  Failed to clean up: ${relativePath}`);
+      }
+    }
+  });
+
+  // Kill any hanging processes
   try {
-    // 1. Clean up test cache data
-    const testCacheDir = path.join(projectRoot, '.waltodo-cache/test');
-    if (fs.existsSync(testCacheDir)) {
-      fs.rmSync(testCacheDir, { recursive: true, force: true });
+    // Kill any node processes that might be hanging
+    if (process.platform !== 'win32') {
+      const { execSync } = require('child_process');
+      execSync("pkill -f 'node.*waltodo' || true", { stdio: 'ignore' });
     }
-
-    // 2. Clean up test todos (optional - for non-blockchain tests)
-    try {
-      execSync('./bin/waltodo list --format json --limit 100', {
-        cwd: projectRoot,
-        timeout: 30000,
-        stdio: 'pipe',
-      });
-    } catch (error) {
-      // Ignore cleanup errors
-    }
-
-    // 3. Generate test report summary
-    const reportPath = path.join(
-      projectRoot,
-      'test-results',
-      'e2e-summary.json'
-    );
-    const summary = {
-      timestamp: new Date().toISOString(),
-      testRun: 'e2e-integration',
-      environment: 'local',
-      status: 'completed',
-    };
-
-    fs.writeFileSync(reportPath, JSON.stringify(summary, null, 2));
-
-    console.log('✅ E2E test environment cleanup complete!');
   } catch (error) {
-    console.error('⚠️ Error during teardown (non-critical):', error);
-    // Don't throw - teardown errors shouldn't fail the test run
+    // Ignore errors from pkill
   }
-}
 
-export default globalTeardown;
+  console.log('\n✨ Integration test cleanup complete!\n');
+}

@@ -1,221 +1,48 @@
 /** @type {import('next').NextConfig} */
+
+// Simple Next.js configuration for production build
 const nextConfig = {
   reactStrictMode: true,
   
-  // Enable proper hydration handling
-  poweredByHeader: false,
+  // Transpile packages that need it
+  transpilePackages: ['@mysten/dapp-kit', '@suiet/wallet-sdk', '@wallet-standard/react'],
   
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'],
-    } : false,
-  },
-  
-  images: {
-    domains: ['localhost', '192.168.8.204'],
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: process.env.PORT || '3000',
-      },
-      {
-        protocol: 'http',
-        hostname: '192.168.8.204',
-        port: process.env.PORT || '3000',
-      },
-    ],
-    formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 3600,
-  },
-  
-  // Disable standalone output to fix MIME type issues with static assets
-  // output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
-
-  // Increase timeout for static generation
-  staticPageGenerationTimeout: 180,
-  
-  // SWC minification is now enabled by default in Next.js 13+
-  
-  // Configure proper development/production settings for hydration
-  trailingSlash: false,
-  generateEtags: false,
-
-  webpack: (config, { isServer, dev, webpack }) => {
-    // Fix for node-fetch encoding issue and prevent hydration mismatches
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        encoding: false,
-        crypto: false,
-        stream: false,
-        util: false,
-        buffer: false,
-        process: false,
-        path: false,
-        os: false,
-        http: false,
-        https: false,
-        child_process: false,
-        worker_threads: false,
-      };
-    }
-
-    // Ensure proper module resolution for all environments
-    config.resolve.modules = [
-      'node_modules',
-      ...(config.resolve.modules || []),
-    ];
-
-    // Performance optimizations with hydration safety
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\/]node_modules[\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-          sui: {
-            test: /[\/]node_modules[\/]@mysten[\/]/,
-            name: 'sui-vendor',
-            chunks: 'all',
-            priority: 10,
-          },
-          wallet: {
-            test: /[\/]node_modules[\/](@suiet|@solana)[\/]/,
-            name: 'wallet-vendor',
-            chunks: 'all',
-            priority: 10,
-          },
-        },
-      },
-    };
-
-    // Tree shaking and dead code elimination (careful with side effects for SSR)
-    if (!dev) {
-      config.optimization.usedExports = true;
-      // Be more conservative with side effects to prevent hydration issues
-      config.optimization.sideEffects = false;
-    }
-
-    // Define environment variables consistently for server and client
-    config.plugins.push(
-      new webpack.DefinePlugin({
-        __SUPPRESS_WALLET_ERRORS__: JSON.stringify(dev),
-        __IS_SERVER__: JSON.stringify(isServer),
-        __IS_DEV__: JSON.stringify(dev),
-      })
-    );
-
-    // Ensure proper module resolution without forcing specific paths
-    config.resolve.modules = [
-      'node_modules',
-      ...(config.resolve.modules || []),
-    ];
-
-    return config;
-  },
-
-  // Skip ESLint during builds
+  // Disable ESLint during builds
   eslint: {
     ignoreDuringBuilds: true,
   },
-
-  // Skip TypeScript checking during builds
+  
+  // Enable TypeScript checking during builds
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-
-  // Configure runtime to handle client-side operations correctly
-  experimental: {
-    // Configure server actions
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
-    // Optimize font loading
-    optimizePackageImports: ['@heroicons/react', 'socket.io-client'],
-    // Enable optimizations that don't affect hydration
-    optimizeCss: false, // Disable CSS optimization that can cause hydration issues
-    // External packages for server components (Next.js 13+ app directory feature)
-    // Enable strict hydration checking in development
-    strictNextHead: process.env.NODE_ENV === 'development',
+  
+  // Image configuration for Walrus domains
+  images: {
+    domains: [
+      'localhost',
+      'walrus.site',
+      'walrus-testnet.site',
+      'aggregator.walrus-testnet.walrus.space',
+      'publisher.walrus-testnet.walrus.space',
+    ],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-
-  // Turbopack configuration (Turbopack is now stable in Next.js 15)
-  // For now, using empty config until we need specific turbopack settings
-  // turbopack: {},
-
-  // Allow development origins (dynamic port support)
-  allowedDevOrigins: (function () {
-    const port = process.env.PORT || '3000';
-    return [`192.168.8.204:${port}`, `localhost:${port}`];
-  })(),
-
-  // Define custom headers to help with caching and security
-  async headers() {
-    return [
-      {
-        // Apply to all routes except static assets
-        source: '/((?!_next/static|favicon.ico).*)',
-        headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-        ],
-      },
-      {
-        // Proper caching for static assets
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        // Cache API responses
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=300, stale-while-revalidate=600',
-          },
-        ],
-      },
-    ];
-  },
-
-  // Fix for development server restarts
-  onDemandEntries: {
-    // Keep pages in memory for longer
-    maxInactiveAge: 60 * 60 * 1000, // 1 hour
-    pagesBufferLength: 5,
-  },
-
-  // Environment variable handling for consistent SSR/CSR behavior
+  
+  // Static page generation timeout
+  staticPageGenerationTimeout: 180,
+  
+  // Production optimizations
+  poweredByHeader: false,
+  compress: true,
+  generateEtags: false,
+  trailingSlash: false,
+  
+  // Environment variables
   env: {
     NEXT_PUBLIC_ENVIRONMENT: process.env.NODE_ENV || 'development',
-  },
-
-  // Ensure consistent behavior across server and client
-  serverRuntimeConfig: {
-    // Will only be available on the server side
-  },
-  publicRuntimeConfig: {
-    // Will be available on both server and client
-    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || '0.1.0',
   },
 };
 

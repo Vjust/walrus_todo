@@ -24,6 +24,7 @@ export interface WalrusUploadResponse {
   cost: number;
   transactionId?: string;
   explorerUrl?: string;
+  expiresAt?: number;
 }
 
 export interface WalrusBlob {

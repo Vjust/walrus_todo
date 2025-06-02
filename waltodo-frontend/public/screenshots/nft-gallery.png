@@ -1,0 +1,6 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#0F172A"/>
+  <rect x="0" y="0" width="1920" height="60" fill="#1E293B"/>
+  <text x="20" y="40" font-family="Arial" font-size="24px" font-weight="bold" fill="#0EA5E9">WalTodo</text>
+  <text x="960" y="540" text-anchor="middle" font-family="Arial" font-size="32px" fill="#64748B">NFT Gallery</text>
+</svg>

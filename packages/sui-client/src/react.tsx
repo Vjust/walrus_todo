@@ -26,6 +26,10 @@ import {
   checkVersionCompatibility,
   ReactCompatibility 
 } from './compatibility';
+
+// Type alias to handle version compatibility for Transaction
+type CompatibleTransaction = Transaction | any;
+
 import {
   AppConfig,
   NetworkType,
@@ -70,7 +74,7 @@ export interface WalTodoWalletContextType {
   disconnect: () => void;
 
   // Transaction handling
-  signAndExecuteTransaction: (txb: Transaction) => Promise<TransactionResult>;
+  signAndExecuteTransaction: (txb: CompatibleTransaction) => Promise<TransactionResult>;
 
   // Session management
   sessionExpired: boolean;
@@ -206,7 +210,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
   }, [disconnectWallet]);
 
   const signAndExecuteTransaction = useCallback(
-    async (txb: Transaction): Promise<TransactionResult> => {
+    async (txb: CompatibleTransaction): Promise<TransactionResult> => {
       try {
         setError(null);
 
@@ -214,7 +218,10 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
           throw new WalletNotConnectedError();
         }
 
-        const result = await signAndExecute({ transaction: txb });
+        // Handle version compatibility for Transaction type
+        const result = await signAndExecute({ 
+          transaction: txb as any // Type assertion to handle version compatibility
+        });
 
         // Add to transaction history
         const transaction: TransactionRecord = {
@@ -437,6 +444,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
     <WalTodoWalletContext.Provider value={contextValue}>
       {children}
       <ConnectModal
+        trigger={<div style={{ display: 'none' }} />}
         open={isModalOpen}
         onOpenChange={(open) => {
           setIsModalOpen(open);
@@ -493,9 +501,6 @@ export function WalTodoWalletProvider({
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork={defaultNetwork}>
         <WalletProvider
-          slushWallet={{
-            name: 'WalTodo',
-          }}
           autoConnect={autoConnect}
         >
           <WalTodoWalletContextProvider>{children}</WalTodoWalletContextProvider>
@@ -523,7 +528,7 @@ export function useTransactionExecution() {
   const [lastError, setLastError] = useState<string | null>(null);
 
   const executeTransaction = useCallback(
-    async (transaction: Transaction): Promise<TransactionResult> => {
+    async (transaction: CompatibleTransaction): Promise<TransactionResult> => {
       if (!connected || !account) {
         const error = 'Wallet not connected';
         setLastError(error);

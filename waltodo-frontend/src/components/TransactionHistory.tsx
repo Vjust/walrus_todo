@@ -9,7 +9,8 @@ interface TransactionHistoryProps {
 }
 
 export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
-  const { transactionHistory } = useWalletContext();
+  const walletContext = useWalletContext();
+  const transactionHistory = walletContext?.transactionHistory || [];
   const [expanded, setExpanded] = useState(false);
 
   // Get transactions to display based on expanded state and maxItems
@@ -28,14 +29,16 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
   }
 
   // Format relative time using Intl.RelativeTimeFormat
-  const formatRelativeTime = (timestamp: number) => {
+  const formatRelativeTime = (timestamp: string) => {
+    const timestampMs = new Date(timestamp).getTime();
+    
     if (typeof Intl === 'undefined' || !Intl.RelativeTimeFormat) {
       // Fallback for environments without Intl.RelativeTimeFormat
-      return formatRelativeTimeFallback(timestamp);
+      return formatRelativeTimeFallback(timestampMs);
     }
 
     const now = Date.now();
-    const diffSeconds = Math.floor((now - timestamp) / 1000);
+    const diffSeconds = Math.floor((now - timestampMs) / 1000);
 
     const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
@@ -144,7 +147,7 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
               )}
             </p>
             <p className='text-xs text-ocean-medium dark:text-ocean-light ml-2'>
-              {formatRelativeTime(tx.timestamp instanceof Date ? tx.timestamp.getTime() : tx.timestamp)}
+              {formatRelativeTime(tx.timestamp)}
             </p>
           </div>
           {tx.status === 'failed' && tx.details?.error && (

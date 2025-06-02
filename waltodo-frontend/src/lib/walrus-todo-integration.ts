@@ -43,8 +43,9 @@ export interface WalrusTodo {
   blockchainStored: boolean; // Whether stored on blockchain
 
   // Metadata
-  createdAt: number;
-  updatedAt: number;
+  createdAt: string; // ISO string timestamp
+  updatedAt: string; // ISO string timestamp
+  completedAt?: string; // ISO string timestamp
   owner?: string;
   storageEpochs?: number;
   storageSize?: number;
@@ -61,8 +62,8 @@ export interface TodoStorageMetadata {
     storage: bigint;
     write: bigint;
   };
-  uploadTimestamp: number;
-  expiresAt?: number;
+  uploadTimestamp: string; // ISO string timestamp
+  expiresAt?: string; // ISO string timestamp
 }
 
 export interface WalrusTodoUploadOptions {
@@ -121,8 +122,8 @@ export class WalrusTodoManager {
     const completeTodo: WalrusTodo = {
       ...todo,
       id: todoId,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       blockchainStored: false,
       isPrivate,
       storageEpochs: epochs,
@@ -239,8 +240,11 @@ export class WalrusTodoManager {
           storage: costInfo.storageCost,
           write: costInfo.writeCost,
         },
-        uploadTimestamp: Date.now(),
-        expiresAt: walrusResult.metadata.expiresAt as number | undefined,
+        uploadTimestamp: new Date().toISOString(),
+        expiresAt: walrusResult.metadata.expiresAt && 
+          (typeof walrusResult.metadata.expiresAt === 'string' || typeof walrusResult.metadata.expiresAt === 'number')
+          ? new Date(walrusResult.metadata.expiresAt).toISOString() 
+          : undefined,
       };
 
       return {
@@ -300,7 +304,7 @@ export class WalrusTodoManager {
   ): Promise<WalrusUploadResult> {
     const updatedTodo: WalrusTodo = {
       ...todo,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     };
 
     try {

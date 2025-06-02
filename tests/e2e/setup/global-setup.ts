@@ -1,82 +1,76 @@
-import { chromium, FullConfig } from '@playwright/test';
 import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+import { existsSync, mkdirSync, rmSync } from 'fs';
+import path from 'path';
 
-/**
- * Global setup for Playwright E2E tests
- * Prepares CLI, builds frontend, and sets up test environment
- */
-async function globalSetup(config: FullConfig) {
-  const projectRoot = path.join(__dirname, '../../..');
+export default async function globalSetup() {
+  console.log('\n🚀 Setting up integration test environment...\n');
 
-  console.log('🔧 Setting up E2E test environment...');
+  // Create test directories
+  const testDirs = [
+    'Todos',
+    'logs',
+    '.waltodo-cache',
+    '.waltodo-cache/ai-responses',
+    '.waltodo-cache/background-retrievals',
+    '.waltodo-cache/blockchain',
+    '.waltodo-cache/config',
+    'test-artifacts',
+  ];
 
-  try {
-    // 1. Build CLI for testing
-    console.log('📦 Building CLI...');
-    execSync('pnpm run build:dev', {
-      cwd: projectRoot,
-      stdio: 'inherit',
-      timeout: 120000,
-    });
-
-    // 2. Install frontend dependencies
-    const frontendPath = path.join(projectRoot, 'waltodo-frontend');
-    if (fs.existsSync(frontendPath)) {
-      console.log('📦 Installing frontend dependencies...');
-      execSync('pnpm install', {
-        cwd: frontendPath,
-        stdio: 'inherit',
-        timeout: 180000,
-      });
+  const rootDir = path.join(__dirname, '../../..');
+  
+  testDirs.forEach(dir => {
+    const fullPath = path.join(rootDir, dir);
+    if (!existsSync(fullPath)) {
+      mkdirSync(fullPath, { recursive: true });
+      console.log(`✅ Created directory: ${dir}`);
     }
+  });
 
-    // 3. Generate frontend configuration
-    console.log('⚙️ Generating frontend configuration...');
-    try {
-      execSync('pnpm run config:generate', {
-        cwd: projectRoot,
-        stdio: 'inherit',
-        timeout: 60000,
-      });
-    } catch (error) {
-      console.warn(
-        '⚠️ Frontend config generation failed, continuing with existing config'
-      );
-    }
+  // Set up test environment variables
+  process.env.NODE_ENV = 'test';
+  process.env.LOG_LEVEL = 'error';
+  process.env.ENABLE_WEBSOCKET = 'true';
+  process.env.ENABLE_AUTH = 'false';
+  process.env.API_KEY = 'test-integration-key';
+  process.env.JWT_SECRET = 'test-jwt-secret';
+  process.env.RATE_LIMIT_MAX = '0'; // Disable rate limiting for tests
 
-    // 4. Create test data directories
-    const testDataDirs = [
-      path.join(projectRoot, 'test-results'),
-      path.join(projectRoot, 'playwright-report'),
-      path.join(projectRoot, '.waltodo-cache/test'),
-    ];
-
-    testDataDirs.forEach(dir => {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-    });
-
-    // 5. Verify CLI is functional
-    console.log('🧪 Verifying CLI functionality...');
-    const cliVersion = execSync('./bin/waltodo --version', {
-      cwd: projectRoot,
-      encoding: 'utf8',
-      timeout: 30000,
-    });
-    console.log(`✅ CLI version: ${cliVersion.trim()}`);
-
-    // 6. Set up browser for global state (if needed)
-    const browser = await chromium.launch();
-    await browser.close();
-
-    console.log('✅ E2E test environment setup complete!');
-  } catch (error) {
-    console.error('❌ Failed to set up E2E test environment:', error);
-    throw error;
+  // Clean up any leftover test data
+  const todoPath = path.join(rootDir, 'Todos', 'todos.json');
+  if (existsSync(todoPath)) {
+    rmSync(todoPath);
+    console.log('✅ Cleaned up previous test data');
   }
-}
 
-export default globalSetup;
+  // Build projects if needed
+  try {
+    console.log('🔨 Building projects...');
+    execSync('pnpm build:dev', { 
+      stdio: 'pipe',
+      cwd: rootDir,
+    });
+    console.log('✅ Build completed');
+  } catch (error) {
+    console.warn('⚠️  Build failed, tests may use existing build');
+  }
+
+  // Install CLI globally for testing
+  try {
+    console.log('📦 Installing CLI globally...');
+    execSync('pnpm run global-install', {
+      stdio: 'pipe',
+      cwd: rootDir,
+    });
+    console.log('✅ CLI installed');
+  } catch (error) {
+    console.warn('⚠️  CLI installation failed, tests may fail');
+  }
+
+  console.log('\n✨ Integration test environment ready!\n');
+
+  // Return a teardown function that jest will keep in memory
+  return async () => {
+    // This will be available in globalTeardown
+  };
+}

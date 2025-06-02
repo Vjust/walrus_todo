@@ -9,6 +9,12 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';
 import { bcs } from '@mysten/sui/bcs';
 import { loadAppConfig, type AppConfig } from './config-loader';
+import { 
+  transformWalrusBlobToUrl, 
+  generateThumbnailUrls, 
+  extractBlobIdFromUrl,
+  isValidWalrusUrl 
+} from './walrus-url-utils';
 
 // Network configuration - removed in favor of config-loader
 // Use loadAppConfig() to get network URLs dynamically
@@ -44,6 +50,58 @@ export interface SuiTodoNFT {
   owner: string;
   metadata: string;
   is_private: boolean;
+}
+
+// Extended metadata interface
+export interface ExtendedTodoMetadata {
+  checklists?: Array<{
+    id: string;
+    title: string;
+    items: Array<{
+      id: string;
+      text: string;
+      completed: boolean;
+    }>;
+  }>;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
+  labels?: string[];
+  dueDate?: string;
+  reminder?: string;
+  location?: {
+    lat: number;
+    lng: number;
+    address: string;
+  };
+  collaborators?: string[];
+  customFields?: Record<string, any>;
+}
+
+// NFT transformation cache
+interface NFTCacheEntry {
+  todo: Todo;
+  timestamp: number;
+  thumbnails?: Record<string, string>;
+}
+
+const nftTransformCache = new Map<string, NFTCacheEntry>();
+const NFT_CACHE_TTL = 300000; // 5 minutes
+
+// NFT filter options
+export interface NFTFilterOptions {
+  completed?: boolean;
+  isPrivate?: boolean;
+  tags?: string[];
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  searchTerm?: string;
 }
 
 // Re-export for convenience
@@ -134,10 +192,10 @@ export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
       suiClient = new SuiClient({ url: appConfig.network.url });
       isInitialized = true;
       initializationAttempts = 0; // Reset attempts on success
-      console.log(`Sui client initialized with config for ${configNetwork}`);
+      // Sui client initialized with config
       return suiClient;
     } catch (error) {
-      console.error('Failed to initialize Sui client with config:', error);
+      // Failed to initialize Sui client with config
       // Only reset initializationPromise after a delay to prevent rapid retries
       setTimeout(() => {
         initializationPromise = null;
@@ -162,7 +220,7 @@ export async function initializeSuiClient(
 
   // Return existing client if already initialized and network matches
   if (suiClient && isInitialized && currentNetwork === network) {
-    console.log(`Sui client already initialized for ${network}`);
+    // Sui client already initialized
     return suiClient;
   }
 
@@ -170,9 +228,7 @@ export async function initializeSuiClient(
   try {
     return await initializeSuiClientWithConfig();
   } catch (error) {
-    console.warn(
-      'Failed to load app config, using fallback network configuration'
-    );
+    // Failed to load app config, using fallback network configuration
     
     initializationPromise = (async () => {
       try {
@@ -187,10 +243,10 @@ export async function initializeSuiClient(
         suiClient = new SuiClient({ url: networkUrls[network] });
         isInitialized = true;
         initializationAttempts = 0; // Reset attempts on success
-        console.log(`Sui client initialized with fallback config for ${network}`);
+        // Sui client initialized with fallback config
         return suiClient;
       } catch (fallbackError) {
-        console.error('Failed to initialize Sui client with fallback:', fallbackError);
+        // Failed to initialize Sui client with fallback
         // Only reset initializationPromise after a delay to prevent rapid retries
         setTimeout(() => {
           initializationPromise = null;
@@ -218,7 +274,7 @@ export async function getSuiClient(): Promise<SuiClient> {
       return await initializationPromise;
     } catch (error) {
       // Don't reset the promise immediately, let the initialization function handle it
-      console.warn('Initialization promise failed, will retry if needed');
+      // Initialization promise failed, will retry if needed
       throw error;
     }
   }
@@ -229,13 +285,13 @@ export async function getSuiClient(): Promise<SuiClient> {
   }
   
   // Auto-initialize if not already done
-  console.log(`Sui client not initialized, auto-initializing... (attempt ${initializationAttempts + 1})`);
+  // Sui client not initialized, auto-initializing...
   initializationAttempts++;
   
   try {
     return await ensureSuiClientInitialized();
   } catch (error) {
-    console.error(`Sui client initialization attempt ${initializationAttempts} failed:`, error);
+    // Sui client initialization attempt failed
     if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
       throw new SuiClientError(`Failed to initialize Sui client after ${MAX_INITIALIZATION_ATTEMPTS} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`, 'INITIALIZATION_FAILED');
     }
@@ -313,7 +369,7 @@ export async function ensureSuiClientInitialized(network: NetworkType = 'testnet
  * Reset initialization state - useful for error recovery
  */
 export function resetSuiClientInitialization(): void {
-  console.log('Resetting Sui client initialization state');
+  // Resetting Sui client initialization state
   suiClient = null;
   isInitialized = false;
   initializationPromise = null;
@@ -341,7 +397,7 @@ export async function withSuiClient<T>(
       if (attempt < maxRetries - 1 && 
           (lastError.message.includes('not initialized') || 
            lastError.message.includes('initialization failed'))) {
-        console.warn(`Sui operation failed (attempt ${attempt + 1}), resetting and retrying...`);
+        // Sui operation failed, resetting and retrying...
         resetSuiClientInitialization();
         // Wait a bit before retrying
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -399,14 +455,43 @@ export function getCurrentNetwork(): NetworkType {
 // Remove local wallet disconnect - use wallet context
 
 /**
- * Transform Sui object data to Todo interface
+ * Parse extended metadata from JSON string
  */
-function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
+function parseExtendedMetadata(metadataStr: string): ExtendedTodoMetadata {
+  try {
+    if (!metadataStr || metadataStr === '') {
+      return {};
+    }
+    const parsed = JSON.parse(metadataStr);
+    return parsed as ExtendedTodoMetadata;
+  } catch (error) {
+    console.warn('Failed to parse metadata:', error);
+    return {};
+  }
+}
+
+/**
+ * Transform Sui object data to Todo interface with enhanced features
+ */
+function transformSuiObjectToTodo(
+  suiObject: SuiObjectResponse,
+  options?: { useCache?: boolean; generateThumbnails?: boolean }
+): Todo | null {
   if (
     !suiObject.data?.content ||
     suiObject.data.content.dataType !== 'moveObject'
   ) {
     return null;
+  }
+
+  const objectId = suiObject.data.objectId;
+
+  // Check cache first if enabled
+  if (options?.useCache) {
+    const cached = nftTransformCache.get(objectId);
+    if (cached && Date.now() - cached.timestamp < NFT_CACHE_TTL) {
+      return cached.todo;
+    }
   }
 
   const moveObject = suiObject.data.content as SuiMoveObject;
@@ -417,24 +502,70 @@ function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
   }
 
   try {
-    return {
-      id: suiObject.data.objectId,
-      objectId: suiObject.data.objectId,
+    // Parse extended metadata
+    const extendedMetadata = parseExtendedMetadata(fields.metadata || '');
+    
+    // Transform Walrus URL if needed
+    let imageUrl = fields.image_url;
+    let thumbnails: Record<string, string> | undefined;
+    
+    if (imageUrl) {
+      // If it's a blob ID, transform to URL
+      if (!imageUrl.startsWith('http')) {
+        imageUrl = transformWalrusBlobToUrl(imageUrl);
+      }
+      
+      // Generate thumbnails if requested
+      if (options?.generateThumbnails) {
+        const blobId = extractBlobIdFromUrl(imageUrl) || fields.image_url;
+        if (blobId) {
+          thumbnails = generateThumbnailUrls(blobId);
+        }
+      }
+    }
+
+    // Extract tags and priority from metadata
+    const tags = extendedMetadata.labels || [];
+    let priority: 'low' | 'medium' | 'high' = 'medium';
+    
+    // Determine priority based on metadata or tags
+    if (tags.includes('urgent') || tags.includes('high-priority')) {
+      priority = 'high';
+    } else if (tags.includes('low-priority')) {
+      priority = 'low';
+    }
+
+    const todo: Todo = {
+      id: objectId,
+      objectId: objectId,
       title: fields.title || 'Untitled',
       description: fields.description || '',
       completed: fields.completed === true,
-      priority: 'medium', // Default priority, can be enhanced with metadata parsing
-      tags: [], // Can be parsed from metadata
+      priority,
+      tags,
       blockchainStored: true,
-      imageUrl: fields.image_url,
-      createdAt: fields.created_at ? parseInt(fields.created_at) : Date.now(),
+      imageUrl,
+      createdAt: fields.created_at 
+        ? new Date(parseInt(fields.created_at)).toISOString() 
+        : new Date().toISOString(),
       completedAt: fields.completed_at
-        ? parseInt(fields.completed_at)
+        ? new Date(parseInt(fields.completed_at)).toISOString()
         : undefined,
       owner: fields.owner,
       metadata: fields.metadata || '',
       isPrivate: fields.is_private === true,
     };
+
+    // Cache the result if caching is enabled
+    if (options?.useCache) {
+      nftTransformCache.set(objectId, {
+        todo,
+        timestamp: Date.now(),
+        thumbnails,
+      });
+    }
+
+    return todo;
   } catch (error) {
     console.error('Error transforming Sui object to Todo:', error);
     return null;
@@ -442,46 +573,123 @@ function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
 }
 
 /**
- * Get TodoNFTs owned by a specific address
+ * Get TodoNFTs owned by a specific address with filtering and caching
  */
 export async function getTodosFromBlockchain(
-  ownerAddress: string
-): Promise<Todo[]> {
-  try {
-    if (!ownerAddress) {
-      throw new WalletNotConnectedError();
-    }
-
-    return await withSuiClient(async (client) => {
-      // Get all objects owned by the address
-      const response: PaginatedObjectsResponse = await client.getOwnedObjects({
-        owner: ownerAddress,
-        filter: {
-          StructType: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
-        },
-        options: {
-          showContent: true,
-          showOwner: true,
-          showType: true,
-        },
-      });
-
-      // Transform Sui objects to Todo format
-      const todos: Todo[] = response.data
-        .map(transformSuiObjectToTodo)
-        .filter((todo): todo is Todo => todo !== null);
-
-      return todos;
-    });
-  } catch (error) {
-    console.error('Error fetching todos from blockchain:', error);
-    if (error instanceof SuiClientError) {
-      throw error;
-    }
-    throw new SuiClientError(
-      `Failed to fetch todos: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+  ownerAddress: string,
+  options?: {
+    filter?: NFTFilterOptions;
+    useCache?: boolean;
+    generateThumbnails?: boolean;
+    maxRetries?: number;
   }
+): Promise<Todo[]> {
+  const maxRetries = options?.maxRetries ?? 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      if (!ownerAddress) {
+        throw new WalletNotConnectedError();
+      }
+
+      return await withSuiClient(async (client) => {
+        // Get all objects owned by the address
+        const response: PaginatedObjectsResponse = await client.getOwnedObjects({
+          owner: ownerAddress,
+          filter: {
+            StructType: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
+          },
+          options: {
+            showContent: true,
+            showOwner: true,
+            showType: true,
+          },
+        });
+
+        // Transform Sui objects to Todo format with options
+        const todos: Todo[] = response.data
+          .map(obj => transformSuiObjectToTodo(obj, {
+            useCache: options?.useCache,
+            generateThumbnails: options?.generateThumbnails,
+          }))
+          .filter((todo): todo is Todo => todo !== null);
+
+        // Apply filters if provided
+        if (options?.filter) {
+          return filterTodos(todos, options.filter);
+        }
+
+        return todos;
+      });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Log retry attempt
+      console.warn(`Attempt ${attempt + 1}/${maxRetries} failed:`, lastError.message);
+      
+      // If not the last attempt, wait before retrying
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+  }
+
+  // All retries failed
+  if (lastError instanceof SuiClientError) {
+    throw lastError;
+  }
+  throw new SuiClientError(
+    `Failed to fetch todos after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+  );
+}
+
+/**
+ * Filter todos based on criteria
+ */
+export function filterTodos(todos: Todo[], filter: NFTFilterOptions): Todo[] {
+  return todos.filter(todo => {
+    // Filter by completion status
+    if (filter.completed !== undefined && todo.completed !== filter.completed) {
+      return false;
+    }
+
+    // Filter by privacy
+    if (filter.isPrivate !== undefined && todo.isPrivate !== filter.isPrivate) {
+      return false;
+    }
+
+    // Filter by tags
+    if (filter.tags && filter.tags.length > 0) {
+      const todoTags = todo.tags || [];
+      const hasMatchingTag = filter.tags.some(tag => todoTags.includes(tag));
+      if (!hasMatchingTag) {
+        return false;
+      }
+    }
+
+    // Filter by date range
+    if (filter.dateRange && todo.createdAt) {
+      const createdAt = new Date(todo.createdAt);
+      if (createdAt < filter.dateRange.start || createdAt > filter.dateRange.end) {
+        return false;
+      }
+    }
+
+    // Filter by search term
+    if (filter.searchTerm) {
+      const searchLower = filter.searchTerm.toLowerCase();
+      const matchesTitle = todo.title.toLowerCase().includes(searchLower);
+      const matchesDescription = todo.description?.toLowerCase().includes(searchLower);
+      const matchesTags = todo.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+      
+      if (!matchesTitle && !matchesDescription && !matchesTags) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 }
 
 /**
@@ -558,7 +766,7 @@ export async function storeTodoOnBlockchain(
 
     return { success: false, error: 'Transaction failed without digest' };
   } catch (error) {
-    console.error('Error storing todo on blockchain:', error);
+    // Error storing todo on blockchain
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -630,6 +838,23 @@ export function deleteTodoNFTTransaction(
 }
 
 /**
+ * Transfer TodoNFT transaction
+ */
+export function transferTodoNFTTransaction(
+  objectId: string,
+  recipientAddress: string,
+  senderAddress: string
+): Transaction {
+  const tx = new Transaction();
+  tx.setSender(senderAddress);
+
+  // Transfer the TodoNFT object to the recipient
+  tx.transferObjects([tx.object(objectId)], recipientAddress);
+
+  return tx;
+}
+
+/**
  * Update todo on blockchain
  */
 export async function updateTodoOnBlockchain(
@@ -654,7 +879,7 @@ export async function updateTodoOnBlockchain(
       error: result.digest ? undefined : 'Transaction failed',
     };
   } catch (error) {
-    console.error('Error updating todo on blockchain:', error);
+    // Error updating todo on blockchain
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -687,7 +912,7 @@ export async function completeTodoOnBlockchain(
       error: result.digest ? undefined : 'Transaction failed',
     };
   } catch (error) {
-    console.error('Error completing todo on blockchain:', error);
+    // Error completing todo on blockchain
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -720,7 +945,7 @@ export async function deleteTodoOnBlockchain(
       error: result.digest ? undefined : 'Transaction failed',
     };
   } catch (error) {
-    console.error('Error deleting todo on blockchain:', error);
+    // Error deleting todo on blockchain
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -729,59 +954,126 @@ export async function deleteTodoOnBlockchain(
 }
 
 /**
- * Get a specific TodoNFT by object ID
+ * Get a specific TodoNFT by object ID with enhanced features
  */
 export async function getTodoByObjectId(
-  objectId: string
-): Promise<Todo | null> {
-  try {
-    return await withSuiClient(async (client) => {
-      const response = await client.getObject({
-        id: objectId,
-        options: {
-          showContent: true,
-          showOwner: true,
-          showType: true,
-        },
-      });
-
-      return transformSuiObjectToTodo(response);
-    });
-  } catch (error) {
-    console.error('Error fetching todo by object ID:', error);
-    throw new SuiClientError(
-      `Failed to fetch todo: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+  objectId: string,
+  options?: {
+    useCache?: boolean;
+    generateThumbnails?: boolean;
+    maxRetries?: number;
   }
+): Promise<Todo | null> {
+  const maxRetries = options?.maxRetries ?? 3;
+  let lastError: Error | null = null;
+
+  // Check cache first if enabled
+  if (options?.useCache) {
+    const cached = nftTransformCache.get(objectId);
+    if (cached && Date.now() - cached.timestamp < NFT_CACHE_TTL) {
+      return cached.todo;
+    }
+  }
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await withSuiClient(async (client) => {
+        const response = await client.getObject({
+          id: objectId,
+          options: {
+            showContent: true,
+            showOwner: true,
+            showType: true,
+          },
+        });
+
+        return transformSuiObjectToTodo(response, {
+          useCache: options?.useCache,
+          generateThumbnails: options?.generateThumbnails,
+        });
+      });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Log retry attempt
+      console.warn(`Fetch attempt ${attempt + 1}/${maxRetries} failed:`, lastError.message);
+      
+      // If not the last attempt, wait before retrying
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+  }
+
+  // All retries failed
+  throw new SuiClientError(
+    `Failed to fetch todo after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+  );
 }
 
 /**
- * Batch fetch multiple TodoNFTs by object IDs
+ * Batch fetch multiple TodoNFTs by object IDs with enhanced features
  */
 export async function getTodosByObjectIds(
-  objectIds: string[]
-): Promise<Todo[]> {
-  try {
-    return await withSuiClient(async (client) => {
-      const response = await client.multiGetObjects({
-        ids: objectIds,
-        options: {
-          showContent: true,
-          showOwner: true,
-          showType: true,
-        },
-      });
-
-      return response
-        .map(transformSuiObjectToTodo)
-        .filter((todo): todo is Todo => todo !== null);
-    });
-  } catch (error) {
-    console.error('Error batch fetching todos:', error);
-    throw new SuiClientError(
-      `Failed to batch fetch todos: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+  objectIds: string[],
+  options?: {
+    useCache?: boolean;
+    generateThumbnails?: boolean;
+    maxRetries?: number;
+    batchSize?: number;
   }
+): Promise<Todo[]> {
+  const maxRetries = options?.maxRetries ?? 3;
+  const batchSize = options?.batchSize ?? 50; // Sui API limit
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await withSuiClient(async (client) => {
+        const allTodos: Todo[] = [];
+
+        // Process in batches
+        for (let i = 0; i < objectIds.length; i += batchSize) {
+          const batch = objectIds.slice(i, i + batchSize);
+          
+          const response = await client.multiGetObjects({
+            ids: batch,
+            options: {
+              showContent: true,
+              showOwner: true,
+              showType: true,
+            },
+          });
+
+          const batchTodos = response
+            .map(obj => transformSuiObjectToTodo(obj, {
+              useCache: options?.useCache,
+              generateThumbnails: options?.generateThumbnails,
+            }))
+            .filter((todo): todo is Todo => todo !== null);
+
+          allTodos.push(...batchTodos);
+        }
+
+        return allTodos;
+      });
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Log retry attempt
+      console.warn(`Batch fetch attempt ${attempt + 1}/${maxRetries} failed:`, lastError.message);
+      
+      // If not the last attempt, wait before retrying
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+  }
+
+  // All retries failed
+  throw new SuiClientError(
+    `Failed to batch fetch todos after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+  );
 }
 
 /**
@@ -808,9 +1100,257 @@ export async function getTransactionStatus(digest: string) {
       };
     });
   } catch (error) {
-    console.error('Error getting transaction status:', error);
+    // Error getting transaction status
     throw new SuiClientError(
       `Failed to get transaction status: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
   }
+}
+
+// ===== NFT-specific helper functions =====
+
+/**
+ * Clear NFT transformation cache
+ */
+export function clearNFTCache(): void {
+  nftTransformCache.clear();
+}
+
+/**
+ * Get NFT cache statistics
+ */
+export function getNFTCacheStats(): {
+  entries: number;
+  oldestEntry?: Date;
+  newestEntry?: Date;
+} {
+  const stats: ReturnType<typeof getNFTCacheStats> = {
+    entries: nftTransformCache.size,
+  };
+
+  if (nftTransformCache.size > 0) {
+    let oldest = Infinity;
+    let newest = -Infinity;
+
+    nftTransformCache.forEach(entry => {
+      if (entry.timestamp < oldest) oldest = entry.timestamp;
+      if (entry.timestamp > newest) newest = entry.timestamp;
+    });
+
+    stats.oldestEntry = new Date(oldest);
+    stats.newestEntry = new Date(newest);
+  }
+
+  return stats;
+}
+
+/**
+ * Prefetch and cache NFT data
+ */
+export async function prefetchNFTData(
+  objectIds: string[],
+  options?: {
+    generateThumbnails?: boolean;
+    batchSize?: number;
+  }
+): Promise<void> {
+  try {
+    await getTodosByObjectIds(objectIds, {
+      useCache: true,
+      generateThumbnails: options?.generateThumbnails,
+      batchSize: options?.batchSize,
+    });
+  } catch (error) {
+    console.error('Failed to prefetch NFT data:', error);
+  }
+}
+
+/**
+ * Validate NFT metadata structure
+ */
+export function validateNFTMetadata(metadata: any): metadata is ExtendedTodoMetadata {
+  if (!metadata || typeof metadata !== 'object') {
+    return false;
+  }
+
+  // Basic validation - can be extended based on requirements
+  const validKeys = [
+    'checklists',
+    'attachments',
+    'labels',
+    'dueDate',
+    'reminder',
+    'location',
+    'collaborators',
+    'customFields',
+  ];
+
+  const keys = Object.keys(metadata);
+  return keys.every(key => validKeys.includes(key));
+}
+
+/**
+ * Create metadata for TodoNFT
+ */
+export function createNFTMetadata(data: Partial<ExtendedTodoMetadata>): string {
+  try {
+    // Clean and validate data
+    const metadata: ExtendedTodoMetadata = {};
+
+    if (data.checklists) metadata.checklists = data.checklists;
+    if (data.attachments) metadata.attachments = data.attachments;
+    if (data.labels) metadata.labels = data.labels;
+    if (data.dueDate) metadata.dueDate = data.dueDate;
+    if (data.reminder) metadata.reminder = data.reminder;
+    if (data.location) metadata.location = data.location;
+    if (data.collaborators) metadata.collaborators = data.collaborators;
+    if (data.customFields) metadata.customFields = data.customFields;
+
+    return JSON.stringify(metadata);
+  } catch (error) {
+    console.error('Failed to create NFT metadata:', error);
+    return '{}';
+  }
+}
+
+/**
+ * Extract image URL from NFT data with fallback
+ */
+export function extractNFTImageUrl(
+  nftData: any,
+  fallbackUrl?: string
+): string | undefined {
+  const imageUrl = nftData?.image_url || nftData?.imageUrl || nftData?.image;
+  
+  if (!imageUrl) {
+    return fallbackUrl;
+  }
+
+  // Transform blob ID to URL if needed
+  if (!imageUrl.startsWith('http')) {
+    return transformWalrusBlobToUrl(imageUrl);
+  }
+
+  return imageUrl;
+}
+
+/**
+ * Get NFT by various identifiers (object ID, title, etc.)
+ */
+export async function findNFT(
+  identifier: string,
+  ownerAddress: string,
+  searchBy: 'objectId' | 'title' | 'any' = 'any'
+): Promise<Todo | null> {
+  try {
+    // If searching by object ID, try direct fetch first
+    if (searchBy === 'objectId' || (searchBy === 'any' && identifier.startsWith('0x'))) {
+      try {
+        const todo = await getTodoByObjectId(identifier);
+        if (todo && todo.owner === ownerAddress) {
+          return todo;
+        }
+      } catch {
+        // Continue to search in owned objects
+      }
+    }
+
+    // Search in owned objects
+    const todos = await getTodosFromBlockchain(ownerAddress, {
+      useCache: true,
+    });
+
+    return todos.find(todo => {
+      if (searchBy === 'objectId') {
+        return todo.objectId === identifier;
+      } else if (searchBy === 'title') {
+        return todo.title.toLowerCase() === identifier.toLowerCase();
+      } else {
+        // Search by any field
+        return (
+          todo.objectId === identifier ||
+          todo.title.toLowerCase() === identifier.toLowerCase() ||
+          todo.id === identifier
+        );
+      }
+    }) || null;
+  } catch (error) {
+    console.error('Failed to find NFT:', error);
+    return null;
+  }
+}
+
+/**
+ * Sort todos by various criteria
+ */
+export function sortTodos(
+  todos: Todo[],
+  sortBy: 'createdAt' | 'title' | 'priority' | 'dueDate' = 'createdAt',
+  order: 'asc' | 'desc' = 'desc'
+): Todo[] {
+  const sorted = [...todos].sort((a, b) => {
+    let comparison = 0;
+
+    switch (sortBy) {
+      case 'createdAt':
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        comparison = aTime - bTime;
+        break;
+      case 'title':
+        comparison = a.title.localeCompare(b.title);
+        break;
+      case 'priority':
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+        break;
+      case 'dueDate':
+        if (!a.dueDate && !b.dueDate) comparison = 0;
+        else if (!a.dueDate) comparison = 1;
+        else if (!b.dueDate) comparison = -1;
+        else comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        break;
+    }
+
+    return order === 'asc' ? comparison : -comparison;
+  });
+
+  return sorted;
+}
+
+/**
+ * Group todos by various criteria
+ */
+export function groupTodos(
+  todos: Todo[],
+  groupBy: 'date' | 'priority' | 'status' | 'tags'
+): Record<string, Todo[]> {
+  const groups: Record<string, Todo[]> = {};
+
+  todos.forEach(todo => {
+    let key: string;
+
+    switch (groupBy) {
+      case 'date':
+        key = todo.createdAt ? new Date(todo.createdAt).toLocaleDateString() : 'No Date';
+        break;
+      case 'priority':
+        key = todo.priority;
+        break;
+      case 'status':
+        key = todo.completed ? 'completed' : 'pending';
+        break;
+      case 'tags':
+        // Group by first tag or 'untagged'
+        key = todo.tags?.[0] || 'untagged';
+        break;
+    }
+
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(todo);
+  });
+
+  return groups;
 }
