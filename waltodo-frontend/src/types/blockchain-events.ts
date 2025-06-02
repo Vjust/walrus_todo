@@ -159,7 +159,7 @@ export interface TodoEventNotification {
   id: string;
   message: string;
   type: TodoNFTEvent['type'];
-  timestamp: number;
+  timestamp: string; // ISO string timestamp
   todoId?: string;
   autoRemove?: boolean;
 }
@@ -214,7 +214,7 @@ export interface EventTransformOptions {
 }
 
 // Import Todo type from existing file
-import type { Todo } from '@/lib/sui-client';
+import type { Todo } from '@/types/todo-nft';
 
 // Re-export for convenience
 export type { Todo };

@@ -5,6 +5,7 @@ import { Todo, TodoList } from '../types/todo';
 import { STORAGE_CONFIG } from '../constants';
 import { generateId } from '../utils/id-generator';
 import { CLIError } from '../types/errors/consolidated';
+import { SHARED_STORAGE_CONFIG, ensureTodosDirectory } from '@waltodo/shared-constants';
 
 /**
  * TodoService - A service class for managing Todo lists and items locally.
@@ -22,16 +23,13 @@ export class TodoService {
    * Directory path where todo list files are stored
    * @private
    */
-  private readonly todosDir: string = path.join(
-    process.cwd(),
-    STORAGE_CONFIG.TODOS_DIR
-  );
+  private readonly todosDir: string = SHARED_STORAGE_CONFIG.getTodosPath();
 
   /**
    * Initializes a new instance of TodoService and ensures the todos directory exists
    */
   constructor() {
-    fsPromises.mkdir(this.todosDir, { recursive: true }).catch(() => {
+    ensureTodosDirectory().catch(() => {
       /* ignore */
     });
   }

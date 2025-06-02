@@ -190,13 +190,13 @@ export class PerformanceOptimizedServer {
     });
 
     // Optimized todo endpoints
-    this.app.get('/api/todos', this.optimizedGetTodos.bind(this));
-    this.app.post('/api/todos', this.optimizedCreateTodo.bind(this));
-    this.app.put('/api/todos/:id', this.optimizedUpdateTodo.bind(this));
-    this.app.delete('/api/todos/:id', this.optimizedDeleteTodo.bind(this));
+    this.app.get('/api/v1/todos', this.optimizedGetTodos.bind(this));
+    this.app.post('/api/v1/todos', this.optimizedCreateTodo.bind(this));
+    this.app.put('/api/v1/todos/:id', this.optimizedUpdateTodo.bind(this));
+    this.app.delete('/api/v1/todos/:id', this.optimizedDeleteTodo.bind(this));
 
     // Batch operations endpoint
-    this.app.post('/api/todos/batch', this.batchTodoOperations.bind(this));
+    this.app.post('/api/v1/todos/batch', this.batchTodoOperations.bind(this));
 
     // Cache control endpoints
     this.app.delete('/api/cache', (req, res) => {
@@ -302,7 +302,7 @@ export class PerformanceOptimizedServer {
       const newTodo = await this.createTodoOptimized(todoData);
       
       // Invalidate relevant cache entries
-      this.cache.invalidate('/api/todos');
+      this.cache.invalidate('/api/v1/todos');
       
       // Notify via WebSocket
       this.io.emit('todo-created', newTodo);
@@ -321,7 +321,7 @@ export class PerformanceOptimizedServer {
       const updatedTodo = await this.updateTodoOptimized(id, updateData);
       
       // Invalidate cache
-      this.cache.invalidate('/api/todos');
+      this.cache.invalidate('/api/v1/todos');
       
       // Notify via WebSocket
       this.io.emit('todo-updated', updatedTodo);
@@ -339,7 +339,7 @@ export class PerformanceOptimizedServer {
       await this.deleteTodoOptimized(id);
       
       // Invalidate cache
-      this.cache.invalidate('/api/todos');
+      this.cache.invalidate('/api/v1/todos');
       
       // Notify via WebSocket
       this.io.emit('todo-deleted', { id });
@@ -359,7 +359,7 @@ export class PerformanceOptimizedServer {
       );
       
       // Invalidate cache once for all operations
-      this.cache.invalidate('/api/todos');
+      this.cache.invalidate('/api/v1/todos');
       
       // Batch notify via WebSocket
       this.io.emit('batch-todos-updated', results);

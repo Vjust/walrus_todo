@@ -1,0 +1,6 @@
+<svg width="750" height="1334" viewBox="0 0 750 1334" xmlns="http://www.w3.org/2000/svg">
+  <rect width="750" height="1334" fill="#0F172A"/>
+  <rect x="0" y="0" width="750" height="60" fill="#1E293B"/>
+  <text x="20" y="40" font-family="Arial" font-size="24px" font-weight="bold" fill="#0EA5E9">WalTodo</text>
+  <text x="375" y="667" text-anchor="middle" font-family="Arial" font-size="32px" fill="#64748B">Mobile Dashboard</text>
+</svg>

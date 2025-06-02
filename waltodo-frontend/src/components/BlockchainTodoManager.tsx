@@ -15,6 +15,16 @@ import {
   UpdateTodoParams,
 } from '@/hooks/useSuiTodos';
 import { useWalletContext } from '@/contexts/WalletContext';
+import { useSuiClient } from '@/hooks/useSuiClient';
+import { TransactionSafetyManager } from '@/lib/transaction-safety';
+import {
+  storeTodoOnBlockchainSafely,
+  updateTodoOnBlockchainSafely,
+  completeTodoOnBlockchainSafely,
+  transferTodoNFTSafely,
+  deleteTodoNFTSafely,
+} from '@/lib/sui-client-safe';
+import toast from 'react-hot-toast';
 
 // TodoNFT creation form component
 function CreateTodoForm({
@@ -73,8 +83,16 @@ function CreateTodoForm({
         tags: [],
       });
       setErrors({});
+      toast.success('TodoNFT created successfully!', {
+        duration: 3000,
+        icon: '🎉',
+      });
     } catch (error) {
       console.error('Create todo error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create TodoNFT';
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
     }
   };
 
@@ -170,7 +188,7 @@ function CreateTodoForm({
         <input
           type='date'
           id='dueDate'
-          value={formData.dueDate || ''}
+          value={typeof formData.dueDate === 'string' ? formData.dueDate : (formData.dueDate instanceof Date ? formData.dueDate.toISOString().split('T')[0] : '')}
           onChange={e =>
             setFormData(prev => ({
               ...prev,
@@ -271,6 +289,10 @@ function TodoItem({
     if (window.confirm('Are you sure you want to delete this TodoNFT?')) {
       await executeOperation(async () => {
         await onDelete(todo.objectId!);
+        toast.success('TodoNFT deleted successfully!', {
+          duration: 3000,
+          icon: '🗑️',
+        });
         return { success: true };
       });
     }
@@ -432,7 +454,10 @@ function NetworkSwitcher({
 
 // Main TodoNFT management component
 export default function BlockchainTodoManager() {
-  const { connected, connecting, address } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const connecting = walletContext?.connecting || false;
+  const address = walletContext?.address || null;
   const { state, actions, network, isWalletReady } = useSuiTodos();
 
   const [showCreateForm, setShowCreateForm] = useState(false);

@@ -1,5 +1,5 @@
 // Import polyfills first to ensure compatibility
-import './utils/polyfills';
+import './utils/polyfills/index';
 
 import * as fs from 'fs';
 import * as os from 'os';
@@ -159,15 +159,26 @@ export abstract class BaseCommand extends Command {
         (this as any).config = testUtils.createMockOCLIFConfig();
       } catch (error) {
         // If import fails, create minimal config for tests
-        const jestMockFn = typeof jest !== 'undefined' && jest?.fn ? jest.fn() : () => Promise.resolve({ successes: [], failures: [] });
+        const defaultRunHook = () => Promise.resolve({ successes: [], failures: [] });
+        let runHookFn = defaultRunHook;
+        
+        // Try to create a jest mock if available
+        if (typeof jest !== 'undefined' && jest?.fn) {
+          try {
+            const mockFn = jest.fn();
+            mockFn.mockResolvedValue({ successes: [], failures: [] });
+            runHookFn = mockFn as any;
+          } catch {
+            // Fall back to default if jest mock creation fails
+            runHookFn = defaultRunHook;
+          }
+        }
         
         (this as any).config = {
           name: 'waltodo',
           bin: 'waltodo',
           version: '1.0.0',
-          runHook: typeof jestMockFn === 'function' && jestMockFn.mockResolvedValue 
-            ? jestMockFn.mockResolvedValue({ successes: [], failures: [] })
-            : () => Promise.resolve({ successes: [], failures: [] }),
+          runHook: runHookFn,
           root: process.cwd(),
           dataDir: '/tmp/waltodo-test',
           configDir: '/tmp/waltodo-test-config',
@@ -222,7 +233,7 @@ export abstract class BaseCommand extends Command {
 
     // Parse flags to populate flagsConfig
     const parsed = await this.parse();
-    this.flagsConfig = parsed.flags as BaseFlags;
+    this.flagsConfig = (parsed.flags || {}) as BaseFlags;
 
     // Check if command should run in background
     if (await this.shouldRunInBackground()) {

@@ -155,6 +155,7 @@ tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo --help       # Show al
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo add \"task\"   # Add a new todo'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo list         # List all todos'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo status       # Show system status'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  pnpm status          # Check service health'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo 'Tmux Controls:'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  Ctrl+B then arrow keys: Switch panes'" Enter
@@ -165,17 +166,26 @@ tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
 # Pane 1: API Server (right top)
 tmux send-keys -t "$SESSION_NAME:main.1" "clear" Enter
 tmux send-keys -t "$SESSION_NAME:main.1" "echo '🔧 Starting API Server on port 3001...'" Enter
-tmux send-keys -t "$SESSION_NAME:main.1" "echo 'Waiting 3 seconds before start...'" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "echo 'Setting up environment variables...'" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "export NODE_ENV=development" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "export API_PORT=3001" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "export API_HOST=localhost" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "export CORS_ORIGIN=http://localhost:3000" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "echo 'Using waltodo serve command for integrated API...'" Enter
 tmux send-keys -t "$SESSION_NAME:main.1" "sleep 3" Enter
-tmux send-keys -t "$SESSION_NAME:main.1" "cd apps/api && pnpm dev --port=3001" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "./bin/waltodo serve --port 3001 --dev" Enter
 
 # Pane 2: Web Frontend (right bottom)
 tmux send-keys -t "$SESSION_NAME:main.2" "clear" Enter
 tmux send-keys -t "$SESSION_NAME:main.2" "echo '🌐 Starting Web Frontend on port 3000...'" Enter
-tmux send-keys -t "$SESSION_NAME:main.2" "echo 'Waiting 5 seconds before start...'" Enter
+tmux send-keys -t "$SESSION_NAME:main.2" "echo 'Setting up environment variables...'" Enter
+tmux send-keys -t "$SESSION_NAME:main.2" "export NEXT_PUBLIC_API_URL=http://localhost:3001" Enter
+tmux send-keys -t "$SESSION_NAME:main.2" "export NEXT_PUBLIC_WS_URL=ws://localhost:3001" Enter
+tmux send-keys -t "$SESSION_NAME:main.2" "export PORT=3000" Enter
+tmux send-keys -t "$SESSION_NAME:main.2" "echo 'Waiting 5 seconds for API to start...'" Enter
 tmux send-keys -t "$SESSION_NAME:main.2" "sleep 5" Enter
 tmux send-keys -t "$SESSION_NAME:main.2" "cd waltodo-frontend" Enter
-tmux send-keys -t "$SESSION_NAME:main.2" "PORT=3000 pnpm dev" Enter
+tmux send-keys -t "$SESSION_NAME:main.2" "pnpm dev" Enter
 
 # Set the active pane to CLI (pane 0)
 tmux select-pane -t "$SESSION_NAME:main.0"

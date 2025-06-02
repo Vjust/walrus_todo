@@ -242,12 +242,12 @@ export class WalrusClient implements WalrusClientAdapter {
       }
 
       const data = await response.arrayBuffer();
-      const contentType = response.headers.get('content-type') || undefined;
+      const contentType = response.headers.get('content-type');
 
       return {
         id: blobId,
         data: new Uint8Array(data),
-        contentType,
+        ...(contentType && { contentType }),
         size: data.byteLength,
       };
     }, 'download');
@@ -341,7 +341,7 @@ export class WalrusClient implements WalrusClientAdapter {
       const contentLength = response.headers.get('content-length');
       const size = contentLength ? parseInt(contentLength) : undefined;
 
-      return { size };
+      return size !== undefined ? { size } : {};
     } catch (error) {
       throw ErrorHandler.wrapError(error, `Failed to get blob info for ${blobId}`);
     }
@@ -462,13 +462,18 @@ export class WalrusClient implements WalrusClientAdapter {
       let storageCost;
       
       if (blobInfo.size) {
-        storageCost = await this.calculateStorageCost(blobInfo.size, 5);
+        const costs = await this.calculateStorageCost(blobInfo.size, 5);
+        storageCost = {
+          total: costs.totalCost,
+          storage: costs.storageCost,
+          write: costs.writeCost,
+        };
       }
 
       return {
         exists: true,
-        size: blobInfo.size,
-        storageCost,
+        ...(blobInfo.size !== undefined && { size: blobInfo.size }),
+        ...(storageCost && { storageCost }),
       };
     } catch (error) {
       return { exists: true }; // We know it exists, but couldn't get details

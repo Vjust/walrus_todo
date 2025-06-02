@@ -106,7 +106,7 @@ export class RetryManager {
     
     // Check for HTTP status codes in error message
     const statusMatch = error.message.match(/status\s*:?\s*(\d+)/i);
-    if (statusMatch) {
+    if (statusMatch && statusMatch[1]) {
       const status = parseInt(statusMatch[1]);
       return status >= 500 || status === 429; // Server errors or rate limiting
     }

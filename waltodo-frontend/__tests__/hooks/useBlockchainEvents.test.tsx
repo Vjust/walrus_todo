@@ -3,74 +3,20 @@
  * Ensures real-time event subscriptions work correctly
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHookSafe as renderHook, act, waitFor, createMockTodo } from '../test-utils';
+import type { MockTodo } from '../test-utils';
 
-// Mock the hooks and types with proper interfaces
-const mockUseBlockchainEvents = jest.fn();
-const mockUseTodoEvents = jest.fn();
-const mockUseTodoStateSync = jest.fn();
+// Import centralized mocks
+import '../mocks';
 
-jest.mock('@/hooks/useBlockchainEvents', () => ({
-  useBlockchainEvents: mockUseBlockchainEvents,
-  useTodoEvents: mockUseTodoEvents,
-  useTodoStateSync: mockUseTodoStateSync,
-}));
+// Import the actual hooks for testing
+import { useBlockchainEvents, useTodoEvents, useTodoStateSync } from '../../src/hooks/useBlockchainEvents';
 
-jest.mock('@/lib/blockchain-events', () => ({
-  BlockchainEventManager: jest.fn().mockImplementation(() => ({
-    initialize: jest.fn(),
-    subscribeToEvents: jest.fn(),
-    unsubscribeAll: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    getConnectionState: jest.fn(),
-    destroy: jest.fn(),
-  }))
-}));
+// Get the mock event manager from the blockchain-events module
+const blockchainEvents = jest.requireMock('@/lib/blockchain-events');
+const mockEventManager = blockchainEvents.getEventManager();
 
-jest.mock('@/lib/sui-client', () => ({
-  Todo: jest.fn()
-}));
-
-// Define Todo interface for tests
-interface Todo {
-  id: string;
-  title: string;
-  completed: boolean;
-  priority?: string;
-  blockchainStored?: boolean;
-  objectId?: string;
-  owner?: string;
-  createdAt?: number;
-  completedAt?: number;
-}
-
-// Mock the blockchain event manager
-jest.mock('@/lib/blockchain-events');
-jest.mock('@/lib/sui-client');
-
-const mockEventManager = {
-  initialize: jest.fn(),
-  subscribeToEvents: jest.fn(),
-  unsubscribeAll: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  getConnectionState: jest.fn(),
-  destroy: jest.fn(),
-};
-
-const mockGetEventManager = jest.fn(() => mockEventManager);
-
-// Mock the wallet context
-const mockWalletContext = {
-  address: '0x123456789',
-  connected: true,
-  // ... other wallet properties
-};
-
-jest.mock('@/contexts/WalletContext', () => ({
-  useWalletContext: () => mockWalletContext,
-}));
+// The wallet context is mocked centrally in __tests__/mocks/wallet-context.ts
 
 describe('useBlockchainEvents', () => {
   beforeEach(() => {
@@ -281,14 +227,14 @@ describe('useTodoEvents', () => {
 });
 
 describe('useTodoStateSync', () => {
-  const initialTodos: Todo[] = [
-    {
+  const initialTodos: MockTodo[] = [
+    createMockTodo({
       id: '1',
       title: 'Initial Todo',
       completed: false,
       priority: 'medium',
       blockchainStored: false,
-    },
+    }),
   ];
 
   const mockTodoCreatedEvent = {
@@ -423,15 +369,15 @@ describe('useTodoStateSync', () => {
 
   it('should update when external todos change', () => {
     const onTodoChange = jest.fn();
-    const newTodos: Todo[] = [
+    const newTodos: MockTodo[] = [
       ...initialTodos,
-      {
+      createMockTodo({
         id: '2',
         title: 'Another Todo',
         completed: false,
         priority: 'high',
         blockchainStored: false,
-      },
+      }),
     ];
 
     const { result, rerender } = renderHook(
@@ -486,8 +432,8 @@ describe('Event manager lifecycle', () => {
     
     rerender();
     
-    // Event manager should be singleton
-    expect(mockGetEventManager).toHaveBeenCalledTimes(1);
+    // Event manager should be singleton - check that initialize is only called once
+    expect(mockEventManager.initialize).toHaveBeenCalledTimes(1);
   });
 
   it('should cleanup subscriptions on component unmount', () => {

@@ -9,7 +9,9 @@ import { useEffect, useState } from 'react';
 export default function InitTestPage() {
   const { isAppReady, isSuiClientReady, initializationError } = useAppInitialization();
   const { isInitialized, isInitializing, error } = useSuiClient('testnet');
-  const { connected, address } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const address = walletContext?.address || null;
   const [clientState, setClientState] = useState<any>(null);
 
   useEffect(() => {

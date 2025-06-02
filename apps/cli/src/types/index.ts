@@ -33,9 +33,11 @@ export type {
   OfflineData,
   SyncData,
 } from './todo';
-export {
+export type {
   TransactionResult as TodoTransactionResult,
   NetworkType as TodoNetworkType,
+} from './todo';
+export {
   createTodo,
   createTodoList,
   validateTodo,

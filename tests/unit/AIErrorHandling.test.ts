@@ -43,7 +43,7 @@ describe('AI Service Error Handling', () => {
         .fn()
         .mockRejectedValue(new Error('Request timed out after 30000ms'));
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -58,7 +58,7 @@ describe('AI Service Error Handling', () => {
         .fn()
         .mockRejectedValue(new Error('401 Unauthorized: Invalid API key'));
 
-      const aiService = new AIService('invalid-api-key');
+      const aiService = new AIService(undefined, 'invalid-api-key');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -75,7 +75,7 @@ describe('AI Service Error Handling', () => {
           new Error('429 Too Many Requests: Rate limit exceeded')
         );
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -92,7 +92,7 @@ describe('AI Service Error Handling', () => {
           new Error('500 Internal Server Error: Something went wrong')
         );
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -105,7 +105,7 @@ describe('AI Service Error Handling', () => {
   // SECTION: Input validation errors
   describe('Input Validation Errors', () => {
     it('should handle empty todo lists', async () => {
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -135,7 +135,7 @@ describe('AI Service Error Handling', () => {
         .fn()
         .mockRejectedValue(new Error('Input exceeds maximum token limit'));
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -154,7 +154,7 @@ describe('AI Service Error Handling', () => {
         {}, // Empty object
       ];
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -182,7 +182,7 @@ describe('AI Service Error Handling', () => {
         timestamp: Date.now(),
       });
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -202,7 +202,7 @@ describe('AI Service Error Handling', () => {
         timestamp: Date.now(),
       });
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -221,7 +221,7 @@ describe('AI Service Error Handling', () => {
         timestamp: Date.now(),
       });
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -242,7 +242,7 @@ describe('AI Service Error Handling', () => {
     });
 
     it('should handle verification service initialization errors', async () => {
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
 
       await expect(
         aiService.summarizeWithVerification(sampleTodos)
@@ -260,8 +260,8 @@ describe('AI Service Error Handling', () => {
       );
 
       const aiService = new AIService(
-        'test-api-key',
         AIProvider.XAI,
+        'test-api-key-12345',
         'mock-model',
         {},
         mockVerificationService
@@ -303,8 +303,8 @@ describe('AI Service Error Handling', () => {
       verifyRecordSpy.mockResolvedValue(false); // Validation fails
 
       const aiService = new AIService(
-        'test-api-key',
         AIProvider.XAI,
+        'test-api-key-12345',
         'mock-model',
         {},
         mockVerificationService
@@ -338,7 +338,7 @@ describe('AI Service Error Handling', () => {
           new Error('XAI: Model grok-beta is currently unavailable')
         );
 
-      const aiService = new AIService('test-api-key', AIProvider.XAI);
+      const aiService = new AIService(AIProvider.XAI, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -358,7 +358,7 @@ describe('AI Service Error Handling', () => {
           new Error('OpenAI API Error: Content policy violation')
         );
 
-      const aiService = new AIService('test-api-key', AIProvider.OPENAI);
+      const aiService = new AIService(AIProvider.OPENAI, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -378,7 +378,7 @@ describe('AI Service Error Handling', () => {
           new Error('Anthropic: Request canceled due to quota exceeded')
         );
 
-      const aiService = new AIService('test-api-key', AIProvider.ANTHROPIC);
+      const aiService = new AIService(AIProvider.ANTHROPIC, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -398,7 +398,7 @@ describe('AI Service Error Handling', () => {
           new Error('Network error: Unable to connect to the API')
         );
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 
@@ -415,7 +415,7 @@ describe('AI Service Error Handling', () => {
           throw new Error('Unexpected system error');
         });
 
-      const aiService = new AIService('test-api-key');
+      const aiService = new AIService(undefined, 'test-api-key-12345');
       (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
         mockAdapter;
 

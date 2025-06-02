@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navbar from '@/components/navbar';
+// import Navbar from '@/components/navbar';
 import TodoList from '@/components/todo-list';
 import CreateTodoForm from '@/components/create-todo-form';
 import InitializationGuard from '@/components/InitializationGuard';
 import { useWalletContext } from '@/contexts/WalletContext';
+import { PWAMetrics } from '@/components/PWAMetrics';
 import {
   getTodoLists,
   createTodoList,
@@ -89,7 +90,7 @@ export default function Dashboard() {
   if (!componentMounted) {
     return (
       <div className='max-w-6xl mx-auto'>
-        <Navbar currentPage='dashboard' />
+        
         <div className='flex justify-center py-12'>
           <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
         </div>
@@ -99,7 +100,7 @@ export default function Dashboard() {
 
   return (
     <div className='max-w-6xl mx-auto'>
-      <Navbar currentPage='dashboard' />
+      
 
       <div className='mb-8'>
         <h1 className='text-3xl font-bold mb-4 text-ocean-deep dark:text-ocean-foam'>
@@ -238,6 +239,14 @@ export default function Dashboard() {
                 listName={selectedList}
               />
             </InitializationGuard>
+          </div>
+          
+          {/* PWA Metrics Section */}
+          <div className='ocean-card mt-6'>
+            <h2 className='text-xl font-semibold mb-4 text-ocean-deep dark:text-ocean-foam'>
+              PWA Status
+            </h2>
+            <PWAMetrics />
           </div>
         </div>
       </div>

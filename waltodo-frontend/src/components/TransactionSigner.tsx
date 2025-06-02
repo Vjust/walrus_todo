@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
+import { useSuiClient } from '@/hooks/useSuiClient';
+import { TransactionSafetyManager, TransactionSafetyConfig } from '@/lib/transaction-safety';
+import { Transaction } from '@mysten/sui/transactions';
+import toast from 'react-hot-toast';
+import { analytics } from '@/lib/analytics';
 
 interface TransactionSignerProps {
   transactionData: any;
   onSuccess?: (result: any) => void;
   onError?: (error: Error) => void;
+  operation?: string;
+  safetyConfig?: Partial<TransactionSafetyConfig>;
+  skipSafetyChecks?: boolean;
   children?: (props: {
     isLoading: boolean;
     error: Error | null;
@@ -18,16 +26,29 @@ export function TransactionSigner({
   transactionData,
   onSuccess,
   onError,
+  operation = 'Execute Transaction',
+  safetyConfig,
+  skipSafetyChecks = false,
   children,
 }: TransactionSignerProps) {
-  const { connected, signAndExecuteTransaction, trackTransaction } =
-    useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const address = walletContext?.address;
+  const signAndExecuteTransaction = walletContext?.signAndExecuteTransaction;
+  const trackTransaction = walletContext?.trackTransaction;
+  const suiClientHook = useSuiClient();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Initialize safety manager - temporarily disabled due to async client pattern
+  const safetyManager = useMemo(() => {
+    // TODO: Update TransactionSafetyManager to work with async client pattern
+    return null;
+  }, []);
+
   const signAndExecute = async () => {
-    if (!connected || !signAndExecuteTransaction) {
+    if (!connected || !signAndExecuteTransaction || !address) {
       const err = new Error(
         "Wallet not connected or doesn't support transaction signing"
       );
@@ -39,13 +60,27 @@ export function TransactionSigner({
     setIsLoading(true);
     setError(null);
 
+    const transactionStartTime = performance.now();
+    
     try {
-      // Sign and execute the transaction
-      const result = await signAndExecuteTransaction(transactionData);
+      let result;
+
+      // Execute transaction directly (safety checks temporarily disabled)
+      result = await signAndExecuteTransaction(transactionData);
 
       // Track the transaction if trackTransaction is available
       if (trackTransaction) {
-        await trackTransaction(Promise.resolve(result), 'Custom Transaction');
+        await trackTransaction(Promise.resolve(result), operation);
+      }
+      
+      // Track successful transaction in analytics
+      if (analytics) {
+        analytics.trackTransaction({
+          type: operation,
+          success: true,
+          duration: performance.now() - transactionStartTime,
+          gasUsed: result?.effects?.gasUsed?.computationCost,
+        });
       }
 
       onSuccess?.(result);
@@ -54,6 +89,18 @@ export function TransactionSigner({
         err instanceof Error ? err : new Error('Transaction failed');
       setError(error);
       onError?.(error);
+      
+      // Track failed transaction in analytics
+      if (analytics) {
+        analytics.trackTransaction({
+          type: operation,
+          success: false,
+          duration: performance.now() - transactionStartTime,
+          error: error.message,
+        });
+      }
+
+      // Error recovery temporarily disabled with safety manager
     } finally {
       setIsLoading(false);
     }
