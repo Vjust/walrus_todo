@@ -1,7 +1,7 @@
 [package]
 name = "walrus_todo"
 version = "0.1.0"
-published-at = "0x0"
+published-at = "0x9a679ea2ab90d62abf6ffe20e52942222c858c3e4a87ad0cfeb8104877d5dd32"
 authors = ["Walrus Todo Team"]
 license = "MIT"
 edition = "2024"
@@ -11,4 +11,4 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 
 [addresses]
 sui = "0x2"
-walrus_todo = "0x0"
+walrus_todo = "0x9a679ea2ab90d62abf6ffe20e52942222c858c3e4a87ad0cfeb8104877d5dd32"

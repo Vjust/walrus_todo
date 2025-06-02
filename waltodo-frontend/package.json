@@ -10,6 +10,7 @@
     "dev:all": "pnpm run setup-config && concurrently \"pnpm run dev:api\" \"pnpm run dev:proxy\"",
     "build": "pnpm run setup-config && next build",
     "build:dev": "pnpm run setup-config && next build",
+    "build:static": "pnpm run setup-config && node scripts/embed-configs.js && NEXT_EXPORT=true next build && node scripts/embed-configs.js restore",
     "build:production": "pnpm run setup-config && NODE_ENV=production next build && node scripts/deploy.js",
     "start": "node scripts/start-with-available-port.js start",
     "start:fixed-port": "next start",
@@ -30,9 +31,11 @@
     "test:lighthouse:single": "node scripts/lighthouse-performance.js http://localhost:${PORT:-3000} single",
     "perf:test": "pnpm run analyze:bundle && pnpm run test:lighthouse",
     "build:analyze": "pnpm run build && pnpm run analyze:bundle:report",
-    "build:walrus": "next build && next export",
+    "build:walrus": "pnpm run build:static",
     "deploy:walrus": "echo 'Walrus deployment removed - use standard build process'",
-    "export": "next export"
+    "export": "NEXT_EXPORT=true next build",
+    "embed-configs": "node scripts/embed-configs.js",
+    "restore-configs": "node scripts/embed-configs.js restore"
   },
   "engines": {
     "node": ">=18.0.0",

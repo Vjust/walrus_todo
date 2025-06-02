@@ -4,8 +4,10 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image';
 import { useSwipeable } from 'react-swipeable';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { useIsMounted } from './MotionWrapper';
 import { Share2, Download, Heart, Info, ChevronUp, RefreshCw } from 'lucide-react';
 import { TodoNFT } from '../types/todo-nft';
+import { useSafeBrowserAPI, safeDateFormat, safeNumberFormat } from './SSRSafe';
 
 interface MobileNFTViewProps {
   nfts: TodoNFT[];
@@ -32,6 +34,7 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [imageLoading, setImageLoading] = useState(true);
   const refreshTimeoutRef = useRef<NodeJS.Timeout>();
+  const mounted = useIsMounted();
   
   // Pull-to-refresh motion values
   const pullDistance = useMotionValue(0);
@@ -58,9 +61,16 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
     }
   }, []);
 
+  // Safe navigator access for haptic feedback
+  const { data: navigator, isLoaded: navigatorLoaded } = useSafeBrowserAPI(
+    () => window.navigator,
+    null,
+    []
+  );
+
   // Haptic feedback utility
   const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
-    if ('vibrate' in navigator) {
+    if (navigatorLoaded && navigator && 'vibrate' in navigator) {
       const patterns = {
         light: [10],
         medium: [20],
@@ -68,7 +78,7 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
       };
       navigator.vibrate(patterns[type]);
     }
-  }, []);
+  }, [navigatorLoaded, navigator]);
 
   // Preload adjacent images for smooth navigation
   useEffect(() => {
@@ -169,12 +179,12 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
   const handleShare = useCallback(async () => {
     triggerHaptic('medium');
     
-    if (navigator.share) {
+    if (navigatorLoaded && navigator && 'share' in navigator) {
       try {
         await navigator.share({
           title: getNFTName(currentNFT),
           text: getNFTDescription(currentNFT) || `Check out this NFT: ${getNFTName(currentNFT)}`,
-          url: window.location.href,
+          url: typeof window !== 'undefined' ? window.location.href : '',
         });
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
@@ -182,7 +192,7 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
         }
       }
     }
-  }, [currentNFT, triggerHaptic]);
+  }, [currentNFT, triggerHaptic, navigatorLoaded, navigator]);
 
   // Download functionality
   const handleDownload = useCallback(async () => {
@@ -218,14 +228,13 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
   const isFirstNFT = currentIndex === 0;
   const isLastNFT = currentIndex === nfts.length - 1;
 
-  // Format timestamps
+  // Format timestamps safely
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return new Intl.DateTimeFormat('en-US', {
+    return safeDateFormat(new Date(timestamp), {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
-    }).format(date);
+    });
   };
 
   // Format file size
@@ -292,9 +301,9 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
           <div className="h-1 bg-white/20 rounded-full overflow-hidden">
             <motion.div 
               className="h-full bg-white rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress * 100}%` }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              initial={mounted ? { width: 0 } : false}
+              animate={mounted ? { width: `${progress * 100}%` } : {}}
+              transition={mounted ? { type: "spring", stiffness: 400, damping: 30 } : undefined}
             />
           </div>
         </div>
@@ -309,10 +318,10 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
           <motion.div
             key={currentNFT.id}
             className="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden bg-gray-900"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.3 }}
+            initial={mounted ? { opacity: 0, scale: 0.9 } : false}
+            animate={mounted ? { opacity: 1, scale: 1 } : false}
+            exit={mounted ? { opacity: 0, scale: 0.9 } : false}
+            transition={mounted ? { duration: 0.3 } : undefined}
           >
             {/* NFT Image */}
             <div className="relative h-full">
@@ -407,10 +416,10 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
         {showDetails && (
           <motion.div
             className="absolute inset-0 bg-black/95 z-30"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            initial={mounted ? { y: '100%' } : false}
+            animate={mounted ? { y: 0 } : false}
+            exit={mounted ? { y: '100%' } : false}
+            transition={mounted ? { type: 'spring', damping: 30, stiffness: 300 } : undefined}
           >
             <div className="h-full overflow-y-auto">
               <div className="p-6">

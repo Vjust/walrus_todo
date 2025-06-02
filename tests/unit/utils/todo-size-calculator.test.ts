@@ -181,7 +181,7 @@ describe('TodoSizeCalculator', () => {
     });
   });
 
-  describe('edge cases', () => {
+  describe('error handling and edge cases', () => {
     it('should handle circular references gracefully', () => {
       const todo: Todo & { self?: unknown } = createMockTodo({
         id: '12345',

@@ -188,11 +188,11 @@ export function setupDefaultWalrusClientMocks(
     total: '1000',
   });
 
-  mockClient.readBlob.mockImplementation(async (params: { blobId: string; signal?: AbortSignal }) => {
+  mockClient.readBlob.mockImplementation(async (_params: { blobId: string; signal?: AbortSignal }) => {
     return new Uint8Array([1, 2, 3, 4]);
   });
 
-  mockClient.writeBlob.mockImplementation(async (params: {
+  mockClient.writeBlob.mockImplementation(async (_params: {
     blob: Uint8Array;
     signer: any;
     deletable?: boolean;
@@ -215,11 +215,11 @@ export function setupDefaultWalrusClientMocks(
     return convertToCompatibleBlobObject(createMockBlobObject(params.blobId));
   });
 
-  mockClient.getBlobMetadata.mockImplementation(async (params: { blobId: string; signal?: AbortSignal }) => {
+  mockClient.getBlobMetadata.mockImplementation(async (_params: { blobId: string; signal?: AbortSignal }) => {
     return convertToCompatibleBlobMetadata(createMockBlobMetadata(1024))!;
   });
 
-  mockClient.verifyPoA.mockImplementation(async (params: { blobId: string }) => {
+  mockClient.verifyPoA.mockImplementation(async (_params: { blobId: string }) => {
     return true;
   });
 
@@ -250,7 +250,7 @@ export function setupDefaultWalrusClientMocks(
   });
 
   mockClient.deleteBlob.mockImplementation(
-    () => (tx: any) =>
+    () => (_tx: any) =>
       Promise.resolve({
         digest: 'mock-delete-digest',
       })
@@ -268,7 +268,7 @@ export function setupDefaultWalrusClientMocks(
   mockClient.createStorageBlock.mockResolvedValue({});
 
   mockClient.createStorage.mockImplementation(
-    () => (tx: any) =>
+    () => (_tx: any) =>
       Promise.resolve({
         digest: 'mock-create-storage-digest',
         storage: {
@@ -280,7 +280,7 @@ export function setupDefaultWalrusClientMocks(
       })
   );
 
-  mockClient.getStorageProviders.mockImplementation(async (params: { blobId: string }) => {
+  mockClient.getStorageProviders.mockImplementation(async (_params: { blobId: string }) => {
     return [
       'provider1',
       'provider2',

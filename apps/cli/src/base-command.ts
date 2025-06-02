@@ -1317,7 +1317,9 @@ export abstract class BaseCommand extends Command {
         const progress = Math.round((currentStep / totalSteps) * 100);
 
         // Output progress in format that background orchestrator can parse
+        // eslint-disable-next-line no-console
         console.log(`PROGRESS:${progress}:${stage}`);
+        // eslint-disable-next-line no-console
         console.log(`STAGE:${stage}`);
 
         if (progressCallback) {
@@ -1327,6 +1329,7 @@ export abstract class BaseCommand extends Command {
 
       // Monkey patch console.log to report stages
       const originalLog = console.log;
+      // eslint-disable-next-line no-console
       console.log = (...args: any[]) => {
         const message = args.join(' ');
         if (
@@ -1344,6 +1347,7 @@ export abstract class BaseCommand extends Command {
         reportProgress('Completed');
         return result;
       } finally {
+        // eslint-disable-next-line no-console
         console.log = originalLog;
       }
     } else {
@@ -1356,7 +1360,9 @@ export abstract class BaseCommand extends Command {
    */
   protected reportBackgroundProgress(progress: number, stage: string): void {
     if (process.env.WALRUS_BACKGROUND_JOB) {
+      // eslint-disable-next-line no-console
       console.log(`PROGRESS:${progress}:${stage}`);
+      // eslint-disable-next-line no-console
       console.log(`STAGE:${stage}`);
     }
   }

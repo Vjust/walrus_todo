@@ -9,6 +9,7 @@ import {
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getEffectiveNetworkConfig, type NetworkName } from '@/config';
+import { LoadingFallback } from '@/components/LoadingFallback';
 
 // Network Configuration for Sui
 const { networkConfig } = createNetworkConfig({
@@ -105,7 +106,18 @@ export function SuiWalletProvider({
   enableNetworkSwitching = true,
   enableSlushWallet = true,
 }: SuiWalletProviderProps) {
+  const [mounted, setMounted] = React.useState(false);
   const networkSettings = getCurrentNetworkSettings();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render wallet provider during SSR to prevent hydration issues
+  if (!mounted) {
+    return <LoadingFallback message="Initializing wallet..." size="md" fullScreen />;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider 

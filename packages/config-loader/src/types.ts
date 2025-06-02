@@ -82,7 +82,7 @@ export interface FeaturesConfig {
  */
 export interface EnvironmentConfig {
   // Index signature for type-safe string access
-  [key: string]: any;
+  [key: string]: unknown;
   
   /** Environment mode (development, production) */
   mode: 'development' | 'production';

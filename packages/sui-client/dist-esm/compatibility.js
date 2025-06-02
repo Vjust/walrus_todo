@@ -37,10 +37,12 @@ export function isVersionAtLeast(current, required) {
 export function getSuiVersion() {
     try {
         // Try to get version from package.json
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const pkg = require('@mysten/sui/package.json');
         return parseVersion(pkg.version);
     }
     catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('[SuiClient] Could not determine @mysten/sui version:', error);
         return null;
     }
@@ -50,10 +52,12 @@ export function getSuiVersion() {
  */
 export function getDappKitVersion() {
     try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const pkg = require('@mysten/dapp-kit/package.json');
         return parseVersion(pkg.version);
     }
     catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('[SuiClient] Could not determine @mysten/dapp-kit version:', error);
         return null;
     }
@@ -179,6 +183,7 @@ export const ReactCompatibility = {
             return useCurrentAccountHook();
         }
         catch (error) {
+            // eslint-disable-next-line no-console
             console.warn('[SuiClient] useCurrentAccount hook failed:', error);
             return null;
         }
@@ -191,6 +196,7 @@ export const ReactCompatibility = {
             return useConnectWalletHook();
         }
         catch (error) {
+            // eslint-disable-next-line no-console
             console.warn('[SuiClient] useConnectWallet hook failed:', error);
             return { mutate: () => { }, isPending: false };
         }
@@ -203,6 +209,7 @@ export const ReactCompatibility = {
             return useSignAndExecuteTransactionHook();
         }
         catch (error) {
+            // eslint-disable-next-line no-console
             console.warn('[SuiClient] useSignAndExecuteTransaction hook failed:', error);
             return { mutateAsync: async () => { throw error; } };
         }
@@ -242,10 +249,12 @@ export function checkVersionCompatibility() {
     const minSuiVersion = { major: 1, minor: 28, patch: 0, full: '1.28.0' };
     const minDappKitVersion = { major: 0, minor: 14, patch: 0, full: '0.14.0' };
     if (suiVersion && !isVersionAtLeast(suiVersion, minSuiVersion)) {
+        // eslint-disable-next-line no-console
         console.warn(`[SuiClient] @mysten/sui version ${suiVersion.full} may be incompatible. ` +
             `Minimum recommended version is ${minSuiVersion.full}`);
     }
     if (dappKitVersion && !isVersionAtLeast(dappKitVersion, minDappKitVersion)) {
+        // eslint-disable-next-line no-console
         console.warn(`[SuiClient] @mysten/dapp-kit version ${dappKitVersion.full} may be incompatible. ` +
             `Minimum recommended version is ${minDappKitVersion.full}`);
     }

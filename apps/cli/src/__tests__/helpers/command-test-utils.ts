@@ -97,7 +97,7 @@ export function createMockOCLIFConfig(): Config {
     scopedEnvVarKeys: typeof jest !== 'undefined' && jest.fn 
       ? jest.fn().mockReturnValue([])
       : () => [],
-  } as any;
+  } as Config;
 
   return mockConfig;
 }
@@ -107,12 +107,12 @@ export function createMockOCLIFConfig(): Config {
  * This ensures the command has all the necessary properties and methods
  */
 export async function initializeCommandForTest<T extends Command>(
-  CommandClass: new (...args: any[]) => T,
+  CommandClass: new (...args: unknown[]) => T,
   argv: string[] = [],
   options: {
     config?: Config;
     mockParse?: boolean;
-    parseResult?: any;
+    parseResult?: { flags: Record<string, unknown>; args: Record<string, unknown> };
   } = {}
 ): Promise<T> {
   const config = options.config || createMockOCLIFConfig();
@@ -126,19 +126,19 @@ export async function initializeCommandForTest<T extends Command>(
   // Mock commonly used methods
   command.log = typeof jest !== 'undefined' && typeof jest.fn === 'function'
     ? jest.fn() 
-    : (..._args: any[]) => {};
+    : (..._args: unknown[]) => {};
   command.warn = typeof jest !== 'undefined' && typeof jest.fn === 'function'
     ? jest.fn() 
     : (input: string | Error) => input;
   (command as any).error = typeof jest !== 'undefined' && typeof jest.fn === 'function'
-    ? jest.fn().mockImplementation((message: string | Error, options?: any) => {
+    ? jest.fn().mockImplementation((message: string | Error, options?: { exit?: boolean }) => {
         const error = typeof message === 'string' ? new Error(message) : message;
         if (options?.exit) {
           throw error;
         }
         console.error(error);
       })
-    : (message: string | Error, options?: any) => {
+    : (message: string | Error, options?: { exit?: boolean }) => {
         const error = typeof message === 'string' ? new Error(message) : message;
         if (options?.exit) {
           throw error;
@@ -173,10 +173,10 @@ export async function initializeCommandForTest<T extends Command>(
  * Helper to run a command in test environment with proper setup
  */
 export async function runCommandInTest<T extends Command>(
-  CommandClass: new (...args: any[]) => T,
+  CommandClass: new (...args: unknown[]) => T,
   argv: string[] = [],
-  flags: Record<string, any> = {},
-  args: Record<string, any> = {}
+  flags: Record<string, unknown> = {},
+  args: Record<string, unknown> = {}
 ): Promise<{ command: T; output: string[]; errors: string[] }> {
   const output: string[] = [];
   const errors: string[] = [];
@@ -188,16 +188,16 @@ export async function runCommandInTest<T extends Command>(
 
   // Capture log output
   if (typeof jest !== 'undefined' && typeof jest.fn === 'function') {
-    (command.log as jest.Mock).mockImplementation((...args: any[]) => {
+    (command.log as jest.Mock).mockImplementation((...args: unknown[]) => {
       output.push(args.join(' '));
     });
 
-    (command.warn as jest.Mock).mockImplementation((...args: any[]) => {
+    (command.warn as jest.Mock).mockImplementation((...args: unknown[]) => {
       errors.push(args.join(' '));
     });
   } else {
     // Fallback for non-Jest environments
-    command.log = (...args: any[]) => {
+    command.log = (...args: unknown[]) => {
       output.push(args.join(' '));
     };
     command.warn = (input: string | Error) => {
@@ -252,7 +252,7 @@ export function setupBaseCommandMocks() {
  * Creates a mock command instance with minimal setup for unit testing
  */
 export function createMockCommand<T extends Command>(
-  CommandClass: new (...args: any[]) => T,
+  CommandClass: new (...args: unknown[]) => T,
   overrides: Partial<T> = {}
 ): T {
   const config = createMockOCLIFConfig();

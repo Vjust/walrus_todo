@@ -166,6 +166,8 @@ export function useWalrusImage(blobIdOrUrl: string | undefined, options: ImagePr
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     if (!blobIdOrUrl) {
       setState({
         isLoading: false,
@@ -327,6 +329,8 @@ export function useOptimizedWalrusImage(
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     if (!blobIdOrUrl) {
       setState({
         isLoading: false,

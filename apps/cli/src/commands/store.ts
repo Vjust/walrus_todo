@@ -298,14 +298,14 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Display results from background operation
    */
-  private displayBackgroundResults(result: any, todoCount: number): void {
+  private displayBackgroundResults(result: { uploads?: Array<{ success: boolean; id: string; blobId?: string; error?: string }> }, todoCount: number): void {
     this.log('');
     this.log(chalk.green.bold('🎉 Background Upload Summary:'));
     this.log('');
 
     if (result.uploads) {
-      const successful = result.uploads.filter((u: any) => u.success);
-      const failed = result.uploads.filter((u: any) => !u.success);
+      const successful = result.uploads.filter(u => u.success);
+      const failed = result.uploads.filter(u => !u.success);
 
       this.log(chalk.white(`  Total todos: ${chalk.cyan(todoCount)}`));
       this.log(chalk.white(`  Successful: ${chalk.green(successful.length)}`));
@@ -314,7 +314,7 @@ export default class StoreCommand extends BaseCommand {
       if (successful.length > 0) {
         this.log('');
         this.log(chalk.white.bold('Successful uploads:'));
-        successful.forEach((upload: any) => {
+        successful.forEach(upload => {
           this.log(
             chalk.white(`  ✅ ${upload.id}: ${chalk.yellow(upload.blobId)}`)
           );
@@ -324,7 +324,7 @@ export default class StoreCommand extends BaseCommand {
       if (failed.length > 0) {
         this.log('');
         this.log(chalk.white.bold('Failed uploads:'));
-        failed.forEach((upload: any) => {
+        failed.forEach(upload => {
           this.log(
             chalk.white(`  ❌ ${upload.id}: ${chalk.red(upload.error)}`)
           );
@@ -386,7 +386,7 @@ export default class StoreCommand extends BaseCommand {
       network?: string;
     }
   ): Promise<void> {
-    let uploadResult: any;
+    let uploadResult: { blobId: string; transactionId?: string; explorerUrl?: string; aggregatorUrl?: string } | string;
     let attemptCount = 0;
 
     try {
@@ -632,7 +632,7 @@ export default class StoreCommand extends BaseCommand {
     todo: Todo,
     walrusStorage: ReturnType<typeof createWalrusStorage>,
     flags: { epochs: number; reuse: boolean }
-  ): Promise<any> {
+  ): Promise<{ blobId: string; transactionId?: string; explorerUrl?: string; aggregatorUrl?: string }> {
     // Check cache first
     const hash = this.getTodoHash(todo);
     const cachedBlobId = await this.uploadCache.get(hash);
@@ -647,7 +647,7 @@ export default class StoreCommand extends BaseCommand {
       const result = await (walrusStorage as any).storeTodoWithDetails(
         todo,
         flags.epochs
-      );
+      ) as { blobId: string; transactionId?: string; explorerUrl?: string; aggregatorUrl?: string };
       // Cache the result
       await this.uploadCache.set(hash, result.blobId);
       return result;
@@ -736,7 +736,7 @@ export default class StoreCommand extends BaseCommand {
    */
   private displaySuccessInfoDetailed(
     todo: Todo,
-    uploadResult: any,
+    uploadResult: { blobId: string; transactionId?: string; explorerUrl?: string; aggregatorUrl?: string } | string,
     flags: {
       json: boolean;
       retry?: boolean;
@@ -893,7 +893,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Run store operation in background (non-blocking)
    */
-  private async runInBackgroundLegacy(args: any, flags: any): Promise<void> {
+  private async runInBackgroundLegacy(args: { list?: string; todo?: string }, flags: Record<string, unknown>): Promise<void> {
     // Create background job
     const commandArgs = [];
 
@@ -973,8 +973,8 @@ export default class StoreCommand extends BaseCommand {
    * Execute the actual store operation (extracted for background use)
    */
   private async executeStoreOperation(
-    args: any,
-    flags: any,
+    args: { list?: string; todo?: string },
+    flags: Record<string, unknown>,
     jobId?: string
   ): Promise<void> {
     const updateProgress = (progress: number, message?: string) => {
@@ -1194,7 +1194,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Run store operation using the upload queue
    */
-  private async runWithQueue(args: any, flags: any): Promise<void> {
+  private async runWithQueue(args: { list?: string; todo?: string }, flags: Record<string, unknown>): Promise<void> {
     // Parse arguments
     const listName = args.list || flags.list || 'default';
     const todoIdentifier = args.todo || flags.todo;
@@ -1379,7 +1379,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Get job details for display
    */
-  private getJobDetails(job: any): string {
+  private getJobDetails(job: { type: string; data?: { title?: string; name?: string; todos?: unknown[]; fileName?: string } }): string {
     switch (job.type) {
       case 'todo':
         return job.data?.title?.substring(0, 30) || 'Unknown todo';

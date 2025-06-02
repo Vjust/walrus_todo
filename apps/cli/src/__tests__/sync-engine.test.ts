@@ -1,7 +1,6 @@
 import { SyncEngine, SyncEngineConfig } from '../services/syncEngine';
 import { FileWatcher } from '../utils/fileWatcher';
 import { ApiClient } from '../utils/apiClient';
-import { TodoService } from '../services/todoService';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -9,7 +8,6 @@ import * as os from 'os';
 // Mock dependencies
 jest.mock('../utils/fileWatcher');
 jest.mock('../utils/apiClient');
-jest.mock('../services/todoService');
 jest.mock('../utils/BackgroundCommandOrchestrator');
 
 describe('SyncEngine', () => {

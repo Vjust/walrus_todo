@@ -153,7 +153,7 @@ describe('InteractiveMode', () => {
   });
 
   // Helper function to access private methods for testing
-  function getPrivateMethod(instance: any, methodName: string) {
+  function getPrivateMethod(instance: InteractiveMode, methodName: string) {
     return instance[methodName]?.bind(instance);
   }
 
@@ -203,7 +203,7 @@ describe('InteractiveMode', () => {
 
       // Find the line event handler
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -229,7 +229,7 @@ describe('InteractiveMode', () => {
       let lineHandler: (input: string) => void = () => {};
       let closeHandler: () => void = () => {};
 
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         } else if (event === 'close') {
@@ -250,7 +250,7 @@ describe('InteractiveMode', () => {
     it('should handle empty input', () => {
       let lineHandler: (input: string) => void = () => {};
 
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -280,7 +280,7 @@ describe('InteractiveMode', () => {
         .mockReturnValue(mockChild);
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -318,7 +318,7 @@ describe('InteractiveMode', () => {
         .mockReturnValue(mockChild);
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -357,7 +357,7 @@ describe('InteractiveMode', () => {
         }));
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -389,7 +389,7 @@ describe('InteractiveMode', () => {
         }));
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -417,7 +417,7 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -452,7 +452,7 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -479,7 +479,7 @@ describe('InteractiveMode', () => {
       interactiveMode.setCurrentList('test-list');
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -559,7 +559,7 @@ describe('InteractiveMode', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -587,7 +587,7 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: any) => {
+      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }

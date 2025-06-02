@@ -9,10 +9,32 @@ import { Todo } from '@/types/todo-nft';
 
 export interface BlockchainEvent {
   type: string;
-  data: any;
+  data: unknown;
   timestamp: string;
   transactionId?: string;
   objectId?: string;
+}
+
+export interface SuiEventData {
+  parsedJson?: {
+    todo_id?: string;
+    title?: string;
+    description?: string;
+    completed?: boolean;
+    priority?: string;
+    due_date?: string;
+    tags?: string[];
+    sender?: string;
+    recipient?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface TransferEventData {
+  sender: string;
+  recipient: string;
+  objectId: string;
 }
 
 export interface BlockchainEventHandler {
@@ -156,7 +178,7 @@ export class BlockchainEventManager {
             module: 'todo_nft'
           }
         },
-        onMessage: (eventData: any) => {
+        onMessage: (eventData: SuiEventData) => {
           this.processBlockchainEvent(eventData);
         }
       });
@@ -184,7 +206,7 @@ export class BlockchainEventManager {
         filter: {
           Sender: walletAddress
         },
-        onMessage: (eventData: any) => {
+        onMessage: (eventData: SuiEventData) => {
           this.processWalletEvent(walletAddress, eventData);
         }
       });
@@ -203,7 +225,7 @@ export class BlockchainEventManager {
   /**
    * Process blockchain events and emit typed events
    */
-  private processBlockchainEvent(eventData: any): void {
+  private processBlockchainEvent(eventData: SuiEventData): void {
     try {
       const { parsedJson, type, timestampMs, id } = eventData;
       
@@ -212,7 +234,7 @@ export class BlockchainEventManager {
       }
 
       let eventType: string;
-      let todoData: any = null;
+      let todoData: Partial<Todo> | TransferEventData | null = null;
 
       // Parse event type and data based on the Move event structure
       if (type.includes('TodoNFTCreated') || type.includes('TodoCreated')) {
@@ -249,7 +271,7 @@ export class BlockchainEventManager {
   /**
    * Process wallet-specific events
    */
-  private processWalletEvent(walletAddress: string, eventData: any): void {
+  private processWalletEvent(walletAddress: string, eventData: SuiEventData): void {
     // Process events specifically for this wallet
     this.processBlockchainEvent(eventData);
   }
@@ -257,7 +279,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoCreated event data
    */
-  private parseCreatedEvent(parsedJson: any): Partial<Todo> | null {
+  private parseCreatedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
     if (!parsedJson) return null;
 
     return {
@@ -275,7 +297,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoCompleted event data
    */
-  private parseCompletedEvent(parsedJson: any): Partial<Todo> | null {
+  private parseCompletedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
     if (!parsedJson) return null;
 
     return {
@@ -294,7 +316,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoUpdated event data
    */
-  private parseUpdatedEvent(parsedJson: any): Partial<Todo> | null {
+  private parseUpdatedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
     if (!parsedJson) return null;
 
     return {
@@ -314,7 +336,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoTransferred event data
    */
-  private parseTransferredEvent(parsedJson: any): any {
+  private parseTransferredEvent(parsedJson: SuiEventData['parsedJson']): TransferEventData | null {
     if (!parsedJson) return null;
 
     return {
@@ -408,7 +430,7 @@ export class BlockchainEventManager {
   /**
    * Manually trigger an event (for testing)
    */
-  simulateEvent(eventType: string, data: any): void {
+  simulateEvent(eventType: string, data: unknown): void {
     this.emitEvent({
       type: eventType,
       data,
@@ -449,7 +471,7 @@ export function getEventManager(): BlockchainEventManager {
   return blockchainEventManager;
 }
 
-export function transformEventToTodoUpdate(event: TodoNFTEvent): any {
+export function transformEventToTodoUpdate(event: TodoNFTEvent): Partial<Todo> | null {
   return {
     id: event.data.todo_id,
     title: event.data.title || 'Updated Todo',

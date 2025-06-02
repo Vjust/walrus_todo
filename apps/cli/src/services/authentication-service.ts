@@ -142,17 +142,45 @@ export class AuthenticationService {
    * @returns A hexadecimal string representing the salt
    */
   private generateSalt(): string {
-    const saltBuffer = crypto.randomBytes(16);
+    try {
+      const saltBuffer = crypto.randomBytes(16);
 
-    // Validate generated salt
-    if (saltBuffer.length !== 16) {
+      // Validate generated salt buffer exists and has correct length
+      if (!saltBuffer) {
+        throw new CLIError(
+          'Failed to generate salt buffer - crypto.randomBytes returned null/undefined',
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      // Check if it's a buffer-like object with length property
+      if (typeof saltBuffer.length !== 'number' || saltBuffer.length !== 16) {
+        throw new CLIError(
+          `Invalid salt length: expected 16 bytes, got ${saltBuffer.length || 'undefined'}`,
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      // Check if it has a toString method
+      if (typeof saltBuffer.toString !== 'function') {
+        throw new CLIError(
+          'Generated salt buffer does not have toString method',
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      return saltBuffer.toString('hex');
+    } catch (error) {
+      // Handle both our custom errors and any crypto operation errors
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      
       throw new CLIError(
-        'Failed to generate valid salt',
+        `Crypto operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'CRYPTO_OPERATION_ERROR'
       );
     }
-
-    return saltBuffer.toString('hex');
   }
 
   /**
@@ -188,14 +216,45 @@ export class AuthenticationService {
       );
     }
 
-    const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512');
+    try {
+      const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512');
 
-    // Validate result
-    if (hash.length !== 64) {
-      throw new CLIError('Invalid hash generated', 'CRYPTO_OPERATION_ERROR');
+      // Validate result
+      if (!hash) {
+        throw new CLIError(
+          'Failed to generate password hash - crypto.pbkdf2Sync returned null/undefined',
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      // Check if it's a buffer-like object with length property
+      if (typeof hash.length !== 'number' || hash.length !== 64) {
+        throw new CLIError(
+          `Invalid hash length: expected 64 bytes, got ${hash.length || 'undefined'}`,
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      // Check if it has a toString method
+      if (typeof hash.toString !== 'function') {
+        throw new CLIError(
+          'Generated hash does not have toString method',
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      return hash.toString('hex');
+    } catch (error) {
+      // Handle both our custom errors and any crypto operation errors
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      
+      throw new CLIError(
+        `Password hashing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'CRYPTO_OPERATION_ERROR'
+      );
     }
-
-    return hash.toString('hex');
   }
 
   /**
@@ -708,7 +767,44 @@ export class AuthenticationService {
     );
 
     // Create cryptographically secure refresh token
-    const refreshToken = crypto.randomBytes(40).toString('hex');
+    let refreshToken: string;
+    try {
+      const refreshTokenBuffer = crypto.randomBytes(40);
+      
+      if (!refreshTokenBuffer) {
+        throw new CLIError(
+          'Failed to generate refresh token - crypto.randomBytes returned null/undefined',
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+      
+      // Check if it's a buffer-like object with length property
+      if (typeof refreshTokenBuffer.length !== 'number' || refreshTokenBuffer.length !== 40) {
+        throw new CLIError(
+          `Invalid refresh token length: expected 40 bytes, got ${refreshTokenBuffer.length || 'undefined'}`,
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+
+      // Check if it has a toString method
+      if (typeof refreshTokenBuffer.toString !== 'function') {
+        throw new CLIError(
+          'Generated refresh token buffer does not have toString method',
+          'CRYPTO_OPERATION_ERROR'
+        );
+      }
+      
+      refreshToken = refreshTokenBuffer.toString('hex');
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      
+      throw new CLIError(
+        `Refresh token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'CRYPTO_OPERATION_ERROR'
+      );
+    }
 
     // Store session with refresh token and metadata
     const sessionId = uuidv4();

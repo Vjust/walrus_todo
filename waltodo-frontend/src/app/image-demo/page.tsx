@@ -1,13 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
-import { OptimizedImageGallery } from '@/components/OptimizedImage';
-import { 
-  getImagePerformanceMetrics, 
-  clearImageCaches, 
-  preloadImages,
-  checkWebPSupport 
-} from '@/lib/image-optimization';
+import dynamic from 'next/dynamic';
+
+// Dynamically import components to avoid SSR issues
+const OptimizedImageGallery = dynamic(
+  () => import('@/components/OptimizedImage').then(mod => ({ default: mod.OptimizedImageGallery })),
+  { 
+    ssr: false,
+    loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg" />
+  }
+);
+
+// Dynamically import optimization functions to avoid SSR issues
+const imageOptimizationPromise = typeof window !== 'undefined' 
+  ? import('@/lib/image-optimization')
+  : null;
 
 // Demo images (you can replace these with actual Walrus URLs)
 const demoImages = [
@@ -47,27 +55,42 @@ export default function ImageDemoPage() {
   const [showMetrics, setShowMetrics] = useState(true);
   const [webpSupport, setWebpSupport] = useState<boolean | null>(null);
   const [performanceData, setPerformanceData] = useState<Map<string, any>>(new Map());
+  const [imageOptimization, setImageOptimization] = useState<any>(null);
 
   React.useEffect(() => {
-    // Check WebP support
-    checkWebPSupport().then(setWebpSupport);
+    // Load image optimization functions dynamically
+    if (imageOptimizationPromise) {
+      imageOptimizationPromise.then(module => {
+        setImageOptimization(module);
+        // Check WebP support
+        module.checkWebPSupport().then(setWebpSupport);
+      });
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!imageOptimization) return;
 
     // Update performance metrics periodically
     const interval = setInterval(() => {
-      setPerformanceData(new Map(getImagePerformanceMetrics()));
+      setPerformanceData(new Map(imageOptimization.getImagePerformanceMetrics()));
     }, 500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [imageOptimization]);
 
   const handlePreloadAll = async () => {
+    if (!imageOptimization) return;
     const urls = demoImages.map(img => img.src);
-    await preloadImages(urls, { priority: 'high' });
+    await imageOptimization.preloadImages(urls, { priority: 'high' });
   };
 
   const handleClearCache = () => {
-    clearImageCaches();
-    window.location.reload();
+    if (!imageOptimization) return;
+    imageOptimization.clearImageCaches();
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   };
 
   return (
@@ -84,15 +107,15 @@ export default function ImageDemoPage() {
           </div>
           <div>
             <span className="font-medium">Intersection Observer:</span>{' '}
-            {'IntersectionObserver' in window ? '✅ Yes' : '❌ No'}
+            {typeof window !== 'undefined' && 'IntersectionObserver' in window ? '✅ Yes' : '❌ No'}
           </div>
           <div>
             <span className="font-medium">Service Worker:</span>{' '}
-            {'serviceWorker' in navigator ? '✅ Yes' : '❌ No'}
+            {typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? '✅ Yes' : '❌ No'}
           </div>
           <div>
             <span className="font-medium">Cache API:</span>{' '}
-            {'caches' in window ? '✅ Yes' : '❌ No'}
+            {typeof window !== 'undefined' && 'caches' in window ? '✅ Yes' : '❌ No'}
           </div>
         </div>
       </div>

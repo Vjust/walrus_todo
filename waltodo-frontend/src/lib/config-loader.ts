@@ -186,20 +186,39 @@ function getCurrentNetwork(): string {
 }
 
 /**
+ * Network configs embedded at build time for static export compatibility
+ * These will be replaced during build process with actual config files
+ */
+const EMBEDDED_CONFIGS: Record<string, any> = {};
+
+/**
  * Load network configuration dynamically at runtime
- * This replaces build-time imports with runtime loading
+ * This handles both static export and runtime scenarios
  */
 export async function loadNetworkConfig(network: string): Promise<AppConfig | null> {
   try {
-    // Try to load the JSON configuration file from public directory
-    const configResponse = await fetch(`/config/${network}.json`);
-    if (configResponse.ok) {
-      const config = await configResponse.json();
-      console.log(`Loaded runtime configuration for ${network}`);
-      return transformConfigFormat(config);
+    // First, try embedded configs (for static export)
+    if (EMBEDDED_CONFIGS[network]) {
+      console.log(`Loaded embedded configuration for ${network}`);
+      return transformConfigFormat(EMBEDDED_CONFIGS[network]);
+    }
+
+    // Only try runtime loading in browser context
+    if (typeof window !== 'undefined') {
+      try {
+        const configUrl = `/config/${network}.json`;
+        const configResponse = await fetch(configUrl);
+        if (configResponse.ok) {
+          const config = await configResponse.json();
+          console.log(`Loaded runtime configuration for ${network}`);
+          return transformConfigFormat(config);
+        }
+      } catch (fetchError) {
+        console.warn(`Failed to fetch runtime config for ${network}:`, fetchError);
+      }
     }
   } catch (error) {
-    console.warn(`Failed to load runtime config for ${network}:`, error);
+    console.warn(`Failed to load config for ${network}:`, error);
   }
 
   return null;
@@ -309,6 +328,7 @@ export function getNetworkName(): string {
 /**
  * Hook for React components to load configuration
  * Prevents hydration mismatches by ensuring client-only execution
+ * Enhanced with better error handling and fallback support
  */
 export function useAppConfig() {
   const [config, setConfig] = React.useState<AppConfig | null>(null);
@@ -320,13 +340,43 @@ export function useAppConfig() {
     // Only load config after hydration is complete
     if (!hydrated) return;
 
-    loadAppConfig()
-      .then(setConfig)
-      .catch(err => {
-        setError(err.message);
-        console.error('Failed to load app configuration:', err);
-      })
-      .finally(() => setLoading(false));
+    let isMounted = true;
+
+    const loadConfig = async () => {
+      try {
+        const loadedConfig = await loadAppConfig();
+        if (isMounted) {
+          setConfig(loadedConfig);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown configuration error';
+          setError(errorMessage);
+          console.error('Failed to load app configuration:', err);
+          
+          // Try to use fallback config as last resort
+          try {
+            const network = getCurrentNetwork();
+            const fallbackConfig = createFallbackConfig(network);
+            setConfig(fallbackConfig);
+            console.warn('Using fallback configuration due to load failure');
+          } catch (fallbackError) {
+            console.error('Fallback configuration also failed:', fallbackError);
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadConfig();
+
+    return () => {
+      isMounted = false;
+    };
   }, [hydrated]);
 
   return { config, loading, error };

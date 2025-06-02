@@ -1,6 +1,6 @@
 'use client';
 
-import { useAppInitialization } from '@/app/ClientOnlyRoot';
+import { useAppInitialization } from '@/contexts/AppInitializationContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import { isSuiClientInitialized, getSuiClientState } from '@/lib/sui-client';
 import { useWalletContext } from '@/contexts/WalletContext';

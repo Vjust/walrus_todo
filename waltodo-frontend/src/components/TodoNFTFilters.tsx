@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import { useSafeLocalStorage, useMounted } from './SSRSafe';
 
 export interface TodoNFTFilter {
   ownerAddress?: string;
@@ -90,21 +91,22 @@ export default function TodoNFTFilters({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<('low' | 'medium' | 'high')[]>([]);
 
-  // Load saved filters from localStorage on mount
+  const [savedFilters, setSavedFilters, isStorageLoaded] = useSafeLocalStorage<TodoNFTFilter>(STORAGE_KEY, {});
+  const mounted = useMounted();
+
+  // Load saved filters on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const savedFilters = JSON.parse(saved);
+    if (mounted && isStorageLoaded && Object.keys(savedFilters).length > 0) {
+      try {
         // Restore dates if present
         if (savedFilters.dateRange) {
           if (savedFilters.dateRange.start) {
-            savedFilters.dateRange.start = new Date(savedFilters.dateRange.start);
-            setStartDate(format(savedFilters.dateRange.start, 'yyyy-MM-dd'));
+            const startDate = new Date(savedFilters.dateRange.start);
+            setStartDate(format(startDate, 'yyyy-MM-dd'));
           }
           if (savedFilters.dateRange.end) {
-            savedFilters.dateRange.end = new Date(savedFilters.dateRange.end);
-            setEndDate(format(savedFilters.dateRange.end, 'yyyy-MM-dd'));
+            const endDate = new Date(savedFilters.dateRange.end);
+            setEndDate(format(endDate, 'yyyy-MM-dd'));
           }
         }
         // Restore other fields
@@ -117,21 +119,19 @@ export default function TodoNFTFilters({
         if (savedFilters.priorities) setSelectedPriorities(savedFilters.priorities);
         
         setFilters(savedFilters);
+      } catch (error) {
+        console.error('Failed to load saved filters:', error);
       }
-    } catch (error) {
-      console.error('Failed to load saved filters:', error);
     }
-  }, []);
+  }, [mounted, isStorageLoaded, savedFilters]);
 
   // Save filters to localStorage and notify parent
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-    } catch (error) {
-      console.error('Failed to save filters:', error);
+    if (mounted && isStorageLoaded) {
+      setSavedFilters(filters);
     }
     onFilterChange(filters);
-  }, [filters, onFilterChange]);
+  }, [filters, onFilterChange, mounted, isStorageLoaded, setSavedFilters]);
 
   // Calculate active filter count
   const activeFilterCount = useMemo(() => {

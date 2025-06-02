@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import WalletConnectButton from './WalletConnectButton';
 import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
+import { WalletOptional } from './GracefulWalletFeature';
 import { useBlockchainEvents } from '@/hooks/useBlockchainEvents';
 import { useSuiClientRecovery } from '@/hooks/useSuiClientRecovery';
 import { getSuiClient } from '@/lib/sui-client';
+import { useSafeTheme } from '@/hooks/useSafeTheme';
 import testnetConfig from '@/config/testnet.json';
 import {
   ChevronDownIcon,
@@ -47,8 +49,9 @@ function Navbar({ currentPage }: NavbarProps) {
   const { eventCache, connectionState } = useBlockchainEvents();
   const { executeWithSuiClient } = useSuiClientRecovery();
   
+  const { isDarkMode, toggleTheme, isLoaded: themeLoaded } = useSafeTheme();
+  
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [nftCount, setNftCount] = useState(0);
   const [balance, setBalance] = useState('0');
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,22 +78,7 @@ function Navbar({ currentPage }: NavbarProps) {
     });
   }
 
-  // Handle dark mode
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    
-    setIsDarkMode(shouldBeDark);
-    document.documentElement.classList.toggle('dark', shouldBeDark);
-  }, []);
-
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem('theme', newMode ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', newMode);
-  };
+  // Theme is now handled by useSafeTheme hook - no additional setup needed
 
   // Fetch NFT count and balance when wallet is connected
   useEffect(() => {
@@ -273,7 +261,7 @@ function Navbar({ currentPage }: NavbarProps) {
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
             {/* Sync Status Indicator */}
-            {connected && (
+            <WalletOptional>
               <button
                 onClick={simulateSync}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -292,10 +280,10 @@ function Navbar({ currentPage }: NavbarProps) {
                   <ExclamationCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 )}
               </button>
-            )}
+            </WalletOptional>
 
             {/* Notifications */}
-            {connected && (
+            <WalletOptional>
               <div className="relative" ref={notificationRef}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
@@ -342,33 +330,35 @@ function Navbar({ currentPage }: NavbarProps) {
                   </div>
                 )}
               </div>
-            )}
+            </WalletOptional>
 
             {/* Theme Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
-            >
-              {isDarkMode ? (
-                <SunIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <MoonIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              )}
-            </button>
+            {themeLoaded && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              >
+                {isDarkMode ? (
+                  <SunIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <MoonIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
+            )}
 
             {/* Wallet Balance Display */}
-            {connected && (
+            <WalletOptional>
               <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Balance:</span>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {balance} SUI
                 </span>
               </div>
-            )}
+            </WalletOptional>
 
             {/* Quick Actions Dropdown */}
-            {connected && (
+            <WalletOptional>
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowQuickActions(!showQuickActions)}
@@ -414,7 +404,7 @@ function Navbar({ currentPage }: NavbarProps) {
                   </div>
                 )}
               </div>
-            )}
+            </WalletOptional>
 
             {/* Wallet Connect Button */}
             <WalletConnectButton size="sm" />
@@ -479,7 +469,7 @@ function Navbar({ currentPage }: NavbarProps) {
             </div>
 
             {/* Mobile Wallet Info */}
-            {connected && (
+            <WalletOptional>
               <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Wallet Balance</span>
@@ -494,10 +484,10 @@ function Navbar({ currentPage }: NavbarProps) {
                   </span>
                 </div>
               </div>
-            )}
+            </WalletOptional>
 
             {/* Mobile Quick Actions */}
-            {connected && (
+            <WalletOptional>
               <div className="mt-4 space-y-2">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 px-4 mb-2">
                   Quick Actions
@@ -517,7 +507,7 @@ function Navbar({ currentPage }: NavbarProps) {
                   View My NFTs
                 </Link>
               </div>
-            )}
+            </WalletOptional>
           </div>
         )}
       </nav>

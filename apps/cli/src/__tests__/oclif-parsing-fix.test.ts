@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
 import { Command } from '@oclif/core';
-import BaseCommand from '../base-command';
 import AI from '../commands/ai';
 import {
   initializeCommandForTest,

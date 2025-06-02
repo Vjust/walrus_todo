@@ -4,6 +4,7 @@ import chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
+import { Todo } from '../types/todo';
 
 // Helper function for colored priority display
 function getColoredPriority(priority: string): string {
@@ -133,8 +134,8 @@ export default class DeleteCommand extends BaseCommand {
    * Parse input arguments and flags to determine delete operation
    */
   private parseDeleteInput(
-    args: any,
-    flags: any
+    args: { listName?: string; todoId?: string },
+    flags: { all?: boolean; id?: string; force?: boolean }
   ): {
     listName: string | null;
     todoIdentifier: string | null;
@@ -262,7 +263,7 @@ export default class DeleteCommand extends BaseCommand {
     );
     if (list.todos.length > 0 && list.todos.length <= 5) {
       this.log(chalk.dim('\n  Deleted todos:'));
-      list.todos.forEach((todo: any) => {
+      list.todos.forEach((todo: Todo) => {
         this.log(chalk.dim(`  • ${todo.title}`));
       });
     }
@@ -276,7 +277,7 @@ export default class DeleteCommand extends BaseCommand {
     todoIdentifier: string,
     force: boolean
   ): Promise<void> {
-    let todo: any;
+    let todo: Todo | undefined;
     let actualListName: string;
 
     if (listName) {
@@ -294,7 +295,7 @@ export default class DeleteCommand extends BaseCommand {
 
       // If not found, try partial ID match
       if (!todo && this.looksLikeTodoId(todoIdentifier)) {
-        const partialMatches = list.todos.filter((t: any) =>
+        const partialMatches = list.todos.filter((t: Todo) =>
           t.id.toLowerCase().startsWith(todoIdentifier.toLowerCase())
         );
 
@@ -306,7 +307,7 @@ export default class DeleteCommand extends BaseCommand {
               `⚠️  Multiple todos found matching "${todoIdentifier}" in list "${listName}":`
             )
           );
-          partialMatches.forEach((t: any, index: number) => {
+          partialMatches.forEach((t: Todo, index: number) => {
             this.log(
               `  ${index + 1}. ${chalk.bold(t.title)} (${chalk.dim(t.id)})`
             );
@@ -328,7 +329,7 @@ export default class DeleteCommand extends BaseCommand {
             )
           );
           this.log(chalk.dim('\nAvailable todos in this list:'));
-          availableTodos.forEach((t: any) => {
+          availableTodos.forEach((t: Todo) => {
             this.log(
               `  • ${t.title} ${chalk.dim(`(${t.id.substring(0, 8)}...)`)}`
             );
@@ -389,24 +390,24 @@ export default class DeleteCommand extends BaseCommand {
    */
   private async findTodoInAllLists(
     todoIdentifier: string
-  ): Promise<{ todo: any; listName: string } | null> {
+  ): Promise<{ todo: Todo; listName: string } | null> {
     const lists = await this.todoService.getAllListsWithContent();
-    const matches: Array<{ todo: any; listName: string }> = [];
+    const matches: Array<{ todo: Todo; listName: string }> = [];
 
     for (const [listName, list] of Object.entries(lists)) {
       // First try exact match
       const exactMatch = list.todos.find(
-        (t: any) => t.id === todoIdentifier || t.title === todoIdentifier
+        (t: Todo) => t.id === todoIdentifier || t.title === todoIdentifier
       );
       if (exactMatch) {
         return { todo: exactMatch, listName };
       }
 
       // Collect partial ID matches
-      const partialMatches = list.todos.filter((t: any) =>
+      const partialMatches = list.todos.filter((t: Todo) =>
         t.id.toLowerCase().startsWith(todoIdentifier.toLowerCase())
       );
-      partialMatches.forEach((todo: any) => {
+      partialMatches.forEach((todo: Todo) => {
         matches.push({ todo, listName });
       });
     }
@@ -465,7 +466,7 @@ export default class DeleteCommand extends BaseCommand {
       if (list.todos.length > 0) {
         this.log(chalk.blue('\nTodos in this list:'));
         const maxToShow = 10;
-        list.todos.slice(0, maxToShow).forEach((todo: any, index: number) => {
+        list.todos.slice(0, maxToShow).forEach((todo: Todo, index: number) => {
           const status = todo.completed ? chalk.green('✓') : chalk.yellow('○');
           const priority = todo.priority
             ? ` ${chalk.dim(`[${getColoredPriority(todo.priority)}]`)}`

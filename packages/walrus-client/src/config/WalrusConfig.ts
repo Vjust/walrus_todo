@@ -9,7 +9,7 @@ import { WalrusValidationError } from '../errors';
 export class WalrusConfig {
   private config: IWalrusConfig;
 
-  constructor(networkOrConfig: WalrusNetwork | Partial<IWalrusConfig> = 'testnet') {
+  constructor(networkOrConfig?: WalrusNetwork | Partial<IWalrusConfig>) {
     if (typeof networkOrConfig === 'string') {
       this.config = this.createFromNetwork(networkOrConfig);
     } else {
@@ -32,14 +32,14 @@ export class WalrusConfig {
     } as IWalrusConfig;
   }
 
-  private createFromPartialConfig(partialConfig: Partial<IWalrusConfig>): IWalrusConfig {
-    const network = partialConfig.network || 'testnet';
+  private createFromPartialConfig(partialConfig?: Partial<IWalrusConfig>): IWalrusConfig {
+    const network = partialConfig?.network || 'testnet';
     const networkDefaults = WALRUS_NETWORKS[network] || {};
 
     return {
       ...DEFAULT_CONFIG,
       ...networkDefaults,
-      ...partialConfig,
+      ...(partialConfig || {}),
       network,
     } as IWalrusConfig;
   }

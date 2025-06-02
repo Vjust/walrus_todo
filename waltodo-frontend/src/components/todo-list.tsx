@@ -34,15 +34,15 @@ function TodoList({ listName }: TodoListProps) {
   // Wallet context with safety checks
   const walletContext = useWalletContext();
   const { address, connected, signAndExecuteTransaction } = walletContext || {};
-  
-  // TODO: WebSocket/real-time updates temporarily disabled
-  
-  // Sui client hook with initialization state
+
+  // Sui client hook with initialization state - moved before early returns
   const { 
     isInitialized: suiClientInitialized, 
     isInitializing: suiClientInitializing, 
     error: suiClientError 
   } = useSuiClient('testnet');
+
+  // TODO: WebSocket/real-time updates temporarily disabled
 
   // Disable blockchain events to prevent console spam
   // const { syncedTodos, isConnected: eventsConnected } = useTodoStateSync({
@@ -79,12 +79,9 @@ function TodoList({ listName }: TodoListProps) {
   // Use merged todos since blockchain events are disabled
   const displayTodos = useMemo(() => mergedTodos, [mergedTodos]);
 
-  // Component mount effect
+  // SSR/Hydration safety - don't render wallet features until client-side mounted
   useEffect(() => {
     setComponentMounted(true);
-    return () => {
-      setComponentMounted(false);
-    };
   }, []);
 
   // Initialization guard effect
@@ -190,7 +187,7 @@ function TodoList({ listName }: TodoListProps) {
     };
   }, [listName, address]);
 
-
+  // Move all useCallback hooks before early returns
   const refreshBlockchainTodos = useCallback(async () => {
     // Safety guards - moved inside the callback to ensure stable hook count
     if (!componentMounted || !initializationComplete) return;
@@ -357,8 +354,13 @@ function TodoList({ listName }: TodoListProps) {
     }
   }, [signAndExecuteTransaction, address, refreshBlockchainTodos, todos, suiClientInitialized, componentMounted, initializationComplete]);
 
+  // Early returns after all hooks are called
+  if (!componentMounted) {
+    return <TodoListSkeleton />;
+  }
+
   // Loading states with proper initialization guards
-  if (!componentMounted || isLoading || (connected && suiClientInitializing)) {
+  if (isLoading || (connected && suiClientInitializing)) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
         <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
@@ -611,6 +613,20 @@ function TodoList({ listName }: TodoListProps) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Skeleton component for loading state during hydration
+function TodoListSkeleton() {
+  return (
+    <div className='flex flex-col items-center justify-center py-12'>
+      <div className='w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin'></div>
+      <div className='mt-4 text-center'>
+        <p className='text-sm text-gray-500 animate-pulse'>
+          Initializing todo list...
+        </p>
+      </div>
     </div>
   );
 }

@@ -19,10 +19,6 @@ describe('Promise Utilities', () => {
     console.error = originalConsoleError;
   });
 
-  // Helper function for failing tests explicitly
-  const fail = (message: string) => {
-    throw new Error(message);
-  };
 
   describe('withTimeout', () => {
     it('should resolve when promise completes within timeout', async () => {

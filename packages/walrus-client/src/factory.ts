@@ -22,7 +22,7 @@ export function createWalrusClient(
     return new WalrusClient(networkOrConfig);
   }
   
-  return new WalrusClient(new WalrusConfig(networkOrConfig));
+  return new WalrusClient(new WalrusConfig(networkOrConfig as any || 'testnet'));
 }
 
 /**
@@ -43,7 +43,7 @@ export function createWalrusImageStorage(
     return new WalrusImageStorage(networkOrConfig, options);
   }
   
-  return new WalrusImageStorage(new WalrusConfig(networkOrConfig), options);
+  return new WalrusImageStorage(new WalrusConfig(networkOrConfig as any || 'testnet'), options);
 }
 
 /**
@@ -108,15 +108,17 @@ export async function createWalrusClientWithDynamicConfig(
 ): Promise<WalrusClient> {
   try {
     // Try to import config-loader if available
-    const { loadConfig } = await import('@waltodo/config-loader');
-    const config = await loadConfig();
+    const { loadNetworkConfig } = await import('@waltodo/config-loader');
+    const configResult = await loadNetworkConfig(network);
+    const config = configResult.config;
     
     return new WalrusClient({
-      network: config?.walrus?.network || network,
-      publisherUrl: config?.walrus?.publisherUrl,
-      aggregatorUrl: config?.walrus?.aggregatorUrl,
+      network: (config?.walrus as any)?.network || network,
+      publisherUrl: (config?.walrus as any)?.publisherUrl,
+      aggregatorUrl: (config?.walrus as any)?.aggregatorUrl,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.warn('Config loader not available, using default config:', error);
     return createWalrusClient(network);
   }

@@ -50,6 +50,10 @@ const performanceMetrics = new Map<string, PerformanceMetrics>();
 let webpSupported: boolean | null = null;
 
 export async function checkWebPSupport(): Promise<boolean> {
+  if (typeof window === 'undefined') {
+    return false; // Assume no WebP support during SSR
+  }
+
   if (webpSupported !== null) return webpSupported;
 
   try {
@@ -72,6 +76,11 @@ export async function checkWebPSupport(): Promise<boolean> {
 
 // Generate blur placeholder using canvas
 export async function generateBlurPlaceholder(src: string): Promise<string> {
+  if (typeof window === 'undefined') {
+    // Return a gradient fallback for SSR
+    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 1 1%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e0e0e0%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f0f0f0%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%221%22 height%3D%221%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
+  }
+
   const cached = blurCache.get(src);
   if (cached) return cached;
 
@@ -112,6 +121,7 @@ export async function generateBlurPlaceholder(src: string): Promise<string> {
 
 // Convert image to WebP format if supported
 export async function convertToWebP(src: string): Promise<string> {
+  if (typeof window === 'undefined') return src;
   if (!await checkWebPSupport()) return src;
   
   const cached = imageCache.get(`webp:${src}`);
@@ -164,6 +174,15 @@ export function generateSrcSet(src: string, sizes: number[] = [320, 640, 960, 12
 let lazyImageObserver: IntersectionObserver | null = null;
 
 function getLazyImageObserver(onIntersect: (entry: IntersectionObserverEntry) => void): IntersectionObserver {
+  if (typeof window === 'undefined') {
+    // Return a no-op observer for SSR
+    return {
+      observe: () => {},
+      unobserve: () => {},
+      disconnect: () => {},
+    } as IntersectionObserver;
+  }
+
   if (!lazyImageObserver) {
     lazyImageObserver = new IntersectionObserver(
       (entries) => {
@@ -201,7 +220,7 @@ export class ProgressiveImageLoader {
   }
 
   private async initOfflineCache() {
-    if ('caches' in window) {
+    if (typeof window !== 'undefined' && 'caches' in window) {
       try {
         this.offlineCache = await caches.open('walrus-images-v1');
       } catch (error) {
@@ -211,6 +230,14 @@ export class ProgressiveImageLoader {
   }
 
   async load(options: ImagePreloadOptions = {}): Promise<ResponsiveImage> {
+    if (typeof window === 'undefined') {
+      // Return a basic result for SSR
+      return {
+        src: this.state.src,
+        srcSet: generateSrcSet(this.state.src),
+      };
+    }
+
     this.performanceStart = performance.now();
 
     try {
@@ -383,7 +410,7 @@ export function useProgressiveImage(src: string, options: ImagePreloadOptions = 
   });
 
   useEffect(() => {
-    if (!src) return;
+    if (!src || typeof window === 'undefined') return;
 
     const loader = new ProgressiveImageLoader(src);
     
@@ -417,6 +444,8 @@ export function useLazyImage(src: string, elementRef: React.RefObject<HTMLElemen
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const element = elementRef.current;
     if (!element) return;
 

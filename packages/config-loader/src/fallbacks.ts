@@ -193,6 +193,7 @@ export function getFallbackConfig(network: NetworkName | string): AppConfig {
   const networkName = network as NetworkName;
   
   if (!(networkName in FALLBACK_CONFIGS)) {
+    // eslint-disable-next-line no-console
     console.warn(`Unknown network "${network}", falling back to localnet`);
     return LOCALNET_CONFIG;
   }

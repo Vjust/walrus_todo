@@ -613,7 +613,8 @@ async function main() {
 }
 
 // Export for testing
-export { ResourceMonitoringStressTest, StressTestResults, ResourceSnapshot };
+export { ResourceMonitoringStressTest };
+export type { StressTestResults, ResourceSnapshot };
 
 // Run if called directly
 if (require.main === module) {

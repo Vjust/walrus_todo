@@ -39,7 +39,7 @@ export interface ProgressUpdate {
   jobId: string;
   progress: number;
   stage: string;
-  details?: any;
+  details?: unknown;
   timestamp: number;
 }
 
@@ -167,7 +167,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   public shouldRunInBackground(
     command: string,
     args: string[],
-    flags: Record<string, any>
+    flags: Record<string, unknown>
   ): boolean {
     const profile = this.commandProfiles.get(command);
 
@@ -207,7 +207,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   public async executeInBackground(
     command: string,
     args: string[],
-    flags: Record<string, any>,
+    flags: Record<string, unknown>,
     options: BackgroundOptions = {}
   ): Promise<string> {
     const profile = this.commandProfiles.get(command);
@@ -819,15 +819,15 @@ export async function resetBackgroundOrchestrator(): Promise<void> {
 
 // For backward compatibility
 export const backgroundOrchestrator = {
-  shouldRunInBackground: (...args: any[]) => {
+  shouldRunInBackground: (command: string, args: string[], flags: Record<string, unknown>) => {
     try {
-      return getBackgroundOrchestrator().shouldRunInBackground(...args);
+      return getBackgroundOrchestrator().shouldRunInBackground(command, args, flags);
     } catch {
       return false; // Disabled - never use background
     }
   },
-  executeInBackground: (...args: any[]) => {
-    return getBackgroundOrchestrator().executeInBackground(...args);
+  executeInBackground: (command: string, args: string[], flags: Record<string, unknown>, options?: BackgroundOptions) => {
+    return getBackgroundOrchestrator().executeInBackground(command, args, flags, options);
   },
   shutdown: () => {
     if (_backgroundOrchestrator) {

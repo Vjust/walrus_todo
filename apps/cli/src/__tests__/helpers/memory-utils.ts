@@ -130,7 +130,6 @@ export function createMemoryEfficientMock<T = any>(
   const {
     maxCallHistory = 50,
     maxReturnSize = 10000,
-    maxStringLength = 1000,
   } = options;
 
   // Limit return value size
