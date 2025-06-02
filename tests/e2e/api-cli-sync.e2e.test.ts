@@ -189,26 +189,38 @@ describe('API-CLI Synchronization E2E Tests', () => {
   });
 
   describe('Real-time Sync via WebSocket', () => {
-    test('CLI creates trigger WebSocket events received by API clients', (done) => {
+    test('CLI creates trigger WebSocket events received by API clients', async () => {
       const todoTitle = 'WebSocket CLI Create Test';
       
-      wsClient.once('message', (data) => {
-        const event = JSON.parse(data.toString());
+      // Set up a promise to capture the WebSocket event
+      const eventPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout waiting for WebSocket event'));
+        }, 5000);
         
-        if (event.type === 'todo-created' && event.data.title === todoTitle) {
-          expect(event).toMatchObject({
-            type: 'todo-created',
-            data: {
-              title: todoTitle,
-              completed: false,
-            },
-          });
-          done();
-        }
+        wsClient.once('message', (data) => {
+          clearTimeout(timeout);
+          try {
+            const event = JSON.parse(data.toString());
+            resolve(event);
+          } catch (error) {
+            reject(error);
+          }
+        });
       });
       
       // Create via CLI
       execSync(`node ${cliPath} add "${todoTitle}"`, { encoding: 'utf8' });
+      
+      // Wait for and verify the event
+      const event = await eventPromise;
+      expect(event).toMatchObject({
+        type: 'todo-created',
+        data: {
+          title: todoTitle,
+          completed: false,
+        },
+      });
     });
 
     test('Batch operations trigger appropriate events', async () => {
