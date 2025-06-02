@@ -53,17 +53,17 @@ const createMockAIModelAdapter = (): AIModelAdapter => ({
  * This ensures the adapter is properly initialized before tests run
  */
 export const createTestAIService = (
-  apiKey: string = 'test-api-key',
+  apiKey: string = 'test-api-key-12345', // Ensure it passes validation
   provider: AIProvider = AIProvider.XAI,
   modelName: string = 'mock-model',
   verificationService?: AIVerificationService
 ): AIService => {
   const mockAdapter = createMockAIModelAdapter();
 
-  // Create service
+  // Create service with correct parameter order: provider, apiKey, modelName, options, verificationService
   const aiService = new AIService(
-    apiKey,
     provider,
+    apiKey,
     modelName,
     {},
     verificationService
@@ -190,8 +190,8 @@ export class AITestFactory {
 
     // Create the service with mock API key and configured provider/model
     const aiService = new AIService(
-      'mock-api-key',
       options.provider || AIProvider.XAI,
+      'mock-api-key-12345', // Use valid test API key
       options.modelName || 'mock-model'
     );
 
