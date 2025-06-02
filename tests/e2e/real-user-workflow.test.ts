@@ -86,6 +86,9 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     expect(suiObjectId).toBeTruthy();
 
     // Step 5: User verifies on Walrus scanner
+    let fetchSuccessful = false;
+    let fetchOutput = '';
+    
     if (blobId) {
       // console.log('\n=== Step 5: Verifying on Walrus Scanner ==='); // Removed console statement
       // Walrus URL: `https://testnet.viewblock.io/sui/blob/${blobId}`
@@ -95,8 +98,6 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       const checkWalrusCommand = `walrustodo fetch ${blobId} --network testnet`;
       // console.log(`Running: ${checkWalrusCommand}`); // Removed console statement
 
-      let fetchSuccessful = false;
-      let fetchOutput = '';
       try {
         fetchOutput = execSync(checkWalrusCommand, { encoding: 'utf8' });
         // console.log('Blob verification successful'); // Removed console statement
@@ -104,17 +105,20 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       } catch (error: unknown) {
         // console.warn('Could not fetch blob from Walrus:', error instanceof Error ? error.message : String(error)); // Removed console statement
       }
-
-      // Verify fetch operation outcome
-      expect(typeof fetchSuccessful).toBe('boolean');
-      // Validate fetch output based on success
-      const expectedResult = fetchSuccessful 
-        ? expect.stringContaining(todoTitle)
-        : '';
-      expect(fetchOutput).toEqual(expectedResult);
     }
 
+    // Verify fetch operation outcome (outside conditional block)
+    expect(typeof fetchSuccessful).toBe('boolean');
+    // Validate fetch output based on success
+    const expectedResult = fetchSuccessful 
+      ? expect.stringContaining(todoTitle)
+      : '';
+    expect(fetchOutput).toEqual(expectedResult);
+
     // Step 6: User verifies on Sui scanner
+    let suiCheckSuccessful = false;
+    let checkOutput = '';
+    
     if (suiObjectId) {
       // console.log('\n=== Step 6: Verifying on Sui Scanner ==='); // Removed console statement
       // Sui URL: `https://testnet.explorer.sui.io/object/${suiObjectId}`
@@ -124,8 +128,6 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       const checkSuiCommand = `walrustodo check ${suiObjectId} --network testnet`;
       // console.log(`Running: ${checkSuiCommand}`); // Removed console statement
 
-      let suiCheckSuccessful = false;
-      let checkOutput = '';
       try {
         checkOutput = execSync(checkSuiCommand, { encoding: 'utf8' });
         // console.log('Sui object verification successful'); // Removed console statement
@@ -133,15 +135,15 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       } catch (error: unknown) {
         // console.warn('Could not check Sui object:', error instanceof Error ? error.message : String(error)); // Removed console statement
       }
-
-      // Verify Sui check operation outcome
-      expect(typeof suiCheckSuccessful).toBe('boolean');
-      // Validate check output based on success
-      const expectedCheckResult = suiCheckSuccessful 
-        ? expect.stringContaining('NFT')
-        : '';
-      expect(checkOutput).toEqual(expectedCheckResult);
     }
+
+    // Verify Sui check operation outcome (outside conditional block)
+    expect(typeof suiCheckSuccessful).toBe('boolean');
+    // Validate check output based on success
+    const expectedCheckResult = suiCheckSuccessful 
+      ? expect.stringContaining('NFT')
+      : '';
+    expect(checkOutput).toEqual(expectedCheckResult);
 
     // Step 7: Summary for the user
     // console.log('\n=== Summary ==='); // Removed console statement

@@ -267,18 +267,14 @@ describe('Puppeteer NFT E2E Tests', () => {
         }
       }
 
+      let connectionEstablished = false;
+      
       if (connectButton) {
         await connectButton.click();
 
         // Wait for connection
         await runner.waitForText('Connected', 5000);
-
-        // Verify wallet address appears
-        const addressVisible = await page.evaluate(() => {
-          return document.body.innerText.includes('0x1234');
-        });
-
-        expect(addressVisible).toBe(true);
+        connectionEstablished = true;
       } else {
         // If no connect button found, app might auto-connect or have different UI
         console.log('No connect button found, checking for auto-connection...');
@@ -296,7 +292,17 @@ describe('Puppeteer NFT E2E Tests', () => {
             'Unable to find connect button or establish connection'
           );
         }
+        connectionEstablished = true;
       }
+
+      // Verify connection was established (outside conditional blocks)
+      expect(connectionEstablished).toBe(true);
+      
+      // Verify wallet address appears
+      const addressVisible = await page.evaluate(() => {
+        return document.body.innerText.includes('0x1234');
+      });
+      expect(addressVisible).toBe(true);
     }, 15000);
 
     test('should handle wallet connection errors', async () => {
