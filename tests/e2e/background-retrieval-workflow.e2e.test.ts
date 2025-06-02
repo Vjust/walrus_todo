@@ -531,14 +531,14 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
       // Extract job ID
       const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
-      if (jobIdMatch) {
-        const jobId = jobIdMatch[1];
-        testJobIds.push(jobId);
+      expect(jobIdMatch).toBeTruthy();
+      
+      const jobId = jobIdMatch![1];
+      testJobIds.push(jobId);
 
-        // Check that job completed and was marked as such
-        const job = jobManager.getJob(jobId);
-        expect(job?.status).toBe('completed');
-      }
+      // Check that job completed and was marked as such
+      const job = jobManager.getJob(jobId);
+      expect(job?.status).toBe('completed');
     }, 30000);
 
     test('should handle multiple concurrent background operations', async () => {

@@ -233,34 +233,25 @@ describe('Background Commands E2E', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid commands gracefully', async () => {
-      try {
-        await execAsync(`node ${cliPath} invalid-command --background`, {
+      await expect(
+        execAsync(`node ${cliPath} invalid-command --background`, {
           cwd: testDir,
-        });
-        fail('Should have thrown an error');
-      } catch (error: any) {
-        expect(error.code).toBeGreaterThan(0);
-      }
+        })
+      ).rejects.toThrow();
     }, 10000);
 
     it('should handle missing job IDs in status commands', async () => {
-      try {
-        await execAsync(`node ${cliPath} jobs status`, { cwd: testDir });
-        fail('Should have thrown an error');
-      } catch (error: any) {
-        expect(error.message).toContain('Job ID is required');
-      }
+      await expect(
+        execAsync(`node ${cliPath} jobs status`, { cwd: testDir })
+      ).rejects.toThrow(/Job ID is required/);
     }, 10000);
 
     it('should handle non-existent job IDs', async () => {
-      try {
-        await execAsync(`node ${cliPath} jobs status non-existent-job-id`, {
+      await expect(
+        execAsync(`node ${cliPath} jobs status non-existent-job-id`, {
           cwd: testDir,
-        });
-        fail('Should have thrown an error');
-      } catch (error: any) {
-        expect(error.message).toContain('Job not found');
-      }
+        })
+      ).rejects.toThrow(/Job not found/);
     }, 10000);
   });
 
