@@ -202,11 +202,9 @@ describe('BatchUploader', () => {
       // Verify the list being uploaded has the updated blob IDs
       const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
       expect(uploadedList).toBeDefined();
-      if (uploadedList) {
-        expect(uploadedList.todos[0]!.walrusBlobId).toBe('mock-blob-1');
-        expect(uploadedList.todos[1]!.walrusBlobId).toBe('mock-blob-2');
-        expect(uploadedList.todos[2]!.walrusBlobId).toBe('mock-blob-3');
-      }
+      expect(uploadedList?.todos[0]!.walrusBlobId).toBe('mock-blob-1');
+      expect(uploadedList?.todos[1]!.walrusBlobId).toBe('mock-blob-2');
+      expect(uploadedList?.todos[2]!.walrusBlobId).toBe('mock-blob-3');
     });
 
     it('should update the list with successful blob IDs even if some todos fail', async () => {
@@ -227,11 +225,9 @@ describe('BatchUploader', () => {
       // Verify the list being uploaded has the updated blob IDs for successful uploads only
       const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
       expect(uploadedList).toBeDefined();
-      if (uploadedList) {
-        expect(uploadedList.todos[0]!.walrusBlobId).toBe('mock-blob-1');
-        expect(uploadedList.todos[1]!.walrusBlobId).toBeUndefined(); // Failed
-        expect(uploadedList.todos[2]!.walrusBlobId).toBe('mock-blob-3');
-      }
+      expect(uploadedList?.todos[0]!.walrusBlobId).toBe('mock-blob-1');
+      expect(uploadedList?.todos[1]!.walrusBlobId).toBeUndefined(); // Failed
+      expect(uploadedList?.todos[2]!.walrusBlobId).toBe('mock-blob-3');
     });
   });
 });
