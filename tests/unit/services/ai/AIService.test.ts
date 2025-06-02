@@ -308,7 +308,7 @@ Line 3: Conclusion`;
 
   describe('Error Scenarios', () => {
     it('should handle service initialization errors', async () => {
-      const brokenService = new AIService('invalid-key', AIProviderType.XAI);
+      const brokenService = new AIService(AIProviderType.XAI, 'invalid-key');
 
       // The service should still work with the mock provider in test environment
       await expect(
@@ -348,11 +348,11 @@ Line 3: Conclusion`;
 
   describe('Provider Configuration', () => {
     it('should work with different providers', async () => {
-      const xaiService = new AIService(testApiKey, AIProviderType.XAI);
-      const openaiService = new AIService(testApiKey, AIProviderType.OPENAI);
+      const xaiService = new AIService(AIProviderType.XAI, testApiKey);
+      const openaiService = new AIService(AIProviderType.OPENAI, testApiKey);
       const anthropicService = new AIService(
-        testApiKey,
-        AIProviderType.ANTHROPIC
+        AIProviderType.ANTHROPIC,
+        testApiKey
       );
 
       // All should work with mocks in test environment
@@ -368,7 +368,7 @@ Line 3: Conclusion`;
     });
 
     it('should use default provider when not specified', async () => {
-      const defaultService = new AIService(testApiKey);
+      const defaultService = new AIService(undefined, testApiKey);
 
       await expect(
         defaultService.summarizeTodos(sampleTodos)

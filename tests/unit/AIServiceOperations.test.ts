@@ -80,9 +80,14 @@ describe('AIService Operations', () => {
       expect(aiService.getProvider().getModelName()).toBe('mock-model');
     });
 
-    it('should set a different provider after initialization', () => {
+    it('should set a different provider after initialization when setProvider exists', () => {
       const aiService = createTestAIService('test-api-key', AIProvider.XAI);
       expect(aiService.getProvider().getProviderName()).toBe(AIProvider.XAI);
+
+      // Skip this test if setProvider method doesn't exist
+      if (typeof (aiService as any).setProvider !== 'function') {
+        return;
+      }
 
       // Create a new mock adapter for the provider change
       const newMockAdapter = createMockAIModelAdapter();
@@ -91,26 +96,31 @@ describe('AIService Operations', () => {
       );
       (newMockAdapter.getModelName as jest.Mock).mockReturnValue('gpt-4');
 
-      // Mock the setProvider method since it might not exist in current implementation
+      (aiService as any).setProvider(AIProvider.OPENAI, 'gpt-4');
+
+      // Manually update the adapter for test verification
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: newMockAdapter,
+        writable: true,
+        configurable: true,
+      });
+
+      expect(aiService.getProvider().getProviderName()).toBe(
+        AIProvider.OPENAI
+      );
+      expect(aiService.getProvider().getModelName()).toBe('gpt-4');
+    });
+
+    it('should maintain provider when setProvider does not exist', () => {
+      const aiService = createTestAIService('test-api-key', AIProvider.XAI);
+      
+      // Skip this test if setProvider method exists
       if (typeof (aiService as any).setProvider === 'function') {
-        (aiService as any).setProvider(AIProvider.OPENAI, 'gpt-4');
-
-        // Manually update the adapter for test verification
-        Object.defineProperty(aiService, 'modelAdapter', {
-          value: newMockAdapter,
-          writable: true,
-          configurable: true,
-        });
-
-        expect(aiService.getProvider().getProviderName()).toBe(
-          AIProvider.OPENAI
-        );
-        expect(aiService.getProvider().getModelName()).toBe('gpt-4');
-      } else {
-        // Test the provider retrieval works properly
-        expect(aiService.getProvider().getProviderName()).toBe(AIProvider.XAI);
-        expect(aiService.getProvider().getModelName()).toBe('mock-model');
+        return;
       }
+
+      expect(aiService.getProvider().getProviderName()).toBe(AIProvider.XAI);
+      expect(aiService.getProvider().getModelName()).toBe('mock-model');
     });
   });
 
