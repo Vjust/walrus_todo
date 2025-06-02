@@ -209,11 +209,9 @@ describe('Integration Tests', () => {
       networks.forEach(network => {
         const url = getNetworkUrl(network);
         expect(url).toBeTruthy();
-        if (network === 'localnet') {
-          expect(url).toContain('localhost');
-        } else {
-          expect(url).toContain(network);
-        }
+        
+        const expectedContent = network === 'localnet' ? 'localhost' : network;
+        expect(url).toContain(expectedContent);
       });
     });
   });

@@ -108,11 +108,10 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       // Verify fetch operation outcome
       expect(typeof fetchSuccessful).toBe('boolean');
       // Validate fetch output based on success
-      if (fetchSuccessful) {
-        expect(fetchOutput).toContain(todoTitle);
-      } else {
-        expect(fetchOutput).toBe('');
-      }
+      const expectedResult = fetchSuccessful 
+        ? expect.stringContaining(todoTitle)
+        : '';
+      expect(fetchOutput).toEqual(expectedResult);
     }
 
     // Step 6: User verifies on Sui scanner
@@ -138,11 +137,10 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       // Verify Sui check operation outcome
       expect(typeof suiCheckSuccessful).toBe('boolean');
       // Validate check output based on success
-      if (suiCheckSuccessful) {
-        expect(checkOutput).toContain('NFT');
-      } else {
-        expect(checkOutput).toBe('');
-      }
+      const expectedCheckResult = suiCheckSuccessful 
+        ? expect.stringContaining('NFT')
+        : '';
+      expect(checkOutput).toEqual(expectedCheckResult);
     }
 
     // Step 7: Summary for the user

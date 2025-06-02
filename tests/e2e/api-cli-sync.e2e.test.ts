@@ -288,9 +288,9 @@ describe('API-CLI Synchronization E2E Tests', () => {
       expect(cliTodos.length).toBe(apiTodos.length);
       
       // First few should match (allowing for timing differences)
-      if (cliTodos.length > 0 && apiTodos.length > 0) {
-        expect(cliTodos[0].title).toBe(apiTodos[0].title);
-      }
+      expect(cliTodos.length).toBeGreaterThan(0);
+      expect(apiTodos.length).toBeGreaterThan(0);
+      expect(cliTodos[0].title).toBe(apiTodos[0].title);
     });
 
     test('Filtered results are consistent', async () => {

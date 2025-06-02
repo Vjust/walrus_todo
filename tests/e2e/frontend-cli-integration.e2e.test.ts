@@ -152,16 +152,16 @@ describe('Frontend-CLI Integration Tests', () => {
           /Wallet Address:\s*(0x[a-fA-F0-9]+)/
         );
 
-        // Validate matches unconditionally
-        expect(packageIdMatch).toBeTruthy();
-        expect(addressMatch).toBeTruthy();
-
         deploymentInfo = {
           packageId: packageIdMatch?.[1] || '',
           walletAddress: addressMatch?.[1] || '',
           network: 'testnet',
         };
       }
+
+      // Validate deployment info was captured (after conditional blocks)
+      expect(deploymentInfo.packageId).toBeTruthy();
+      expect(deploymentInfo.walletAddress).toBeTruthy();
     });
 
     test('should verify frontend config files are generated correctly', async () => {

@@ -167,14 +167,13 @@ describe('complete command - positional arguments', () => {
 
       await expect(cmd.run()).rejects.toThrow(CLIError);
 
-      try {
-        await cmd.run();
-      } catch (error: any) {
-        expect(error.message).toContain('Please specify a todo to complete');
-        expect(error.message).toContain('Usage:');
-        expect(error.message).toContain('waltodo complete <todo-id>');
-        expect(error.message).toContain('waltodo complete <list> <todo-id>');
-      }
+      await expect(cmd.run()).rejects.toThrow(
+        expect.objectContaining({
+          message: expect.stringMatching(
+            /Please specify a todo to complete.*Usage:.*waltodo complete <todo-id>.*waltodo complete <list> <todo-id>/s
+          )
+        })
+      );
     });
 
     test('shows available lists when list not found', async () => {
@@ -186,14 +185,13 @@ describe('complete command - positional arguments', () => {
 
       await expect(cmd.run()).rejects.toThrow(CLIError);
 
-      try {
-        await cmd.run();
-      } catch (error: any) {
-        expect(error.message).toContain('List "nonexistent" not found');
-        expect(error.message).toContain(
-          'Available lists: default, work, personal'
-        );
-      }
+      await expect(cmd.run()).rejects.toThrow(
+        expect.objectContaining({
+          message: expect.stringMatching(
+            /List "nonexistent" not found.*Available lists: default, work, personal/s
+          )
+        })
+      );
     });
 
     test('shows available todos when todo not found', async () => {
@@ -216,21 +214,16 @@ describe('complete command - positional arguments', () => {
 
       await expect(cmd.run()).rejects.toThrow(CLIError);
 
-      try {
-        await cmd.run();
-      } catch (error: any) {
-        expect(error.message).toContain(
-          'Todo "nonexistent-todo" not found in list "mylist"'
-        );
-        expect(error.message).toContain('Available todos in this list:');
-        expect(error.message).toContain('todo-111');
-        expect(error.message).toContain('Task 1');
-        expect(error.message).toContain('Task 2');
-        expect(error.message).not.toContain('Task 3'); // Completed todos should not be shown
-        expect(error.message).toContain(
-          'Tip: You can use either the todo ID or title'
-        );
-      }
+      await expect(cmd.run()).rejects.toThrow(
+        expect.objectContaining({
+          message: expect.allOf([
+            expect.stringMatching(
+              /Todo "nonexistent-todo" not found in list "mylist".*Available todos in this list:.*todo-111.*Task 1.*Task 2.*Tip: You can use either the todo ID or title/s
+            ),
+            expect.not.stringContaining('Task 3') // Completed todos should not be shown
+          ])
+        })
+      );
     });
 
     test('indicates when todo is already completed', async () => {
