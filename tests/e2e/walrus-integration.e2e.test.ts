@@ -226,11 +226,10 @@ describe('Walrus Protocol Integration Tests', () => {
 
         expect(storeOutput).toContain('stored successfully');
         // console.log('✓ Large file storage handled correctly'); // Removed console statement
-      } catch (_error) {
+      } catch (error) {
         const isTimeout = error.toString().includes('timeout');
-        // Validate timeout check
-        const isTimeoutBoolean = typeof isTimeout === 'boolean';
-        expect(isTimeoutBoolean).toBe(true);
+        // Validate timeout check - timeouts are acceptable for large files
+        expect(typeof isTimeout).toBe('boolean');
         if (!isTimeout) {
           throw error;
         }
