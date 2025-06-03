@@ -7,6 +7,10 @@ import { storeTodoOnBlockchain } from '@/lib/sui-client';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useSecureForm } from '@/hooks/useSecureForm';
+import { createTodoSchema, RATE_LIMIT_CONFIGS } from '@/lib/validation-schemas';
+import { SecurityUtils } from '@/lib/security-utils';
+import { useRateLimit } from '@/lib/rate-limiter';
 
 type CreateTodoFormProps = {
   listName: string;
@@ -42,50 +46,52 @@ export default function CreateTodoForm({
     };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // Rate limiting for todo creation
+  const { checkLimit: checkTodoRateLimit } = useRateLimit('todo_creation', RATE_LIMIT_CONFIGS.FORM_SUBMISSION);
+  
+  // Secure form validation
+  const secureForm = useSecureForm({
+    schema: createTodoSchema,
+    sanitize: true,
+    csrfProtection: true,
+    rateLimit: {
+      maxAttempts: 5,
+      windowMs: 60 * 1000, // 1 minute
+    },
+    onSubmit: async (validatedData) => {
+      // This will be called with validated and sanitized data
+      await handleSecureSubmit(validatedData);
+    },
+    onError: (errors) => {
+      const errorMessage = errors.map(err => err.message).join(', ');
+      setError(errorMessage);
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+
+  // Handle secure form submission
+  const handleSecureSubmit = async (validatedData: typeof createTodoSchema._type) => {
     // Safety guard
     if (!componentMounted) {return;}
 
-    // Validation
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) {
-      setError('Title is required');
-      return;
+    // Check rate limiting
+    const rateLimitResult = checkTodoRateLimit();
+    if (!rateLimitResult.allowed) {
+      throw new Error(`Rate limit exceeded. Please wait ${Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)} seconds.`);
     }
-    
-    if (trimmedTitle.length > 100) {
-      setError('Title must be 100 characters or less');
-      return;
-    }
-
-    // Clear any previous errors
-    setError(null);
-
-    // Allow creating todos without wallet connection (local storage only)
-    // if (!connected) {
-    //   setError('Please connect your wallet to add todos')
-    //   return
-    // }
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Create the todo object
+      // Create the todo object with sanitized data
       const todoData = {
-        title: trimmedTitle,
-        description: description.trim() || undefined,
+        title: SecurityUtils.sanitizeUserInput(validatedData.title),
+        description: validatedData.description ? SecurityUtils.sanitizeUserInput(validatedData.description) : undefined,
         completed: false,
-        priority,
-        tags: tags
-          ? tags
-              .split(',')
-              .map(tag => tag.trim())
-              .filter(Boolean)
-          : undefined,
-        dueDate: dueDate || undefined,
+        priority: validatedData.priority,
+        tags: validatedData.tags,
+        dueDate: validatedData.dueDate || undefined,
       };
 
       let newTodo;
@@ -193,7 +199,7 @@ export default function CreateTodoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4'>
+    <form onSubmit={secureForm.handleSubmit} className='space-y-4'>
       {/* Error display */}
       {error && (
         <div className='bg-red-50 border border-red-200 rounded-lg p-3'>

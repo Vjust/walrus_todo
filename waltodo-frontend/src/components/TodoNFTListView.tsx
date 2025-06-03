@@ -1,8 +1,26 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  createColumnHelper,
+  ExpandedState,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  RowSelectionState,
+  SortingState,
+  useReactTable,
+  VisibilityState,
+} from '@tanstack/react-table';
+import { format, formatDistanceToNow } from 'date-fns';
 import { TodoNFTDisplay } from '../types/nft-display';
-import { useNFTTableState } from '../hooks/useNFTTableState';
+import { TodoNFTImage } from './TodoNFTImage';
+import { useDebounce } from '../hooks/useDebounce';
+import { useWalletContext } from '../contexts/WalletContext';
 import { TodoNFTTable } from './ui/TodoNFTTable';
 import { TodoNFTTableControls } from './ui/TodoNFTTableControls';
 import { BulkActions } from './ui/TodoNFTTableActions';
@@ -25,6 +43,27 @@ interface TodoNFTListViewProps {
   className?: string;
 }
 
+// Priority color mapping
+const PRIORITY_COLORS = {
+  high: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+  medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
+  low: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+};
+
+// Status color mapping
+const STATUS_COLORS = {
+  completed: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+  pending: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
+};
+
+// Helper function to truncate address
+function truncateAddress(address: string, startLength = 6, endLength = 4): string {
+  if (!address || address.length <= startLength + endLength + 3) {
+    return address;
+  }
+  return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
+}
+
 export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
   nfts,
   loading = false,
@@ -41,21 +80,111 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
 
-  const tableContainerRef = useRef<HTMLDivElement>(null);
+  // State management
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [globalFilter, setGlobalFilter] = useState('');
 
-  // Use the table state hook for managing table functionality
-  const { 
-    table, 
-    columns, 
-    globalFilter, 
-    setGlobalFilter,
-    rowSelection,
-  } = useNFTTableState({
-    nfts,
-    onComplete,
-    onTransfer,
-    isProcessing,
-    setIsProcessing,
+  const debouncedGlobalFilter = useDebounce(globalFilter, 300);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const walletContext = useWalletContext();
+  const account = walletContext?.account;
+
+  // Column definitions
+  const columnHelper = createColumnHelper<TodoNFTDisplay>();
+
+  const columns = useMemo(() => [
+    // Selection column
+    columnHelper.display({
+      id: 'select',
+      header: 'Select',
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={row.getToggleSelectedHandler()}
+          className="cursor-pointer"
+        />
+      ),
+      size: 40,
+    }),
+
+    // Title column  
+    columnHelper.accessor('title', {
+      header: 'Title',
+      cell: (info) => (
+        <div className="min-w-0">
+          <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+            {info.getValue()}
+          </div>
+          {info.row.original.description && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {info.row.original.description}
+            </div>
+          )}
+        </div>
+      ),
+      size: 250,
+      enableSorting: true,
+    }),
+
+    // Status column
+    columnHelper.accessor('completed', {
+      header: 'Status',
+      cell: (info) => (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+          info.getValue() ? STATUS_COLORS.completed : STATUS_COLORS.pending
+        }`}>
+          {info.getValue() ? 'Completed' : 'Pending'}
+        </span>
+      ),
+      size: 100,
+      enableSorting: true,
+    }),
+
+    // Priority column
+    columnHelper.accessor('priority', {
+      header: 'Priority',
+      cell: (info) => (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${PRIORITY_COLORS[info.getValue() as keyof typeof PRIORITY_COLORS]}`}>
+          {info.getValue()}
+        </span>
+      ),
+      size: 100,
+      enableSorting: true,
+    }),
+  ], [columnHelper]);
+
+  // Create table instance
+  const table = useReactTable({
+    data: nfts,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter: debouncedGlobalFilter,
+      columnVisibility,
+      rowSelection,
+      expanded,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onExpandedChange: setExpanded,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: () => true,
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
   });
 
   // SSR/Hydration safety - prevent rendering until client-side mounted

@@ -3,9 +3,74 @@
 // Check if we're building for static export
 const isStaticExport = process.env.NEXT_EXPORT === 'true' || process.env.BUILD_MODE === 'static';
 
+// Security headers configuration
+const securityHeaders = [
+  {
+    key: 'X-DNS-Prefetch-Control',
+    value: 'on'
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload'
+  },
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block'
+  },
+  {
+    key: 'X-Frame-Options',
+    value: 'DENY'
+  },
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff'
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin'
+  },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), speaker=()'
+  }
+];
+
+// Content Security Policy
+const ContentSecurityPolicy = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://vitals.vercel-insights.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' data: blob: https: https://*.walrus.space https://*.sui.io https://vercel.com https://*.vercel.app;
+  font-src 'self' https://fonts.gstatic.com data:;
+  connect-src 'self' https: wss: https://*.sui.io https://*.walrus.space https://api.suiet.app https://wallet.sui.io https://vercel.live https://vitals.vercel-insights.com;
+  media-src 'self' https://*.walrus.space;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  block-all-mixed-content;
+  upgrade-insecure-requests;
+`;
+
 // Simple Next.js configuration for production build
 const nextConfig = {
   reactStrictMode: true,
+  
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          ...securityHeaders,
+          {
+            key: 'Content-Security-Policy',
+            value: ContentSecurityPolicy.replace(/\n/g, '')
+          }
+        ]
+      }
+    ];
+  },
   
   // Static export configuration
   ...(isStaticExport && {

@@ -274,7 +274,7 @@ describe('BlockchainTodoManager', () => {
     });
 
     it('should cancel delete when not confirmed', async () => {
-      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+      const _confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
 
       render(<BlockchainTodoManager />);
       

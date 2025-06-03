@@ -209,6 +209,164 @@ describe('WalletContext', () => {
     expect(result.current!.lastActivity).toBeGreaterThan(initialLastActivity);
   });
   
+  it('should handle network switching', async () => {
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
+    
+    expect(result.current).toBeTruthy();
+    
+    // Test network switching
+    await act(async () => {
+      await result.current!.switchNetwork('testnet');
+    });
+    
+    // Function should complete without throwing
+    expect(result.current).toBeTruthy();
+  });
+
+  it('should manage connection state consistently', async () => {
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
+    
+    expect(result.current).toBeTruthy();
+    expect(result.current!.connected).toBe(false);
+    expect(result.current!.connecting).toBe(false);
+    
+    // Test connection attempt
+    await act(async () => {
+      await result.current!.connect();
+    });
+    
+    // Connection state should be handled by the mocked hooks
+    expect(result.current).toBeTruthy();
+    expect(typeof result.current!.connected).toBe('boolean');
+  });
+
+  it('should maintain transaction history integrity', async () => {
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
+    
+    expect(result.current).toBeTruthy();
+    expect(result.current!.transactionHistory).toEqual([]);
+    
+    // Add multiple transactions
+    const tx1 = Promise.resolve({ digest: 'tx1' });
+    const tx2 = Promise.resolve({ digest: 'tx2' });
+    
+    await act(async () => {
+      await result.current!.trackTransaction(tx1, 'Transaction1');
+      await result.current!.trackTransaction(tx2, 'Transaction2');
+    });
+    
+    expect(result.current!.transactionHistory).toHaveLength(2);
+    
+    // Check transaction order (should be newest first)
+    expect(result.current!.transactionHistory[0].type).toBe('Transaction2');
+    expect(result.current!.transactionHistory[1].type).toBe('Transaction1');
+  });
+
+  it('should handle localStorage operations safely', () => {
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
+    
+    expect(result.current).toBeTruthy();
+    
+    // The context should not crash when localStorage operations occur
+    act(() => {
+      localStorageMock.setItem('test-key', 'test-value');
+    });
+    
+    expect(localStorageMock.getItem('test-key')).toBe('test-value');
+    expect(result.current).toBeTruthy();
+  });
+
+  it('should handle provider unmounting gracefully', () => {
+    const TestComponent = () => {
+      const wallet = useWalletContext();
+      return <div>{wallet ? 'Wallet Connected' : 'No Wallet'}</div>;
+    };
+    
+    const { unmount } = render(<TestComponent />, { wrapper });
+    
+    expect(screen.getByText('Wallet Connected')).toBeInTheDocument();
+    
+    // Should unmount without errors
+    expect(() => unmount()).not.toThrow();
+  });
+
+  it('should provide consistent typing', () => {
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
+    
+    expect(result.current).toBeTruthy();
+    
+    // Type checks for all properties
+    expect(typeof result.current!.connected).toBe('boolean');
+    expect(typeof result.current!.connecting).toBe('boolean');
+    expect(result.current!.address === null || typeof result.current!.address === 'string').toBe(true);
+    expect(result.current!.chainId === null || typeof result.current!.chainId === 'string').toBe(true);
+    expect(result.current!.name === null || typeof result.current!.name === 'string').toBe(true);
+    expect(result.current!.error === null || result.current!.error instanceof Error).toBe(true);
+    expect(Array.isArray(result.current!.transactionHistory)).toBe(true);
+    expect(typeof result.current!.lastActivity).toBe('number');
+    
+    // Function type checks
+    expect(typeof result.current!.connect).toBe('function');
+    expect(typeof result.current!.disconnect).toBe('function');
+    expect(typeof result.current!.switchNetwork).toBe('function');
+    expect(typeof result.current!.trackTransaction).toBe('function');
+    expect(typeof result.current!.setError).toBe('function');
+    expect(typeof result.current!.resetActivityTimer).toBe('function');
+  });
+
+  it('should handle edge cases in transaction tracking', async () => {
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
+    
+    expect(result.current).toBeTruthy();
+    
+    // Test with null transaction
+    await act(async () => {
+      try {
+        await result.current!.trackTransaction(null as any, 'NullTransaction');
+      } catch (error) {
+        // Expected to fail gracefully
+      }
+    });
+    
+    // Test with undefined transaction type
+    const mockTx = Promise.resolve({ digest: 'test' });
+    await act(async () => {
+      await result.current!.trackTransaction(mockTx, undefined as any);
+    });
+    
+    // Should handle edge cases without crashing
+    expect(result.current).toBeTruthy();
+  });
+
+  // Test component integration
+  it('should work with component consumers', () => {
+    const TestConsumer = () => {
+      const wallet = useWalletContext();
+      
+      if (!wallet) {
+        return <div>No wallet context</div>;
+      }
+      
+      return (
+        <div>
+          <div data-testid="connected">{wallet.connected ? 'Connected' : 'Disconnected'}</div>
+          <div data-testid="address">{wallet.address || 'No address'}</div>
+          <div data-testid="tx-count">{wallet.transactionHistory.length}</div>
+          <button onClick={() => wallet.connect()}>Connect</button>
+          <button onClick={() => wallet.disconnect()}>Disconnect</button>
+        </div>
+      );
+    };
+    
+    render(<TestConsumer />, { wrapper });
+    
+    expect(screen.getByTestId('connected')).toHaveTextContent('Disconnected');
+    expect(screen.getByTestId('address')).toHaveTextContent('No address');
+    expect(screen.getByTestId('tx-count')).toHaveTextContent('0');
+    expect(screen.getByText('Connect')).toBeInTheDocument();
+    expect(screen.getByText('Disconnect')).toBeInTheDocument();
+  });
+
   // Tests for localStorage persistence would go here, but they require more complex mocking
   // of the useWallet hook from @suiet/wallet-kit
 });

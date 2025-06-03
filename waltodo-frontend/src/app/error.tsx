@@ -1,7 +1,7 @@
 'use client';
 
 export default function Error({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -13,6 +13,7 @@ export default function Error({
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Error</h1>
         <p className="text-gray-600 mb-4">Something went wrong</p>
         <button 
+          type="button"
           onClick={() => reset()}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >

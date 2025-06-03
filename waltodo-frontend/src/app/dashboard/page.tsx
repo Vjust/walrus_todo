@@ -123,6 +123,7 @@ export default function Dashboard() {
                 <li key={list} className='mb-1'>
                   <div className='flex items-center gap-2'>
                     <button
+                      type="button"
                       className={`flex-grow text-left px-3 py-2 rounded-lg transition-colors ${
                         selectedList === list
                           ? 'bg-ocean-medium text-white font-medium'
@@ -134,6 +135,7 @@ export default function Dashboard() {
                     </button>
                     {list !== 'default' && (
                       <button
+                        type="button"
                         onClick={() => handleDeleteList(list)}
                         className='p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors'
                         title='Delete list'
@@ -162,6 +164,7 @@ export default function Dashboard() {
             <div className='mt-6'>
               {!showCreateList ? (
                 <button
+                  type="button"
                   className='ocean-button w-full'
                   onClick={() => setShowCreateList(true)}
                 >
@@ -180,6 +183,7 @@ export default function Dashboard() {
                   />
                   <div className='flex gap-2'>
                     <button
+                      type="button"
                       onClick={handleCreateList}
                       disabled={!newListName.trim()}
                       className='flex-1 px-3 py-2 bg-ocean-medium text-white rounded-lg hover:bg-ocean-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
@@ -187,6 +191,7 @@ export default function Dashboard() {
                       Create
                     </button>
                     <button
+                      type="button"
                       onClick={() => {
                         setShowCreateList(false);
                         setNewListName('');
@@ -221,13 +226,13 @@ export default function Dashboard() {
               </h2>
 
               <div className='flex space-x-2'>
-                <button className='px-3 py-1 text-sm bg-ocean-light/50 dark:bg-ocean-medium/50 rounded-lg hover:bg-ocean-light dark:hover:bg-ocean-medium transition-colors'>
+                <button type="button" className='px-3 py-1 text-sm bg-ocean-light/50 dark:bg-ocean-medium/50 rounded-lg hover:bg-ocean-light dark:hover:bg-ocean-medium transition-colors'>
                   All
                 </button>
-                <button className='px-3 py-1 text-sm bg-ocean-light/30 dark:bg-ocean-medium/30 rounded-lg hover:bg-ocean-light dark:hover:bg-ocean-medium transition-colors'>
+                <button type="button" className='px-3 py-1 text-sm bg-ocean-light/30 dark:bg-ocean-medium/30 rounded-lg hover:bg-ocean-light dark:hover:bg-ocean-medium transition-colors'>
                   Pending
                 </button>
-                <button className='px-3 py-1 text-sm bg-ocean-light/30 dark:bg-ocean-medium/30 rounded-lg hover:bg-ocean-light dark:hover:bg-ocean-medium transition-colors'>
+                <button type="button" className='px-3 py-1 text-sm bg-ocean-light/30 dark:bg-ocean-medium/30 rounded-lg hover:bg-ocean-light dark:hover:bg-ocean-medium transition-colors'>
                   Completed
                 </button>
               </div>

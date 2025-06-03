@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '../test-utils';
+import { render, screen, fireEvent, act } from '../test-utils';
 import { SessionTimeoutWarning } from '../../src/components/SessionTimeoutWarning';
 import { useWalletContext } from '../../src/contexts/WalletContext';
 
@@ -33,7 +33,7 @@ describe('SessionTimeoutWarning', () => {
     global.Date.now = jest.fn(() => mockNow);
     
     // Mock setInterval to capture the callback for testing
-    jest.spyOn(global, 'setInterval').mockImplementation((callback: any, ms?: number) => {
+    jest.spyOn(global, 'setInterval').mockImplementation((callback: any, _ms?: number) => {
       timerCallback = callback;
       return 1 as any; // Timer ID
     });
