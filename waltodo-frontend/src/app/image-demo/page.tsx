@@ -69,7 +69,7 @@ export default function ImageDemoPage() {
   }, []);
 
   React.useEffect(() => {
-    if (!imageOptimization) return;
+    if (!imageOptimization) {return;}
 
     // Update performance metrics periodically
     const interval = setInterval(() => {
@@ -80,13 +80,13 @@ export default function ImageDemoPage() {
   }, [imageOptimization]);
 
   const handlePreloadAll = async () => {
-    if (!imageOptimization) return;
+    if (!imageOptimization) {return;}
     const urls = demoImages.map(img => img.src);
     await imageOptimization.preloadImages(urls, { priority: 'high' });
   };
 
   const handleClearCache = () => {
-    if (!imageOptimization) return;
+    if (!imageOptimization) {return;}
     imageOptimization.clearImageCaches();
     if (typeof window !== 'undefined') {
       window.location.reload();

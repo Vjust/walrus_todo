@@ -89,7 +89,7 @@ export default function TodoNFTImageUsageExample() {
             url={exampleWalrusUrl}
             alt="Full Size NFT"
             displayMode="full"
-            priority={true}
+            priority
             quality={100}
           />
         </div>

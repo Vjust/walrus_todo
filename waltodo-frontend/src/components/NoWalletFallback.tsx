@@ -33,8 +33,8 @@ export function NoWalletFallback({
     // Track install button click
     if (analytics) {
       analytics.trackWallet({
-        action: 'install_click',
-        source: 'no_wallet_fallback',
+        action: 'connect' as const,
+        success: true,
       });
     }
 
@@ -43,13 +43,6 @@ export function NoWalletFallback({
   };
 
   const handleBrowseMode = () => {
-    if (analytics) {
-      analytics.trackEvent({
-        name: 'browse_mode_enabled',
-        source: 'no_wallet_fallback',
-      });
-    }
-
     if (onBrowseMode) {
       onBrowseMode();
     }

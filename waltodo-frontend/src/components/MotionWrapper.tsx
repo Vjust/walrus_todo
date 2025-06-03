@@ -42,7 +42,7 @@ export function MotionWrapper({
   }
 
   // After hydration, use motion component with animations
-  const MotionComponent = motion[as];
+  const MotionComponent = motion[as as keyof typeof motion] as any;
   
   return (
     <MotionComponent
@@ -91,8 +91,8 @@ export function SafeMotionDiv({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0, y: 20 } : false}
-      animate={mounted ? { opacity: 1, y: 0 } : false}
+      initial={mounted ? { opacity: 0, y: 20 } : undefined}
+      animate={mounted ? { opacity: 1, y: 0 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       className={className}
       {...props}
@@ -121,8 +121,8 @@ export function FadeIn({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0 } : false}
-      animate={mounted ? { opacity: 1 } : false}
+      initial={mounted ? { opacity: 0 } : undefined}
+      animate={mounted ? { opacity: 1 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       className={className}
       {...props}
@@ -153,8 +153,8 @@ export function SlideUp({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0, y: distance } : false}
-      animate={mounted ? { opacity: 1, y: 0 } : false}
+      initial={mounted ? { opacity: 0, y: distance } : undefined}
+      animate={mounted ? { opacity: 1, y: 0 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       className={className}
       {...props}
@@ -185,8 +185,8 @@ export function SlideInLeft({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0, x: -distance } : false}
-      animate={mounted ? { opacity: 1, x: 0 } : false}
+      initial={mounted ? { opacity: 0, x: -distance } : undefined}
+      animate={mounted ? { opacity: 1, x: 0 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       className={className}
       {...props}
@@ -217,8 +217,8 @@ export function SlideInRight({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0, x: distance } : false}
-      animate={mounted ? { opacity: 1, x: 0 } : false}
+      initial={mounted ? { opacity: 0, x: distance } : undefined}
+      animate={mounted ? { opacity: 1, x: 0 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       className={className}
       {...props}
@@ -249,8 +249,8 @@ export function ScaleIn({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0, scale } : false}
-      animate={mounted ? { opacity: 1, scale: 1 } : false}
+      initial={mounted ? { opacity: 0, scale } : undefined}
+      animate={mounted ? { opacity: 1, scale: 1 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       className={className}
       {...props}
@@ -282,8 +282,8 @@ export function ViewportSlideUp({
 
   return (
     <motion.div
-      initial={mounted ? { opacity: 0, y: distance } : false}
-      whileInView={mounted ? { opacity: 1, y: 0 } : {}}
+      initial={mounted ? { opacity: 0, y: distance } : undefined}
+      whileInView={mounted ? { opacity: 1, y: 0 } : undefined}
       transition={mounted ? { duration, delay } : undefined}
       viewport={{ once: true }}
       className={className}

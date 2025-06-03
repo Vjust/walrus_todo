@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronDown as ChevronDownIcon, ChevronUp as ChevronUpIcon, Filter as FunnelIcon, X as XMarkIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { useSafeLocalStorage, useMounted } from './SSRSafe';
+import { useMounted, useSafeLocalStorage } from './SSRSafe';
 
 export interface TodoNFTFilter {
   ownerAddress?: string;
@@ -110,13 +110,13 @@ export default function TodoNFTFilters({
           }
         }
         // Restore other fields
-        if (savedFilters.ownerAddress) setOwnerInput(savedFilters.ownerAddress);
+        if (savedFilters.ownerAddress) {setOwnerInput(savedFilters.ownerAddress);}
         if (savedFilters.storageSizeRange) {
-          if (savedFilters.storageSizeRange.min) setMinSize(String(savedFilters.storageSizeRange.min));
-          if (savedFilters.storageSizeRange.max) setMaxSize(String(savedFilters.storageSizeRange.max));
+          if (savedFilters.storageSizeRange.min) {setMinSize(String(savedFilters.storageSizeRange.min));}
+          if (savedFilters.storageSizeRange.max) {setMaxSize(String(savedFilters.storageSizeRange.max));}
         }
-        if (savedFilters.tags) setSelectedTags(savedFilters.tags);
-        if (savedFilters.priorities) setSelectedPriorities(savedFilters.priorities);
+        if (savedFilters.tags) {setSelectedTags(savedFilters.tags);}
+        if (savedFilters.priorities) {setSelectedPriorities(savedFilters.priorities);}
         
         setFilters(savedFilters);
       } catch (error) {
@@ -136,11 +136,11 @@ export default function TodoNFTFilters({
   // Calculate active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.ownerAddress) count++;
-    if (filters.dateRange?.start || filters.dateRange?.end) count++;
-    if (filters.storageSizeRange?.min || filters.storageSizeRange?.max) count++;
-    if (filters.tags && filters.tags.length > 0) count++;
-    if (filters.priorities && filters.priorities.length > 0) count++;
+    if (filters.ownerAddress) {count++;}
+    if (filters.dateRange?.start || filters.dateRange?.end) {count++;}
+    if (filters.storageSizeRange?.min || filters.storageSizeRange?.max) {count++;}
+    if (filters.tags && filters.tags.length > 0) {count++;}
+    if (filters.priorities && filters.priorities.length > 0) {count++;}
     return count;
   }, [filters]);
 
@@ -236,11 +236,11 @@ export default function TodoNFTFilters({
   };
 
   const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   };
 
   return (

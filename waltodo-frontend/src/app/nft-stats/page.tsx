@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { TodoNFTStats } from '../../components/TodoNFTStats';
+import React, { useEffect, useState } from 'react';
+import { DynamicTodoNFTStats } from '../../lib/dynamic-wallet-imports';
 import WalletConnectButton from '../../components/WalletConnectButton';
 import { ClientOnly } from '../../components/ClientOnly';
 import { motion } from 'framer-motion';
@@ -66,11 +66,11 @@ export default function NFTStatsPage() {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <div className="flex items-center space-x-1">
-                    <div className={`w-2 h-2 rounded-full ${networkStatus.sui === 'online' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${networkStatus.sui === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span className="text-xs text-gray-600">Sui</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className={`w-2 h-2 rounded-full ${networkStatus.walrus === 'online' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${networkStatus.walrus === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span className="text-xs text-gray-600">Walrus</span>
                   </div>
                 </div>
@@ -170,7 +170,7 @@ export default function NFTStatsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            <TodoNFTStats />
+            <DynamicTodoNFTStats />
           </motion.div>
         </div>
       </div>

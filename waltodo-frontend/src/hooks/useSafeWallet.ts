@@ -23,7 +23,7 @@ export function useSafeWallet() {
 
   // Detect wallets after mount
   useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return;
+    if (!mounted || typeof window === 'undefined') {return;}
 
     const detectWallets = () => {
       const detected: string[] = [];

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { OptimizedImage, OptimizedImageGallery } from './OptimizedImage';
-import { getImagePerformanceMetrics, clearImageCaches } from '@/lib/image-optimization';
+import { clearImageCaches, getImagePerformanceMetrics } from '@/lib/image-optimization';
 
 interface TodoImageDisplayProps {
   todoId: string;
@@ -30,7 +30,7 @@ export function TodoImageDisplay({
 
   // Performance monitoring
   React.useEffect(() => {
-    if (!showPerformanceMetrics) return;
+    if (!showPerformanceMetrics) {return;}
 
     const interval = setInterval(() => {
       const metrics = getImagePerformanceMetrics();
@@ -105,7 +105,7 @@ function PerformanceDisplay() {
     return () => clearInterval(interval);
   }, []);
 
-  if (metrics.size === 0) return null;
+  if (metrics.size === 0) {return null;}
 
   return (
     <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">
@@ -139,7 +139,7 @@ export function useTodoImages(todoId: string, imageUrls?: string[]) {
   const [optimizedUrls, setOptimizedUrls] = React.useState<string[]>([]);
 
   React.useEffect(() => {
-    if (!imageUrls || imageUrls.length === 0) return;
+    if (!imageUrls || imageUrls.length === 0) {return;}
 
     // Preload and optimize images
     const processImages = async () => {

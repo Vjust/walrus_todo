@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ClientOnly } from '@/components/ClientOnly';
 import { TodoNFTCard } from '@/components/TodoNFTCard';
 import { TodoNFTDisplay, todoToNFTDisplay } from '@/types/nft-display';
@@ -191,7 +191,7 @@ export default function NFTDemoPage() {
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-8">
-                <span className="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></span>
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse" />
                 Live Demo Environment
               </div>
               
@@ -294,8 +294,8 @@ export default function NFTDemoPage() {
                         onComplete={handleComplete}
                         onTransfer={handleTransfer}
                         onClick={handleCardClick}
-                        showActions={true}
-                        enableFlip={true}
+                        showActions
+                        enableFlip
                       />
                     </ClientOnly>
                   </motion.div>
@@ -331,8 +331,8 @@ export default function NFTDemoPage() {
                     onComplete={handleComplete}
                     onTransfer={handleTransfer}
                     onClick={handleCardClick}
-                    showActions={true}
-                    enableFlip={true}
+                    showActions
+                    enableFlip
                   />
                 </ClientOnly>
               ))}
@@ -373,7 +373,7 @@ export default function NFTDemoPage() {
                 <TodoNFTCard
                   todo={nftTodos[0]}
                   displayMode="preview"
-                  loading={true}
+                  loading
                 />
               </ClientOnly>
               <ClientOnly fallback={
@@ -394,7 +394,7 @@ export default function NFTDemoPage() {
                 <TodoNFTCard
                   todo={nftTodos[2]}
                   displayMode="preview"
-                  showActions={true}
+                  showActions
                 />
               </ClientOnly>
             </div>
@@ -475,8 +475,8 @@ export default function NFTDemoPage() {
                       title: `${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority Task`,
                     }}
                     displayMode="preview"
-                    showActions={true}
-                    enableFlip={true}
+                    showActions
+                    enableFlip
                   />
                 </ClientOnly>
               ))}

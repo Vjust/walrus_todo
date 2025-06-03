@@ -10,21 +10,21 @@ import { Transaction as TransactionBlock } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { Signer } from '@mysten/sui/cryptography';
 import {
-  FrontendWalrusClient,
-  WalrusTodoStorage,
   ContentEncoder,
+  FrontendWalrusClient,
   WalrusClientError,
-  WalrusRetryError,
-  WalrusValidationError,
-  type WalrusUploadResult,
   type WalrusNetwork,
+  WalrusRetryError,
+  WalrusTodoStorage,
+  type WalrusUploadResult,
+  WalrusValidationError,
 } from './walrus-client';
 import {
-  storeTodoOnBlockchain,
   type CreateTodoParams,
-  type TransactionResult,
   getSuiClient,
   getSuiClientSync,
+  storeTodoOnBlockchain,
+  type TransactionResult,
 } from './sui-client';
 
 // Extended Todo interface with Walrus integration

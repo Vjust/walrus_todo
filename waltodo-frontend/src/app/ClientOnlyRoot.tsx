@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { initializeSuiClient, isSuiClientInitialized } from '@/lib/sui-client';
 
 interface AppInitializationContextType {

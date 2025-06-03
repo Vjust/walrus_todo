@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { useProgressiveImage, useLazyImage } from '@/lib/image-optimization';
+import { useLazyImage, useProgressiveImage } from '@/lib/image-optimization';
 import { useOptimizedWalrusImage } from '@/lib/walrus-image-optimization';
 
 interface OptimizedImageComponentProps {
@@ -247,7 +247,7 @@ export function ProgressiveImage({
   const [currentSrc, setCurrentSrc] = useState(thumbnail || '');
   
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
     
     // Load thumbnail first if provided
     if (thumbnail && !isLoaded) {

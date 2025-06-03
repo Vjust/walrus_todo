@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import WalletConnectButton from './WalletConnectButton';
@@ -12,25 +12,25 @@ import { getSuiClient } from '@/lib/sui-client';
 import { useSafeTheme } from '@/hooks/useSafeTheme';
 import testnetConfig from '@/config/testnet.json';
 import {
-  ChevronDownIcon,
-  Bars3Icon,
-  XMarkIcon,
-  BellIcon,
-  SunIcon,
-  MoonIcon,
-  MagnifyingGlassIcon,
-  ChevronRightIcon,
-  HomeIcon,
-  PhotoIcon,
-  RocketLaunchIcon,
-  CreditCardIcon,
-  ArrowPathIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ChartBarIcon,
-  CircleStackIcon,
-} from '@heroicons/react/24/outline';
-import { BellIcon as BellIconSolid } from '@heroicons/react/24/solid';
+  RotateCcw as ArrowPathIcon,
+  Menu as Bars3Icon,
+  Bell as BellIcon,
+  BellRing as BellIconSolid,
+  BarChart3 as ChartBarIcon,
+  CheckCircle as CheckCircleIcon,
+  ChevronDown as ChevronDownIcon,
+  ChevronRight as ChevronRightIcon,
+  Database as CircleStackIcon,
+  CreditCard as CreditCardIcon,
+  AlertCircle as ExclamationCircleIcon,
+  Home as HomeIcon,
+  Search as MagnifyingGlassIcon,
+  Moon as MoonIcon,
+  Image as PhotoIcon,
+  Rocket as RocketLaunchIcon,
+  Sun as SunIcon,
+  X as XMarkIcon,
+} from 'lucide-react';
 
 interface NavbarProps {
   currentPage?: string;
@@ -83,7 +83,7 @@ function Navbar({ currentPage }: NavbarProps) {
   // Fetch NFT count and balance when wallet is connected
   useEffect(() => {
     const fetchWalletData = async () => {
-      if (!connected || !address) return;
+      if (!connected || !address) {return;}
 
       // Fetch balance
       const balanceResult = await executeWithSuiClient(

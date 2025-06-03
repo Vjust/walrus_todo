@@ -224,11 +224,11 @@ export function AdvancedNFTTodoManager() {
   });
 
   const filteredTodos = todos.filter(todo => {
-    if (filter.priority !== 'all' && todo.priority !== filter.priority) return false;
-    if (filter.category !== 'all' && todo.category !== filter.category) return false;
+    if (filter.priority !== 'all' && todo.priority !== filter.priority) {return false;}
+    if (filter.category !== 'all' && todo.category !== filter.category) {return false;}
     if (filter.completed !== 'all') {
       const isCompleted = filter.completed === 'completed';
-      if (todo.completed !== isCompleted) return false;
+      if (todo.completed !== isCompleted) {return false;}
     }
     return true;
   });

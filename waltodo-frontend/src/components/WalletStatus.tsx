@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
-import { WalletStatusSkeleton } from './WalletSkeleton';
+import { WalletButtonSkeleton } from './WalletSkeleton';
 import WalletErrorBoundary from './WalletErrorBoundary';
 
 export function WalletStatus() {
@@ -22,7 +22,7 @@ function WalletStatusContent() {
 
   // Show loading state during hydration
   if (isLoading) {
-    return <WalletStatusSkeleton />;
+    return <WalletButtonSkeleton />;
   }
 
   if (error) {

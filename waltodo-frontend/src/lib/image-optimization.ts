@@ -1,5 +1,5 @@
 import { LRUCache } from 'lru-cache';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type React from 'react';
 
 // Types
@@ -54,7 +54,7 @@ export async function checkWebPSupport(): Promise<boolean> {
     return false; // Assume no WebP support during SSR
   }
 
-  if (webpSupported !== null) return webpSupported;
+  if (webpSupported !== null) {return webpSupported;}
 
   try {
     const webpData = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
@@ -82,7 +82,7 @@ export async function generateBlurPlaceholder(src: string): Promise<string> {
   }
 
   const cached = blurCache.get(src);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   try {
     const img = new Image();
@@ -97,7 +97,7 @@ export async function generateBlurPlaceholder(src: string): Promise<string> {
     // Create small canvas for blur
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas context not available');
+    if (!ctx) {throw new Error('Canvas context not available');}
 
     // Use small dimensions for performance
     const scale = 0.1;
@@ -121,11 +121,11 @@ export async function generateBlurPlaceholder(src: string): Promise<string> {
 
 // Convert image to WebP format if supported
 export async function convertToWebP(src: string): Promise<string> {
-  if (typeof window === 'undefined') return src;
-  if (!await checkWebPSupport()) return src;
+  if (typeof window === 'undefined') {return src;}
+  if (!await checkWebPSupport()) {return src;}
   
   const cached = imageCache.get(`webp:${src}`);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   try {
     const img = new Image();
@@ -139,7 +139,7 @@ export async function convertToWebP(src: string): Promise<string> {
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas context not available');
+    if (!ctx) {throw new Error('Canvas context not available');}
 
     canvas.width = img.width;
     canvas.height = img.height;
@@ -180,6 +180,10 @@ function getLazyImageObserver(onIntersect: (entry: IntersectionObserverEntry) =>
       observe: () => {},
       unobserve: () => {},
       disconnect: () => {},
+      root: null,
+      rootMargin: '',
+      thresholds: [],
+      takeRecords: () => [],
     } as IntersectionObserver;
   }
 
@@ -327,7 +331,7 @@ export class ProgressiveImageLoader {
   }
 
   private async checkOfflineCache(url: string): Promise<Response | null> {
-    if (!this.offlineCache) return null;
+    if (!this.offlineCache) {return null;}
 
     try {
       const cached = await this.offlineCache.match(url);
@@ -338,7 +342,7 @@ export class ProgressiveImageLoader {
   }
 
   private async cacheOffline(url: string): Promise<void> {
-    if (!this.offlineCache) return;
+    if (!this.offlineCache) {return;}
 
     try {
       const response = await fetch(url);
@@ -410,7 +414,7 @@ export function useProgressiveImage(src: string, options: ImagePreloadOptions = 
   });
 
   useEffect(() => {
-    if (!src || typeof window === 'undefined') return;
+    if (!src || typeof window === 'undefined') {return;}
 
     const loader = new ProgressiveImageLoader(src);
     
@@ -444,10 +448,10 @@ export function useLazyImage(src: string, elementRef: React.RefObject<HTMLElemen
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
     
     const element = elementRef.current;
-    if (!element) return;
+    if (!element) {return;}
 
     const observer = getLazyImageObserver((entry) => {
       if (entry.isIntersecting) {

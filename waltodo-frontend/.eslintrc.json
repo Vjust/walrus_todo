@@ -1,10 +1,120 @@
 {
-  "extends": "next/core-web-vitals",
+  // Strict ESLint Configuration for WalTodo Frontend
+  // Benefits of strict mode enforcement:
+  // 1. Prevents runtime errors through compile-time checks
+  // 2. Enforces consistent code style across the team
+  // 3. Improves accessibility through a11y rules
+  // 4. Enhances security by preventing dangerous patterns
+  // 5. Reduces debugging time through early error detection
+  // 6. Ensures TypeScript type safety is properly utilized
+  // 7. Maintains high code quality standards for production
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": [],
+  "extends": [
+    "next/core-web-vitals",
+    "eslint:recommended"
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true,
+    "jest": true
+  },
   "rules": {
-    "react-hooks/rules-of-hooks": "warn",
-    "react-hooks/exhaustive-deps": "warn",
-    "@next/next/no-img-element": "off",
-    "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/no-explicit-any": "warn"
-  }
+    // Core JavaScript/TypeScript rules - Enhanced for strict enforcement
+    "no-unused-vars": ["error", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_",
+      "ignoreRestSiblings": true
+    }],
+    
+    // React specific rules - Enhanced for strict enforcement
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/no-unescaped-entities": "error",
+    "react/jsx-no-target-blank": "error",
+    "react/jsx-key": "error",
+    "react/no-array-index-key": "error",
+    "react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
+    "react/self-closing-comp": "error",
+    "react/jsx-boolean-value": ["error", "never"],
+    "react/jsx-fragments": ["error", "syntax"],
+    "react/no-unused-prop-types": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/no-deprecated": "error",
+    "react/button-has-type": "error",
+    
+    // React Hooks rules - Enhanced for strict enforcement
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "error",
+    
+    // Accessibility rules - Using Next.js built-in rules
+    
+    // General JavaScript/TypeScript rules - Enhanced for strict enforcement
+    "no-console": ["error", { "allow": ["warn", "error", "info"] }],
+    "no-debugger": "error",
+    "prefer-const": "error",
+    "no-var": "error",
+    "object-shorthand": "error",
+    "prefer-template": "error",
+    "eqeqeq": ["error", "always"],
+    "curly": ["error", "all"],
+    "no-unused-expressions": "error",
+    "no-implicit-globals": "error",
+    "no-throw-literal": "error",
+    "prefer-promise-reject-errors": "error",
+    "no-return-await": "error",
+    "require-await": "error",
+    "no-async-promise-executor": "error",
+    
+    // Next.js specific rules - Use built-in enforcement from next/core-web-vitals
+    
+    // Import rules - Enhanced for strict enforcement
+    "no-duplicate-imports": "error",
+    "sort-imports": ["error", {
+      "ignoreCase": true,
+      "ignoreDeclarationSort": true,
+      "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+    }],
+    
+    // Security rules - New strict enforcement
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-script-url": "error"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "next": {
+      "rootDir": "."
+    }
+  },
+  "overrides": [
+    {
+      "files": ["**/__tests__/**/*", "**/*.test.*", "**/*.spec.*"],
+      "rules": {
+        // Test files get some leniency but still enforce quality
+        "react-hooks/exhaustive-deps": "off",
+        "no-console": "off",
+        "require-await": "off"
+      }
+    },
+    {
+      "files": ["*.config.js", "*.config.ts", "scripts/**/*", "*.mjs", "setup-config.js"],
+      "rules": {
+        // Configuration files get leniency for Node.js patterns
+        "no-console": "off"
+      }
+    }
+  ]
 }

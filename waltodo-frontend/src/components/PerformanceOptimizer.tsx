@@ -23,7 +23,7 @@ export function PerformanceMonitor() {
   const mounted = useIsMounted();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     // Measure Web Vitals
     const measureWebVitals = () => {
@@ -94,7 +94,7 @@ export function PerformanceMonitor() {
   }
 
   const getScoreColor = (metric: string, value: number | null) => {
-    if (value === null) return 'text-gray-400';
+    if (value === null) {return 'text-gray-400';}
     
     const thresholds = {
       fcp: [1800, 3000],
@@ -106,8 +106,8 @@ export function PerformanceMonitor() {
 
     const [good, poor] = thresholds[metric as keyof typeof thresholds] || [0, 0];
     
-    if (value <= good) return 'text-green-600';
-    if (value <= poor) return 'text-yellow-600';
+    if (value <= good) {return 'text-green-600';}
+    if (value <= poor) {return 'text-yellow-600';}
     return 'text-red-600';
   };
 
@@ -161,7 +161,7 @@ export function useLazyLoading(threshold = 0.1) {
   const [element, setElement] = useState<Element | null>(null);
 
   useEffect(() => {
-    if (!element || typeof window === 'undefined') return;
+    if (!element || typeof window === 'undefined') {return;}
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -192,7 +192,7 @@ export function preloadImage(src: string): Promise<void> {
 
 // Resource hints
 export function addResourceHints(urls: string[]) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
 
   urls.forEach(url => {
     // Add preload hint
@@ -207,7 +207,7 @@ export function addResourceHints(urls: string[]) {
 
 // Bundle analyzer utility for development
 export function analyzeBundleSize() {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (process.env.NODE_ENV !== 'development') {return;}
 
   const analyzeChunks = () => {
     const scripts = Array.from(document.scripts);

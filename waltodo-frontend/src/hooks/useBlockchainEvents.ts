@@ -4,14 +4,14 @@
  */
 
 // @ts-nocheck - Temporarily disable type checking for complex blockchain event interfaces
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  BlockchainEventHandler,
   BlockchainEventManager,
-  TodoNFTEvent,
   EventConnectionState,
   EventListener,
-  BlockchainEventHandler,
   getEventManager,
+  TodoNFTEvent,
   transformEventToTodoUpdate,
 } from '@/lib/blockchain-events';
 import type { Todo } from '@/types/todo-nft';
@@ -185,7 +185,7 @@ export function useBlockchainEvents(
    * Check if event should be processed based on filters
    */
   const shouldProcessEvent = useCallback((event: EnhancedTodoNFTEvent): boolean => {
-    if (!filter) return true;
+    if (!filter) {return true;}
 
     // Filter by owner
     if (filter.owner) {
@@ -320,13 +320,13 @@ export function useBlockchainEvents(
    * Replay events that were missed during disconnection
    */
   const replayMissedEvents = useCallback(async () => {
-    if (!suiClientRef.current || missedEventsRef.current.size === 0) return;
+    if (!suiClientRef.current || missedEventsRef.current.size === 0) {return;}
 
     try {
       const config = await loadNetworkConfig(
         process.env.NEXT_PUBLIC_NETWORK || 'testnet'
       );
-      if (!config) return;
+      if (!config) {return;}
 
       // Query events since last successful connection
       const events = await suiClientRef.current.queryEvents({
@@ -358,13 +358,13 @@ export function useBlockchainEvents(
    * Load historical events from blockchain
    */
   const loadHistoricalEvents = useCallback(async () => {
-    if (!suiClientRef.current || !targetOwner) return;
+    if (!suiClientRef.current || !targetOwner) {return;}
 
     try {
       const config = await loadNetworkConfig(
         process.env.NEXT_PUBLIC_NETWORK || 'testnet'
       );
-      if (!config) return;
+      if (!config) {return;}
 
       // Query historical events
       const events = await suiClientRef.current.queryEvents({
@@ -445,7 +445,7 @@ export function useBlockchainEvents(
       await initialize();
     }
 
-    if (!eventManagerRef.current) return;
+    if (!eventManagerRef.current) {return;}
 
     try {
       setConnectionState(prev => ({ ...prev, connecting: true, error: null }));
@@ -561,10 +561,10 @@ export function useBlockchainEvents(
       const enhancedListener: BlockchainEventHandler = (event: any) => {
         // Parse and enhance the event
         const enhancedEvent = event.type && event.data ? event : parseBlockchainEvent(event);
-        if (!enhancedEvent) return;
+        if (!enhancedEvent) {return;}
 
         // Check if event should be processed
-        if (!shouldProcessEvent(enhancedEvent)) return;
+        if (!shouldProcessEvent(enhancedEvent)) {return;}
 
         // Update cache and statistics using functional update
         setEventCache(prev => {
@@ -596,13 +596,13 @@ export function useBlockchainEvents(
   const queryHistoricalEvents = useCallback(async (
     queryFilter?: EventFilter
   ): Promise<EnhancedTodoNFTEvent[]> => {
-    if (!suiClientRef.current) return [];
+    if (!suiClientRef.current) {return [];}
 
     try {
       const config = await loadNetworkConfig(
         process.env.NEXT_PUBLIC_NETWORK || 'testnet'
       );
-      if (!config) return [];
+      if (!config) {return [];}
 
       const events = await suiClientRef.current.queryEvents({
         query: {
@@ -625,7 +625,7 @@ export function useBlockchainEvents(
           if (effectiveFilter) {
             // Create a callback that uses the effective filter
             const shouldProcessWithEffectiveFilter = (event: EnhancedTodoNFTEvent): boolean => {
-              if (!effectiveFilter) return true;
+              if (!effectiveFilter) {return true;}
               
               // Filter by owner
               if (effectiveFilter.owner) {
@@ -718,7 +718,7 @@ export function useBlockchainEvents(
 
   // Update connection state periodically
   useEffect(() => {
-    if (!eventManagerRef.current) return;
+    if (!eventManagerRef.current) {return;}
 
     const interval = setInterval(() => {
       if (eventManagerRef.current) {
@@ -1082,16 +1082,16 @@ export function useEventConnectionStatus() {
   });
 
   const getStatusColor = useCallback(() => {
-    if (connectionState.connecting) return 'yellow';
-    if (connectionState.connected) return 'green';
-    if (connectionState.error) return 'red';
+    if (connectionState.connecting) {return 'yellow';}
+    if (connectionState.connected) {return 'green';}
+    if (connectionState.error) {return 'red';}
     return 'gray';
   }, [connectionState]);
 
   const getStatusText = useCallback(() => {
-    if (connectionState.connecting) return 'Connecting...';
-    if (connectionState.connected) return 'Connected';
-    if (connectionState.error) return `Error: ${connectionState.error.message}`;
+    if (connectionState.connecting) {return 'Connecting...';}
+    if (connectionState.connected) {return 'Connected';}
+    if (connectionState.error) {return `Error: ${connectionState.error.message}`;}
     return 'Disconnected';
   }, [connectionState]);
 

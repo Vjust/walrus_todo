@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { WalrusOptimizedImage } from './WalrusOptimizedImage';
 import { OptimizedImage } from './OptimizedImage';
 
@@ -81,7 +81,7 @@ export function TodoNFTImage({
 
   // Parse Walrus URL to extract blob ID
   const walrusInfo = useMemo(() => {
-    if (!url) return { isWalrus: false, blobId: null };
+    if (!url) {return { isWalrus: false, blobId: null };}
     
     // Handle walrus:// protocol
     if (url.startsWith('walrus://')) {
@@ -157,7 +157,7 @@ export function TodoNFTImage({
 
   // Calculate responsive sizes
   const responsiveSizes = useMemo(() => {
-    if (sizes) return sizes;
+    if (sizes) {return sizes;}
     
     switch (effectiveDisplayMode) {
       case 'thumbnail':
@@ -186,7 +186,7 @@ export function TodoNFTImage({
   const imgRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    if (!lazy || isVisible) return;
+    if (!lazy || isVisible) {return;}
     
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -209,7 +209,7 @@ export function TodoNFTImage({
   const imageProps = {
     alt,
     className: 'w-full h-full',
-    priority: priority,
+    priority,
     placeholder,
     onLoad: handleLoad,
     onError: handleError,

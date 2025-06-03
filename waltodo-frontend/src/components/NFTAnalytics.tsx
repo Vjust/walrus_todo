@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 import type { Todo, TodoNFT } from '@/types/todo-nft';
 

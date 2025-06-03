@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useIsMounted } from './MotionWrapper';
 
 interface OptimizedNFTImageProps {
@@ -81,9 +81,9 @@ export function OptimizedNFTImage({
           <motion.div
             key="placeholder"
             className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"
-            initial={mounted ? { opacity: 0 } : false}
-            animate={mounted ? { opacity: 1 } : false}
-            exit={mounted ? { opacity: 0 } : false}
+            initial={mounted ? { opacity: 0 } : undefined}
+            animate={mounted ? { opacity: 1 } : undefined}
+            exit={mounted ? { opacity: 0 } : undefined}
             transition={mounted ? { duration: 0.3 } : undefined}
           >
             <div className="absolute inset-0 flex items-center justify-center">
@@ -107,9 +107,9 @@ export function OptimizedNFTImage({
           <motion.div
             key="error"
             className="absolute inset-0 bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center"
-            initial={mounted ? { opacity: 0 } : false}
-            animate={mounted ? { opacity: 1 } : false}
-            exit={mounted ? { opacity: 0 } : false}
+            initial={mounted ? { opacity: 0 } : undefined}
+            animate={mounted ? { opacity: 1 } : undefined}
+            exit={mounted ? { opacity: 0 } : undefined}
             transition={mounted ? { duration: 0.3 } : undefined}
           >
             <div className="text-center">
@@ -148,7 +148,7 @@ export function OptimizedNFTImage({
               placeholder={placeholder}
               onLoad={handleLoad}
               onError={handleError}
-              sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             
             {/* Loading overlay */}

@@ -3,20 +3,20 @@
  */
 
 import {
-  isValidBlobId,
-  validateBlobId,
+  extractBlobId,
   extractBlobIdFromWalrusUrl,
-  walrusToHttpUrl,
   generateHttpUrl,
   generateWalrusUrl,
-  extractBlobId,
   getNetworkFromUrl,
+  isValidBlobId,
   isWalrusUrl,
-  WalrusUrlManager,
+  validateBlobId,
+  walrusToHttpUrl,
   WalrusUrlError,
+  WalrusUrlManager,
   type BlobId,
-  type WalrusUrl,
-  type WalrusNetwork
+  type WalrusNetwork,
+  type WalrusUrl
 } from '@/lib/walrus-url-utils';
 
 describe('walrus-url-utils', () => {
@@ -26,8 +26,8 @@ describe('walrus-url-utils', () => {
   describe('isValidBlobId', () => {
     it('should return true for valid 64 character hex string', () => {
       expect(isValidBlobId(validBlobId)).toBe(true);
-      expect(isValidBlobId('0123456789abcdef' + 'f'.repeat(48))).toBe(true);
-      expect(isValidBlobId('ABCDEF' + '0'.repeat(58))).toBe(true);
+      expect(isValidBlobId(`0123456789abcdef${'f'.repeat(48)}`)).toBe(true);
+      expect(isValidBlobId(`ABCDEF${'0'.repeat(58)}`)).toBe(true);
     });
 
     it('should return false for invalid blob IDs', () => {

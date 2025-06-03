@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { initializeSuiClient, getSuiClient, isSuiClientInitialized } from '@/lib/sui-client';
+import { useCallback, useEffect, useState } from 'react';
+import { getSuiClient, initializeSuiClient, isSuiClientInitialized } from '@/lib/sui-client';
 import type { NetworkType } from '@/types/todo-nft';
 
 export function useSuiClient(network: NetworkType = 'testnet') {
@@ -24,7 +24,7 @@ export function useSuiClient(network: NetworkType = 'testnet') {
   }, [componentMounted, initializationAttempted]);
 
   const initialize = useCallback(async () => {
-    if (!componentMounted || isInitializing) return;
+    if (!componentMounted || isInitializing) {return;}
     
     // Don't re-initialize if already done
     if (isInitialized || isSuiClientInitialized()) {
@@ -65,7 +65,7 @@ export function useSuiClient(network: NetworkType = 'testnet') {
   }, [network, isInitializing, isInitialized, componentMounted]);
 
   const getClient = useCallback(async () => {
-    if (!componentMounted) return null;
+    if (!componentMounted) {return null;}
     
     try {
       // First check if already initialized

@@ -5,17 +5,17 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { Todo } from '@/types/todo-nft';
 import {
   useBlockchainEvents,
+  useEventConnectionStatus,
   useTodoEvents,
   useTodoStateSync,
-  useEventConnectionStatus,
 } from '@/hooks/useBlockchainEvents';
 import {
-  BlockchainEventStatus,
   BlockchainEventIndicator,
+  BlockchainEventStatus,
 } from '@/components/BlockchainEventStatus';
 import { RealtimeTodoList } from '@/components/RealtimeTodoList';
 import { useWalletContext } from '@/contexts/WalletContext';
@@ -252,7 +252,7 @@ export function ConnectionStatusManagement() {
             <div className='flex items-center'>
               <div
                 className={`w-3 h-3 rounded-full mr-2 bg-${statusColor}-500`}
-              ></div>
+               />
               <span>{statusText}</span>
             </div>
             <div className='text-sm text-gray-600'>
@@ -276,7 +276,7 @@ export function ConnectionStatusManagement() {
       </div>
 
       <div className='mt-4'>
-        <BlockchainEventStatus showReconnectButton={true} showDetails={true} />
+        <BlockchainEventStatus showReconnectButton showDetails />
       </div>
     </div>
   );
@@ -352,7 +352,7 @@ export function CompleteRealtimeTodoApp() {
         onTodoUpdate={handleTodoUpdate}
         onTodoComplete={handleTodoComplete}
         onTodoDelete={handleTodoDelete}
-        showEventIndicator={true}
+        showEventIndicator
       />
 
       <div className='mt-4 p-3 bg-blue-50 rounded text-sm'>

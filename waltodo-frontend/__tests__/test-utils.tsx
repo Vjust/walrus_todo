@@ -4,9 +4,8 @@
  */
 
 import React from 'react';
-import { render, renderHook as originalRenderHook, RenderHookOptions, RenderHookResult } from '@testing-library/react';
+import { act, renderHook as originalRenderHook, RenderHookOptions, RenderHookResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act } from '@testing-library/react';
 
 // Types for blockchain events
 export interface BlockchainEvent {
@@ -117,7 +116,7 @@ type SafeRenderHookResult<Result, Props> = Omit<RenderHookResult<Result, Props>,
 };
 
 export function renderHookSafe<Result, Props>(
-  renderCallback: (props: Props) => Result,
+  renderCallback: (_props: Props) => Result,
   options?: RenderHookOptions<Props>
 ): SafeRenderHookResult<Result, Props> {
   const result = originalRenderHook(renderCallback, options);
@@ -157,11 +156,7 @@ export const createTestQueryClient = () => {
         staleTime: 0,
       },
     },
-    logger: {
-      log: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    },
+    // logger removed - not part of QueryClientConfig
   });
 };
 
@@ -250,7 +245,7 @@ export interface MockTodo {
 
 // Create mock todo
 export const createMockTodo = (overrides: Partial<MockTodo> = {}): MockTodo => ({
-  id: 'mock-todo-' + Math.random().toString(36).substr(2, 9),
+  id: `mock-todo-${  Math.random().toString(36).substr(2, 9)}`,
   title: 'Mock Todo',
   completed: false,
   priority: 'medium',
@@ -261,7 +256,7 @@ export const createMockTodo = (overrides: Partial<MockTodo> = {}): MockTodo => (
 
 // Mock transaction result
 export const createMockTransactionResult = (overrides = {}) => ({
-  digest: 'mock-digest-' + Math.random().toString(36).substr(2, 9),
+  digest: `mock-digest-${  Math.random().toString(36).substr(2, 9)}`,
   ...overrides,
 });
 

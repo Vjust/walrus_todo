@@ -1,8 +1,8 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw, Trash2, Mail, ChevronDown, ChevronUp, WifiOff, Database, Shield } from 'lucide-react';
-import { classifyError, errorPersistence, retryWithRecovery, ErrorType } from '../lib/error-recovery';
+import { AlertCircle, ChevronDown, ChevronUp, Database, Mail, RefreshCw, Shield, Trash2, WifiOff } from 'lucide-react';
+import { classifyError, errorPersistence, ErrorType, retryWithRecovery } from '../lib/error-recovery';
 import { showError, showSuccess } from '../lib/error-handling';
 
 interface Props {

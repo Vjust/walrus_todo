@@ -5,8 +5,8 @@
 
 import { 
   CreateTodoInput as SharedCreateTodoInput,
-  UpdateTodoInput as SharedUpdateTodoInput,
-  Todo as SharedTodo 
+  Todo as SharedTodo,
+  UpdateTodoInput as SharedUpdateTodoInput 
 } from '@waltodo/shared-types';
 
 export interface CreateTodoParams extends SharedCreateTodoInput {

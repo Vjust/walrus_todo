@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useSignTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { TodoNFTImage } from './TodoNFTImage';
+import { NFTImageSkeleton } from './ui/skeletons/NFTImageSkeleton';
 import { 
-  TodoNFTDisplay, 
-  NFTDisplayMode, 
-  generateNFTAttributes,
+  generateNFTAttributes, 
+  hasNFTMetadata, 
   isTodoNFTDisplay,
-  hasNFTMetadata
+  NFTDisplayMode,
+  TodoNFTDisplay
 } from '@/types/nft-display';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import { useWalletContext } from '@/contexts/WalletContext';
@@ -44,7 +45,7 @@ export interface TodoNFTCardProps {
  * Truncate address for display
  */
 function truncateAddress(address: string, startLength = 6, endLength = 4): string {
-  if (!address || address.length <= startLength + endLength + 3) return address;
+  if (!address || address.length <= startLength + endLength + 3) {return address;}
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 }
 
@@ -124,6 +125,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferAddress, setTransferAddress] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   
   const router = useRouter();
   const suiClient = useSuiClient();
@@ -137,7 +139,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
   // Handle card click
   const handleCardClick = useCallback((e: React.MouseEvent) => {
     // Don't flip if clicking on buttons or links
-    if ((e.target as HTMLElement).closest('button, a')) return;
+    if ((e.target as HTMLElement).closest('button, a')) {return;}
     
     if (enableFlip) {
       setIsFlipped(!isFlipped);
@@ -147,7 +149,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
 
   // Handle complete action
   const handleComplete = useCallback(async () => {
-    if (!onComplete || todo.completed || isProcessing) return;
+    if (!onComplete || todo.completed || isProcessing) {return;}
     
     setIsProcessing(true);
     try {
@@ -163,7 +165,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
 
   // Handle transfer action
   const handleTransfer = useCallback(async () => {
-    if (!onTransfer || !transferAddress || isProcessing) return;
+    if (!onTransfer || !transferAddress || isProcessing) {return;}
     
     // Validate Sui address format
     if (!transferAddress.startsWith('0x') || transferAddress.length !== 66) {
@@ -187,7 +189,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
 
   // View on explorer
   const handleViewOnExplorer = useCallback(() => {
-    if (!todo.objectId) return;
+    if (!todo.objectId) {return;}
     
     const explorerUrl = `https://suiexplorer.com/object/${todo.objectId}?network=testnet`;
     window.open(explorerUrl, '_blank', 'noopener,noreferrer');
@@ -195,7 +197,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
 
   // Format dates
   const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) {return 'N/A';}
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch {
@@ -204,7 +206,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
   }, []);
 
   const formatRelativeTime = useCallback((dateString?: string) => {
-    if (!dateString) return '';
+    if (!dateString) {return '';}
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true });
     } catch {
@@ -229,13 +231,25 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
         <div className="flex items-center gap-4">
           {/* Thumbnail */}
           <div className="flex-shrink-0 w-20 h-20 relative">
+            {imageLoading && (
+              <NFTImageSkeleton
+                displayMode="thumbnail"
+                showOverlay={false}
+                animationSpeed="normal"
+                className="absolute inset-0 rounded-md"
+              />
+            )}
             <TodoNFTImage
               url={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
               displayMode="thumbnail"
-              className="w-full h-full object-cover rounded-md"
+              className={`w-full h-full object-cover rounded-md transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
               priority={false}
-              onError={() => setImageError(true)}
+              onLoad={() => setImageLoading(false)}
+              onError={() => {
+                setImageError(true);
+                setImageLoading(false);
+              }}
             />
             {/* Priority Badge */}
             <div className="absolute -top-2 -left-2">
@@ -386,12 +400,25 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
           <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full flex flex-col hover:shadow-xl transition-shadow duration-300">
             {/* Image Section */}
             <div className="relative h-48 bg-gray-100">
+              {imageLoading && (
+                <NFTImageSkeleton
+                  displayMode="preview"
+                  showOverlay={true}
+                  animationSpeed="normal"
+                  className="absolute inset-0"
+                />
+              )}
               <TodoNFTImage
                 url={todo.imageUrl || todo.displayImageUrl || ''}
                 alt={todo.title}
                 displayMode={displayMode === 'thumbnail' ? 'thumbnail' : 'preview'}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
                 priority={displayMode === 'thumbnail'}
+                onLoad={() => setImageLoading(false)}
+                onError={() => {
+                  setImageError(true);
+                  setImageLoading(false);
+                }}
               />
               
               {/* Status Badge */}

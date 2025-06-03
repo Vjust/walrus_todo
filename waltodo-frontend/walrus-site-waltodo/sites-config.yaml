@@ -1,75 +1,83 @@
 # Walrus Sites Configuration for WalTodo Frontend
-# Optimized configuration following official Walrus Sites format
+# Multi-context configuration supporting testnet and mainnet
 
-# Package configuration for Walrus Sites
-package: 0xe0b8b0b4a5f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4
+# Default context to use
+default_context: testnet
 
-# Portal configuration (affects CLI output only)
-portal: walrus.site
-
-# General configuration options
-general:
-  # Sui RPC configuration
-  rpc_url: https://fullnode.testnet.sui.io:443
-  
-  # Gas budget for transactions (500M MIST = 0.5 SUI)
-  gas_budget: 500000000
-  
-  # Walrus client configuration
-  walrus_config: ~/.config/walrus/client_config.yaml
-  
-  # Wallet configuration (uses system default if not specified)
-  # wallet: ~/.sui/sui_config/sui.keystore
-
-# Site-specific configurations
-sites:
-  waltodo-app:
-    # Source directory for site files
-    source: "./out"
+# Context-specific configurations
+contexts:
+  testnet:
+    # Package configuration for Walrus Sites (testnet)
+    package: 0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799
     
-    # Network to deploy to
-    network: testnet
+    # Portal configuration
+    portal: wal.app
     
-    # Storage duration in epochs (183 max = 1 year, each epoch = 2 days on testnet)
-    epochs: 100
+    # General configuration options
+    general:
+      # Sui RPC configuration
+      rpc_url: https://sui-testnet.nodeinfra.com
+      
+      # Gas budget for transactions (500M MIST = 0.5 SUI)
+      gas_budget: 500000000
+      
+      # Walrus client configuration
+      walrus_config: ~/.config/walrus/client_config.yaml
+      walrus_context: testnet
+      walrus_package: 0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799
+      
+      # Wallet configuration (uses system default if not specified)
+      # wallet: ~/.sui/sui_config/sui.keystore
     
-    # Custom headers for resources
-    headers:
-      "/*":
-        - "Cache-Control: public, max-age=3600, s-maxage=86400"
-        - "X-Content-Type-Options: nosniff"
-        - "X-Frame-Options: DENY" 
-        - "X-XSS-Protection: 1; mode=block"
-        - "Referrer-Policy: strict-origin-when-cross-origin"
-      "/_next/static/*":
-        - "Cache-Control: public, max-age=31536000, immutable"
-      "/icons/*":
-        - "Cache-Control: public, max-age=31536000"
-      "/config/*":
-        - "Cache-Control: public, max-age=300"
-    
-    # URL routing configuration
-    routes:
-      "/": "/index.html"
-      "/404": "/404.html"
-    
-    # Redirects for API calls and external resources
-    redirects:
-      - from: "/api/*"
-        to: "https://api.waltodo.com/api/*"
-        status: 307
+    # Site-specific configurations
+    sites:
+      waltodo-app:
+        # Source directory for site files
+        source: "./out"
+        
+        # Network to deploy to
+        network: testnet
+        
+        # Storage duration in epochs (53 max on testnet, each epoch = 2 days)
+        epochs: 53
+        
+        # Custom headers for resources
         headers:
-          - "Access-Control-Allow-Origin: *"
-          - "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"
-    
-    # Error page configuration
-    error_pages:
-      404: "/404.html"
-      500: "/404.html"
-    
-    # Site metadata
-    metadata:
-      title: "WalTodo - Decentralized Todo Management"
-      description: "A decentralized todo application built on Sui and Walrus"
-      author: "WalTodo Team"
-      version: "1.0.0"
+          "/*":
+            - "Cache-Control: public, max-age=3600, s-maxage=86400"
+            - "X-Content-Type-Options: nosniff"
+            - "X-Frame-Options: DENY" 
+            - "X-XSS-Protection: 1; mode=block"
+            - "Referrer-Policy: strict-origin-when-cross-origin"
+          "/_next/static/*":
+            - "Cache-Control: public, max-age=31536000, immutable"
+          "/icons/*":
+            - "Cache-Control: public, max-age=31536000"
+          "/config/*":
+            - "Cache-Control: public, max-age=300"
+        
+        # URL routing configuration
+        routes:
+          "/": "/index.html"
+          "/404": "/404.html"
+        
+        # Redirects for API calls and external resources
+        redirects:
+          - from: "/api/*"
+            to: "https://api.waltodo.com/api/*"
+            status: 307
+            headers:
+              - "Access-Control-Allow-Origin: *"
+              - "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"
+        
+        # Error page configuration
+        error_pages:
+          404: "/404.html"
+          500: "/404.html"
+        
+        # Site metadata
+        metadata:
+          title: "WalTodo - Decentralized Todo Management"
+          description: "A decentralized todo application built on Sui and Walrus"
+          author: "WalTodo Team"
+          version: "1.0.0"

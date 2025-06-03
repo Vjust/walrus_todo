@@ -1,0 +1,69 @@
+{
+  "network": {
+    "name": "devnet",
+    "url": "https://fullnode.devnet.sui.io:443",
+    "faucetUrl": "https://faucet.devnet.sui.io/gas",
+    "explorerUrl": "https://devnet.suiexplorer.com",
+    "websocketUrl": "wss://fullnode.devnet.sui.io:443",
+    "fallbackUrls": [
+      "https://sui-devnet-endpoint.blockvision.org/v1",
+      "https://rpc-ws-devnet.suiscan.xyz:443"
+    ],
+    "chainId": "2a212de6"
+  },
+  "walrus": {
+    "packageId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "networkUrl": "https://wal.devnet.sui.io",
+    "publisherUrl": "https://publisher-devnet.walrus.space",
+    "aggregatorUrl": "https://aggregator-devnet.walrus.space", 
+    "apiPrefix": "https://api-devnet.walrus.tech/1.0",
+    "fallbackPublisherUrls": [
+      "https://walrus-devnet-publisher.nodes.guru",
+      "https://walrus-devnet-publisher.blockscope.net"
+    ]
+  },
+  "slushWallet": {
+    "enabled": true,
+    "autoConnect": true,
+    "features": [
+      "transaction_signing",
+      "account_management",
+      "network_switching"
+    ],
+    "supportedNetworks": ["devnet", "testnet"],
+    "networkSwitchingEnabled": true
+  },
+  "deployment": {
+    "packageId": "0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799",
+    "digest": "unknown",
+    "timestamp": "2025-06-01T10:00:00.000Z",
+    "deployerAddress": "0xca793690985183dc8e2180fd059d76f3b0644f5c2ecd3b01cdebe7d40b0cca39"
+  },
+  "contracts": {
+    "todoNft": {
+      "packageId": "0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799",
+      "moduleName": "todo_nft",
+      "structName": "TodoNFT"
+    }
+  },
+  "features": {
+    "aiEnabled": true,
+    "blockchainVerification": false,
+    "encryptedStorage": false,
+    "networkSwitching": true,
+    "automaticRetry": true,
+    "fallbackEndpoints": true
+  },
+  "networkSwitching": {
+    "enabled": true,
+    "supportedNetworks": ["devnet", "testnet"],
+    "autoDetectNetwork": true,
+    "confirmationRequired": true
+  },
+  "connectivity": {
+    "timeout": 10000,
+    "retryAttempts": 3,
+    "retryDelay": 1000,
+    "healthCheckInterval": 30000
+  }
+}

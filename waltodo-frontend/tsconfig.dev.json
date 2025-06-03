@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Development mode - slightly less strict but still enforce quality
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": false,  // Allow during development for faster iteration
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,  // Allow during development for flexibility
+    "exactOptionalPropertyTypes": false,  // Allow during development for gradual migration
+    "noUnusedLocals": false,  // Allow during development
+    "noUnusedParameters": false,  // Allow during development
+    "noImplicitOverride": false  // Allow during development for gradual migration
+  },
+  "exclude": ["node_modules"]
+}

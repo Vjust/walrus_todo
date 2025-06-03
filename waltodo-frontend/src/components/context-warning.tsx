@@ -12,7 +12,7 @@ export function ContextWarning() {
 
   useEffect(() => {
     // Only run in browser environment
-    if (!isBrowser()) return;
+    if (!isBrowser()) {return;}
 
     const detectedWarnings: string[] = [];
 
@@ -60,7 +60,7 @@ export function ContextWarning() {
   }, []);
 
   // Return null during SSR and initial client-side render
-  if (!showWarning || warnings.length === 0 || !isBrowser()) return null;
+  if (!showWarning || warnings.length === 0 || !isBrowser()) {return null;}
 
   return (
     <div className='fixed top-0 left-0 right-0 z-50 bg-yellow-50 dark:bg-yellow-900 border-b border-yellow-200 dark:border-yellow-700'>

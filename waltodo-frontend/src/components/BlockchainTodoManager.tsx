@@ -5,24 +5,24 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  useSuiTodos,
-  useTodoOperation,
+  CreateTodoParams,
   NetworkType,
   Todo,
-  CreateTodoParams,
   UpdateTodoParams,
+  useSuiTodos,
+  useTodoOperation,
 } from '@/hooks/useSuiTodos';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import { TransactionSafetyManager } from '@/lib/transaction-safety';
 import {
-  storeTodoOnBlockchainSafely,
-  updateTodoOnBlockchainSafely,
   completeTodoOnBlockchainSafely,
-  transferTodoNFTSafely,
   deleteTodoNFTSafely,
+  storeTodoOnBlockchainSafely,
+  transferTodoNFTSafely,
+  updateTodoOnBlockchainSafely,
 } from '@/lib/sui-client-safe';
 import toast from 'react-hot-toast';
 
@@ -260,7 +260,7 @@ function TodoItem({
   const { executeOperation, loading: operationLoading } = useTodoOperation();
 
   const handleSave = async () => {
-    if (!todo.objectId) return;
+    if (!todo.objectId) {return;}
 
     await executeOperation(async () => {
       await onUpdate({
@@ -275,7 +275,7 @@ function TodoItem({
   };
 
   const handleComplete = async () => {
-    if (!todo.objectId) return;
+    if (!todo.objectId) {return;}
 
     await executeOperation(async () => {
       await onComplete(todo.objectId!);
@@ -284,7 +284,7 @@ function TodoItem({
   };
 
   const handleDelete = async () => {
-    if (!todo.objectId) return;
+    if (!todo.objectId) {return;}
 
     if (window.confirm('Are you sure you want to delete this TodoNFT?')) {
       await executeOperation(async () => {
@@ -625,7 +625,7 @@ function BlockchainTodoManagerSkeleton() {
     <div className='max-w-4xl mx-auto p-6'>
       <div className='bg-white p-6 rounded-lg shadow-md'>
         <div className='flex justify-center items-center py-12'>
-          <div className='w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin'></div>
+          <div className='w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin' />
           <div className='ml-4'>
             <p className='text-sm text-gray-500 animate-pulse'>
               Initializing blockchain manager...

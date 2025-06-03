@@ -1,10 +1,10 @@
 import { 
-  ProgressiveImageLoader, 
+  type ImagePreloadOptions, 
   preloadImages,
-  type ImagePreloadOptions 
+  ProgressiveImageLoader 
 } from './image-optimization';
 import { getImageUrl as getWalrusImageUrl } from '@/lib/walrus-client';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Configuration for Walrus image optimization
 const WALRUS_IMAGE_CONFIG = {
@@ -96,7 +96,7 @@ export async function batchLoadWalrusImages(
   const inProgress = new Set<Promise<void>>();
 
   async function processNext(): Promise<void> {
-    if (queue.length === 0) return;
+    if (queue.length === 0) {return;}
     
     const blobId = queue.shift()!;
     const loader = new WalrusImageLoader(blobId);
@@ -148,7 +148,7 @@ export async function preloadTodoImages(
       return todo.imageUrl!;
     });
 
-  if (imageUrls.length === 0) return;
+  if (imageUrls.length === 0) {return;}
 
   // Use the enhanced Walrus batch loader
   await batchLoadWalrusImages(imageUrls, { priority: options.priority });
@@ -166,7 +166,7 @@ export function useWalrusImage(blobIdOrUrl: string | undefined, options: ImagePr
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
     
     if (!blobIdOrUrl) {
       setState({
@@ -234,7 +234,7 @@ export async function optimizeWalrusImage(
     // Create canvas for resizing
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas context not available');
+    if (!ctx) {throw new Error('Canvas context not available');}
 
     // Calculate dimensions maintaining aspect ratio
     const aspectRatio = img.width / img.height;
@@ -293,7 +293,7 @@ export async function generateWalrusBlurPlaceholder(imageUrl: string): Promise<s
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas context not available');
+    if (!ctx) {throw new Error('Canvas context not available');}
 
     // Very small for performance
     canvas.width = 20;
@@ -329,7 +329,7 @@ export function useOptimizedWalrusImage(
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
     
     if (!blobIdOrUrl) {
       setState({
@@ -352,7 +352,7 @@ export function useOptimizedWalrusImage(
           ? blobIdOrUrl!
           : getWalrusImageUrl(blobIdOrUrl!);
 
-        if (!isMounted) return;
+        if (!isMounted) {return;}
 
         setState(prev => ({ ...prev, originalUrl: url }));
 

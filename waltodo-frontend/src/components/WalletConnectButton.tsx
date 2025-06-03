@@ -12,18 +12,35 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
-import { useSafeWallet } from '@/hooks/useSafeWallet';
-import { useMounted } from '@/hooks/useMounted';
+import { useWalletContext } from '@/contexts/WalletContext';
+import { useSSRSafeMounted } from '@/hooks/useSSRSafe';
+import { WalletButtonSkeleton } from '@/components/SSRFallback';
 import { analytics } from '@/lib/analytics';
-import { WalletButtonSkeleton, NoWalletFallback } from './WalletSkeleton';
-import WalletErrorBoundary from './WalletErrorBoundary';
-import { useSafeBrowserAPI } from './SSRSafe';
 
 interface WalletConnectButtonProps {
   className?: string;
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
+}
+
+// Simple fallback components (kept for backward compatibility)
+
+function NoWalletFallback({ variant, className }: { variant?: string; className?: string }) {
+  return (
+    <div className={`text-gray-500 text-sm ${className}`}>
+      Wallet not available
+    </div>
+  );
+}
+
+function WalletErrorBoundary({ children, fallback, className }: { children: React.ReactNode; fallback?: React.ReactNode; className?: string }) {
+  const [hasError, setHasError] = useState(false);
+  
+  if (hasError) {
+    return fallback || <NoWalletFallback className={className} />;
+  }
+  
+  return <>{children}</>;
 }
 
 function WalletConnectButton({ 
@@ -51,17 +68,34 @@ function WalletConnectButtonContent({
   size = 'md'
 }: WalletConnectButtonProps) {
   // ALL HOOKS MUST BE CALLED AT TOP LEVEL - NO CONDITIONAL HOOKS
-  const walletContext = useClientSafeWallet();
-  const { hasWallet, detectedWallets, isLoaded: walletLoaded } = useSafeWallet();
-  const mounted = useMounted();
+  const walletContext = useWalletContext();
+  const { mounted, isReady } = useSSRSafeMounted();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [hasWallet, setHasWallet] = useState(false);
+  const [detectedWallets, setDetectedWallets] = useState<string[]>([]);
+  
+  // Check for wallet on mount
+  useEffect(() => {
+    if (isReady && typeof window !== 'undefined') {
+      const checkWallets = () => {
+        const wallets: string[] = [];
+        if ((window as any).suiWallet) {wallets.push('Sui Wallet');}
+        if ((window as any).slushWallet) {wallets.push('Slush Wallet');}
+        setDetectedWallets(wallets);
+        setHasWallet(wallets.length > 0);
+      };
+      
+      checkWallets();
+      
+      // Check again after a short delay for wallets that load asynchronously
+      const timeout = setTimeout(checkWallets, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isReady]);
 
-  // Move useSafeBrowserAPI to top level
-  const { data: performance, isLoaded: perfLoaded } = useSafeBrowserAPI(
-    () => window.performance,
-    { now: () => Date.now() },
-    []
-  );
+  // Use simple performance fallback to avoid type issues
+  const performance = typeof window !== 'undefined' ? window.performance : null;
+  const perfLoaded = true;
 
   const getSizeClasses = (size: 'sm' | 'md' | 'lg') => {
     switch (size) {
@@ -75,14 +109,14 @@ function WalletConnectButtonContent({
   };
   
   // Handle SSR and initialization phase - early return after hooks
-  if (!mounted || !walletContext || !walletLoaded) {
+  if (!isReady || !walletContext) {
     return <WalletButtonSkeleton size={size} className={className} />;
   }
 
   const { connected, connecting, address, connect, disconnect, error, name } = walletContext;
 
   const handleConnect = () => {
-    const connectStartTime = perfLoaded ? performance.now() : Date.now();
+    const connectStartTime = performance?.now() ?? Date.now();
     
     if (!hasWallet) {
       // Safe analytics tracking with null check
@@ -109,7 +143,7 @@ function WalletConnectButtonContent({
         action: 'connect',
         wallet: name || detectedWallets[0] || undefined,
         success: false, // Will be updated on success
-        duration: (perfLoaded ? performance.now() : Date.now()) - connectStartTime,
+        duration: (performance?.now() ?? Date.now()) - connectStartTime,
       });
     }
   };

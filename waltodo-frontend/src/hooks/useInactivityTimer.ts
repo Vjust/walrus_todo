@@ -3,7 +3,7 @@
  * Used by wallet context for session management
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseInactivityTimerOptions {
   timeout: number; // timeout in milliseconds
@@ -26,7 +26,7 @@ export function useInactivityTimer({
 }: UseInactivityTimerOptions) {
   // Initialize from localStorage if available
   const [lastActivity, setLastActivity] = useState<number>(() => {
-    if (typeof window === 'undefined') return Date.now();
+    if (typeof window === 'undefined') {return Date.now();}
     
     try {
       const stored = localStorage.getItem(storageKey);
@@ -50,7 +50,7 @@ export function useInactivityTimer({
 
   // Update localStorage and broadcast to other tabs
   const updateActivityTime = useCallback((timestamp: number) => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
     
     try {
       localStorage.setItem(storageKey, timestamp.toString());
@@ -84,7 +84,7 @@ export function useInactivityTimer({
 
   // Listen for activity updates from other tabs
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === storageKey && e.newValue) {
@@ -122,7 +122,7 @@ export function useInactivityTimer({
 
   // Set up activity event listeners
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const handleActivity = () => resetActivityTimer();
 
@@ -140,7 +140,7 @@ export function useInactivityTimer({
 
   // Check for timeout periodically
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const checkTimeout = () => {
       const now = Date.now();

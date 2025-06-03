@@ -10,7 +10,7 @@
 import React from 'react';
 import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import WalletErrorBoundary from './WalletErrorBoundary';
-import { NoWalletFallback, ConnectWalletPrompt } from './NoWalletFallback';
+import { ConnectWalletPrompt, NoWalletFallback } from './NoWalletFallback';
 import { WalletButtonSkeleton } from './WalletSkeleton';
 
 interface GracefulWalletFeatureProps {
@@ -152,7 +152,7 @@ export function WalletRequired({
 }) {
   return (
     <GracefulWalletFeature
-      requireConnection={true}
+      requireConnection
       loadingVariant="card"
       fallbackVariant={fallbackVariant}
       className={className}
@@ -198,7 +198,7 @@ export function WalletButton({
       requireConnection={false}
       loadingVariant="button"
       fallbackVariant="minimal"
-      showConnectPrompt={true}
+      showConnectPrompt
       className={className}
     >
       {children}
@@ -211,16 +211,16 @@ export function useWalletFeature(requireConnection = true) {
   const wallet = useClientSafeWallet();
   
   const isAvailable = React.useMemo(() => {
-    if (!wallet || wallet.isLoading) return false;
-    if (wallet.error) return false;
-    if (requireConnection && !wallet.connected) return false;
+    if (!wallet || wallet.isLoading) {return false;}
+    if (wallet.error) {return false;}
+    if (requireConnection && !wallet.connected) {return false;}
     return true;
   }, [wallet, requireConnection]);
 
   const shouldShowFallback = React.useMemo(() => {
-    if (!wallet || wallet.isLoading) return false;
-    if (wallet.error) return true;
-    if (requireConnection && !wallet.connected) return true;
+    if (!wallet || wallet.isLoading) {return false;}
+    if (wallet.error) {return true;}
+    if (requireConnection && !wallet.connected) {return true;}
     return false;
   }, [wallet, requireConnection]);
 

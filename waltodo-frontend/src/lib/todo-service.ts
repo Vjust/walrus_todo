@@ -3,12 +3,12 @@
  * Integrates with Sui blockchain and Walrus storage
  */
 
-import type { Todo, TodoList, TodoNFTMetadata, NFTCategory } from '@/types/todo-nft';
+import type { NFTCategory, Todo, TodoList, TodoNFTMetadata } from '@/types/todo-nft';
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { PublicKey } from '@solana/web3.js';
 import safeStorage, { isUsingFallbackStorage } from './safe-storage';
-import { loadNetworkConfig, type AppConfig } from './config-loader';
+import { type AppConfig, loadNetworkConfig } from './config-loader';
 import { walrusClient } from './walrus-client';
 
 // Runtime configuration state
@@ -167,7 +167,7 @@ let allWalletTodos: Record<string, Record<string, TodoList>> = {};
 
 // Helper function to get wallet-specific storage key
 function getWalletKey(address?: string): string {
-  if (!address) return 'anonymous';
+  if (!address) {return 'anonymous';}
   return address.toLowerCase();
 }
 
@@ -297,12 +297,12 @@ export function updateTodo(
   const walletKey = getWalletKey(walletAddress);
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return false;
+  if (!walletTodos[listName]) {return false;}
 
   const index = walletTodos[listName].todos.findIndex(
     todo => todo.id === updatedTodo.id
   );
-  if (index === -1) return false;
+  if (index === -1) {return false;}
 
   walletTodos[listName].todos[index] = {
     ...updatedTodo,
@@ -329,7 +329,7 @@ export function deleteTodo(
   const walletKey = getWalletKey(walletAddress);
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return false;
+  if (!walletTodos[listName]) {return false;}
 
   const initialLength = walletTodos[listName].todos.length;
   walletTodos[listName].todos = walletTodos[listName].todos.filter(
@@ -355,7 +355,7 @@ export function createTodoList(
   const walletKey = getWalletKey(walletAddress);
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (walletTodos[listName]) return false;
+  if (walletTodos[listName]) {return false;}
 
   walletTodos[listName] = {
     name: listName,
@@ -381,7 +381,7 @@ export function deleteTodoList(
   const walletKey = getWalletKey(walletAddress);
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName] || listName === 'default') return false;
+  if (!walletTodos[listName] || listName === 'default') {return false;}
 
   delete walletTodos[listName];
 
@@ -406,12 +406,12 @@ export function markTodoAsBlockchainStored(
   const walletKey = getWalletKey(walletAddress);
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return false;
+  if (!walletTodos[listName]) {return false;}
 
   const todoIndex = walletTodos[listName].todos.findIndex(
     todo => todo.id === todoId
   );
-  if (todoIndex === -1) return false;
+  if (todoIndex === -1) {return false;}
 
   walletTodos[listName].todos[todoIndex].blockchainStored = true;
   walletTodos[listName].todos[todoIndex].objectId = objectId;
@@ -436,10 +436,10 @@ export async function storeTodoOnBlockchain(
 ): Promise<string | null> {
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return null;
+  if (!walletTodos[listName]) {return null;}
 
   const todo = walletTodos[listName].todos.find(t => t.id === todoId);
-  if (!todo) return null;
+  if (!todo) {return null;}
 
   // If no signer provided, operate in read-only mode
   if (!signer || !signer.signAndExecuteTransaction) {
@@ -618,7 +618,7 @@ export async function completeTodoOnBlockchain(
 ): Promise<boolean> {
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return false;
+  if (!walletTodos[listName]) {return false;}
 
   const todo = walletTodos[listName].todos.find(t => t.id === todoId);
   if (!todo || !todo.blockchainStored || !todo.objectId) {
@@ -678,7 +678,7 @@ export async function transferTodoNFT(
 ): Promise<boolean> {
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return false;
+  if (!walletTodos[listName]) {return false;}
 
   const todo = walletTodos[listName].todos.find(t => t.id === todoId);
   if (!todo || !todo.blockchainStored || !todo.objectId) {
@@ -844,7 +844,7 @@ export async function updateNFTMetadata(
 ): Promise<boolean> {
   const walletTodos = getWalletTodos(walletAddress);
 
-  if (!walletTodos[listName]) return false;
+  if (!walletTodos[listName]) {return false;}
 
   const todo = walletTodos[listName].todos.find(t => t.id === todoId);
   if (!todo || !todo.blockchainStored || !todo.objectId) {
@@ -1039,7 +1039,7 @@ export async function getNFT(
   // Check cache first
   if (!forceRefresh) {
     const cached = getNFTFromCache(objectId);
-    if (cached) return cached;
+    if (cached) {return cached;}
   }
 
   try {
@@ -1155,7 +1155,7 @@ export function getTransactionStatus(todoId: string): {
   message?: string;
 } {
   const status = transactionStatusMap.get(todoId);
-  if (!status) return { status: 'none' };
+  if (!status) {return { status: 'none' };}
   
   // Clean up old statuses (older than 1 hour)
   if (Date.now() - status.timestamp > 3600000) {
@@ -1275,7 +1275,7 @@ function updateNFTCache(objectId: string, todo: Todo): void {
  */
 function getNFTFromCache(objectId: string): Todo | null {
   const cached = nftCache.get(objectId);
-  if (!cached) return null;
+  if (!cached) {return null;}
   
   if (Date.now() - cached.timestamp > CACHE_DURATION) {
     nftCache.delete(objectId);

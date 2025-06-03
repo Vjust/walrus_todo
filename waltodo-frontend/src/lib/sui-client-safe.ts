@@ -3,7 +3,7 @@
  */
 
 import { SuiClient, SuiHTTPTransport } from '@mysten/sui.js/client';
-import { retryWithRecovery, ErrorType } from './error-recovery';
+import { ErrorType, retryWithRecovery } from './error-recovery';
 
 export interface SafeSuiClientOptions {
   url: string;

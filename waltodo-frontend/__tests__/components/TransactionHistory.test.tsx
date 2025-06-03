@@ -14,9 +14,14 @@ jest.mock('../../src/contexts/WalletContext', () => ({
 
 // Mock Intl.RelativeTimeFormat for consistent testing
 const mockFormatFn = jest.fn(value => `${Math.abs(value)} time units ago`);
-global.Intl.RelativeTimeFormat = jest.fn().mockImplementation(() => ({
-  format: mockFormatFn
-})) as any;
+// Use Object.defineProperty to avoid read-only property error
+Object.defineProperty(global.Intl, 'RelativeTimeFormat', {
+  value: jest.fn().mockImplementation(() => ({
+    format: mockFormatFn
+  })),
+  writable: true,
+  configurable: true
+});
 
 describe('TransactionHistory', () => {
   // Sample transaction records for testing
@@ -24,43 +29,43 @@ describe('TransactionHistory', () => {
     {
       id: 'tx1',
       status: 'success',
-      timestamp: Date.now() - 60000, // 1 minute ago
+      timestamp: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
       type: 'Transfer',
-      hash: '0xabc123def456'
+      details: { hash: '0xabc123def456' }
     },
     {
       id: 'tx2',
       status: 'pending',
-      timestamp: Date.now() - 300000, // 5 minutes ago
+      timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
       type: 'Swap'
     },
     {
       id: 'tx3',
-      status: 'error',
-      timestamp: Date.now() - 3600000, // 1 hour ago
+      status: 'failed',
+      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
       type: 'Mint',
-      message: 'Transaction failed: insufficient funds'
+      details: { message: 'Transaction failed: insufficient funds' }
     },
     {
       id: 'tx4',
       status: 'success',
-      timestamp: Date.now() - 86400000, // 1 day ago
+      timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
       type: 'Stake',
-      hash: '0x789012345abc'
+      details: { hash: '0x789012345abc' }
     },
     {
       id: 'tx5',
       status: 'success',
-      timestamp: Date.now() - 172800000, // 2 days ago
+      timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
       type: 'Claim',
-      hash: '0xdef456789abc'
+      details: { hash: '0xdef456789abc' }
     },
     {
       id: 'tx6',
       status: 'success',
-      timestamp: Date.now() - 604800000, // 7 days ago
+      timestamp: new Date(Date.now() - 604800000).toISOString(), // 7 days ago
       type: 'Vote',
-      hash: '0x123def789abc'
+      details: { hash: '0x123def789abc' }
     }
   ];
 

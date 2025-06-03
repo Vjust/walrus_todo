@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
+import { ReactNode } from 'react';
+import { useClientOnly } from '@/lib/ssr-utils';
 
 interface ClientOnlyProps {
   children: ReactNode;
@@ -9,18 +10,14 @@ interface ClientOnlyProps {
 
 /**
  * Component that only renders its children on the client side to prevent hydration mismatches.
- * Useful for components that rely on browser-specific APIs or have dynamic content.
+ * Uses the improved SSR-safe pattern that doesn't cause layout shifts.
  */
 export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
-  const [hasMounted, setHasMounted] = useState(false);
+  const { isClient, ClientOnlyWrapper } = useClientOnly(() => <>{fallback}</>);
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted) {
-    return <div suppressHydrationWarning>{fallback}</div>;
-  }
-
-  return <div suppressHydrationWarning>{children}</div>;
+  return (
+    <ClientOnlyWrapper>
+      {children}
+    </ClientOnlyWrapper>
+  );
 }

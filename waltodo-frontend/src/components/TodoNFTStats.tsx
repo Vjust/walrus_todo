@@ -1,22 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
   Area,
-  AreaChart
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useSuiClient } from '../hooks/useSuiClient';
@@ -59,14 +59,14 @@ export const TodoNFTStats: React.FC = () => {
   // Fetch NFTs
   useEffect(() => {
     const fetchNFTs = async () => {
-      if (!account?.address || !client) return;
+      if (!account?.address || !client) {return;}
 
       try {
         setLoading(true);
         setError(null);
 
         const suiClient = await client.getClient();
-        if (!suiClient) return;
+        if (!suiClient) {return;}
 
         const objects = await suiClient.getOwnedObjects({
           owner: account.address,
@@ -264,28 +264,28 @@ export const TodoNFTStats: React.FC = () => {
 
   // Format bytes to human readable
   const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   };
 
   // Format duration to human readable
   const formatDuration = (ms: number) => {
-    if (ms === 0) return 'N/A';
+    if (ms === 0) {return 'N/A';}
     const days = Math.floor(ms / (1000 * 60 * 60 * 24));
     const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h`;
+    if (days > 0) {return `${days}d ${hours}h`;}
+    if (hours > 0) {return `${hours}h`;}
     return '< 1h';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
       </div>
     );
   }
@@ -408,7 +408,7 @@ export const TodoNFTStats: React.FC = () => {
           <h3 className="text-lg font-semibold mb-4">Most Used Tags</h3>
           <div className="flex flex-wrap gap-2">
             {stats.tagFrequency.map((tag, index) => {
-              const fontSize = Math.max(0.75, Math.min(2, tag.count / 10)) + 'rem';
+              const fontSize = `${Math.max(0.75, Math.min(2, tag.count / 10))  }rem`;
               return (
                 <span
                   key={index}
@@ -463,7 +463,7 @@ export const TodoNFTStats: React.FC = () => {
       {/* Real-time Updates Indicator */}
       <div className="text-center text-sm text-gray-500">
         <span className="inline-flex items-center">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></span>
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
           Real-time updates enabled • Last updated: {formatDistanceToNow(new Date(), { addSuffix: true })}
         </span>
       </div>

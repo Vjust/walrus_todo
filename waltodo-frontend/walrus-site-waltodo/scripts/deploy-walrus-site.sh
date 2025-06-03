@@ -18,12 +18,39 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SITE_CONFIG_FILE="$PROJECT_DIR/sites-config.yaml"
 BUILD_DIR="$PROJECT_DIR/out"
 
+# Network and retry configuration
+MAX_RETRIES=5
+BASE_DELAY=2
+MAX_DELAY=60
+CONNECTION_TIMEOUT=30
+GAS_BUDGET=500000000
+
+# Testnet RPC endpoints (fallbacks)
+TESTNET_RPC_ENDPOINTS=(
+    "https://fullnode.testnet.sui.io:443"
+    "https://sui-testnet.nodeinfra.com"
+    "https://sui-testnet.chainstack.com"
+    "https://sui-testnet.publicnode.com"
+)
+
+# Mainnet RPC endpoints (fallbacks)
+MAINNET_RPC_ENDPOINTS=(
+    "https://fullnode.mainnet.sui.io:443"
+    "https://sui-mainnet.nodeinfra.com"
+    "https://sui-mainnet.chainstack.com"
+    "https://sui-mainnet.publicnode.com"
+)
+
 # Default values
 NETWORK="testnet"
 FORCE_REBUILD=false
 SKIP_BUILD=false
 SITE_NAME="waltodo-app"
-CONFIG_DIR="$HOME/.walrus"
+CONFIG_DIR="$HOME/.config/walrus"
+VERBOSE=false
+DRY_RUN=false
+CURRENT_RPC_INDEX=0
+AUTO_OPTIMIZE=false
 
 # Help function
 show_help() {
@@ -37,8 +64,13 @@ OPTIONS:
     -n, --network NETWORK     Network to deploy to (testnet|mainnet) [default: testnet]
     -f, --force              Force rebuild even if build exists
     -s, --skip-build         Skip build process and deploy existing build
+    --optimize               Automatically optimize assets during build validation
     --site-name NAME         Name for the Walrus site [default: waltodo-app]
-    --config-dir DIR         Walrus config directory [default: ~/.walrus]
+    --config-dir DIR         Walrus config directory [default: ~/.config/walrus]
+    --gas-budget AMOUNT      Gas budget for transactions [default: 500000000]
+    --max-retries COUNT      Maximum retry attempts [default: 5]
+    --dry-run                Validate configuration without deploying
+    -v, --verbose            Enable verbose logging
     -h, --help               Show this help message
 
 EXAMPLES:
@@ -51,6 +83,8 @@ ENVIRONMENT VARIABLES:
     WALRUS_CONFIG_PATH       Path to Walrus configuration file
     WALRUS_WALLET_PATH       Path to wallet file for deployment
     SITE_BUILDER_PATH        Path to site-builder executable
+    SUI_RPC_URL              Override RPC endpoint URL
+    WALRUS_VERBOSE           Enable verbose Walrus output
 
 EOF
 }
@@ -70,6 +104,163 @@ log_warning() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Utility functions for retry logic and network validation
+wait_with_backoff() {
+    local attempt=$1
+    local delay=$((BASE_DELAY * (2 ** (attempt - 1))))
+    if [[ $delay -gt $MAX_DELAY ]]; then
+        delay=$MAX_DELAY
+    fi
+    log_info "Waiting ${delay}s before retry (attempt $attempt/$MAX_RETRIES)..."
+    sleep $delay
+}
+
+# Test RPC endpoint connectivity
+test_rpc_endpoint() {
+    local rpc_url=$1
+    local timeout=${2:-$CONNECTION_TIMEOUT}
+    
+    if [[ "$VERBOSE" == true ]]; then
+        log_info "Testing RPC endpoint: $rpc_url"
+    fi
+    
+    # Test basic connectivity with curl
+    if curl -s --max-time "$timeout" --connect-timeout 10 \
+        -X POST "$rpc_url" \
+        -H "Content-Type: application/json" \
+        -d '{"jsonrpc":"2.0","method":"sui_getLatestSuiSystemState","params":[],"id":1}' \
+        >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Get the next available RPC endpoint
+get_next_rpc_endpoint() {
+    local endpoints
+    if [[ "$NETWORK" == "mainnet" ]]; then
+        endpoints=("${MAINNET_RPC_ENDPOINTS[@]}")
+    else
+        endpoints=("${TESTNET_RPC_ENDPOINTS[@]}")
+    fi
+    
+    local total_endpoints=${#endpoints[@]}
+    if [[ $total_endpoints -eq 0 ]]; then
+        log_error "No RPC endpoints configured for network: $NETWORK"
+        return 1
+    fi
+    
+    # Try each endpoint in order
+    for ((i=0; i<total_endpoints; i++)); do
+        local index=$(( (CURRENT_RPC_INDEX + i) % total_endpoints ))
+        local endpoint="${endpoints[$index]}"
+        
+        if test_rpc_endpoint "$endpoint"; then
+            CURRENT_RPC_INDEX=$index
+            echo "$endpoint"
+            return 0
+        else
+            log_warning "RPC endpoint failed: $endpoint"
+        fi
+    done
+    
+    log_error "All RPC endpoints failed for network: $NETWORK"
+    return 1
+}
+
+# Execute command with retry logic
+execute_with_retry() {
+    local cmd=("$@")
+    local attempt=1
+    
+    while [[ $attempt -le $MAX_RETRIES ]]; do
+        if [[ "$VERBOSE" == true ]]; then
+            log_info "Attempt $attempt/$MAX_RETRIES: ${cmd[*]}"
+        fi
+        
+        local output
+        local exit_code=0
+        
+        # Capture both stdout and stderr
+        if output=$("${cmd[@]}" 2>&1); then
+            echo "$output"
+            return 0
+        else
+            exit_code=$?
+            log_warning "Command failed (attempt $attempt/$MAX_RETRIES): ${cmd[*]}"
+            
+            # Check if it's a network-related error
+            if echo "$output" | grep -iq "connection reset by peer\\|network\\|timeout\\|refused"; then
+                log_warning "Network error detected: $output"
+                
+                # Try to get a new RPC endpoint
+                if [[ $attempt -lt $MAX_RETRIES ]]; then
+                    log_info "Attempting to find alternative RPC endpoint..."
+                    local new_rpc
+                    if new_rpc=$(get_next_rpc_endpoint); then
+                        log_info "Switching to RPC endpoint: $new_rpc"
+                        # Update the command if it contains an RPC URL
+                        for i in "${!cmd[@]}"; do
+                            if [[ "${cmd[$i]}" =~ https://.*sui\\.io:443 ]] || [[ "${cmd[$i]}" =~ https://.*sui.*\\.(com|io) ]]; then
+                                cmd[$i]="$new_rpc"
+                                break
+                            fi
+                        done
+                    fi
+                fi
+            fi
+            
+            if [[ $attempt -eq $MAX_RETRIES ]]; then
+                log_error "Command failed after $MAX_RETRIES attempts: $output"
+                return $exit_code
+            fi
+            
+            wait_with_backoff $attempt
+            ((attempt++))
+        fi
+    done
+    
+    return 1
+}
+
+# Validate network connectivity and configuration
+validate_network_config() {
+    log_info "Validating network configuration for $NETWORK..."
+    
+    # Test basic internet connectivity
+    if ! curl -s --max-time 10 --connect-timeout 5 https://www.google.com >/dev/null 2>&1; then
+        log_error "No internet connectivity detected"
+        return 1
+    fi
+    
+    # Get a working RPC endpoint
+    local rpc_url
+    if ! rpc_url=$(get_next_rpc_endpoint); then
+        log_error "No working RPC endpoints found for $NETWORK"
+        log_info "Please check your internet connection and try again"
+        return 1
+    fi
+    
+    log_success "Using RPC endpoint: $rpc_url"
+    
+    # Test Walrus aggregator connectivity
+    local walrus_url
+    if [[ "$NETWORK" == "mainnet" ]]; then
+        walrus_url="https://aggregator.walrus.space"
+    else
+        walrus_url="https://aggregator-devnet.walrus.space"
+    fi
+    
+    if test_rpc_endpoint "$walrus_url" 15; then
+        log_success "Walrus aggregator connectivity verified: $walrus_url"
+    else
+        log_warning "Walrus aggregator test failed: $walrus_url (proceeding anyway)"
+    fi
+    
+    return 0
 }
 
 # Parse command line arguments
@@ -92,6 +283,10 @@ parse_args() {
                 SKIP_BUILD=true
                 shift
                 ;;
+            --optimize)
+                AUTO_OPTIMIZE=true
+                shift
+                ;;
             --site-name)
                 SITE_NAME="$2"
                 shift 2
@@ -99,6 +294,22 @@ parse_args() {
             --config-dir)
                 CONFIG_DIR="$2"
                 shift 2
+                ;;
+            --gas-budget)
+                GAS_BUDGET="$2"
+                shift 2
+                ;;
+            --max-retries)
+                MAX_RETRIES="$2"
+                shift 2
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            -v|--verbose)
+                VERBOSE=true
+                shift
                 ;;
             -h|--help)
                 show_help
@@ -113,23 +324,29 @@ parse_args() {
     done
 }
 
-# Check prerequisites
+# Enhanced prerequisites check with comprehensive validation
 check_prerequisites() {
     log_info "Checking prerequisites..."
+    
+    local prerequisites_passed=true
     
     # Check if we're in the right directory
     if [[ ! -f "$PROJECT_DIR/package.json" ]]; then
         log_error "package.json not found. Are you in the right directory?"
-        exit 1
+        prerequisites_passed=false
     fi
     
     # Check if pnpm is installed
     if ! command -v pnpm &> /dev/null; then
         log_error "pnpm is required but not installed. Please install pnpm first."
-        exit 1
+        log_info "Install: curl -fsSL https://get.pnpm.io/install.sh | sh"
+        prerequisites_passed=false
+    else
+        local pnpm_version=$(pnpm --version)
+        log_success "pnpm found: v$pnpm_version"
     fi
     
-    # Check for site-builder
+    # Check for site-builder with enhanced validation
     SITE_BUILDER_CMD="site-builder"
     if [[ -n "${SITE_BUILDER_PATH:-}" ]]; then
         SITE_BUILDER_CMD="$SITE_BUILDER_PATH"
@@ -138,18 +355,130 @@ check_prerequisites() {
     if ! command -v "$SITE_BUILDER_CMD" &> /dev/null; then
         log_error "site-builder CLI not found. Please install it first:"
         log_error "Run: ./scripts/setup-walrus-site.sh"
-        exit 1
+        prerequisites_passed=false
+    else
+        # Test site-builder functionality
+        local site_builder_version
+        if site_builder_version=$("$SITE_BUILDER_CMD" --version 2>/dev/null | head -1); then
+            log_success "site-builder found: $site_builder_version"
+        else
+            log_warning "site-builder found but version check failed"
+        fi
+        
+        # Test site-builder help command
+        if ! "$SITE_BUILDER_CMD" --help &> /dev/null; then
+            log_warning "site-builder help command failed - binary might be corrupted"
+        fi
     fi
     
     # Check Node.js version
-    NODE_VERSION=$(node --version | cut -d'v' -f2)
-    REQUIRED_NODE="18.0.0"
-    if ! printf '%s\n%s\n' "$REQUIRED_NODE" "$NODE_VERSION" | sort -V -C; then
-        log_error "Node.js version $NODE_VERSION is less than required $REQUIRED_NODE"
+    if ! command -v node &> /dev/null; then
+        log_error "Node.js not found. Please install Node.js 18 or higher."
+        prerequisites_passed=false
+    else
+        NODE_VERSION=$(node --version | cut -d'v' -f2)
+        REQUIRED_NODE="18.0.0"
+        if ! printf '%s\n%s\n' "$REQUIRED_NODE" "$NODE_VERSION" | sort -V -C; then
+            log_error "Node.js version $NODE_VERSION is less than required $REQUIRED_NODE"
+            prerequisites_passed=false
+        else
+            log_success "Node.js found: v$NODE_VERSION"
+        fi
+    fi
+    
+    # Check for curl (required for network tests)
+    if ! command -v curl &> /dev/null; then
+        log_error "curl is required but not installed."
+        prerequisites_passed=false
+    fi
+    
+    # Check for sui CLI (optional but recommended)
+    if command -v sui &> /dev/null; then
+        local sui_version=$(sui --version 2>/dev/null | head -1 || echo "unknown")
+        log_success "Sui CLI found: $sui_version"
+        
+        # Check if sui client is configured
+        if sui client active-address &> /dev/null; then
+            local active_address=$(sui client active-address 2>/dev/null)
+            log_success "Sui client configured with address: $active_address"
+        else
+            log_warning "Sui client not configured. Run 'sui client' to configure."
+        fi
+    else
+        log_warning "Sui CLI not found. Wallet operations may be limited."
+        log_info "Install: curl -fsSL https://sui.io/install | sh"
+    fi
+    
+    # Check disk space
+    local available_space=$(df "$PROJECT_DIR" | awk 'NR==2 {print $4}')
+    if [[ $available_space -lt 1048576 ]]; then  # Less than 1GB
+        log_warning "Low disk space: ${available_space}KB available"
+    fi
+    
+    # Check memory
+    if command -v free &> /dev/null; then
+        local available_mem=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+        if [[ $available_mem -lt 512 ]]; then
+            log_warning "Low memory: ${available_mem}MB available"
+        fi
+    fi
+    
+    # Validate configuration files
+    validate_config_files
+    
+    if [[ "$prerequisites_passed" != true ]]; then
+        log_error "Prerequisites check failed. Please address the issues above."
         exit 1
     fi
     
     log_success "Prerequisites check passed"
+}
+
+# Validate configuration files
+validate_config_files() {
+    log_info "Validating configuration files..."
+    
+    # Check for walrus config
+    local walrus_config_paths=(
+        "$HOME/.config/walrus/client_config.yaml"
+        "$HOME/.walrus/client_config.yaml"
+        "./client_config.yaml"
+    )
+    
+    local walrus_config_found=false
+    for config_path in "${walrus_config_paths[@]}"; do
+        if [[ -f "$config_path" ]]; then
+            log_success "Walrus config found: $config_path"
+            walrus_config_found=true
+            break
+        fi
+    done
+    
+    if [[ "$walrus_config_found" != true ]]; then
+        log_warning "Walrus client config not found. Using defaults."
+        log_info "Run ./scripts/setup-walrus-site.sh to create config."
+    fi
+    
+    # Validate sites config structure
+    if [[ -f "$SITE_CONFIG_FILE" ]]; then
+        log_info "Validating sites config structure..."
+        
+        # Basic YAML syntax check
+        if command -v python3 &> /dev/null; then
+            if ! python3 -c "import yaml; yaml.safe_load(open('$SITE_CONFIG_FILE'))" 2>/dev/null; then
+                log_warning "Sites config has invalid YAML syntax"
+            else
+                log_success "Sites config YAML syntax is valid"
+            fi
+        fi
+        
+        # Check for required fields
+        if grep -q "package:" "$SITE_CONFIG_FILE"; then
+            log_success "Package ID found in config"
+        else
+            log_warning "Package ID not found in config"
+        fi
+    fi
 }
 
 # Install dependencies
@@ -209,9 +538,43 @@ build_application() {
     log_success "Application built successfully"
 }
 
-# Validate build output
+# Validate build output using enhanced validator
 validate_build() {
-    log_info "Validating build output..."
+    log_info "Running enhanced build validation..."
+    
+    if [[ -f "$SCRIPT_DIR/build-validator.sh" ]]; then
+        if "$SCRIPT_DIR/build-validator.sh" --build-dir "$BUILD_DIR"; then
+            log_success "Enhanced build validation passed"
+            
+            # Check if optimization is recommended
+            if [[ -f "$PROJECT_DIR/build-validation-report.json" ]]; then
+                local warnings=$(jq -r '.summary.warnings // 0' "$PROJECT_DIR/build-validation-report.json" 2>/dev/null || echo 0)
+                if [[ $warnings -gt 0 ]]; then
+                    log_info "Build validation found $warnings optimization opportunities"
+                    
+                    # Ask user if they want to optimize
+                    if [[ "${AUTO_OPTIMIZE:-false}" == "true" ]]; then
+                        log_info "Auto-optimization enabled, running asset optimizer..."
+                        optimize_build
+                    else
+                        log_info "Run with --optimize flag to automatically optimize assets"
+                    fi
+                fi
+            fi
+        else
+            log_error "Enhanced build validation failed"
+            log_error "Run '$SCRIPT_DIR/build-validator.sh --build-dir $BUILD_DIR' for detailed report"
+            return 1
+        fi
+    else
+        log_warning "Enhanced validator not found, falling back to basic validation"
+        validate_build_basic
+    fi
+}
+
+# Basic build validation (fallback)
+validate_build_basic() {
+    log_info "Running basic build validation..."
     
     # Check for essential files
     local essential_files=("index.html" "_next" "404.html")
@@ -231,7 +594,22 @@ validate_build() {
         log_warning "Build size is quite large ($build_size). Consider optimizing assets."
     fi
     
-    log_success "Build validation completed"
+    log_success "Basic build validation completed"
+}
+
+# Optimize build assets
+optimize_build() {
+    log_info "Optimizing build assets..."
+    
+    if [[ -f "$SCRIPT_DIR/asset-optimizer.sh" ]]; then
+        if "$SCRIPT_DIR/asset-optimizer.sh" --build-dir "$BUILD_DIR"; then
+            log_success "Asset optimization completed"
+        else
+            log_warning "Asset optimization failed, continuing with unoptimized build"
+        fi
+    else
+        log_warning "Asset optimizer not found, skipping optimization"
+    fi
 }
 
 # Create or update sites config
@@ -265,76 +643,170 @@ EOF
     log_success "Sites configuration created at $SITE_CONFIG_FILE"
 }
 
-# Deploy to Walrus Sites
+# Deploy to Walrus Sites with enhanced error handling and retry logic
 deploy_to_walrus() {
     log_info "Deploying to Walrus Sites ($NETWORK)..."
     
     cd "$PROJECT_DIR"
     
-    # Set up environment variables for deployment
-    local deploy_cmd=("$SITE_BUILDER_CMD" "deploy")
+    # Validate network configuration
+    validate_network_config
     
-    # Add network flag
-    deploy_cmd+=("--network" "$NETWORK")
+    # Check wallet balance before deployment
+    check_wallet_balance
     
-    # Add config file if it exists
+    # Prepare deployment command with proper syntax
+    local publish_cmd=()
+    
+    # Add global config options (must come before command)
     if [[ -f "$SITE_CONFIG_FILE" ]]; then
-        deploy_cmd+=("--config" "$SITE_CONFIG_FILE")
+        publish_cmd+=("--config" "$SITE_CONFIG_FILE")
     fi
     
-    # Add wallet configuration if provided
+    # Add site-builder executable
+    publish_cmd+=("$SITE_BUILDER_CMD")
+    
+    # Add the publish command
+    publish_cmd+=("publish")
+    
+    # Add command-specific options
+    publish_cmd+=("--epochs" "100")
+    
+    # Add wallet if specified
     if [[ -n "${WALRUS_WALLET_PATH:-}" ]]; then
-        deploy_cmd+=("--wallet" "$WALRUS_WALLET_PATH")
+        publish_cmd+=("--wallet" "$WALRUS_WALLET_PATH")
     fi
     
-    # Add configuration directory
-    if [[ -d "$CONFIG_DIR" ]]; then
-        deploy_cmd+=("--config-dir" "$CONFIG_DIR")
-    fi
-    
-    # Execute deployment - use publish instead of deploy
-    local publish_cmd=("$SITE_BUILDER_CMD")
-    
-    # Add global options first (context and config go before command)
-    if [[ "$NETWORK" == "testnet" ]]; then
-        publish_cmd+=("--context" "testnet")
-    fi
-    
-    # Use the actual config file location
-    local config_file="$HOME/.config/walrus/sites-config.yaml"
-    if [[ -f "$config_file" ]]; then
-        publish_cmd+=("--config" "$config_file")
+    # Add RPC URL for network
+    if [[ "$NETWORK" == "mainnet" ]]; then
+        publish_cmd+=("--rpc-url" "https://fullnode.mainnet.sui.io:443")
     else
-        log_info "Walrus config not found at $config_file, using default"
+        publish_cmd+=("--rpc-url" "https://fullnode.testnet.sui.io:443")
     fi
     
-    # Add the publish command and its options
-    publish_cmd+=("publish" "--epochs" "5" "--site-name" "$SITE_NAME")
-    
-    # Add build directory
+    # Add build directory (must be last argument)
     publish_cmd+=("$BUILD_DIR")
     
-    log_info "Running: ${publish_cmd[*]}"
+    log_info "Command to execute: ${publish_cmd[*]}"
     
-    local deployment_output
-    if deployment_output=$("${publish_cmd[@]}" 2>&1); then
-        log_success "Deployment completed successfully!"
-        echo "$deployment_output"
+    # Execute deployment with retry logic
+    local max_retries=3
+    local retry_count=0
+    local deployment_output=""
+    local deployment_success=false
+    
+    while [[ $retry_count -lt $max_retries && "$deployment_success" == false ]]; do
+        log_info "Deployment attempt $((retry_count + 1))/$max_retries..."
         
-        # Extract site URL if available
-        local site_url
-        if site_url=$(echo "$deployment_output" | grep -oE 'https://[a-zA-Z0-9.-]+\.walrus\.site' | head -1); then
-            log_success "Site deployed at: $site_url"
+        if deployment_output=$("${publish_cmd[@]}" 2>&1); then
+            deployment_success=true
+            log_success "Deployment completed successfully!"
+            echo "$deployment_output"
             
-            # Save URL for future reference
-            echo "$site_url" > "$PROJECT_DIR/.walrus-site-url"
-            log_info "Site URL saved to .walrus-site-url"
+            # Extract and save site information
+            extract_site_info "$deployment_output"
+            
+        else
+            retry_count=$((retry_count + 1))
+            log_warning "Deployment attempt $retry_count failed"
+            echo "$deployment_output" >&2
+            
+            # Check for specific error types
+            if echo "$deployment_output" | grep -q "insufficient.*balance"; then
+                log_error "Insufficient wallet balance. Please add more SUI tokens."
+                break
+            elif echo "$deployment_output" | grep -q "network.*error\|connection.*error"; then
+                log_warning "Network error detected. Retrying in 10 seconds..."
+                sleep 10
+            elif echo "$deployment_output" | grep -q "invalid.*config\|config.*not.*found"; then
+                log_error "Configuration error detected. Please check your config files."
+                break
+            else
+                log_warning "Unknown error. Retrying in 5 seconds..."
+                sleep 5
+            fi
         fi
-        
-    else
-        log_error "Deployment failed:"
+    done
+    
+    if [[ "$deployment_success" != true ]]; then
+        log_error "Deployment failed after $max_retries attempts"
+        log_error "Last error output:"
         echo "$deployment_output" >&2
+        
+        # Provide troubleshooting guidance
+        log_info "Troubleshooting steps:"
+        log_info "1. Check wallet balance: sui client gas"
+        log_info "2. Verify network connectivity"
+        log_info "3. Check site-builder configuration"
+        log_info "4. Review build directory contents"
+        
         exit 1
+    fi
+}
+
+# Validate network configuration
+validate_network_config() {
+    log_info "Validating network configuration..."
+    
+    # Check if network endpoints are reachable
+    local rpc_url
+    if [[ "$NETWORK" == "mainnet" ]]; then
+        rpc_url="https://fullnode.mainnet.sui.io:443"
+    else
+        rpc_url="https://fullnode.testnet.sui.io:443"
+    fi
+    
+    log_info "Testing connection to $rpc_url..."
+    if ! curl -s -f --connect-timeout 10 "$rpc_url" > /dev/null; then
+        log_warning "Cannot reach Sui RPC endpoint. Network might be slow."
+    else
+        log_success "Network connection verified"
+    fi
+}
+
+# Check wallet balance before deployment
+check_wallet_balance() {
+    log_info "Checking wallet balance..."
+    
+    # Try to get balance using sui client
+    if command -v sui &> /dev/null; then
+        local balance_output
+        if balance_output=$(sui client gas 2>/dev/null); then
+            log_info "Wallet balance check:"
+            echo "$balance_output" | head -5
+        else
+            log_warning "Could not check wallet balance. Ensure sui client is configured."
+        fi
+    else
+        log_warning "Sui CLI not found. Cannot check wallet balance."
+    fi
+}
+
+# Extract site information from deployment output
+extract_site_info() {
+    local output="$1"
+    
+    # Extract site URL
+    local site_url
+    if site_url=$(echo "$output" | grep -oE 'https://[a-zA-Z0-9.-]+\.walrus\.site' | head -1); then
+        log_success "Site deployed at: $site_url"
+        echo "$site_url" > "$PROJECT_DIR/.walrus-site-url"
+        log_info "Site URL saved to .walrus-site-url"
+    fi
+    
+    # Extract object ID
+    local object_id
+    if object_id=$(echo "$output" | grep -oE '0x[a-fA-F0-9]{64}' | head -1); then
+        log_success "Site object ID: $object_id"
+        echo "$object_id" > "$PROJECT_DIR/.walrus-object-id"
+        log_info "Object ID saved to .walrus-object-id"
+    fi
+    
+    # Extract blob IDs for future reference
+    local blob_ids
+    if blob_ids=$(echo "$output" | grep -oE 'blob.*ID.*0x[a-fA-F0-9]+' | head -5); then
+        log_info "Blob IDs created:"
+        echo "$blob_ids"
     fi
 }
 

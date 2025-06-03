@@ -27,7 +27,7 @@ export function useSafeBrowser() {
 
   // Initialize browser info after mount
   useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return;
+    if (!mounted || typeof window === 'undefined') {return;}
 
     try {
       setBrowserInfo({

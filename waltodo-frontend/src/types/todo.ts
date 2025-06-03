@@ -5,13 +5,13 @@
 
 // Import all types from shared package
 import {
-  Todo as SharedTodo,
   CreateTodoInput,
-  UpdateTodoInput,
+  StorageLocation as SharedStorageLocation,
+  Todo as SharedTodo,
   TodoFilters,
-  TodoSortOptions,
   TodoNFTMetadata,
-  StorageLocation as SharedStorageLocation
+  TodoSortOptions,
+  UpdateTodoInput
 } from '@waltodo/shared-types';
 
 // Todo status enum
@@ -113,7 +113,7 @@ export interface TodoList {
 
 // Helper function to convert between storage location formats
 export function mapStorageLocation(location?: string): StorageLocation | undefined {
-  if (!location) return undefined;
+  if (!location) {return undefined;}
   
   switch (location) {
     case 'local':

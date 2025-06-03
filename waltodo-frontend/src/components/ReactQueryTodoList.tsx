@@ -50,7 +50,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
 
   // Filter todos based on store settings
   const filteredTodos = React.useMemo(() => {
-    if (!todos.length) return [];
+    if (!todos.length) {return [];}
     
     let filtered = [...todos];
     
@@ -85,7 +85,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTodoTitle.trim()) return;
+    if (!newTodoTitle.trim()) {return;}
 
     setIsAddingTodo(true);
     try {
@@ -162,7 +162,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         <span className="ml-2">Loading todos...</span>
       </div>
     );
@@ -201,7 +201,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
       {/* Real-time status indicator */}
       <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
         <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-sm text-gray-600">
             {wsConnected ? 'Real-time sync active' : 'Connecting...'}
           </span>
@@ -275,7 +275,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
             >
               {/* Sync indicator */}
               {syncInProgress.has(todo.id) && (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent" />
               )}
               
               {/* Complete checkbox */}

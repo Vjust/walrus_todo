@@ -5,15 +5,15 @@
  * with proper state management, error handling, and loading states.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  WalrusTodoManager,
-  WalrusTodo,
-  WalrusTodoCreateResult,
-  WalrusTodoUploadOptions,
   TodoStorageMetadata,
   WalrusClientError,
   type WalrusNetwork,
+  WalrusTodo,
+  WalrusTodoCreateResult,
+  WalrusTodoManager,
+  WalrusTodoUploadOptions,
 } from '@/lib/walrus-todo-integration';
 import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -689,7 +689,7 @@ export function useWalrusStorage(
 
   // Auto-refresh balance and usage
   useEffect(() => {
-    if (!connected || !address) return;
+    if (!connected || !address) {return;}
 
     let intervalId: NodeJS.Timeout | undefined;
 

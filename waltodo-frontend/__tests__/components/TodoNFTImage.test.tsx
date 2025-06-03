@@ -370,7 +370,7 @@ describe('TodoNFTImage', () => {
     });
 
     it('becomes visible when intersecting', () => {
-      let observerCallback: IntersectionObserverCallback | null = null;
+      let observerCallback: IntersectionObserverCallback | undefined;
       
       mockIntersectionObserver.mockImplementation((callback) => {
         observerCallback = callback;

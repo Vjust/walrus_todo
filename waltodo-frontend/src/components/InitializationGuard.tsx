@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useAppInitialization } from '@/contexts/AppInitializationContext';
 
 interface InitializationGuardProps {
@@ -38,7 +38,7 @@ export function InitializationGuard({
   
   const loadingContent = fallback || (
     <div className='flex flex-col items-center justify-center py-8'>
-      <div className='w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin'></div>
+      <div className='w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin' />
       <div className='mt-3 text-center'>
         <p className='text-sm text-gray-600'>
           {!mounted ? 'Loading...' : (!isAppReady ? 'Initializing application...' : 'Connecting to blockchain...')}

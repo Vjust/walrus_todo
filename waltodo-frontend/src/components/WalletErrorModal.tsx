@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  WalletError,
   getWalletErrorMessage,
+  WalletError,
   WalletNotInstalledError,
 } from '@/lib/wallet-errors';
 
@@ -166,7 +166,7 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
                 <button
                   type='button'
                   onClick={handleDismiss}
-                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-ocean-medium rounded-md hover:bg-ocean-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ocean-light`}
+                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-ocean-medium rounded-md hover:bg-ocean-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ocean-light"
                 >
                   Got it
                 </button>

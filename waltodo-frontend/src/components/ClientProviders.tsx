@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode } from 'react';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ProviderErrorBoundary } from '@/components/ProviderErrorBoundary';
@@ -8,6 +8,7 @@ import LoadingLayout from '@/components/LoadingLayout';
 import { ToastProvider } from '@/components/ToastProvider';
 import { SuiWalletProvider } from '@/providers/SuiWalletProvider';
 import { AppInitializationProvider } from '@/contexts/AppInitializationContext';
+import { useClientOnly } from '@/lib/ssr-utils';
 
 interface ClientProvidersProps {
   children: ReactNode;
@@ -17,29 +18,21 @@ interface ClientProvidersProps {
  * ClientProviders - Wraps the app with all necessary providers in the correct order
  * 
  * This component ensures:
- * - No SSR/hydration mismatches by only rendering on client
+ * - No SSR/hydration mismatches using proper SSR-safe patterns
  * - Proper provider hierarchy (QueryClient → Wallet → App)
  * - Graceful fallbacks when providers fail
  * - Client-side only provider mounting for static export compatibility
  */
 export function ClientProviders({ children }: ClientProvidersProps) {
-  const [mounted, setMounted] = useState(false);
+  const { isClient, ClientOnlyWrapper } = useClientOnly();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // During SSR/static generation, render children directly to avoid skeleton
-  if (!mounted) {
-    return (
-      <div suppressHydrationWarning>
-        {children}
-      </div>
-    );
+  // During SSR/static generation, render a minimal version
+  if (!isClient) {
+    return <>{children}</>;
   }
 
   return (
-    <div suppressHydrationWarning>
+    <ClientOnlyWrapper>
       <ErrorBoundary
         fallback={
           <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -69,14 +62,13 @@ export function ClientProviders({ children }: ClientProvidersProps) {
               <ProviderErrorBoundary providerName="Sui Wallet">
                 <SuiWalletProvider
                   defaultNetwork="testnet"
-                  autoConnect={true}
-                  enableNetworkSwitching={true}
-                  enableSlushWallet={true}
+                  autoConnect
+                  enableNetworkSwitching
+                  enableSlushWallet
                 >
                   <ProviderErrorBoundary providerName="Toast">
-                    <ToastProvider>
-                      {children}
-                    </ToastProvider>
+                    <ToastProvider />
+                    {children}
                   </ProviderErrorBoundary>
                 </SuiWalletProvider>
               </ProviderErrorBoundary>
@@ -84,6 +76,6 @@ export function ClientProviders({ children }: ClientProvidersProps) {
           </ProviderErrorBoundary>
         </AppInitializationProvider>
       </ErrorBoundary>
-    </div>
+    </ClientOnlyWrapper>
   );
 }

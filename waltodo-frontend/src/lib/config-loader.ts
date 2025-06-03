@@ -6,7 +6,7 @@
  * and network settings that were generated during CLI deployment.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Simple hydration check hook
 function useIsHydrated() {
@@ -338,7 +338,7 @@ export function useAppConfig() {
 
   React.useEffect(() => {
     // Only load config after hydration is complete
-    if (!hydrated) return;
+    if (!hydrated) {return;}
 
     let isMounted = true;
 

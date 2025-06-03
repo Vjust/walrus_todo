@@ -82,7 +82,7 @@ export function detectContext(): StorageContext {
 
 // Check if localStorage is available
 export function isStorageAvailable(): boolean {
-  if (!isBrowser()) return false;
+  if (!isBrowser()) {return false;}
 
   try {
     // First check if we're in a context that blocks storage APIs
@@ -258,7 +258,7 @@ export function safeClear(): boolean {
 
 // Additional utility for checking if we're using fallback storage
 export function isUsingFallbackStorage(): boolean {
-  if (!isBrowser()) return true;
+  if (!isBrowser()) {return true;}
   try {
     return getStorage() === memoryStorage;
   } catch (e) {

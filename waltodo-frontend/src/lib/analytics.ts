@@ -105,7 +105,7 @@ class Analytics {
    * Initialize analytics system
    */
   initialize(config?: Partial<AnalyticsConfig>) {
-    if (this.initialized) return;
+    if (this.initialized) {return;}
 
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.initialized = true;
@@ -134,7 +134,7 @@ class Analytics {
    * Track performance metric
    */
   trackPerformance(name: string, value: number, unit: PerformanceMetric['unit'] = 'ms', metadata?: Record<string, any>) {
-    if (!this.shouldTrack()) return;
+    if (!this.shouldTrack()) {return;}
 
     const metric: PerformanceMetric = {
       name,
@@ -156,7 +156,7 @@ class Analytics {
    * Track error
    */
   trackError(error: Error | string, context?: Record<string, any>) {
-    if (!this.shouldTrack()) return;
+    if (!this.shouldTrack()) {return;}
 
     const errorKey = typeof error === 'string' ? error : error.message;
     const existingError = this.data.errors.find(e => e.message === errorKey);
@@ -187,7 +187,7 @@ class Analytics {
    * Track user action
    */
   trackUser(action: string, category: string, value?: number, metadata?: Record<string, any>) {
-    if (!this.shouldTrack()) return;
+    if (!this.shouldTrack()) {return;}
 
     const metric: UserMetric = {
       action,
@@ -209,7 +209,7 @@ class Analytics {
    * Track wallet interaction
    */
   trackWallet(metric: Omit<WalletMetric, 'timestamp'>) {
-    if (!this.shouldTrack()) return;
+    if (!this.shouldTrack()) {return;}
 
     const fullMetric: WalletMetric = {
       ...metric,
@@ -228,7 +228,7 @@ class Analytics {
    * Track transaction
    */
   trackTransaction(metric: Omit<TransactionMetric, 'timestamp'>) {
-    if (!this.shouldTrack()) return;
+    if (!this.shouldTrack()) {return;}
 
     const fullMetric: TransactionMetric = {
       ...metric,
@@ -247,7 +247,7 @@ class Analytics {
    * Track storage operation
    */
   trackStorage(metric: Omit<StorageMetric, 'timestamp'>) {
-    if (!this.shouldTrack()) return;
+    if (!this.shouldTrack()) {return;}
 
     const fullMetric: StorageMetric = {
       ...metric,
@@ -421,7 +421,7 @@ class Analytics {
   }
 
   private shouldTrack(): boolean {
-    if (!this.initialized || !this.config.enabled) return false;
+    if (!this.initialized || !this.config.enabled) {return false;}
     
     // Sampling
     if (this.config.samplingRate < 1) {
@@ -467,7 +467,7 @@ class Analytics {
   }
 
   private trackPagePerformance() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     // Track page load performance
     window.addEventListener('load', () => {
@@ -519,7 +519,7 @@ class Analytics {
   }
 
   private setupErrorTracking() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     window.addEventListener('error', (event) => {
       this.trackError(event.error || event.message, {
@@ -537,7 +537,7 @@ class Analytics {
   }
 
   private trackVisibilityChanges() {
-    if (typeof document === 'undefined') return;
+    if (typeof document === 'undefined') {return;}
 
     document.addEventListener('visibilitychange', () => {
       this.trackUser(
@@ -551,7 +551,7 @@ class Analytics {
     const metrics = (this.data[category] as PerformanceMetric[])
       .filter(m => m.name === name);
     
-    if (metrics.length === 0) return 0;
+    if (metrics.length === 0) {return 0;}
     
     const sum = metrics.reduce((acc, m) => acc + m.value, 0);
     return sum / metrics.length;
@@ -570,7 +570,7 @@ class Analytics {
 
   private getSuccessRate(category: 'transactions' | 'storage'): number {
     const items = this.data[category];
-    if (items.length === 0) return 0;
+    if (items.length === 0) {return 0;}
     
     const successful = items.filter(item => item.success).length;
     return (successful / items.length) * 100;

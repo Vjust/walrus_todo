@@ -17,7 +17,7 @@ export { mockInitializeSuiClient, mockIsSuiClientInitialized, mockGetSuiClient, 
 
 // Mock other common modules
 jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mock-id-' + Math.random().toString(36).substr(2, 9)),
+  nanoid: jest.fn(() => `mock-id-${Math.random().toString(36).substr(2, 9)}`),
 }));
 
 jest.mock('@mysten/sui/client', () => ({

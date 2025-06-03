@@ -57,13 +57,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
 
     // Track error in analytics
     if (analytics) {
-      analytics.trackError({
-        type: 'wallet_error',
-        error: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-        retryCount: this.state.retryCount,
-      });
+      analytics.trackError(error);
     }
 
     // Call optional error handler
@@ -98,9 +92,8 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
     // Track retry attempt
     if (analytics) {
       analytics.trackWallet({
-        action: 'error_retry',
-        retryCount: this.state.retryCount + 1,
-        error: this.state.error?.message,
+        action: 'error' as const,
+        success: false,
       });
     }
   };
@@ -118,8 +111,8 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
     // Track reset
     if (analytics) {
       analytics.trackWallet({
-        action: 'error_reset',
-        error: this.state.error?.message,
+        action: 'connect' as const,
+        success: true,
       });
     }
   };
@@ -265,11 +258,7 @@ export function useWalletErrorBoundary() {
     setError(error);
     
     if (analytics) {
-      analytics.trackError({
-        type: 'wallet_hook_error',
-        error: error.message,
-        stack: error.stack,
-      });
+      analytics.trackError(error);
     }
   }, []);
 

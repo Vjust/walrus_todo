@@ -40,37 +40,28 @@ const mockSpeechRecognition = {
 const mockNFTs: TodoNFT[] = [
   {
     id: '1',
-    objectId: '0x123',
     title: 'Complete project documentation',
-    description: 'Write comprehensive documentation for the new API endpoints',
+    content: 'Write comprehensive documentation for the new API endpoints',
     completed: false,
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['documentation', 'api', 'urgent'],
-      priority: 'high',
-      category: 'Development'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: 1705742400000, // 2024-01-20T10:00:00Z as Unix timestamp
+    priority: 'high',
+    blobId: 'blob1',
+    storageSize: 1024,
+    tags: ['documentation', 'api', 'urgent'],
+    walTokensSpent: 10,
   },
   {
     id: '2',
-    objectId: '0x124',
     title: 'Review code changes',
-    description: 'Review and approve pending pull requests',
+    content: 'Review and approve pending pull requests',
     completed: true,
-    createdAt: '2024-01-19T14:30:00Z',
-    updatedAt: '2024-01-21T09:15:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['review', 'frontend'],
-      priority: 'medium',
-      category: 'Development'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: 1705656600000, // 2024-01-19T14:30:00Z as Unix timestamp
+    completedAt: 1705911300000, // 2024-01-21T09:15:00Z as Unix timestamp
+    priority: 'medium',
+    blobId: 'blob2',
+    storageSize: 512,
+    tags: ['review', 'frontend'],
+    walTokensSpent: 5,
   },
 ];
 

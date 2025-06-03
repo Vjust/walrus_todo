@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 // import Navbar from '@/components/navbar';
 import TodoList from '@/components/todo-list';
 import CreateTodoForm from '@/components/create-todo-form';
@@ -8,9 +8,9 @@ import InitializationGuard from '@/components/InitializationGuard';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { PWAMetrics } from '@/components/PWAMetrics';
 import {
-  getTodoLists,
   createTodoList,
   deleteTodoList,
+  getTodoLists,
 } from '@/lib/todo-service';
 
 export default function Dashboard() {
@@ -36,7 +36,7 @@ export default function Dashboard() {
 
   // Load todo lists for the current wallet with mount guard
   useEffect(() => {
-    if (!componentMounted) return;
+    if (!componentMounted) {return;}
     
     const lists = getTodoLists(address || undefined);
     setTodoLists(lists.length > 0 ? lists : ['default']);
@@ -48,7 +48,7 @@ export default function Dashboard() {
   };
 
   const handleCreateList = () => {
-    if (!newListName.trim()) return;
+    if (!newListName.trim()) {return;}
 
     const success = createTodoList(newListName.trim(), address || undefined);
     if (success) {
@@ -92,7 +92,7 @@ export default function Dashboard() {
       <div className='max-w-6xl mx-auto'>
         
         <div className='flex justify-center py-12'>
-          <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
+          <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin' />
         </div>
       </div>
     );
@@ -233,7 +233,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <InitializationGuard requireSuiClient={true}>
+            <InitializationGuard requireSuiClient>
               <TodoList
                 key={`${selectedList}-${refreshKey}`}
                 listName={selectedList}

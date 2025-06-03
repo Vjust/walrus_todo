@@ -1,27 +1,21 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import Image from 'next/image';
-import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
-import { useWalrusStorage } from '@/hooks/useWalrusStorage';
 import { storeTodoOnBlockchain } from '@/lib/sui-client';
-import { storeTodoOnBlockchainSafely } from '@/lib/sui-client-safe';
-import { createNFT, initializeOfflineSync } from '@/lib/todo-service-offline';
+import { addTodo } from '@/lib/todo-service';
 import toast from 'react-hot-toast';
 import type { CreateTodoParams, Todo } from '@/types/todo-nft';
-
-// Template presets
-interface TodoTemplate {
-  id: string;
-  name: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high';
-  tags: string[];
-  category: string;
-  icon: string;
-}
+import { 
+  type TodoTemplate,
+  useCreateTodoNFTAdvancedOptions,
+  useCreateTodoNFTFormData,
+  useCreateTodoNFTImageState,
+  useCreateTodoNFTLoadingState,
+  useCreateTodoNFTStore
+} from '@/stores/createTodoNFTStore';
 
 const templates: TodoTemplate[] = [
   {
@@ -77,52 +71,29 @@ export default function CreateTodoNFTForm({
   onTodoCreated,
   onCancel,
 }: CreateTodoNFTFormProps) {
-  // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
-  const [tags, setTags] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [category, setCategory] = useState('personal');
+  // Zustand store hooks
+  const { title, description, priority, tags, dueDate, category } = useCreateTodoNFTFormData();
+  const { imageFile, imagePreview, isCompressing } = useCreateTodoNFTImageState();
+  const { isSubmitting, uploadProgress, uploadStage, error } = useCreateTodoNFTLoadingState();
+  const { showAdvanced, isPrivate, expirationDays } = useCreateTodoNFTAdvancedOptions();
   
-  // Image state
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isCompressing, setIsCompressing] = useState(false);
-  
-  // Advanced options
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [expirationDays, setExpirationDays] = useState(365); // Default 1 year
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  
-  // Loading states
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStage, setUploadStage] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  // Store actions
+  const {
+    setTitle, setDescription, setPriority, setTags, setDueDate, setCategory,
+    setImageFile, setImagePreview, setIsCompressing,
+    setShowAdvanced, setIsPrivate, setExpirationDays,
+    setIsSubmitting, setUploadProgress, setUploadStage, setError,
+    setEstimatedCost, setSelectedTemplate, applyTemplate, resetForm,
+    selectedTemplate, estimatedCost
+  } = useCreateTodoNFTStore();
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Hooks
-  const walletContext = useClientSafeWallet();
+  const walletContext = useWalletContext();
   const { address, connected, signAndExecuteTransaction } = walletContext || {};
   const { isInitialized: suiClientInitialized } = useSuiClient('testnet');
-  const {
-    createTodo: createWalrusTodo,
-    estimateStorageCosts,
-    loading: walrusLoading,
-    progress: walrusProgress,
-    progressMessage: walrusProgressMessage,
-    error: walrusError,
-  } = useWalrusStorage({ network: 'testnet' });
-  
-  // Estimated storage cost
-  const [estimatedCost, setEstimatedCost] = useState<{
-    totalCost: string;
-    breakdown: { storage: string; transaction: string };
-  } | null>(null);
   
   // Calculate estimated size
   const estimatedSize = useMemo(() => {
@@ -139,36 +110,22 @@ export default function CreateTodoNFTForm({
   
   // Update storage cost estimate when content changes
   const updateCostEstimate = useCallback(async () => {
-    if (!connected || !address) return;
+    if (!connected || !address) {return;}
     
     try {
-      const todoData = {
-        title: title || 'Untitled',
-        description,
-        priority,
-        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-        category,
-        dueDate: dueDate || undefined,
-        completed: false,
-      };
-      
-      const costs = await estimateStorageCosts([todoData], expirationDays / 30); // Convert days to epochs
-      
-      if (costs) {
-        // Format costs for display
-        const totalCostInWAL = Number(costs.totalCost) / 1e9; // Convert from MIST to WAL
-        setEstimatedCost({
-          totalCost: totalCostInWAL.toFixed(6),
-          breakdown: {
-            storage: (totalCostInWAL * 0.8).toFixed(6), // Approximate storage portion
-            transaction: (totalCostInWAL * 0.2).toFixed(6), // Approximate transaction fees
-          },
-        });
-      }
+      // Simple cost estimation based on data size
+      const totalCostInWAL = (estimatedSize / 1024) * 0.001; // Rough estimate: 0.001 WAL per KB
+      setEstimatedCost({
+        totalCost: totalCostInWAL.toFixed(6),
+        breakdown: {
+          storage: (totalCostInWAL * 0.8).toFixed(6), // Approximate storage portion
+          transaction: (totalCostInWAL * 0.2).toFixed(6), // Approximate transaction fees
+        },
+      });
     } catch (err) {
       console.error('Failed to estimate costs:', err);
     }
-  }, [connected, address, title, description, priority, tags, category, dueDate, expirationDays, estimateStorageCosts]);
+  }, [connected, address, estimatedSize]);
   
   // Debounced cost estimate update
   React.useEffect(() => {
@@ -192,7 +149,7 @@ export default function CreateTodoNFTForm({
   // Handle image selection
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {return;}
     
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -300,9 +257,6 @@ export default function CreateTodoNFTForm({
     setUploadProgress(0);
     
     try {
-      // Initialize offline sync
-      await initializeOfflineSync();
-      
       // Prepare todo data
       const todoData = {
         title: title.trim(),
@@ -318,37 +272,31 @@ export default function CreateTodoNFTForm({
         isPrivate,
       };
       
-      // Create NFT with offline support
-      setUploadStage('Creating NFT...');
+      // First create local todo
+      setUploadStage('Creating todo...');
       setUploadProgress(30);
       
-      const result = await createNFT({
-        title: todoData.title,
-        description: todoData.description,
-        tags: todoData.tags,
-        priority: todoData.priority,
-      });
+      const localTodo = addTodo(listName, todoData, address || undefined);
       
-      if (!result.success || !result.todo) {
-        throw new Error(result.error || 'Failed to create NFT');
+      // Try to create on blockchain
+      setUploadStage('Creating NFT on blockchain...');
+      setUploadProgress(60);
+      
+      const blockchainResult = await storeTodoOnBlockchain(
+        {
+          ...todoData,
+          imageUrl: imagePreview || '',
+          metadata: JSON.stringify({ category, expirationDays }),
+        },
+        signAndExecuteTransaction!,
+        address!
+      );
+      
+      if (!blockchainResult.success || !blockchainResult.objectId) {
+        throw new Error(blockchainResult.error || 'Failed to create NFT on blockchain');
       }
       
-      const todoId = result.todo.id;
-      const objectId = result.todo.id; // Use the same ID as object ID for offline
-      
-      if (!navigator.onLine) {
-        toast.success('Todo created locally and queued for sync when online');
-        setUploadProgress(100);
-        if (onTodoCreated) {
-          onTodoCreated({ id: todoId, ...todoData } as Todo);
-        }
-        resetForm();
-        return;
-      }
-      
-      if (!objectId) {
-        throw new Error('Failed to create NFT on blockchain');
-      }
+      const objectId = blockchainResult.objectId;
       
       setUploadProgress(100);
       setUploadStage('Todo NFT created successfully!');
@@ -360,10 +308,12 @@ export default function CreateTodoNFTForm({
       
       // Call success callback
       const createdTodo: Todo = {
-        id: todoId,
+        id: localTodo.id,
         ...todoData,
         blockchainStored: true,
         objectId,
+        createdAt: localTodo.createdAt,
+        updatedAt: localTodo.updatedAt,
       };
       
       if (onTodoCreated) {
@@ -372,7 +322,7 @@ export default function CreateTodoNFTForm({
       
       
       // Reset form
-      resetForm();
+      handleResetForm();
       
     } catch (err) {
       console.error('Failed to create Todo NFT:', err);
@@ -386,7 +336,7 @@ export default function CreateTodoNFTForm({
   };
   
   // Reset form
-  const resetForm = () => {
+  const handleResetForm = () => {
     setTitle('');
     setDescription('');
     setPriority('medium');
@@ -425,10 +375,10 @@ export default function CreateTodoNFTForm({
         </div>
         
         {/* Error display */}
-        {(error || walrusError) && (
+        {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-sm text-red-700 dark:text-red-300">
-              {error || walrusError?.message}
+              {error}
             </p>
           </div>
         )}
@@ -713,13 +663,13 @@ export default function CreateTodoNFTForm({
         {isSubmitting && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-ocean-medium">
-              <span>{uploadStage || walrusProgressMessage}</span>
-              <span>{uploadProgress || walrusProgress}%</span>
+              <span>{uploadStage}</span>
+              <span>{uploadProgress}%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-ocean-medium h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress || walrusProgress}%` }}
+                style={{ width: `${uploadProgress}%` }}
               />
             </div>
           </div>
@@ -754,8 +704,7 @@ export default function CreateTodoNFTForm({
                 isSubmitting ||
                 !title.trim() ||
                 !connected ||
-                !suiClientInitialized ||
-                walrusLoading
+                !suiClientInitialized
               }
               className={`ocean-button ${
                 isSubmitting || !title.trim() || !connected || !suiClientInitialized

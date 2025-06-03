@@ -51,7 +51,7 @@ export function BlockchainEventStatus({
   if (compact) {
     return (
       <div className={`flex items-center text-sm ${className}`}>
-        <span className={getIndicatorClasses()}></span>
+        <span className={getIndicatorClasses()} />
         <span className='text-gray-600 dark:text-gray-300'>
           {connectionState.connected ? 'Live' : 'Offline'}
         </span>
@@ -65,7 +65,7 @@ export function BlockchainEventStatus({
     >
       <div className='flex items-center justify-between'>
         <div className='flex items-center'>
-          <span className={getIndicatorClasses()}></span>
+          <span className={getIndicatorClasses()} />
           <div>
             <span className='font-medium text-gray-900 dark:text-gray-100'>
               Blockchain Events
@@ -159,7 +159,7 @@ export function BlockchainEventIndicator({
   return (
     <BlockchainEventStatus
       className={className}
-      compact={true}
+      compact
       showReconnectButton={false}
       showDetails={false}
     />

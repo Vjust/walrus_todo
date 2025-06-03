@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useSwipeable } from 'react-swipeable';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import { useIsMounted } from './MotionWrapper';
-import { Share2, Download, Heart, Info, ChevronUp, RefreshCw } from 'lucide-react';
+import { ChevronUp, Download, Heart, Info, RefreshCw, Share2 } from 'lucide-react';
 import { TodoNFT } from '../types/todo-nft';
-import { useSafeBrowserAPI, safeDateFormat, safeNumberFormat } from './SSRSafe';
+import { safeDateFormat, safeNumberFormat, useSafeBrowserAPI } from './SSRSafe';
 
 interface MobileNFTViewProps {
   nfts: TodoNFT[];
@@ -114,7 +114,7 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
-    if (isRefreshing) return;
+    if (isRefreshing) {return;}
     
     setIsRefreshing(true);
     triggerHaptic('medium');
@@ -239,9 +239,9 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
 
   // Format file size
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes < 1024) {return `${bytes  } B`;}
+    if (bytes < 1024 * 1024) {return `${(bytes / 1024).toFixed(1)  } KB`;}
+    return `${(bytes / (1024 * 1024)).toFixed(1)  } MB`;
   };
 
   // Get attributes for display
@@ -251,7 +251,7 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
     { label: 'Created', value: formatDate(currentNFT.createdAt) },
     { label: 'Storage Size', value: formatFileSize(currentNFT.storageSize) },
     { label: 'WAL Tokens', value: currentNFT.walTokensSpent.toString() },
-    { label: 'Blob ID', value: currentNFT.blobId.slice(0, 8) + '...' }
+    { label: 'Blob ID', value: `${currentNFT.blobId.slice(0, 8)  }...` }
   ], [currentNFT]);
 
   // Get cached or original image URL
@@ -318,9 +318,9 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
           <motion.div
             key={currentNFT.id}
             className="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden bg-gray-900"
-            initial={mounted ? { opacity: 0, scale: 0.9 } : false}
-            animate={mounted ? { opacity: 1, scale: 1 } : false}
-            exit={mounted ? { opacity: 0, scale: 0.9 } : false}
+            initial={mounted ? { opacity: 0, scale: 0.9 } : undefined}
+            animate={mounted ? { opacity: 1, scale: 1 } : undefined}
+            exit={mounted ? { opacity: 0, scale: 0.9 } : undefined}
             transition={mounted ? { duration: 0.3 } : undefined}
           >
             {/* NFT Image */}
@@ -416,9 +416,9 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
         {showDetails && (
           <motion.div
             className="absolute inset-0 bg-black/95 z-30"
-            initial={mounted ? { y: '100%' } : false}
-            animate={mounted ? { y: 0 } : false}
-            exit={mounted ? { y: '100%' } : false}
+            initial={mounted ? { y: '100%' } : undefined}
+            animate={mounted ? { y: 0 } : undefined}
+            exit={mounted ? { y: '100%' } : undefined}
             transition={mounted ? { type: 'spring', damping: 30, stiffness: 300 } : undefined}
           >
             <div className="h-full overflow-y-auto">

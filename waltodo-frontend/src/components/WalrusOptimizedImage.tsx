@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { OptimizedImage } from './OptimizedImage';
 
 export interface WalrusOptimizedImageProps {
@@ -40,7 +40,7 @@ export function WalrusOptimizedImage({
 
   // Generate Walrus URLs from blob ID
   const walrusUrls = useMemo(() => {
-    if (!blobId) return [];
+    if (!blobId) {return [];}
     
     // Common Walrus aggregator endpoints
     const aggregators = [

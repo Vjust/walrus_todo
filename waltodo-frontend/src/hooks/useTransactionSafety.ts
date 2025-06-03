@@ -2,14 +2,14 @@
  * Hook for safe transaction execution with gas estimation and simulation
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Transaction } from '@mysten/sui/transactions';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import { 
-  TransactionSafetyManager, 
+  GasEstimation, 
   TransactionSafetyConfig,
-  GasEstimation,
+  TransactionSafetyManager,
   TransactionSimulationResult,
 } from '@/lib/transaction-safety';
 import toast from 'react-hot-toast';
@@ -45,7 +45,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
   // Initialize safety manager asynchronously
   const getSafetyManager = useCallback(async () => {
     const client = await getClient();
-    if (!client) return null;
+    if (!client) {return null;}
     return new TransactionSafetyManager(client, options.safetyConfig);
   }, [getClient, options.safetyConfig]);
 
@@ -202,7 +202,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
   const handleTransactionError = useCallback(
     async (error: Error) => {
       const safetyManager = await getSafetyManager();
-      if (!safetyManager) return;
+      if (!safetyManager) {return;}
 
       const recovery = await safetyManager.handleTransactionError(error);
       

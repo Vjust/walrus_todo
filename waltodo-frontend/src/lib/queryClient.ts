@@ -6,7 +6,7 @@ export const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error: any) => {
         // Don't retry on 4xx errors
-        if (error?.message?.includes('4')) return false;
+        if (error?.message?.includes('4')) {return false;}
         return failureCount < 3;
       },
       staleTime: 30000, // 30 seconds

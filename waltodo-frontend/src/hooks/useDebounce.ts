@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Hook that delays updating a value until after wait milliseconds have passed since the last time it was updated.

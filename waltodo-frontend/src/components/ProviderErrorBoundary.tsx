@@ -87,7 +87,7 @@ export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps,
                 <summary className="text-sm text-gray-500 cursor-pointer">Technical details</summary>
                 <pre className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded overflow-auto max-h-32">
                   {this.state.error.message}
-                  {this.state.error.stack && '\n\n' + this.state.error.stack}
+                  {this.state.error.stack && `\n\n${  this.state.error.stack}`}
                 </pre>
               </details>
             )}

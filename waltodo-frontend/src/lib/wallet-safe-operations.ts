@@ -3,7 +3,7 @@
  * Prevents common wallet errors from crashing the application
  */
 
-import { retryWithRecovery, ErrorType, classifyError } from './error-recovery';
+import { classifyError, ErrorType, retryWithRecovery } from './error-recovery';
 import { showError } from './error-handling';
 
 export type WalletOperationResult<T> = {

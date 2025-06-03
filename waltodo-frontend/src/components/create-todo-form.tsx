@@ -26,7 +26,7 @@ export default function CreateTodoForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingOnChain, setIsCreatingOnChain] = useState(false);
-  const [createOnBlockchain, setCreateOnBlockchain] = useState(true); // Default to blockchain creation
+  const [createOnBlockchain, setCreateOnBlockchain] = useState(false); // Default to local creation for better UX
   const [componentMounted, setComponentMounted] = useState(false);
 
   // Safe wallet context access
@@ -46,9 +46,22 @@ export default function CreateTodoForm({
     e.preventDefault();
     
     // Safety guard
-    if (!componentMounted) return;
+    if (!componentMounted) {return;}
 
-    if (!title.trim()) return;
+    // Validation
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setError('Title is required');
+      return;
+    }
+    
+    if (trimmedTitle.length > 100) {
+      setError('Title must be 100 characters or less');
+      return;
+    }
+
+    // Clear any previous errors
+    setError(null);
 
     // Allow creating todos without wallet connection (local storage only)
     // if (!connected) {
@@ -62,7 +75,7 @@ export default function CreateTodoForm({
     try {
       // Create the todo object
       const todoData = {
-        title: title.trim(),
+        title: trimmedTitle,
         description: description.trim() || undefined,
         completed: false,
         priority,
@@ -174,7 +187,7 @@ export default function CreateTodoForm({
   if (!componentMounted) {
     return (
       <div className='flex justify-center py-4'>
-        <div className='w-6 h-6 rounded-full border-2 border-ocean-light border-t-ocean-deep animate-spin'></div>
+        <div className='w-6 h-6 rounded-full border-2 border-ocean-light border-t-ocean-deep animate-spin' />
       </div>
     );
   }

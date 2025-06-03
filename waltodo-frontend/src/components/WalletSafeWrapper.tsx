@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 
 interface WalletSafeWrapperProps {
@@ -38,7 +38,7 @@ export function WalletSafeWrapper({
     return (
       fallback || (
         <div className="flex items-center justify-center p-8">
-          <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
           <span className="ml-3 text-sm text-gray-600">Loading...</span>
         </div>
       )
@@ -72,7 +72,7 @@ export function WalletSafeWrapper({
             </p>
             {walletContext?.connecting ? (
               <div className="flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <div className="w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin mr-2" />
                 <span className="text-yellow-700">Connecting...</span>
               </div>
             ) : (

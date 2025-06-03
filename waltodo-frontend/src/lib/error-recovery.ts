@@ -100,7 +100,7 @@ export async function retryWithRecovery<T>(
 export const errorPersistence = {
   async saveError(entry: ErrorPersistenceEntry): Promise<void> {
     try {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') {return;}
       
       const key = `error_log_${entry.id}`;
       localStorage.setItem(key, JSON.stringify(entry));
@@ -120,7 +120,7 @@ export const errorPersistence = {
 
   async getErrors(): Promise<ErrorPersistenceEntry[]> {
     try {
-      if (typeof window === 'undefined') return [];
+      if (typeof window === 'undefined') {return [];}
       
       const errors: ErrorPersistenceEntry[] = [];
       const allKeys = Object.keys(localStorage).filter(k => k.startsWith('error_log_'));
@@ -144,7 +144,7 @@ export const errorPersistence = {
 
   async clearErrors(): Promise<void> {
     try {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') {return;}
       
       const allKeys = Object.keys(localStorage).filter(k => k.startsWith('error_log_'));
       allKeys.forEach(key => localStorage.removeItem(key));

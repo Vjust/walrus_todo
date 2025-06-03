@@ -5,9 +5,9 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { Todo } from '@/types/todo-nft';
-import { useTodoStateSync, useTodoEvents } from '@/hooks/useBlockchainEvents';
+import { useTodoEvents, useTodoStateSync } from '@/hooks/useBlockchainEvents';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { BlockchainEventIndicator } from './BlockchainEventStatus';
 

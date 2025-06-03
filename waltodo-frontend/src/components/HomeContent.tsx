@@ -1,28 +1,33 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from '@/components/navbar';
 import TodoList from '@/components/todo-list';
 import WalletConnectButton from '@/components/WalletConnectButton';
 import { ClientOnly } from '@/components/ClientOnly';
-import { getTodos, addTodo } from '@/lib/todo-service';
-import { Todo, CreateTodoParams } from '@/types/todo-nft';
+import { addTodo, getTodos } from '@/lib/todo-service';
+import { CreateTodoParams, Todo } from '@/types/todo-nft';
+import { useSSRSafeMounted } from '@/hooks/useSSRSafe';
+import { PageSkeleton, StatsGridSkeleton } from '@/components/SSRFallback';
+import { TodoListSkeleton } from '@/components/ui/skeletons/TodoListSkeleton';
+import { StatsSkeleton } from '@/components/ui/skeletons/StatsSkeleton';
+import { useLoadingStates } from '@/hooks/useLoadingStates';
 import toast from 'react-hot-toast';
 import {
-  PlusIcon,
-  SparklesIcon,
-  ChartBarIcon,
-  PhotoIcon,
-  CreditCardIcon,
-  GlobeAltIcon,
-} from '@heroicons/react/24/outline';
+  BarChart3 as ChartBarIcon,
+  CreditCard as CreditCardIcon,
+  Globe as GlobeAltIcon,
+  Image as PhotoIcon,
+  Plus as PlusIcon,
+  Sparkles as SparklesIcon,
+} from 'lucide-react';
 
 interface HomeContentProps {
   currentPage?: string;
 }
 
 function HomeContent({ currentPage = 'home' }: HomeContentProps) {
-  const [mounted, setMounted] = useState(false);
+  const { mounted, isReady } = useSSRSafeMounted({ minMountTime: 100 });
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState<CreateTodoParams>({
     title: '',
@@ -30,7 +35,6 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
     priority: 'medium',
     tags: [],
   });
-  const [isCreating, setIsCreating] = useState(false);
   const [stats, setStats] = useState({
     totalTodos: 0,
     completedTodos: 0,
@@ -38,17 +42,16 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
     nftTodos: 0,
   });
 
-  // SSR safety - only render after component mounts
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Loading states
+  const statsLoading = useLoadingStates('home-stats', { minLoadingTime: 500 });
+  const createTodoLoading = useLoadingStates('create-todo', { minLoadingTime: 800 });
 
-  // Load stats when component mounts
+  // Load stats when component is ready
   useEffect(() => {
-    if (!mounted) return;
+    if (!isReady) return;
 
-    const loadStats = () => {
-      try {
+    const loadStats = async () => {
+      await statsLoading.execute(async () => {
         const todos = getTodos('main');
         const completed = todos.filter(t => t.completed).length;
         const nft = todos.filter(t => t.blockchainStored).length;
@@ -59,16 +62,14 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
           pendingTodos: todos.length - completed,
           nftTodos: nft,
         });
-      } catch (error) {
-        console.error('Failed to load stats:', error);
-      }
+      });
     };
 
     loadStats();
     // Refresh stats every 30 seconds
     const interval = setInterval(loadStats, 30000);
     return () => clearInterval(interval);
-  }, [mounted]);
+  }, [isReady, statsLoading]);
 
   const handleCreateTodo = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,26 +79,25 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
       return;
     }
 
-    setIsCreating(true);
-    
     try {
-      const todoData = {
-        title: formData.title.trim(),
-        description: formData.description?.trim() || '',
-        completed: false,
-        priority: formData.priority || 'medium',
-        tags: formData.tags || [],
-        dueDate: formData.dueDate,
-      };
+      await createTodoLoading.execute(async () => {
+        const todoData = {
+          title: formData.title.trim(),
+          description: formData.description?.trim() || '',
+          completed: false,
+          priority: formData.priority || 'medium',
+          tags: formData.tags || [],
+          dueDate: formData.dueDate ? 
+            (typeof formData.dueDate === 'string' ? formData.dueDate : formData.dueDate.toISOString().split('T')[0]) 
+            : undefined,
+        };
 
-      const createdTodo = addTodo('main', todoData);
-      
-      if (createdTodo) {
-        toast.success('Todo created successfully!', {
-          duration: 3000,
-          icon: '✅',
-        });
+        const createdTodo = addTodo('main', todoData);
         
+        if (!createdTodo) {
+          throw new Error('Failed to create todo');
+        }
+
         // Reset form
         setFormData({
           title: '',
@@ -113,18 +113,19 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
           totalTodos: prev.totalTodos + 1,
           pendingTodos: prev.pendingTodos + 1,
         }));
-      } else {
-        throw new Error('Failed to create todo');
-      }
+      });
+      
+      toast.success('Todo created successfully!', {
+        duration: 3000,
+        icon: '✅',
+      });
     } catch (error) {
       console.error('Create todo error:', error);
       toast.error('Failed to create todo. Please try again.', {
         duration: 4000,
       });
-    } finally {
-      setIsCreating(false);
     }
-  }, [formData]);
+  }, [formData, createTodoLoading]);
 
   const quickActions = [
     {
@@ -158,8 +159,8 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
   ];
 
   // Show loading skeleton during hydration
-  if (!mounted) {
-    return <HomeContentSkeleton />;
+  if (!isReady) {
+    return <PageSkeleton showNavbar={true} />;
   }
 
   return (
@@ -198,46 +199,58 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
         </section>
 
         {/* Stats Section */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Todos</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalTodos}</p>
+        <section className="mb-8">
+          {statsLoading.isLoading ? (
+            <StatsSkeleton 
+              cardCount={4} 
+              variant="grid" 
+              size="lg" 
+              showIcons={true}
+              animationSpeed="normal"
+            />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Todos</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalTodos}</p>
+                  </div>
+                  <CreditCardIcon className="w-8 h-8 text-blue-500" />
+                </div>
               </div>
-              <CreditCardIcon className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedTodos}</p>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedTodos}</p>
+                  </div>
+                  <SparklesIcon className="w-8 h-8 text-green-500" />
+                </div>
               </div>
-              <SparklesIcon className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.pendingTodos}</p>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.pendingTodos}</p>
+                  </div>
+                  <ChartBarIcon className="w-8 h-8 text-orange-500" />
+                </div>
               </div>
-              <ChartBarIcon className="w-8 h-8 text-orange-500" />
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">NFTs</p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.nftTodos}</p>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">NFTs</p>
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.nftTodos}</p>
+                  </div>
+                  <PhotoIcon className="w-8 h-8 text-purple-500" />
+                </div>
               </div>
-              <PhotoIcon className="w-8 h-8 text-purple-500" />
             </div>
-          </div>
+          )}
         </section>
 
         {/* Quick Actions */}
@@ -289,7 +302,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Enter todo title"
-                    disabled={isCreating}
+                    disabled={createTodoLoading.isLoading}
                     required
                   />
                 </div>
@@ -305,7 +318,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Enter todo description"
                     rows={3}
-                    disabled={isCreating}
+                    disabled={createTodoLoading.isLoading}
                   />
                 </div>
                 
@@ -318,7 +331,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
                     value={formData.priority || 'medium'}
                     onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    disabled={isCreating}
+                    disabled={createTodoLoading.isLoading}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -329,16 +342,16 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    disabled={isCreating || !formData.title.trim()}
+                    disabled={createTodoLoading.isLoading || !formData.title.trim()}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-md font-medium transition-colors disabled:cursor-not-allowed"
                   >
-                    {isCreating ? 'Creating...' : 'Create Todo'}
+                    {createTodoLoading.isLoading ? 'Creating...' : 'Create Todo'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    disabled={isCreating}
+                    disabled={createTodoLoading.isLoading}
                   >
                     Cancel
                   </button>
@@ -354,6 +367,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Todos</h2>
             {!showCreateForm && (
               <button
+                data-testid="create-todo-button"
                 onClick={() => setShowCreateForm(true)}
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
@@ -370,57 +384,6 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
           </div>
         </section>
       </main>
-    </div>
-  );
-}
-
-// Skeleton component for loading state during hydration
-function HomeContentSkeleton() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="w-96 h-12 bg-gray-200 rounded-lg mx-auto mb-4 animate-pulse"></div>
-          <div className="w-64 h-6 bg-gray-200 rounded-lg mx-auto mb-8 animate-pulse"></div>
-          <div className="flex gap-4 justify-center">
-            <div className="w-32 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div className="w-32 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-16 h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
-              <div className="w-12 h-8 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-4"></div>
-          <TodoListSkeleton />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Todo list skeleton
-function TodoListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="p-4 border border-gray-200 rounded-lg">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 bg-gray-200 rounded-full animate-pulse flex-shrink-0 mt-1"></div>
-            <div className="flex-grow space-y-2">
-              <div className="w-3/4 h-5 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-1/2 h-4 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

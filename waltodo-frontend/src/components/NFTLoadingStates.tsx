@@ -180,7 +180,7 @@ export const LoadingText: React.FC<{
   React.useEffect(() => {
     if (variant === 'dots') {
       const interval = setInterval(() => {
-        setDots(prev => prev.length >= 3 ? '' : prev + '.');
+        setDots(prev => prev.length >= 3 ? '' : `${prev  }.`);
       }, 500);
       return () => clearInterval(interval);
     }

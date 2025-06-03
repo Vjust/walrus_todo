@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Todo } from '@/types/todo-nft';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { blockchainTodoService } from '@/lib/todo-service-blockchain';
@@ -62,7 +62,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
 
   // Set up real-time event listeners
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized) {return;}
 
     const handleTodoCreated = (event: any) => {
       const newTodo = event.data;
@@ -116,7 +116,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
 
   // Load todos from blockchain (primary data source)
   const loadTodos = useCallback(async () => {
-    if (!address || !isInitialized) return;
+    if (!address || !isInitialized) {return;}
 
     setIsLoading(true);
     setError(null);
@@ -150,7 +150,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
     }
 
     const todo = todos.find(t => t.id === todoId);
-    if (!todo) return;
+    if (!todo) {return;}
 
     try {
       if (!todo.completed) {
@@ -217,7 +217,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
 
   // Refresh todos from blockchain
   const refreshTodos = useCallback(async () => {
-    if (!address || !isInitialized) return;
+    if (!address || !isInitialized) {return;}
 
     try {
       const { todos: freshTodos } = await blockchainTodoService.getTodos(address, {
@@ -244,7 +244,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
   if (isLoading) {
     return (
       <div className={`text-center py-8 ${className}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto" />
         <p className="text-gray-500 mt-2">Loading todos from blockchain...</p>
       </div>
     );
@@ -283,7 +283,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
       <div className="text-sm text-gray-600">
         <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
           blockchainEventManager.getConnectionState().connected ? 'bg-green-500' : 'bg-red-500'
-        }`}></span>
+        }`} />
         {blockchainEventManager.getConnectionState().connected 
           ? 'Connected to blockchain events' 
           : 'Not connected to blockchain events'

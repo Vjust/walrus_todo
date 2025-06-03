@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { FixedSizeGrid as Grid, FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -11,6 +11,8 @@ import { Todo } from '../types/todo-nft';
 import { TodoNFTDisplay, todoToNFTDisplay } from '../types/nft-display';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useSuiClient } from '../hooks/useSuiClient';
+import { TodoCardSkeleton, TodoCardSkeletonGrid } from './ui/skeletons/TodoCardSkeleton';
+import { useLoadingStates } from '../hooks/useLoadingStates';
 
 interface TodoNFTGridProps {
   className?: string;
@@ -150,8 +152,8 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
     if (dateRange.start || dateRange.end) {
       filtered = filtered.filter(nft => {
         const nftDate = new Date(nft.createdAt || Date.now());
-        if (dateRange.start && nftDate < dateRange.start) return false;
-        if (dateRange.end && nftDate > dateRange.end) return false;
+        if (dateRange.start && nftDate < dateRange.start) {return false;}
+        if (dateRange.end && nftDate > dateRange.end) {return false;}
         return true;
       });
     }
@@ -203,7 +205,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
       }
 
       const nft = filteredAndSortedNFTs[index];
-      if (!nft) return null;
+      if (!nft) {return null;}
 
       return (
         <div
@@ -227,14 +229,14 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
     ({ index, style }: any) => {
       if (!isItemLoaded(index)) {
         return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg w-full h-24" />
+          <div style={style} className="px-4">
+            <TodoCardSkeleton variant="list" animationSpeed="normal" />
           </div>
         );
       }
 
       const nft = filteredAndSortedNFTs[index];
-      if (!nft) return null;
+      if (!nft) {return null;}
 
       return (
         <div style={style} className="px-4">
@@ -249,13 +251,13 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
   if (isLoading) {
     return (
       <div className={`${className} p-4`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-96" />
-            </div>
-          ))}
-        </div>
+        <TodoCardSkeletonGrid
+          count={8}
+          columns="auto"
+          gap="md"
+          showActions={true}
+          animationSpeed="normal"
+        />
       </div>
     );
   }

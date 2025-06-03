@@ -15,7 +15,7 @@ export default function WalrusStorageManager() {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {return;}
 
     setIsUploading(true);
     setUploadStatus('Uploading to Walrus...');
@@ -48,7 +48,7 @@ export default function WalrusStorageManager() {
 
   const handleTextUpload = async () => {
     const text = prompt('Enter text to upload:');
-    if (!text) return;
+    if (!text) {return;}
 
     setIsUploading(true);
     setUploadStatus('Uploading text to Walrus...');

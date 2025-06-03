@@ -3,17 +3,17 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-import { SuiClient, type SuiObjectResponse, type SuiMoveObject, type PaginatedObjectsResponse } from '@mysten/sui/client';
+import { type PaginatedObjectsResponse, SuiClient, type SuiMoveObject, type SuiObjectResponse } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';
 import { bcs } from '@mysten/sui/bcs';
-import { loadAppConfig, type AppConfig } from './config-loader';
+import { type AppConfig, loadAppConfig } from './config-loader';
 import { 
-  transformWalrusBlobToUrl, 
+  extractBlobIdFromUrl, 
   generateThumbnailUrls, 
-  extractBlobIdFromUrl,
-  isValidWalrusUrl 
+  isValidWalrusUrl,
+  transformWalrusBlobToUrl 
 } from './walrus-url-utils';
 
 // Network configuration - removed in favor of config-loader
@@ -29,12 +29,12 @@ const TODO_NFT_CONFIG = {
 
 // Import unified types
 import type { 
+  CreateTodoParams, 
+  NetworkType, 
   Todo, 
   TodoList, 
-  CreateTodoParams, 
-  UpdateTodoParams, 
   TransactionResult, 
-  NetworkType 
+  UpdateTodoParams 
 } from '@/types/todo-nft';
 
 export interface SuiTodoNFT {
@@ -157,7 +157,7 @@ const MAX_INITIALIZATION_ATTEMPTS = 3;
 
 // Safe storage check helper to avoid errors
 const isStorageAvailable = () => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined') {return false;}
 
   try {
     const testKey = '__storage_test__';
@@ -537,7 +537,7 @@ function transformSuiObjectToTodo(
 
     const todo: Todo = {
       id: objectId,
-      objectId: objectId,
+      objectId,
       title: fields.title || 'Untitled',
       description: fields.description || '',
       completed: fields.completed === true,
@@ -1133,8 +1133,8 @@ export function getNFTCacheStats(): {
     let newest = -Infinity;
 
     nftTransformCache.forEach(entry => {
-      if (entry.timestamp < oldest) oldest = entry.timestamp;
-      if (entry.timestamp > newest) newest = entry.timestamp;
+      if (entry.timestamp < oldest) {oldest = entry.timestamp;}
+      if (entry.timestamp > newest) {newest = entry.timestamp;}
     });
 
     stats.oldestEntry = new Date(oldest);
@@ -1197,14 +1197,14 @@ export function createNFTMetadata(data: Partial<ExtendedTodoMetadata>): string {
     // Clean and validate data
     const metadata: ExtendedTodoMetadata = {};
 
-    if (data.checklists) metadata.checklists = data.checklists;
-    if (data.attachments) metadata.attachments = data.attachments;
-    if (data.labels) metadata.labels = data.labels;
-    if (data.dueDate) metadata.dueDate = data.dueDate;
-    if (data.reminder) metadata.reminder = data.reminder;
-    if (data.location) metadata.location = data.location;
-    if (data.collaborators) metadata.collaborators = data.collaborators;
-    if (data.customFields) metadata.customFields = data.customFields;
+    if (data.checklists) {metadata.checklists = data.checklists;}
+    if (data.attachments) {metadata.attachments = data.attachments;}
+    if (data.labels) {metadata.labels = data.labels;}
+    if (data.dueDate) {metadata.dueDate = data.dueDate;}
+    if (data.reminder) {metadata.reminder = data.reminder;}
+    if (data.location) {metadata.location = data.location;}
+    if (data.collaborators) {metadata.collaborators = data.collaborators;}
+    if (data.customFields) {metadata.customFields = data.customFields;}
 
     return JSON.stringify(metadata);
   } catch (error) {
@@ -1305,10 +1305,10 @@ export function sortTodos(
         comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
         break;
       case 'dueDate':
-        if (!a.dueDate && !b.dueDate) comparison = 0;
-        else if (!a.dueDate) comparison = 1;
-        else if (!b.dueDate) comparison = -1;
-        else comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        if (!a.dueDate && !b.dueDate) {comparison = 0;}
+        else if (!a.dueDate) {comparison = 1;}
+        else if (!b.dueDate) {comparison = -1;}
+        else {comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();}
         break;
     }
 

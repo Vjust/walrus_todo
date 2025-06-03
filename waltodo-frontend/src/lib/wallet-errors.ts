@@ -156,7 +156,7 @@ export function getWalletErrorMessage(error: WalletError): {
 
     return {
       message: `${walletName} wallet not installed`,
-      suggestion: suggestion,
+      suggestion,
     };
   }
 

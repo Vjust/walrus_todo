@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 
 // Session timeout in milliseconds (30 minutes)
@@ -25,7 +25,7 @@ export function SessionTimeoutWarning() {
 
   // Calculate time remaining
   const calculateTimeRemaining = useCallback(() => {
-    if (!lastActivity || lastActivity === 0) return SESSION_TIMEOUT;
+    if (!lastActivity || lastActivity === 0) {return SESSION_TIMEOUT;}
     const now = Date.now();
     const timeSinceLastActivity = now - lastActivity;
     return Math.max(0, SESSION_TIMEOUT - timeSinceLastActivity);
@@ -67,7 +67,7 @@ export function SessionTimeoutWarning() {
 
   // Update countdown timer every second when warning is shown
   useEffect(() => {
-    if (!showWarning) return;
+    if (!showWarning) {return;}
 
     const timer = setInterval(() => {
       const remaining = calculateTimeRemaining();
@@ -129,7 +129,7 @@ export function SessionTimeoutWarning() {
     );
   }
 
-  if (!showWarning) return null;
+  if (!showWarning) {return null;}
 
   const warningColor = isCritical ? 'red' : 'yellow';
   const borderClass = isCritical ? 'border-red-500' : 'border-yellow-500';

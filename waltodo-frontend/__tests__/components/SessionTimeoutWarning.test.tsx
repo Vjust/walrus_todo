@@ -33,7 +33,7 @@ describe('SessionTimeoutWarning', () => {
     global.Date.now = jest.fn(() => mockNow);
     
     // Mock setInterval to capture the callback for testing
-    jest.spyOn(global, 'setInterval').mockImplementation((callback: any, ms: number) => {
+    jest.spyOn(global, 'setInterval').mockImplementation((callback: any, ms?: number) => {
       timerCallback = callback;
       return 1 as any; // Timer ID
     });

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { pwaManager, BeforeInstallPromptEvent, PWAMetrics } from '@/lib/pwa-manager';
+import { useCallback, useEffect, useState } from 'react';
+import { BeforeInstallPromptEvent, pwaManager, PWAMetrics } from '@/lib/pwa-manager';
 
 export function usePWA() {
   const [canInstall, setCanInstall] = useState(false);

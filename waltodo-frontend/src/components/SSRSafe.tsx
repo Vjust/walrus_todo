@@ -1,11 +1,11 @@
 'use client';
 
 import React, { 
-  useState, 
-  useEffect, 
-  ReactNode, 
   ComponentType, 
-  ReactElement 
+  ReactElement, 
+  ReactNode, 
+  useEffect, 
+  useState 
 } from 'react';
 
 // TypeScript types for SSR-safe patterns
@@ -71,7 +71,7 @@ export function useSafeBrowserAPI<T>(
   const mounted = useMounted();
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     try {
       const result = apiCall();
@@ -98,7 +98,7 @@ export function SSRSafeComponent({
 
   if (!mounted) {
     return (
-      <div className={className} suppressHydrationWarning>
+      <div className={className}>
         {fallback}
       </div>
     );
@@ -125,7 +125,7 @@ export function NoSSR({
 
   if (!shouldRender) {
     return (
-      <div className={className} suppressHydrationWarning>
+      <div className={className}>
         {fallback}
       </div>
     );
@@ -155,7 +155,7 @@ export function SSROnly({
   }
 
   return (
-    <div className={className} suppressHydrationWarning>
+    <div className={className}>
       {children}
     </div>
   );
@@ -184,7 +184,7 @@ export function ConditionalRender({
 
   if (!mounted) {
     return (
-      <div className={className} suppressHydrationWarning>
+      <div className={className}>
         {serverFallback || fallback}
       </div>
     );
@@ -214,7 +214,7 @@ export function withSSRSafety<P extends object>(
     const mounted = useMounted();
 
     if (!mounted) {
-      return <div suppressHydrationWarning>{fallback}</div>;
+      return <div>{fallback}</div>;
     }
 
     return <Component {...props} />;
@@ -234,7 +234,7 @@ export function useSafeLocalStorage<T>(
   const mounted = useMounted();
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     try {
       const item = window.localStorage.getItem(key);
@@ -272,7 +272,7 @@ export function useSafeSessionStorage<T>(
   const mounted = useMounted();
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     try {
       const item = window.sessionStorage.getItem(key);
@@ -314,7 +314,7 @@ export function useSafeWindowSize(): {
   const mounted = useMounted();
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     function handleResize() {
       setWindowSize({
@@ -339,7 +339,7 @@ export function useSafeMediaQuery(query: string): boolean {
   const mounted = useMounted();
 
   useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return;
+    if (!mounted || typeof window === 'undefined') {return;}
 
     const media = window.matchMedia(query);
     setMatches(media.matches);
@@ -364,7 +364,7 @@ export function useSafeFeatureDetection(
   const mounted = useMounted();
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     try {
       setHasFeature(detector());

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMounted } from './useMounted';
 
 /**
@@ -14,7 +14,7 @@ export function useSafeLocalStorage<T>(key: string, defaultValue: T) {
 
   // Load from localStorage after mount
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     try {
       const stored = localStorage.getItem(key);

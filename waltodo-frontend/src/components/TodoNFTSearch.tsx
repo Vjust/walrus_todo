@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Search, X, Mic, MicOff, Clock, Save, Filter } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Clock, Filter, Mic, MicOff, Save, Search, X } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useDebounce } from '../hooks/useDebounce';
 import { TodoNFT } from '../types/todo-nft';
@@ -216,7 +216,7 @@ export function TodoNFTSearch({
 
   // Save search to history
   const saveToHistory = useCallback((searchQuery: string) => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {return;}
     
     const newHistory = [searchQuery, ...searchHistory.filter(h => h !== searchQuery)].slice(0, 10);
     setSearchHistory(newHistory);
@@ -225,11 +225,11 @@ export function TodoNFTSearch({
 
   // Save search as favorite
   const saveSearch = useCallback((name?: string) => {
-    if (!query.trim()) return;
+    if (!query.trim()) {return;}
     
     const newSaved: SavedSearch = {
       id: Date.now().toString(),
-      query: query,
+      query,
       timestamp: Date.now(),
       name: name || query
     };
@@ -279,7 +279,7 @@ export function TodoNFTSearch({
 
   // Highlight matched terms in text
   const highlightMatches = useCallback((text: string, matches: any[]) => {
-    if (!matches || matches.length === 0) return text;
+    if (!matches || matches.length === 0) {return text;}
     
     let highlighted = text;
     const sortedMatches = [...matches].sort((a, b) => b.indices[0][0] - a.indices[0][0]);
@@ -287,11 +287,11 @@ export function TodoNFTSearch({
     sortedMatches.forEach(match => {
       const [start, end] = match.indices[0];
       highlighted = 
-        highlighted.slice(0, start) +
-        `<mark class="bg-yellow-200 dark:bg-yellow-800">` +
-        highlighted.slice(start, end + 1) +
-        '</mark>' +
-        highlighted.slice(end + 1);
+        `${highlighted.slice(0, start) 
+        }<mark class="bg-yellow-200 dark:bg-yellow-800">${ 
+        highlighted.slice(start, end + 1) 
+        }</mark>${ 
+        highlighted.slice(end + 1)}`;
     });
     
     return highlighted;
@@ -405,7 +405,7 @@ export function TodoNFTSearch({
               <button
                 onClick={() => {
                   const name = prompt('Name this search:');
-                  if (name) saveSearch(name);
+                  if (name) {saveSearch(name);}
                   setShowSaved(false);
                 }}
                 className="w-full text-left px-3 py-2 bg-blue-50 dark:bg-blue-900/20 

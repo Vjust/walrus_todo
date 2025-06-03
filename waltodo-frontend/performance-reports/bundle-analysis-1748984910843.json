@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-06-03T21:08:30.841Z",
+  "bundles": {
+    "chunks/polyfills.js": {
+      "size": 112594,
+      "sizeKB": 109.96,
+      "type": "javascript"
+    },
+    "development/_buildManifest.js": {
+      "size": 238,
+      "sizeKB": 0.23,
+      "type": "javascript"
+    },
+    "development/_ssgManifest.js": {
+      "size": 76,
+      "sizeKB": 0.07,
+      "type": "javascript"
+    }
+  },
+  "chunks": {
+    "pages": {
+      "/_app": {
+        "files": 0,
+        "totalSize": 0,
+        "totalSizeKB": 0
+      }
+    },
+    "sharedChunks": [],
+    "largestChunks": []
+  },
+  "dependencies": {
+    "totalDependencies": 100,
+    "largeDependencies": [
+      "@heroicons/react",
+      "@mysten/sui",
+      "@mysten/walrus",
+      "@tanstack/react-query",
+      "@tanstack/react-query-devtools",
+      "@tanstack/react-table",
+      "@tanstack/react-virtual",
+      "lucide-react",
+      "next",
+      "react",
+      "react-chartjs-2",
+      "react-dom",
+      "react-hot-toast",
+      "react-smooth",
+      "react-swipeable",
+      "react-transition-group",
+      "react-virtualized-auto-sizer",
+      "react-window",
+      "react-window-infinite-loader",
+      "socket.io-client",
+      "@babel/preset-react",
+      "@testing-library/react",
+      "@types/react",
+      "@types/react-dom",
+      "@types/react-window",
+      "@types/react-window-infinite-loader",
+      "eslint-config-next"
+    ],
+    "duplicateDependencies": [],
+    "unusedDependencies": []
+  },
+  "recommendations": [
+    {
+      "type": "dependencies",
+      "severity": "medium",
+      "message": "High dependency count: 100. Review unused dependencies."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 
 interface StorageBlob {
@@ -163,7 +163,7 @@ export function useWalrusStorageManagement() {
 
   // Auto-cleanup effect
   useEffect(() => {
-    if (!preferences.autoCleanup || !blobs.length) return;
+    if (!preferences.autoCleanup || !blobs.length) {return;}
 
     const expiredBlobs = blobs.filter(blob => {
       const ageInDays = (Date.now() - blob.createdAt.getTime()) / (1000 * 60 * 60 * 24);
@@ -178,7 +178,7 @@ export function useWalrusStorageManagement() {
 
   // Cost alert effect
   useEffect(() => {
-    if (!quota) return;
+    if (!quota) {return;}
 
     if (quota.walTokensSpent > preferences.costAlertThreshold) {
       toast.error(`Storage costs exceeded ${preferences.costAlertThreshold} WAL tokens!`);

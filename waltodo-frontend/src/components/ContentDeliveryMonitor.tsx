@@ -29,7 +29,7 @@ export default function ContentDeliveryMonitor() {
   }, [isConnected]);
 
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible) {return;}
 
     const monitorInterval = setInterval(() => {
       // Mock monitoring - replace with actual CDN monitoring logic

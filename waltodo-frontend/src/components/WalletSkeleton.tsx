@@ -36,7 +36,7 @@ export function WalletButtonSkeleton({
     >
       <div className="flex items-center space-x-2">
         {/* Skeleton icon */}
-        <div className="w-4 h-4 bg-gray-300 rounded"></div>
+        <div className="w-4 h-4 bg-gray-300 rounded" />
         <span>Loading...</span>
       </div>
     </div>

@@ -11,7 +11,7 @@ import { ComponentType } from 'react';
 // Loading component for dynamic imports
 const WalletLoadingFallback = () => (
   <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg">
-    <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
     <span className="ml-3 text-sm text-gray-600">Loading wallet features...</span>
   </div>
 );
@@ -48,9 +48,12 @@ export function createWalletDynamicImport<T = {}>(
     error?: ComponentType;
   }
 ) {
-  return dynamic(importFn, {
+  return dynamic(() => importFn(), {
     ssr: false, // Critical: disable SSR for wallet components
-    loading: options?.loading || WalletLoadingFallback,
+    loading: () => {
+      const LoadingComponent = options?.loading || WalletLoadingFallback;
+      return <LoadingComponent />;
+    },
     // Note: Next.js dynamic doesn't have built-in error handling
     // Error boundaries should be used at the component level
   });
@@ -78,22 +81,31 @@ export const DynamicTodoNFTListView = createWalletDynamicImport(
 );
 
 export const DynamicTransactionHistory = createWalletDynamicImport(
-  () => import('../components/TransactionHistory')
+  () => import('../components/TransactionHistory').then(mod => ({ default: mod.TransactionHistory }))
 );
 
 export const DynamicNFTAnalytics = createWalletDynamicImport(
-  () => import('../components/NFTAnalytics')
+  () => import('../components/NFTAnalytics').then(mod => ({ default: mod.NFTAnalytics }))
+);
+
+export const DynamicTodoNFTSearch = createWalletDynamicImport(
+  () => import('../components/TodoNFTSearch')
+);
+
+export const DynamicTodoNFTStats = createWalletDynamicImport(
+  () => import('../components/TodoNFTStats').then(mod => ({ default: mod.TodoNFTStats }))
 );
 
 // Utility to create wallet-safe pages
 export function createWalletSafePage<T = {}>(
   importFn: () => Promise<{ default: ComponentType<T> }>
 ) {
-  return createWalletDynamicImport(importFn, {
+  return dynamic(() => importFn(), {
+    ssr: false,
     loading: () => (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Loading Page</h2>
           <p className="text-sm text-gray-500">Initializing wallet features...</p>
         </div>

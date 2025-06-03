@@ -1,9 +1,9 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState, useCallback } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getAnalytics } from '@/lib/analytics';
-import { classifyError, errorPersistence, retryWithRecovery, ErrorType } from '../lib/error-recovery';
+import { classifyError, errorPersistence, ErrorType, retryWithRecovery } from '../lib/error-recovery';
 import { showError } from '../lib/error-handling';
 
 interface ErrorBoundaryProps {
@@ -21,7 +21,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
 
   // Reset error state with retry functionality
   const resetError = useCallback(async () => {
-    if (isRecovering) return;
+    if (isRecovering) {return;}
     
     setIsRecovering(true);
     setHasError(false);
@@ -44,7 +44,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
     setMounted(true);
     
     // Only run in the browser
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     // Set up global error handler for uncaught errors
     const errorHandler = (event: ErrorEvent) => {
@@ -120,11 +120,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       // Track error in analytics
       const analytics = getAnalytics();
       if (analytics) {
-        analytics.trackError(errorInstance, {
-          source: 'error-boundary',
-          critical: isCriticalError,
-          url: window.location.href,
-        });
+        analytics.trackError(errorInstance);
       }
 
       // Prevent the error from propagating
@@ -224,11 +220,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       // Track rejection in analytics
       const analytics = getAnalytics();
       if (analytics) {
-        analytics.trackError(errorInstance, {
-          source: 'unhandled-rejection',
-          critical: isCriticalError,
-          url: window.location.href,
-        });
+        analytics.trackError(errorInstance);
       }
 
       // Prevent the error from propagating

@@ -54,7 +54,7 @@ beforeAll(() => {
 });
 
 // Create a wrapper for testing hooks with the provider
-const wrapper = ({ children }: { children: React.ReactNode }) => (
+const wrapper = ({ children }: { children: any }) => (
   <AppWalletProvider>{children}</AppWalletProvider>
 );
 

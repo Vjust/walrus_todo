@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState, createContext, useContext } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 // Initialization context to track the overall app readiness
 interface AppInitializationContextType {

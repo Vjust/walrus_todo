@@ -292,7 +292,7 @@ class PWAManager {
       return false;
     }
     
-    if (!data) return true;
+    if (!data) {return true;}
     
     // Check if navigator.canShare exists (newer API)
     if ('canShare' in navigator && typeof navigator.canShare === 'function') {

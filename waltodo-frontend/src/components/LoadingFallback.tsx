@@ -35,7 +35,7 @@ export function LoadingFallback({
   return (
     <div className={containerClasses}>
       <div className="text-center">
-        <div className={`animate-spin rounded-full border-b-2 border-blue-600 mx-auto mb-4 ${sizeClasses[size]}`}></div>
+        <div className={`animate-spin rounded-full border-b-2 border-blue-600 mx-auto mb-4 ${sizeClasses[size]}`} />
         <p className={`text-gray-600 ${textSizeClasses[size]}`}>{message}</p>
       </div>
     </div>

@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { WalletSkeleton } from './WalletSkeleton';
+import { WalletButtonSkeleton } from './WalletSkeleton';
 
 interface LoadingLayoutProps {
   children: React.ReactNode;
@@ -39,7 +39,7 @@ export function LoadingLayout({
     if (showProgress && loading) {
       const interval = setInterval(() => {
         setProgress(prev => {
-          if (prev >= 90) return prev;
+          if (prev >= 90) {return prev;}
           return prev + Math.random() * 20;
         });
       }, 200);
@@ -114,10 +114,10 @@ function AppSkeleton() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
             </div>
             <div className="flex items-center space-x-4">
-              <WalletSkeleton variant="button" size="md" />
+              <WalletButtonSkeleton size="md" />
             </div>
           </div>
         </div>
@@ -127,15 +127,15 @@ function AppSkeleton() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
+            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-lg shadow p-6">
                   <div className="animate-pulse space-y-4">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
                     <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full" />
+                      <div className="h-3 bg-gray-200 rounded w-2/3" />
                     </div>
                   </div>
                 </div>
@@ -173,7 +173,7 @@ function HydrationLoadingState({
 
         {/* Loading spinner */}
         <div className="flex justify-center mb-6">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
         </div>
 
         {showProgress && (
@@ -181,7 +181,7 @@ function HydrationLoadingState({
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out" 
               style={{ width: `${progress}%` }}
-            ></div>
+             />
           </div>
         )}
 
@@ -216,7 +216,7 @@ function WalletLoadingState({
         <p className="text-gray-600 mb-6">{message}</p>
 
         <div className="flex justify-center mb-6">
-          <div className="w-6 h-6 border-2 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+          <div className="w-6 h-6 border-2 border-green-200 border-t-green-600 rounded-full animate-spin" />
         </div>
 
         {showProgress && (
@@ -224,7 +224,7 @@ function WalletLoadingState({
             <div 
               className="bg-green-600 h-2 rounded-full transition-all duration-300 ease-out" 
               style={{ width: `${progress}%` }}
-            ></div>
+             />
           </div>
         )}
 
@@ -259,7 +259,7 @@ function NetworkLoadingState({
         <p className="text-gray-600 mb-6">{message}</p>
 
         <div className="flex justify-center mb-6">
-          <div className="w-6 h-6 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          <div className="w-6 h-6 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
         </div>
 
         {showProgress && (
@@ -267,7 +267,7 @@ function NetworkLoadingState({
             <div 
               className="bg-purple-600 h-2 rounded-full transition-all duration-300 ease-out" 
               style={{ width: `${progress}%` }}
-            ></div>
+             />
           </div>
         )}
 
@@ -302,7 +302,7 @@ function ContentLoadingState({
         <p className="text-gray-600 mb-6">{message}</p>
 
         <div className="flex justify-center mb-6">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+          <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
         </div>
 
         {showProgress && (
@@ -310,7 +310,7 @@ function ContentLoadingState({
             <div 
               className="bg-gray-600 h-2 rounded-full transition-all duration-300 ease-out" 
               style={{ width: `${progress}%` }}
-            ></div>
+             />
           </div>
         )}
 
@@ -330,8 +330,8 @@ export function useLoadingState(initialLoading = true) {
 
   const startLoading = (loadingType?: typeof type, loadingMessage?: string) => {
     setLoading(true);
-    if (loadingType) setType(loadingType);
-    if (loadingMessage) setMessage(loadingMessage);
+    if (loadingType) {setType(loadingType);}
+    if (loadingMessage) {setMessage(loadingMessage);}
   };
 
   const stopLoading = () => {

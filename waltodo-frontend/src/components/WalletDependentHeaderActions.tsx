@@ -25,7 +25,7 @@ export function WalletDependentHeaderActions() {
     <div className="flex items-center space-x-3">
       {/* Account info */}
       <div className="flex items-center space-x-2">
-        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+        <div className="w-2 h-2 bg-green-500 rounded-full" />
         <span className="text-sm text-gray-600">
           {account.address.slice(0, 6)}...{account.address.slice(-4)}
         </span>

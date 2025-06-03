@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { pwaManager } from '@/lib/pwa-manager';
-import { BarChart3, Download, Bell, Wifi, WifiOff, Database } from 'lucide-react';
+import { BarChart3, Bell, Database, Download, Wifi, WifiOff } from 'lucide-react';
 
 export function PWAMetrics() {
   const [metrics, setMetrics] = useState(pwaManager.getMetrics());

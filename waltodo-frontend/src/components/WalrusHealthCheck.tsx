@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { AlertCircle, CheckCircle, Wifi, WifiOff, RefreshCw, AlertTriangle, Activity } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Activity, AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useWalrusStorage } from '@/hooks/useWalrusStorage';
 import { toast } from 'react-hot-toast';
 
@@ -186,12 +186,12 @@ export function WalrusHealthCheck() {
   };
 
   const formatLatency = (latency: number | null) => {
-    if (!latency) return 'N/A';
+    if (!latency) {return 'N/A';}
     return `${latency}ms`;
   };
 
   const formatTimestamp = (date: Date | null) => {
-    if (!date) return 'Never';
+    if (!date) {return 'Never';}
     return date.toLocaleTimeString();
   };
 

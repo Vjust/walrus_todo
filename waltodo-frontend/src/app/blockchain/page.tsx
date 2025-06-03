@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 // import Navbar from '@/components/navbar';
 import BlockchainTodoManager from '@/components/BlockchainTodoManager';
 import { useWalletContext } from '@/contexts/WalletContext';
@@ -16,7 +16,7 @@ function BlockchainPageContent() {
   const connecting = walletContext?.connecting || false;
   const account = walletContext?.account || null;
   const connect = walletContext?.connect || (() => {});
-  const { state, network, isWalletReady } = useSuiTodos();
+  const { state, network } = useSuiTodos();
   const [showFullManager, setShowFullManager] = useState(false);
   const [showOfflineGallery, setShowOfflineGallery] = useState(false);
   const { isOnline } = usePWA();
@@ -56,12 +56,14 @@ function BlockchainPageContent() {
             </div>
             <div className='flex gap-2'>
               <button
+                type="button"
                 onClick={() => setShowFullManager(!showFullManager)}
                 className='ocean-button text-sm'
               >
                 {showFullManager ? 'Simple View' : 'Advanced Manager'}
               </button>
               <button
+                type="button"
                 onClick={() => setShowOfflineGallery(!showOfflineGallery)}
                 className='ocean-button text-sm'
               >
@@ -99,13 +101,14 @@ function BlockchainPageContent() {
             the blockchain.
           </p>
           <button
+            type="button"
             onClick={connect}
             disabled={connecting}
             className='ocean-button inline-flex items-center gap-2'
           >
             {connecting ? (
               <>
-                <div className='w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin'></div>
+                <div className='w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin' />
                 Connecting...
               </>
             ) : (
@@ -146,6 +149,7 @@ function BlockchainPageContent() {
                   Switch to Advanced Manager to create and manage TodoNFTs.
                 </p>
                 <button
+                  type="button"
                   onClick={() => setShowFullManager(true)}
                   className='ocean-button'
                 >

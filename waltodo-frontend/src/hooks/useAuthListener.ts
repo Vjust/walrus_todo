@@ -7,7 +7,7 @@ export function useAuthListener() {
   const walletContext = useWalletContext();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const handleUnauthorized = () => {
       console.log('[useAuthListener] Received unauthorized event');

@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { 
-  useCurrentAccount, 
+  ConnectButton, 
   useConnectWallet, 
+  useCurrentAccount,
   useDisconnectWallet,
   useSignAndExecuteTransaction,
   useSuiClient,
-  ConnectButton,
 } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { formatAddress } from '@mysten/sui/utils';
@@ -30,7 +30,7 @@ export function WalletExample() {
 
   // Example transaction - sending a small amount of SUI
   const handleSendTransaction = async () => {
-    if (!account) return;
+    if (!account) {return;}
 
     try {
       const tx = new Transaction();
@@ -49,7 +49,7 @@ export function WalletExample() {
       alert(`Transaction successful! Digest: ${result.digest}`);
     } catch (error) {
       console.error('Transaction failed:', error);
-      alert('Transaction failed: ' + (error as Error).message);
+      alert(`Transaction failed: ${  (error as Error).message}`);
     }
   };
 

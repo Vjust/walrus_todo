@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMounted } from './useMounted';
 
 type Theme = 'light' | 'dark';
@@ -15,7 +15,7 @@ export function useSafeTheme() {
 
   // Initialize theme after mount
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     try {
       const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -31,7 +31,7 @@ export function useSafeTheme() {
   }, [mounted]);
 
   const toggleTheme = useCallback(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     setTheme(current => {
       const newTheme = current === 'dark' ? 'light' : 'dark';
@@ -48,7 +48,7 @@ export function useSafeTheme() {
   }, [mounted]);
 
   const setThemeValue = useCallback((newTheme: Theme) => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     setTheme(newTheme);
     

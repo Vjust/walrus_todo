@@ -210,7 +210,7 @@ class ErrorMonitor {
   }
 
   private async flushErrors() {
-    if (this.errorQueue.length === 0) return;
+    if (this.errorQueue.length === 0) {return;}
 
     const errors = [...this.errorQueue];
     this.errorQueue = [];
@@ -310,7 +310,7 @@ let performanceMonitor: PerformanceMonitor | null = null;
 let errorMonitor: ErrorMonitor | null = null;
 
 export function initializeMonitoring() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
 
   if (!performanceMonitor) {
     performanceMonitor = new PerformanceMonitor();
@@ -329,7 +329,7 @@ export function captureException(error: Error, context?: ErrorContext) {
 
 // Web Vitals reporting
 export function reportWebVitals(metric: any) {
-  if (process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'true') return;
+  if (process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'true') {return;}
 
   const vitals = {
     FCP: 'first_contentful_paint',

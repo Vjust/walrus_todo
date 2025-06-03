@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Transaction } from '@mysten/sui/transactions';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
-import { TransactionSafetyManager, TransactionSafetyConfig } from '@/lib/transaction-safety';
+import { TransactionSafetyConfig, TransactionSafetyManager } from '@/lib/transaction-safety';
 import toast from 'react-hot-toast';
 
 interface SafeTransactionButtonProps {

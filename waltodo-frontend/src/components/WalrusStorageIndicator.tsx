@@ -1,8 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ClipboardIcon, CheckIcon, ArrowTopRightOnSquareIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
-import { CloudArrowUpIcon, CloudIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import React, { useEffect, useState } from 'react';
+import { 
+  ExternalLink as ArrowTopRightOnSquareIcon, 
+  Check as CheckIcon, 
+  Clipboard as ClipboardIcon, 
+  CloudUpload as CloudArrowUpIcon,
+  Cloud as CloudIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Info as InformationCircleIcon
+} from 'lucide-react';
 import type { Todo } from '../types/todo';
 
 interface WalrusStorageIndicatorProps {
@@ -31,10 +38,10 @@ export default function WalrusStorageIndicator({
   
   // Determine sync status based on todo properties
   const getSyncStatus = (): SyncStatus => {
-    if (!todo.walrusBlobId) return 'error';
-    if (walrusMetadata?.syncStatus) return walrusMetadata.syncStatus;
+    if (!todo.walrusBlobId) {return 'error';}
+    if (walrusMetadata?.syncStatus) {return walrusMetadata.syncStatus;}
     // Check if todo is stored on Walrus based on storageLocation
-    if (todo.storageLocation === 'blockchain' || todo.blockchainStored) return 'synced';
+    if (todo.storageLocation === 'blockchain' || todo.blockchainStored) {return 'synced';}
     return 'synced';
   };
 
@@ -68,23 +75,23 @@ export default function WalrusStorageIndicator({
   };
 
   const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   };
 
   const formatExpiryDate = (expiryEpoch?: number): string => {
-    if (!expiryEpoch) return 'Unknown';
+    if (!expiryEpoch) {return 'Unknown';}
     const date = new Date(expiryEpoch * 1000);
     const now = new Date();
     const daysRemaining = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (daysRemaining < 0) return 'Expired';
-    if (daysRemaining === 0) return 'Expires today';
-    if (daysRemaining === 1) return 'Expires tomorrow';
-    if (daysRemaining < 30) return `${daysRemaining} days remaining`;
+    if (daysRemaining < 0) {return 'Expired';}
+    if (daysRemaining === 0) {return 'Expires today';}
+    if (daysRemaining === 1) {return 'Expires tomorrow';}
+    if (daysRemaining < 30) {return `${daysRemaining} days remaining`;}
     
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -278,7 +285,7 @@ export default function WalrusStorageIndicator({
             </div>
 
             {/* Tooltip Arrow */}
-            <div className="absolute -bottom-2 left-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-gray-900"></div>
+            <div className="absolute -bottom-2 left-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-gray-900" />
           </div>
         </div>
       )}

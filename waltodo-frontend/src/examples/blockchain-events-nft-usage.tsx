@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useBlockchainEvents, useTodoEvents, useTodoStateSync } from '@/hooks/useBlockchainEvents';
 import type { Todo } from '@/types/todo-nft';
 

@@ -2,7 +2,7 @@
 
 import { useAppInitialization } from '@/contexts/AppInitializationContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
-import { isSuiClientInitialized, getSuiClientState } from '@/lib/sui-client';
+import { getSuiClientState, isSuiClientInitialized } from '@/lib/sui-client';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useEffect, useState } from 'react';
 

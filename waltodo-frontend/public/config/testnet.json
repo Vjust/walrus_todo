@@ -13,7 +13,6 @@
     "chainId": "4c78adac"
   },
   "walrus": {
-    "packageId": "0xd84704c17fc870b8764832c535aa6b11f21a95cd6f5bb38a9b07d2cf42220c66",
     "networkUrl": "https://wal.testnet.sui.io",
     "publisherUrl": "https://publisher-testnet.walrus.site",
     "aggregatorUrl": "https://aggregator-testnet.walrus.site",
@@ -33,6 +32,17 @@
     ],
     "supportedNetworks": ["testnet", "devnet"],
     "networkSwitchingEnabled": true
+  },
+  "walrus": {
+    "packageId": "0xd84704c17fc870b8764832c535aa6b11f21a95cd6f5bb38a9b07d2cf42220c66",
+    "networkUrl": "https://wal.testnet.sui.io",
+    "publisherUrl": "https://publisher-testnet.walrus.site",
+    "aggregatorUrl": "https://aggregator-testnet.walrus.site",
+    "apiPrefix": "https://api-testnet.walrus.tech/1.0",
+    "fallbackPublisherUrls": [
+      "https://walrus-testnet-publisher.nodes.guru",
+      "https://walrus-testnet-publisher.blockscope.net"
+    ]
   },
   "deployment": {
     "packageId": "0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799",

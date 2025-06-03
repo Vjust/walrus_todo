@@ -45,7 +45,7 @@ if (typeof window !== 'undefined') {
 // Check if localStorage is available
 export function isStorageAvailable(): boolean {
   // Always return false during SSR or hydration
-  if (!isBrowser() || isHydrating) return false;
+  if (!isBrowser() || isHydrating) {return false;}
 
   // Additional safety check for document readiness
   if (typeof document !== 'undefined' && document.readyState === 'loading') {

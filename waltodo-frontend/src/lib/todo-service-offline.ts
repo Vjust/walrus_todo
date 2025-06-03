@@ -63,7 +63,7 @@ export class OfflineTodoService {
    */
   private saveStorage(storage: OfflineTodoStorage): void {
     try {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') {return;}
       
       localStorage.setItem(this.storageKey, JSON.stringify(storage));
     } catch (error) {
@@ -208,7 +208,7 @@ export class OfflineTodoService {
    */
   async clearOfflineData(): Promise<void> {
     try {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') {return;}
       
       localStorage.removeItem(this.storageKey);
     } catch (error) {

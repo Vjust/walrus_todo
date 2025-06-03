@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import safeStorage, {
   isBrowser,
   isUsingFallbackStorage,
@@ -35,7 +35,7 @@ const WarningMessage: React.FC<WarningMessageProps> = ({
   context,
   usingFallback,
 }) => {
-  if (!usingFallback) return null;
+  if (!usingFallback) {return null;}
 
   const getMessageForContext = (): { title: string; message: string } => {
     switch (context) {
@@ -163,7 +163,7 @@ export function StorageContextWarning() {
 
   // Initialize after hydration is complete
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated) {return;}
 
     // Small delay to ensure all other components have also hydrated
     const timerId = setTimeout(() => {

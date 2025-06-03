@@ -91,7 +91,7 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
           <div
             className='w-4 h-4 bg-yellow-400 rounded-full animate-pulse'
             title='Pending transaction'
-          ></div>
+           />
         );
       case 'success':
         return (

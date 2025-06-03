@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import type { Todo } from '@/types/todo-nft';
 // import { useTodoStateSync } from '@/hooks/useBlockchainEvents'
 // import { BlockchainEventIndicator } from './BlockchainEventStatus'
@@ -8,9 +8,9 @@ import { useWalletContext } from '@/contexts/WalletContext';
 // WebSocket status removed - using blockchain events for real-time updates
 import { getTodos, updateTodo } from '@/lib/todo-service';
 import {
-  getTodosFromBlockchain,
   completeTodoOnBlockchain,
   deleteTodoOnBlockchain,
+  getTodosFromBlockchain,
 } from '@/lib/sui-client';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import toast from 'react-hot-toast';
@@ -190,8 +190,8 @@ function TodoList({ listName }: TodoListProps) {
   // Move all useCallback hooks before early returns
   const refreshBlockchainTodos = useCallback(async () => {
     // Safety guards - moved inside the callback to ensure stable hook count
-    if (!componentMounted || !initializationComplete) return;
-    if (!connected || !address || !suiClientInitialized) return;
+    if (!componentMounted || !initializationComplete) {return;}
+    if (!connected || !address || !suiClientInitialized) {return;}
 
     try {
       // Refreshing blockchain todos...
@@ -208,10 +208,10 @@ function TodoList({ listName }: TodoListProps) {
 
   const toggleTodoCompletion = useCallback(async (id: string) => {
     // Safety guards - componentMounted and initializationComplete checked inside to ensure stable hook count
-    if (!componentMounted || !initializationComplete) return;
+    if (!componentMounted || !initializationComplete) {return;}
     
     const todo = displayTodos.find(t => t.id === id);
-    if (!todo) return;
+    if (!todo) {return;}
 
     // Update local state immediately for optimistic UI
     const updatedTodos = displayTodos.map(todoItem =>
@@ -288,8 +288,8 @@ function TodoList({ listName }: TodoListProps) {
   // Handle storing local todo on blockchain
   const handleStoreOnBlockchain = useCallback(async (todo: Todo) => {
     // Safety guards - moved inside the callback to ensure stable hook count
-    if (!componentMounted || !initializationComplete) return;
-    if (!connected || !address || !signAndExecuteTransaction || !suiClientInitialized) return;
+    if (!componentMounted || !initializationComplete) {return;}
+    if (!connected || !address || !signAndExecuteTransaction || !suiClientInitialized) {return;}
 
     try {
       // Storing todo on blockchain
@@ -311,8 +311,8 @@ function TodoList({ listName }: TodoListProps) {
   // Handle deleting todo (local or blockchain)
   const handleDeleteTodo = useCallback(async (todo: Todo) => {
     // Safety guards - moved inside the callback to ensure stable hook count
-    if (!componentMounted || !initializationComplete) return;
-    if (!confirm(`Are you sure you want to delete "${todo.title}"?`)) return;
+    if (!componentMounted || !initializationComplete) {return;}
+    if (!confirm(`Are you sure you want to delete "${todo.title}"?`)) {return;}
 
     try {
       if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction && suiClientInitialized) {
@@ -363,7 +363,7 @@ function TodoList({ listName }: TodoListProps) {
   if (isLoading || (connected && suiClientInitializing)) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
-        <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
+        <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin' />
         <div className='mt-4 text-center'>
           {!componentMounted && (
             <p className='text-sm text-ocean-medium animate-pulse'>
@@ -403,30 +403,66 @@ function TodoList({ listName }: TodoListProps) {
   if (displayTodos.length === 0) {
     return (
       <div className='text-center py-12'>
-        <p className='text-ocean-medium dark:text-ocean-light mb-4'>
-          No todos in this list yet.
+        <div className='mx-auto w-24 h-24 mb-4 text-gray-400'>
+          <svg className='w-full h-full' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} 
+              d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+          </svg>
+        </div>
+        <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
+          No todos yet
+        </h3>
+        <p className='text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto'>
+          Get started by creating your first todo. You can create local todos or mint them as NFTs on the Sui blockchain.
         </p>
-        <p className='text-sm text-ocean-medium/70 dark:text-ocean-light/70'>
-          Create your first todo using the form above!
-        </p>
-        {connected && (
-          <div className='mt-4'>
-            <div className='flex items-center space-x-2'>
-              <div className='w-2 h-2 bg-blue-500 rounded-full' />
-              <span className='text-xs text-ocean-medium/70'>
-                Blockchain Connected
-              </span>
+        
+        {/* Quick action buttons */}
+        <div className='flex flex-col sm:flex-row gap-3 justify-center items-center'>
+          <button
+            onClick={() => {
+              // Trigger create form if available
+              const createButton = document.querySelector('[data-testid="create-todo-button"]') as HTMLButtonElement;
+              if (createButton) {createButton.click();}
+            }}
+            className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+          >
+            <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 6v6m0 0v6m0-6h6m-6 0H6' />
+            </svg>
+            Create Todo
+          </button>
+          
+          {connected && (
+            <button className='inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'>
+              <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} 
+                  d='M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' />
+              </svg>
+              Create NFT Todo
+            </button>
+          )}
+        </div>
+        
+        {/* Connection status */}
+        <div className='mt-6 pt-6 border-t border-gray-200 dark:border-gray-700'>
+          {connected ? (
+            <div className='flex items-center justify-center space-x-2 text-green-600 dark:text-green-400'>
+              <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+              <span className='text-sm'>Wallet Connected - Ready for blockchain todos</span>
             </div>
-            <p className='text-xs text-ocean-medium/50 dark:text-ocean-light/50 mt-2'>
-              Blockchain integration active
+          ) : (
+            <div className='flex items-center justify-center space-x-2 text-gray-500 dark:text-gray-400'>
+              <div className='w-2 h-2 bg-gray-400 rounded-full' />
+              <span className='text-sm'>Connect wallet to create blockchain todos</span>
+            </div>
+          )}
+          
+          {loadingBlockchain && (
+            <p className='text-xs text-blue-600 dark:text-blue-400 mt-2 animate-pulse'>
+              Loading blockchain todos...
             </p>
-            {loadingBlockchain && (
-              <p className='text-xs text-blue-600 dark:text-blue-400 mt-1 animate-pulse'>
-                Loading blockchain todos...
-              </p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   }
@@ -504,7 +540,7 @@ function TodoList({ listName }: TodoListProps) {
                 <div className='flex items-center gap-2'>
                   {todo.blockchainStored && (
                     <span className='flex items-center text-xs bg-dream-purple/20 text-dream-purple px-2 py-0.5 rounded-full'>
-                      <span className='w-1.5 h-1.5 bg-dream-purple rounded-full mr-1'></span>
+                      <span className='w-1.5 h-1.5 bg-dream-purple rounded-full mr-1' />
                       NFT
                     </span>
                   )}
@@ -621,7 +657,7 @@ function TodoList({ listName }: TodoListProps) {
 function TodoListSkeleton() {
   return (
     <div className='flex flex-col items-center justify-center py-12'>
-      <div className='w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin'></div>
+      <div className='w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin' />
       <div className='mt-4 text-center'>
         <p className='text-sm text-gray-500 animate-pulse'>
           Initializing todo list...

@@ -10,7 +10,7 @@ export function useApiErrorHandler() {
   const walletContext = useWalletContext();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const handleApiError = async (error: any) => {
       console.error('[useApiErrorHandler] API Error:', error);

@@ -5,15 +5,15 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // Use unified types
 import type { 
-  Todo, 
   CreateTodoParams, 
-  UpdateTodoParams,
+  NetworkType, 
+  Todo,
   TransactionResult as TodoTransactionResult,
-  NetworkType
+  UpdateTodoParams
 } from '@/types/todo-nft';
 
 interface UseSuiTodosState {
@@ -53,23 +53,23 @@ interface UseSuiTodosReturn extends UseSuiTodosState, UseSuiTodosActions {
 
 import { useWalletContext } from '@/contexts/WalletContext';
 import {
-  retrieveTodosFromBlockchain,
-  completeTodoOnBlockchain,
-  transferTodoNFT,
   addTodo,
-  getTodos,
-  getTodoList,
-  updateTodo as updateLocalTodo,
+  completeTodoOnBlockchain,
   deleteTodo as deleteLocalTodo,
+  getTodoList,
+  getTodos,
+  retrieveTodosFromBlockchain,
+  transferTodoNFT,
+  updateTodo as updateLocalTodo,
   type WalletSigner,
 } from '@/lib/todo-service';
 import { 
   getTodosFromBlockchain as getBlockchainTodos,
-  withSuiClient,
   getPackageId,
   storeTodoOnBlockchain,
+  withSuiClient,
 } from '@/lib/sui-client';
-import type { SuiClient, PaginatedObjectsResponse, SuiObjectResponse, SuiMoveObject } from '@mysten/sui/client';
+import type { PaginatedObjectsResponse, SuiClient, SuiMoveObject, SuiObjectResponse } from '@mysten/sui/client';
 import { walrusClient } from '@/lib/walrus-client';
 import { loadAppConfig } from '@/lib/config-loader';
 import type { TodoList, TodoNFTMetadata } from '@/types/todo-nft';
@@ -137,12 +137,12 @@ async function withRetry<T>(
 
 // Helper to transform walrus:// URLs to HTTP URLs with caching
 function transformWalrusUrl(walrusUrl: string | undefined, options?: { size?: 'thumbnail' | 'preview' | 'full' }): string | undefined {
-  if (!walrusUrl) return undefined;
+  if (!walrusUrl) {return undefined;}
   
   // Check cache first
   const cacheKey = `${walrusUrl}_${options?.size || 'full'}`;
   const cached = IMAGE_CACHE.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {return cached;}
   
   let transformedUrl: string;
   
@@ -184,7 +184,7 @@ function parseMetadata(metadata: string | undefined): {
   links?: string[];
   attachments?: string[];
 } {
-  if (!metadata) return {};
+  if (!metadata) {return {};}
   
   try {
     const parsed = JSON.parse(metadata);
@@ -282,7 +282,7 @@ function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
     
     // Handle timestamp fields with multiple formats
     const parseTimestamp = (timestamp: any): string => {
-      if (!timestamp) return new Date().toISOString();
+      if (!timestamp) {return new Date().toISOString();}
       
       // If it's already a valid ISO string
       if (typeof timestamp === 'string' && timestamp.includes('T')) {
@@ -309,7 +309,7 @@ function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
 
     const todo: Todo = {
       id: objectId,
-      objectId: objectId,
+      objectId,
       title,
       description,
       completed,
@@ -870,7 +870,7 @@ export function useSuiTodos(options?: UseSuiTodosOptions): UseSuiTodosReturn {
             tags: params.tags,
             dueDate: params.dueDate,
             imageUrl: params.imageUrl,
-            metadata: metadata,
+            metadata,
             isPrivate: params.isPrivate,
           };
 
@@ -1126,12 +1126,12 @@ export function useSuiTodos(options?: UseSuiTodosOptions): UseSuiTodosReturn {
 
   // Auto-refresh todos when wallet connects or filter changes
   useEffect(() => {
-    if (!isWalletReady) return;
+    if (!isWalletReady) {return;}
     
     let isMounted = true;
     
     const loadInitialTodos = async () => {
-      if (!isMounted) return;
+      if (!isMounted) {return;}
       
       await refreshTodos();
       if (isMounted) {
@@ -1155,7 +1155,7 @@ export function useSuiTodos(options?: UseSuiTodosOptions): UseSuiTodosReturn {
 
   // Auto-check health periodically
   useEffect(() => {
-    if (!isWalletReady) return;
+    if (!isWalletReady) {return;}
 
     const interval = setInterval(() => {
       checkHealth();
@@ -1465,7 +1465,7 @@ export function convertTodoToNFTDisplay(todo: Todo, cached?: CachedNFTData): Tod
 
 // Helper to prefetch NFT image
 export async function prefetchNFTImage(imageUrl: string | undefined) {
-  if (!imageUrl || !imageUrl.startsWith('http')) return;
+  if (!imageUrl || !imageUrl.startsWith('http')) {return;}
   
   return new Promise<void>((resolve) => {
     const img = new Image();

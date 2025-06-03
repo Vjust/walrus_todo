@@ -13,7 +13,7 @@ import { Todo } from '@/types/todo-nft';
 import { TodoList } from '@/types/todo';
 import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
-import { loadNetworkConfig, type AppConfig } from './config-loader';
+import { type AppConfig, loadNetworkConfig } from './config-loader';
 import { walrusClient } from './walrus-client';
 import safeStorage from './safe-storage';
 
@@ -128,7 +128,7 @@ export class BlockchainTodoService {
       for (const obj of objects.data) {
         if (obj.data?.content?.dataType === 'moveObject') {
           const todo = await this.convertBlockchainObjectToTodo(obj.data);
-          if (todo) todos.push(todo);
+          if (todo) {todos.push(todo);}
         }
       }
 

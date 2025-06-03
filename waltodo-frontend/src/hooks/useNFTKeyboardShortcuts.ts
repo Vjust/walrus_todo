@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
@@ -293,22 +293,22 @@ export const useNFTKeyboardShortcuts = (options?: {
     // Handle Cmd/Ctrl based on platform
     const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
     
-    if (hasCmd && !cmdOrCtrl) return false;
-    if (hasCtrl && !event.ctrlKey) return false;
-    if (hasAlt && !event.altKey) return false;
-    if (hasShift && !event.shiftKey) return false;
+    if (hasCmd && !cmdOrCtrl) {return false;}
+    if (hasCtrl && !event.ctrlKey) {return false;}
+    if (hasAlt && !event.altKey) {return false;}
+    if (hasShift && !event.shiftKey) {return false;}
 
     // Ensure no extra modifiers
-    if (!hasCmd && !hasCtrl && cmdOrCtrl) return false;
-    if (!hasAlt && event.altKey) return false;
-    if (!hasShift && event.shiftKey) return false;
+    if (!hasCmd && !hasCtrl && cmdOrCtrl) {return false;}
+    if (!hasAlt && event.altKey) {return false;}
+    if (!hasShift && event.shiftKey) {return false;}
 
     return true;
   }, []);
 
   // Handle keydown
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (options?.disabled) return;
+    if (options?.disabled) {return;}
 
     // Ignore if in input field (unless it's a navigation shortcut)
     const target = event.target as HTMLElement;
@@ -322,10 +322,10 @@ export const useNFTKeyboardShortcuts = (options?: {
 
     // Check each binding
     for (const [id, binding] of Object.entries(bindings)) {
-      if (binding.enabled === false) continue;
+      if (binding.enabled === false) {continue;}
       
       // Skip non-navigation shortcuts if in input
-      if (isInput && !id.startsWith('nav.') && !id.startsWith('general.')) continue;
+      if (isInput && !id.startsWith('nav.') && !id.startsWith('general.')) {continue;}
 
       if (isMatch(event, binding)) {
         event.preventDefault();
@@ -388,7 +388,7 @@ export const useNFTKeyboardShortcuts = (options?: {
     };
 
     for (const [id, binding] of Object.entries(bindings)) {
-      if (binding.enabled === false) continue;
+      if (binding.enabled === false) {continue;}
       
       const action = actionMap[id as keyof typeof actionMap];
       categories[binding.category].push({
@@ -414,7 +414,7 @@ export const useNFTKeyboardShortcuts = (options?: {
     getCategories,
     isActive: (shortcutId: string) => {
       const binding = { ...DEFAULT_BINDINGS, ...customBindings }[shortcutId];
-      if (!binding) return false;
+      if (!binding) {return false;}
       
       const keys = [...(binding.modifiers || []), binding.key];
       return keys.every(key => activeKeys.current.has(key));

@@ -132,7 +132,7 @@ export function validateSSRSafety(componentCode: string): {
 export const SSRUtils = {
   // Safe JSON parsing
   parseJSON: <T>(json: string, fallback: T): T => {
-    if (typeof window === 'undefined') return fallback;
+    if (typeof window === 'undefined') {return fallback;}
     try {
       return JSON.parse(json);
     } catch {
@@ -142,7 +142,7 @@ export const SSRUtils = {
 
   // Safe date formatting
   formatDate: (date: Date | string | number, options?: Intl.DateTimeFormatOptions): string => {
-    if (typeof window === 'undefined') return 'Loading...';
+    if (typeof window === 'undefined') {return 'Loading...';}
     try {
       const dateObj = typeof date === 'string' || typeof date === 'number' 
         ? new Date(date) 
@@ -155,7 +155,7 @@ export const SSRUtils = {
 
   // Safe number formatting
   formatNumber: (num: number, options?: Intl.NumberFormatOptions): string => {
-    if (typeof window === 'undefined') return '0';
+    if (typeof window === 'undefined') {return '0';}
     try {
       return num.toLocaleString(undefined, options);
     } catch {
@@ -165,7 +165,7 @@ export const SSRUtils = {
 
   // Safe localStorage access
   getLocalStorage: <T>(key: string, fallback: T): T => {
-    if (typeof window === 'undefined' || !window.localStorage) return fallback;
+    if (typeof window === 'undefined' || !window.localStorage) {return fallback;}
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : fallback;
@@ -176,7 +176,7 @@ export const SSRUtils = {
 
   // Safe sessionStorage access
   getSessionStorage: <T>(key: string, fallback: T): T => {
-    if (typeof window === 'undefined' || !window.sessionStorage) return fallback;
+    if (typeof window === 'undefined' || !window.sessionStorage) {return fallback;}
     try {
       const item = window.sessionStorage.getItem(key);
       return item ? JSON.parse(item) : fallback;
@@ -187,7 +187,7 @@ export const SSRUtils = {
 
   // Safe URL creation
   createSafeURL: (url: string, base?: string): string => {
-    if (typeof window === 'undefined') return url;
+    if (typeof window === 'undefined') {return url;}
     try {
       return new URL(url, base || window.location.origin).href;
     } catch {
@@ -351,7 +351,7 @@ export const SSRPerformance = {
   },
 
   getHydrationMetrics: (): PerformanceEntry[] => {
-    if (typeof window === 'undefined' || !window.performance) return [];
+    if (typeof window === 'undefined' || !window.performance) {return [];}
     return window.performance.getEntriesByType('measure')
       .filter(entry => entry.name.startsWith('hydration-'));
   },

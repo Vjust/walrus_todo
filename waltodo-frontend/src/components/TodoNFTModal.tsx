@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { X, Share2, Download, Edit2, Send, Maximize2, Minimize2, Copy, Twitter, Facebook, Link, Clock, DollarSign, Info, Check, AlertCircle } from 'lucide-react'
+import { AlertCircle, Check, Clock, Copy, DollarSign, Download, Edit2, Facebook, Info, Link, Maximize2, Minimize2, Send, Share2, Twitter, X } from 'lucide-react'
 import { TodoNFT } from '@/types/todo-nft'
 import { useWalletContext } from '@/contexts/WalletContext'
 import { toast } from 'react-hot-toast'
@@ -78,7 +78,7 @@ export default function TodoNFTModal({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return
+      if (!isOpen) {return}
 
       switch (e.key) {
         case 'Escape':
@@ -115,7 +115,7 @@ export default function TodoNFTModal({
 
   // Image zoom controls
   const handleImageZoom = useCallback((e: React.WheelEvent) => {
-    if (!isImageZoomed) return
+    if (!isImageZoomed) {return}
     
     e.preventDefault()
     const delta = e.deltaY * -0.01
@@ -124,7 +124,7 @@ export default function TodoNFTModal({
   }, [isImageZoomed, imageZoomLevel])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!isImageZoomed || imageZoomLevel <= 1) return
+    if (!isImageZoomed || imageZoomLevel <= 1) {return}
     
     setIsDragging(true)
     setDragStart({
@@ -134,7 +134,7 @@ export default function TodoNFTModal({
   }, [isImageZoomed, imageZoomLevel, imagePosition])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return
+    if (!isDragging) {return}
     
     setImagePosition({
       x: e.clientX - dragStart.x,
@@ -148,7 +148,7 @@ export default function TodoNFTModal({
 
   // Transfer functionality
   const handleTransfer = async () => {
-    if (!nft || !onTransfer) return
+    if (!nft || !onTransfer) {return}
 
     if (!isValidSuiAddress(transferAddress)) {
       toast.error('Please enter a valid Sui address')
@@ -175,7 +175,7 @@ export default function TodoNFTModal({
 
   // Save metadata
   const handleSaveMetadata = async () => {
-    if (!nft || !onUpdateMetadata || Object.keys(editedMetadata).length === 0) return
+    if (!nft || !onUpdateMetadata || Object.keys(editedMetadata).length === 0) {return}
 
     setIsSaving(true)
     try {
@@ -218,7 +218,7 @@ export default function TodoNFTModal({
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
   }
 
-  if (!isOpen || !nft) return null
+  if (!isOpen || !nft) {return null}
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">

@@ -3,7 +3,7 @@
  * Implements LRU eviction, versioning, and offline support
  */
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { DBSchema, IDBPDatabase, openDB } from 'idb';
 
 interface CacheEntry {
   id: string;
@@ -64,7 +64,7 @@ export class CacheManager {
    * Initialize the IndexedDB database
    */
   private async init(): Promise<void> {
-    if (this.db) return;
+    if (this.db) {return;}
     
     if (!this.initPromise) {
       this.initPromise = this.initializeDB();
@@ -100,7 +100,7 @@ export class CacheManager {
   }
 
   private async initializeMetadata(): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     const tx = this.db.transaction('metadata', 'readwrite');
     const existing = await tx.store.get('cache-meta');
@@ -122,13 +122,13 @@ export class CacheManager {
    */
   async get(key: string): Promise<CacheEntry | null> {
     await this.init();
-    if (!this.db) return null;
+    if (!this.db) {return null;}
 
     try {
       const tx = this.db.transaction('cache', 'readwrite');
       const entry = await tx.store.get(key);
       
-      if (!entry) return null;
+      if (!entry) {return null;}
 
       // Check if entry is expired
       if (Date.now() - entry.timestamp > this.ttl) {
@@ -160,7 +160,7 @@ export class CacheManager {
     }
   ): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     const size = new Blob([data]).size;
     const now = Date.now();
@@ -207,7 +207,7 @@ export class CacheManager {
    */
   async delete(key: string): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     try {
       const tx = this.db.transaction(['cache', 'metadata'], 'readwrite');
@@ -236,7 +236,7 @@ export class CacheManager {
    */
   async clear(): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     try {
       const tx = this.db.transaction(['cache', 'metadata'], 'readwrite');
@@ -267,7 +267,7 @@ export class CacheManager {
     version: number;
   }> {
     await this.init();
-    if (!this.db) return { totalSize: 0, entryCount: 0, version: this.version };
+    if (!this.db) {return { totalSize: 0, entryCount: 0, version: this.version };}
 
     try {
       const meta = await this.db.get('metadata', 'cache-meta');
@@ -303,7 +303,7 @@ export class CacheManager {
    * Implements LRU eviction strategy
    */
   private async ensureSpace(requiredSize: number): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     const stats = await this.getStats();
     
@@ -358,7 +358,7 @@ export class CacheManager {
     freedSpace: number;
   }> {
     await this.init();
-    if (!this.db) return { removedEntries: 0, freedSpace: 0 };
+    if (!this.db) {return { removedEntries: 0, freedSpace: 0 };}
 
     try {
       const now = Date.now();
@@ -410,7 +410,7 @@ export class CacheManager {
     metadata: CacheMetadata | null;
   }> {
     await this.init();
-    if (!this.db) return { version: this.version, entries: [], metadata: null };
+    if (!this.db) {return { version: this.version, entries: [], metadata: null };}
 
     try {
       const tx = this.db.transaction(['cache', 'metadata'], 'readonly');
@@ -437,7 +437,7 @@ export class CacheManager {
     metadata: CacheMetadata | null;
   }): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     try {
       // Clear existing data
@@ -487,11 +487,11 @@ export const CacheUtils = {
    * Format bytes to human readable string
    */
   formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   },
 
   /**

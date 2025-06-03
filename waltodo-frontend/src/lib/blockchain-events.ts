@@ -167,7 +167,7 @@ export class BlockchainEventManager {
    * Subscribe to general TodoNFT events
    */
   private async subscribeToTodoEvents(): Promise<void> {
-    if (!this.suiClient || !this.packageId) return;
+    if (!this.suiClient || !this.packageId) {return;}
 
     try {
       // Subscribe to all events from the TodoNFT module
@@ -178,8 +178,8 @@ export class BlockchainEventManager {
             module: 'todo_nft'
           }
         },
-        onMessage: (eventData: SuiEventData) => {
-          this.processBlockchainEvent(eventData);
+        onMessage: (event: any) => {
+          this.processBlockchainEvent(event as SuiEventData);
         }
       });
 
@@ -198,7 +198,7 @@ export class BlockchainEventManager {
    * Subscribe to wallet-specific events
    */
   private async subscribeToWalletEvents(walletAddress: string): Promise<void> {
-    if (!this.suiClient) return;
+    if (!this.suiClient) {return;}
 
     try {
       // Subscribe to object changes for the wallet
@@ -206,8 +206,8 @@ export class BlockchainEventManager {
         filter: {
           Sender: walletAddress
         },
-        onMessage: (eventData: SuiEventData) => {
-          this.processWalletEvent(walletAddress, eventData);
+        onMessage: (event: any) => {
+          this.processWalletEvent(walletAddress, event as SuiEventData);
         }
       });
 
@@ -229,7 +229,7 @@ export class BlockchainEventManager {
     try {
       const { parsedJson, type, timestampMs, id } = eventData;
       
-      if (!type || !type.includes('todo_nft')) {
+      if (!type || typeof type !== 'string' || !type.includes('todo_nft')) {
         return; // Skip non-TodoNFT events
       }
 
@@ -252,16 +252,16 @@ export class BlockchainEventManager {
       } else {
         // Generic todo update
         eventType = TodoEventType.TODO_UPDATED;
-        todoData = parsedJson;
+        todoData = (parsedJson as any) || null;
       }
 
       // Emit the processed event
       this.emitEvent({
         type: eventType,
         data: todoData,
-        timestamp: new Date(timestampMs || Date.now()).toISOString(),
-        transactionId: id?.txDigest,
-        objectId: parsedJson?.todo_id || parsedJson?.object_id
+        timestamp: new Date(Number(timestampMs) || Date.now()).toISOString(),
+        transactionId: (id as any)?.txDigest,
+        objectId: String(parsedJson?.todo_id || parsedJson?.object_id || '')
       });
     } catch (error) {
       // Error processing blockchain event
@@ -280,15 +280,15 @@ export class BlockchainEventManager {
    * Parse TodoCreated event data
    */
   private parseCreatedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
-    if (!parsedJson) return null;
+    if (!parsedJson) {return null;}
 
     return {
-      id: parsedJson.todo_id || parsedJson.object_id,
-      title: parsedJson.title,
-      description: parsedJson.description,
+      id: String(parsedJson.todo_id || parsedJson.object_id || ''),
+      title: String(parsedJson.title || ''),
+      description: String(parsedJson.description || ''),
       completed: false,
       blockchainStored: true,
-      objectId: parsedJson.todo_id || parsedJson.object_id,
+      objectId: String(parsedJson.todo_id || parsedJson.object_id || ''),
       createdAt: new Date().toISOString(),
       priority: 'medium' as const,
     };
@@ -298,17 +298,17 @@ export class BlockchainEventManager {
    * Parse TodoCompleted event data
    */
   private parseCompletedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
-    if (!parsedJson) return null;
+    if (!parsedJson) {return null;}
 
     return {
-      id: parsedJson.todo_id || parsedJson.object_id,
-      objectId: parsedJson.todo_id || parsedJson.object_id,
+      id: String(parsedJson.todo_id || parsedJson.object_id || ''),
+      objectId: String(parsedJson.todo_id || parsedJson.object_id || ''),
       completed: true,
-      completedAt: new Date(parseInt(parsedJson.timestamp) || Date.now()).toISOString(),
+      completedAt: new Date(parseInt(String(parsedJson.timestamp || '0')) || Date.now()).toISOString(),
       isNFT: true,
       nftData: {
-        owner: parsedJson.owner,
-        completedAt: parseInt(parsedJson.timestamp) || Date.now(),
+        owner: String(parsedJson.owner || ''),
+        completedAt: parseInt(String(parsedJson.timestamp || '0')) || Date.now(),
       }
     };
   }
@@ -317,18 +317,18 @@ export class BlockchainEventManager {
    * Parse TodoUpdated event data
    */
   private parseUpdatedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
-    if (!parsedJson) return null;
+    if (!parsedJson) {return null;}
 
     return {
-      id: parsedJson.todo_id || parsedJson.object_id,
-      objectId: parsedJson.todo_id || parsedJson.object_id,
-      title: parsedJson.title,
-      description: parsedJson.description,
-      updatedAt: new Date(parseInt(parsedJson.timestamp) || Date.now()).toISOString(),
+      id: String(parsedJson.todo_id || parsedJson.object_id || ''),
+      objectId: String(parsedJson.todo_id || parsedJson.object_id || ''),
+      title: String(parsedJson.title || ''),
+      description: String(parsedJson.description || ''),
+      updatedAt: new Date(parseInt(String(parsedJson.timestamp || '0')) || Date.now()).toISOString(),
       isNFT: true,
       nftData: {
-        owner: parsedJson.owner,
-        updatedAt: parseInt(parsedJson.timestamp) || Date.now(),
+        owner: String(parsedJson.owner || ''),
+        updatedAt: parseInt(String(parsedJson.timestamp || '0')) || Date.now(),
       }
     };
   }
@@ -337,14 +337,12 @@ export class BlockchainEventManager {
    * Parse TodoTransferred event data
    */
   private parseTransferredEvent(parsedJson: SuiEventData['parsedJson']): TransferEventData | null {
-    if (!parsedJson) return null;
+    if (!parsedJson) {return null;}
 
     return {
-      todo_id: parsedJson.todo_id || parsedJson.object_id,
-      from: parsedJson.from || parsedJson.sender,
-      to: parsedJson.to || parsedJson.recipient,
-      owner: parsedJson.to || parsedJson.recipient,
-      timestamp: parsedJson.timestamp || Date.now().toString()
+      sender: String(parsedJson.from || parsedJson.sender || ''),
+      recipient: String(parsedJson.to || parsedJson.recipient || ''),
+      objectId: String(parsedJson.todo_id || parsedJson.object_id || '')
     };
   }
 
@@ -478,7 +476,7 @@ export function transformEventToTodoUpdate(event: TodoNFTEvent): Partial<Todo> |
     owner: event.data.owner,
     blockchainStored: true,
     objectId: event.data.todo_id,
-    updatedAt: new Date(event.data.timestamp).getTime(),
+    updatedAt: new Date(event.data.timestamp).toISOString(),
   };
 }
 
