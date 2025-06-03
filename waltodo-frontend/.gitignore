@@ -13,6 +13,11 @@
 # production
 /build
 
+# walrus-site build artifacts
+/walrus-site-waltodo/.next/
+/walrus-site-waltodo/out/
+/walrus-site-waltodo/build/
+
 # misc
 .DS_Store
 *.pem
@@ -37,3 +42,10 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# swc cache
+.swc/
+
+# temp files
+*.tmp
+*.temp

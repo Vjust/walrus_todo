@@ -141,84 +141,6 @@ export function useBlockchainEvents(
   const targetOwner = filter?.owner || owner || address;
 
   /**
-   * Initialize event manager and SUI client
-   */
-  const initialize = useCallback(async () => {
-    try {
-      if (!eventManagerRef.current) {
-        eventManagerRef.current = getEventManager();
-      }
-
-      // Initialize SUI client for historical queries
-      if (!suiClientRef.current) {
-        const config = await loadNetworkConfig(
-          process.env.NEXT_PUBLIC_NETWORK || 'testnet'
-        );
-        if (config) {
-          suiClientRef.current = new SuiClient({ url: config.network.url });
-        }
-      }
-
-      await eventManagerRef.current.initialize();
-      const state = eventManagerRef.current.getConnectionState();
-      setConnectionState(state);
-      
-      // Load historical events if enabled
-      if (enableHistorical && targetOwner) {
-        await loadHistoricalEvents();
-      }
-    } catch (error) {
-      // Failed to initialize blockchain events
-      setConnectionState(prev => ({
-        ...prev,
-        error: error as Error,
-        connecting: false,
-      }));
-    }
-  }, [enableHistorical, targetOwner, loadHistoricalEvents]);
-
-  /**
-   * Load historical events from blockchain
-   */
-  const loadHistoricalEvents = useCallback(async () => {
-    if (!suiClientRef.current || !targetOwner) return;
-
-    try {
-      const config = await loadNetworkConfig(
-        process.env.NEXT_PUBLIC_NETWORK || 'testnet'
-      );
-      if (!config) return;
-
-      // Query historical events
-      const events = await suiClientRef.current.queryEvents({
-        query: {
-          MoveModule: {
-            package: config.deployment.packageId,
-            module: 'todo_nft'
-          }
-        },
-        limit: 100,
-        order: 'descending'
-      });
-
-      // Process and cache historical events
-      setEventCache(prevCache => {
-        const newCache = new Map(prevCache);
-        events.data.forEach(event => {
-          const enhancedEvent = parseBlockchainEvent(event);
-          if (enhancedEvent && shouldProcessEvent(enhancedEvent)) {
-            newCache.set(enhancedEvent.data.todo_id, enhancedEvent);
-            updateEventStatistics(enhancedEvent);
-          }
-        });
-        return newCache;
-      });
-    } catch (error) {
-      console.error('Failed to load historical events:', error);
-    }
-  }, [targetOwner, parseBlockchainEvent, shouldProcessEvent, updateEventStatistics]);
-
-  /**
    * Parse raw blockchain event into enhanced format
    */
   const parseBlockchainEvent = useCallback((event: any): EnhancedTodoNFTEvent | null => {
@@ -395,37 +317,6 @@ export function useBlockchainEvents(
   }, [debounceConfig]);
 
   /**
-   * Handle reconnection with exponential backoff
-   */
-  const handleReconnection = useCallback(async () => {
-    if (!enableReconnect || connectionState.reconnectAttempts >= maxReconnectAttempts) {
-      return;
-    }
-
-    const backoffDelay = Math.min(1000 * Math.pow(2, connectionState.reconnectAttempts), 30000);
-    
-    setConnectionState(prev => ({
-      ...prev,
-      reconnectAttempts: prev.reconnectAttempts + 1,
-      lastReconnectAttempt: Date.now()
-    }));
-
-    reconnectTimeoutRef.current = setTimeout(async () => {
-      try {
-        await startSubscription();
-        
-        // Replay missed events
-        if (missedEventsRef.current.size > 0) {
-          await replayMissedEvents();
-        }
-      } catch (error) {
-        // Retry reconnection
-        handleReconnection();
-      }
-    }, backoffDelay);
-  }, [enableReconnect, connectionState.reconnectAttempts, maxReconnectAttempts, replayMissedEvents, startSubscription]);
-
-  /**
    * Replay events that were missed during disconnection
    */
   const replayMissedEvents = useCallback(async () => {
@@ -464,6 +355,89 @@ export function useBlockchainEvents(
   }, [parseBlockchainEvent]);
 
   /**
+   * Load historical events from blockchain
+   */
+  const loadHistoricalEvents = useCallback(async () => {
+    if (!suiClientRef.current || !targetOwner) return;
+
+    try {
+      const config = await loadNetworkConfig(
+        process.env.NEXT_PUBLIC_NETWORK || 'testnet'
+      );
+      if (!config) return;
+
+      // Query historical events
+      const events = await suiClientRef.current.queryEvents({
+        query: {
+          MoveModule: {
+            package: config.deployment.packageId,
+            module: 'todo_nft'
+          }
+        },
+        limit: 100,
+        order: 'descending'
+      });
+
+      // Process and cache historical events
+      setEventCache(prevCache => {
+        const newCache = new Map(prevCache);
+        events.data.forEach(event => {
+          const enhancedEvent = parseBlockchainEvent(event);
+          if (enhancedEvent && shouldProcessEvent(enhancedEvent)) {
+            newCache.set(enhancedEvent.data.todo_id, enhancedEvent);
+            updateEventStatistics(enhancedEvent);
+          }
+        });
+        return newCache;
+      });
+    } catch (error) {
+      console.error('Failed to load historical events:', error);
+    }
+  }, [targetOwner, parseBlockchainEvent, shouldProcessEvent, updateEventStatistics]);
+
+  /**
+   * Initialize event manager and SUI client
+   */
+  const initialize = useCallback(async () => {
+    try {
+      if (!eventManagerRef.current) {
+        eventManagerRef.current = getEventManager();
+      }
+
+      // Initialize SUI client for historical queries
+      if (!suiClientRef.current) {
+        const config = await loadNetworkConfig(
+          process.env.NEXT_PUBLIC_NETWORK || 'testnet'
+        );
+        if (config) {
+          suiClientRef.current = new SuiClient({ url: config.network.url });
+        }
+      }
+
+      await eventManagerRef.current.initialize();
+      const state = eventManagerRef.current.getConnectionState();
+      setConnectionState(state);
+      
+      // Load historical events if enabled
+      if (enableHistorical && targetOwner) {
+        await loadHistoricalEvents();
+      }
+    } catch (error) {
+      // Failed to initialize blockchain events
+      setConnectionState(prev => ({
+        ...prev,
+        error: error as Error,
+        connecting: false,
+      }));
+    }
+  }, [enableHistorical, targetOwner, loadHistoricalEvents]);
+
+  /**
+   * Handle reconnection with exponential backoff (forward declaration placeholder)
+   */
+  const handleReconnectionRef = useRef<() => Promise<void>>();
+
+  /**
    * Start event subscriptions with enhanced error handling
    */
   const startSubscription = useCallback(async () => {
@@ -497,11 +471,49 @@ export function useBlockchainEvents(
       }));
       
       // Attempt reconnection
-      if (enableReconnect) {
-        handleReconnection();
+      if (enableReconnect && handleReconnectionRef.current) {
+        handleReconnectionRef.current();
       }
     }
-  }, [initialize, targetOwner, enableReconnect, handleReconnection]);
+  }, [initialize, targetOwner, enableReconnect]);
+
+  /**
+   * Handle reconnection with exponential backoff
+   */
+  const handleReconnection = useCallback(async () => {
+    if (!enableReconnect || connectionState.reconnectAttempts >= maxReconnectAttempts) {
+      return;
+    }
+
+    const backoffDelay = Math.min(1000 * Math.pow(2, connectionState.reconnectAttempts), 30000);
+    
+    setConnectionState(prev => ({
+      ...prev,
+      reconnectAttempts: prev.reconnectAttempts + 1,
+      lastReconnectAttempt: Date.now()
+    }));
+
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      try {
+        await startSubscription();
+        
+        // Replay missed events
+        if (missedEventsRef.current.size > 0) {
+          await replayMissedEvents();
+        }
+      } catch (error) {
+        // Retry reconnection
+        if (handleReconnectionRef.current) {
+          handleReconnectionRef.current();
+        }
+      }
+    }, backoffDelay);
+  }, [enableReconnect, connectionState.reconnectAttempts, maxReconnectAttempts, replayMissedEvents, startSubscription]);
+
+  // Assign the handleReconnection function to the ref after it's defined
+  useEffect(() => {
+    handleReconnectionRef.current = handleReconnection;
+  }, []);
 
   /**
    * Stop event subscriptions and cleanup
@@ -699,10 +711,10 @@ export function useBlockchainEvents(
 
   // Handle connection errors and attempt reconnection
   useEffect(() => {
-    if (connectionState.error && enableReconnect && !connectionState.connecting) {
-      handleReconnection();
+    if (connectionState.error && enableReconnect && !connectionState.connecting && handleReconnectionRef.current) {
+      handleReconnectionRef.current();
     }
-  }, [connectionState.error, connectionState.connecting, enableReconnect, handleReconnection]);
+  }, [connectionState.error, connectionState.connecting, enableReconnect]);
 
   // Update connection state periodically
   useEffect(() => {

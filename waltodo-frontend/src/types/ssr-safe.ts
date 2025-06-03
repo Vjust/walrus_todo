@@ -327,9 +327,9 @@ export interface ScreenResult {
 
 // File System Access types
 export interface FileSystemResult {
-  showOpenFilePicker: (options?: OpenFilePickerOptions) => Promise<FileSystemFileHandle[]>;
-  showSaveFilePicker: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
-  showDirectoryPicker: (options?: DirectoryPickerOptions) => Promise<FileSystemDirectoryHandle>;
+  showOpenFilePicker: (options?: any) => Promise<FileSystemFileHandle[]>;
+  showSaveFilePicker: (options?: any) => Promise<FileSystemFileHandle>;
+  showDirectoryPicker: (options?: any) => Promise<FileSystemDirectoryHandle>;
   isSupported: boolean;
 }
 
@@ -339,22 +339,4 @@ export interface EyeDropperResult {
   isSupported: boolean;
 }
 
-export default {
-  // Re-export all types for convenience
-  SafeBrowserAPI,
-  MountingState,
-  SSRSafeProps,
-  NoSSRProps,
-  ConditionalRenderProps,
-  SafeBrowserAPIProps,
-  SafeBrowserAPIResult,
-  SafeStorageResult,
-  SafeWindowSizeResult,
-  SafeMediaQueryResult,
-  FeatureDetectionResult,
-  LoadingState,
-  LoadingStateResult,
-  MediaQueryString,
-  ValidationRule,
-  ValidationResult,
-} as const;
+// All types are already exported above as individual exports
