@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, memo, useMemo } from 'react';
 import Navbar from '@/components/navbar';
 import TodoList from '@/components/todo-list';
 import WalletConnectButton from '@/components/WalletConnectButton';
@@ -26,7 +26,7 @@ interface HomeContentProps {
   currentPage?: string;
 }
 
-function HomeContent({ currentPage = 'home' }: HomeContentProps) {
+const HomeContent = memo(({ currentPage = 'home' }: HomeContentProps) => {
   const { mounted, isReady } = useSSRSafeMounted({ minMountTime: 100 });
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState<CreateTodoParams>({
@@ -46,7 +46,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
   const statsLoading = useLoadingStates('home-stats', { minLoadingTime: 500 });
   const createTodoLoading = useLoadingStates('create-todo', { minLoadingTime: 800 });
 
-  // Load stats when component is ready
+  // Load stats when component is ready - moved to useEffect to prevent dependency loop
   useEffect(() => {
     if (!isReady) return;
 
@@ -69,7 +69,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
     // Refresh stats every 30 seconds
     const interval = setInterval(loadStats, 30000);
     return () => clearInterval(interval);
-  }, [isReady, statsLoading]);
+  }, [isReady]); // Only depend on isReady, not on statsLoading
 
   const handleCreateTodo = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +127,8 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
     }
   }, [formData, createTodoLoading]);
 
-  const quickActions = [
+  // Memoize static data for performance
+  const quickActions = useMemo(() => [
     {
       name: 'NFT Gallery',
       href: '/nft-gallery',
@@ -156,7 +157,63 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
       description: 'Check storage status',
       color: 'bg-orange-500 hover:bg-orange-600',
     },
-  ];
+  ], []);
+
+  // Memoized components for better performance
+  const HeroSection = useMemo(() => (
+    <section className="text-center py-12">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+          Transform Tasks into{' '}
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Valuable NFTs
+          </span>
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+          The first decentralized productivity platform where your completed tasks 
+          become tradeable digital assets on Sui blockchain, stored permanently on Walrus.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <ClientOnly>
+            <WalletConnectButton size="lg" />
+          </ClientOnly>
+          
+          <a
+            href="/nft-gallery"
+            className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-lg font-medium transition-colors no-underline"
+          >
+            <PhotoIcon className="w-5 h-5" />
+            Explore NFTs
+          </a>
+        </div>
+      </div>
+    </section>
+  ), []);
+
+  const QuickActionsGrid = useMemo(() => (
+    <section className="mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <a
+              key={action.name}
+              href={action.href}
+              className={`${action.color} text-white p-6 rounded-lg shadow-sm transition-all hover:shadow-md hover:scale-105 no-underline`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <Icon className="w-6 h-6" />
+                <h3 className="font-medium">{action.name}</h3>
+              </div>
+              <p className="text-sm opacity-90">{action.description}</p>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  ), [quickActions]);
 
   // Show loading skeleton during hydration
   if (!isReady) {
@@ -169,34 +226,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
       
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Hero Section */}
-        <section className="text-center py-12">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              Transform Tasks into{' '}
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Valuable NFTs
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-              The first decentralized productivity platform where your completed tasks 
-              become tradeable digital assets on Sui blockchain, stored permanently on Walrus.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <ClientOnly>
-                <WalletConnectButton size="lg" />
-              </ClientOnly>
-              
-              <a
-                href="/nft-gallery"
-                className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-lg font-medium transition-colors no-underline"
-              >
-                <PhotoIcon className="w-5 h-5" />
-                Explore NFTs
-              </a>
-            </div>
-          </div>
-        </section>
+        {HeroSection}
 
         {/* Stats Section */}
         <section className="mb-8">
@@ -254,27 +284,7 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
         </section>
 
         {/* Quick Actions */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <a
-                  key={action.name}
-                  href={action.href}
-                  className={`${action.color} text-white p-6 rounded-lg shadow-sm transition-all hover:shadow-md hover:scale-105 no-underline`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <Icon className="w-6 h-6" />
-                    <h3 className="font-medium">{action.name}</h3>
-                  </div>
-                  <p className="text-sm opacity-90">{action.description}</p>
-                </a>
-              );
-            })}
-          </div>
-        </section>
+        {QuickActionsGrid}
 
         {/* Create Todo Form */}
         {showCreateForm && (
@@ -386,6 +396,8 @@ function HomeContent({ currentPage = 'home' }: HomeContentProps) {
       </main>
     </div>
   );
-}
+});
+
+HomeContent.displayName = 'HomeContent';
 
 export default HomeContent;

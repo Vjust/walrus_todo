@@ -172,7 +172,7 @@ class StoreLogger {
   /**
    * Calculate state differences for logging
    */
-  private getStateDiff(prev: any, next: any): any {
+  getStateDiff(prev: any, next: any): any {
     if (prev === next) {return 'No changes';}
     
     if (typeof prev !== 'object' || typeof next !== 'object') {
@@ -238,11 +238,18 @@ export const logger = <T>(
       
       const nextState = get();
       
-      // Determine action name from call stack or function name
-      const action = getActionName(partial);
-      
-      // Log the action
-      storeLogger.logAction(storeName, action, prevState, nextState, startTime);
+      // Only log if state actually changed
+      if (prevState !== nextState) {
+        // Check for deep equality to avoid logging "No changes"
+        const stateDiff = storeLogger.getStateDiff(prevState, nextState);
+        if (stateDiff !== 'No changes') {
+          // Determine action name from call stack or function name
+          const action = getActionName(partial);
+          
+          // Log the action
+          storeLogger.logAction(storeName, action, prevState, nextState, startTime);
+        }
+      }
       
       return result;
     };
@@ -273,7 +280,7 @@ function getActionName(partial: any): string {
 }
 
 /**
- * Performance monitoring decorator
+ * Performance monitoring decorator with better measurement
  */
 export const withPerformanceMonitoring = <T extends (...args: any[]) => any>(
   storeName: string,
@@ -281,14 +288,28 @@ export const withPerformanceMonitoring = <T extends (...args: any[]) => any>(
   fn: T
 ): T => {
   return ((...args: any[]) => {
+    // Only measure performance in development and for actions that might be slow
+    if (process.env.NODE_ENV !== 'development') {
+      return fn(...args);
+    }
+    
     const startTime = performance.now();
     const result = fn(...args);
     const duration = performance.now() - startTime;
     
-    if (duration > 16) {
-      console.warn(
-        `🐌 Slow action in ${storeName}: ${actionName} took ${duration.toFixed(2)}ms`
-      );
+    // Only record if action is slow enough to matter
+    if (duration > 1) {
+      // Record metrics for analysis
+      if (typeof window !== 'undefined' && (window as any).debugPerformance) {
+        (window as any).debugPerformance.recordAction?.(storeName, actionName, duration);
+      }
+      
+      if (duration > 16) {
+        console.warn(
+          `🐌 Slow action in ${storeName}: ${actionName} took ${duration.toFixed(2)}ms`,
+          { args, duration }
+        );
+      }
     }
     
     return result;

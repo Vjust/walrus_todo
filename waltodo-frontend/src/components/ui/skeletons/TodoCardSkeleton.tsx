@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 
 export interface TodoCardSkeletonProps {
   /** Variant of the skeleton (default or list) */
@@ -19,7 +19,7 @@ export interface TodoCardSkeletonProps {
  * A skeleton loading component that matches the structure of TodoNFTCard
  * to prevent layout shift during loading states.
  */
-export const TodoCardSkeleton: React.FC<TodoCardSkeletonProps> = ({
+export const TodoCardSkeleton: React.FC<TodoCardSkeletonProps> = memo(({
   variant = 'default',
   className = '',
   showActions = true,
@@ -143,7 +143,9 @@ export const TodoCardSkeleton: React.FC<TodoCardSkeletonProps> = ({
       </div>
     </div>
   );
-};
+});
+
+TodoCardSkeleton.displayName = 'TodoCardSkeleton';
 
 /**
  * Multiple card skeletons for grid layouts
@@ -159,7 +161,7 @@ export interface TodoCardSkeletonGridProps extends Omit<TodoCardSkeletonProps, '
   containerClassName?: string;
 }
 
-export const TodoCardSkeletonGrid: React.FC<TodoCardSkeletonGridProps> = ({
+export const TodoCardSkeletonGrid: React.FC<TodoCardSkeletonGridProps> = memo(({
   count = 6,
   columns = 'auto',
   gap = 'md',
@@ -192,6 +194,8 @@ export const TodoCardSkeletonGrid: React.FC<TodoCardSkeletonGridProps> = ({
       ))}
     </div>
   );
-};
+});
+
+TodoCardSkeletonGrid.displayName = 'TodoCardSkeletonGrid';
 
 export default TodoCardSkeleton;

@@ -25,6 +25,9 @@ export * from './middleware/persist';
 export * from './middleware/devtools';
 export * from './middleware/logger';
 
+// Performance monitoring
+export * from './performance-monitor';
+
 // Store hydration utilities
 export { hydrateUIStore } from './ui-store';
 export { hydrateWalletStore } from './wallet-store';
@@ -67,3 +70,25 @@ export const STORE_NAMES = {
   NAVBAR: 'navbarStore',
   TODO_LIST: 'todoListStore',
 } as const;
+
+/**
+ * Performance debugging utilities (development only)
+ */
+export const storeDebugUtils = process.env.NODE_ENV === 'development' ? {
+  logPerformanceSummary: () => {
+    const { debugPerformance } = require('./performance-monitor');
+    console.table(debugPerformance.getSummary()?.storeStats || []);
+  },
+  logSlowActions: () => {
+    const { debugPerformance } = require('./performance-monitor');
+    console.table(debugPerformance.getSlowActions() || []);
+  },
+  clearPerformanceData: () => {
+    const { debugPerformance } = require('./performance-monitor');
+    debugPerformance.clearMetrics();
+  },
+  setThreshold: (ms: number) => {
+    const { debugPerformance } = require('./performance-monitor');
+    debugPerformance.setThreshold(ms);
+  },
+} : {};

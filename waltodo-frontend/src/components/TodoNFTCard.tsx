@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, memo } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useSignTransaction } from '@mysten/dapp-kit';
@@ -63,12 +63,24 @@ export interface TodoNFTCardProps {
 }
 
 /**
- * Truncate address for display
+ * Truncate address for display - memoized for performance
  */
-function truncateAddress(address: string, startLength = 6, endLength = 4): string {
-  if (!address || address.length <= startLength + endLength + 3) {return address;}
-  return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
-}
+const truncateAddress = (() => {
+  const addressCache = new Map<string, string>();
+  
+  return (address: string, startLength = 6, endLength = 4): string => {
+    if (!address || address.length <= startLength + endLength + 3) {return address;}
+    
+    const cacheKey = `${address}-${startLength}-${endLength}`;
+    if (addressCache.has(cacheKey)) {
+      return addressCache.get(cacheKey)!;
+    }
+    
+    const truncated = `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
+    addressCache.set(cacheKey, truncated);
+    return truncated;
+  };
+})();
 
 /**
  * Priority color mapping
@@ -88,9 +100,9 @@ const STATUS_COLORS = {
 };
 
 /**
- * Loading skeleton component
+ * Loading skeleton component - memoized
  */
-const CardSkeleton: React.FC = () => (
+const CardSkeleton: React.FC = memo(() => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
     <div className="h-48 bg-gray-200" />
     <div className="p-4 space-y-3">
@@ -103,12 +115,14 @@ const CardSkeleton: React.FC = () => (
       </div>
     </div>
   </div>
-);
+));
+
+CardSkeleton.displayName = 'CardSkeleton';
 
 /**
- * Error state component
+ * Error state component - memoized
  */
-const CardError: React.FC<{ message?: string }> = ({ message = 'Failed to load NFT' }) => (
+const CardError: React.FC<{ message?: string }> = memo(({ message = 'Failed to load NFT' }) => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-red-200">
     <div className="h-48 bg-red-50 flex items-center justify-center">
       <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -121,7 +135,9 @@ const CardError: React.FC<{ message?: string }> = ({ message = 'Failed to load N
       <p className="text-red-600 font-medium">{message}</p>
     </div>
   </div>
-);
+));
+
+CardError.displayName = 'CardError';
 
 /**
  * TodoNFTCard Component
@@ -129,7 +145,7 @@ const CardError: React.FC<{ message?: string }> = ({ message = 'Failed to load N
  * A comprehensive NFT card component that displays todo NFTs with
  * rich metadata, interactive features, flip animation, and full accessibility support.
  */
-export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
+export const TodoNFTCard: React.FC<TodoNFTCardProps> = memo(({
   todo,
   displayMode = 'gallery',
   variant = 'default',
@@ -172,17 +188,25 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
     }
   );
   
-  // Generate IDs for accessibility
-  const cardId = useMemo(() => generateAriaId('todo-card'), []);
-  const titleId = useMemo(() => generateAriaId('todo-title'), []);
-  const descriptionId = useMemo(() => generateAriaId('todo-desc'), []);
-  const metadataId = useMemo(() => generateAriaId('todo-metadata'), []);
-  const transferModalId = useMemo(() => generateAriaId('transfer-modal'), []);
+  // Generate IDs for accessibility - memoized with stable keys
+  const ids = useMemo(() => ({
+    cardId: generateAriaId('todo-card'),
+    titleId: generateAriaId('todo-title'),
+    descriptionId: generateAriaId('todo-desc'),
+    metadataId: generateAriaId('todo-metadata'),
+    transferModalId: generateAriaId('transfer-modal')
+  }), []);
+  
+  const { cardId, titleId, descriptionId, metadataId, transferModalId } = ids;
 
-  // Generate NFT attributes for display
-  const attributes = useMemo(() => generateNFTAttributes(todo), [todo]);
+  // Generate NFT attributes for display - optimized memoization
+  const attributes = useMemo(() => {
+    // Only recalculate if essential todo fields change
+    const { id, title, description, priority, createdAt, completedAt, tags, metadata } = todo;
+    return generateNFTAttributes({ id, title, description, priority, createdAt, completedAt, tags, metadata });
+  }, [todo.id, todo.title, todo.description, todo.priority, todo.createdAt, todo.completedAt, todo.tags, todo.metadata]);
 
-  // Handle card click with accessibility
+  // Handle card click with accessibility - optimized dependencies
   const handleCardClick = useCallback((e: React.MouseEvent) => {
     // Don't flip if clicking on buttons or links
     if ((e.target as HTMLElement).closest('button, a')) {return;}
@@ -192,7 +216,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
       announceInfo(`Card ${isFlipped ? 'front' : 'back'} view activated`);
     }
     onClick?.(todo);
-  }, [enableFlip, isFlipped, onClick, todo, announceInfo]);
+  }, [enableFlip, isFlipped, onClick, todo.id, announceInfo]); // Only depend on todo.id instead of entire todo object
   
   // Handle keyboard interactions
   const handleCardKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -283,24 +307,42 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
     announceInfo(`Opening ${todo.title} in Sui Explorer`);
   }, [todo.objectId, todo.title, announceInfo]);
 
-  // Format dates
-  const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) {return 'N/A';}
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy');
-    } catch {
-      return 'Invalid date';
-    }
+  // Format dates - memoized with cache for performance
+  const dateFormatters = useMemo(() => {
+    const dateCache = new Map<string, string>();
+    const relativeCache = new Map<string, string>();
+    
+    return {
+      formatDate: (dateString?: string) => {
+        if (!dateString) {return 'N/A';}
+        if (dateCache.has(dateString)) {
+          return dateCache.get(dateString)!;
+        }
+        try {
+          const formatted = format(new Date(dateString), 'MMM d, yyyy');
+          dateCache.set(dateString, formatted);
+          return formatted;
+        } catch {
+          return 'Invalid date';
+        }
+      },
+      formatRelativeTime: (dateString?: string) => {
+        if (!dateString) {return '';}
+        if (relativeCache.has(dateString)) {
+          return relativeCache.get(dateString)!;
+        }
+        try {
+          const relative = formatDistanceToNow(new Date(dateString), { addSuffix: true });
+          relativeCache.set(dateString, relative);
+          return relative;
+        } catch {
+          return '';
+        }
+      }
+    };
   }, []);
-
-  const formatRelativeTime = useCallback((dateString?: string) => {
-    if (!dateString) {return '';}
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {
-      return '';
-    }
-  }, []);
+  
+  const { formatDate, formatRelativeTime } = dateFormatters;
 
   // Loading state with accessibility
   if (loading) {
@@ -1002,6 +1044,8 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
       `}</style>
     </div>
   );
-};
+});
+
+TodoNFTCard.displayName = 'TodoNFTCard';
 
 export default TodoNFTCard;

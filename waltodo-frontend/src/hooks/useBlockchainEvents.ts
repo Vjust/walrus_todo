@@ -481,39 +481,43 @@ export function useBlockchainEvents(
    * Handle reconnection with exponential backoff
    */
   const handleReconnection = useCallback(async () => {
-    if (!enableReconnect || connectionState.reconnectAttempts >= maxReconnectAttempts) {
-      return;
-    }
-
-    const backoffDelay = Math.min(1000 * Math.pow(2, connectionState.reconnectAttempts), 30000);
-    
-    setConnectionState(prev => ({
-      ...prev,
-      reconnectAttempts: prev.reconnectAttempts + 1,
-      lastReconnectAttempt: Date.now()
-    }));
-
-    reconnectTimeoutRef.current = setTimeout(async () => {
-      try {
-        await startSubscription();
-        
-        // Replay missed events
-        if (missedEventsRef.current.size > 0) {
-          await replayMissedEvents();
-        }
-      } catch (error) {
-        // Retry reconnection
-        if (handleReconnectionRef.current) {
-          handleReconnectionRef.current();
-        }
+    setConnectionState(currentState => {
+      if (!enableReconnect || currentState.reconnectAttempts >= maxReconnectAttempts) {
+        return currentState;
       }
-    }, backoffDelay);
-  }, [enableReconnect, connectionState.reconnectAttempts, maxReconnectAttempts, replayMissedEvents, startSubscription]);
+
+      const backoffDelay = Math.min(1000 * Math.pow(2, currentState.reconnectAttempts), 30000);
+      
+      const newState = {
+        ...currentState,
+        reconnectAttempts: currentState.reconnectAttempts + 1,
+        lastReconnectAttempt: Date.now()
+      };
+
+      reconnectTimeoutRef.current = setTimeout(async () => {
+        try {
+          await startSubscription();
+          
+          // Replay missed events
+          if (missedEventsRef.current.size > 0) {
+            await replayMissedEvents();
+          }
+        } catch (error) {
+          // Retry reconnection
+          if (handleReconnectionRef.current) {
+            handleReconnectionRef.current();
+          }
+        }
+      }, backoffDelay);
+
+      return newState;
+    });
+  }, [enableReconnect, maxReconnectAttempts, startSubscription, replayMissedEvents]);
 
   // Assign the handleReconnection function to the ref after it's defined
   useEffect(() => {
     handleReconnectionRef.current = handleReconnection;
-  }, []);
+  }, [handleReconnection]);
 
   /**
    * Stop event subscriptions and cleanup
@@ -788,6 +792,15 @@ export function useTodoEvents(
     debounceConfig,
   });
 
+  // Memoize callback functions to prevent unnecessary re-renders
+  const memoizedCallbacks = useMemo(() => ({
+    onTodoCreated,
+    onTodoUpdated,
+    onTodoCompleted,
+    onTodoDeleted,
+    onTodoTransferred,
+  }), [onTodoCreated, onTodoUpdated, onTodoCompleted, onTodoDeleted, onTodoTransferred]);
+
   // Handle todo events with enhanced NFT support
   useEffect(() => {
     const unsubscribe = addEventListener('*', (event) => {
@@ -805,8 +818,8 @@ export function useTodoEvents(
       switch (todoEvent.type) {
         case 'TodoNFTCreated':
         case 'created':
-          if (todoUpdate && onTodoCreated) {
-            onTodoCreated({
+          if (todoUpdate && memoizedCallbacks.onTodoCreated) {
+            memoizedCallbacks.onTodoCreated({
               ...todoUpdate,
               isNFT: true,
               nftData: {
@@ -818,8 +831,8 @@ export function useTodoEvents(
           break;
         case 'TodoNFTUpdated':
         case 'updated':
-          if (todoUpdate && onTodoUpdated) {
-            onTodoUpdated({
+          if (todoUpdate && memoizedCallbacks.onTodoUpdated) {
+            memoizedCallbacks.onTodoUpdated({
               ...todoUpdate,
               isNFT: true,
               nftData: {
@@ -831,8 +844,8 @@ export function useTodoEvents(
           break;
         case 'TodoNFTCompleted':
         case 'completed':
-          if (todoUpdate && onTodoCompleted) {
-            onTodoCompleted({
+          if (todoUpdate && memoizedCallbacks.onTodoCompleted) {
+            memoizedCallbacks.onTodoCompleted({
               ...todoUpdate,
               completed: true,
               isNFT: true,
@@ -844,22 +857,22 @@ export function useTodoEvents(
           }
           break;
         case 'deleted':
-          if (onTodoDeleted) {
-            onTodoDeleted(event.data.todo_id);
+          if (memoizedCallbacks.onTodoDeleted) {
+            memoizedCallbacks.onTodoDeleted(event.data.todo_id);
           }
           break;
         case 'TodoNFTTransferred':
           const transferData = event.data as TodoNFTTransferredData;
-          if (onTodoTransferred) {
-            onTodoTransferred({
+          if (memoizedCallbacks.onTodoTransferred) {
+            memoizedCallbacks.onTodoTransferred({
               todoId: transferData.todo_id,
               from: transferData.from,
               to: transferData.to
             });
           }
           // Also trigger update callback for UI refresh
-          if (onTodoUpdated) {
-            onTodoUpdated({
+          if (memoizedCallbacks.onTodoUpdated) {
+            memoizedCallbacks.onTodoUpdated({
               id: transferData.todo_id,
               objectId: transferData.todo_id,
               isNFT: true,
@@ -875,14 +888,7 @@ export function useTodoEvents(
     });
 
     return unsubscribe;
-  }, [
-    addEventListener,
-    onTodoCreated,
-    onTodoUpdated,
-    onTodoCompleted,
-    onTodoDeleted,
-    onTodoTransferred,
-  ]);
+  }, [addEventListener, memoizedCallbacks]);
 
   return {
     ...eventHookResult,
@@ -925,13 +931,9 @@ export function useTodoStateSync(
   const [syncedTodos, setSyncedTodos] = useState<Todo[]>(todos || []);
   const [nftOwnership, setNftOwnership] = useState<Map<string, string>>(new Map());
 
-  const { ...eventHookResult } = useTodoEvents({
-    owner,
-    autoStart,
-    filter,
-    enableHistorical,
-    debounceConfig,
-    onTodoCreated: todoUpdate => {
+  // Memoize event handlers to prevent unnecessary re-renders
+  const eventHandlers = useMemo(() => ({
+    onTodoCreated: (todoUpdate: Partial<Todo>) => {
       setSyncedTodos(prev => {
         // Check if todo already exists
         const existingIndex = prev.findIndex(
@@ -965,7 +967,7 @@ export function useTodoStateSync(
         });
       }
     },
-    onTodoUpdated: todoUpdate => {
+    onTodoUpdated: (todoUpdate: Partial<Todo>) => {
       setSyncedTodos(prev => {
         const index = prev.findIndex(
           t => t.id === todoUpdate.id || t.objectId === todoUpdate.id
@@ -978,7 +980,7 @@ export function useTodoStateSync(
         return prev;
       });
     },
-    onTodoCompleted: todoUpdate => {
+    onTodoCompleted: (todoUpdate: Partial<Todo>) => {
       setSyncedTodos(prev => {
         const index = prev.findIndex(
           t => t.id === todoUpdate.id || t.objectId === todoUpdate.id
@@ -991,7 +993,7 @@ export function useTodoStateSync(
         return prev;
       });
     },
-    onTodoDeleted: todoId => {
+    onTodoDeleted: (todoId: string) => {
       setSyncedTodos(prev =>
         prev.filter(t => t.id !== todoId && t.objectId !== todoId)
       );
@@ -1003,7 +1005,7 @@ export function useTodoStateSync(
         return updated;
       });
     },
-    onTodoTransferred: ({ todoId, from, to }) => {
+    onTodoTransferred: ({ todoId, from, to }: { todoId: string; from: string; to: string }) => {
       // Update ownership tracking
       setNftOwnership(prev => {
         const updated = new Map(prev);
@@ -1032,6 +1034,15 @@ export function useTodoStateSync(
         return prev;
       });
     },
+  }), []);
+
+  const { ...eventHookResult } = useTodoEvents({
+    owner,
+    autoStart,
+    filter,
+    enableHistorical,
+    debounceConfig,
+    ...eventHandlers,
   });
 
   // Update parent component when todos change

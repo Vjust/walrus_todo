@@ -185,47 +185,56 @@ export function useAsyncError<T = any>(
         { operation: asyncFunction.name, isRetry }
       );
 
-      const canRetry = isRetryableError(classifiedError) && 
-        state.retryCount < mergedConfig.maxRetries;
+      setState(prev => {
+        const canRetry = isRetryableError(classifiedError) && 
+          prev.retryCount < mergedConfig.maxRetries;
 
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: classifiedError,
-        retryCount: isRetry ? prev.retryCount + 1 : 0,
-        canRetry
-      }));
+        return {
+          ...prev,
+          loading: false,
+          error: classifiedError,
+          retryCount: isRetry ? prev.retryCount + 1 : 0,
+          canRetry
+        };
+      });
 
       // Call error callback
       mergedConfig.onError(classifiedError);
 
       // Handle automatic retry
-      if (mergedConfig.autoRetry && canRetry && !isRetry) {
-        mergedConfig.onRetryAttempt(state.retryCount + 1, classifiedError);
-        
-        // Wait before retrying
-        await delay(mergedConfig.retryDelay);
-        
-        if (mountedRef.current && !abortControllerRef.current?.signal.aborted) {
-          await executeOperation(true);
-        }
-      } else if (state.retryCount >= mergedConfig.maxRetries) {
-        // Max retries reached
-        mergedConfig.onGiveUp(classifiedError);
-      }
+      setState(currentState => {
+        const canRetry = isRetryableError(classifiedError) && 
+          currentState.retryCount < mergedConfig.maxRetries;
 
-      // Show error toast if configured
-      if (mergedConfig.showToast && !mergedConfig.silentErrors) {
-        toastService.error(classifiedError.userMessage, {
-          actions: canRetry ? [{
-            label: 'Retry',
-            action: () => executeOperation(true),
-            style: 'primary' as const
-          }] : undefined
-        });
-      }
+        if (mergedConfig.autoRetry && canRetry && !isRetry) {
+          mergedConfig.onRetryAttempt(currentState.retryCount + 1, classifiedError);
+          
+          // Wait before retrying
+          delay(mergedConfig.retryDelay).then(() => {
+            if (mountedRef.current && !abortControllerRef.current?.signal.aborted) {
+              executeOperation(true);
+            }
+          });
+        } else if (currentState.retryCount >= mergedConfig.maxRetries) {
+          // Max retries reached
+          mergedConfig.onGiveUp(classifiedError);
+        }
+
+        // Show error toast if configured
+        if (mergedConfig.showToast && !mergedConfig.silentErrors) {
+          toastService.error(classifiedError.userMessage, {
+            actions: canRetry ? [{
+              label: 'Retry',
+              action: () => executeOperation(true),
+              style: 'primary' as const
+            }] : undefined
+          });
+        }
+
+        return currentState;
+      });
     }
-  }, [asyncFunction, mergedConfig, state.retryCount, delay]);
+  }, [asyncFunction, mergedConfig, delay]);
 
   // Execute function (external call)
   const execute = useCallback(async (): Promise<void> => {
@@ -395,7 +404,7 @@ export function useAsyncErrorWithDeps<T = any>(
   // Re-execute when dependencies change
   useEffect(() => {
     result.execute();
-  }, dependencies); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [result.execute, ...dependencies]);
 
   return result;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { FixedSizeGrid as Grid, FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -53,7 +53,7 @@ const CARD_WIDTH = 320;
 const CARD_HEIGHT = 400;
 const LIST_ITEM_HEIGHT = 120;
 
-export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ 
+export const TodoNFTGrid: React.FC<TodoNFTGridProps> = memo(({ 
   className = '',
   ariaLabel = 'Todo NFT collection',
   ariaDescription = 'A grid of Todo NFTs with filtering and search capabilities',
@@ -69,13 +69,17 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
   const { announceSuccess, announceError, announceLoading, announceInfo } = useAnnouncementShortcuts();
   const { announceStatus, announceProgress, StatusRegion } = useStatusAnnouncements();
   
-  // Refs for accessibility
+  // Refs for accessibility - memoized IDs
   const gridRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const gridId = useMemo(() => generateAriaId('todo-nft-grid'), []);
-  const searchId = useMemo(() => generateAriaId('nft-search'), []);
-  const filtersId = useMemo(() => generateAriaId('nft-filters'), []);
-  const resultsId = useMemo(() => generateAriaId('nft-results'), []);
+  const accessibilityIds = useMemo(() => ({
+    gridId: generateAriaId('todo-nft-grid'),
+    searchId: generateAriaId('nft-search'),
+    filtersId: generateAriaId('nft-filters'),
+    resultsId: generateAriaId('nft-results')
+  }), []);
+  
+  const { gridId, searchId, filtersId, resultsId } = accessibilityIds;
 
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -187,6 +191,23 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
     role: viewMode === 'grid' ? 'grid' : 'list'
   });
 
+  // Memoize constants for stable references
+  const constants = useMemo(() => ({
+    priorityOrder: { high: 0, medium: 1, low: 2 },
+    filterNames: {
+      all: 'all items',
+      active: 'active items',
+      completed: 'completed items'
+    },
+    sortNames: {
+      date: 'date',
+      title: 'title',
+      priority: 'priority'
+    }
+  }), []);
+  
+  const { priorityOrder, filterNames, sortNames } = constants;
+
   // Filter and sort NFTs with accessibility announcements
   const filteredAndSortedNFTs = useMemo(() => {
     let filtered = [...allNFTs];
@@ -228,7 +249,6 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
         case 'title':
           return a.title.localeCompare(b.title);
         case 'priority':
-          const priorityOrder = { high: 0, medium: 1, low: 2 };
           return priorityOrder[a.priority] - priorityOrder[b.priority];
         default:
           return 0;
@@ -236,7 +256,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
     });
 
     return filtered;
-  }, [allNFTs, debouncedSearch, filterOption, priorityFilter, dateRange, sortOption]);
+  }, [allNFTs, debouncedSearch, filterOption, priorityFilter, dateRange, sortOption, priorityOrder]);
 
   // Announce filter/sort changes
   useEffect(() => {
@@ -266,6 +286,8 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
     }
   }, [filteredAndSortedNFTs, onItemActivate, announceStatus]);
 
+  // Constants are now memoized above
+
   // Handle view mode changes
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
     setViewMode(newMode);
@@ -284,24 +306,14 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
   // Handle filter changes
   const handleFilterChange = useCallback((newFilter: FilterOption) => {
     setFilterOption(newFilter);
-    const filterNames = {
-      all: 'all items',
-      active: 'active items',
-      completed: 'completed items'
-    };
     announceInfo(`Filtering by ${filterNames[newFilter]}`);
-  }, [announceInfo]);
+  }, [announceInfo, filterNames]);
 
   // Handle sort changes
   const handleSortChange = useCallback((newSort: SortOption) => {
     setSortOption(newSort);
-    const sortNames = {
-      date: 'date',
-      title: 'title',
-      priority: 'priority'
-    };
     announceInfo(`Sorting by ${sortNames[newSort]}`);
-  }, [announceInfo]);
+  }, [announceInfo, sortNames]);
 
   // Load more items
   const loadMoreItems = useCallback(
@@ -321,7 +333,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
     [filteredAndSortedNFTs.length]
   );
 
-  // Grid cell renderer with accessibility
+  // Grid cell renderer with accessibility - optimized memoization
   const GridCell = useCallback(
     ({ columnIndex, rowIndex, style }: any) => {
       const itemsPerRow = Math.floor((style.width - GRID_GAP) / (CARD_WIDTH + GRID_GAP));
@@ -376,10 +388,10 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
         </div>
       );
     },
-    [filteredAndSortedNFTs, selectedIndex, gridId, handleItemSelect, handleItemActivate]
+    [filteredAndSortedNFTs.length, selectedIndex, gridId, handleItemSelect, handleItemActivate]
   );
 
-  // List item renderer with accessibility
+  // List item renderer with accessibility - optimized memoization
   const ListItem = useCallback(
     ({ index, style }: any) => {
       if (!isItemLoaded(index)) {
@@ -428,7 +440,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
         </div>
       );
     },
-    [filteredAndSortedNFTs, isItemLoaded, selectedIndex, gridId, handleItemSelect, handleItemActivate]
+    [filteredAndSortedNFTs.length, isItemLoaded, selectedIndex, gridId, handleItemSelect, handleItemActivate]
   );
 
   // Loading skeleton with accessibility
@@ -795,4 +807,6 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({
       <StatusRegion />
     </div>
   );
-};
+});
+
+TodoNFTGrid.displayName = 'TodoNFTGrid';

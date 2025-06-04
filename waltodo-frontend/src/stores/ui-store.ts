@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import type { UIActions, UIState } from './types';
 import { defaultStorageConfig, persistSelectors, storageKeys } from './middleware/persist';
-import { logger } from './middleware/logger';
+import { logger, withPerformanceMonitoring } from './middleware/logger';
 
 /**
  * Initial state for UI store
@@ -112,13 +113,18 @@ export const useUIStore = create<UIState & UIActions>()(
             ...initialUIState,
 
             // Modal actions
-            openModal: (modal, data) => {
+            openModal: withPerformanceMonitoring('UI Store', 'openModal', (modal, data) => {
               set((state) => {
-                (state.modals as any)[modal] = data ?? true;
+                // Direct assignment for better performance
+                if (modal === 'todoDetail' || modal === 'editTodo' || modal === 'confirmDelete') {
+                  (state.modals as any)[modal] = data;
+                } else {
+                  (state.modals as any)[modal] = true;
+                }
               });
-            },
+            }),
 
-            closeModal: (modal) => {
+            closeModal: withPerformanceMonitoring('UI Store', 'closeModal', (modal) => {
               set((state) => {
                 if (modal === 'todoDetail' || modal === 'editTodo' || modal === 'confirmDelete') {
                   (state.modals as any)[modal] = null;
@@ -126,7 +132,7 @@ export const useUIStore = create<UIState & UIActions>()(
                   (state.modals as any)[modal] = false;
                 }
               });
-            },
+            }),
 
             closeAllModals: () => {
               set((state) => {
@@ -142,11 +148,17 @@ export const useUIStore = create<UIState & UIActions>()(
             },
 
             // Form actions
-            updateForm: (form, updates) => {
+            updateForm: withPerformanceMonitoring('UI Store', 'updateForm', (form, updates) => {
               set((state) => {
-                Object.assign(state.forms[form], updates);
+                // More efficient object update
+                const currentForm = state.forms[form];
+                for (const key in updates) {
+                  if (updates.hasOwnProperty(key)) {
+                    (currentForm as any)[key] = (updates as any)[key];
+                  }
+                }
               });
-            },
+            }),
 
             resetForm: (form) => {
               set((state) => {
@@ -254,11 +266,15 @@ export const useUIStore = create<UIState & UIActions>()(
             },
 
             // Search actions
-            setSearchQuery: (query) => {
+            setSearchQuery: withPerformanceMonitoring('UI Store', 'setSearchQuery', (query) => {
+              // Skip update if query hasn't changed
+              const currentQuery = get().search.query;
+              if (currentQuery === query) return;
+              
               set((state) => {
                 state.search.query = query;
               });
-            },
+            }),
 
             setFilter: (filter, value) => {
               set((state) => {
@@ -273,11 +289,17 @@ export const useUIStore = create<UIState & UIActions>()(
               });
             },
 
-            clearFilters: () => {
+            clearFilters: withPerformanceMonitoring('UI Store', 'clearFilters', () => {
               set((state) => {
-                state.search.filters = { ...initialUIState.search.filters };
+                // More efficient reset
+                state.search.filters.status = 'all';
+                state.search.filters.priority = 'all';
+                state.search.filters.category = null;
+                state.search.filters.tags = [];
+                state.search.filters.dateRange.start = null;
+                state.search.filters.dateRange.end = null;
               });
-            },
+            }),
 
             resetSearch: () => {
               set((state) => {
@@ -301,7 +323,7 @@ export const useUIStore = create<UIState & UIActions>()(
   )
 );
 
-// Selectors for performance optimization
+// Performance-optimized selectors with shallow comparison
 export const useUIModals = () => useUIStore((state) => state.modals);
 export const useUILoading = () => useUIStore((state) => state.loading);
 export const useUIErrors = () => useUIStore((state) => state.errors);

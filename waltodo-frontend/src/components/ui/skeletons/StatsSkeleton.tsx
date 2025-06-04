@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 
 export interface StatsSkeletonProps {
   /** Number of stat cards to render */
@@ -25,7 +25,7 @@ export interface StatsSkeletonProps {
  * A skeleton loading component for statistics cards and dashboards.
  * Supports various layouts and customization options.
  */
-export const StatsSkeleton: React.FC<StatsSkeletonProps> = ({
+const StatsSkeletonComponent: React.FC<StatsSkeletonProps> = ({
   cardCount = 4,
   variant = 'grid',
   size = 'md',
@@ -74,6 +74,9 @@ export const StatsSkeleton: React.FC<StatsSkeletonProps> = ({
   );
 };
 
+export const StatsSkeleton = memo(StatsSkeletonComponent);
+StatsSkeleton.displayName = 'StatsSkeleton';
+
 interface StatCardSkeletonProps {
   size: 'sm' | 'md' | 'lg';
   animationClass: string;
@@ -82,7 +85,7 @@ interface StatCardSkeletonProps {
   delay?: number;
 }
 
-const StatCardSkeleton: React.FC<StatCardSkeletonProps> = ({
+const StatCardSkeletonComponent: React.FC<StatCardSkeletonProps> = ({
   size,
   animationClass,
   showIcon,
@@ -154,6 +157,9 @@ const StatCardSkeleton: React.FC<StatCardSkeletonProps> = ({
     </div>
   );
 };
+
+const StatCardSkeleton = memo(StatCardSkeletonComponent);
+StatCardSkeleton.displayName = 'StatCardSkeleton';
 
 /**
  * KPI Dashboard Skeleton

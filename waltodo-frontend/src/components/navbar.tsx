@@ -122,7 +122,7 @@ function Navbar({ currentPage }: NavbarProps) {
     // Refresh every 30 seconds
     const interval = setInterval(fetchWalletData, 30000);
     return () => clearInterval(interval);
-  }, [connected, address, executeWithSuiClient]);
+  }, [connected, address]); // Remove executeWithSuiClient to prevent infinite loops
 
   // Handle blockchain events for notifications
   useEffect(() => {

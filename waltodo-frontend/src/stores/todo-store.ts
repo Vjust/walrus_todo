@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import type { TodoActions, TodoState } from './types';
 import type { Todo, TodoList } from '@/types/todo';
 import { defaultStorageConfig, persistSelectors, storageKeys } from './middleware/persist';
-import { logger } from './middleware/logger';
+import { logger, withPerformanceMonitoring } from './middleware/logger';
 
 /**
  * Initial state for todo store
@@ -44,10 +45,12 @@ export const useTodoStore = create<TodoState & TodoActions>()(
             ...initialTodoState,
 
             // Local todo management
-            addTodo: (listName, todo) => {
+            addTodo: withPerformanceMonitoring('Todo Store', 'addTodo', (listName, todo) => {
               set((state) => {
-                if (!state.todos[listName]) {
-                  state.todos[listName] = [];
+                // Ensure todos array exists
+                let todosArray = state.todos[listName];
+                if (!todosArray) {
+                  todosArray = state.todos[listName] = [];
                 }
                 
                 const newTodo: Todo = {
@@ -57,34 +60,37 @@ export const useTodoStore = create<TodoState & TodoActions>()(
                   updatedAt: new Date().toISOString(),
                 };
                 
-                state.todos[listName].unshift(newTodo);
+                // More efficient array prepend
+                todosArray.unshift(newTodo);
                 
-                // Update cache size estimation
+                // Batch cache size update
                 state.cache.size += estimateTodoSize(newTodo);
               });
-            },
+            }),
 
-            updateTodo: (listName, todoId, updates) => {
+            updateTodo: withPerformanceMonitoring('Todo Store', 'updateTodo', (listName, todoId, updates) => {
               set((state) => {
                 const todos = state.todos[listName];
-                if (!todos) {return;}
+                if (!todos) return;
                 
-                const todoIndex = todos.findIndex(t => t.id === todoId);
-                if (todoIndex === -1) {return;}
-                
-                const oldTodo = todos[todoIndex];
-                const updatedTodo = {
-                  ...oldTodo,
-                  ...updates,
-                  updatedAt: new Date().toISOString(),
-                };
-                
-                todos[todoIndex] = updatedTodo;
-                
-                // Update cache size
-                state.cache.size = state.cache.size - estimateTodoSize(oldTodo) + estimateTodoSize(updatedTodo);
+                // More efficient todo finding with early exit
+                for (let i = 0; i < todos.length; i++) {
+                  if (todos[i].id === todoId) {
+                    const oldTodo = todos[i];
+                    const oldSize = estimateTodoSize(oldTodo);
+                    
+                    // Direct property updates for better performance
+                    Object.assign(oldTodo, updates, {
+                      updatedAt: new Date().toISOString(),
+                    });
+                    
+                    // Update cache size efficiently
+                    state.cache.size += estimateTodoSize(oldTodo) - oldSize;
+                    break;
+                  }
+                }
               });
-            },
+            }),
 
             deleteTodo: (listName, todoId) => {
               set((state) => {
@@ -102,24 +108,29 @@ export const useTodoStore = create<TodoState & TodoActions>()(
               });
             },
 
-            completeTodo: (listName, todoId) => {
+            completeTodo: withPerformanceMonitoring('Todo Store', 'completeTodo', (listName, todoId) => {
               set((state) => {
                 const todos = state.todos[listName];
-                if (!todos) {return;}
+                if (!todos) return;
                 
-                const todo = todos.find(t => t.id === todoId);
-                if (!todo) {return;}
-                
-                todo.completed = !todo.completed;
-                todo.updatedAt = new Date().toISOString();
-                
-                if (todo.completed) {
-                  todo.completedAt = new Date().toISOString();
-                } else {
-                  delete todo.completedAt;
+                // Optimized todo finding and updating
+                for (let i = 0; i < todos.length; i++) {
+                  const todo = todos[i];
+                  if (todo.id === todoId) {
+                    const isCompleting = !todo.completed;
+                    todo.completed = isCompleting;
+                    todo.updatedAt = new Date().toISOString();
+                    
+                    if (isCompleting) {
+                      todo.completedAt = new Date().toISOString();
+                    } else {
+                      delete todo.completedAt;
+                    }
+                    break;
+                  }
                 }
               });
-            },
+            }),
 
             // List management
             createList: (list) => {
@@ -323,16 +334,37 @@ export const useLastSync = (key: string) => useTodoStore((state) => state.lastSy
 export const useCacheInfo = () => useTodoStore((state) => state.cache);
 export const useCacheSize = () => useTodoStore((state) => state.cache.size);
 
-// Computed selectors
+// Memoized computed selectors for performance
 export const useTodoStats = (listName?: string) => useTodoStore((state) => {
   const todos = state.todos[listName || state.currentList] || [];
   
+  // Optimized single-pass calculation
+  let completed = 0;
+  let pending = 0;
+  let overdue = 0;
+  let highPriority = 0;
+  const now = new Date();
+  
+  for (const todo of todos) {
+    if (todo.completed) {
+      completed++;
+    } else {
+      pending++;
+      if (todo.priority === 'high') {
+        highPriority++;
+      }
+      if (todo.dueDate && new Date(todo.dueDate) < now) {
+        overdue++;
+      }
+    }
+  }
+  
   return {
     total: todos.length,
-    completed: todos.filter(t => t.completed).length,
-    pending: todos.filter(t => !t.completed).length,
-    overdue: todos.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < new Date()).length,
-    highPriority: todos.filter(t => !t.completed && t.priority === 'high').length,
+    completed,
+    pending,
+    overdue,
+    highPriority,
   };
 });
 
@@ -341,28 +373,45 @@ export const useFilteredTodos = (listName?: string, filters?: {
   priority?: 'all' | 'high' | 'medium' | 'low';
   search?: string;
 }) => useTodoStore((state) => {
-  let todos = state.todos[listName || state.currentList] || [];
+  const todos = state.todos[listName || state.currentList] || [];
   
-  if (!filters) {return todos;}
+  if (!filters) return todos;
   
-  if (filters.status && filters.status !== 'all') {
-    todos = todos.filter(t => filters.status === 'completed' ? t.completed : !t.completed);
+  // Optimized single-pass filtering
+  const result: Todo[] = [];
+  const hasStatusFilter = filters.status && filters.status !== 'all';
+  const hasPriorityFilter = filters.priority && filters.priority !== 'all';
+  const hasSearchFilter = filters.search;
+  const searchQuery = hasSearchFilter ? filters.search!.toLowerCase() : '';
+  
+  for (const todo of todos) {
+    // Status filter check
+    if (hasStatusFilter) {
+      const isCompleted = todo.completed;
+      const showCompleted = filters.status === 'completed';
+      if (isCompleted !== showCompleted) continue;
+    }
+    
+    // Priority filter check
+    if (hasPriorityFilter && todo.priority !== filters.priority) {
+      continue;
+    }
+    
+    // Search filter check
+    if (hasSearchFilter) {
+      const matchesTitle = todo.title.toLowerCase().includes(searchQuery);
+      const matchesDescription = todo.description?.toLowerCase().includes(searchQuery) || false;
+      const matchesTags = todo.tags?.some(tag => tag.toLowerCase().includes(searchQuery)) || false;
+      
+      if (!matchesTitle && !matchesDescription && !matchesTags) {
+        continue;
+      }
+    }
+    
+    result.push(todo);
   }
   
-  if (filters.priority && filters.priority !== 'all') {
-    todos = todos.filter(t => t.priority === filters.priority);
-  }
-  
-  if (filters.search) {
-    const query = filters.search.toLowerCase();
-    todos = todos.filter(t => 
-      t.title.toLowerCase().includes(query) ||
-      t.description?.toLowerCase().includes(query) ||
-      t.tags?.some(tag => tag.toLowerCase().includes(query))
-    );
-  }
-  
-  return todos;
+  return result;
 });
 
 // Action selectors

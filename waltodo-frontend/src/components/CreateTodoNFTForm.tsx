@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, memo } from 'react';
 import Image from 'next/image';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
@@ -33,7 +33,8 @@ import {
   isActionKey
 } from '@/lib/accessibility-utils';
 
-const templates: TodoTemplate[] = [
+// Memoized templates for performance - moved outside component to prevent re-creation
+const TEMPLATES: TodoTemplate[] = [
   {
     id: 'meeting',
     name: 'Meeting Notes',
@@ -88,7 +89,7 @@ interface CreateTodoNFTFormProps {
   autoFocus?: boolean;
 }
 
-export default function CreateTodoNFTForm({
+const CreateTodoNFTForm = memo(function CreateTodoNFTForm({
   listName = 'default',
   onTodoCreated,
   onCancel,
@@ -117,16 +118,23 @@ export default function CreateTodoNFTForm({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   
-  // Generate unique IDs for accessibility
-  const formId = useMemo(() => generateAriaId('create-todo-nft-form'), []);
-  const titleId = useMemo(() => generateAriaId('todo-title'), []);
-  const descriptionId = useMemo(() => generateAriaId('todo-description'), []);
-  const templateSectionId = useMemo(() => generateAriaId('template-section'), []);
-  const imageUploadId = useMemo(() => generateAriaId('image-upload'), []);
-  const advancedOptionsId = useMemo(() => generateAriaId('advanced-options'), []);
-  const costEstimateId = useMemo(() => generateAriaId('cost-estimate'), []);
-  const progressId = useMemo(() => generateAriaId('upload-progress'), []);
-  const errorId = useMemo(() => generateAriaId('form-error'), []);
+  // Generate unique IDs for accessibility - memoized object
+  const accessibilityIds = useMemo(() => ({
+    formId: generateAriaId('create-todo-nft-form'),
+    titleId: generateAriaId('todo-title'),
+    descriptionId: generateAriaId('todo-description'),
+    templateSectionId: generateAriaId('template-section'),
+    imageUploadId: generateAriaId('image-upload'),
+    advancedOptionsId: generateAriaId('advanced-options'),
+    costEstimateId: generateAriaId('cost-estimate'),
+    progressId: generateAriaId('upload-progress'),
+    errorId: generateAriaId('form-error')
+  }), []);
+  
+  const {
+    formId, titleId, descriptionId, templateSectionId, imageUploadId,
+    advancedOptionsId, costEstimateId, progressId, errorId
+  } = accessibilityIds;
   
   // Hooks
   const walletContext = useWalletContext();
@@ -151,13 +159,14 @@ export default function CreateTodoNFTForm({
     trapFocus: true
   });
   
-  // Calculate estimated size
+  // Calculate estimated size - optimized calculation
   const estimatedSize = useMemo(() => {
     let size = 0;
-    size += new Blob([title]).size;
-    size += new Blob([description]).size;
-    size += new Blob([tags]).size;
-    size += new Blob([JSON.stringify({ priority, category, dueDate })]).size;
+    // Use string length * 2 for approximate UTF-16 byte size instead of creating Blobs
+    size += (title?.length || 0) * 2;
+    size += (description?.length || 0) * 2;
+    size += (tags?.length || 0) * 2;
+    size += JSON.stringify({ priority, category, dueDate }).length * 2;
     if (imageFile) {
       size += imageFile.size;
     }
@@ -181,7 +190,7 @@ export default function CreateTodoNFTForm({
     } catch (err) {
       console.error('Failed to estimate costs:', err);
     }
-  }, [connected, address, estimatedSize]);
+  }, [connected, address, estimatedSize, setEstimatedCost]);
   
   // Debounced cost estimate update
   React.useEffect(() => {
@@ -191,7 +200,7 @@ export default function CreateTodoNFTForm({
   
   // Handle template selection with accessibility
   const handleTemplateSelect = useCallback((templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
+    const template = TEMPLATES.find(t => t.id === templateId);
     if (template) {
       setTitle(template.title);
       setDescription(template.description);
@@ -438,7 +447,7 @@ export default function CreateTodoNFTForm({
   }, [
     connected, address, signAndExecuteTransaction, checkNFTRateLimit, announceError, announceLoading, 
     announceProgress, announceSuccess, setIsSubmitting, setError, setUploadProgress, setUploadStage,
-    listName, imagePreview, category, expirationDays, onTodoCreated
+    listName, imagePreview, category, expirationDays, onTodoCreated, handleResetForm
   ]);
   
   // Reset form with accessibility
@@ -605,7 +614,7 @@ export default function CreateTodoNFTForm({
               aria-labelledby={templateSectionId}
               aria-describedby={`${templateSectionId}-desc`}
             >
-              {templates.map((template, index) => (
+              {TEMPLATES.map((template, index) => (
                 <button
                   key={template.id}
                   type="button"
@@ -1184,4 +1193,8 @@ export default function CreateTodoNFTForm({
       </div>
     </AccessibilityAnnouncerProvider>
   );
-}
+});
+
+CreateTodoNFTForm.displayName = 'CreateTodoNFTForm';
+
+export default CreateTodoNFTForm;

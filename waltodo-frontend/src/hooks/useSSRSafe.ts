@@ -41,24 +41,27 @@ export function useSSRSafeMounted(options: {
       ? setTimeout(() => setMounted(true), minMountTime)
       : (setMounted(true), null);
 
-    // Handle stability frames
-    if (mounted) {
-      let frameCount = 0;
-      const checkStability = () => {
-        frameCount++;
-        if (frameCount >= stabilityFrames) {
-          setStable(true);
-        } else {
-          requestAnimationFrame(checkStability);
-        }
-      };
-      requestAnimationFrame(checkStability);
-    }
-
     return () => {
       if (mountTimer) clearTimeout(mountTimer);
     };
-  }, [minMountTime, stabilityFrames, mounted]);
+  }, [minMountTime]);
+
+  // Separate effect for stability to prevent infinite loop
+  useEffect(() => {
+    if (!mounted) return;
+    
+    let frameCount = 0;
+    const checkStability = () => {
+      frameCount++;
+      if (frameCount >= stabilityFrames) {
+        setStable(true);
+      } else {
+        requestAnimationFrame(checkStability);
+      }
+    };
+    
+    requestAnimationFrame(checkStability);
+  }, [mounted, stabilityFrames]);
 
   return {
     mounted,

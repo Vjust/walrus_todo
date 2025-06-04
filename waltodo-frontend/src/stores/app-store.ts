@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import type { AppActions, AppState } from './types';
 import { defaultStorageConfig, persistSelectors, storageKeys } from './middleware/persist';
-import { logger } from './middleware/logger';
+import { logger, withPerformanceMonitoring } from './middleware/logger';
 
 /**
  * Initial state for app store
@@ -110,23 +111,34 @@ export const useAppStore = create<AppState & AppActions>()(
             },
 
             // Performance tracking actions
-            recordRender: (renderTime) => {
+            recordRender: withPerformanceMonitoring('App Store', 'recordRender', (renderTime) => {
+              // Skip update if render time is normal to avoid unnecessary updates
+              if (renderTime < 8) return;
+              
+              const currentState = get();
+              const currentCount = currentState.performance.renderCount;
+              const newAvg = (currentState.performance.avgRenderTime * currentCount + renderTime) / (currentCount + 1);
+              
+              // Only update if values actually change significantly
+              if (Math.abs(newAvg - currentState.performance.avgRenderTime) < 0.1) return;
+              
               set((state) => {
-                state.performance.renderCount += 1;
-                state.performance.lastRenderTime = renderTime;
-                
-                // Calculate running average
-                const { renderCount, avgRenderTime } = state.performance;
-                state.performance.avgRenderTime = 
-                  (avgRenderTime * (renderCount - 1) + renderTime) / renderCount;
+                const perf = state.performance;
+                perf.renderCount += 1;
+                perf.lastRenderTime = renderTime;
+                perf.avgRenderTime = newAvg;
               });
-            },
+            }),
 
-            updateMemoryUsage: (usage) => {
+            updateMemoryUsage: withPerformanceMonitoring('App Store', 'updateMemoryUsage', (usage) => {
+              // Skip if memory usage hasn't changed significantly (1MB threshold)
+              const currentUsage = get().performance.memoryUsage;
+              if (Math.abs(currentUsage - usage) < 1) return;
+              
               set((state) => {
                 state.performance.memoryUsage = usage;
               });
-            },
+            }),
 
             // Environment detection actions
             setEnvironment: (env) => {
@@ -333,6 +345,9 @@ export const checkNetworkHealth = async (service: keyof AppState['network'], url
   }
 };
 
+// Track if monitoring has already been started to prevent multiple intervals
+let monitoringStarted = false;
+
 /**
  * Store hydration helper
  */
@@ -345,8 +360,14 @@ export const hydrateAppStore = () => {
     useAppStore.getState().setEnvironment(env);
     useAppStore.getState().setHydrated(true);
     
-    // Start performance monitoring
-    updateMemoryUsage();
-    setInterval(updateMemoryUsage, 30000); // Update every 30 seconds
+    // Start performance monitoring only once
+    if (!monitoringStarted) {
+      monitoringStarted = true;
+      updateMemoryUsage();
+      // Reduce frequency and only in development
+      if (process.env.NODE_ENV === 'development') {
+        setInterval(updateMemoryUsage, 60000); // Update every 60 seconds instead of 30
+      }
+    }
   }
 };

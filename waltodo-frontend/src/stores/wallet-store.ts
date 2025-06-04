@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import type { TransactionRecord, WalletActions, WalletState } from './types';
 import type { NetworkType } from '@/types/wallet';
 import { defaultStorageConfig, persistSelectors, storageKeys } from './middleware/persist';
-import { logger } from './middleware/logger';
+import { logger, withPerformanceMonitoring } from './middleware/logger';
 
 /**
  * Initial state for wallet store
@@ -160,19 +161,22 @@ export const useWalletStore = create<WalletState & WalletActions>()(
             },
 
             // Transaction actions
-            addTransaction: (transaction) => {
+            addTransaction: withPerformanceMonitoring('Wallet Store', 'addTransaction', (transaction) => {
               const fullTransaction: TransactionRecord = {
                 ...transaction,
                 timestamp: new Date().toISOString(),
               };
 
               set((state) => {
-                // Add to history
-                state.transactions.history.unshift(fullTransaction);
+                // Pre-check to avoid unnecessary operations
+                const history = state.transactions.history;
                 
-                // Keep only last 100 transactions
-                if (state.transactions.history.length > 100) {
-                  state.transactions.history = state.transactions.history.slice(0, 100);
+                // Add to history with more efficient array management
+                history.unshift(fullTransaction);
+                
+                // Efficient array truncation
+                if (history.length > 100) {
+                  history.length = 100; // More efficient than slice
                 }
 
                 // Add to pending if status is pending
@@ -183,33 +187,38 @@ export const useWalletStore = create<WalletState & WalletActions>()(
                 // Update last transaction
                 state.transactions.lastTransaction = fullTransaction;
               });
-            },
+            }),
 
-            updateTransaction: (id, updates) => {
+            updateTransaction: withPerformanceMonitoring('Wallet Store', 'updateTransaction', (id, updates) => {
               set((state) => {
-                // Update in history
-                const historyIndex = state.transactions.history.findIndex(tx => tx.id === id);
-                if (historyIndex !== -1) {
-                  Object.assign(state.transactions.history[historyIndex], updates);
-                }
-
-                // Update in pending
-                const pendingTx = state.transactions.pending[id];
-                if (pendingTx) {
-                  Object.assign(pendingTx, updates);
-                  
-                  // Remove from pending if no longer pending
-                  if (updates.status && updates.status !== 'pending') {
-                    delete state.transactions.pending[id];
+                // More efficient transaction finding and updating
+                const { history, pending, lastTransaction } = state.transactions;
+                
+                // Update in history with early exit optimization
+                for (let i = 0; i < history.length; i++) {
+                  if (history[i].id === id) {
+                    Object.assign(history[i], updates);
+                    break;
                   }
                 }
 
-                // Update last transaction if it's the same
-                if (state.transactions.lastTransaction?.id === id) {
-                  Object.assign(state.transactions.lastTransaction, updates);
+                // Update in pending with null safety
+                const pendingTx = pending[id];
+                if (pendingTx) {
+                  Object.assign(pendingTx, updates);
+                  
+                  // Remove from pending if status changed
+                  if (updates.status && updates.status !== 'pending') {
+                    delete pending[id];
+                  }
+                }
+
+                // Update last transaction efficiently
+                if (lastTransaction?.id === id) {
+                  Object.assign(lastTransaction, updates);
                 }
               });
-            },
+            }),
 
             removeTransaction: (id) => {
               set((state) => {
@@ -283,7 +292,7 @@ export const useWalletStore = create<WalletState & WalletActions>()(
   )
 );
 
-// Connection selectors
+// Performance-optimized connection selectors
 export const useWalletConnection = () => useWalletStore((state) => state.connection);
 export const useWalletAddress = () => useWalletStore((state) => state.connection.address);
 export const useWalletStatus = () => useWalletStore((state) => state.connection.status);

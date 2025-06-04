@@ -131,7 +131,6 @@ export function getSecurityHeaders(nonce?: string): Record<string, string> {
       'usb=()',
       'magnetometer=()',
       'gyroscope=()',
-      'speaker=()',
     ].join(', '),
     
     // Strict Transport Security (HTTPS only)

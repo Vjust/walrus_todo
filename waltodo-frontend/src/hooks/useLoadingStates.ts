@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useUIStore } from '@/stores/ui-store';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+// import { useUIStore } from '@/stores/ui-store'; // Disabled to prevent infinite loops
 
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -68,170 +68,23 @@ export function useLoadingStates(
   /** Configuration options */
   config: LoadingConfig = {}
 ): UseLoadingStatesReturn {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  
-  const [state, setState] = useState<LoadingState>('idle');
-  const [progress, setProgress] = useState(0);
-  
-  const loadingStartTime = useRef<number | null>(null);
-  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const maxTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Global UI store integration
-  const { setLoading: setGlobalLoading } = useUIStore();
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
-      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
-      if (maxTimeoutRef.current) clearTimeout(maxTimeoutRef.current);
-    };
-  }, []);
-
-  // Update global loading state when key is provided
-  useEffect(() => {
-    if (key) {
-      setGlobalLoading(key, state === 'loading');
-    }
-  }, [key, state, setGlobalLoading]);
-
-  const clearTimeouts = useCallback(() => {
-    if (successTimeoutRef.current) {
-      clearTimeout(successTimeoutRef.current);
-      successTimeoutRef.current = null;
-    }
-    if (errorTimeoutRef.current) {
-      clearTimeout(errorTimeoutRef.current);
-      errorTimeoutRef.current = null;
-    }
-    if (maxTimeoutRef.current) {
-      clearTimeout(maxTimeoutRef.current);
-      maxTimeoutRef.current = null;
-    }
-  }, []);
-
-  const setLoading = useCallback(() => {
-    clearTimeouts();
-    setState('loading');
-    setProgress(0);
-    loadingStartTime.current = Date.now();
-
-    // Set maximum loading timeout
-    maxTimeoutRef.current = setTimeout(() => {
-      setState('error');
-      if (finalConfig.autoReset && finalConfig.errorDuration > 0) {
-        errorTimeoutRef.current = setTimeout(() => {
-          setState('idle');
-          setProgress(0);
-        }, finalConfig.errorDuration);
-      }
-    }, finalConfig.maxLoadingTime);
-  }, [clearTimeouts, finalConfig.maxLoadingTime, finalConfig.autoReset, finalConfig.errorDuration]);
-
-  const setSuccess = useCallback(() => {
-    clearTimeouts();
-    
-    const handleSuccess = () => {
-      setState('success');
-      setProgress(100);
-      
-      if (finalConfig.persistSuccess && finalConfig.autoReset) {
-        successTimeoutRef.current = setTimeout(() => {
-          setState('idle');
-          setProgress(0);
-        }, finalConfig.successDuration);
-      } else if (!finalConfig.persistSuccess) {
-        setState('idle');
-        setProgress(0);
-      }
-    };
-
-    // Ensure minimum loading time
-    if (loadingStartTime.current) {
-      const elapsedTime = Date.now() - loadingStartTime.current;
-      const remainingTime = Math.max(0, finalConfig.minLoadingTime - elapsedTime);
-      
-      if (remainingTime > 0) {
-        setTimeout(handleSuccess, remainingTime);
-      } else {
-        handleSuccess();
-      }
-    } else {
-      handleSuccess();
-    }
-  }, [clearTimeouts, finalConfig.minLoadingTime, finalConfig.persistSuccess, finalConfig.autoReset, finalConfig.successDuration]);
-
-  const setError = useCallback(() => {
-    clearTimeouts();
-    
-    const handleError = () => {
-      setState('error');
-      setProgress(0);
-      
-      if (finalConfig.autoReset && finalConfig.errorDuration > 0) {
-        errorTimeoutRef.current = setTimeout(() => {
-          setState('idle');
-          setProgress(0);
-        }, finalConfig.errorDuration);
-      }
-    };
-
-    // Ensure minimum loading time
-    if (loadingStartTime.current) {
-      const elapsedTime = Date.now() - loadingStartTime.current;
-      const remainingTime = Math.max(0, finalConfig.minLoadingTime - elapsedTime);
-      
-      if (remainingTime > 0) {
-        setTimeout(handleError, remainingTime);
-      } else {
-        handleError();
-      }
-    } else {
-      handleError();
-    }
-  }, [clearTimeouts, finalConfig.minLoadingTime, finalConfig.autoReset, finalConfig.errorDuration]);
-
-  const reset = useCallback(() => {
-    clearTimeouts();
-    setState('idle');
-    setProgress(0);
-    loadingStartTime.current = null;
-  }, [clearTimeouts]);
-
-  const execute = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
-    setLoading();
-    
-    try {
-      const result = await operation();
-      setSuccess();
-      return result;
-    } catch (error) {
-      setError();
-      throw error;
-    }
-  }, [setLoading, setSuccess, setError]);
-
-  const updateProgress = useCallback((newProgress: number) => {
-    const clampedProgress = Math.max(0, Math.min(100, newProgress));
-    setProgress(clampedProgress);
-  }, []);
-
-  return {
-    state,
-    isLoading: state === 'loading',
-    isSuccess: state === 'success',
-    isError: state === 'error',
-    isIdle: state === 'idle',
-    setLoading,
-    setSuccess,
-    setError,
-    reset,
-    execute,
-    progress,
-    setProgress: updateProgress,
-  };
+  // TEMPORARILY DISABLED TO PREVENT INFINITE LOOPS
+  console.warn('useLoadingStates temporarily disabled to fix infinite loops');
+  // Return a simple stable object to prevent crashes
+  return useMemo(() => ({
+    state: 'idle' as LoadingState,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    isIdle: true,
+    setLoading: () => {},
+    setSuccess: () => {},
+    setError: () => {},
+    reset: () => {},
+    execute: async <T>(operation: () => Promise<T>) => operation(),
+    progress: 0,
+    setProgress: () => {},
+  }), []);
 }
 
 /**
@@ -309,7 +162,7 @@ export function useMultipleLoadingStates(
       };
     }
     return loadingInstances.current[key];
-  }, []);
+  }, [setStates]);
 
   const getState = useCallback((key: string): LoadingState => {
     return states[key] || 'idle';

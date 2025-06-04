@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { Todo } from '@/types/todo-nft';
 // import { useTodoStateSync } from '@/hooks/useBlockchainEvents'
 // import { BlockchainEventIndicator } from './BlockchainEventStatus'
@@ -29,7 +29,8 @@ function TodoList({ listName }: TodoListProps) {
   const [blockchainTodos, setBlockchainTodos] = useState<Todo[]>([]);
   const [loadingBlockchain, setLoadingBlockchain] = useState(false);
   const [componentMounted, setComponentMounted] = useState(false);
-  const [initializationComplete, setInitializationComplete] = useState(false);
+  const initializationComplete = useRef(false);
+  const lastInitCheck = useRef(0);
   
   // Wallet context with safety checks
   const walletContext = useWalletContext();
@@ -84,11 +85,15 @@ function TodoList({ listName }: TodoListProps) {
     setComponentMounted(true);
   }, []);
 
-  // Initialization guard effect
-  useEffect(() => {
-    if (componentMounted && (suiClientInitialized || !connected)) {
-      setInitializationComplete(true);
-    }
+  // Check initialization state without triggering re-renders
+  const checkInitialization = useCallback(() => {
+    const now = Date.now();
+    if (now - lastInitCheck.current < 50) return initializationComplete.current; // Debounce
+    
+    lastInitCheck.current = now;
+    const isComplete = componentMounted && (suiClientInitialized || !connected);
+    initializationComplete.current = isComplete;
+    return isComplete;
   }, [componentMounted, suiClientInitialized, connected]);
 
   // Load blockchain todos when wallet is connected and Sui client is ready
@@ -97,7 +102,7 @@ function TodoList({ listName }: TodoListProps) {
 
     const loadBlockchainTodos = async () => {
       // Safety checks - prevent premature execution
-      if (!componentMounted || !initializationComplete) {
+      if (!checkInitialization()) {
         return;
       }
 
@@ -147,7 +152,7 @@ function TodoList({ listName }: TodoListProps) {
     return () => {
       isMounted = false;
     };
-  }, [connected, address, suiClientInitialized, componentMounted, initializationComplete]);
+  }, [connected, address, checkInitialization]);
 
   // Load initial todos from local storage for the connected wallet
   useEffect(() => {
@@ -190,7 +195,7 @@ function TodoList({ listName }: TodoListProps) {
   // Move all useCallback hooks before early returns
   const refreshBlockchainTodos = useCallback(async () => {
     // Safety guards - moved inside the callback to ensure stable hook count
-    if (!componentMounted || !initializationComplete) {return;}
+    if (!checkInitialization()) {return;}
     if (!connected || !address || !suiClientInitialized) {return;}
 
     try {
@@ -204,17 +209,19 @@ function TodoList({ listName }: TodoListProps) {
         duration: 3000,
       });
     }
-  }, [connected, address, suiClientInitialized, componentMounted, initializationComplete]);
+  }, [connected, address, suiClientInitialized, checkInitialization]);
 
   const toggleTodoCompletion = useCallback(async (id: string) => {
     // Safety guards - componentMounted and initializationComplete checked inside to ensure stable hook count
-    if (!componentMounted || !initializationComplete) {return;}
+    if (!checkInitialization()) {return;}
     
-    const todo = displayTodos.find(t => t.id === id);
+    // Find todo using current state directly, not as dependency
+    const allCurrentTodos = displayTodos;
+    const todo = allCurrentTodos.find(t => t.id === id);
     if (!todo) {return;}
 
     // Update local state immediately for optimistic UI
-    const updatedTodos = displayTodos.map(todoItem =>
+    setTodos(prevTodos => prevTodos.map(todoItem =>
       todoItem.id === id
         ? {
             ...todoItem,
@@ -222,8 +229,7 @@ function TodoList({ listName }: TodoListProps) {
             completedAt: !todoItem.completed ? new Date().toISOString() : undefined,
           }
         : todoItem
-    );
-    setTodos(updatedTodos);
+    ));
 
     try {
       if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction && suiClientInitialized) {
@@ -241,7 +247,14 @@ function TodoList({ listName }: TodoListProps) {
             icon: '🎉',
           });
           // Refresh blockchain todos to get updated state
-          await refreshBlockchainTodos();
+          if (connected && address && suiClientInitialized) {
+            try {
+              const fetchedTodos = await getTodosFromBlockchain(address);
+              setBlockchainTodos(fetchedTodos);
+            } catch (error) {
+              // Failed to refresh blockchain todos after update
+            }
+          }
         } else {
           throw new Error(
             result.error || 'Failed to complete todo on blockchain'
@@ -279,16 +292,21 @@ function TodoList({ listName }: TodoListProps) {
       // Revert optimistic update by reloading from storage and blockchain
       const localTodos = getTodos(listName, address || undefined);
       setTodos(localTodos);
-      if (connected && address) {
-        await refreshBlockchainTodos();
+      if (connected && address && suiClientInitialized) {
+        try {
+          const fetchedTodos = await getTodosFromBlockchain(address);
+          setBlockchainTodos(fetchedTodos);
+        } catch (error) {
+          // Failed to refresh blockchain todos after error
+        }
       }
     }
-  }, [displayTodos, signAndExecuteTransaction, address, refreshBlockchainTodos, listName, connected, suiClientInitialized, componentMounted, initializationComplete]);
+  }, [signAndExecuteTransaction, address, listName, connected, suiClientInitialized, checkInitialization]);
 
   // Handle storing local todo on blockchain
   const handleStoreOnBlockchain = useCallback(async (todo: Todo) => {
     // Safety guards - moved inside the callback to ensure stable hook count
-    if (!componentMounted || !initializationComplete) {return;}
+    if (!checkInitialization()) {return;}
     if (!connected || !address || !signAndExecuteTransaction || !suiClientInitialized) {return;}
 
     try {
@@ -306,12 +324,12 @@ function TodoList({ listName }: TodoListProps) {
         duration: 4000,
       });
     }
-  }, [connected, address, signAndExecuteTransaction, suiClientInitialized, componentMounted, initializationComplete]);
+  }, [connected, address, signAndExecuteTransaction, suiClientInitialized, checkInitialization]);
 
   // Handle deleting todo (local or blockchain)
   const handleDeleteTodo = useCallback(async (todo: Todo) => {
     // Safety guards - moved inside the callback to ensure stable hook count
-    if (!componentMounted || !initializationComplete) {return;}
+    if (!checkInitialization()) {return;}
     if (!confirm(`Are you sure you want to delete "${todo.title}"?`)) {return;}
 
     try {
@@ -330,7 +348,14 @@ function TodoList({ listName }: TodoListProps) {
             icon: '🗑️',
           });
           // Refresh blockchain todos
-          await refreshBlockchainTodos();
+          if (connected && address && suiClientInitialized) {
+            try {
+              const fetchedTodos = await getTodosFromBlockchain(address);
+              setBlockchainTodos(fetchedTodos);
+            } catch (error) {
+              // Failed to refresh blockchain todos after delete
+            }
+          }
         } else {
           throw new Error(
             result.error || 'Failed to delete todo from blockchain'
@@ -338,8 +363,7 @@ function TodoList({ listName }: TodoListProps) {
         }
       } else {
         // Delete from local storage
-        const updatedTodos = todos.filter(t => t.id !== todo.id);
-        setTodos(updatedTodos);
+        setTodos(prevTodos => prevTodos.filter(t => t.id !== todo.id));
         toast.success('Todo deleted!', {
           duration: 2000,
         });
@@ -352,7 +376,7 @@ function TodoList({ listName }: TodoListProps) {
         duration: 5000,
       });
     }
-  }, [signAndExecuteTransaction, address, refreshBlockchainTodos, todos, suiClientInitialized, componentMounted, initializationComplete]);
+  }, [signAndExecuteTransaction, address, listName, suiClientInitialized, checkInitialization]);
 
   // Early returns after all hooks are called
   if (!componentMounted) {
