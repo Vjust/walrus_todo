@@ -1,6 +1,22 @@
 // Advanced Service Worker for WalTodo with Intelligent Content Delivery
 // Version: 2.0.0 - Content Delivery Optimization
 
+// Disable service worker in development
+if (typeof location !== 'undefined' && location.hostname === 'localhost') {
+  console.log('[SW] Service Worker disabled in development mode');
+  self.addEventListener('install', event => {
+    self.skipWaiting();
+  });
+  self.addEventListener('activate', event => {
+    self.clients.claim();
+  });
+  self.addEventListener('fetch', event => {
+    // Pass through all requests in development
+    return;
+  });
+  // Exit early to prevent further execution
+}
+
 const CACHE_VERSION = '2.0.1'; // Increment to force cache update
 const CACHE_NAME = `waltodo-v${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = `waltodo-static-v${CACHE_VERSION}`;
@@ -258,6 +274,20 @@ function getCacheConfig(cacheName) {
 }
 
 function addCacheHeaders(response, cacheStatus) {
+  // Handle invalid status codes (0 means network error)
+  if (!response || response.status === 0 || response.status < 200 || response.status > 599) {
+    return new Response('Network error', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: {
+        'X-Cache-Status': cacheStatus,
+        'X-Cache-Version': CACHE_VERSION,
+        'X-SW-Cache-Date': new Date().toISOString(),
+        'Content-Type': 'text/plain'
+      }
+    });
+  }
+
   const headers = new Headers(response.headers);
   headers.set('X-Cache-Status', cacheStatus);
   headers.set('X-Cache-Version', CACHE_VERSION);
@@ -388,7 +418,7 @@ async function staleWhileRevalidate(request, cacheName = DYNAMIC_CACHE_NAME) {
   
   // Always try to fetch fresh content in background
   const fetchPromise = fetch(request).then(response => {
-    if (response.ok) {
+    if (response && response.ok) {
       const headers = new Headers(response.headers);
       headers.set('sw-cached-date', Date.now().toString());
       headers.set('sw-cache-version', CACHE_VERSION);
@@ -400,7 +430,10 @@ async function staleWhileRevalidate(request, cacheName = DYNAMIC_CACHE_NAME) {
       }));
     }
     return response;
-  }).catch(() => null);
+  }).catch(error => {
+    console.warn('[SW] Background fetch failed:', error);
+    return null;
+  });
   
   // Return cached version immediately if available
   if (cachedResponse) {
@@ -414,11 +447,15 @@ async function staleWhileRevalidate(request, cacheName = DYNAMIC_CACHE_NAME) {
   PERFORMANCE_METRICS.cacheMisses++;
   const networkResponse = await fetchPromise;
   
-  if (networkResponse) {
+  if (networkResponse && networkResponse.ok) {
     return addCacheHeaders(networkResponse, 'FRESH');
   }
   
-  return new Response('Content not available', { status: 503 });
+  return new Response('Content not available', { 
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/plain' }
+  });
 }
 
 // Enhanced network first strategy

@@ -2,6 +2,13 @@
  * Performance monitoring utilities for Zustand stores
  */
 
+import { 
+  PERFORMANCE_CONFIG, 
+  isPerformanceMonitoringEnabled,
+  SLOW_ACTION_THRESHOLD,
+  MAX_STORED_METRICS 
+} from '../config/performance';
+
 interface ActionMetrics {
   actionName: string;
   storeName: string;
@@ -12,9 +19,10 @@ interface ActionMetrics {
 
 class StorePerformanceMonitor {
   private metrics: ActionMetrics[] = [];
-  private maxMetrics = 200;
-  private slowActionThreshold = 16; // 16ms = 1 frame at 60fps
-  private enabled = process.env.NODE_ENV === 'development';
+  private maxMetrics = MAX_STORED_METRICS;
+  private slowActionThreshold = SLOW_ACTION_THRESHOLD;
+  private enabled = isPerformanceMonitoringEnabled();
+  private memoryTrackingInterval: NodeJS.Timeout | null = null;
 
   /**
    * Record action execution time
@@ -37,8 +45,8 @@ class StorePerformanceMonitor {
       this.metrics = this.metrics.slice(-this.maxMetrics);
     }
 
-    // Log slow actions
-    if (metric.isSlowAction) {
+    // Log slow actions only if enabled
+    if (metric.isSlowAction && PERFORMANCE_CONFIG.features.logSlowActions) {
       console.warn(
         `🐌 Slow store action: ${storeName}.${actionName} took ${executionTime.toFixed(2)}ms`
       );
@@ -115,11 +123,64 @@ class StorePerformanceMonitor {
    */
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
+    
+    // Clean up memory tracking if disabling
+    if (!enabled && this.memoryTrackingInterval) {
+      clearInterval(this.memoryTrackingInterval);
+      this.memoryTrackingInterval = null;
+    }
+  }
+
+  /**
+   * Start memory tracking if enabled
+   */
+  private startMemoryTracking() {
+    if (!PERFORMANCE_CONFIG.memory.trackingEnabled || this.memoryTrackingInterval) {
+      return;
+    }
+
+    this.memoryTrackingInterval = setInterval(() => {
+      if (typeof window !== 'undefined' && 'performance' in window && 'memory' in (performance as any)) {
+        const memory = (performance as any).memory;
+        const heapUsedMB = memory.usedJSHeapSize / (1024 * 1024);
+        
+        if (heapUsedMB > PERFORMANCE_CONFIG.memory.criticalThresholdMB) {
+          console.error(`🚨 Critical memory usage: ${heapUsedMB.toFixed(2)}MB`);
+        } else if (heapUsedMB > PERFORMANCE_CONFIG.memory.warningThresholdMB) {
+          console.warn(`⚠️ High memory usage: ${heapUsedMB.toFixed(2)}MB`);
+        }
+      }
+    }, PERFORMANCE_CONFIG.memory.trackingIntervalMs);
+  }
+
+  /**
+   * Initialize performance monitor
+   */
+  initialize() {
+    if (this.enabled && PERFORMANCE_CONFIG.memory.trackingEnabled) {
+      this.startMemoryTracking();
+    }
+  }
+
+  /**
+   * Cleanup resources
+   */
+  cleanup() {
+    if (this.memoryTrackingInterval) {
+      clearInterval(this.memoryTrackingInterval);
+      this.memoryTrackingInterval = null;
+    }
+    this.clearMetrics();
   }
 }
 
 // Global performance monitor instance
 export const storePerformanceMonitor = new StorePerformanceMonitor();
+
+// Initialize on creation if in browser environment
+if (typeof window !== 'undefined') {
+  storePerformanceMonitor.initialize();
+}
 
 /**
  * Performance decorator for store actions
@@ -146,7 +207,7 @@ export function measureStoreAction<T extends (...args: any[]) => any>(
  */
 export function throttleAction<T extends (...args: any[]) => any>(
   action: T,
-  delay: number = 16 // Default to 16ms (60fps)
+  delay: number = PERFORMANCE_CONFIG.optimization.defaultThrottleMs
 ): T {
   let lastCall = 0;
   let timeoutId: NodeJS.Timeout | null = null;
@@ -177,7 +238,7 @@ export function throttleAction<T extends (...args: any[]) => any>(
  */
 export function debounceAction<T extends (...args: any[]) => any>(
   action: T,
-  delay: number = 300
+  delay: number = PERFORMANCE_CONFIG.optimization.defaultDebounceMs
 ): T {
   let timeoutId: NodeJS.Timeout | null = null;
 
@@ -198,8 +259,8 @@ export function debounceAction<T extends (...args: any[]) => any>(
  */
 export function batchActions<T extends (...args: any[]) => any>(
   action: T,
-  batchSize: number = 10,
-  batchDelay: number = 16
+  batchSize: number = PERFORMANCE_CONFIG.optimization.defaultBatchSize,
+  batchDelay: number = PERFORMANCE_CONFIG.optimization.defaultBatchDelayMs
 ): T {
   let batch: any[][] = [];
   let timeoutId: NodeJS.Timeout | null = null;
@@ -266,9 +327,18 @@ export const debugPerformance = {
   exportMetrics: () => storePerformanceMonitor.exportMetrics(),
   setThreshold: (ms: number) => storePerformanceMonitor.setThreshold(ms),
   setEnabled: (enabled: boolean) => storePerformanceMonitor.setEnabled(enabled),
+  cleanup: () => storePerformanceMonitor.cleanup(),
+  getConfig: () => PERFORMANCE_CONFIG,
 };
 
 // Make debug utilities globally available in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' && !PERFORMANCE_CONFIG.monitoring.enableInProduction) {
   (window as any).debugPerformance = debugPerformance;
+}
+
+// Cleanup on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    storePerformanceMonitor.cleanup();
+  });
 }

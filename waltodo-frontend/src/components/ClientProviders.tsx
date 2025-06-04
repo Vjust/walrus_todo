@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, Suspense } from 'react';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ProviderErrorBoundary } from '@/components/ProviderErrorBoundary';
@@ -9,9 +9,24 @@ import { ToastProvider } from '@/components/ToastProvider';
 import { SuiWalletProvider } from '@/providers/SuiWalletProvider';
 import { AppInitializationProvider } from '@/contexts/AppInitializationContext';
 import { StoreProvider } from '@/stores/StoreProvider';
+import { HydrationBoundary, useHydrated } from '@/utils/hydration';
 
 interface ClientProvidersProps {
   children: ReactNode;
+}
+
+/**
+ * Loading component shown during provider initialization
+ */
+function ProviderLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin mx-auto mb-4" />
+        <p className="text-sm text-gray-600">Initializing TodoNFT...</p>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -19,26 +34,26 @@ interface ClientProvidersProps {
  * 
  * This component ensures:
  * - No SSR/hydration mismatches using proper SSR-safe patterns
- * - Proper provider hierarchy (QueryClient → Wallet → App)
+ * - Proper provider hierarchy (Store → App → Query → Wallet → Toast)
  * - Graceful fallbacks when providers fail
- * - Client-side only provider mounting for static export compatibility
+ * - Progressive initialization to prevent race conditions
+ * - Hydration boundaries to prevent mismatches
  */
 export function ClientProviders({ children }: ClientProvidersProps) {
-  const [mounted, setMounted] = React.useState(false);
+  const hydrated = useHydrated();
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // During SSR/static generation, render children with a loading wrapper
-  if (!mounted) {
+  // During SSR/initial render, show minimal UI to prevent hydration issues
+  if (!hydrated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        {children}
+        <HydrationBoundary fallback={<ProviderLoadingFallback />}>
+          {children}
+        </HydrationBoundary>
       </div>
     );
   }
 
+  // Progressive provider initialization with proper error boundaries
   return (
     <ErrorBoundary
       fallback={
@@ -63,27 +78,39 @@ export function ClientProviders({ children }: ClientProvidersProps) {
         </div>
       }
     >
-      <StoreProvider>
-        <AppInitializationProvider>
-          <ProviderErrorBoundary providerName="Query Client">
-            <QueryProvider>
-              <ProviderErrorBoundary providerName="Sui Wallet">
-                <SuiWalletProvider
-                  defaultNetwork="testnet"
-                  autoConnect
-                  enableNetworkSwitching
-                  enableSlushWallet
-                >
-                  <ProviderErrorBoundary providerName="Toast">
-                    <ToastProvider />
-                    {children}
+      <Suspense fallback={<ProviderLoadingFallback />}>
+        {/* Store Provider - Base state management, must be initialized first */}
+        <StoreProvider>
+          {/* App Initialization - Tracks overall app readiness */}
+          <AppInitializationProvider>
+            <HydrationBoundary fallback={<ProviderLoadingFallback />}>
+              {/* Query Provider - Data fetching layer */}
+              <ProviderErrorBoundary providerName="Query Client">
+                <QueryProvider>
+                  {/* Wallet Provider - Blockchain connection layer */}
+                  <ProviderErrorBoundary providerName="Sui Wallet">
+                    <SuiWalletProvider
+                      defaultNetwork="testnet"
+                      autoConnect={false} // Prevent auto-connect during initial load
+                      enableNetworkSwitching
+                      enableSlushWallet
+                    >
+                      {/* Toast Provider - UI notifications */}
+                      <ProviderErrorBoundary providerName="Toast">
+                        <ToastProvider />
+                        {/* Main app content */}
+                        <Suspense fallback={<LoadingLayout />}>
+                          {children}
+                        </Suspense>
+                      </ProviderErrorBoundary>
+                    </SuiWalletProvider>
                   </ProviderErrorBoundary>
-                </SuiWalletProvider>
+                </QueryProvider>
               </ProviderErrorBoundary>
-            </QueryProvider>
-          </ProviderErrorBoundary>
-        </AppInitializationProvider>
-      </StoreProvider>
+            </HydrationBoundary>
+          </AppInitializationProvider>
+        </StoreProvider>
+      </Suspense>
     </ErrorBoundary>
   );
 }

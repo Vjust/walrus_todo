@@ -1,19 +1,43 @@
 #!/usr/bin/env node
 
 /**
- * Development server wrapper that clears caches before starting
- * and optionally opens a browser tab to clear service workers
+ * Development server wrapper with optimized startup
+ * Usage: 
+ *   node dev-with-cache-clear.js [--no-cache] [--no-setup] [--fast] [--no-browser]
  */
 
 const { spawn, exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// Check if we should auto-open browser to clear caches
-const AUTO_CLEAR_BROWSER = process.env.AUTO_CLEAR_BROWSER !== 'false';
+// Parse command line arguments
+const args = process.argv.slice(2);
+const flags = {
+  noCache: args.includes('--no-cache'),
+  noSetup: args.includes('--no-setup'),
+  fast: args.includes('--fast'),
+  noBrowser: args.includes('--no-browser'),
+};
+
+// Fast mode implies no-cache, no-setup, and no-browser
+if (flags.fast) {
+  flags.noCache = true;
+  flags.noSetup = true;
+  flags.noBrowser = true;
+}
+
+// Environment variable overrides
+const AUTO_CLEAR_BROWSER = !flags.noBrowser && process.env.AUTO_CLEAR_BROWSER !== 'false';
+const SKIP_CACHE_CLEAR = flags.noCache || process.env.SKIP_CACHE_CLEAR === 'true';
+const SKIP_SETUP = flags.noSetup || process.env.SKIP_SETUP === 'true';
 
 async function clearCaches() {
-  console.log('🚀 Starting WalTodo development server with cache clearing...\n');
+  if (SKIP_CACHE_CLEAR) {
+    console.log('⚡ Skipping cache clear for faster startup...\n');
+    return;
+  }
+  
+  console.log('🧹 Clearing caches...\n');
   
   // First run the cache clearing script
   const clearCacheScript = path.join(__dirname, 'clear-dev-cache.js');
@@ -25,36 +49,12 @@ async function clearCaches() {
   });
 }
 
-async function openCacheClearPage(port) {
-  if (!AUTO_CLEAR_BROWSER) {
-    console.log('ℹ️  Skipping browser cache clear (AUTO_CLEAR_BROWSER=false)\n');
+async function setupConfig() {
+  if (SKIP_SETUP) {
+    console.log('⚡ Skipping configuration setup...\n');
     return;
   }
-
-  const url = `http://localhost:${port}/_dev-clear-cache.html`;
-  console.log('🌐 Opening browser to clear service worker caches...\n');
   
-  // Detect platform and open browser
-  const platform = process.platform;
-  let command;
-  
-  if (platform === 'darwin') {
-    command = `open "${url}"`;
-  } else if (platform === 'win32') {
-    command = `start "${url}"`;
-  } else {
-    command = `xdg-open "${url}"`;
-  }
-  
-  exec(command, (error) => {
-    if (error) {
-      console.warn('⚠️  Could not auto-open browser. Please manually clear browser cache if needed.\n');
-    }
-  });
-}
-
-async function startDevServer() {
-  // Run the setup config first
   console.log('📋 Setting up configuration...\n');
   await new Promise((resolve) => {
     const setup = spawn('node', ['setup-config.js'], {
@@ -63,28 +63,27 @@ async function startDevServer() {
     });
     setup.on('close', resolve);
   });
+}
+
+async function startDevServer() {
+  // Start mode message
+  if (flags.fast) {
+    console.log('🚀 Starting Next.js in FAST mode (minimal setup)...\n');
+  } else {
+    console.log('🚀 Starting Next.js development server...\n');
+  }
   
-  // Start the dev server with port detection
-  console.log('🚀 Starting Next.js development server...\n');
   const startScript = path.join(__dirname, 'start-with-available-port.js');
   
   const devServer = spawn('node', [startScript, 'dev'], {
     stdio: 'inherit',
-    env: { ...process.env }
-  });
-  
-  // Wait a bit for server to start, then open cache clear page
-  setTimeout(() => {
-    // Try to detect which port was used
-    const ports = [3000, 3001, 3002];
-    for (const port of ports) {
-      fetch(`http://localhost:${port}`)
-        .then(() => {
-          openCacheClearPage(port);
-        })
-        .catch(() => {});
+    env: { 
+      ...process.env,
+      // Pass performance flags to Next.js
+      NEXT_TELEMETRY_DISABLED: '1',
+      NODE_OPTIONS: '--max-old-space-size=4096',
     }
-  }, 3000);
+  });
   
   // Handle process termination
   process.on('SIGINT', () => {
@@ -96,13 +95,35 @@ async function startDevServer() {
     devServer.kill('SIGTERM');
     process.exit();
   });
+  
+  return devServer;
 }
 
 // Main execution
 (async () => {
   try {
-    await clearCaches();
+    const startTime = Date.now();
+    
+    // Run setup tasks in parallel when not in fast mode
+    if (!flags.fast) {
+      await Promise.all([
+        clearCaches(),
+        setupConfig(),
+      ]);
+    }
+    
     await startDevServer();
+    
+    const setupTime = Date.now() - startTime;
+    console.log(`\n✅ Development server started in ${(setupTime / 1000).toFixed(1)}s\n`);
+    
+    // Print helpful information
+    console.log('📝 Available flags:');
+    console.log('  --fast        Skip all setup steps for fastest startup');
+    console.log('  --no-cache    Skip cache clearing');
+    console.log('  --no-setup    Skip configuration setup');
+    console.log('  --no-browser  Don\'t open browser\n');
+    
   } catch (error) {
     console.error('❌ Error starting development server:', error);
     process.exit(1);

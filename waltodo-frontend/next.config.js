@@ -1,18 +1,29 @@
 /** @type {import('next').NextConfig} */
 
+const path = require('path');
+
 // Check if we're building for static export
 const isStaticExport = process.env.NEXT_EXPORT === 'true' || process.env.BUILD_MODE === 'static';
 
-// Security headers configuration
+// Security headers configuration - conditional based on environment
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Build performance settings
+const ENABLE_BUILD_CACHE = process.env.DISABLE_BUILD_CACHE !== 'true';
+const ENABLE_SWC_MINIFY = process.env.DISABLE_SWC_MINIFY !== 'true';
+const PARALLEL_BUILD = process.env.PARALLEL_BUILD !== 'false';
+
 const securityHeaders = [
   {
     key: 'X-DNS-Prefetch-Control',
     value: 'on'
   },
-  {
+  // Only apply HSTS in production
+  ...(isDevelopment ? [] : [{
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload'
-  },
+  }]),
   {
     key: 'X-XSS-Protection',
     value: '1; mode=block'
@@ -35,8 +46,20 @@ const securityHeaders = [
   }
 ];
 
-// Content Security Policy
-const ContentSecurityPolicy = `
+// Content Security Policy - conditional based on environment
+const ContentSecurityPolicy = isDevelopment ? `
+  default-src 'self' 'unsafe-inline' 'unsafe-eval';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https: http: localhost:*;
+  style-src 'self' 'unsafe-inline' https: http:;
+  img-src 'self' data: blob: https: http:;
+  font-src 'self' https: http: data:;
+  connect-src 'self' https: http: wss: ws: localhost:*;
+  media-src 'self' https: http:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+` : `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://vitals.vercel-insights.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
@@ -161,35 +184,77 @@ const nextConfig = {
   
   // Performance optimizations
   compiler: {
-    // Temporarily disable console removal to debug build issues
-    removeConsole: false,
+    // Remove console in production only
+    removeConsole: isProduction ? {
+      exclude: ['error', 'warn']
+    } : false,
   },
+  
+  // SWC minification for faster builds
+  swcMinify: ENABLE_SWC_MINIFY,
   
   // Webpack optimizations for production
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Fix for Next.js 15 factory call errors
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      crypto: require.resolve('crypto-browserify'),
-      stream: require.resolve('stream-browserify'),
-      buffer: require.resolve('buffer'),
-      util: require.resolve('util'),
-      url: require.resolve('url'),
-      querystring: require.resolve('querystring-es3'),
-      process: require.resolve('process/browser'),
-      path: false,
-      fs: false,
-      net: false,
-      tls: false,
-    };
+    // Enable webpack build cache
+    if (ENABLE_BUILD_CACHE) {
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+        cacheDirectory: path.resolve('.next/cache/webpack'),
+        compression: 'gzip',
+        hashAlgorithm: 'xxhash64',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxMemoryGenerations: dev ? 5 : Infinity,
+        memoryCacheUnaffected: true,
+        name: `${buildId}-${dev ? 'dev' : 'prod'}`,
+        profile: false,
+        store: 'pack',
+        version: `${process.env.NODE_ENV}-${Date.now()}`,
+      };
+    }
+    
+    // Parallel compilation for faster builds
+    if (PARALLEL_BUILD && !isServer) {
+      config.parallelism = require('os').cpus().length;
+    }
+    
+    // Only add polyfills in production - skip in dev for faster builds
+    if (!dev) {
+      // Fix for Next.js 15 factory call errors
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: require.resolve('crypto-browserify'),
+        stream: require.resolve('stream-browserify'),
+        buffer: require.resolve('buffer'),
+        util: require.resolve('util'),
+        url: require.resolve('url'),
+        querystring: require.resolve('querystring-es3'),
+        process: require.resolve('process/browser'),
+        path: false,
+        fs: false,
+        net: false,
+        tls: false,
+      };
 
-    // Provide polyfills for Node.js built-ins
-    config.plugins.push(
-      new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer'],
-        process: 'process/browser',
-      })
-    );
+      // Provide polyfills for Node.js built-ins
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+        })
+      );
+    } else {
+      // Minimal fallbacks for development
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        path: false,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
 
     // Resolve module issues with packages
     config.resolve.alias = {
@@ -213,64 +278,37 @@ const nextConfig = {
       layers: true,
     };
 
-    // Optimize bundle splitting
+    // Load optimization config for production builds
     if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            chunks: 'all',
-            priority: 1,
-            reuseExistingChunk: true,
-          },
-          // Separate chart libraries
-          charts: {
-            test: /[\\/]node_modules[\\/](recharts|d3-)/,
-            chunks: 'all',
-            priority: 3,
-            name: 'charts',
-            reuseExistingChunk: true,
-          },
-          // Separate blockchain libraries
-          blockchain: {
-            test: /[\\/]node_modules[\\/](@mysten|@wallet-standard)/,
-            chunks: 'all',
-            priority: 4,
-            name: 'blockchain',
-            reuseExistingChunk: true,
-          },
-          // Separate UI libraries
-          ui: {
-            test: /[\\/]node_modules[\\/](framer-motion|lucide-react|react-transition-group)/,
-            chunks: 'all',
-            priority: 2,
-            name: 'ui',
-            reuseExistingChunk: true,
-          },
-          // Common utilities
-          utils: {
-            test: /[\\/]node_modules[\\/](date-fns|fuse\.js|nanoid|zustand)/,
-            chunks: 'all',
-            priority: 2,
-            name: 'utils',
-            reuseExistingChunk: true,
-          },
-        },
+      const optimizationConfig = require('./webpack.config.optimization.js');
+      config.optimization = {
+        ...config.optimization,
+        ...optimizationConfig.getOptimizationConfig(webpack, isProduction),
+      };
+    } else if (dev) {
+      // Development optimizations for faster rebuilds
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        splitChunks: false,
+        runtimeChunk: false,
+        minimize: false,
       };
     }
 
-    // Tree-shaking optimizations - compatible with Next.js 15
-    config.optimization.sideEffects = false;
-    config.optimization.usedExports = false; // Disable to prevent conflicts with Next.js 15
+    // Tree-shaking optimizations - only in production
+    if (!dev) {
+      config.optimization.sideEffects = false;
+      config.optimization.usedExports = true;
+      config.optimization.innerGraph = true;
+      config.optimization.providedExports = true;
+      config.optimization.concatenateModules = true;
+    }
     
     // Fix webpack module factory call errors
     config.optimization.moduleIds = 'deterministic';
     config.optimization.chunkIds = 'deterministic';
-    config.optimization.providedExports = false; // Prevent factory conflicts
-    
-    // Add module concatenation for better performance
-    config.optimization.concatenateModules = !dev;
     
     // Note: Next.js handles transpilation internally, no need for custom babel-loader
 

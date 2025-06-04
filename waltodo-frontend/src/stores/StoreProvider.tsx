@@ -40,93 +40,104 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     appActions.setHydrated(true);
     appActions.setInitialized(true);
     
-    // Set up performance monitoring
-    const performanceInterval = setInterval(() => {
-      updateMemoryUsage();
-    }, 30000); // Every 30 seconds
-    intervalRefs.current.push(performanceInterval);
-    
-    // Set up cache management
-    const cacheInterval = setInterval(() => {
-      manageTodoCache();
-    }, 60 * 60 * 1000); // Every hour
-    intervalRefs.current.push(cacheInterval);
-    
-    // Set up session timeout checking for wallet
-    const sessionInterval = setInterval(() => {
-      const walletState = useWalletStore.getState();
-      if (walletState.connection.status === 'connected') {
-        const timeSinceActivity = Date.now() - walletState.session.lastActivity;
-        const warningTime = (walletState.session.autoDisconnectTime || 30 * 60 * 1000) - 5 * 60 * 1000;
-        
-        if (timeSinceActivity >= warningTime && !walletState.session.timeoutWarning) {
-          walletState.setTimeoutWarning(true);
-        }
-        
-        if (timeSinceActivity >= (walletState.session.autoDisconnectTime || 30 * 60 * 1000)) {
-          walletState.setSessionExpired(true);
-        }
-      }
-    }, 60000); // Every minute
-    intervalRefs.current.push(sessionInterval);
-    
-    // Set up network health monitoring
-    const networkInterval = setInterval(async () => {
-      const { updateNetworkStatus } = useAppStore.getState();
+    // Delay heavy operations to prevent blocking initial render
+    setTimeout(() => {
+      if (typeof window === 'undefined') return;
       
-      // Check different services with appropriate endpoints
-      const checks = [
-        { service: 'sui' as const, url: 'https://fullnode.testnet.sui.io' },
-        { service: 'walrus' as const, url: 'https://publisher.walrus-testnet.walrus.space' },
-        { service: 'api' as const, url: `${window.location.origin  }/api/health` },
-      ];
+      // Set up performance monitoring
+      const performanceInterval = setInterval(() => {
+        updateMemoryUsage();
+      }, 30000); // Every 30 seconds
+      intervalRefs.current.push(performanceInterval);
       
-      for (const { service, url } of checks) {
-        try {
-          const start = performance.now();
-          const response = await fetch(url, { 
-            method: 'HEAD', 
-            cache: 'no-cache',
-            signal: AbortSignal.timeout(5000)
-          });
-          const latency = performance.now() - start;
-          const status = response.ok ? 'healthy' : 'degraded';
+      // Set up cache management
+      const cacheInterval = setInterval(() => {
+        manageTodoCache();
+      }, 60 * 60 * 1000); // Every hour
+      intervalRefs.current.push(cacheInterval);
+      
+      // Set up session timeout checking for wallet
+      const sessionInterval = setInterval(() => {
+        const walletState = useWalletStore.getState();
+        if (walletState.connection.status === 'connected') {
+          const timeSinceActivity = Date.now() - walletState.session.lastActivity;
+          const warningTime = (walletState.session.autoDisconnectTime || 30 * 60 * 1000) - 5 * 60 * 1000;
           
-          updateNetworkStatus(service, status, latency);
-        } catch (error) {
-          updateNetworkStatus(service, 'offline', 0);
+          if (timeSinceActivity >= warningTime && !walletState.session.timeoutWarning) {
+            walletState.setTimeoutWarning(true);
+          }
+          
+          if (timeSinceActivity >= (walletState.session.autoDisconnectTime || 30 * 60 * 1000)) {
+            walletState.setSessionExpired(true);
+          }
         }
-      }
-    }, 2 * 60 * 1000); // Every 2 minutes
-    intervalRefs.current.push(networkInterval);
+      }, 60000); // Every minute
+      intervalRefs.current.push(sessionInterval);
+      
+      // Set up network health monitoring
+      const networkInterval = setInterval(async () => {
+        const { updateNetworkStatus } = useAppStore.getState();
+        
+        // Check different services with appropriate endpoints
+        const checks = [
+          { service: 'sui' as const, url: 'https://fullnode.testnet.sui.io' },
+          { service: 'walrus' as const, url: 'https://publisher.walrus-testnet.walrus.space' },
+          { service: 'api' as const, url: `${window.location.origin  }/api/health` },
+        ];
+        
+        for (const { service, url } of checks) {
+          try {
+            const start = performance.now();
+            const response = await fetch(url, { 
+              method: 'HEAD', 
+              cache: 'no-cache',
+              signal: AbortSignal.timeout(5000)
+            });
+            const latency = performance.now() - start;
+            const status = response.ok ? 'healthy' : 'degraded';
+            
+            updateNetworkStatus(service, status, latency);
+          } catch (error) {
+            updateNetworkStatus(service, 'offline', 0);
+          }
+        }
+      }, 2 * 60 * 1000); // Every 2 minutes
+      intervalRefs.current.push(networkInterval);
+      
+      // Set up activity tracking for wallet
+      const trackActivity = () => {
+        const walletState = useWalletStore.getState();
+        if (walletState.connection.status === 'connected') {
+          walletState.updateActivity();
+        }
+      };
+      
+      // Track user activity
+      const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+      activityEvents.forEach(event => {
+        document.addEventListener(event, trackActivity, { passive: true });
+      });
+    }, 1000); // Delay heavy operations by 1 second
     
-    // Set up activity tracking for wallet
-    const trackActivity = () => {
-      const walletState = useWalletStore.getState();
-      if (walletState.connection.status === 'connected') {
-        walletState.updateActivity();
-      }
-    };
+    initialized.current = true;
     
-    // Track user activity
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    activityEvents.forEach(event => {
-      document.addEventListener(event, trackActivity, { passive: true });
-    });
-    
-    // Cleanup function
-    const cleanup = () => {
+    // Return cleanup function
+    return () => {
       intervalRefs.current.forEach(interval => clearInterval(interval));
       intervalRefs.current = [];
       
+      // Remove activity event listeners
+      const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+      const trackActivity = () => {
+        const walletState = useWalletStore.getState();
+        if (walletState.connection.status === 'connected') {
+          walletState.updateActivity();
+        }
+      };
       activityEvents.forEach(event => {
         document.removeEventListener(event, trackActivity);
       });
     };
-    
-    initialized.current = true;
-    
-    return cleanup;
   }, []);
   
   // Clean up intervals on unmount

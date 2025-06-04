@@ -1,62 +1,152 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState, useCallback } from 'react';
 import { useAppInitialization } from '@/contexts/AppInitializationContext';
+import { HydrationBoundary, useHydrated } from '@/utils/hydration';
 
 interface InitializationGuardProps {
   children: ReactNode;
   fallback?: ReactNode;
   requireSuiClient?: boolean;
+  timeout?: number; // Timeout in ms before showing error state
+  showProgress?: boolean; // Show detailed progress indicators
+}
+
+/**
+ * Default loading component with progress indicators
+ */
+function DefaultLoadingFallback({ 
+  stage, 
+  error, 
+  showProgress = true,
+  progress = 0
+}: { 
+  stage: string; 
+  error: string | null;
+  showProgress: boolean;
+  progress?: number;
+}) {
+  return (
+    <div className='flex flex-col items-center justify-center min-h-[200px] py-8'>
+      <div className='w-10 h-10 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin' />
+      <div className='mt-4 text-center max-w-xs'>
+        <p className='text-sm font-medium text-gray-700'>
+          {stage}
+        </p>
+        {showProgress && (
+          <div className='mt-2'>
+            <div className='w-48 h-1 bg-gray-200 rounded-full overflow-hidden'>
+              <div 
+                className='h-full bg-blue-500 rounded-full transition-all duration-300 ease-out' 
+                style={{ width: `${progress}%` }} 
+              />
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className='mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md'>
+            <p className='text-xs text-yellow-700'>
+              {error}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**
  * Guards components from rendering until the app is properly initialized
  * Prevents premature access to Sui client and other services
  * 
- * Uses suppressHydrationWarning to prevent hydration mismatches during initialization
+ * Features:
+ * - Progressive initialization tracking
+ * - Timeout handling for stuck initialization
+ * - Hydration-safe rendering
+ * - Detailed error states
  */
 export function InitializationGuard({ 
   children, 
   fallback, 
-  requireSuiClient = false 
+  requireSuiClient = false,
+  timeout = 30000, // 30 seconds default timeout
+  showProgress = true
 }: InitializationGuardProps) {
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useHydrated();
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [initStage, setInitStage] = useState('Starting...');
   
-  // Always call hooks at the top level - never conditionally
-  // useAppInitialization now safely returns default values during SSR
-  const contextValue = useAppInitialization();
+  // Get initialization context
+  const { 
+    isAppReady, 
+    isSuiClientReady, 
+    initializationError, 
+    initializationProgress,
+    retryInitialization 
+  } = useAppInitialization();
   
-  // Track client-side mounting to prevent hydration issues
+  // Track initialization stages
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!hydrated) {
+      setInitStage('Loading application...');
+    } else if (!isAppReady) {
+      setInitStage('Initializing core services...');
+    } else if (requireSuiClient && !isSuiClientReady) {
+      setInitStage('Connecting to blockchain...');
+    } else {
+      setInitStage('Ready!');
+    }
+  }, [hydrated, isAppReady, isSuiClientReady, requireSuiClient]);
   
-  const { isAppReady, isSuiClientReady, initializationError } = contextValue;
+  // Handle initialization timeout
+  useEffect(() => {
+    if (hydrated && !isAppReady) {
+      const timer = setTimeout(() => {
+        setHasTimedOut(true);
+      }, timeout);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hydrated, isAppReady, timeout]);
   
-  // Determine if we're ready based on requirements
-  const isReady = mounted && (requireSuiClient ? (isAppReady && isSuiClientReady) : isAppReady);
+  // Determine if we're ready
+  const isReady = hydrated && isAppReady && (!requireSuiClient || isSuiClientReady);
   
+  // Handle timeout error
+  const displayError = hasTimedOut 
+    ? 'Initialization is taking longer than expected. Please refresh the page.'
+    : initializationError;
+  
+  // Custom or default loading content with retry capability
   const loadingContent = fallback || (
-    <div className='flex flex-col items-center justify-center py-8'>
-      <div className='w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin' />
-      <div className='mt-3 text-center'>
-        <p className='text-sm text-gray-600'>
-          {!mounted ? 'Loading...' : (!isAppReady ? 'Initializing application...' : 'Connecting to blockchain...')}
-        </p>
-        {mounted && initializationError && (
-          <p className='text-xs text-yellow-600 mt-1'>
-            Warning: {initializationError}
-          </p>
-        )}
-      </div>
+    <div>
+      <DefaultLoadingFallback 
+        stage={initStage} 
+        error={displayError} 
+        showProgress={showProgress}
+        progress={initializationProgress}
+      />
+      {displayError && (
+        <div className='text-center mt-4'>
+          <button
+            onClick={retryInitialization}
+            className='px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+          >
+            Retry Initialization
+          </button>
+        </div>
+      )}
     </div>
   );
   
-  // Always render consistent structure, use suppressHydrationWarning for content that differs
+  // Render with hydration boundary
   return (
-    <div suppressHydrationWarning>
+    <HydrationBoundary 
+      fallback={loadingContent}
+      suppressWarning
+    >
       {isReady ? children : loadingContent}
-    </div>
+    </HydrationBoundary>
   );
 }
 

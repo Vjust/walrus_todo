@@ -62,17 +62,82 @@ export const viewport = {
   themeColor: '#2563eb',
 };
 
+/**
+ * Root error boundary component for catastrophic failures
+ */
+function RootErrorFallback() {
+  return (
+    <html lang='en'>
+      <body>
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f9fafb',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+        }}>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              Application Error
+            </h1>
+            <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
+              Something went wrong. Please refresh the page.
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.375rem',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </body>
+    </html>
+  );
+}
+
 export default function RootLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   return (
-    <html lang='en'>
-      <body className='font-sans min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 antialiased'>
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+    <html lang='en' suppressHydrationWarning>
+      <head>
+        {/* Preload critical resources */}
+        <link rel='preconnect' href='https://fonts.googleapis.com' />
+        <link rel='dns-prefetch' href='https://fonts.googleapis.com' />
+      </head>
+      <body 
+        className='font-sans min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 antialiased'
+        suppressHydrationWarning
+      >
+        {/* Minimal wrapper to ensure fast initial render */}
+        <div id='root' suppressHydrationWarning>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
+        </div>
+        
+        {/* Non-blocking scripts */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Prevent FOUC (Flash of Unstyled Content)
+              if (typeof window !== 'undefined') {
+                document.documentElement.classList.add('js');
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
