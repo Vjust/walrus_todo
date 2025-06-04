@@ -11,6 +11,9 @@ import CreateCommand from './create';
 import DeleteCommand from './delete';
 import DemoProgressCommand from './demo-progress';
 import DeployCommand from './deploy';
+import DeployDiagnosticsCommand from './deploy/diagnostics';
+import DeployEnhancedCommand from './deploy/enhanced';
+import DeploySiteCommand from './deploy-site';
 import InteractiveCommand from './interactive';
 import JobsCommand from './jobs';
 import ListCommand from './list';
@@ -39,6 +42,9 @@ export {
   DeleteCommand,
   DemoProgressCommand,
   DeployCommand,
+  DeployDiagnosticsCommand,
+  DeployEnhancedCommand,
+  DeploySiteCommand,
   InteractiveCommand,
   JobsCommand,
   ListCommand,

@@ -111,6 +111,26 @@
       "args": [],
       "path": "./dist/src/commands/demo-progress"
     },
+    "deploy-site": {
+      "id": "deploy-site",
+      "description": "deploy-site command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/deploy-site"
+    },
+    "deploy-with-health-check": {
+      "id": "deploy-with-health-check",
+      "description": "deploy-with-health-check command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/deploy-with-health-check"
+    },
     "deploy": {
       "id": "deploy",
       "description": "Deploy the Todo NFT smart contract to the Sui blockchain",
@@ -481,6 +501,26 @@
       "args": [],
       "path": "./dist/src/commands/ai/verify"
     },
+    "deploy:diagnostics": {
+      "id": "deploy:diagnostics",
+      "description": "deploy:diagnostics command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/deploy/diagnostics"
+    },
+    "deploy:enhanced": {
+      "id": "deploy:enhanced",
+      "description": "deploy:enhanced command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/deploy/enhanced"
+    },
     "image:create-nft": {
       "id": "image:create-nft",
       "description": "image:create-nft command",
@@ -527,6 +567,9 @@
     },
     "simple": {
       "description": "Simple todo management commands"
+    },
+    "deploy": {
+      "description": "Deploy management commands"
     }
   }
 }

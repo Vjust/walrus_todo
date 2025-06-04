@@ -95,6 +95,7 @@
     "security-audit:comprehensive": "pnpm run test:security && pnpm run test:fuzz && pnpm run test:stress",
     "postinstall": "node scripts/fix-permissions.js && node scripts/enhanced-run-build.js --manifest-only",
     "upload-image": "ts-node scripts/upload-default-image.ts",
+    "validate:rpc": "ts-node scripts/validate-rpc-endpoints.ts",
     "manifest": "node scripts/enhanced-run-build.js --manifest-only",
     "postbuild": "node scripts/enhanced-run-build.js --manifest-only",
     "local-install": "mkdir -p ~/.local/bin && pnpm pack && tar -xzf waltodo-1.0.0.tgz && cp -r package/bin/* ~/.local/bin/ && chmod +x ~/.local/bin/waltodo && rm -rf package waltodo-1.0.0.tgz",

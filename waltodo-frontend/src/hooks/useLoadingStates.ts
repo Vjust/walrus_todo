@@ -68,23 +68,116 @@ export function useLoadingStates(
   /** Configuration options */
   config: LoadingConfig = {}
 ): UseLoadingStatesReturn {
-  // TEMPORARILY DISABLED TO PREVENT INFINITE LOOPS
-  console.warn('useLoadingStates temporarily disabled to fix infinite loops');
-  // Return a simple stable object to prevent crashes
-  return useMemo(() => ({
-    state: 'idle' as LoadingState,
-    isLoading: false,
-    isSuccess: false,
-    isError: false,
-    isIdle: true,
-    setLoading: () => {},
-    setSuccess: () => {},
-    setError: () => {},
-    reset: () => {},
-    execute: async <T>(operation: () => Promise<T>) => operation(),
-    progress: 0,
-    setProgress: () => {},
-  }), []);
+  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
+  const [state, setState] = useState<LoadingState>('idle');
+  const [progress, setProgress] = useState(0);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const startTimeRef = useRef<number>();
+
+  // Computed states
+  const isLoading = state === 'loading';
+  const isSuccess = state === 'success';
+  const isError = state === 'error';
+  const isIdle = state === 'idle';
+
+  // Clear any existing timeouts
+  const clearTimeouts = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = undefined;
+    }
+  }, []);
+
+  // Set loading state
+  const setLoading = useCallback(() => {
+    clearTimeouts();
+    setState('loading');
+    setProgress(0);
+    startTimeRef.current = Date.now();
+
+    // Set max loading timeout
+    if (mergedConfig.maxLoadingTime) {
+      timeoutRef.current = setTimeout(() => {
+        setState('error');
+      }, mergedConfig.maxLoadingTime);
+    }
+  }, [clearTimeouts, mergedConfig.maxLoadingTime]);
+
+  // Set success state
+  const setSuccess = useCallback(() => {
+    clearTimeouts();
+    
+    // Ensure minimum loading time
+    const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : Infinity;
+    const delay = Math.max(0, mergedConfig.minLoadingTime - elapsed);
+
+    setTimeout(() => {
+      setState('success');
+      setProgress(100);
+
+      if (mergedConfig.autoReset && mergedConfig.successDuration) {
+        timeoutRef.current = setTimeout(() => {
+          setState('idle');
+          setProgress(0);
+        }, mergedConfig.successDuration);
+      }
+    }, delay);
+  }, [clearTimeouts, mergedConfig]);
+
+  // Set error state
+  const setError = useCallback(() => {
+    clearTimeouts();
+    setState('error');
+    setProgress(0);
+
+    if (mergedConfig.autoReset && mergedConfig.errorDuration) {
+      timeoutRef.current = setTimeout(() => {
+        setState('idle');
+      }, mergedConfig.errorDuration);
+    }
+  }, [clearTimeouts, mergedConfig]);
+
+  // Reset to idle
+  const reset = useCallback(() => {
+    clearTimeouts();
+    setState('idle');
+    setProgress(0);
+  }, [clearTimeouts]);
+
+  // Execute async operation
+  const execute = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
+    setLoading();
+    try {
+      const result = await operation();
+      setSuccess();
+      return result;
+    } catch (error) {
+      setError();
+      throw error;
+    }
+  }, [setLoading, setSuccess, setError]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeouts();
+    };
+  }, [clearTimeouts]);
+
+  return {
+    state,
+    isLoading,
+    isSuccess,
+    isError,
+    isIdle,
+    setLoading,
+    setSuccess,
+    setError,
+    reset,
+    execute,
+    progress,
+    setProgress,
+  };
 }
 
 /**
