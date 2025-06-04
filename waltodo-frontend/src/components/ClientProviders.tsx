@@ -8,6 +8,7 @@ import LoadingLayout from '@/components/LoadingLayout';
 import { ToastProvider } from '@/components/ToastProvider';
 import { SuiWalletProvider } from '@/providers/SuiWalletProvider';
 import { AppInitializationProvider } from '@/contexts/AppInitializationContext';
+import { StoreProvider } from '@/stores/StoreProvider';
 
 interface ClientProvidersProps {
   children: ReactNode;
@@ -62,25 +63,27 @@ export function ClientProviders({ children }: ClientProvidersProps) {
         </div>
       }
     >
-      <AppInitializationProvider>
-        <ProviderErrorBoundary providerName="Query Client">
-          <QueryProvider>
-            <ProviderErrorBoundary providerName="Sui Wallet">
-              <SuiWalletProvider
-                defaultNetwork="testnet"
-                autoConnect
-                enableNetworkSwitching
-                enableSlushWallet
-              >
-                <ProviderErrorBoundary providerName="Toast">
-                  <ToastProvider />
-                  {children}
-                </ProviderErrorBoundary>
-              </SuiWalletProvider>
-            </ProviderErrorBoundary>
-          </QueryProvider>
-        </ProviderErrorBoundary>
-      </AppInitializationProvider>
+      <StoreProvider>
+        <AppInitializationProvider>
+          <ProviderErrorBoundary providerName="Query Client">
+            <QueryProvider>
+              <ProviderErrorBoundary providerName="Sui Wallet">
+                <SuiWalletProvider
+                  defaultNetwork="testnet"
+                  autoConnect
+                  enableNetworkSwitching
+                  enableSlushWallet
+                >
+                  <ProviderErrorBoundary providerName="Toast">
+                    <ToastProvider />
+                    {children}
+                  </ProviderErrorBoundary>
+                </SuiWalletProvider>
+              </ProviderErrorBoundary>
+            </QueryProvider>
+          </ProviderErrorBoundary>
+        </AppInitializationProvider>
+      </StoreProvider>
     </ErrorBoundary>
   );
 }

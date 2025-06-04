@@ -48,6 +48,22 @@ build/
 tmp/
 .eslintcache
 
+# Next.js build outputs and cache
+.next/
+out/
+*.next/
+
+# Next.js cache directories (webpack cache files)
+.next/cache/
+**/.next/cache/
+**/cache/webpack/
+**/.next/cache/webpack/
+walrus-site-*/
+**/walrus-site-*/.next/
+
+# Vercel deployment outputs
+.vercel/
+
 # Sui Move build artifacts
 *.mv
 move/build/

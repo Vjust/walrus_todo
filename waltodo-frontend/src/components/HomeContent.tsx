@@ -7,7 +7,6 @@ import WalletConnectButton from '@/components/WalletConnectButton';
 import { ClientOnly } from '@/components/ClientOnly';
 import { addTodo, getTodos } from '@/lib/todo-service';
 import { CreateTodoParams, Todo } from '@/types/todo-nft';
-import { useSSRSafeMounted } from '@/hooks/useSSRSafe';
 import { PageSkeleton, StatsGridSkeleton } from '@/components/SSRFallback';
 import { TodoListSkeleton } from '@/components/ui/skeletons/TodoListSkeleton';
 import { StatsSkeleton } from '@/components/ui/skeletons/StatsSkeleton';
@@ -27,7 +26,19 @@ interface HomeContentProps {
 }
 
 const HomeContent = memo(({ currentPage = 'home' }: HomeContentProps) => {
-  const { mounted, isReady } = useSSRSafeMounted({ minMountTime: 100 });
+  // Simple mounted state - bypass complex store dependencies for now
+  const [mounted, setMounted] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState<CreateTodoParams>({
     title: '',
@@ -43,33 +54,44 @@ const HomeContent = memo(({ currentPage = 'home' }: HomeContentProps) => {
   });
 
   // Loading states
-  const statsLoading = useLoadingStates('home-stats', { minLoadingTime: 500 });
-  const createTodoLoading = useLoadingStates('create-todo', { minLoadingTime: 800 });
+  const statsLoading = useLoadingStates('home-stats', { minLoadingTime: 300 });
+  const createTodoLoading = useLoadingStates('create-todo', { minLoadingTime: 500 });
 
-  // Load stats when component is ready - moved to useEffect to prevent dependency loop
+  // Load stats when component is ready
   useEffect(() => {
     if (!isReady) return;
 
     const loadStats = async () => {
-      await statsLoading.execute(async () => {
-        const todos = getTodos('main');
-        const completed = todos.filter(t => t.completed).length;
-        const nft = todos.filter(t => t.blockchainStored).length;
-        
-        setStats({
-          totalTodos: todos.length,
-          completedTodos: completed,
-          pendingTodos: todos.length - completed,
-          nftTodos: nft,
+      try {
+        await statsLoading.execute(async () => {
+          const todos = getTodos('main');
+          const completed = todos.filter(t => t.completed).length;
+          const nft = todos.filter(t => t.blockchainStored).length;
+          
+          setStats({
+            totalTodos: todos.length,
+            completedTodos: completed,
+            pendingTodos: todos.length - completed,
+            nftTodos: nft,
+          });
         });
-      });
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+        // Set empty stats on error
+        setStats({
+          totalTodos: 0,
+          completedTodos: 0,
+          pendingTodos: 0,
+          nftTodos: 0,
+        });
+      }
     };
 
     loadStats();
     // Refresh stats every 30 seconds
     const interval = setInterval(loadStats, 30000);
     return () => clearInterval(interval);
-  }, [isReady]); // Only depend on isReady, not on statsLoading
+  }, [isReady, statsLoading]);
 
   const handleCreateTodo = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,11 +237,13 @@ const HomeContent = memo(({ currentPage = 'home' }: HomeContentProps) => {
     </section>
   ), [quickActions]);
 
-  // Show loading skeleton during hydration
-  if (!isReady) {
-    return <PageSkeleton showNavbar={true} />;
-  }
+  // Show loading skeleton during hydration - simplified
+  // Temporarily bypassing all loading logic to fix the issue
+  // if (!mounted || !isReady) {
+  //   return <PageSkeleton showNavbar={true} />;
+  // }
 
+  // Show content immediately - will fix loading later
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Navbar currentPage={currentPage} />
@@ -230,14 +254,17 @@ const HomeContent = memo(({ currentPage = 'home' }: HomeContentProps) => {
 
         {/* Stats Section */}
         <section className="mb-8">
-          {statsLoading.isLoading ? (
-            <StatsSkeleton 
-              cardCount={4} 
-              variant="grid" 
-              size="lg" 
-              showIcons={true}
-              animationSpeed="normal"
-            />
+          {(!mounted || !isReady || statsLoading.isLoading) ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-8 bg-gray-300 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -388,9 +415,23 @@ const HomeContent = memo(({ currentPage = 'home' }: HomeContentProps) => {
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <ClientOnly fallback={<TodoListSkeleton />}>
-              <TodoList listName="main" />
-            </ClientOnly>
+            {(!mounted || !isReady) ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            ) : (
+              <ClientOnly fallback={
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              }>
+                <TodoList listName="main" />
+              </ClientOnly>
+            )}
           </div>
         </section>
       </main>
