@@ -9,7 +9,11 @@ export const createSSRSafeStorage = (): StateStorage => {
     getItem: (name: string): string | null => {
       try {
         const value = getItem<string>(name);
-        return typeof value === 'string' ? value : null;
+        // Ensure we return only string or null
+        if (value === null || value === undefined) {
+          return null;
+        }
+        return typeof value === 'string' ? value : JSON.stringify(value);
       } catch (error) {
         console.warn(`Failed to get item from storage: ${name}`, error);
         return null;

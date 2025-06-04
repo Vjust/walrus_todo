@@ -197,7 +197,8 @@ const nextConfig = {
     }
 
     // Tree-shaking optimizations
-    config.optimization.usedExports = true;
+    // Note: usedExports conflicts with Next.js 15's cacheUnaffected
+    // Let Next.js handle tree-shaking optimizations internally
     config.optimization.sideEffects = false;
 
     // Module resolution optimizations

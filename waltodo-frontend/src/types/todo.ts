@@ -139,7 +139,7 @@ export function adaptSharedTodo(sharedTodo: SharedTodo): Todo {
   return {
     ...sharedTodo,
     description: sharedTodo.description || '',
-    priority: sharedTodo.priority || 'medium',
+    priority: (sharedTodo.priority as 'high' | 'medium' | 'low') || 'medium',
     tags: sharedTodo.tags || [],
     createdAt: typeof sharedTodo.createdAt === 'string' 
       ? sharedTodo.createdAt 
@@ -149,11 +149,11 @@ export function adaptSharedTodo(sharedTodo: SharedTodo): Todo {
       : sharedTodo.updatedAt 
         ? new Date(sharedTodo.updatedAt).toISOString()
         : new Date().toISOString(),
-    dueDate: sharedTodo.dueDate 
-      ? (typeof sharedTodo.dueDate === 'string' 
+    ...(sharedTodo.dueDate && {
+      dueDate: typeof sharedTodo.dueDate === 'string' 
         ? sharedTodo.dueDate 
-        : new Date(sharedTodo.dueDate).toISOString())
-      : undefined,
+        : new Date(sharedTodo.dueDate).toISOString()
+    }),
     private: false,
     storageLocation,
     walrusBlobId: sharedTodo.blobId,

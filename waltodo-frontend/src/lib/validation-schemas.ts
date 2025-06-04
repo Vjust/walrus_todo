@@ -2,6 +2,9 @@
 
 import { z } from 'zod';
 
+// Re-export rate limit configs for compatibility
+export { RATE_LIMIT_CONFIGS } from './rate-limiter';
+
 // Configuration for validation rules
 export const VALIDATION_RULES = {
   TITLE: {

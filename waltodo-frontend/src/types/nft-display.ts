@@ -121,9 +121,9 @@ export function convertToDisplayUrl(walrusBlobId: string, aggregator?: string): 
 /**
  * Helper function to extract blob ID from Walrus URL
  */
-export function extractBlobId(walrusUrl: string): string | null {
+export function extractBlobId(walrusUrl: string): string | undefined {
   const match = walrusUrl.match(/\/v1\/([a-zA-Z0-9_-]+)/);
-  return match ? match[1] : null;
+  return match ? match[1] : undefined;
 }
 
 /**
@@ -164,11 +164,10 @@ export function todoToNFTDisplay(
   return {
     ...todo,
     displayImageUrl: todo.imageUrl ? convertToDisplayUrl(walrusBlobId || '') : '',
-    walrusImageBlobId: walrusBlobId || undefined,
+    ...(walrusBlobId && { walrusImageBlobId: walrusBlobId }),
     nftTokenId: todo.objectId,
-    loadingState: 'idle',
-    imageLoadError: undefined,
-    contentData: todo.metadata ? parseNFTMetadata(todo.metadata) : undefined,
+    loadingState: 'idle' as NFTLoadingState,
+    ...(todo.metadata && { contentData: parseNFTMetadata(todo.metadata) }),
     displayConfig,
     thumbnails: {},
     blockchainMetadata: {}

@@ -31,7 +31,6 @@ const initialWalletState: WalletState = {
   transactions: {
     history: [],
     pending: {},
-    lastTransaction: undefined,
   },
   
   // Capabilities
@@ -58,7 +57,7 @@ export const useWalletStore = create<WalletState & WalletActions>()(
       subscribeWithSelector(
         logger(
           'Wallet Store',
-          immer((set, get) => ({
+          immer((set, _get) => ({
             ...initialWalletState,
 
             // Connection actions
@@ -222,7 +221,7 @@ export const useWalletStore = create<WalletState & WalletActions>()(
 
                 // Clear last transaction if it's the same
                 if (state.transactions.lastTransaction?.id === id) {
-                  state.transactions.lastTransaction = undefined;
+                  delete state.transactions.lastTransaction;
                 }
               });
             },
@@ -231,7 +230,7 @@ export const useWalletStore = create<WalletState & WalletActions>()(
               set((state) => {
                 state.transactions.history = [];
                 state.transactions.pending = {};
-                state.transactions.lastTransaction = undefined;
+                delete state.transactions.lastTransaction;
               });
             },
 

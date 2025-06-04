@@ -463,27 +463,13 @@ export class ToastService {
 
   /**
    * Configure react-hot-toast defaults
+   * Note: react-hot-toast v2.x doesn't have toast.setup()
+   * Configuration is done via the Toaster component or individual toast options
    */
   private configureDefaults(): void {
-    toast.setup({
-      // Default position
-      position: 'top-right',
-      
-      // Default toast options
-      toastOptions: {
-        duration: 4000,
-        style: {
-          background: '#FFFFFF',
-          color: '#374151',
-          border: '1px solid #E5E7EB',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          fontSize: '14px',
-          maxWidth: '400px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-        }
-      }
-    });
+    // Default configuration is handled by the Toaster component
+    // Individual toasts use the theme configuration through the toast options
+    // This method is kept for potential future configuration needs
   }
 
   /**
