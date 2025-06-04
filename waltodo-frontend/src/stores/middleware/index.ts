@@ -24,7 +24,7 @@ export const defaultMiddleware = {
 /**
  * Middleware factory for creating stores with consistent configuration
  */
-export const createStoreWithMiddleware = <T>(
+export const createStoreWithMiddleware = async <T>(
   name: string,
   storeConfig: any,
   options: {
@@ -37,44 +37,58 @@ export const createStoreWithMiddleware = <T>(
 ) => {
   let config = storeConfig;
   
-  // Apply middleware in reverse order (innermost first)
-  if (options.immer !== false && defaultMiddleware.enableImmer) {
-    const { immer } = require('zustand/middleware/immer');
-    config = immer(config);
-  }
-  
-  if (options.logger !== false && defaultMiddleware.enableLogging) {
-    const { logger } = require('./logger');
-    config = logger(name, config);
-  }
-  
-  if (options.subscriptions !== false && defaultMiddleware.enableSubscriptions) {
-    const { subscribeWithSelector } = require('zustand/middleware');
-    config = subscribeWithSelector(config);
-  }
-  
-  if (options.persist !== false && defaultMiddleware.enablePersistence) {
-    const { persist } = require('zustand/middleware');
-    const { defaultStorageConfig, persistSelectors, storageKeys } = require('./persist');
+  try {
+    // Apply middleware in reverse order (innermost first)
+    if (options.immer !== false && defaultMiddleware.enableImmer) {
+      const { immer } = await import('zustand/middleware/immer');
+      config = immer(config);
+    }
     
-    const storeName = name.toLowerCase().replace(/\s+/g, '-');
-    const persistConfig = {
-      name: storageKeys[storeName as keyof typeof storageKeys] || `waltodo-${storeName}`,
-      ...defaultStorageConfig,
-      partialize: persistSelectors[storeName as keyof typeof persistSelectors] || ((state: any) => state),
-    };
+    if (options.logger !== false && defaultMiddleware.enableLogging) {
+      const { logger } = await import('./logger');
+      config = logger(name, config);
+    }
     
-    config = persist(config, persistConfig);
-  }
-  
-  if (options.devtools !== false && defaultMiddleware.enableDevtools) {
-    const { devtools } = require('zustand/middleware');
-    const { storeNames } = require('./devtools');
+    if (options.subscriptions !== false && defaultMiddleware.enableSubscriptions) {
+      const { subscribeWithSelector } = await import('zustand/middleware');
+      config = subscribeWithSelector(config);
+    }
     
-    config = devtools(config, {
-      name: storeNames[name as keyof typeof storeNames] || name,
-      enabled: process.env.NODE_ENV === 'development',
-    });
+    if (options.persist !== false && defaultMiddleware.enablePersistence) {
+      const [
+        { persist },
+        { defaultStorageConfig, persistSelectors, storageKeys }
+      ] = await Promise.all([
+        import('zustand/middleware'),
+        import('./persist')
+      ]);
+      
+      const storeName = name.toLowerCase().replace(/\s+/g, '-');
+      const persistConfig = {
+        name: storageKeys[storeName as keyof typeof storageKeys] || `waltodo-${storeName}`,
+        ...defaultStorageConfig,
+        partialize: persistSelectors[storeName as keyof typeof persistSelectors] || ((state: any) => state),
+      };
+      
+      config = persist(config, persistConfig);
+    }
+    
+    if (options.devtools !== false && defaultMiddleware.enableDevtools) {
+      const [
+        { devtools },
+        { storeNames }
+      ] = await Promise.all([
+        import('zustand/middleware'),
+        import('./devtools')
+      ]);
+      
+      config = devtools(config, {
+        name: storeNames[name as keyof typeof storeNames] || name,
+        enabled: process.env.NODE_ENV === 'development',
+      });
+    }
+  } catch (error) {
+    console.warn('Failed to apply middleware:', error);
   }
   
   return config;
@@ -98,22 +112,25 @@ export const createSSRSafeStore = <T>(
 /**
  * Store initialization helper for Next.js apps
  */
-export const initializeStores = () => {
+export const initializeStores = async () => {
   if (typeof window !== 'undefined') {
-    // Import hydration functions
-    const { hydrateAllStores } = require('../index');
-    
-    // Hydrate all stores
-    hydrateAllStores();
-    
-    // Initialize environment detection
-    const { detectEnvironment } = require('../app-store');
-    const { useAppStore } = require('../app-store');
-    
-    const env = detectEnvironment();
-    useAppStore.getState().setEnvironment(env);
-    useAppStore.getState().setInitialized(true);
-    
-    console.log('🏪 All Zustand stores initialized');
+    try {
+      // Import hydration functions
+      const { hydrateAllStores } = await import('../index');
+      
+      // Hydrate all stores
+      await hydrateAllStores();
+      
+      // Initialize environment detection
+      const { detectEnvironment, useAppStore } = await import('../app-store');
+      
+      const env = detectEnvironment();
+      useAppStore.getState().setEnvironment(env);
+      useAppStore.getState().setInitialized(true);
+      
+      console.log('🏪 All Zustand stores initialized');
+    } catch (error) {
+      console.warn('Failed to initialize stores:', error);
+    }
   }
 };

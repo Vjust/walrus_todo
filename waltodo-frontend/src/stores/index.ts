@@ -41,19 +41,30 @@ export { manageTodoCache } from './todo-store';
 /**
  * Hydrate all stores - call this in your app initialization
  */
-export const hydrateAllStores = () => {
+export const hydrateAllStores = async () => {
   if (typeof window !== 'undefined') {
-    // Import stores to avoid circular dependencies
-    const { useAppStore } = require('./app-store');
-    const { useUIStore } = require('./ui-store');  
-    const { useWalletStore } = require('./wallet-store');
-    const { useTodoStore } = require('./todo-store');
-    
-    // Rehydrate stores
-    useAppStore.persist.rehydrate();
-    useUIStore.persist.rehydrate();
-    useWalletStore.persist.rehydrate();
-    useTodoStore.persist.rehydrate();
+    try {
+      // Use dynamic imports to avoid circular dependencies
+      const [
+        { useAppStore },
+        { useUIStore },  
+        { useWalletStore },
+        { useTodoStore }
+      ] = await Promise.all([
+        import('./app-store'),
+        import('./ui-store'),
+        import('./wallet-store'),
+        import('./todo-store')
+      ]);
+      
+      // Rehydrate stores
+      useAppStore.persist.rehydrate();
+      useUIStore.persist.rehydrate();
+      useWalletStore.persist.rehydrate();
+      useTodoStore.persist.rehydrate();
+    } catch (error) {
+      console.warn('Failed to hydrate stores:', error);
+    }
   }
 };
 
@@ -75,20 +86,36 @@ export const STORE_NAMES = {
  * Performance debugging utilities (development only)
  */
 export const storeDebugUtils = process.env.NODE_ENV === 'development' ? {
-  logPerformanceSummary: () => {
-    const { debugPerformance } = require('./performance-monitor');
-    console.table(debugPerformance.getSummary()?.storeStats || []);
+  logPerformanceSummary: async () => {
+    try {
+      const { debugPerformance } = await import('./performance-monitor');
+      console.table(debugPerformance.getSummary()?.storeStats || []);
+    } catch (error) {
+      console.warn('Failed to load performance monitor:', error);
+    }
   },
-  logSlowActions: () => {
-    const { debugPerformance } = require('./performance-monitor');
-    console.table(debugPerformance.getSlowActions() || []);
+  logSlowActions: async () => {
+    try {
+      const { debugPerformance } = await import('./performance-monitor');
+      console.table(debugPerformance.getSlowActions() || []);
+    } catch (error) {
+      console.warn('Failed to load performance monitor:', error);
+    }
   },
-  clearPerformanceData: () => {
-    const { debugPerformance } = require('./performance-monitor');
-    debugPerformance.clearMetrics();
+  clearPerformanceData: async () => {
+    try {
+      const { debugPerformance } = await import('./performance-monitor');
+      debugPerformance.clearMetrics();
+    } catch (error) {
+      console.warn('Failed to load performance monitor:', error);
+    }
   },
-  setThreshold: (ms: number) => {
-    const { debugPerformance } = require('./performance-monitor');
-    debugPerformance.setThreshold(ms);
+  setThreshold: async (ms: number) => {
+    try {
+      const { debugPerformance } = await import('./performance-monitor');
+      debugPerformance.setThreshold(ms);
+    } catch (error) {
+      console.warn('Failed to load performance monitor:', error);
+    }
   },
 } : {};

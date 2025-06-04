@@ -1,4 +1,5 @@
 import '@/styles/globals.css';
+import '@/lib/polyfills';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { ClientProviders } from '@/components/ClientProviders';

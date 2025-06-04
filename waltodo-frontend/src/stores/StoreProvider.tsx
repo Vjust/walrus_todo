@@ -162,17 +162,31 @@ export function useStoreDevtools() {
   }
   
   return {
-    exportLogs: () => {
-      const { debugStores } = require('./middleware/logger');
-      return debugStores.exportLogs();
+    exportLogs: async () => {
+      try {
+        const { debugStores } = await import('./middleware/logger');
+        return debugStores.exportLogs();
+      } catch (error) {
+        console.warn('Failed to load logger middleware:', error);
+        return [];
+      }
     },
-    clearLogs: () => {
-      const { debugStores } = require('./middleware/logger');
-      debugStores.clearLogs();
+    clearLogs: async () => {
+      try {
+        const { debugStores } = await import('./middleware/logger');
+        debugStores.clearLogs();
+      } catch (error) {
+        console.warn('Failed to load logger middleware:', error);
+      }
     },
-    getStats: () => {
-      const { debugStores } = require('./middleware/logger');
-      return debugStores.getStats();
+    getStats: async () => {
+      try {
+        const { debugStores } = await import('./middleware/logger');
+        return debugStores.getStats();
+      } catch (error) {
+        console.warn('Failed to load logger middleware:', error);
+        return {};
+      }
     },
     stores: {
       app: useAppStore.getState(),

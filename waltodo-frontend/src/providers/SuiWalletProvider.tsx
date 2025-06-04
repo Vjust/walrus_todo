@@ -19,7 +19,7 @@ const { networkConfig } = createNetworkConfig({
 });
 
 // Query client configuration for React Query
-const queryClient = new QueryClient({
+const walletQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Retry failed requests 3 times
@@ -28,8 +28,10 @@ const queryClient = new QueryClient({
       staleTime: 30000,
       // Keep cache for 5 minutes
       gcTime: 5 * 60 * 1000,
-      // Refetch on window focus
-      refetchOnWindowFocus: true,
+      // Refetch on window focus only in browser
+      refetchOnWindowFocus: typeof window !== 'undefined',
+      // Prevent hydration issues
+      refetchOnMount: 'always',
     },
     mutations: {
       // Retry failed mutations once
@@ -119,7 +121,7 @@ export function SuiWalletProvider({
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={walletQueryClient}>
       <SuiClientProvider 
         networks={networkConfig} 
         defaultNetwork={defaultNetwork}

@@ -1,7 +1,7 @@
 // Advanced Service Worker for WalTodo with Intelligent Content Delivery
 // Version: 2.0.0 - Content Delivery Optimization
 
-const CACHE_VERSION = '2.0.0';
+const CACHE_VERSION = '2.0.1'; // Increment to force cache update
 const CACHE_NAME = `waltodo-v${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = `waltodo-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `waltodo-dynamic-v${CACHE_VERSION}`;

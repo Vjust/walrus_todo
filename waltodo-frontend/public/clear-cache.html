@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear WalTodo Cache</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
+        button { padding: 15px 30px; font-size: 18px; background: #3B82F6; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        button:hover { background: #2563EB; }
+        .message { margin-top: 20px; padding: 20px; border-radius: 8px; }
+        .success { background: #10B981; color: white; }
+        .info { background: #F3F4F6; color: #374151; }
+    </style>
+</head>
+<body>
+    <h1>Clear WalTodo Cache</h1>
+    <p>Click the button below to clear all caches and service workers</p>
+    <button onclick="clearEverything()">Clear All Caches</button>
+    <div id="message"></div>
+
+    <script>
+        async function clearEverything() {
+            const messageEl = document.getElementById('message');
+            messageEl.className = 'message info';
+            messageEl.textContent = 'Clearing caches...';
+
+            try {
+                // Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                    console.log('Service workers unregistered');
+                }
+
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    console.log('All caches cleared');
+                }
+
+                // Clear localStorage and sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+
+                messageEl.className = 'message success';
+                messageEl.innerHTML = 'All caches cleared successfully!<br>Redirecting to home page in 2 seconds...';
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } catch (error) {
+                messageEl.className = 'message error';
+                messageEl.textContent = 'Error clearing caches: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -13,8 +13,8 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: typeof window !== 'undefined', // Only refetch on window focus in browser
       refetchOnReconnect: typeof window !== 'undefined', // Only refetch on reconnect in browser
       refetchInterval: false, // TODO: Will be managed by WebSocket when re-enabled
-      // Prevent queries from running during SSR by default
-      enabled: typeof window !== 'undefined',
+      // Allow queries to run during SSR but with proper hydration
+      enabled: true,
     },
     mutations: {
       retry: 1,
