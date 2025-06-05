@@ -1,62 +1,33 @@
-// Export all commands
-import AccountShowCommand from './account/show';
-import AccountSwitchCommand from './account/switch';
-import AddCommand from './add';
-import AiCommand from './ai';
-import CancelCommand from './cancel';
-import CheckCommand from './check';
-import CompleteCommand from './complete';
-import ConfigureCommand from './configure';
-import CreateCommand from './create';
-import DeleteCommand from './delete';
-import DemoProgressCommand from './demo-progress';
-import DeployCommand from './deploy';
-import DeployDiagnosticsCommand from './deploy/diagnostics';
-import DeployEnhancedCommand from './deploy/enhanced';
-import DeploySiteCommand from './deploy-site';
-import InteractiveCommand from './interactive';
-import JobsCommand from './jobs';
-import ListCommand from './list';
-import QueueCommand from './queue';
-import RetrieveCommand from './retrieve';
-// ServeCommand removed - using blockchain-first architecture
-import ShareCommand from './share';
-import SimpleCommand from './simple';
-import StatusCommand from './status';
-import StoreCommand from './store';
-import StoreFileCommand from './store-file';
-import SyncCommand from './sync';
-import TemplateCommand from './template';
-import UpdateCommand from './update';
+// OCLIF Command Discovery - Commands are automatically discovered by OCLIF
+// This file is primarily for backwards compatibility and programmatic access
+// Individual command files should export as default for OCLIF auto-discovery
 
-export {
-  AccountShowCommand,
-  AccountSwitchCommand,
-  AddCommand,
-  AiCommand,
-  CancelCommand,
-  CheckCommand,
-  CompleteCommand,
-  ConfigureCommand,
-  CreateCommand,
-  DeleteCommand,
-  DemoProgressCommand,
-  DeployCommand,
-  DeployDiagnosticsCommand,
-  DeployEnhancedCommand,
-  DeploySiteCommand,
-  InteractiveCommand,
-  JobsCommand,
-  ListCommand,
-  QueueCommand,
-  RetrieveCommand,
-  // ServeCommand removed
-  ShareCommand,
-  SimpleCommand,
-  StatusCommand,
-  StoreCommand,
-  StoreFileCommand,
-  SyncCommand,
-  TemplateCommand,
-  UpdateCommand,
-};
+// Re-export commands for backwards compatibility
+export { default as AccountShowCommand } from './account/show';
+export { default as AccountSwitchCommand } from './account/switch';
+export { default as AddCommand } from './add';
+export { default as AiCommand } from './ai';
+export { default as CancelCommand } from './cancel';
+export { default as CheckCommand } from './check';
+export { default as CompleteCommand } from './complete';
+export { default as ConfigureCommand } from './configure';
+export { default as CreateCommand } from './create';
+export { default as DeleteCommand } from './delete';
+export { default as DemoProgressCommand } from './demo-progress';
+export { default as DeployCommand } from './deploy';
+export { default as DeployDiagnosticsCommand } from './deploy/diagnostics';
+export { default as DeployEnhancedCommand } from './deploy/enhanced';
+export { default as DeploySiteCommand } from './deploy-site';
+export { default as InteractiveCommand } from './interactive';
+export { default as JobsCommand } from './jobs';
+export { default as ListCommand } from './list';
+export { default as QueueCommand } from './queue';
+export { default as RetrieveCommand } from './retrieve';
+export { default as ShareCommand } from './share';
+export { default as SimpleCommand } from './simple';
+export { default as StatusCommand } from './status';
+export { default as StoreCommand } from './store';
+export { default as StoreFileCommand } from './store-file';
+export { default as SyncCommand } from './sync';
+export { default as TemplateCommand } from './template';
+export { default as UpdateCommand } from './update';

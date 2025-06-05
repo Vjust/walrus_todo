@@ -7,13 +7,49 @@
   "bin": {
     "waltodo": "./dist/index.js"
   },
+  "oclif": {
+    "bin": "waltodo",
+    "dirname": "waltodo",
+    "commands": "./dist/commands",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-autocomplete"
+    ],
+    "topicSeparator": ":",
+    "topics": {
+      "account": {
+        "description": "Manage Sui accounts"
+      },
+      "ai": {
+        "description": "AI-powered todo management features"
+      },
+      "deploy": {
+        "description": "Deploy management commands"
+      },
+      "image": {
+        "description": "Manage todo images for storage on Walrus and NFT creation"
+      },
+      "system": {
+        "description": "Manage and view security audit logs"
+      }
+    },
+    "hooks": {
+      "init": "./dist/hooks/init"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "build:dev": "tsc --skipLibCheck",
     "clean": "rm -rf dist",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "postpack": "rm -f oclif.manifest.json",
+    "posttest": "npm run lint",
+    "prepack": "npm run build && oclif manifest && oclif readme",
+    "manifest": "oclif manifest"
   },
   "keywords": [
     "cli",
@@ -31,6 +67,8 @@
     "@mysten/sui": "^1.30.1",
     "@mysten/walrus": "0.1.1",
     "@oclif/core": "^3.25.2",
+    "@oclif/plugin-help": "^6.0.12",
+    "@oclif/plugin-autocomplete": "^3.0.4",
     "@smithery/cli": "^1.1.84",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/uuid": "^10.0.0",
