@@ -38,8 +38,8 @@ export { run };
 // Run the CLI if this file is executed directly
 if (require.main === module) {
   import('@oclif/core')
-    .then(({ run }) => run())
-    .catch(error => {
+    .then(( run ) => run())
+    .catch(error =>): 
       // Enhanced error handling for common issues
       const errorMessage = error instanceof Error ? error.message : String(error);
       

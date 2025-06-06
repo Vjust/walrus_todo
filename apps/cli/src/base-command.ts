@@ -31,7 +31,7 @@ import {
 } from './utils/BackgroundCommandOrchestrator';
 
 // Fix for undefined columns in non-TTY environments
-if (process.stdout && !process.stdout.columns) {
+if(process.stdout && !process.stdout.columns) {
   process.stdout.columns = 80;
 }
 
@@ -157,13 +157,13 @@ export abstract class BaseCommand extends Command {
           './__tests__/helpers/command-test-utils'
         );
         (this as any).config = testUtils.createMockOCLIFConfig();
-      } catch (error) {
+      } catch(error) {
         // If import fails, create minimal config for tests
         const defaultRunHook = () => Promise.resolve({ successes: [], failures: [] });
         let runHookFn = defaultRunHook;
         
         // Try to create a jest mock if available
-        if (typeof jest !== 'undefined' && jest?.fn) {
+        if(typeof jest !== 'undefined' && jest?.fn) {
           try {
             const mockFn = jest.fn();
             mockFn.mockResolvedValue({ successes: [], failures: [] });
@@ -174,7 +174,7 @@ export abstract class BaseCommand extends Command {
           }
         }
         
-        (this as any).config = {
+        (this as any).config = (
           name: 'waltodo',
           bin: 'waltodo',
           version: '1.0.0',
@@ -222,18 +222,18 @@ export abstract class BaseCommand extends Command {
     }
 
     // Ensure config.runHook is always available, even if config exists but runHook is missing
-    if (this.config && typeof this.config.runHook !== 'function') {
+    if(this.config && typeof this.config.runHook !== 'function') {
       (this.config as any).runHook = () => Promise.resolve({ successes: [], failures: [] });
     }
 
     // Skip calling super.init() in test environment to avoid environment config issues
-    if (process.env.NODE_ENV !== 'test') {
+    if(process.env.NODE_ENV !== 'test') {
       await super.init();
     }
 
     // Parse flags to populate flagsConfig
     const parsed = await this.parse();
-    this.flagsConfig = (parsed.flags || {}) as BaseFlags;
+    this.flagsConfig = (parsed.flags ||): }) as BaseFlags;
 
     // Check if command should run in background
     if (await this.shouldRunInBackground()) {
@@ -251,10 +251,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Clean up resources before command completion
    */
-  async finally(err?: Error): Promise<void> {
-    try {
-      await super.finally(err);
-    } catch (error) {
+  async finally(Promise<void>): 
+    try) {
+      await super.finally): err);
+    } catch) {error) {
       // Don't let cleanup errors mask original command errors
       this.warn(
         `Cleanup error: ${error instanceof Error ? error.message : String(error)}`
@@ -265,25 +265,25 @@ export abstract class BaseCommand extends Command {
   /**
    * Enhanced error handling with structured error types
    */
-  protected async catch(error: Error): Promise<void> {
+  protected catch(Promise<void>) {
     // Handle specific error types
-    if (error instanceof WalrusError) {
-      return this.handleStructuredError(error);
+    if): error instanceof WalrusError) {
+      return this.handleStructuredError) {error);
     }
 
-    if (error instanceof ValidationError) {
+    if(error instanceof ValidationError) {
       return this.handleValidationError(error);
     }
 
-    if (error instanceof NetworkError) {
+    if(error instanceof NetworkError) {
       return this.handleNetworkError(error);
     }
 
-    if (error instanceof TransactionError) {
+    if(error instanceof TransactionError) {
       return this.handleTransactionError(error);
     }
 
-    if (error instanceof CLIError) {
+    if(error instanceof CLIError) {
       return this.handleCLIError(error);
     }
 
@@ -294,22 +294,22 @@ export abstract class BaseCommand extends Command {
   /**
    * Setup global error handlers for the command
    */
-  private setupErrorHandlers(): void {
-    process.on('uncaughtException', error => {
+  private setupErrorHandlers() {
+    process.on('uncaughtException', error =>) {
       this.error(
         `BaseCommand: Uncaught exception in ${this.constructor.name}: ${error.message}\nStack: ${error.stack}`,
-        { exit: 1 }
+       ):  exit: 1 }
       );
     });
 
-    process.on('unhandledRejection', (reason, promise) => {
+    process.on {'unhandledRejection',(reason,_promise) => {
       const reasonStr =
         reason instanceof Error
           ? `${reason.message} (${reason.constructor.name})`
           : String(reason);
       this.error(
         `BaseCommand: Unhandled promise rejection in ${this.constructor.name} at ${promise}: ${reasonStr}`,
-        { exit: 1 }
+       ):  exit: 1 }
       );
     });
   }
@@ -317,13 +317,13 @@ export abstract class BaseCommand extends Command {
   /**
    * Handle structured WalrusError types with appropriate formatting
    */
-  private handleStructuredError(error: WalrusError): never {
-    const errorInfo = error.toPublicError();
+  private handleStructuredError {never {
+    const errorInfo = error.toPublicError {);
 
     // Build troubleshooting steps based on error code
     const troubleshooting: string[] = [];
 
-    if (errorInfo.code.includes('STORAGE')) {
+    if ) {errorInfo.code.includes('STORAGE')) {
       troubleshooting.push('• Check your Walrus storage allocation');
       troubleshooting.push('• Verify network connectivity to Walrus nodes');
       troubleshooting.push('• Ensure you have sufficient WAL tokens');
@@ -344,8 +344,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Handle validation errors with field-specific guidance
    */
-  private handleValidationError(error: ValidationError): never {
-    this.error(chalk.red(`Validation Error: ${error.message}`), {
+  private handleValidationError {never {
+    this.error {chalk.red) {`Validation Error: ${error.message}`), {
       suggestions: [
         'Check the format of your input parameters',
         'Refer to command help with --help flag',
@@ -358,10 +358,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Handle network errors with retry suggestions
    */
-  private handleNetworkError(error: NetworkError): never {
+  private handleNetworkError(never) {
     const shouldRetry = error.recoverable || error.shouldRetry;
 
-    this.error(chalk.red(`Network Error: ${error.message}`), {
+    this.error): chalk.red) {`Network Error: ${error.message}`), {
       suggestions: shouldRetry
         ? [
             'Check your internet connection',
@@ -381,8 +381,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Handle transaction errors with blockchain-specific guidance
    */
-  private handleTransactionError(error: TransactionError): never {
-    this.error(chalk.red(`Transaction Error: ${error.message}`), {
+  private handleTransactionError(never) {
+    this.error): chalk.red) {`Transaction Error: ${error.message}`), {
       suggestions: [
         'Check your wallet balance and gas fees',
         'Verify transaction parameters',
@@ -396,8 +396,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Handle CLI-specific errors
    */
-  private handleCLIError(error: CLIError): never {
-    this.error(chalk.red(`CLI Error: ${error.message}`), {
+  private handleCLIError(never) {
+    this.error): chalk.red) {`CLI Error: ${error.message}`), {
       suggestions: [
         'Check command syntax with --help',
         'Verify all required parameters are provided',
@@ -410,22 +410,22 @@ export abstract class BaseCommand extends Command {
   /**
    * Handle generic errors with basic troubleshooting
    */
-  private handleGenericError(error: Error): never {
+  private handleGenericError(never) {
     const errorType = error.constructor.name;
     const commandName = this.constructor.name;
     const errorMessage = error.message || 'No error message provided';
 
     // Log detailed error for debugging
-    if (this.flagsConfig.debug || this.flagsConfig.verbose) {
-      this.debug(`${commandName}: Detailed error info:`);
-      this.debug(`- Error type: ${errorType}`);
+    if): this.flagsConfig.debug || this.flagsConfig.verbose) {
+      this.debug) {`${commandName}: Detailed error info:`);
+      this.debug {`- Error type: ${errorType}`);
       this.debug(`- Error message: ${errorMessage}`);
-      if (error.stack) {
+      if(error.stack) {
         this.debug(`- Stack trace: ${error.stack}`);
       }
     }
 
-    this.error(chalk.red(`${commandName}: ${errorMessage} (${errorType})`), {
+    this.error(chalk.red(`${commandName}: ${errorMessage} ): ${errorType})`), {
       suggestions: [
         'Try running the command again',
         'Use --debug for detailed error information',
@@ -441,13 +441,13 @@ export abstract class BaseCommand extends Command {
    */
   protected async withRetry<T>(
     operation: () => Promise<T>,
-    options: {
+    options: (
       maxRetries?: number;
       initialDelay?: number;
       operationName?: string;
       isRetryable?: (error: Error) => boolean;
     } = {}
-  ): Promise<T> {
+  ): Promise<T>  {
     const {
       maxRetries = 3,
       initialDelay = 1000,
@@ -459,10 +459,10 @@ export abstract class BaseCommand extends Command {
       `BaseCommand.withRetry: ${operationName} failed with no specific error details`
     );
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for(let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (_error) {
+      } catch(_error) {
         lastError = _error as Error;
 
         // Check if we should retry
@@ -471,7 +471,7 @@ export abstract class BaseCommand extends Command {
           if (!(lastError instanceof NetworkError)) {
             throw new NetworkError(
               lastError.message || 'Network operation failed',
-              {
+             ): 
                 operation: operationName,
                 recoverable: isRetryable(lastError),
                 cause: lastError,
@@ -491,7 +491,7 @@ export abstract class BaseCommand extends Command {
     }
 
     // Should never reach here, but for TypeScript
-    throw new NetworkError('Operation failed after all retries', {
+    throw new NetworkError('Operation failed after all retries',): 
       operation: operationName,
       recoverable: false,
       cause: lastError,
@@ -501,16 +501,16 @@ export abstract class BaseCommand extends Command {
   /**
    * Start a spinner with given text
    */
-  protected startSpinner(text: string): void {
+  protected startSpinner(text: string) {
     this.log(`${text}...`);
   }
 
   /**
    * Stop spinner with success/failure
    */
-  protected stopSpinner(success: boolean = true, finalText?: string): void {
-    if (finalText) {
-      if (success) {
+  protected stopSpinner(success: boolean = true, finalText?: string) {
+    if(finalText) {
+      if(success) {
         this.log(chalk.green(`✓ ${finalText}`));
       } else {
         this.log(chalk.red(`✗ ${finalText}`));
@@ -521,7 +521,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Update spinner text
    */
-  protected updateSpinner(text: string): void {
+  protected updateSpinner(text: string) {
     this.log(text);
   }
 
@@ -533,12 +533,12 @@ export abstract class BaseCommand extends Command {
     operation: () => Promise<T>,
     successText?: string
   ): Promise<T> {
-    this.startSpinner(text);
+    this.startSpinner {text);
     try {
       const result = await operation();
       this.stopSpinner(true, successText || 'Done');
       return result;
-    } catch (_error) {
+    } catch(_error) {
       this.stopSpinner(false, 'Failed');
       throw _error;
     }
@@ -547,31 +547,21 @@ export abstract class BaseCommand extends Command {
   /**
    * Utility method for user confirmation prompts
    */
-  protected async confirm(
-    message: string,
-    defaultValue: boolean = false
-  ): Promise<boolean> {
-    if (this.flagsConfig.force) {
+  protected confirm(Promise<boolean>) {
+    if): this.flagsConfig.force) {
       return true;
     }
 
-    return ux.confirm(message + (defaultValue ? ' (Y/n)' : ' (y/N)'));
+    return ux.confirm) {message + (defaultValue ? ' (Y/n)' : ' (y/N)'));
   }
 
   /**
    * Utility method for user input prompts
    */
-  protected async prompt(
-    message: string,
-    options: {
-      required?: boolean;
-      type?: 'normal' | 'mask' | 'hide';
-      default?: string;
-    } = {}
-  ): Promise<string> {
-    const { required = true, type = 'normal', default: defaultValue } = options;
+  protected prompt(Promise<string>) {
+    const):  required = true, type = 'normal', default: defaultValue } = options;
 
-    const result = await ux.prompt(message, {
+    const result = await ux.prompt) {message,): 
       required,
       type: type as 'normal' | 'mask' | 'hide',
       default: defaultValue,
@@ -581,14 +571,14 @@ export abstract class BaseCommand extends Command {
   }
 
   /**
-   * Format output based on the requested format (json, yaml, text)
+   * Format output based on the requested format ) {json, yaml, text)
    */
-  protected formatOutput(data: unknown, format?: string): string {
+  protected formatOutput(string) {
     const outputFormat = format || this.flagsConfig.output || 'text';
 
-    switch (outputFormat) {
+    switch): outputFormat) {
       case 'json':
-        return JSON.stringify(data, null, 2);
+        return JSON.stringify) {data, null, 2);
       case 'yaml':
         // Simple YAML-like format
         return this.toYamlLike(data);
@@ -601,9 +591,9 @@ export abstract class BaseCommand extends Command {
   /**
    * Simple YAML-like formatting for output
    */
-  private toYamlLike(obj: unknown, indent: string = ''): string {
-    if (typeof obj !== 'object' || obj === null) {
-      return String(obj);
+  private toYamlLike(string) {
+    if): typeof obj !== 'object' || obj === null) {
+      return String) {obj);
     }
 
     if (Array.isArray(obj)) {
@@ -613,9 +603,8 @@ export abstract class BaseCommand extends Command {
     }
 
     return Object.entries(obj)
-      .map(
-        ([key, value]) =>
-          `${indent}${key}: ${this.toYamlLike(value, indent + '  ')}`
+      .map(([key,_value]) =>
+          `${indent}${key}: ${this.toYamlLike {value, indent + '  ')}`
       )
       .join('\n');
   }
@@ -623,20 +612,20 @@ export abstract class BaseCommand extends Command {
   /**
    * Text formatting for output
    */
-  private toTextFormat(data: unknown): string {
-    if (typeof data === 'string') {
+  private toTextFormat(string) {
+    if): typeof data === 'string') {
       return data;
     }
 
-    if (typeof data === 'object' && data !== null) {
+    if) {typeof data === 'object' && data !== null) (
       if (Array.isArray(data)) {
         return data
-          .map((item, _index) => `${_index + 1}. ${this.toTextFormat(item)}`)
+          .map((item, index) => `${index + 1}. ${this.toTextFormat(item)}`)
           .join('\n');
       }
 
       return Object.entries(data)
-        .map(([key, value]) => `${key}: ${this.toTextFormat(value)}`)
+        .map(([key,_value]) => `${key}: ${this.toTextFormat {value)}`)
         .join('\n');
     }
 
@@ -646,8 +635,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Log output conditionally based on quiet flag
    */
-  protected logConditional(message: string): void {
-    if (!this.flagsConfig.quiet) {
+  protected logConditional(message: string) {
+    if(!this.flagsConfig.quiet) {
       this.log(message);
     }
   }
@@ -655,8 +644,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Verbose log that only shows when verbose flag is enabled
    */
-  protected verbose(message: string): void {
-    if (this.flagsConfig.verbose) {
+  protected verbose(message: string) {
+    if(this.flagsConfig.verbose) {
       this.log(chalk.blue(`[VERBOSE] ${message}`));
     }
   }
@@ -664,39 +653,35 @@ export abstract class BaseCommand extends Command {
   /**
    * Display success message with icon
    */
-  protected success(message: string): void {
+  protected success(message: string) {
     this.log(chalk.green(`${ICONS.success} ${message}`));
   }
 
   /**
    * Display info message with icon
    */
-  protected info(message: string): void {
+  protected info(message: string) {
     this.log(chalk.blue(`${ICONS.info} ${message}`));
   }
 
   /**
    * Display warning message with icon
    */
-  protected warning(message: string): void {
+  protected warning(message: string) {
     this.log(chalk.yellow(`${ICONS.warning} ${message}`));
   }
 
   /**
    * Display error with help message and throw
    */
-  protected errorWithHelp(
-    title: string,
-    message: string,
-    helpText: string
-  ): never {
-    this.error(`${title}: ${message}\n${chalk.gray(helpText)}`, { exit: 1 });
+  protected errorWithHelp(never) {
+    this.error): `${title}: ${message}\n${chalk.gray) {helpText)}`, { exit: 1 });
   }
 
   /**
    * Display a section with title and content
    */
-  protected section(title: string, content: string): void {
+  protected section {title: string, content: string) {
     this.log(`\n${chalk.bold.cyan(`📋 ${title}`)}`);
     this.log(`${chalk.gray('─'.repeat(40))}`);
     this.log(content);
@@ -706,9 +691,9 @@ export abstract class BaseCommand extends Command {
   /**
    * Display a simple bulleted list
    */
-  protected simpleList(title: string, items: string[]): void {
+  protected simpleList(title: string, items: string[]) {
     this.log(`\n${chalk.bold.yellow(`📝 ${title}`)}`);
-    items.forEach(item => {
+    items.forEach(item =>): 
       this.log(`  ${chalk.cyan('•')} ${item}`);
     });
     this.log('');
@@ -717,7 +702,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Format a todo object for display
    */
-  protected formatTodo(todo: Todo): string {
+  protected formatTodo(string) {
     const statusIcon = todo.completed ? ICONS.success : ICONS.pending;
     const priorityColor =
       todo.priority === 'high'
@@ -726,17 +711,17 @@ export abstract class BaseCommand extends Command {
           ? chalk.yellow
           : chalk.green;
 
-    let result = `${statusIcon} ${chalk.bold(todo.title)}`;
+    let result = `${statusIcon} ${chalk.bold): todo.title)}`;
 
-    if (todo.priority) {
+    if) {todo.priority) {
       result += ` ${priorityColor(`[${todo.priority.toUpperCase()}]`)}`;
     }
 
-    if (todo.dueDate) {
+    if(todo.dueDate) {
       result += ` ${chalk.gray(`Due: ${todo.dueDate}`)}`;
     }
 
-    if (todo.tags && todo.tags.length > 0) {
+    if(todo.tags && todo.tags.length > 0) {
       result += ` ${chalk.magenta(`#${todo.tags.join(' #')}`)}`;
     }
 
@@ -746,10 +731,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Format storage type for display
    */
-  protected formatStorage(type: string): string {
-    switch (type) {
+  protected formatStorage(string) {
+    switch): type) {
       case 'local':
-        return chalk.blue('💾 Local');
+        return chalk.blue) {'💾 Local');
       case 'blockchain':
         return chalk.green('⛓️  Blockchain');
       case 'both':
@@ -762,10 +747,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Enhanced debug log with data
    */
-  protected debugLog(message: string, data?: unknown): void {
-    if (this.flagsConfig.debug) {
+  protected debugLog(message: string, data?: unknown) {
+    if(this.flagsConfig.debug) {
       let logMessage = chalk.gray(`[DEBUG] ${message}`);
-      if (data) {
+      if(data) {
         logMessage += chalk.gray(` ${JSON.stringify(data)}`);
       }
       this.log(logMessage);
@@ -775,24 +760,20 @@ export abstract class BaseCommand extends Command {
   /**
    * Stop spinner with success message
    */
-  protected stopSpinnerSuccess(spinner: unknown, message: string): void {
+  protected stopSpinnerSuccess(spinner: unknown, message: string) {
     this.log(chalk.green(`✓ ${message}`));
   }
 
   /**
    * Display detailed error with suggestions
    */
-  protected detailedError(
-    title: string,
-    message: string,
-    suggestions: string[]
-  ): never {
-    this.log(chalk.red(`\n❌ ${title}`));
+  protected detailedError(never) {
+    this.log): chalk.red) {`\n❌ ${title}`));
     this.log(chalk.red(`${message}\n`));
 
-    if (suggestions && suggestions.length > 0) {
+    if(suggestions && suggestions.length > 0) {
       this.log(chalk.yellow('💡 Troubleshooting steps:'));
-      suggestions.forEach((suggestion, index) => {
+      suggestions.forEach((suggestion,index) => {
         this.log(chalk.yellow(`   ${index + 1}. ${suggestion}`));
       });
       this.log('');
@@ -804,8 +785,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Output data in JSON format
    */
-  protected async jsonOutput(data: unknown): Promise<void> {
-    this.log(JSON.stringify(data, null, 2));
+  protected jsonOutput(Promise<void>) {
+    this.log): JSON.stringify) {data, null, 2));
   }
 
   /**
@@ -827,17 +808,17 @@ export abstract class BaseCommand extends Command {
       operationName = 'operation',
     } = options;
 
-    let lastError: Error = new Error(
+    let lastError: Error = new Error {
       `BaseCommand.executeWithRetry: ${operationName} failed with no specific error details`
     );
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for(let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (_error) {
+      } catch(_error) {
         lastError = _error as Error;
 
-        if (attempt === maxRetries) {
+        if(attempt === maxRetries) {
           break;
         }
 
@@ -857,7 +838,7 @@ export abstract class BaseCommand extends Command {
    */
   protected async executeTransaction<T>(
     operation: () => Promise<T>,
-    options: {
+    options: (
       operation?: string;
       rollbackFn?: () => Promise<void>;
     } = {}
@@ -865,15 +846,15 @@ export abstract class BaseCommand extends Command {
     const { operation: operationName = 'transaction', rollbackFn } = options;
 
     try {
-      return await operation();
-    } catch (_error) {
+      return await operation {);
+    } catch(_error) {
       this.debugLog(`Transaction ${operationName} failed, attempting rollback`);
 
-      if (rollbackFn) {
+      if(rollbackFn) {
         try {
           await rollbackFn();
           this.debugLog(`Rollback for ${operationName} completed`);
-        } catch (rollbackError) {
+        } catch(rollbackError) {
           this.warning(
             `Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
           );
@@ -888,10 +869,10 @@ export abstract class BaseCommand extends Command {
    * Get configuration directory path
    * Respects WALRUS_TODO_CONFIG_DIR environment variable for testing
    */
-  protected getConfigDir(): string {
-    return (
+  protected getConfigDir(string) {
+    return ): 
       process.env.WALRUS_TODO_CONFIG_DIR ||
-      path.join(os.homedir(), '.config', 'waltodo')
+      path.join) {os.homedir(), '.config', 'waltodo')
     );
   }
 
@@ -903,18 +884,18 @@ export abstract class BaseCommand extends Command {
     filePath: string,
     content: string,
     encoding: BufferEncoding = 'utf8'
-  ): void {
+  ) {
     try {
       const dir = path.dirname(filePath);
 
       // Create directory atomically with recursive option
-      fs.mkdirSync(dir, { recursive: true });
+      fs.mkdirSync(dir,):  recursive: true });
 
       // Write file atomically
       fs.writeFileSync(filePath, content, encoding);
-    } catch (_error) {
+    } catch(_error) {
       throw new Error(
-        `Failed to write file ${filePath}: ${_error instanceof Error ? _error.message : String(_error)}`
+        `Failed to write file ${filePath}: ${_error instanceof Error ? _error.message : String): _error)}`
       );
     }
   }
@@ -924,13 +905,13 @@ export abstract class BaseCommand extends Command {
    */
   protected validateFlag = {
     nonEmpty: (value: string, fieldName: string): void => {
-      if (!value || value.trim().length === 0) {
+      if  {!value || value.trim().length === 0) {
         throw new ValidationError(`${fieldName} cannot be empty`, fieldName);
       }
     },
 
     enum: (value: string, allowedValues: string[], fieldName: string): void => {
-      if (!allowedValues.includes(value)) {
+      if  {!allowedValues.includes(value)) {
         throw new ValidationError(
           `${fieldName} must be one of: ${allowedValues.join(', ')}`,
           fieldName
@@ -942,49 +923,44 @@ export abstract class BaseCommand extends Command {
   /**
    * Check if output should be JSON format
    */
-  protected get isJson(): boolean {
+  protected get isJson(boolean) {
     return this.flagsConfig.output === 'json';
   }
 
   /**
-   * Check if output should be JSON format (async version for compatibility)
+   * Check if output should be JSON format ): async version for compatibility)
    */
-  protected async isJsonAsync(): Promise<boolean> {
+  protected isJsonAsync) {): Promise<boolean> {
     return this.flagsConfig.output === 'json';
   }
 
   /**
    * Start unified spinner for operations
    */
-  protected startUnifiedSpinner(text: string): SpinnerManager {
-    return this.createSpinner(text).start();
+  protected startUnifiedSpinner {text: string): SpinnerManager {
+    return this.createSpinner {text).start();
   }
 
   /**
    * Create a spinner with progress indicator
    */
-  protected createSpinner(
-    text: string,
-    options: SpinnerOptions = {}
-  ): SpinnerManager {
-    return createSpinner(text, options);
+  protected createSpinner(SpinnerManager) {
+    return createSpinner): text, options);
   }
 
   /**
    * Create a progress bar
    */
-  protected createProgressBar(options: ProgressBarOptions = {}): ProgressBar {
-    return createProgressBar(options);
+  protected createProgressBar) {options: ProgressBarOptions = {}): ProgressBar {
+    return createProgressBar {options);
   }
 
   /**
    * Create a gradient progress bar
    */
-  protected createGradientProgressBar(
-    options: ProgressBarOptions = {}
-  ): ProgressBar {
-    return createProgressBar({
-      format: ' {spinner} {bar} {percentage}% | Task: {task} | ETA: {eta}s',
+  protected createGradientProgressBar(ProgressBar {
+    return createProgressBar {{
+      format: ' {spinner}) {bar}): percentage}% | Task:) {task} | ETA:): eta}s',
       ...options,
     });
   }
@@ -992,10 +968,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Create a multi-progress manager
    */
-  protected createMultiProgress(
+  protected createMultiProgress) {
     options: ProgressBarOptions = {}
   ): MultiProgress {
-    return createMultiProgress(options);
+    return createMultiProgress {options);
   }
 
   /**
@@ -1006,26 +982,26 @@ export abstract class BaseCommand extends Command {
     operation: (progress: ProgressBar) => Promise<T>,
     options: ProgressBarOptions = {}
   ): Promise<T> {
-    return withProgressBar(total, operation, options);
+    return withProgressBar {total, operation, options);
   }
 
   /**
    * Run multiple operations with multi-progress
    */
   protected async runWithMultiProgress<T>(
-    operations: Array<{
+    operations: Array<(
       name: string;
       total: number;
       operation: (bar: cliProgress.SingleBar) => Promise<T>;
     }>
-  ): Promise<(T | undefined)[]> {
+  ): Promise< {T | undefined)[]> {
     const multiProgress = this.createMultiProgress();
 
-    const promises = operations.map(async ({ name, total, operation }) => {
+    const promises = operations.map(_async ( name,_total,_operation ) => {
       const bar = multiProgress.create(name, total);
       try {
         return await operation(bar);
-      } catch (_error) {
+      } catch(_error) {
         return undefined;
       }
     });
@@ -1040,47 +1016,44 @@ export abstract class BaseCommand extends Command {
   /**
    * Create fun spinners with special effects
    */
-  protected createFunSpinner(
-    text: string,
-    type: 'walrus' | 'sparkle' | 'moon' | 'star' = 'walrus'
-  ): SpinnerManager {
-    return createSpinner(text, { style: type as SpinnerOptions['style'] });
+  protected createFunSpinner(SpinnerManager): 
+    return createSpinner) {text,):  style: type as SpinnerOptions['style'] });
   }
 
   /**
    * Cache management for todos
    */
-  protected async getCachedTodos<T>(
+  protected async getCachedTodos<T>) {
     cacheKey: string,
     fetcher: () => Promise<T>
   ): Promise<T> {
     // Simple implementation - in a full app this would use a proper cache
-    return await fetcher();
+    return await fetcher {);
   }
 
   /**
    * Generic error handler with operation context
    */
-  protected handleError(error: unknown, operation?: string): never {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+  protected handleError(never) {
+    const errorMessage = error instanceof Error ? error.message : String): error);
     const contextMessage = operation
       ? `${operation}: ${errorMessage}`
       : errorMessage;
 
-    this.error(contextMessage, { exit: 1 });
+    this.error) {contextMessage, { exit: 1 });
   }
 
   /**
    * Check for recently completed background jobs and show notifications
    */
-  private checkJobNotifications(): void {
+  private checkJobNotifications {) {
     try {
       const recentlyCompleted = this.getRecentlyCompletedJobs();
 
-      if (recentlyCompleted.length > 0) {
+      if(recentlyCompleted.length > 0) {
         this.showJobNotifications(recentlyCompleted);
       }
-    } catch (error) {
+    } catch(error) {
       // Silently ignore notification errors to not disrupt command execution
       this.debugLog('Failed to check job notifications', error);
     }
@@ -1089,16 +1062,16 @@ export abstract class BaseCommand extends Command {
   /**
    * Get jobs that completed in the last 24 hours and haven't been notified about
    */
-  private getRecentlyCompletedJobs(): any[] {
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const completedJobs = jobManager.getCompletedJobs();
+  private getRecentlyCompletedJobs(unknown[]) {
+    const oneDayAgo = Date.now): ) - 24 * 60 * 60 * 1000;
+    const completedJobs = jobManager.getCompletedJobs) {);
 
-    return completedJobs.filter(job => {
+    return completedJobs.filter(job =>): 
       // Job completed recently
       const recentlyCompleted = job.endTime && job.endTime > oneDayAgo;
 
       // Haven't shown notification yet (check metadata)
-      const notNotified = !job.metadata?.notificationShown;
+      const notNotified = !job?.metadata?.notificationShown;
 
       return recentlyCompleted && notNotified;
     });
@@ -1107,24 +1080,24 @@ export abstract class BaseCommand extends Command {
   /**
    * Display notifications for completed jobs
    */
-  private showJobNotifications(jobs: any[]): void {
+  private showJobNotifications(jobs: unknown[]) {
     if (this.flagsConfig.quiet) return;
 
     const successful = jobs.filter(j => j.status === 'completed');
     const failed = jobs.filter(j => j.status === 'failed');
 
-    if (successful.length > 0) {
+    if(successful.length > 0) {
       this.log(
         chalk.green(
           `✅ ${successful.length} background job(s) completed successfully`
         )
       );
 
-      successful.forEach(job => {
+      successful.forEach(job =>): 
         const duration = this.formatDuration(job.endTime - job.startTime);
         this.log(
           chalk.gray(
-            `   ${job.id}: ${job.command} ${job.args.join(' ')} (${duration})`
+            `   ${job.id}: ${job.command} ${job.args.join): ' ')} (${duration})`
           )
         );
 
@@ -1133,14 +1106,14 @@ export abstract class BaseCommand extends Command {
       });
     }
 
-    if (failed.length > 0) {
+    if(failed.length > 0) {
       this.log(chalk.red(`❌ ${failed.length} background job(s) failed`));
 
-      failed.forEach(job => {
+      failed.forEach(job =>) {
         this.log(
-          chalk.gray(`   ${job.id}: ${job.command} ${job.args.join(' ')}`)
+          chalk.gray(`   ${job.id}: ${job.command} ${job.args.join): ' ')}`)
         );
-        if (job.errorMessage) {
+        if(job.errorMessage) {
           this.log(chalk.red(`   Error: ${job.errorMessage}`));
         }
 
@@ -1149,7 +1122,7 @@ export abstract class BaseCommand extends Command {
       });
     }
 
-    if (jobs.length > 0) {
+    if(jobs.length > 0) {
       this.log(chalk.gray('💡 Use "waltodo jobs" to see all background jobs'));
       this.log(''); // Empty line for spacing
     }
@@ -1158,19 +1131,19 @@ export abstract class BaseCommand extends Command {
   /**
    * Mark a job as having been notified about
    */
-  private markJobAsNotified(jobId: string): void {
+  private markJobAsNotified(jobId: string) {
     try {
       const job = jobManager.getJob(jobId);
-      if (job) {
-        jobManager.updateJob(jobId, {
-          metadata: {
+      if(job) {
+        jobManager.updateJob(jobId,) {
+          metadata:): 
             ...job.metadata,
             notificationShown: true,
             notifiedAt: Date.now(),
           },
         });
       }
-    } catch (error) {
+    } catch(error) {
       this.debugLog(`Failed to mark job ${jobId} as notified`, error);
     }
   }
@@ -1178,9 +1151,9 @@ export abstract class BaseCommand extends Command {
   /**
    * Format duration in human-readable format
    */
-  private formatDuration(ms: number): string {
-    if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  private formatDuration(string) {
+    if ): ms < 1000) return `${ms}ms`;
+    if ) {ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -1189,8 +1162,8 @@ export abstract class BaseCommand extends Command {
   /**
    * Formatting utilities
    */
-  protected get format() {
-    return {
+  protected get format() (
+    return): 
       highlight: (text: string) => chalk.bold.cyan(text),
       success: (text: string) => chalk.green(text),
       error: (text: string) => chalk.red(text),
@@ -1203,10 +1176,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Check if command should run in background
    */
-  protected async shouldRunInBackground(): Promise<boolean> {
+  protected async shouldRunInBackground(Promise<boolean>) {
     const commandName = this.constructor.name
-      .toLowerCase()
-      .replace('command', '');
+      .toLowerCase): )
+      .replace) {'command', '');
     const parsed = await this.parse();
 
     return backgroundOrchestrator.shouldRunInBackground(
@@ -1219,10 +1192,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Execute command in background
    */
-  protected async executeInBackground(): Promise<void> {
+  protected async executeInBackground(Promise<void>) {
     const commandName = this.constructor.name
-      .toLowerCase()
-      .replace('command', '');
+      .toLowerCase): )
+      .replace) {'command', '');
     const parsed = await this.parse();
 
     const options: BackgroundOptions = {
@@ -1251,10 +1224,10 @@ export abstract class BaseCommand extends Command {
       this.log(chalk.gray(`📋 View all jobs with: waltodo jobs list`));
 
       // Don't exit in test environment
-      if (process.env.NODE_ENV !== 'test') {
+      if(process.env.NODE_ENV !== 'test') {
         process.exit(0);
       }
-    } catch (error) {
+    } catch(error) {
       this.error(
         `Failed to start background job: ${error instanceof Error ? error.message : String(error)}`,
         { exit: 1 }
@@ -1265,10 +1238,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Get command priority for background execution
    */
-  protected getCommandPriority(): 'low' | 'medium' | 'high' {
+  protected getCommandPriority('low' | 'medium' | 'high') {
     const commandName = this.constructor.name
-      .toLowerCase()
-      .replace('command', '');
+      .toLowerCase): )
+      .replace) {'command', '');
 
     // High priority commands
     if (['deploy', 'create-nft'].includes(commandName)) {
@@ -1293,7 +1266,7 @@ export abstract class BaseCommand extends Command {
    */
   protected async executeWithBackgroundProgress<T>(
     operation: () => Promise<T>,
-    options: {
+    options: (
       totalSteps?: number;
       stepName?: string;
       progressCallback?: (progress: number, stage: string) => void;
@@ -1308,7 +1281,7 @@ export abstract class BaseCommand extends Command {
     // Check if running in background mode
     const isBackground = process.env.WALRUS_BACKGROUND_JOB;
 
-    if (isBackground && progressCallback) {
+    if {isBackground && progressCallback) (
       // Setup progress reporting for background jobs
       let currentStep = 0;
 
@@ -1318,11 +1291,11 @@ export abstract class BaseCommand extends Command {
 
         // Output progress in format that background orchestrator can parse
         // eslint-disable-next-line no-console
-        console.log(`PROGRESS:${progress}:${stage}`);
+        console.log(`PROGRESS:${progress}: ${stage}`);
         // eslint-disable-next-line no-console
-        console.log(`STAGE:${stage}`);
+        console.log {`STAGE:${stage}`);
 
-        if (progressCallback) {
+        if(progressCallback) {
           progressCallback(progress, stage);
         }
       };
@@ -1330,7 +1303,7 @@ export abstract class BaseCommand extends Command {
       // Monkey patch console.log to report stages
       const originalLog = console.log;
       // eslint-disable-next-line no-console
-      console.log = (...args: any[]) => {
+      console.log = (...args: unknown[]) => {
         const message = args.join(' ');
         if (
           message.includes('Starting') ||
@@ -1358,12 +1331,12 @@ export abstract class BaseCommand extends Command {
   /**
    * Report progress for background jobs
    */
-  protected reportBackgroundProgress(progress: number, stage: string): void {
-    if (process.env.WALRUS_BACKGROUND_JOB) {
+  protected reportBackgroundProgress(progress: number, stage: string) {
+    if(process.env.WALRUS_BACKGROUND_JOB) {
       // eslint-disable-next-line no-console
-      console.log(`PROGRESS:${progress}:${stage}`);
+      console.log(`PROGRESS:${progress}: ${stage}`);
       // eslint-disable-next-line no-console
-      console.log(`STAGE:${stage}`);
+      console.log {`STAGE:${stage}`);
     }
   }
 

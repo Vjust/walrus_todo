@@ -1,0 +1,117 @@
+{
+  "version": "1.0.0",
+  "commands": {
+    "add": {
+      "id": "add",
+      "description": "Add one or more todo items to a specified list",
+      "pluginName": "@waltodo/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "task": {
+          "name": "task",
+          "type": "option",
+          "char": "t",
+          "description": "Task description (legacy flag - prefer positional args)",
+          "multiple": true
+        },
+        "priority": {
+          "name": "priority",
+          "type": "option",
+          "char": "p",
+          "description": "Task priority (high, medium, low)",
+          "options": ["high", "medium", "low"],
+          "multiple": true
+        },
+        "due": {
+          "name": "due",
+          "type": "option",
+          "char": "d",
+          "description": "Due date (YYYY-MM-DD)",
+          "multiple": true
+        },
+        "tags": {
+          "name": "tags",
+          "type": "option",
+          "char": "g",
+          "description": "Comma-separated tags",
+          "multiple": true
+        },
+        "list": {
+          "name": "list",
+          "type": "option",
+          "char": "l",
+          "description": "Name of the todo list",
+          "default": "default"
+        },
+        "storage": {
+          "name": "storage",
+          "type": "option",
+          "char": "s",
+          "description": "Storage location",
+          "options": ["local", "blockchain", "both"],
+          "default": "local"
+        }
+      },
+      "args": {
+        "titleOrList": {
+          "name": "titleOrList",
+          "description": "Todo title (if only one arg) or list name (if two args)",
+          "required": false
+        },
+        "title": {
+          "name": "title",
+          "description": "Todo title (when two args are provided)",
+          "required": false
+        }
+      }
+    },
+    "list": {
+      "id": "list",
+      "description": "Display todos from a specific list, or show all available lists",
+      "pluginName": "@waltodo/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "all": {
+          "name": "all",
+          "type": "boolean",
+          "char": "a",
+          "description": "Show all todos from all lists",
+          "default": false
+        },
+        "completed": {
+          "name": "completed",
+          "type": "boolean",
+          "char": "c",
+          "description": "Show only completed todos"
+        },
+        "pending": {
+          "name": "pending",
+          "type": "boolean",
+          "char": "p",
+          "description": "Show only pending todos"
+        },
+        "priority": {
+          "name": "priority",
+          "type": "option",
+          "description": "Filter by priority (high, medium, low)",
+          "options": ["high", "medium", "low"]
+        },
+        "tags": {
+          "name": "tags",
+          "type": "option",
+          "char": "t",
+          "description": "Filter by tags (comma-separated)"
+        }
+      },
+      "args": {
+        "listName": {
+          "name": "listName",
+          "description": "Name of the todo list to display",
+          "required": false
+        }
+      }
+    }
+  }
+}

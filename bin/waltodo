@@ -34,8 +34,8 @@ check_node() {
     do
       if [ -x "$(echo $node_path)" ]; then
         # Found Node.js, use it
-        NODE_PATH="$(echo $node_path)"
-        echo "Found Node.js at $NODE_PATH"
+        NODE_BIN="$(echo $node_path)"
+        echo "Found Node.js at $NODE_BIN"
         return 0
       fi
     done
@@ -97,7 +97,7 @@ check_node
 check_pnpm
 
 # If we need to build the project first
-if [ ! -d "$PROJECT_DIR/dist/apps/cli" ] || [ ! -f "$PROJECT_DIR/dist/apps/cli/src/index.js" ]; then
+if [ ! -d "$PROJECT_DIR/apps/cli/dist" ] || [ ! -f "$PROJECT_DIR/apps/cli/dist/index.js" ]; then
   echo "Building project..."
   BUILD_SUCCESS=false
 
@@ -123,19 +123,11 @@ if [ ! -d "$PROJECT_DIR/dist/apps/cli" ] || [ ! -f "$PROJECT_DIR/dist/apps/cli/s
   fi
 fi
 
-# Set NODE_PATH if we found it in a non-standard location
-if [ -n "$NODE_PATH" ]; then
-  # Direct call to the enhanced CLI runner which handles errors properly
-  if check_enhanced_runner; then
-    "$NODE_PATH" "$PROJECT_DIR/bin/run-enhanced.js" "$@"
-  else
-    "$NODE_PATH" "$PROJECT_DIR/bin/run.js" "$@"
-  fi
+# Run the CLI directly
+if [ -n "$NODE_BIN" ]; then
+  # Use the specific node binary we found
+  exec "$NODE_BIN" "$PROJECT_DIR/apps/cli/dist/cli.js" "$@"
 else
   # Use the node in PATH
-  if check_enhanced_runner; then
-    node "$PROJECT_DIR/bin/run-enhanced.js" "$@"
-  else
-    node "$PROJECT_DIR/bin/run.js" "$@"
-  fi
+  exec node "$PROJECT_DIR/apps/cli/dist/cli.js" "$@"
 fi
