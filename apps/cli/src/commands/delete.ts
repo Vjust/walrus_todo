@@ -277,7 +277,7 @@ export default class DeleteCommand extends BaseCommand {
     todoIdentifier: string,
     force: boolean
   ): Promise<void> {
-    let todo: Todo | undefined;
+    let todo: Todo | null;
     let actualListName: string;
 
     if (listName) {

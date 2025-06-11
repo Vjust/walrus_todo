@@ -174,7 +174,7 @@ export abstract class BaseCommand extends Command {
           }
         }
         
-        (this as any).config = (
+        (this as any).config = {
           name: 'waltodo',
           bin: 'waltodo',
           version: '1.0.0',
@@ -1211,7 +1211,7 @@ export abstract class BaseCommand extends Command {
       const jobId = await backgroundOrchestrator.executeInBackground(
         commandName,
         (parsed.args as any[]) || [],
-        this.flagsConfig,
+        this.flagsConfig as Record<string, unknown>,
         options
       );
 

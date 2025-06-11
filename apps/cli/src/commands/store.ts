@@ -261,7 +261,11 @@ export default class StoreCommand extends BaseCommand {
       // Step 3: Store todos (single or batch)
       if (todosToStore.length === 1) {
         // Single todo upload
-        await this.storeSingleTodo(todosToStore[0], walrusStorage, {
+        const todoToStore = todosToStore[0];
+        if (!todoToStore) {
+          throw new CLIError('Todo not found in list', 'TODO_NOT_FOUND');
+        }
+        await this.storeSingleTodo(todoToStore, walrusStorage, {
           epochs: flags.epochs,
           json: flags.json,
           reuse: flags.reuse,
@@ -864,7 +868,7 @@ export default class StoreCommand extends BaseCommand {
       if (fs.existsSync(blobMappingsFile)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
-          mappings = JSON.parse(content);
+          mappings = JSON.parse(content.toString());
         } catch (error) {
           this.warning(
             `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`
@@ -1045,8 +1049,12 @@ export default class StoreCommand extends BaseCommand {
       // Step 3: Store todos (single or batch)
       if (todosToStore.length === 1) {
         // Single todo upload
+        const todoToStore = todosToStore[0];
+        if (!todoToStore) {
+          throw new CLIError('Todo not found in list', 'TODO_NOT_FOUND');
+        }
         await this.storeSingleTodoWithProgress(
-          todosToStore[0],
+          todoToStore,
           walrusStorage,
           {
             epochs: flags.epochs,
