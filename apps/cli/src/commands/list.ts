@@ -4,7 +4,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createWriteStream } from 'fs';
 import { spawn, ChildProcess } from 'child_process';
-import BaseCommand, { ICONS, PRIORITY } from '../base-command';
+import { BaseCommand } from '../base-command';
+
+// Define ICONS and PRIORITY locally since they're not exported from base-command
+const ICONS = {
+  SUCCESS: '✓',
+  ERROR: '✗',
+  WARNING: '⚠',
+  INFO: 'ℹ',
+  list: '📋',
+  todo: '📝',
+  completed: '✅',
+  pending: '⏳',
+};
+
+const PRIORITY = {
+  high: '🔴',
+  medium: '🟡',
+  low: '🟢',
+};
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
@@ -12,7 +30,7 @@ import { jobManager, BackgroundJob } from '../utils/PerformanceMonitor';
 import { createSpinner } from '../utils/progress-indicators';
 
 // Add debug logging for cache hits/misses
-const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
+const CACHE_DEBUG = process.env?.CACHE_DEBUG === 'true';
 
 /**
  * @class ListCommand
@@ -114,12 +132,12 @@ class ListCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(ListCommand);
-      this.debugLog(`Command parsed with args: ${JSON.stringify(args)}`);
+      const { args, flags } = await this.parse(ListCommand as any);
+      this.debugLog(`Command parsed with args: ${JSON.stringify(args as any)}`);
 
       // Check if we're querying job status
-      if (flags['job-id']) {
-        return this.showJobStatus(flags['job-id'] as string);
+      if (flags?.["job-id"]) {
+        return this.showJobStatus(flags?.["job-id"] as string);
       }
 
       // Determine which list to show: positional arg takes precedence over flag
@@ -127,7 +145,7 @@ class ListCommand extends BaseCommand {
 
       // Store list name in the class property for error handling
       if (targetList) {
-        this.listName = targetList;
+        this?.listName = targetList;
       }
 
       // If JSON output is requested, handle it separately
@@ -137,7 +155,7 @@ class ListCommand extends BaseCommand {
 
       // Determine if we should run in background
       const shouldRunInBackground =
-        flags.background || flags.sync || this.shouldUseBackground(targetList);
+        flags.background || flags.sync || this.shouldUseBackground(targetList as any);
 
       if (shouldRunInBackground && !flags.watch) {
         return this.runInBackground(targetList, flags);
@@ -157,11 +175,11 @@ class ListCommand extends BaseCommand {
     } catch (error) {
       this.debugLog(`Error: ${error}`);
 
-      if (error instanceof CLIError && error.code === 'LIST_NOT_FOUND') {
+      if (error instanceof CLIError && error?.code === 'LIST_NOT_FOUND') {
         this.errorWithHelp(
           'List not found',
           `List "${this.listName}" does not exist`,
-          `Run '${this.config.bin} list' to see all available lists`
+          `Run '${this?.config?.bin} list' to see all available lists`
         );
       }
 
@@ -170,7 +188,7 @@ class ListCommand extends BaseCommand {
       }
 
       throw new CLIError(
-        `Failed to list todos: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to list todos: ${error instanceof Error ? error.message : String(error as any)}`,
         'LIST_FAILED'
       );
     } finally {
@@ -186,7 +204,7 @@ class ListCommand extends BaseCommand {
     flags: Record<string, unknown>
   ): Promise<void> {
     if (args.listName) {
-      const list = await this.todoService.getList(args.listName);
+      const list = await this?.todoService?.getList(args.listName);
       if (!list) {
         throw new CLIError(
           `List "${args.listName}" not found`,
@@ -203,28 +221,28 @@ class ListCommand extends BaseCommand {
 
       await this.jsonOutput({
         name: list.name,
-        totalCount: list.todos.length,
+        totalCount: list?.todos?.length,
         filteredCount: todos.length,
         completedCount: todos.filter((t: Todo) => t.completed).length,
         todos: todos,
       });
     } else {
-      const lists = await this.todoService.getAllLists();
+      const lists = await this?.todoService?.getAllLists();
       const listsWithDetails = await Promise.all(
         lists.map(async listName => {
-          const list = await this.todoService.getList(listName);
+          const list = await this?.todoService?.getList(listName as any);
           if (!list) return null;
           return {
             name: list.name,
-            todoCount: list.todos.length,
-            completedCount: list.todos.filter(t => t.completed).length,
+            todoCount: list?.todos?.length,
+            completedCount: list?.todos?.filter(t => t.completed).length,
           };
         })
       );
 
       await this.jsonOutput({
         totalLists: lists.length,
-        lists: listsWithDetails.filter(Boolean),
+        lists: listsWithDetails.filter(Boolean as any),
       });
     }
   }
@@ -249,7 +267,7 @@ class ListCommand extends BaseCommand {
     flags: Record<string, unknown>
   ): Promise<void> {
     this.debugLog(`Getting list: ${listName}`);
-    const list = await this.todoService.getList(listName);
+    const list = await this?.todoService?.getList(listName as any);
 
     if (!list) {
       this.debugLog(`List "${listName}" not found`);
@@ -257,15 +275,15 @@ class ListCommand extends BaseCommand {
     }
 
     // Calculate counts and prepare header
-    const completed = list.todos.filter(t => t.completed).length;
-    const total = list.todos.length;
+    const completed = list?.todos?.filter(t => t.completed).length;
+    const total = list?.todos?.length;
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     // Create a header with list name and progress bar
     const progressBarWidth = 20;
     const filledCount = Math.round((percent / 100) * progressBarWidth);
     const progressBar =
-      chalk.green('█'.repeat(filledCount)) +
+      chalk.green('█'.repeat(filledCount as any)) +
       chalk.gray('░'.repeat(progressBarWidth - filledCount));
 
     // Construct a formatted box header with list name and completion statistics
@@ -274,15 +292,15 @@ class ListCommand extends BaseCommand {
     // 2. Completion ratio (completed/total) with percentage
     // 3. A visual progress bar representing completion percentage
     const headerContent = [
-      `${chalk.bold(listName)}`,
+      `${chalk.bold(listName as any)}`,
       `${chalk.blue(`${completed}/${total} completed`)} ${chalk.dim(`(${percent}%)`)}`,
     ].join('\n');
 
     const headerBox = [
-      `${ICONS.BOX_TL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_TR}`, // Top border
+      `${ICONS.BOX_TL}${ICONS?.BOX_H?.repeat(40 as any)}${ICONS.BOX_TR}`, // Top border
       `${ICONS.BOX_V} ${ICONS.LIST} ${headerContent}${' '.repeat(35 - listName.length)}${ICONS.BOX_V}`, // Content with padding
       `${ICONS.BOX_V} ${progressBar} ${ICONS.BOX_V}`, // Progress bar
-      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_BR}`, // Bottom border
+      `${ICONS.BOX_BL}${ICONS?.BOX_H?.repeat(40 as any)}${ICONS.BOX_BR}`, // Bottom border
     ].join('\n');
 
     this.log('\n' + headerBox + '\n');
@@ -296,44 +314,44 @@ class ListCommand extends BaseCommand {
     this.applySorting(todos, flags.sort as string);
 
     // Display todos
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       this.log(chalk.yellow(`${ICONS.INFO} No matching todos found`));
 
       // Show helpful hint
       if (flags.completed && completed === 0) {
         this.log(
           chalk.dim(
-            `\n${ICONS.TIP} Mark todos as completed with: ${chalk.cyan(`${this.config.bin} complete <todo-id>`)}`
+            `\n${ICONS.TIP} Mark todos as completed with: ${chalk.cyan(`${this?.config?.bin} complete <todo-id>`)}`
           )
         );
       } else if (flags.pending && completed === total) {
         this.log(
           chalk.dim(
-            `\n${ICONS.TIP} Add new todos with: ${chalk.cyan(`${this.config.bin} add ${listName} -t "Your todo"`)}`
+            `\n${ICONS.TIP} Add new todos with: ${chalk.cyan(`${this?.config?.bin} add ${listName} -t "Your todo"`)}`
           )
         );
       } else if (total === 0) {
         this.log(
           chalk.dim(
-            `\n${ICONS.TIP} Add your first todo with: ${chalk.cyan(`${this.config.bin} add ${listName} -t "Your first todo"`)}`
+            `\n${ICONS.TIP} Add your first todo with: ${chalk.cyan(`${this?.config?.bin} add ${listName} -t "Your first todo"`)}`
           )
         );
       }
     } else {
       // Determine display mode: detailed provides comprehensive information,
       // while compact mode (default) shows minimal info for better screen utilization
-      const useDetailedView = flags.detailed === true;
+      const useDetailedView = flags?.detailed === true;
 
       // Display column headers in detailed view for better visual organization
       if (useDetailedView) {
         this.log(
           chalk.dim(
-            `${' '.repeat(4)}ID${' '.repeat(10)}STATUS${' '.repeat(6)}PRIORITY${' '.repeat(4)}TITLE`
+            `${' '.repeat(4 as any)}ID${' '.repeat(10 as any)}STATUS${' '.repeat(6 as any)}PRIORITY${' '.repeat(4 as any)}TITLE`
           )
         );
         this.log(
           chalk.dim(
-            `${' '.repeat(4)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(8)}${' '.repeat(2)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(30)}`
+            `${' '.repeat(4 as any)}${ICONS?.LINE?.repeat(10 as any)}${' '.repeat(2 as any)}${ICONS?.LINE?.repeat(8 as any)}${' '.repeat(2 as any)}${ICONS?.LINE?.repeat(10 as any)}${' '.repeat(2 as any)}${ICONS?.LINE?.repeat(30 as any)}`
           )
         );
       }
@@ -341,7 +359,7 @@ class ListCommand extends BaseCommand {
       // Display each todo
       todos.forEach((todo: Todo, index: number) => {
         // Make ID shorter for display but unique enough
-        const shortId = todo.id.slice(-6);
+        const shortId = todo?.id?.slice(-6);
 
         // Format status
         const status = todo.completed
@@ -365,8 +383,8 @@ class ListCommand extends BaseCommand {
         }
 
         // Format tags
-        const tagsDisplay = todo.tags?.length
-          ? chalk.cyan(`${ICONS.TAG} ${todo.tags.join(', ')}`)
+        const tagsDisplay = todo?.tags?.length
+          ? chalk.cyan(`${ICONS.TAG} ${todo?.tags?.join(', ')}`)
           : '';
 
         // Format private status
@@ -377,12 +395,12 @@ class ListCommand extends BaseCommand {
         // Choose between compact and detailed view
         if (!useDetailedView) {
           this.log(
-            `${status} [${chalk.dim(shortId)}] ${priorityDisplay} ${todo.title}`
+            `${status} [${chalk.dim(shortId as any)}] ${priorityDisplay} ${todo.title}`
           );
         } else {
           // Full display with details
           this.log(
-            `${status} [${chalk.dim(shortId)}] ${priorityDisplay.padEnd(12)} ${todo.title}`
+            `${status} [${chalk.dim(shortId as any)}] ${priorityDisplay.padEnd(12 as any)} ${todo.title}`
           );
 
           // Show details if they exist
@@ -395,7 +413,7 @@ class ListCommand extends BaseCommand {
 
           // Add a separator between todos for better readability
           if (index < todos.length - 1) {
-            this.log(chalk.dim(`    ${ICONS.LINE.repeat(50)}`));
+            this.log(chalk.dim(`    ${ICONS?.LINE?.repeat(50 as any)}`));
           }
         }
       });
@@ -427,7 +445,7 @@ class ListCommand extends BaseCommand {
     // Check cache for all lists first
     const cacheKey = 'lists:all';
     const lists = (await this.getCachedTodos(cacheKey, async () =>
-      this.todoService.getAllLists()
+      this?.todoService?.getAllLists()
     )) as string[];
 
     if (CACHE_DEBUG) {
@@ -439,7 +457,7 @@ class ListCommand extends BaseCommand {
     }
     this.debugLog(`Found ${lists.length} lists`);
 
-    if (lists.length === 0) {
+    if (lists?.length === 0) {
       // No lists found, provide helpful guidance
       this.log(chalk.yellow(`${ICONS.WARNING} No todo lists found`));
 
@@ -447,12 +465,12 @@ class ListCommand extends BaseCommand {
       const quickStartGuide = [
         `Create your first todo list with:`,
         ``,
-        `  ${chalk.cyan(`${this.config.bin} add my-list -t "My first task"`)}`,
+        `  ${chalk.cyan(`${this?.config?.bin} add my-list -t "My first task"`)}`,
         ``,
         `This will create a list named "my-list" with your first task.`,
         `You can then view it with:`,
         ``,
-        `  ${chalk.cyan(`${this.config.bin} list my-list`)}`,
+        `  ${chalk.cyan(`${this?.config?.bin} list my-list`)}`,
       ].join('\n');
 
       this.section('Quick Start', quickStartGuide);
@@ -461,10 +479,10 @@ class ListCommand extends BaseCommand {
 
     // Format header for lists display
     const headerBox = [
-      `${ICONS.BOX_TL}${ICONS.BOX_H.repeat(50)}${ICONS.BOX_TR}`,
-      `${ICONS.BOX_V} ${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}${' '.repeat(24)}${ICONS.BOX_V}`,
-      `${ICONS.BOX_V} ${chalk.dim(`Found ${lists.length} list${lists.length === 1 ? '' : 's'}`)}${' '.repeat(50 - 8 - lists.length.toString().length - (lists.length === 1 ? 4 : 5))}${ICONS.BOX_V}`,
-      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(50)}${ICONS.BOX_BR}`,
+      `${ICONS.BOX_TL}${ICONS?.BOX_H?.repeat(50 as any)}${ICONS.BOX_TR}`,
+      `${ICONS.BOX_V} ${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}${' '.repeat(24 as any)}${ICONS.BOX_V}`,
+      `${ICONS.BOX_V} ${chalk.dim(`Found ${lists.length} list${lists?.length === 1 ? '' : 's'}`)}${' '.repeat(50 - 8 - lists?.length?.toString().length - (lists?.length === 1 ? 4 : 5))}${ICONS.BOX_V}`,
+      `${ICONS.BOX_BL}${ICONS?.BOX_H?.repeat(50 as any)}${ICONS.BOX_BR}`,
     ].join('\n');
 
     this.log('\n' + headerBox + '\n');
@@ -472,11 +490,11 @@ class ListCommand extends BaseCommand {
     // Process all lists to get more detailed information
     const listDetails = await Promise.all(
       (lists as string[]).map(async listName => {
-        const list = await this.todoService.getList(listName);
+        const list = await this?.todoService?.getList(listName as any);
         if (!list) return null;
 
-        const total = list.todos.length;
-        const completed = list.todos.filter(t => t.completed).length;
+        const total = list?.todos?.length;
+        const completed = list?.todos?.filter(t => t.completed).length;
         const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
         const pending = total - completed;
 
@@ -484,14 +502,14 @@ class ListCommand extends BaseCommand {
         const progressWidth = 10;
         const filled = Math.round((percent / 100) * progressWidth);
         const progressBar =
-          chalk.green('█'.repeat(filled)) +
+          chalk.green('█'.repeat(filled as any)) +
           chalk.gray('░'.repeat(progressWidth - filled));
 
         // Get priority distribution
         const priorities = {
-          high: list.todos.filter(t => t.priority === 'high').length,
-          medium: list.todos.filter(t => t.priority === 'medium').length,
-          low: list.todos.filter(t => t.priority === 'low').length,
+          high: list?.todos?.filter(t => t?.priority === 'high').length,
+          medium: list?.todos?.filter(t => t?.priority === 'medium').length,
+          low: list?.todos?.filter(t => t?.priority === 'low').length,
         };
 
         return {
@@ -521,9 +539,9 @@ class ListCommand extends BaseCommand {
     validLists.forEach((list, index) => {
       // Format list name with icon and better spacing
       const listIcon =
-        list.total === 0
+        list?.total === 0
           ? ICONS.FOLDER
-          : list.percent === 100
+          : list?.percent === 100
             ? ICONS.SUCCESS
             : ICONS.LIST;
       this.log(`${listIcon} ${chalk.bold(list.name)}`);
@@ -539,19 +557,19 @@ class ListCommand extends BaseCommand {
       // Show priority breakdown if there are todos
       if (list.total > 0) {
         const priorityParts = [];
-        if (list.priorities.high > 0) {
+        if (list?.priorities?.high > 0) {
           priorityParts.push(
-            chalk.red(`${ICONS.PRIORITY_HIGH} ${list.priorities.high}`)
+            chalk.red(`${ICONS.PRIORITY_HIGH} ${list?.priorities?.high}`)
           );
         }
-        if (list.priorities.medium > 0) {
+        if (list?.priorities?.medium > 0) {
           priorityParts.push(
-            chalk.yellow(`${ICONS.PRIORITY_MEDIUM} ${list.priorities.medium}`)
+            chalk.yellow(`${ICONS.PRIORITY_MEDIUM} ${list?.priorities?.medium}`)
           );
         }
-        if (list.priorities.low > 0) {
+        if (list?.priorities?.low > 0) {
           priorityParts.push(
-            chalk.green(`${ICONS.PRIORITY_LOW} ${list.priorities.low}`)
+            chalk.green(`${ICONS.PRIORITY_LOW} ${list?.priorities?.low}`)
           );
         }
 
@@ -573,17 +591,17 @@ class ListCommand extends BaseCommand {
     this.log(chalk.blue(`${ICONS.INFO} Quick Commands:`));
     this.log(
       chalk.dim(
-        `  ${ICONS.BULLET} View a list: ${chalk.cyan(`${this.config.bin} list <list-name>`)}`
+        `  ${ICONS.BULLET} View a list: ${chalk.cyan(`${this?.config?.bin} list <list-name>`)}`
       )
     );
     this.log(
       chalk.dim(
-        `  ${ICONS.BULLET} Add a todo: ${chalk.cyan(`${this.config.bin} add <list-name> -t "Your task"`)}`
+        `  ${ICONS.BULLET} Add a todo: ${chalk.cyan(`${this?.config?.bin} add <list-name> -t "Your task"`)}`
       )
     );
     this.log(
       chalk.dim(
-        `  ${ICONS.BULLET} Filter todos: ${chalk.cyan(`${this.config.bin} list <list-name> --completed`)}`
+        `  ${ICONS.BULLET} Filter todos: ${chalk.cyan(`${this?.config?.bin} list <list-name> --completed`)}`
       )
     );
   }
@@ -627,10 +645,10 @@ class ListCommand extends BaseCommand {
   private async shouldUseBackground(targetList?: string): Promise<boolean> {
     try {
       if (targetList) {
-        const list = await this.todoService.getList(targetList);
-        return list ? list.todos.length > 100 : false;
+        const list = await this?.todoService?.getList(targetList as any);
+        return list ? list?.todos?.length > 100 : false;
       } else {
-        const lists = await this.todoService.getAllLists();
+        const lists = await this?.todoService?.getAllLists();
         return lists.length > 10;
       }
     } catch {
@@ -650,19 +668,19 @@ class ListCommand extends BaseCommand {
     const jobFlags = { ...flags, background: false }; // Remove background flag to avoid recursion
 
     // Create background job
-    this.backgroundJob = jobManager.createJob(command, args, jobFlags);
+    this?.backgroundJob = jobManager.createJob(command, args, jobFlags);
 
     this.log(chalk.blue(`${ICONS.INFO} Starting background list operation...`));
-    this.log(chalk.dim(`Job ID: ${this.backgroundJob.id}`));
+    this.log(chalk.dim(`Job ID: ${this?.backgroundJob?.id}`));
     this.log(
       chalk.dim(
-        `Track progress: ${this.config.bin} list --job-id ${this.backgroundJob.id}`
+        `Track progress: ${this?.config?.bin} list --job-id ${this?.backgroundJob?.id}`
       )
     );
 
     // Start background process
     const childArgs = [
-      this.config.bin,
+      this?.config?.bin,
       'list',
       ...args,
       '--output',
@@ -684,24 +702,24 @@ class ListCommand extends BaseCommand {
     });
 
     // Set up output and log files
-    const outputFile = createWriteStream(this.backgroundJob.outputFile!);
-    const logFile = createWriteStream(this.backgroundJob.logFile!);
+    const outputFile = createWriteStream(this?.backgroundJob?.outputFile!);
+    const logFile = createWriteStream(this?.backgroundJob?.logFile!);
 
-    child.stdout?.pipe(outputFile);
-    child.stderr?.pipe(logFile);
+    child?.stdout?.pipe(outputFile as any);
+    child?.stderr?.pipe(logFile as any);
 
-    jobManager.startJob(this.backgroundJob.id, child.pid);
+    jobManager.startJob(this?.backgroundJob?.id, child.pid);
     jobManager.writeJobLog(
-      this.backgroundJob.id,
+      this?.backgroundJob?.id,
       `Started background list operation with PID: ${child.pid}`
     );
 
     child.on('exit', code => {
       if (code === 0) {
-        jobManager.completeJob(this.backgroundJob!.id, { exitCode: code });
+        jobManager.completeJob(this.backgroundJob?.id, { exitCode: code });
       } else {
         jobManager.failJob(
-          this.backgroundJob!.id,
+          this.backgroundJob?.id,
           `Process exited with code: ${code}`
         );
       }
@@ -712,32 +730,32 @@ class ListCommand extends BaseCommand {
     this.log(
       chalk.green(`${ICONS.SUCCESS} Background job started successfully`)
     );
-    this.log(chalk.dim(`View output: cat ${this.backgroundJob.outputFile}`));
+    this.log(chalk.dim(`View output: cat ${this?.backgroundJob?.outputFile}`));
   }
 
   /**
    * Show status of background job
    */
   private async showJobStatus(jobId: string): Promise<void> {
-    const job = jobManager.getJob(jobId);
+    const job = jobManager.getJob(jobId as any);
 
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
     }
 
-    this.log('\n' + jobManager.formatJobForDisplay(job));
+    this.log('\n' + jobManager.formatJobForDisplay(job as any));
 
     // Show recent log output if available
-    const logs = jobManager.readJobLog(jobId);
+    const logs = jobManager.readJobLog(jobId as any);
     if (logs) {
       this.log('\n' + chalk.blue('Recent Logs:'));
       const recentLogs = logs.split('\n').slice(-10).join('\n');
-      this.log(chalk.dim(recentLogs));
+      this.log(chalk.dim(recentLogs as any));
     }
 
     // Show output if job is completed
     if (
-      job.status === 'completed' &&
+      job?.status === 'completed' &&
       job.outputFile &&
       fs.existsSync(job.outputFile)
     ) {
@@ -745,7 +763,7 @@ class ListCommand extends BaseCommand {
       const content = fs.readFileSync(job.outputFile, 'utf8');
       const output =
         typeof content === 'string' ? content : content.toString('utf8');
-      this.log(output);
+      this.log(output as any);
     }
   }
 
@@ -763,7 +781,7 @@ class ListCommand extends BaseCommand {
     const updateDisplay = async () => {
       try {
         // Clear screen and move cursor to top
-        process.stdout.write('\x1b[2J\x1b[H');
+        process?.stdout?.write('\x1b[2J\x1b[H');
 
         this.log(chalk.dim(`Last updated: ${new Date().toLocaleTimeString()}`));
         this.log('');
@@ -779,7 +797,7 @@ class ListCommand extends BaseCommand {
       } catch (error) {
         this.log(
           chalk.red(
-            `Error updating display: ${error instanceof Error ? error.message : String(error)}`
+            `Error updating display: ${error instanceof Error ? error.message : String(error as any)}`
           )
         );
       }
@@ -789,13 +807,13 @@ class ListCommand extends BaseCommand {
     await updateDisplay();
 
     // Set up periodic updates
-    this.watchInterval = setInterval(updateDisplay, 2000);
+    this?.watchInterval = setInterval(updateDisplay, 2000);
 
     // Handle graceful shutdown
     process.on('SIGINT', () => {
       this.cleanup();
       this.log('\n' + chalk.yellow('Watch mode stopped.'));
-      process.exit(0);
+      process.exit(0 as any);
     });
 
     // Keep process alive
@@ -830,7 +848,7 @@ class ListCommand extends BaseCommand {
     listName: string,
     flags: Record<string, unknown>
   ): Promise<void> {
-    const list = await this.todoService.getList(listName);
+    const list = await this?.todoService?.getList(listName as any);
 
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
@@ -851,7 +869,7 @@ class ListCommand extends BaseCommand {
       const chunk = todos.slice(i, i + chunkSize);
 
       chunk.forEach((todo: Todo) => {
-        const shortId = todo.id.slice(-6);
+        const shortId = todo?.id?.slice(-6);
         const status = todo.completed
           ? chalk.green(ICONS.SUCCESS)
           : chalk.yellow(ICONS.PENDING);
@@ -859,7 +877,7 @@ class ListCommand extends BaseCommand {
           PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
 
         this.log(
-          `${status} [${chalk.dim(shortId)}] ${priority.color(priority.label)} ${todo.title}`
+          `${status} [${chalk.dim(shortId as any)}] ${priority.color(priority.label)} ${todo.title}`
         );
       });
 
@@ -874,23 +892,23 @@ class ListCommand extends BaseCommand {
    * Stream all lists with chunked output
    */
   private async streamAllLists(): Promise<void> {
-    const lists = await this.todoService.getAllLists();
+    const lists = await this?.todoService?.getAllLists();
 
     this.log(chalk.bold(`\n📚 Found ${lists.length} lists`));
     this.log(''.padEnd(50, '─'));
 
     for (const listName of lists) {
-      const list = await this.todoService.getList(listName);
+      const list = await this?.todoService?.getList(listName as any);
       if (!list) continue;
 
-      const completed = list.todos.filter(t => t.completed).length;
-      const total = list.todos.length;
+      const completed = list?.todos?.filter(t => t.completed).length;
+      const total = list?.todos?.length;
       const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      const progressBar = this.createMiniProgressBar(percent);
+      const progressBar = this.createMiniProgressBar(percent as any);
 
       this.log(
-        `📋 ${chalk.bold(listName)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`
+        `📋 ${chalk.bold(listName as any)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`
       );
 
       // Small delay for streaming effect
@@ -904,7 +922,7 @@ class ListCommand extends BaseCommand {
   private createMiniProgressBar(percent: number, width: number = 10): string {
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
-    return `[${chalk.green('█'.repeat(filled))}${chalk.gray('░'.repeat(empty))}]`;
+    return `[${chalk.green('█'.repeat(filled as any))}${chalk.gray('░'.repeat(empty as any))}]`;
   }
 
   /**
@@ -912,7 +930,7 @@ class ListCommand extends BaseCommand {
    */
   private cleanup(): void {
     if (this.outputStream) {
-      this.outputStream.end();
+      this?.outputStream?.end();
     }
 
     if (this.watchInterval) {

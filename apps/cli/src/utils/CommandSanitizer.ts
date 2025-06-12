@@ -18,12 +18,12 @@ export class CommandSanitizer {
       .replace(
         new RegExp(
           '[' +
-            String.fromCharCode(1) +
+            String.fromCharCode(1 as any) +
             '-' +
-            String.fromCharCode(31) +
-            String.fromCharCode(127) +
+            String.fromCharCode(31 as any) +
+            String.fromCharCode(127 as any) +
             '-' +
-            String.fromCharCode(159) +
+            String.fromCharCode(159 as any) +
             ']',
           'g'
         ),
@@ -41,15 +41,15 @@ export class CommandSanitizer {
   static sanitizeFlags<T extends Record<string, unknown>>(flags: T): T {
     const sanitized = { ...flags };
 
-    for (const [key, value] of Object.entries(sanitized)) {
+    for (const [key, value] of Object.entries(sanitized as any)) {
       if (typeof value === 'string') {
-        sanitized[key as keyof T] = this.sanitizeString(value) as T[keyof T];
+        sanitized[key as keyof T] = this.sanitizeString(value as any) as T[keyof T];
       } else if (
-        Array.isArray(value) &&
+        Array.isArray(value as any) &&
         value.every(item => typeof item === 'string')
       ) {
         sanitized[key as keyof T] = value.map(item =>
-          this.sanitizeString(item)
+          this.sanitizeString(item as any)
         ) as T[keyof T];
       }
     }
@@ -63,7 +63,7 @@ export class CommandSanitizer {
    * @returns New object with sanitized string values
    */
   static sanitizeArgs<T extends Record<string, unknown>>(args: T): T {
-    return this.sanitizeFlags(args);
+    return this.sanitizeFlags(args as any);
   }
 
   /**
@@ -94,20 +94,20 @@ export class CommandSanitizer {
     if (!obj) return obj;
 
     if (typeof obj === 'string') {
-      return this.sanitizeString(obj) as T;
+      return this.sanitizeString(obj as any) as T;
     }
 
-    if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeForJson(item)) as T;
+    if (Array.isArray(obj as any)) {
+      return obj.map(item => this.sanitizeForJson(item as any)) as T;
     }
 
     if (typeof obj === 'object' && obj !== null) {
       const sanitized: Record<string, unknown> = {};
 
-      for (const [key, value] of Object.entries(obj)) {
+      for (const [key, value] of Object.entries(obj as any)) {
         // Sanitize the key (although keys are usually safe)
-        const sanitizedKey = this.sanitizeString(key);
-        sanitized[sanitizedKey] = this.sanitizeForJson(value);
+        const sanitizedKey = this.sanitizeString(key as any);
+        sanitized[sanitizedKey] = this.sanitizeForJson(value as any);
       }
 
       return sanitized as T;
@@ -126,7 +126,7 @@ export class CommandSanitizer {
     if (!url) return '';
 
     try {
-      const parsed = new URL(url);
+      const parsed = new URL(url as any);
       // Only allow http and https protocols
       if (!['http:', 'https:'].includes(parsed.protocol)) {
         return '';
@@ -184,8 +184,8 @@ export class CommandSanitizer {
 
     return tags
       .split(',')
-      .map(tag => this.sanitizeString(tag))
-      .filter(Boolean); // Filter out empty tags
+      .map(tag => this.sanitizeString(tag as any))
+      .filter(Boolean as any); // Filter out empty tags
   }
 
   /**
@@ -242,9 +242,9 @@ export class CommandSanitizer {
 
     // Remove anything that's not a digit, decimal point, or minus sign
     const sanitized = input.replace(/[^\d.-]/g, '');
-    const parsed = parseFloat(sanitized);
+    const parsed = parseFloat(sanitized as any);
 
-    return isNaN(parsed) ? NaN : parsed;
+    return isNaN(parsed as any) ? NaN : parsed;
   }
 
   /**
@@ -257,7 +257,7 @@ export class CommandSanitizer {
 
     // Basic email format check and sanitization
     const sanitized = email.trim().toLowerCase();
-    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(sanitized)
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(sanitized as any)
       ? sanitized
       : '';
   }

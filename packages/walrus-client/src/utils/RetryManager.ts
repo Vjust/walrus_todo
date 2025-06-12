@@ -37,47 +37,47 @@ export class RetryManager {
   ): Promise<T> {
     let lastError: Error | null = null;
     
-    for (let attempt = 1; attempt <= this.options.maxRetries + 1; attempt++) {
+    for (let attempt = 1; attempt <= this?.options?.maxRetries + 1; attempt++) {
       try {
         // Apply timeout if specified
-        if (this.options.timeout > 0) {
-          return await this.withTimeout(operation(), this.options.timeout);
+        if (this?.options?.timeout > 0) {
+          return await this.withTimeout(operation(), this?.options?.timeout);
         }
         return await operation();
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
         
         // Don't retry on last attempt
-        if (attempt > this.options.maxRetries) {
+        if (attempt > this?.options?.maxRetries) {
           break;
         }
         
         // Check if we should retry this error
-        if (this.options.shouldRetry && !this.options.shouldRetry(lastError, attempt)) {
+        if (this?.options?.shouldRetry && !this?.options?.shouldRetry(lastError, attempt)) {
           break;
         }
         
         // Default retry logic for common network errors
-        if (!this.options.shouldRetry && !this.shouldRetryDefault(lastError)) {
+        if (!this?.options?.shouldRetry && !this.shouldRetryDefault(lastError as any)) {
           break;
         }
         
         // Call retry callback
-        this.options.onRetry?.(lastError, attempt);
+        this?.options?.onRetry?.(lastError, attempt);
         
         // Calculate delay with exponential backoff
         const delay = Math.min(
-          this.options.baseDelay * Math.pow(this.options.backoffFactor, attempt - 1),
-          this.options.maxDelay
+          this?.options?.baseDelay * Math.pow(this?.options?.backoffFactor, attempt - 1),
+          this?.options?.maxDelay
         );
         
-        await this.sleep(delay);
+        await this.sleep(delay as any);
       }
     }
     
     throw new WalrusRetryError(
-      `${operationName} failed after ${this.options.maxRetries + 1} attempts`,
-      this.options.maxRetries + 1,
+      `${operationName} failed after ${this?.options?.maxRetries + 1} attempts`,
+      this?.options?.maxRetries + 1,
       lastError || undefined
     );
   }
@@ -96,16 +96,16 @@ export class RetryManager {
 
   private shouldRetryDefault(error: Error): boolean {
     // Retry on network errors, timeouts, and 5xx status codes
-    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+    if (error?.name === 'AbortError' || error?.name === 'TimeoutError') {
       return true;
     }
     
-    if (error.message.includes('fetch') || error.message.includes('network')) {
+    if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
       return true;
     }
     
     // Check for HTTP status codes in error message
-    const statusMatch = error.message.match(/status\s*:?\s*(\d+)/i);
+    const statusMatch = error?.message?.match(/status\s*:?\s*(\d+)/i);
     if (statusMatch && statusMatch[1]) {
       const status = parseInt(statusMatch[1]);
       return status >= 500 || status === 429; // Server errors or rate limiting
@@ -124,7 +124,7 @@ export class RetryManager {
     options?: RetryOptions,
     operationName?: string
   ): Promise<T> {
-    const retryManager = new RetryManager(options);
+    const retryManager = new RetryManager(options as any);
     return retryManager.execute(operation, operationName);
   }
 

@@ -9,7 +9,7 @@ import * as sinon from 'sinon';
 const mockBaseConfig = {
   privateKey: 'mock-private-key',
   network: 'testnet',
-  walrusEndpoint: 'https://testnet.wal.app',
+  walrusEndpoint: 'https://testnet?.wal?.app',
   storage: {
     defaultSize: 1000000,
     defaultEpochs: 52,
@@ -40,7 +40,7 @@ const mockBackgroundOpsManager = {
 jest.mock('../../apps/cli/src/utils/background-ai-operations', () => ({
   createBackgroundAIOperationsManager: jest
     .fn()
-    .mockResolvedValue(mockBackgroundOpsManager),
+    .mockResolvedValue(mockBackgroundOpsManager as any),
   BackgroundAIOperations: jest.fn(),
   BackgroundAIUtils: jest.fn(),
 }));
@@ -48,7 +48,7 @@ jest.mock('../../apps/cli/src/utils/background-ai-operations', () => ({
 // Mock the config service
 jest.mock('../../apps/cli/src/services/config-service', () => ({
   configService: {
-    getConfig: jest.fn().mockResolvedValue(mockBaseConfig),
+    getConfig: jest.fn().mockResolvedValue(mockBaseConfig as any),
   },
 }));
 
@@ -70,7 +70,7 @@ describe('verify commands', () => {
     jest.clearAllMocks();
 
     // Reset mock implementations
-    mockBackgroundOpsManager.getOperationStatus.mockResolvedValue({
+    mockBackgroundOpsManager?.getOperationStatus?.mockResolvedValue({
       type: 'verification',
       status: 'completed',
       progress: 100,
@@ -80,14 +80,14 @@ describe('verify commands', () => {
       error: null,
     });
 
-    mockBackgroundOpsManager.waitForOperationWithProgress.mockResolvedValue({
+    mockBackgroundOpsManager?.waitForOperationWithProgress?.mockResolvedValue({
       success: true,
       result: 'verification completed',
     });
 
     // Set up config in home directory
     const configDir = path.join(os.homedir(), '.walrus-todo');
-    if (!fs.existsSync(configDir)) {
+    if (!fs.existsSync(configDir as any)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
     fs.writeFileSync(
@@ -102,7 +102,7 @@ describe('verify commands', () => {
   afterEach(() => {
     // Clean up test files
     try {
-      fs.readdirSync(tmpDir).forEach(file => {
+      fs.readdirSync(tmpDir as any).forEach(file => {
         fs.unlinkSync(path.join(tmpDir, file));
       });
     } catch (error) {
@@ -155,7 +155,7 @@ describe('verify commands', () => {
 
       test
         .stdout()
-        .timeout(10000)
+        .timeout(10000 as any)
         .command(['verify', 'list', '--background', '--wait'])
         .it('starts list operation in background and waits', async ctx => {
           expect(ctx.stdout).to.contain(
@@ -195,7 +195,7 @@ describe('verify commands', () => {
       test
         .stderr()
         .command(['verify', 'show'])
-        .exit(2)
+        .exit(2 as any)
         .it('requires verification ID for show action');
 
       test
@@ -218,7 +218,7 @@ describe('verify commands', () => {
             'Exporting verification test-verification-id'
           );
           expect(ctx.stdout).to.contain('"type": "AIVerificationAttestation"');
-          expect(ctx.stdout).to.contain('"version": "1.0.0"');
+          expect(ctx.stdout).to.contain('"version": "1?.0?.0"');
         });
 
       test
@@ -238,7 +238,7 @@ describe('verify commands', () => {
             `Attestation exported to ${path.join(tmpDir, 'export.json')}`
           );
           // Verify file was created
-          expect(fs.existsSync(path.join(tmpDir, 'export.json'))).to.be.true;
+          expect(fs.existsSync(path.join(tmpDir, 'export.json'))).to?.be?.true;
         });
 
       test
@@ -258,7 +258,7 @@ describe('verify commands', () => {
       test
         .stderr()
         .command(['verify', 'export'])
-        .exit(2)
+        .exit(2 as any)
         .it('requires verification ID for export action');
 
       test
@@ -287,10 +287,10 @@ describe('verify commands', () => {
 
       test
         .stdout()
-        .timeout(5000)
+        .timeout(5000 as any)
         .do(() => {
           // Mock a running operation
-          mockBackgroundOpsManager.getOperationStatus.mockResolvedValueOnce({
+          mockBackgroundOpsManager?.getOperationStatus?.mockResolvedValueOnce({
             type: 'verification',
             status: 'running',
             progress: 50,
@@ -330,12 +330,12 @@ describe('verify commands', () => {
         .stderr()
         .do(() => {
           // Mock job not found
-          mockBackgroundOpsManager.getOperationStatus.mockResolvedValueOnce(
+          mockBackgroundOpsManager?.getOperationStatus?.mockResolvedValueOnce(
             null
           );
         })
         .command(['verify', 'list', '--jobId', 'nonexistent-job'])
-        .exit(2)
+        .exit(2 as any)
         .it('handles non-existent job ID', ctx => {
           expect(ctx.stderr).to.contain('Job nonexistent-job not found');
         });
@@ -344,7 +344,7 @@ describe('verify commands', () => {
         .stdout()
         .do(() => {
           // Mock operation with error
-          mockBackgroundOpsManager.getOperationStatus.mockResolvedValueOnce({
+          mockBackgroundOpsManager?.getOperationStatus?.mockResolvedValueOnce({
             type: 'verification',
             status: 'failed',
             progress: 75,
@@ -367,7 +367,7 @@ describe('verify commands', () => {
       test
         .stderr()
         .command(['verify', 'invalid-action'])
-        .exit(2)
+        .exit(2 as any)
         .it('handles invalid action');
 
       test
@@ -381,7 +381,7 @@ describe('verify commands', () => {
           );
         })
         .command(['verify', 'list', '--background'])
-        .exit(2)
+        .exit(2 as any)
         .it('handles background service failure', ctx => {
           expect(ctx.stderr).to.contain(
             'Failed to start background verification list: Background service unavailable'

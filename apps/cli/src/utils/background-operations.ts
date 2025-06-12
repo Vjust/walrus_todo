@@ -59,7 +59,7 @@ export class BackgroundOperations {
   private cacheManager: BackgroundCacheManager;
 
   constructor(cacheManager: BackgroundCacheManager) {
-    this.cacheManager = cacheManager;
+    this?.cacheManager = cacheManager;
     this.setupEventListeners();
   }
 
@@ -91,7 +91,7 @@ export class BackgroundOperations {
 
     // Setup callbacks if provided
     if (options.onProgress) {
-      this.cacheManager.on('operationProgress', (id, progress) => {
+      this?.cacheManager?.on('operationProgress', (id, progress) => {
         if (id === operationId) {
           options.onProgress!(id, progress);
         }
@@ -99,7 +99,7 @@ export class BackgroundOperations {
     }
 
     if (options.onComplete) {
-      this.cacheManager.on('operationCompleted', (id, result) => {
+      this?.cacheManager?.on('operationCompleted', (id, result) => {
         if (id === operationId) {
           options.onComplete!(id, result);
         }
@@ -107,14 +107,14 @@ export class BackgroundOperations {
     }
 
     if (options.onError) {
-      this.cacheManager.on('operationFailed', (id, error) => {
+      this?.cacheManager?.on('operationFailed', (id, error) => {
         if (id === operationId) {
           options.onError!(id, error);
         }
       });
     }
 
-    const queuedId = await this.cacheManager.queueOperation(operation);
+    const queuedId = await this?.cacheManager?.queueOperation(operation as any);
 
     // Track performance
     performanceMonitor.startOperation(operationId, 'background-upload');
@@ -140,13 +140,13 @@ export class BackgroundOperations {
     };
 
     logger.info(
-      `Starting background blob ID caching for ${options.items.length} items`,
+      `Starting background blob ID caching for ${options?.items?.length} items`,
       {
         operationId,
       }
     );
 
-    return await this.cacheManager.queueOperation(operation);
+    return await this?.cacheManager?.queueOperation(operation as any);
   }
 
   /**
@@ -174,7 +174,7 @@ export class BackgroundOperations {
       }
     );
 
-    return await this.cacheManager.queueOperation(operation);
+    return await this?.cacheManager?.queueOperation(operation as any);
   }
 
   /**
@@ -202,7 +202,7 @@ export class BackgroundOperations {
       }
     );
 
-    return await this.cacheManager.queueOperation(operation);
+    return await this?.cacheManager?.queueOperation(operation as any);
   }
 
   /**
@@ -224,7 +224,7 @@ export class BackgroundOperations {
       priority: options.priority || 'normal',
     };
 
-    logger.info(`Starting background sync for ${options.todos.length} todos`, {
+    logger.info(`Starting background sync for ${options?.todos?.length} todos`, {
       operationId,
       direction: options.direction,
       priority: operation.priority,
@@ -232,7 +232,7 @@ export class BackgroundOperations {
 
     // Setup callbacks if provided
     if (options.onProgress) {
-      this.cacheManager.on('operationProgress', (id, progress) => {
+      this?.cacheManager?.on('operationProgress', (id, progress) => {
         if (id === operationId) {
           options.onProgress!(id, progress);
         }
@@ -240,7 +240,7 @@ export class BackgroundOperations {
     }
 
     if (options.onComplete) {
-      this.cacheManager.on('operationCompleted', (id, result) => {
+      this?.cacheManager?.on('operationCompleted', (id, result) => {
         if (id === operationId) {
           options.onComplete!(id, result);
         }
@@ -248,14 +248,14 @@ export class BackgroundOperations {
     }
 
     if (options.onError) {
-      this.cacheManager.on('operationFailed', (id, error) => {
+      this?.cacheManager?.on('operationFailed', (id, error) => {
         if (id === operationId) {
           options.onError!(id, error);
         }
       });
     }
 
-    const queuedId = await this.cacheManager.queueOperation(operation);
+    const queuedId = await this?.cacheManager?.queueOperation(operation as any);
 
     // Track performance
     performanceMonitor.startOperation(operationId, 'background-sync');
@@ -294,7 +294,7 @@ export class BackgroundOperations {
 
     // Setup callbacks if provided
     if (options.onProgress) {
-      this.cacheManager.on('operationProgress', (id, progress) => {
+      this?.cacheManager?.on('operationProgress', (id, progress) => {
         if (id === operationId) {
           options.onProgress!(id, progress);
         }
@@ -302,7 +302,7 @@ export class BackgroundOperations {
     }
 
     if (options.onComplete) {
-      this.cacheManager.on('operationCompleted', (id, result) => {
+      this?.cacheManager?.on('operationCompleted', (id, result) => {
         if (id === operationId) {
           options.onComplete!(id, result);
         }
@@ -310,14 +310,14 @@ export class BackgroundOperations {
     }
 
     if (options.onError) {
-      this.cacheManager.on('operationFailed', (id, error) => {
+      this?.cacheManager?.on('operationFailed', (id, error) => {
         if (id === operationId) {
           options.onError!(id, error);
         }
       });
     }
 
-    const queuedId = await this.cacheManager.queueOperation(operation);
+    const queuedId = await this?.cacheManager?.queueOperation(operation as any);
 
     // Track performance
     performanceMonitor.startOperation(
@@ -332,14 +332,14 @@ export class BackgroundOperations {
    * Get status of a background operation
    */
   async getOperationStatus(operationId: string) {
-    return await this.cacheManager.getOperationStatus(operationId);
+    return await this?.cacheManager?.getOperationStatus(operationId as any);
   }
 
   /**
    * Get result of a completed operation
    */
   async getOperationResult(operationId: string) {
-    return await this.cacheManager.getOperationResult(operationId);
+    return await this?.cacheManager?.getOperationResult(operationId as any);
   }
 
   /**
@@ -360,50 +360,50 @@ export class BackgroundOperations {
       // Setup progress listener
       const progressListener = (id: string, progress: number) => {
         if (id === operationId && progressCallback) {
-          progressCallback(progress);
+          progressCallback(progress as any);
         }
       };
 
       // Setup completion listener
       const completionListener = (id: string, result: any) => {
         if (id === operationId) {
-          clearTimeout(timeoutId);
-          this.cacheManager.off('operationProgress', progressListener);
-          this.cacheManager.off('operationCompleted', completionListener);
-          this.cacheManager.off('operationFailed', failureListener);
+          clearTimeout(timeoutId as any);
+          this?.cacheManager?.off('operationProgress', progressListener);
+          this?.cacheManager?.off('operationCompleted', completionListener);
+          this?.cacheManager?.off('operationFailed', failureListener);
 
           performanceMonitor.endOperation(
             operationId,
             'background-operation-wait',
             true
           );
-          resolve(result);
+          resolve(result as any);
         }
       };
 
       // Setup failure listener
       const failureListener = (id: string, error: any) => {
         if (id === operationId) {
-          clearTimeout(timeoutId);
-          this.cacheManager.off('operationProgress', progressListener);
-          this.cacheManager.off('operationCompleted', completionListener);
-          this.cacheManager.off('operationFailed', failureListener);
+          clearTimeout(timeoutId as any);
+          this?.cacheManager?.off('operationProgress', progressListener);
+          this?.cacheManager?.off('operationCompleted', completionListener);
+          this?.cacheManager?.off('operationFailed', failureListener);
 
           performanceMonitor.endOperation(
             operationId,
             'background-operation-wait',
             false,
             {
-              error: error instanceof Error ? error.message : String(error),
+              error: error instanceof Error ? error.message : String(error as any),
             }
           );
-          reject(error);
+          reject(error as any);
         }
       };
 
-      this.cacheManager.on('operationProgress', progressListener);
-      this.cacheManager.on('operationCompleted', completionListener);
-      this.cacheManager.on('operationFailed', failureListener);
+      this?.cacheManager?.on('operationProgress', progressListener);
+      this?.cacheManager?.on('operationCompleted', completionListener);
+      this?.cacheManager?.on('operationFailed', failureListener);
 
       // Start tracking
       performanceMonitor.startOperation(
@@ -418,50 +418,50 @@ export class BackgroundOperations {
    */
   async cancelOperation(operationId: string): Promise<boolean> {
     logger.info(`Cancelling background operation: ${operationId}`);
-    return await this.cacheManager.cancelOperation(operationId);
+    return await this?.cacheManager?.cancelOperation(operationId as any);
   }
 
   /**
    * Get list of all active operations
    */
   getActiveOperations() {
-    return this.cacheManager.getActiveOperations();
+    return this?.cacheManager?.getActiveOperations();
   }
 
   /**
    * Setup event listeners for logging and monitoring
    */
   private setupEventListeners(): void {
-    this.cacheManager.on('operationQueued', (id, type) => {
+    this?.cacheManager?.on('operationQueued', (id, type) => {
       logger.info(`Background operation queued: ${type}`, { operationId: id });
     });
 
-    this.cacheManager.on('operationProgress', (id, progress) => {
+    this?.cacheManager?.on('operationProgress', (id, progress) => {
       logger.debug(`Background operation progress: ${id} - ${progress}%`);
     });
 
-    this.cacheManager.on('operationCompleted', (id, result) => {
+    this?.cacheManager?.on('operationCompleted', (id, result) => {
       performanceMonitor.endOperation(id, 'background-operation', true, {
-        resultSize: JSON.stringify(result).length,
+        resultSize: JSON.stringify(result as any).length,
       });
       logger.info(`Background operation completed: ${id}`);
     });
 
-    this.cacheManager.on('operationFailed', (id, error) => {
+    this?.cacheManager?.on('operationFailed', (id, error) => {
       performanceMonitor.endOperation(id, 'background-operation', false, {
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
       logger.error(`Background operation failed: ${id}`, error);
     });
 
-    this.cacheManager.on('operationCancelled', id => {
+    this?.cacheManager?.on('operationCancelled', id => {
       performanceMonitor.endOperation(id, 'background-operation', false, {
         cancelled: true,
       });
       logger.warn(`Background operation cancelled: ${id}`);
     });
 
-    this.cacheManager.on('operationTimeout', id => {
+    this?.cacheManager?.on('operationTimeout', id => {
       performanceMonitor.endOperation(id, 'background-operation', false, {
         timeout: true,
       });
@@ -474,7 +474,7 @@ export class BackgroundOperations {
    */
   async shutdown(): Promise<void> {
     logger.info('Shutting down background operations...');
-    await this.cacheManager.shutdown();
+    await this?.cacheManager?.shutdown();
   }
 }
 
@@ -505,17 +505,17 @@ export class BackgroundUtils {
     return {
       operationId,
       getProgress: async () => {
-        const status = await backgroundOps.getOperationStatus(operationId);
+        const status = await backgroundOps.getOperationStatus(operationId as any);
         return status?.progress || 0;
       },
       getStatus: async () => {
-        return await backgroundOps.getOperationStatus(operationId);
+        return await backgroundOps.getOperationStatus(operationId as any);
       },
       waitForCompletion: async () => {
-        return await backgroundOps.waitForOperationWithProgress(operationId);
+        return await backgroundOps.waitForOperationWithProgress(operationId as any);
       },
       cancel: async () => {
-        return await backgroundOps.cancelOperation(operationId);
+        return await backgroundOps.cancelOperation(operationId as any);
       },
     };
   }
@@ -558,7 +558,7 @@ export class BackgroundUtils {
       const activeOps = backgroundOps.getActiveOperations();
 
       logger.debug(
-        `Resource usage check: ${heapUsedPercent.toFixed(1)}% heap, ${activeOps.length} active ops`
+        `Resource usage check: ${heapUsedPercent.toFixed(1 as any)}% heap, ${activeOps.length} active ops`
       );
 
       // If memory usage is high, we could implement logic to pause or throttle operations
@@ -578,7 +578,7 @@ export async function createBackgroundOperationsManager(): Promise<BackgroundOpe
     './BackgroundCacheManager'
   );
   const cacheManager = createBackgroundCacheManager();
-  return new BackgroundOperations(cacheManager);
+  return new BackgroundOperations(cacheManager as any);
 }
 
 export { BackgroundOperations };

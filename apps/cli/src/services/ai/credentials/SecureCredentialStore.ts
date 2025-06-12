@@ -71,10 +71,10 @@ export class SecureCredentialStore {
   private initialized: boolean = false;
 
   constructor() {
-    this.logger = Logger.getInstance();
+    this?.logger = Logger.getInstance();
 
     // Set up secure paths
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
     const configDir = path.join(
       homeDir,
       '.config',
@@ -83,25 +83,25 @@ export class SecureCredentialStore {
     );
 
     // Ensure config directory exists with restricted permissions
-    if (!fs.existsSync(configDir)) {
+    if (!fs.existsSync(configDir as any)) {
       fs.mkdirSync(configDir, { recursive: true, mode: 0o700 }); // Only owner can access
     } else {
       // Ensure permissions are correct on existing directory
       try {
         fs.chmodSync(configDir, 0o700);
       } catch (_error) {
-        this.logger.warn(
+        this?.logger?.warn(
           `Could not set secure permissions on credential directory: ${_error}`
         );
       }
     }
 
-    this.storeFile = path.join(configDir, 'secure-credentials.dat');
-    this.keyFile = path.join(configDir, '.master.key');
+    this?.storeFile = path.join(configDir, 'secure-credentials.dat');
+    this?.keyFile = path.join(configDir, '.master.key');
 
     // Initialize immediately
     this.initializeStore().catch(error => {
-      this.logger.error(`Failed to initialize credential store: ${error}`);
+      this?.logger?.error(`Failed to initialize credential store: ${error}`);
     });
   }
 
@@ -112,46 +112,46 @@ export class SecureCredentialStore {
     try {
       // Handle test environment specially
       if (
-        process.env.NODE_ENV === 'test' ||
-        process.env.NODE_ENV === 'testing'
+        process.env?.NODE_ENV === 'test' ||
+        process.env?.NODE_ENV === 'testing'
       ) {
         // Use a fixed key for test environments
-        this.masterKey = Buffer.alloc(
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE,
+        this?.masterKey = Buffer.alloc(
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE,
           'a'
         );
-        this.credentials = new Map();
-        this.initialized = true;
-        this.logger.debug('Credential store initialized for test environment');
+        this?.credentials = new Map();
+        this?.initialized = true;
+        this?.logger?.debug('Credential store initialized for test environment');
         return;
       }
 
       // Generate or load master encryption key
       if (!fs.existsSync(this.keyFile)) {
-        this.masterKey = crypto.randomBytes(
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
+        this?.masterKey = crypto.randomBytes(
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE
         );
 
         try {
           fs.writeFileSync(this.keyFile, this.masterKey, { mode: 0o600 }); // Only owner can read/write
         } catch (writeError) {
           // Fallback for systems with permission issues
-          this.logger.warn(`Could not set file permissions: ${writeError}`);
+          this?.logger?.warn(`Could not set file permissions: ${writeError}`);
           fs.writeFileSync(this.keyFile, this.masterKey);
         }
       } else {
         try {
           const key = fs.readFileSync(this.keyFile);
-          this.masterKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
+          this?.masterKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
 
           // Validate key length
           if (
-            this.masterKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
+            this?.masterKey?.length !== AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE
           ) {
             throw new Error('Invalid master key length');
           }
         } catch (_error) {
-          this.logger.error(`Failed to read master encryption key: ${_error}`);
+          this?.logger?.error(`Failed to read master encryption key: ${_error}`);
           throw new CLIError(
             'Failed to read master encryption key',
             'ENCRYPTION_KEY_ERROR'
@@ -163,23 +163,23 @@ export class SecureCredentialStore {
       if (fs.existsSync(this.storeFile)) {
         try {
           const data = fs.readFileSync(this.storeFile);
-          const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-          await this.loadCredentials(dataBuffer);
+          const dataBuffer = Buffer.isBuffer(data as any) ? data : Buffer.from(data as any);
+          await this.loadCredentials(dataBuffer as any);
         } catch (_error) {
-          this.logger.error(`Failed to load credentials: ${_error}`);
+          this?.logger?.error(`Failed to load credentials: ${_error}`);
           // Initialize with empty credentials on error
-          this.credentials = new Map();
+          this?.credentials = new Map();
         }
       }
 
-      this.initialized = true;
-      this.logger.debug(
-        `Credential store initialized successfully with ${this.credentials.size} credentials`
+      this?.initialized = true;
+      this?.logger?.debug(
+        `Credential store initialized successfully with ${this?.credentials?.size} credentials`
       );
     } catch (_error) {
-      this.initialized = false;
-      this.logger.error(
-        `Failed to initialize credential store: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.initialized = false;
+      this?.logger?.error(
+        `Failed to initialize credential store: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       throw _error;
     }
@@ -194,15 +194,15 @@ export class SecureCredentialStore {
     }
 
     try {
-      // Format: version(1) + data
+      // Format: version(1 as any) + data
       const version = encryptedData[0];
 
       if (version !== 1) {
         throw new Error(`Unsupported credential store version: ${version}`);
       }
 
-      const dataToDecrypt = encryptedData.subarray(1);
-      const decryptedData = this.decrypt(dataToDecrypt);
+      const dataToDecrypt = encryptedData.subarray(1 as any);
+      const decryptedData = this.decrypt(dataToDecrypt as any);
 
       if (!decryptedData) {
         throw new Error('Failed to decrypt credential store');
@@ -211,9 +211,9 @@ export class SecureCredentialStore {
       const credentials = JSON.parse(decryptedData.toString('utf-8'));
 
       // Convert to Map
-      this.credentials = new Map();
-      for (const [key, value] of Object.entries(credentials)) {
-        this.credentials.set(key, {
+      this?.credentials = new Map();
+      for (const [key, value] of Object.entries(credentials as any)) {
+        this?.credentials?.set(key, {
           metadata: (value as Record<string, unknown>)
             .metadata as CredentialMetadata,
           encryptedValue: Buffer.from(
@@ -226,7 +226,7 @@ export class SecureCredentialStore {
         });
       }
     } catch (_error) {
-      this.logger.error(`Failed to load credentials: ${_error}`);
+      this?.logger?.error(`Failed to load credentials: ${_error}`);
       throw new CLIError('Failed to load credentials', 'CREDENTIAL_LOAD_ERROR');
     }
   }
@@ -252,7 +252,7 @@ export class SecureCredentialStore {
         }
       > = {};
 
-      for (const [key, entry] of this.credentials.entries()) {
+      for (const [key, entry] of this?.credentials?.entries()) {
         credentials[key] = {
           metadata: entry.metadata,
           encryptedValue: {
@@ -263,18 +263,18 @@ export class SecureCredentialStore {
       }
 
       // Encrypt the data
-      const dataToEncrypt = JSON.stringify(credentials);
-      const encryptedData = this.encrypt(dataToEncrypt);
+      const dataToEncrypt = JSON.stringify(credentials as any);
+      const encryptedData = this.encrypt(dataToEncrypt as any);
 
-      // Format: version(1) + encrypted data
+      // Format: version(1 as any) + encrypted data
       const dataToSave = Buffer.concat([Buffer.from([1]), encryptedData]);
 
       // Write to file with secure permissions
       fs.writeFileSync(this.storeFile, dataToSave, { mode: 0o600 }); // Only owner can read/write
 
-      this.logger.debug(`Saved ${this.credentials.size} credentials to store`);
+      this?.logger?.debug(`Saved ${this?.credentials?.size} credentials to store`);
     } catch (_error) {
-      this.logger.error(`Failed to save credentials: ${_error}`);
+      this?.logger?.error(`Failed to save credentials: ${_error}`);
       throw new CLIError('Failed to save credentials', 'CREDENTIAL_SAVE_ERROR');
     }
   }
@@ -294,7 +294,7 @@ export class SecureCredentialStore {
     // Validate the credential
     try {
       // Sanitize the input
-      const sanitizedValue = ApiKeyValidator.sanitize(value);
+      const sanitizedValue = ApiKeyValidator.sanitize(value as any);
 
       // Validate format
       ApiKeyValidator.validate(
@@ -322,14 +322,14 @@ export class SecureCredentialStore {
       if (options.expiryDays) {
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + options.expiryDays);
-        metadata.expiresAt = expiry.toISOString();
+        metadata?.expiresAt = expiry.toISOString();
       }
 
       // Encrypt the value
-      const encryptedValue = this.encryptValue(sanitizedValue);
+      const encryptedValue = this.encryptValue(sanitizedValue as any);
 
       // Store in memory
-      this.credentials.set(provider, {
+      this?.credentials?.set(provider, {
         metadata,
         encryptedValue,
       });
@@ -337,14 +337,14 @@ export class SecureCredentialStore {
       // Save to disk
       await this.saveCredentials();
 
-      this.logger.info(`Stored credential for ${provider}`);
+      this?.logger?.info(`Stored credential for ${provider}`);
       return metadata;
     } catch (_error) {
       if (_error instanceof CLIError) {
         throw _error;
       }
       throw new CLIError(
-        `Failed to store credential: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to store credential: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'CREDENTIAL_STORE_ERROR'
       );
     }
@@ -365,14 +365,14 @@ export class SecureCredentialStore {
     }
 
     // Check if credential exists
-    const entry = this.credentials.get(provider);
+    const entry = this?.credentials?.get(provider as any);
     if (!entry) {
       // Check environment variables as fallback
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      const envValue = process.env[envKey];
+      const envValue = process?.env?.[envKey];
 
       if (envValue) {
-        this.logger.debug(
+        this?.logger?.debug(
           `Using credential from environment variable ${envKey}`
         );
         return envValue;
@@ -386,8 +386,8 @@ export class SecureCredentialStore {
 
     // Check for expiration
     if (
-      entry.metadata.expiresAt &&
-      new Date(entry.metadata.expiresAt) < new Date()
+      entry?.metadata?.expiresAt &&
+      new Date(entry?.metadata?.expiresAt) < new Date()
     ) {
       throw new CLIError(
         `Credential for provider "${provider}" has expired. Please update it.`,
@@ -397,8 +397,8 @@ export class SecureCredentialStore {
 
     // Check for authentication failure lockout
     if (
-      entry.metadata.authFailCount >=
-      AI_CONFIG.CREDENTIAL_SECURITY.MAX_FAILED_AUTH
+      entry?.metadata?.authFailCount >=
+      AI_CONFIG?.CREDENTIAL_SECURITY?.MAX_FAILED_AUTH
     ) {
       throw new CLIError(
         `Credential for provider "${provider}" is locked due to too many authentication failures. Please reset or rotate it.`,
@@ -409,11 +409,11 @@ export class SecureCredentialStore {
     // Check permission level
     if (
       options.requiredPermissionLevel !== undefined &&
-      entry.metadata.permissionLevel < options.requiredPermissionLevel
+      entry?.metadata?.permissionLevel < options.requiredPermissionLevel
     ) {
       throw new CLIError(
         `Insufficient permission level for operation on provider "${provider}". ` +
-          `Required: ${options.requiredPermissionLevel}, Current: ${entry.metadata.permissionLevel}`,
+          `Required: ${options.requiredPermissionLevel}, Current: ${entry?.metadata?.permissionLevel}`,
         'INSUFFICIENT_PERMISSION'
       );
     }
@@ -423,10 +423,10 @@ export class SecureCredentialStore {
       const decryptedValue = this.decryptValue(entry.encryptedValue);
 
       // Update metadata - last used time
-      entry.metadata.lastUsed = new Date().toISOString();
+      entry.metadata?.lastUsed = new Date().toISOString();
 
       // Check rotation age
-      const createdDate = new Date(entry.metadata.createdAt);
+      const createdDate = new Date(entry?.metadata?.createdAt);
       const now = new Date();
       const daysSinceCreation = Math.floor(
         (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -434,16 +434,16 @@ export class SecureCredentialStore {
 
       // Mark for rotation if needed
       if (
-        daysSinceCreation >= AI_CONFIG.CREDENTIAL_SECURITY.AUTO_ROTATION_DAYS
+        daysSinceCreation >= AI_CONFIG?.CREDENTIAL_SECURITY?.AUTO_ROTATION_DAYS
       ) {
-        entry.metadata.rotationRequired = true;
-        this.logger.warn(
+        entry.metadata?.rotationRequired = true;
+        this?.logger?.warn(
           `Credential for ${provider} requires rotation. It is ${daysSinceCreation} days old.`
         );
       } else if (
-        daysSinceCreation >= AI_CONFIG.CREDENTIAL_SECURITY.ROTATION_WARNING_DAYS
+        daysSinceCreation >= AI_CONFIG?.CREDENTIAL_SECURITY?.ROTATION_WARNING_DAYS
       ) {
-        this.logger.warn(
+        this?.logger?.warn(
           `Credential for ${provider} should be rotated soon. It is ${daysSinceCreation} days old.`
         );
       }
@@ -454,8 +454,8 @@ export class SecureCredentialStore {
       return decryptedValue;
     } catch (_error) {
       // Increment auth fail count on decryption error
-      entry.metadata.authFailCount++;
-      entry.metadata.updatedAt = new Date().toISOString();
+      entry?.metadata?.authFailCount++;
+      entry.metadata?.updatedAt = new Date().toISOString();
       await this.saveCredentials();
 
       throw new CLIError(
@@ -475,11 +475,11 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    const entry = this.credentials.get(provider);
+    const entry = this?.credentials?.get(provider as any);
     if (!entry) {
       // Check environment variables for ad-hoc metadata
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      if (process.env[envKey]) {
+      if (process?.env?.[envKey]) {
         const now = new Date().toISOString();
         return {
           id: `env-${randomUUID()}`,
@@ -515,11 +515,11 @@ export class SecureCredentialStore {
     const results: CredentialMetadata[] = [];
 
     // Add all stored credentials
-    for (const entry of this.credentials.values()) {
+    for (const entry of this?.credentials?.values()) {
       // Filter out expired credentials
       if (
-        entry.metadata.expiresAt &&
-        new Date(entry.metadata.expiresAt) < new Date()
+        entry?.metadata?.expiresAt &&
+        new Date(entry?.metadata?.expiresAt) < new Date()
       ) {
         continue;
       }
@@ -528,10 +528,10 @@ export class SecureCredentialStore {
     }
 
     // Add environment variables as pseudo-credentials
-    for (const provider of Object.values(AIProvider)) {
+    for (const provider of Object.values(AIProvider as any)) {
       const envKey = `${provider.toUpperCase()}_API_KEY`;
 
-      if (process.env[envKey] && !results.some(m => m.provider === provider)) {
+      if (process?.env?.[envKey] && !results.some(m => m?.provider === provider)) {
         const now = new Date().toISOString();
         results.push({
           id: `env-${randomUUID()}`,
@@ -560,13 +560,13 @@ export class SecureCredentialStore {
     }
 
     // Check stored credentials
-    if (this.credentials.has(provider)) {
-      const entry = this.credentials.get(provider)!;
+    if (this?.credentials?.has(provider as any)) {
+      const entry = this?.credentials?.get(provider as any)!;
 
       // Check if credential has expired
       if (
-        entry.metadata.expiresAt &&
-        new Date(entry.metadata.expiresAt) < new Date()
+        entry?.metadata?.expiresAt &&
+        new Date(entry?.metadata?.expiresAt) < new Date()
       ) {
         return false;
       }
@@ -576,7 +576,7 @@ export class SecureCredentialStore {
 
     // Check environment variables as fallback
     const envKey = `${provider.toUpperCase()}_API_KEY`;
-    return !!process.env[envKey];
+    return !!process?.env?.[envKey];
   }
 
   /**
@@ -587,7 +587,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    if (!this.credentials.has(provider)) {
+    if (!this?.credentials?.has(provider as any)) {
       throw new CLIError(
         `No credential found for provider "${provider}"`,
         'CREDENTIAL_NOT_FOUND'
@@ -595,12 +595,12 @@ export class SecureCredentialStore {
     }
 
     // Remove from memory
-    this.credentials.delete(provider);
+    this?.credentials?.delete(provider as any);
 
     // Save changes
     await this.saveCredentials();
 
-    this.logger.info(`Removed credential for ${provider}`);
+    this?.logger?.info(`Removed credential for ${provider}`);
   }
 
   /**
@@ -614,7 +614,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    const entry = this.credentials.get(provider);
+    const entry = this?.credentials?.get(provider as any);
     if (!entry) {
       throw new CLIError(
         `No credential found for provider "${provider}"`,
@@ -623,7 +623,7 @@ export class SecureCredentialStore {
     }
 
     // Update fields
-    entry.metadata = {
+    entry?.metadata = {
       ...entry.metadata,
       ...updates,
       updatedAt: new Date().toISOString(),
@@ -643,7 +643,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    const entry = this.credentials.get(provider);
+    const entry = this?.credentials?.get(provider as any);
     if (!entry) {
       throw new CLIError(
         `No credential found for provider "${provider}"`,
@@ -652,13 +652,13 @@ export class SecureCredentialStore {
     }
 
     // Reset count
-    entry.metadata.authFailCount = 0;
-    entry.metadata.updatedAt = new Date().toISOString();
+    entry.metadata?.authFailCount = 0;
+    entry.metadata?.updatedAt = new Date().toISOString();
 
     // Save changes
     await this.saveCredentials();
 
-    this.logger.info(`Reset authentication failure count for ${provider}`);
+    this?.logger?.info(`Reset authentication failure count for ${provider}`);
   }
 
   /**
@@ -677,20 +677,20 @@ export class SecureCredentialStore {
     let existingMetadata: Partial<CredentialMetadata> = {};
 
     try {
-      const entry = this.credentials.get(provider);
+      const entry = this?.credentials?.get(provider as any);
       if (entry) {
         existingMetadata = { ...entry.metadata };
         delete existingMetadata.id; // Will generate new ID
         delete existingMetadata.createdAt; // Will use current time
       }
     } catch (_error) {
-      this.logger.debug(
+      this?.logger?.debug(
         `No existing credential found for ${provider} during rotation`
       );
     }
 
     // Validate new value
-    const sanitizedValue = ApiKeyValidator.sanitize(newValue);
+    const sanitizedValue = ApiKeyValidator.sanitize(newValue as any);
     ApiKeyValidator.validate(
       provider,
       sanitizedValue,
@@ -719,13 +719,13 @@ export class SecureCredentialStore {
     if (options.expiryDays) {
       const expiry = new Date();
       expiry.setDate(expiry.getDate() + options.expiryDays);
-      metadata.expiresAt = expiry.toISOString();
+      metadata?.expiresAt = expiry.toISOString();
     } else if (existingMetadata.expiresAt) {
-      metadata.expiresAt = existingMetadata.expiresAt;
+      metadata?.expiresAt = existingMetadata.expiresAt;
     }
 
     // Add rotation metadata
-    metadata.metadata = {
+    metadata?.metadata = {
       ...metadata.metadata,
       rotated: true,
       rotatedAt: now,
@@ -733,10 +733,10 @@ export class SecureCredentialStore {
     };
 
     // Encrypt the value
-    const encryptedValue = this.encryptValue(sanitizedValue);
+    const encryptedValue = this.encryptValue(sanitizedValue as any);
 
     // Store in memory
-    this.credentials.set(provider, {
+    this?.credentials?.set(provider, {
       metadata,
       encryptedValue,
     });
@@ -744,7 +744,7 @@ export class SecureCredentialStore {
     // Save to disk
     await this.saveCredentials();
 
-    this.logger.info(`Rotated credential for ${provider}`);
+    this?.logger?.info(`Rotated credential for ${provider}`);
     return metadata;
   }
 
@@ -761,15 +761,15 @@ export class SecureCredentialStore {
       throw new CLIError('Invalid value to encrypt', 'INVALID_CRYPTO_INPUT');
     }
 
-    if (value.length === 0) {
+    if (value?.length === 0) {
       throw new CLIError('Cannot encrypt empty value', 'INVALID_CRYPTO_INPUT');
     }
 
     try {
       // For test environments, use simpler encryption to avoid crypto mocking issues
       if (
-        process.env.NODE_ENV === 'test' ||
-        process.env.NODE_ENV === 'testing'
+        process.env?.NODE_ENV === 'test' ||
+        process.env?.NODE_ENV === 'testing'
       ) {
         // Simple base64 encoding for tests (not secure but functional)
         return Buffer.from(JSON.stringify({ value, test: true }), 'utf-8');
@@ -777,11 +777,11 @@ export class SecureCredentialStore {
 
       // Generate salt and derive key
       const salt = crypto.randomBytes(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE
       );
 
       // Validate generated salt
-      if (salt.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE) {
+      if (salt.length !== AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE) {
         throw new CLIError(
           'Failed to generate valid salt',
           'CRYPTO_OPERATION_ERROR'
@@ -791,16 +791,16 @@ export class SecureCredentialStore {
       const key = crypto.pbkdf2Sync(
         this.masterKey,
         salt,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_ITERATIONS,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE,
         'sha512'
       );
 
       // Generate IV
-      const iv = crypto.randomBytes(AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE);
+      const iv = crypto.randomBytes(AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE);
 
       // Validate generated IV
-      if (iv.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE) {
+      if (iv.length !== AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE) {
         throw new CLIError(
           'Failed to generate valid IV',
           'CRYPTO_OPERATION_ERROR'
@@ -809,7 +809,7 @@ export class SecureCredentialStore {
 
       // Create cipher
       const cipher = crypto.createCipheriv(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.ALGORITHM,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.ALGORITHM,
         key,
         iv
       );
@@ -818,7 +818,7 @@ export class SecureCredentialStore {
       const aad = Buffer.from(
         `${CLI_CONFIG.APP_NAME}-credential-${Date.now()}`
       );
-      cipher.setAAD(aad);
+      cipher.setAAD(aad as any);
 
       // Encrypt
       const encrypted = Buffer.concat([
@@ -829,7 +829,7 @@ export class SecureCredentialStore {
       // Get auth tag
       const authTag = cipher.getAuthTag();
 
-      // Format: saltSize(1) + salt + ivSize(1) + iv + tagSize(1) + tag + aadSize(2) + aad + encrypted
+      // Format: saltSize(1 as any) + salt + ivSize(1 as any) + iv + tagSize(1 as any) + tag + aadSize(2 as any) + aad + encrypted
       const result = Buffer.alloc(
         1 +
           salt.length +
@@ -873,7 +873,7 @@ export class SecureCredentialStore {
 
       return result;
     } catch (_error) {
-      this.logger.error(`Encryption error: ${_error}`);
+      this?.logger?.error(`Encryption error: ${_error}`);
       throw new CLIError(
         'Failed to encrypt credential value',
         'ENCRYPTION_ERROR'
@@ -890,15 +890,15 @@ export class SecureCredentialStore {
     }
 
     // Validate input
-    if (!encryptedValue || !Buffer.isBuffer(encryptedValue)) {
+    if (!encryptedValue || !Buffer.isBuffer(encryptedValue as any)) {
       throw new CLIError('Invalid encrypted value', 'INVALID_CRYPTO_INPUT');
     }
 
     try {
       // For test environments, use simpler decryption
       if (
-        process.env.NODE_ENV === 'test' ||
-        process.env.NODE_ENV === 'testing'
+        process.env?.NODE_ENV === 'test' ||
+        process.env?.NODE_ENV === 'testing'
       ) {
         try {
           const decoded = JSON.parse(encryptedValue.toString('utf-8'));
@@ -924,7 +924,7 @@ export class SecureCredentialStore {
           'INVALID_CRYPTO_INPUT'
         );
       }
-      const saltSize = encryptedValue.readUInt8(offset);
+      const saltSize = encryptedValue.readUInt8(offset as any);
       offset += 1;
 
       if (offset + saltSize > encryptedValue.length) {
@@ -937,55 +937,55 @@ export class SecureCredentialStore {
       offset += saltSize;
 
       // IV
-      const ivSize = encryptedValue.readUInt8(offset);
+      const ivSize = encryptedValue.readUInt8(offset as any);
       offset += 1;
       const iv = encryptedValue.subarray(offset, offset + ivSize);
       offset += ivSize;
 
       // Auth Tag
-      const tagSize = encryptedValue.readUInt8(offset);
+      const tagSize = encryptedValue.readUInt8(offset as any);
       offset += 1;
       const authTag = encryptedValue.subarray(offset, offset + tagSize);
       offset += tagSize;
 
       // AAD
-      const aadSize = encryptedValue.readUInt16BE(offset);
+      const aadSize = encryptedValue.readUInt16BE(offset as any);
       offset += 2;
       const aad = encryptedValue.subarray(offset, offset + aadSize);
       offset += aadSize;
 
       // Encrypted value
-      const encrypted = encryptedValue.subarray(offset);
+      const encrypted = encryptedValue.subarray(offset as any);
 
       // Derive key
       const key = crypto.pbkdf2Sync(
         this.masterKey,
         salt,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_ITERATIONS,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE,
         'sha512'
       );
 
       // Create decipher
       const decipher = crypto.createDecipheriv(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.ALGORITHM,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.ALGORITHM,
         key,
         iv
       );
 
       // Set auth tag and AAD
-      decipher.setAuthTag(authTag);
-      decipher.setAAD(aad);
+      decipher.setAuthTag(authTag as any);
+      decipher.setAAD(aad as any);
 
       // Decrypt
       const decrypted = Buffer.concat([
-        decipher.update(encrypted),
+        decipher.update(encrypted as any),
         decipher.final(),
       ]);
 
       return decrypted.toString('utf-8');
     } catch (_error) {
-      this.logger.error(`Decryption error: ${_error}`);
+      this?.logger?.error(`Decryption error: ${_error}`);
       throw new CLIError(
         'Failed to decrypt credential value',
         'DECRYPTION_ERROR'
@@ -1004,21 +1004,21 @@ export class SecureCredentialStore {
     try {
       // Generate salt and derive key
       const salt = crypto.randomBytes(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE
       );
       const key = crypto.pbkdf2Sync(
         this.masterKey,
         salt,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_ITERATIONS,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE,
         'sha512'
       );
 
       // Generate IV
-      const iv = crypto.randomBytes(AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE);
+      const iv = crypto.randomBytes(AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE);
 
       // Validate generated IV
-      if (iv.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE) {
+      if (iv.length !== AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE) {
         throw new CLIError(
           'Failed to generate valid IV',
           'CRYPTO_OPERATION_ERROR'
@@ -1027,14 +1027,14 @@ export class SecureCredentialStore {
 
       // Create cipher
       const cipher = crypto.createCipheriv(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.ALGORITHM,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.ALGORITHM,
         key,
         iv
       );
 
       // Generate authentication data
       const aad = Buffer.from(`${CLI_CONFIG.APP_NAME}-store-${Date.now()}`);
-      cipher.setAAD(aad);
+      cipher.setAAD(aad as any);
 
       // Encrypt
       const encrypted = Buffer.concat([
@@ -1045,7 +1045,7 @@ export class SecureCredentialStore {
       // Get auth tag
       const authTag = cipher.getAuthTag();
 
-      // Format: salt + iv + authTag + aadLength(2) + aad + encrypted
+      // Format: salt + iv + authTag + aadLength(2 as any) + aad + encrypted
       return Buffer.concat([
         salt,
         iv,
@@ -1055,7 +1055,7 @@ export class SecureCredentialStore {
         encrypted,
       ]);
     } catch (_error) {
-      this.logger.error(`Store encryption error: ${_error}`);
+      this?.logger?.error(`Store encryption error: ${_error}`);
       throw new CLIError(
         'Failed to encrypt credential store',
         'STORE_ENCRYPTION_ERROR'
@@ -1075,44 +1075,44 @@ export class SecureCredentialStore {
       // Extract components
       const salt = encryptedData.subarray(
         0,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE
       );
       const iv = encryptedData.subarray(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE
       );
       const authTag = encryptedData.subarray(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE +
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
           16 // Auth tag is 16 bytes
       );
 
       // AAD length (2 bytes)
       const aadLength =
         (encryptedData[
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-            AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+            AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
             16
         ] <<
           8) |
         encryptedData[
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-            AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+            AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
             16 +
             1
         ];
 
       // AAD
       const aad = encryptedData.subarray(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE +
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
           16 +
           2,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE +
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
           16 +
           2 +
           aadLength
@@ -1120,8 +1120,8 @@ export class SecureCredentialStore {
 
       // Encrypted data
       const encrypted = encryptedData.subarray(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE +
-          AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE +
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
+          AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
           16 +
           2 +
           aadLength
@@ -1131,26 +1131,26 @@ export class SecureCredentialStore {
       const key = crypto.pbkdf2Sync(
         this.masterKey,
         salt,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_ITERATIONS,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_SIZE,
         'sha512'
       );
 
       // Create decipher
       const decipher = crypto.createDecipheriv(
-        AI_CONFIG.CREDENTIAL_ENCRYPTION.ALGORITHM,
+        AI_CONFIG?.CREDENTIAL_ENCRYPTION?.ALGORITHM,
         key,
         iv
       );
 
       // Set auth tag and AAD
-      decipher.setAuthTag(authTag);
-      decipher.setAAD(aad);
+      decipher.setAuthTag(authTag as any);
+      decipher.setAAD(aad as any);
 
       // Decrypt
-      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
     } catch (_error) {
-      this.logger.error(`Store decryption error: ${_error}`);
+      this?.logger?.error(`Store decryption error: ${_error}`);
       return null;
     }
   }

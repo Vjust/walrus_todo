@@ -39,7 +39,7 @@ export class CommandRegistry {
 
   static getInstance(): CommandRegistry {
     if (!CommandRegistry.instance) {
-      CommandRegistry.instance = new CommandRegistry();
+      CommandRegistry?.instance = new CommandRegistry();
     }
     return CommandRegistry.instance;
   }
@@ -48,12 +48,12 @@ export class CommandRegistry {
    * Register a command with its metadata
    */
   registerCommand(metadata: CommandMetadata): void {
-    this.commands.set(metadata.name, metadata);
+    this?.commands?.set(metadata.name, metadata);
 
     // Register aliases
     if (metadata.aliases) {
-      metadata.aliases.forEach(alias => {
-        this.aliases.set(alias, metadata.name);
+      metadata?.aliases?.forEach(alias => {
+        this?.aliases?.set(alias, metadata.name);
       });
     }
   }
@@ -62,39 +62,39 @@ export class CommandRegistry {
    * Register a command group
    */
   registerGroup(group: CommandGroup): void {
-    this.groups.set(group.name, group);
+    this?.groups?.set(group.name, group);
   }
 
   /**
    * Resolve command name from alias
    */
   resolveAlias(input: string): string {
-    return this.aliases.get(input) || input;
+    return this?.aliases?.get(input as any) || input;
   }
 
   /**
    * Get command metadata
    */
   getCommand(name: string): CommandMetadata | undefined {
-    return this.commands.get(name);
+    return this?.commands?.get(name as any);
   }
 
   /**
    * Get all registered commands
    */
   getAllCommands(): CommandMetadata[] {
-    return Array.from(this.commands.values());
+    return Array.from(this?.commands?.values());
   }
 
   /**
    * Get commands in a specific group
    */
   getGroupCommands(groupName: string): CommandMetadata[] {
-    const group = this.groups.get(groupName);
+    const group = this?.groups?.get(groupName as any);
     if (!group) return [];
 
     return Object.keys(group.commands)
-      .map(cmdName => this.commands.get(cmdName))
+      .map(cmdName => this?.commands?.get(cmdName as any))
       .filter((cmd): cmd is CommandMetadata => cmd !== undefined);
   }
 
@@ -103,17 +103,17 @@ export class CommandRegistry {
    */
   addToHistory(command: string): void {
     // Remove duplicate if exists
-    const index = this.commandHistory.indexOf(command);
+    const index = this?.commandHistory?.indexOf(command as any);
     if (index !== -1) {
-      this.commandHistory.splice(index, 1);
+      this?.commandHistory?.splice(index, 1);
     }
 
     // Add to beginning
-    this.commandHistory.unshift(command);
+    this?.commandHistory?.unshift(command as any);
 
     // Maintain max size
-    if (this.commandHistory.length > this.maxHistorySize) {
-      this.commandHistory.pop();
+    if (this?.commandHistory?.length > this.maxHistorySize) {
+      this?.commandHistory?.pop();
     }
   }
 
@@ -134,20 +134,20 @@ export class CommandRegistry {
     const suggestions: Array<{ command: CommandMetadata; score: number }> = [];
 
     // Check exact matches first
-    const exactMatch = this.commands.get(input);
+    const exactMatch = this?.commands?.get(input as any);
     if (exactMatch) {
       return [exactMatch];
     }
 
     // Check alias matches
-    const aliasedCommand = this.resolveAlias(input);
+    const aliasedCommand = this.resolveAlias(input as any);
     if (aliasedCommand !== input) {
-      const cmd = this.commands.get(aliasedCommand);
+      const cmd = this?.commands?.get(aliasedCommand as any);
       if (cmd) return [cmd];
     }
 
     // Calculate fuzzy matches
-    this.commands.forEach(command => {
+    this?.commands?.forEach(command => {
       const score = this.calculateSimilarity(input, command.name);
       if (score > 0.3) {
         // Threshold for similarity
@@ -156,7 +156,7 @@ export class CommandRegistry {
 
       // Check aliases too
       if (command.aliases) {
-        command.aliases.forEach(alias => {
+        command?.aliases?.forEach(alias => {
           const aliasScore = this.calculateSimilarity(input, alias);
           if (aliasScore > 0.3 && aliasScore > score) {
             suggestions.push({ command, score: aliasScore });
@@ -180,8 +180,8 @@ export class CommandRegistry {
     const s2 = str2.toLowerCase();
 
     if (s1 === s2) return 1;
-    if (s1.length === 0) return 0;
-    if (s2.length === 0) return 0;
+    if (s1?.length === 0) return 0;
+    if (s2?.length === 0) return 0;
 
     // Create matrix
     const matrix: number[][] = [];
@@ -224,21 +224,21 @@ export class CommandRegistry {
     const lowerPartial = partial.toLowerCase();
 
     // Check command names
-    this.commands.forEach(command => {
-      if (command.name.toLowerCase().startsWith(lowerPartial)) {
+    this?.commands?.forEach(command => {
+      if (command?.name?.toLowerCase().startsWith(lowerPartial as any)) {
         completions.push(command.name);
       }
     });
 
     // Check aliases
-    this.aliases.forEach((commandName, alias) => {
-      if (alias.toLowerCase().startsWith(lowerPartial)) {
-        completions.push(alias);
+    this?.aliases?.forEach((commandName, alias) => {
+      if (alias.toLowerCase().startsWith(lowerPartial as any)) {
+        completions.push(alias as any);
       }
     });
 
     // Sort alphabetically and remove duplicates
-    return [...new Set(completions)].sort();
+    return [...new Set(completions as any)].sort();
   }
 
   /**
@@ -247,14 +247,14 @@ export class CommandRegistry {
   generateGroupHelp(): string {
     const lines: string[] = [];
 
-    this.groups.forEach(group => {
-      lines.push(`\n${group.name.toUpperCase()} - ${group.description}`);
+    this?.groups?.forEach(group => {
+      lines.push(`\n${group?.name?.toUpperCase()} - ${group.description}`);
 
       Object.entries(group.commands).forEach(([cmdName, _cmdInfo]) => {
-        const command = this.commands.get(cmdName);
+        const command = this?.commands?.get(cmdName as any);
         if (command) {
           const aliases = command.aliases
-            ? ` (${command.aliases.join(', ')})`
+            ? ` (${command?.aliases?.join(', ')})`
             : '';
           lines.push(`  ${cmdName}${aliases} - ${command.description}`);
         }

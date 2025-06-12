@@ -108,11 +108,11 @@ export function SuiWalletProvider({
   enableNetworkSwitching = true,
   enableSlushWallet = true,
 }: SuiWalletProviderProps) {
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false as any);
   const networkSettings = getCurrentNetworkSettings();
 
   React.useEffect(() => {
-    setMounted(true);
+    setMounted(true as any);
   }, []);
 
   // Don't render wallet provider during SSR to prevent hydration issues
@@ -145,7 +145,7 @@ export function SuiWalletProvider({
               'Glass'
             ];
             return supportedWallets.some(supported => 
-              wallet.name.toLowerCase().includes(supported.toLowerCase())
+              wallet?.name?.toLowerCase().includes(supported.toLowerCase())
             );
           }}
         >
@@ -208,7 +208,7 @@ export function SuiWalletProvider({
  *     try {
  *       if (currentWallet?.features?.includes('sui:switchNetwork')) {
  *         // Use wallet's network switching if supported
- *         await currentWallet.features['sui:switchNetwork']({ network });
+ *         await currentWallet?.features?.['sui:switchNetwork']({ network });
  *       } else {
  *         console.warn('Network switching not supported by current wallet');
  *       }
@@ -218,7 +218,7 @@ export function SuiWalletProvider({
  *   };
  *   
  *   return (
- *     <select onChange={(e) => handleNetworkSwitch(e.target.value)}>
+ *     <select onChange={(e) => handleNetworkSwitch(e?.target?.value)}>
  *       <option value="testnet">Testnet</option>
  *       <option value="devnet">Devnet</option>
  *       <option value="mainnet">Mainnet</option>

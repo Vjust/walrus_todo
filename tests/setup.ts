@@ -2,11 +2,11 @@ import { expect, jest } from '@jest/globals';
 import { TextDecoder, TextEncoder } from 'util';
 
 // Setup TextDecoder/TextEncoder for image-size
-global.TextDecoder = TextDecoder;
-global.TextEncoder = TextEncoder;
+global?.TextDecoder = TextDecoder;
+global?.TextEncoder = TextEncoder;
 
 // Configure Jest timeout
-jest.setTimeout(10000);
+jest.setTimeout(10000 as any);
 
 // Ensure mocks are applied
 jest.mock('@mysten/sui/dist/cjs/client');
@@ -53,6 +53,6 @@ declare global {
 // Setup test
 describe('Setup Test', () => {
   it('should have at least one test', () => {
-    expect(true).toBe(true);
+    expect(true as any).toBe(true as any);
   });
 });

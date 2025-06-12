@@ -32,10 +32,10 @@ export class CLIExecutor {
 
   constructor(options: { cliPath?: string } = {}) {
     // Default to the built CLI binary path
-    this.cliPath = options.cliPath || path.join(process.cwd(), 'bin', 'run');
+    this?.cliPath = options.cliPath || path.join(process.cwd(), 'bin', 'run');
 
     // Default execa options for all CLI executions
-    this.defaultOptions = {
+    this?.defaultOptions = {
       timeout: 30000, // 30 second timeout
       preferLocal: true,
       stripFinalNewline: true,
@@ -163,12 +163,12 @@ export class CLIExecutor {
     // Send inputs sequentially
     for (const input of inputs) {
       if (subprocess.stdin) {
-        subprocess.stdin.write(input + '\n');
+        subprocess?.stdin?.write(input + '\n');
       }
     }
 
     if (subprocess.stdin) {
-      subprocess.stdin.end();
+      subprocess?.stdin?.end();
     }
 
     const result = await subprocess;
@@ -186,8 +186,8 @@ export class CLIExecutor {
    */
   withEnv(env: Record<string, string>): CLIExecutor {
     const newExecutor = new CLIExecutor({ cliPath: this.cliPath });
-    newExecutor.defaultOptions.env = {
-      ...this.defaultOptions.env,
+    newExecutor.defaultOptions?.env = {
+      ...this?.defaultOptions?.env,
       ...env,
     };
     return newExecutor;
@@ -198,7 +198,7 @@ export class CLIExecutor {
    */
   withTimeout(timeout: number): CLIExecutor {
     const newExecutor = new CLIExecutor({ cliPath: this.cliPath });
-    newExecutor.defaultOptions.timeout = timeout;
+    newExecutor.defaultOptions?.timeout = timeout;
     return newExecutor;
   }
 }

@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
@@ -61,7 +61,7 @@ export default class StoreFileCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(StoreFileCommand);
+    const { args, flags } = await this.parse(StoreFileCommand as any);
     const files = Array.isArray(args.files)
       ? args.files
       : args.files
@@ -70,16 +70,16 @@ export default class StoreFileCommand extends BaseCommand {
 
     try {
       // Check if any files provided
-      if (files.length === 0) {
+      if (files?.length === 0) {
         this.log('No files provided');
         return;
       }
 
       // Initialize Walrus storage
-      const walrusStorage = await this.initializeStorage(flags);
+      const walrusStorage = await this.initializeStorage(flags as any);
 
       // Process files
-      if (files.length === 1 && !flags.batch) {
+      if (files?.length === 1 && !flags.batch) {
         await this.storeSingleFile(files[0], walrusStorage, flags);
       } else {
         await this.storeBatchFiles(files, walrusStorage, flags);
@@ -109,9 +109,9 @@ export default class StoreFileCommand extends BaseCommand {
         await storage.connect();
       } catch (error) {
         const errorObj = error as { code?: string };
-        if (errorObj.code === 'WALRUS_CLI_NOT_FOUND') {
+        if (errorObj?.code === 'WALRUS_CLI_NOT_FOUND') {
           throw new CLIError(
-            'Walrus CLI not found. Please install it from https://docs.wal.app',
+            'Walrus CLI not found. Please install it from https://docs?.wal?.app',
             'WALRUS_CLI_NOT_FOUND'
           );
         }
@@ -133,14 +133,14 @@ export default class StoreFileCommand extends BaseCommand {
 
     // Check if file exists
     try {
-      await fs.access(filePath);
+      await fs.access(filePath as any);
     } catch (_error) {
       throw new CLIError(`File not found: ${filePath}`, 'FILE_NOT_FOUND');
     }
 
     // Read file data
-    const data = await fs.readFile(filePath);
-    const fileName = path.basename(filePath);
+    const data = await fs.readFile(filePath as any);
+    const fileName = path.basename(filePath as any);
 
     if (flags.verbose) {
       this.log(chalk.gray('Generating mock blob ID'));
@@ -157,7 +157,7 @@ export default class StoreFileCommand extends BaseCommand {
     }
 
     // Format output
-    if (flags.output === 'json') {
+    if (flags?.output === 'json') {
       this.log(
         JSON.stringify({
           blobId,
@@ -168,7 +168,7 @@ export default class StoreFileCommand extends BaseCommand {
     } else {
       this.log('');
       this.log(chalk.green('✓') + ` Stored blob: ${fileName}`);
-      this.log(chalk.gray('Blob ID: ') + chalk.cyan(blobId));
+      this.log(chalk.gray('Blob ID: ') + chalk.cyan(blobId as any));
     }
   }
 
@@ -183,11 +183,11 @@ export default class StoreFileCommand extends BaseCommand {
     this.log('');
 
     for (const file of files) {
-      const fileName = path.basename(file);
+      const fileName = path.basename(file as any);
 
       try {
-        await fs.access(file);
-        const data = await fs.readFile(file);
+        await fs.access(file as any);
+        const data = await fs.readFile(file as any);
 
         const blobId = await walrusStorage.storeBlob(data, {
           epochs: flags.epochs,
@@ -204,7 +204,7 @@ export default class StoreFileCommand extends BaseCommand {
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(error as any);
         results.push({
           fileName,
           error: errorMessage,
@@ -216,18 +216,18 @@ export default class StoreFileCommand extends BaseCommand {
     }
 
     // Show summary
-    const successful = results.filter(r => r.status === 'success').length;
-    const failed = results.filter(r => r.status === 'error').length;
+    const successful = results.filter(r => r?.status === 'success').length;
+    const failed = results.filter(r => r?.status === 'error').length;
 
     this.log('');
     this.log(chalk.bold('Storage Summary:'));
     this.log(`  Total files processed: ${files.length}`);
-    this.log(`  Successfully stored: ${chalk.green(successful)}`);
+    this.log(`  Successfully stored: ${chalk.green(successful as any)}`);
     if (failed > 0) {
-      this.log(`  Failed to store: ${chalk.red(failed)}`);
+      this.log(`  Failed to store: ${chalk.red(failed as any)}`);
     }
 
-    if (flags.output === 'json') {
+    if (flags?.output === 'json') {
       this.log('');
       this.log(
         JSON.stringify(

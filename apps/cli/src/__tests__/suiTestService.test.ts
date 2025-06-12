@@ -6,7 +6,7 @@ describe('SuiTestService (in‑memory)', () => {
   const mockConfig: AppConfig = {
     activeNetwork: {
       name: 'testnet',
-      fullnode: 'https://fullnode.testnet.sui.io:443',
+      fullnode: 'https://fullnode?.testnet?.sui.io:443',
     },
     activeAccount: {
       address: '0xabc',
@@ -38,19 +38,19 @@ describe('SuiTestService (in‑memory)', () => {
     },
   };
 
-  const service = new SuiTestService(mockConfig);
+  const service = new SuiTestService(mockConfig as any);
 
   it('returns the provided wallet address', async () => {
-    const testService = new SuiTestService(mockConfig);
+    const testService = new SuiTestService(mockConfig as any);
     expect(await testService.getWalletAddress()).toBe('0xabc');
   });
 
   it('creates a list and adds a todo', async () => {
     const listId = await service.createTodoList();
     const todoId = await service.addTodo(listId, 'write tests');
-    const todos = await service.getTodos(listId);
+    const todos = await service.getTodos(listId as any);
 
-    expect(todos).toHaveLength(1);
+    expect(todos as any).toHaveLength(1 as any);
     expect(todos[0]).toMatchObject({ id: todoId, text: 'write tests' });
   });
 
@@ -59,15 +59,15 @@ describe('SuiTestService (in‑memory)', () => {
     const todoId = await service.addTodo(listId, 'initial');
     await service.updateTodo(listId, todoId, { completed: true });
 
-    const todos = await service.getTodos(listId);
+    const todos = await service.getTodos(listId as any);
     const item = todos[0];
-    expect(item?.completed).toBe(true);
+    expect(item?.completed).toBe(true as any);
   });
 
   it('deletes a todo list', async () => {
     const listId = await service.createTodoList();
-    await service.deleteTodoList(listId);
+    await service.deleteTodoList(listId as any);
 
-    await expect(service.getTodos(listId)).rejects.toThrow();
+    await expect(service.getTodos(listId as any)).rejects.toThrow();
   });
 });

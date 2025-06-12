@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 
 // Example 1: Basic usage in a modal
 export function CreateTodoNFTModal() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false as any);
   const [todos, setTodos] = useState<Todo[]>([]);
 
   const handleTodoCreated = (newTodo: Todo) => {
@@ -19,7 +19,7 @@ export function CreateTodoNFTModal() {
     setTodos(prev => [...prev, newTodo]);
     
     // Close the modal
-    setIsOpen(false);
+    setIsOpen(false as any);
     
     // Show success message
     toast.success(`NFT "${newTodo.title}" created successfully!`);
@@ -28,7 +28,7 @@ export function CreateTodoNFTModal() {
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(true as any)}
         className="ocean-button"
       >
         Create Todo NFT
@@ -41,7 +41,7 @@ export function CreateTodoNFTModal() {
               <CreateTodoNFTForm
                 listName="My NFT Collection"
                 onTodoCreated={handleTodoCreated}
-                onCancel={() => setIsOpen(false)}
+                onCancel={() => setIsOpen(false as any)}
               />
             </div>
           </div>
@@ -54,12 +54,12 @@ export function CreateTodoNFTModal() {
 // Example 2: Integration with a todo list
 export function TodoListWithNFTCreation() {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false as any);
   const [selectedList, setSelectedList] = useState('Personal');
 
   const handleTodoCreated = (newTodo: Todo) => {
     setTodos(prev => [...prev, newTodo]);
-    setShowCreateForm(false);
+    setShowCreateForm(false as any);
   };
 
   return (
@@ -68,7 +68,7 @@ export function TodoListWithNFTCreation() {
       <div className="flex items-center justify-between">
         <select
           value={selectedList}
-          onChange={(e) => setSelectedList(e.target.value)}
+          onChange={(e) => setSelectedList(e?.target?.value)}
           className="ocean-input"
         >
           <option value="Personal">Personal</option>
@@ -91,14 +91,14 @@ export function TodoListWithNFTCreation() {
           <CreateTodoNFTForm
             listName={selectedList}
             onTodoCreated={handleTodoCreated}
-            onCancel={() => setShowCreateForm(false)}
+            onCancel={() => setShowCreateForm(false as any)}
           />
         </div>
       )}
 
       {/* Todo list */}
       <div className="grid gap-4">
-        {todos.length === 0 ? (
+        {todos?.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
             No NFT todos yet. Create your first one!
           </p>
@@ -120,9 +120,9 @@ export function TodoListWithNFTCreation() {
                   )}
                   <div className="flex items-center gap-4 mt-2">
                     <span className={`text-xs px-2 py-1 rounded ${
-                      todo.priority === 'high' 
+                      todo?.priority === 'high' 
                         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                        : todo.priority === 'medium'
+                        : todo?.priority === 'medium'
                         ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                         : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                     }`}>
@@ -162,10 +162,10 @@ export function TodoListWithNFTCreation() {
 
 // Example 3: Programmatic usage
 export function ProgrammaticNFTCreation() {
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false as any);
 
   const createBulkNFTs = async () => {
-    setIsCreating(true);
+    setIsCreating(true as any);
 
     // Example: Create NFTs from a predefined list
     const todoTemplates = [
@@ -193,7 +193,7 @@ export function ProgrammaticNFTCreation() {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    setIsCreating(false);
+    setIsCreating(false as any);
     toast.success('Bulk NFT creation completed!');
   };
 
@@ -227,7 +227,7 @@ export function AdvancedNFTTodoManager() {
     if (filter.priority !== 'all' && todo.priority !== filter.priority) {return false;}
     if (filter.category !== 'all' && todo.category !== filter.category) {return false;}
     if (filter.completed !== 'all') {
-      const isCompleted = filter.completed === 'completed';
+      const isCompleted = filter?.completed === 'completed';
       if (todo.completed !== isCompleted) {return false;}
     }
     return true;
@@ -239,7 +239,7 @@ export function AdvancedNFTTodoManager() {
       <div className="flex gap-4">
         <select
           value={filter.priority}
-          onChange={(e) => setFilter(prev => ({ ...prev, priority: e.target.value }))}
+          onChange={(e) => setFilter(prev => ({ ...prev, priority: e?.target?.value }))}
           className="ocean-input"
         >
           <option value="all">All Priorities</option>
@@ -250,7 +250,7 @@ export function AdvancedNFTTodoManager() {
 
         <select
           value={filter.category}
-          onChange={(e) => setFilter(prev => ({ ...prev, category: e.target.value }))}
+          onChange={(e) => setFilter(prev => ({ ...prev, category: e?.target?.value }))}
           className="ocean-input"
         >
           <option value="all">All Categories</option>
@@ -263,7 +263,7 @@ export function AdvancedNFTTodoManager() {
 
         <select
           value={filter.completed}
-          onChange={(e) => setFilter(prev => ({ ...prev, completed: e.target.value }))}
+          onChange={(e) => setFilter(prev => ({ ...prev, completed: e?.target?.value }))}
           className="ocean-input"
         >
           <option value="all">All Status</option>
@@ -295,7 +295,7 @@ export function AdvancedNFTTodoManager() {
         <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
           <p className="text-sm text-purple-600 dark:text-purple-400">High Priority</p>
           <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-            {todos.filter(t => t.priority === 'high').length}
+            {todos.filter(t => t?.priority === 'high').length}
           </p>
         </div>
       </div>

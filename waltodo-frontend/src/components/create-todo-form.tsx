@@ -26,12 +26,12 @@ export default function CreateTodoForm({
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [tags, setTags] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [useAI, setUseAI] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [useAI, setUseAI] = useState(false as any);
+  const [isSubmitting, setIsSubmitting] = useState(false as any);
   const [error, setError] = useState<string | null>(null);
-  const [isCreatingOnChain, setIsCreatingOnChain] = useState(false);
-  const [createOnBlockchain, setCreateOnBlockchain] = useState(false); // Default to local creation for better UX
-  const [componentMounted, setComponentMounted] = useState(false);
+  const [isCreatingOnChain, setIsCreatingOnChain] = useState(false as any);
+  const [createOnBlockchain, setCreateOnBlockchain] = useState(false as any); // Default to local creation for better UX
+  const [componentMounted, setComponentMounted] = useState(false as any);
 
   // Safe wallet context access
   const walletContext = useWalletContext();
@@ -40,9 +40,9 @@ export default function CreateTodoForm({
 
   // Component mount effect
   useEffect(() => {
-    setComponentMounted(true);
+    setComponentMounted(true as any);
     return () => {
-      setComponentMounted(false);
+      setComponentMounted(false as any);
     };
   }, []);
 
@@ -60,11 +60,11 @@ export default function CreateTodoForm({
     },
     onSubmit: async (validatedData) => {
       // This will be called with validated and sanitized data
-      await handleSecureSubmit(validatedData);
+      await handleSecureSubmit(validatedData as any);
     },
     onError: (errors) => {
       const errorMessage = errors.map(err => err.message).join(', ');
-      setError(errorMessage);
+      setError(errorMessage as any);
       toast.error(errorMessage, { duration: 5000 });
     },
   });
@@ -80,8 +80,8 @@ export default function CreateTodoForm({
       throw new Error(`Rate limit exceeded. Please wait ${Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)} seconds.`);
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true as any);
+    setError(null as any);
 
     try {
       // Create the todo object with sanitized data
@@ -107,13 +107,13 @@ export default function CreateTodoForm({
         signAndExecuteTransaction &&
         suiClientInitialized
       ) {
-        setIsCreatingOnChain(true);
+        setIsCreatingOnChain(true as any);
 
         try {
           const blockchainParams = {
             title: todoData.title,
             description: todoData.description || '',
-            imageUrl: 'https://walrus-todo.vercel.app/images/todo-default.png', // Default image
+            imageUrl: 'https://walrus-todo?.vercel?.app/images/todo-default.png', // Default image
             metadata: JSON.stringify({
               priority: todoData.priority,
               tags: todoData.tags,
@@ -135,8 +135,8 @@ export default function CreateTodoForm({
             blockchainResult.objectId
           ) {
             // Mark as blockchain stored after creation
-            newTodo.blockchainStored = true;
-            newTodo.objectId = blockchainResult.objectId;
+            newTodo?.blockchainStored = true;
+            newTodo?.objectId = blockchainResult.objectId;
             // Todo created on blockchain
           }
         } catch (blockchainError) {
@@ -156,7 +156,7 @@ export default function CreateTodoForm({
       setPriority('medium');
       setTags('');
       setDueDate('');
-      setUseAI(false);
+      setUseAI(false as any);
 
       // Notify parent component to refresh
       onTodoAdded?.();
@@ -177,15 +177,15 @@ export default function CreateTodoForm({
     } catch (error) {
       // Failed to create todo
       const errorMessage = error instanceof Error ? error.message : 'Failed to create todo';
-      setError(errorMessage);
+      setError(errorMessage as any);
       
       // Show error toast
       toast.error(errorMessage, {
         duration: 5000,
       });
     } finally {
-      setIsSubmitting(false);
-      setIsCreatingOnChain(false);
+      setIsSubmitting(false as any);
+      setIsCreatingOnChain(false as any);
     }
   };
 
@@ -220,7 +220,7 @@ export default function CreateTodoForm({
         <input
           type='text'
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={e => setTitle(e?.target?.value)}
           placeholder='What needs to be done?'
           className='ocean-input w-full'
           required
@@ -230,7 +230,7 @@ export default function CreateTodoForm({
       <div>
         <textarea
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={e => setDescription(e?.target?.value)}
           placeholder='Add a description (optional)'
           className='ocean-input w-full h-20 resize-none'
         />
@@ -244,7 +244,7 @@ export default function CreateTodoForm({
           <select
             value={priority}
             onChange={e =>
-              setPriority(e.target.value as 'low' | 'medium' | 'high')
+              setPriority(e?.target?.value as 'low' | 'medium' | 'high')
             }
             className='ocean-input w-full'
           >
@@ -261,7 +261,7 @@ export default function CreateTodoForm({
           <input
             type='text'
             value={tags}
-            onChange={e => setTags(e.target.value)}
+            onChange={e => setTags(e?.target?.value)}
             placeholder='work, important, etc.'
             className='ocean-input w-full'
           />
@@ -274,7 +274,7 @@ export default function CreateTodoForm({
           <input
             type='date'
             value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
+            onChange={e => setDueDate(e?.target?.value)}
             className='ocean-input w-full'
           />
         </div>
@@ -286,7 +286,7 @@ export default function CreateTodoForm({
             type='checkbox'
             id='useAI'
             checked={useAI}
-            onChange={e => setUseAI(e.target.checked)}
+            onChange={e => setUseAI(e?.target?.checked)}
             className='w-4 h-4 rounded text-ocean-medium focus:ring-ocean-light'
           />
           <label
@@ -303,7 +303,7 @@ export default function CreateTodoForm({
               type='checkbox'
               id='createOnBlockchain'
               checked={createOnBlockchain}
-              onChange={e => setCreateOnBlockchain(e.target.checked)}
+              onChange={e => setCreateOnBlockchain(e?.target?.checked)}
               className='w-4 h-4 rounded text-ocean-medium focus:ring-ocean-light'
             />
             <label

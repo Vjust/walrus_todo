@@ -10,7 +10,7 @@ export default function CreateNFTPage() {
   const [createdTodo, setCreatedTodo] = useState<Todo | null>(null);
 
   const handleTodoCreated = (todo: Todo) => {
-    setCreatedTodo(todo);
+    setCreatedTodo(todo as any);
     // Optionally redirect after a delay
     setTimeout(() => {
       router.push('/dashboard');

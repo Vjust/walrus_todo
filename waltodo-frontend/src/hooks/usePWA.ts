@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { BeforeInstallPromptEvent, pwaManager, PWAMetrics } from '@/lib/pwa-manager';
 
 export function usePWA() {
-  const [canInstall, setCanInstall] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  const [canInstall, setCanInstall] = useState(false as any);
+  const [isInstalled, setIsInstalled] = useState(false as any);
+  const [isOnline, setIsOnline] = useState(true as any);
   const [metrics, setMetrics] = useState<PWAMetrics>(pwaManager.getMetrics());
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export function usePWA() {
     
     // Check initial states
     // INSTALL PROMPT DISABLED: Always set canInstall to false
-    setCanInstall(false);
+    setCanInstall(false as any);
     setIsInstalled(pwaManager.isInstalled());
     setIsOnline(navigator.onLine);
 
@@ -25,8 +25,8 @@ export function usePWA() {
     }, 5000);
 
     // Listen for online/offline events
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => setIsOnline(true as any);
+    const handleOffline = () => setIsOnline(false as any);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -36,13 +36,13 @@ export function usePWA() {
     const checkInstallState = () => {
       setIsInstalled(pwaManager.isInstalled());
       // Keep canInstall always false to disable install prompts
-      setCanInstall(false);
+      setCanInstall(false as any);
     };
 
     window.addEventListener('appinstalled', checkInstallState);
 
     return () => {
-      clearInterval(metricsInterval);
+      clearInterval(metricsInterval as any);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('appinstalled', checkInstallState);
@@ -63,7 +63,7 @@ export function usePWA() {
   }, []);
 
   const cacheNFTImage = useCallback(async (url: string) => {
-    await pwaManager.cacheNFTImage(url);
+    await pwaManager.cacheNFTImage(url as any);
   }, []);
 
   const clearNFTCache = useCallback(async () => {
@@ -71,15 +71,15 @@ export function usePWA() {
   }, []);
 
   const share = useCallback(async (data: ShareData) => {
-    return await pwaManager.share(data);
+    return await pwaManager.share(data as any);
   }, []);
 
   const canShare = useCallback((data?: ShareData) => {
-    return pwaManager.canShare(data);
+    return pwaManager.canShare(data as any);
   }, []);
 
   const registerSync = useCallback(async (tag: string) => {
-    await pwaManager.registerSync(tag);
+    await pwaManager.registerSync(tag as any);
   }, []);
 
   const registerPeriodicSync = useCallback(async (tag: string, minInterval: number) => {

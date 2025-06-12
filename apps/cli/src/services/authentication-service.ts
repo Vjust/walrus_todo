@@ -36,7 +36,7 @@ const DEFAULT_REFRESH_TOKEN_EXPIRY = 604800; // 7 days in seconds
  * Secret key used for signing JWT tokens
  * In production environments, this should be set via environment variable
  */
-const JWT_SECRET = process.env.JWT_SECRET || 'walrus-todo-default-secret';
+const JWT_SECRET = process?.env?.JWT_SECRET || 'walrus-todo-default-secret';
 
 /**
  * Interface representing stored user credentials
@@ -115,10 +115,10 @@ export class AuthenticationService {
    */
   private constructor() {
     try {
-      this.logger = Logger.getInstance();
+      this?.logger = Logger.getInstance();
     } catch (_error) {
       // Fallback for test environments or initialization issues
-      this.logger = undefined as any;
+      this?.logger = undefined as any;
     }
   }
 
@@ -130,7 +130,7 @@ export class AuthenticationService {
    */
   public static getInstance(): AuthenticationService {
     if (!AuthenticationService.instance) {
-      AuthenticationService.instance = new AuthenticationService();
+      AuthenticationService?.instance = new AuthenticationService();
     }
     return AuthenticationService.instance;
   }
@@ -143,7 +143,7 @@ export class AuthenticationService {
    */
   private generateSalt(): string {
     try {
-      const saltBuffer = crypto.randomBytes(16);
+      const saltBuffer = crypto.randomBytes(16 as any);
 
       // Validate generated salt buffer exists and has correct length
       if (!saltBuffer) {
@@ -204,7 +204,7 @@ export class AuthenticationService {
       throw new CLIError('Invalid salt for hashing', 'INVALID_CRYPTO_INPUT');
     }
 
-    if (password.length === 0) {
+    if (password?.length === 0) {
       throw new CLIError('Password cannot be empty', 'INVALID_CRYPTO_INPUT');
     }
 
@@ -275,7 +275,7 @@ export class AuthenticationService {
     roles: UserRole[] = [UserRole.USER]
   ): Promise<PermissionUser> {
     // Check if username already exists
-    const existingUser = await permissionService.getUserByUsername(username);
+    const existingUser = await permissionService.getUserByUsername(username as any);
     if (existingUser) {
       throw new CLIError('Username already exists', 'USERNAME_EXISTS');
     }
@@ -287,7 +287,7 @@ export class AuthenticationService {
     const salt = this.generateSalt();
     const passwordHash = this.hashPassword(password, salt);
 
-    this.credentials.set(username, {
+    this?.credentials?.set(username, {
       passwordHash,
       salt,
       userId: user.id,
@@ -329,13 +329,13 @@ export class AuthenticationService {
     currentPassword: string,
     newPassword: string
   ): Promise<boolean> {
-    const user = await permissionService.getUser(userId);
+    const user = await permissionService.getUser(userId as any);
     if (!user) {
       throw new CLIError('User not found', 'USER_NOT_FOUND');
     }
 
     // Get stored credentials
-    const storedCreds = this.credentials.get(user.username);
+    const storedCreds = this?.credentials?.get(user.username);
     if (!storedCreds) {
       throw new CLIError('Credentials not found', 'CREDENTIALS_NOT_FOUND');
     }
@@ -365,7 +365,7 @@ export class AuthenticationService {
     const salt = this.generateSalt();
     const passwordHash = this.hashPassword(newPassword, salt);
 
-    this.credentials.set(user.username, {
+    this?.credentials?.set(user.username, {
       passwordHash,
       salt,
       userId: user.id,
@@ -373,7 +373,7 @@ export class AuthenticationService {
     });
 
     // Invalidate all sessions for this user
-    this.invalidateAllUserSessions(userId);
+    this.invalidateAllUserSessions(userId as any);
 
     // Log password change
     auditLogger.log({
@@ -411,7 +411,7 @@ export class AuthenticationService {
     userAgent?: string
   ): Promise<AuthResult> {
     // Get stored credentials
-    const storedCreds = this.credentials.get(username);
+    const storedCreds = this?.credentials?.get(username as any);
     if (!storedCreds) {
       // Log failed login
       auditLogger.log({
@@ -533,7 +533,7 @@ export class AuthenticationService {
       }
 
       // Find user by address or create a new one if not found
-      let user = await permissionService.getUserByAddress(address);
+      let user = await permissionService.getUserByAddress(address as any);
 
       if (!user) {
         // Create new user with wallet address
@@ -606,7 +606,7 @@ export class AuthenticationService {
     keyName: string,
     expiryDays?: number
   ): Promise<string> {
-    const user = await permissionService.getUser(userId);
+    const user = await permissionService.getUser(userId as any);
     if (!user) {
       throw new CLIError('User not found', 'USER_NOT_FOUND');
     }
@@ -620,7 +620,7 @@ export class AuthenticationService {
       : undefined;
 
     // Store API key
-    this.apiKeys.set(apiKey, {
+    this?.apiKeys?.set(apiKey, {
       key: apiKey,
       userId: user.id,
       name: keyName,
@@ -663,7 +663,7 @@ export class AuthenticationService {
     userAgent?: string
   ): Promise<AuthResult> {
     // Get API key info
-    const keyInfo = this.apiKeys.get(apiKey);
+    const keyInfo = this?.apiKeys?.get(apiKey as any);
     if (!keyInfo) {
       // Log failed API key authentication
       auditLogger.log({
@@ -769,7 +769,7 @@ export class AuthenticationService {
     // Create cryptographically secure refresh token
     let refreshToken: string;
     try {
-      const refreshTokenBuffer = crypto.randomBytes(40);
+      const refreshTokenBuffer = crypto.randomBytes(40 as any);
       
       if (!refreshTokenBuffer) {
         throw new CLIError(
@@ -808,7 +808,7 @@ export class AuthenticationService {
 
     // Store session with refresh token and metadata
     const sessionId = uuidv4();
-    this.sessions.set(sessionId, {
+    this?.sessions?.set(sessionId, {
       id: sessionId,
       userId: user.id,
       refreshToken,
@@ -860,7 +860,7 @@ export class AuthenticationService {
         };
       }
 
-      const user = await permissionService.getUser(userId);
+      const user = await permissionService.getUser(userId as any);
 
       if (!user) {
         this.logger?.warn(
@@ -912,8 +912,8 @@ export class AuthenticationService {
     userAgent?: string
   ): Promise<AuthResult> {
     // Find session by refresh token
-    const session = Array.from(this.sessions.values()).find(
-      s => s.refreshToken === refreshToken
+    const session = Array.from(this?.sessions?.values()).find(
+      s => s?.refreshToken === refreshToken
     );
 
     if (!session) {
@@ -923,7 +923,7 @@ export class AuthenticationService {
     // Check if refresh token is expired
     if (session.expiresAt < Date.now()) {
       // Remove expired session
-      this.sessions.delete(session.id);
+      this?.sessions?.delete(session.id);
 
       // Log failed refresh
       auditLogger.log({
@@ -953,7 +953,7 @@ export class AuthenticationService {
     }
 
     // Remove old session for security (one-time use refresh tokens)
-    this.sessions.delete(session.id);
+    this?.sessions?.delete(session.id);
 
     // Create new session with fresh tokens
     const authResult = await this.createSession(user, ipAddress, userAgent);
@@ -992,12 +992,12 @@ export class AuthenticationService {
       const userId = decoded.sub as string;
 
       // Find all sessions for this user
-      const sessionIds = Array.from(this.sessions.entries())
-        .filter(([_, session]) => session.userId === userId)
+      const sessionIds = Array.from(this?.sessions?.entries())
+        .filter(([_, session]) => session?.userId === userId)
         .map(([id, _]) => id);
 
       // Remove sessions
-      sessionIds.forEach(id => this.sessions.delete(id));
+      sessionIds.forEach(id => this?.sessions?.delete(id as any));
 
       // Log logout
       auditLogger.log({
@@ -1016,7 +1016,7 @@ export class AuthenticationService {
     } catch (_error: unknown) {
       // Silently fail for invalid tokens
       this.logger?.debug('Failed to invalidate session', {
-        error: _error instanceof Error ? _error.message : String(_error),
+        error: _error instanceof Error ? _error.message : String(_error as any),
       });
     }
   }
@@ -1029,12 +1029,12 @@ export class AuthenticationService {
    */
   public async invalidateAllUserSessions(userId: string): Promise<void> {
     // Find all sessions for this user
-    const sessionIds = Array.from(this.sessions.entries())
-      .filter(([_, session]) => session.userId === userId)
+    const sessionIds = Array.from(this?.sessions?.entries())
+      .filter(([_, session]) => session?.userId === userId)
       .map(([id, _]) => id);
 
     // Remove sessions
-    sessionIds.forEach(id => this.sessions.delete(id));
+    sessionIds.forEach(id => this?.sessions?.delete(id as any));
 
     // Log session invalidation
     auditLogger.log({
@@ -1061,13 +1061,13 @@ export class AuthenticationService {
    */
   public async revokeApiKey(apiKey: string): Promise<void> {
     // Get API key info
-    const keyInfo = this.apiKeys.get(apiKey);
+    const keyInfo = this?.apiKeys?.get(apiKey as any);
     if (!keyInfo) {
       throw new CLIError('API key not found', 'API_KEY_NOT_FOUND');
     }
 
     // Remove API key
-    this.apiKeys.delete(apiKey);
+    this?.apiKeys?.delete(apiKey as any);
 
     // Log API key revocation
     auditLogger.log({
@@ -1092,9 +1092,9 @@ export class AuthenticationService {
    * @internal This method is intended for testing only
    */
   public resetState(): void {
-    this.credentials.clear();
-    this.sessions.clear();
-    this.apiKeys.clear();
+    this?.credentials?.clear();
+    this?.sessions?.clear();
+    this?.apiKeys?.clear();
   }
 }
 

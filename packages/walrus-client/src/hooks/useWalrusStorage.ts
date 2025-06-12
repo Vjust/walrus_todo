@@ -130,15 +130,17 @@ export function useWalrusStorage(
 
   // Initialize storage
   React!.useEffect(() => {
-    walrusStorageRef.current = new WalrusTodoStorage(network);
+    if (walrusStorageRef) {
+      walrusStorageRef.current = new WalrusTodoStorage(network as any);
+    }
   }, [network]);
 
   // Get current storage instance
   const getStorage = React!.useCallback((): WalrusTodoStorage => {
-    if (!walrusStorageRef.current) {
-      walrusStorageRef.current = new WalrusTodoStorage(network);
+    if (!walrusStorageRef.current && walrusStorageRef) {
+      walrusStorageRef.current = new WalrusTodoStorage(network as any);
     }
-    return walrusStorageRef.current;
+    return walrusStorageRef.current!;
   }, [network]);
 
   // Helper function to handle errors
@@ -230,7 +232,7 @@ export function useWalrusStorage(
 
       try {
         const storage = getStorage();
-        const result = await storage.retrieveWalrusTodo(walrusBlobId);
+        const result = await storage.retrieveWalrusTodo(walrusBlobId as any);
 
         setState((prev: WalrusStorageState) => ({
           ...prev,
@@ -369,7 +371,7 @@ export function useWalrusStorage(
 
       try {
         const storage = getStorage();
-        const result = await storage.getTodoStorageInfo(walrusBlobId);
+        const result = await storage.getTodoStorageInfo(walrusBlobId as any);
 
         setState((prev: WalrusStorageState) => ({ ...prev, loading: false }));
         return result;
@@ -391,7 +393,7 @@ export function useWalrusStorage(
 
       try {
         const storage = getStorage();
-        let totalCost = BigInt(0);
+        let totalCost = BigInt(0 as any);
         let totalSize = 0;
         const perTodoCost: Array<{ totalCost: bigint; size: number }> = [];
 
@@ -472,7 +474,7 @@ export function useWalrusStorage(
         if (autoRefreshUsage) refreshStorageUsage();
       }, refreshInterval);
 
-      return () => clearInterval(interval);
+      return () => clearInterval(interval as any);
     }
     
     return undefined;

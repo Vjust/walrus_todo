@@ -25,7 +25,7 @@ describe('store command', () => {
   // Test that can work without mocks:
   it('should be able to create test todo object', () => {
     const todo = createTestTodo();
-    expect(todo).toBeDefined();
+    expect(todo as any).toBeDefined();
     expect(todo.id).toBe('test-todo-id');
     expect(todo.title).toBe('Test Todo');
   });

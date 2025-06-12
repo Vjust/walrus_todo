@@ -57,7 +57,7 @@ describe('Add Command E2E Tests', () => {
   // Cleanup after all tests
   afterAll(() => {
     // Remove test config directory
-    if (fs.existsSync(TEST_CONFIG_DIR)) {
+    if (fs.existsSync(TEST_CONFIG_DIR as any)) {
       fs.rmSync(TEST_CONFIG_DIR, { recursive: true, force: true });
     }
   });
@@ -82,9 +82,9 @@ describe('Add Command E2E Tests', () => {
 
       // Verify todo was saved
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos).toHaveLength(1);
-      expect(config.todos[0].text).toBe('Complete documentation');
-      expect(config.todos[0].completed).toBe(false);
+      expect(config.todos).toHaveLength(1 as any);
+      expect(config?.todos?.[0].text).toBe('Complete documentation');
+      expect(config?.todos?.[0].completed).toBe(false as any);
     });
 
     test('should add todo with priority', () => {
@@ -96,7 +96,7 @@ describe('Add Command E2E Tests', () => {
       expect(result.stdout).toContain('[high]');
 
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].priority).toBe('high');
+      expect(config?.todos?.[0].priority).toBe('high');
     });
 
     test('should add todo with tags', () => {
@@ -109,7 +109,7 @@ describe('Add Command E2E Tests', () => {
       expect(result.stdout).toContain('#urgent');
 
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].tags).toEqual(['work', 'urgent']);
+      expect(config?.todos?.[0].tags).toEqual(['work', 'urgent']);
     });
 
     test('should add todo with due date', () => {
@@ -125,7 +125,7 @@ describe('Add Command E2E Tests', () => {
       expect(result.stdout).toContain('Due:');
 
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].dueDate).toBe(tomorrowStr);
+      expect(config?.todos?.[0].dueDate).toBe(tomorrowStr as any);
     });
 
     test('should add todo with category', () => {
@@ -137,7 +137,7 @@ describe('Add Command E2E Tests', () => {
       expect(result.stdout).toContain('[personal]');
 
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].category).toBe('personal');
+      expect(config?.todos?.[0].category).toBe('personal');
     });
 
     test('should add multiple todos sequentially', () => {
@@ -150,10 +150,10 @@ describe('Add Command E2E Tests', () => {
       expect(result3.error).toBeUndefined();
 
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos).toHaveLength(3);
-      expect(config.todos[0].text).toBe('First task');
-      expect(config.todos[1].text).toBe('Second task');
-      expect(config.todos[2].text).toBe('Third task');
+      expect(config.todos).toHaveLength(3 as any);
+      expect(config?.todos?.[0].text).toBe('First task');
+      expect(config?.todos?.[1].text).toBe('Second task');
+      expect(config?.todos?.[2].text).toBe('Third task');
     });
 
     test('should add todo with all options combined', () => {
@@ -165,7 +165,7 @@ describe('Add Command E2E Tests', () => {
       expect(result.stdout).toContain('✓ Added todo:');
 
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      const todo = config.todos[0];
+      const todo = config?.todos?.[0];
       expect(todo.text).toBe('Complex task');
       expect(todo.priority).toBe('high');
       expect(todo.tags).toEqual(['work', 'project']);
@@ -216,7 +216,7 @@ describe('Add Command E2E Tests', () => {
     });
 
     test('should error with excessively long text', () => {
-      const longText = 'a'.repeat(1001); // Assuming 1000 char limit
+      const longText = 'a'.repeat(1001 as any); // Assuming 1000 char limit
       const result = runCLI(`add "${longText}"`);
 
       expect(result.error).toBeDefined();
@@ -230,7 +230,7 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe(
+      expect(config?.todos?.[0].text).toBe(
         'Task with $pecial ch@racters & symbols!'
       );
     });
@@ -240,7 +240,7 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe('Task with "quotes" inside');
+      expect(config?.todos?.[0].text).toBe('Task with "quotes" inside');
     });
 
     test('should validate tag format', () => {
@@ -262,7 +262,7 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe('Task   with   multiple   spaces');
+      expect(config?.todos?.[0].text).toBe('Task   with   multiple   spaces');
     });
 
     test('should trim whitespace from text', () => {
@@ -270,7 +270,7 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe('Trimmed task');
+      expect(config?.todos?.[0].text).toBe('Trimmed task');
     });
   });
 
@@ -280,7 +280,7 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe('Task with emoji 🎉 and unicode ñ');
+      expect(config?.todos?.[0].text).toBe('Task with emoji 🎉 and unicode ñ');
     });
 
     test('should handle newlines in text', () => {
@@ -288,7 +288,7 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toContain('newlines');
+      expect(config?.todos?.[0].text).toContain('newlines');
     });
 
     test('should handle very short text', () => {
@@ -296,16 +296,16 @@ describe('Add Command E2E Tests', () => {
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe('a');
+      expect(config?.todos?.[0].text).toBe('a');
     });
 
     test('should handle maximum valid text length', () => {
-      const maxText = 'a'.repeat(1000); // Assuming 1000 is the max
+      const maxText = 'a'.repeat(1000 as any); // Assuming 1000 is the max
       const result = runCLI(`add "${maxText}"`);
 
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos[0].text).toBe(maxText);
+      expect(config?.todos?.[0].text).toBe(maxText as any);
     });
 
     test('should handle empty tags array', () => {
@@ -321,7 +321,7 @@ describe('Add Command E2E Tests', () => {
       expect(result.error).toBeUndefined();
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
       // Should deduplicate tags
-      expect(config.todos[0].tags).toEqual(['work', 'urgent']);
+      expect(config?.todos?.[0].tags).toEqual(['work', 'urgent']);
     });
   });
 
@@ -334,12 +334,12 @@ describe('Add Command E2E Tests', () => {
         promises.push(
           new Promise(resolve => {
             const result = runCLI(`add "Concurrent task ${i}"`);
-            resolve(result);
+            resolve(result as any);
           })
         );
       }
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
       // All should succeed
       results.forEach((result: { error?: Error }) => {
@@ -348,7 +348,7 @@ describe('Add Command E2E Tests', () => {
 
       // Check final state
       const config = JSON.parse(fs.readFileSync(TEST_CONFIG_PATH, 'utf8'));
-      expect(config.todos).toHaveLength(5);
+      expect(config.todos).toHaveLength(5 as any);
     });
   });
 

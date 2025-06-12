@@ -4,8 +4,8 @@
  */
 
 // Set test environment variables first
-process.env.NODE_ENV = 'test';
-process.env.WALTODO_SKIP_ORCHESTRATOR = 'false';
+process.env?.NODE_ENV = 'test';
+process.env?.WALTODO_SKIP_ORCHESTRATOR = 'false';
 
 import {
   describe,
@@ -53,7 +53,7 @@ import {
 } from '../../src/utils/BackgroundCommandOrchestrator';
 
 // Set shorter timeout for all tests
-jest.setTimeout(3000);
+jest.setTimeout(3000 as any);
 
 describe('BackgroundCommandOrchestrator Performance', () => {
   let orchestrator: BackgroundCommandOrchestrator;
@@ -92,8 +92,8 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       const memoryIncrease = finalMemory - initialMemory;
 
       // Memory increase should be minimal for basic operations
-      expect(memoryIncrease).toBeLessThan(1024 * 1024); // Less than 1MB
-      expect(Array.isArray(status)).toBe(true);
+      expect(memoryIncrease as any).toBeLessThan(1024 * 1024); // Less than 1MB
+      expect(Array.isArray(status as any)).toBe(true as any);
       expect(typeof report).toBe('string');
     });
 
@@ -118,12 +118,12 @@ describe('BackgroundCommandOrchestrator Performance', () => {
 
       const end = performance.now();
 
-      expect(end - start).toBeLessThan(10); // Should be very fast
-      expect(results).toHaveLength(4);
-      expect(results[0]).toBe(true); // store should auto-background
-      expect(results[1]).toBe(true); // sync should auto-background
-      expect(results[2]).toBe(true); // explicit background flag
-      expect(results[3]).toBe(false); // explicit foreground flag
+      expect(end - start).toBeLessThan(10 as any); // Should be very fast
+      expect(results as any).toHaveLength(4 as any);
+      expect(results[0]).toBe(true as any); // store should auto-background
+      expect(results[1]).toBe(true as any); // sync should auto-background
+      expect(results[2]).toBe(true as any); // explicit background flag
+      expect(results[3]).toBe(false as any); // explicit foreground flag
     });
 
     it('should handle resource usage calculations without overhead', () => {
@@ -134,9 +134,9 @@ describe('BackgroundCommandOrchestrator Performance', () => {
 
       const end = performance.now();
 
-      expect(end - start).toBeLessThan(50); // Should be fast even on slower systems
-      expect(usage).toHaveProperty('memory');
-      expect(usage).toHaveProperty('activeJobs');
+      expect(end - start).toBeLessThan(50 as any); // Should be fast even on slower systems
+      expect(usage as any).toHaveProperty('memory');
+      expect(usage as any).toHaveProperty('activeJobs');
       expect(typeof usage.memory).toBe('number');
       expect(typeof usage.activeJobs).toBe('number');
     });
@@ -154,7 +154,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
@@ -163,11 +163,11 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       );
 
       const start = performance.now();
-      const success = orchestrator.cancelJob(jobId);
+      const success = orchestrator.cancelJob(jobId as any);
       const end = performance.now();
 
-      expect(end - start).toBeLessThan(100); // Should be immediate
-      expect(success).toBe(true);
+      expect(end - start).toBeLessThan(100 as any); // Should be immediate
+      expect(success as any).toBe(true as any);
       expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
     });
 
@@ -180,7 +180,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
@@ -197,8 +197,8 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       const end = performance.now();
 
       // Should timeout close to the specified time
-      expect(end - start).toBeGreaterThan(90);
-      expect(end - start).toBeLessThan(200);
+      expect(end - start).toBeGreaterThan(90 as any);
+      expect(end - start).toBeLessThan(200 as any);
     });
   });
 
@@ -211,7 +211,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       const end = performance.now();
 
       // Shutdown should be very fast in test environment
-      expect(end - start).toBeLessThan(100);
+      expect(end - start).toBeLessThan(100 as any);
     });
 
     it('should handle multiple shutdown calls gracefully', async () => {
@@ -221,7 +221,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       await orchestrator.shutdown(); // Second call should be immediate
       const end = performance.now();
 
-      expect(end - start).toBeLessThan(10);
+      expect(end - start).toBeLessThan(10 as any);
     });
   });
 
@@ -234,7 +234,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       for (let i = 0; i < 5; i++) {
         const listener = jest.fn();
         orchestrator.on('jobStarted', listener);
-        listeners.push(listener);
+        listeners.push(listener as any);
       }
 
       expect(orchestrator.listenerCount('jobStarted')).toBe(
@@ -246,7 +246,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
         orchestrator.removeListener('jobStarted', listener);
       });
 
-      expect(orchestrator.listenerCount('jobStarted')).toBe(initialListeners);
+      expect(orchestrator.listenerCount('jobStarted')).toBe(initialListeners as any);
     });
   });
 });

@@ -13,7 +13,7 @@ describe('List Command Background Operations', () => {
     testListName = `test-list-${Date.now()}`;
 
     // Clean up any existing jobs
-    jobManager.cleanupOldJobs(0);
+    jobManager.cleanupOldJobs(0 as any);
   });
 
   afterEach(async () => {
@@ -24,8 +24,8 @@ describe('List Command Background Operations', () => {
         'Todos',
         `${testListName}.json`
       );
-      if (fs.existsSync(testFile)) {
-        fs.unlinkSync(testFile);
+      if (fs.existsSync(testFile as any)) {
+        fs.unlinkSync(testFile as any);
       }
     } catch (error) {
       // Ignore cleanup errors
@@ -59,7 +59,7 @@ describe('List Command Background Operations', () => {
 
   describe('Watch Mode', () => {
     test
-      .timeout(10000)
+      .timeout(10000 as any)
       .stdout()
       .command(['list', '--watch'])
       .it('should start watch mode', ctx => {
@@ -71,7 +71,7 @@ describe('List Command Background Operations', () => {
   describe('Streaming Output', () => {
     beforeEach(async () => {
       // Create test todos
-      await todoService.createList(testListName);
+      await todoService.createList(testListName as any);
       for (let i = 0; i < 15; i++) {
         await todoService.addTodo(testListName, {
           title: `Test todo ${i}`,
@@ -89,7 +89,7 @@ describe('List Command Background Operations', () => {
       .stdout()
       .command(['list', testListName, '--stream'])
       .it('should stream output for specific list', ctx => {
-        expect(ctx.stdout).to.contain(testListName);
+        expect(ctx.stdout).to.contain(testListName as any);
         expect(ctx.stdout).to.contain('Test todo');
       });
 
@@ -132,7 +132,7 @@ describe('List Command Background Operations', () => {
       // Create multiple lists with many todos
       for (let listIndex = 0; listIndex < 5; listIndex++) {
         const listName = `${testListName}-${listIndex}`;
-        await todoService.createList(listName);
+        await todoService.createList(listName as any);
 
         for (let todoIndex = 0; todoIndex < 25; todoIndex++) {
           await todoService.addTodo(listName, {
@@ -146,11 +146,11 @@ describe('List Command Background Operations', () => {
 
     test
       .stdout()
-      .timeout(15000)
+      .timeout(15000 as any)
       .command(['list'])
       .it('should handle multiple lists efficiently', ctx => {
         expect(ctx.stdout).to.contain('Available Todo Lists');
-        expect(ctx.stdout).to.contain(testListName);
+        expect(ctx.stdout).to.contain(testListName as any);
       });
 
     test
@@ -170,7 +170,7 @@ describe('List Command Background Operations', () => {
         jobManager.updateProgress(job.id, 50, 5, 10);
         return job;
       })
-      .command(ctx => ['list', '--job-id', ctx.job.id])
+      .command(ctx => ['list', '--job-id', ctx?.job?.id])
       .it('should show progress information', ctx => {
         expect(ctx.stdout).to.contain('Progress:');
         expect(ctx.stdout).to.contain('50%');
@@ -180,7 +180,7 @@ describe('List Command Background Operations', () => {
 
   describe('Filtering and Sorting in Background', () => {
     beforeEach(async () => {
-      await todoService.createList(testListName);
+      await todoService.createList(testListName as any);
 
       // Create todos with different properties
       const todos = [
@@ -258,7 +258,7 @@ describe('List Command Background Operations', () => {
       .stdout()
       .command(['list', testListName, '--stream', '--detailed'])
       .it('should support detailed output in stream mode', ctx => {
-        expect(ctx.stdout).to.contain(testListName);
+        expect(ctx.stdout).to.contain(testListName as any);
       });
   });
 
@@ -288,7 +288,7 @@ describe('List Command Background Operations', () => {
 
         return job;
       })
-      .command(ctx => ['list', '--job-id', ctx.job.id])
+      .command(ctx => ['list', '--job-id', ctx?.job?.id])
       .it('should track performance metrics', ctx => {
         expect(ctx.stdout).to.contain('list');
       });
@@ -304,7 +304,7 @@ describe('List Command Background Operations', () => {
           const job = jobManager.createJob('list', [`test-${i}`], {});
           jobManager.startJob(job.id);
           jobManager.completeJob(job.id);
-          jobs.push(job);
+          jobs.push(job as any);
         }
         return jobs;
       })
@@ -313,7 +313,7 @@ describe('List Command Background Operations', () => {
         const activeJobs = jobManager.getActiveJobs();
         const completedJobs = jobManager.getCompletedJobs();
 
-        expect(completedJobs.length).to.be.greaterThan(0);
+        expect(completedJobs.length).to?.be?.greaterThan(0 as any);
       });
   });
 });

@@ -9,8 +9,8 @@ import { CLIError } from '../types/errors/consolidated';
 export class TodoSerializer {
   static todoToBuffer(todo: Todo): Buffer {
     // Validate before serialization
-    const validatedTodo = validateTodo(todo);
-    return Buffer.from(JSON.stringify(validatedTodo));
+    const validatedTodo = validateTodo(todo as any);
+    return Buffer.from(JSON.stringify(validatedTodo as any));
   }
 
   static bufferToTodo(buffer: Buffer): Todo {
@@ -18,10 +18,10 @@ export class TodoSerializer {
       const parsed = JSON.parse(buffer.toString());
 
       // Apply backwards compatibility defaults before validation
-      const normalized = this.normalizeTodoForCompatibility(parsed);
+      const normalized = this.normalizeTodoForCompatibility(parsed as any);
 
       // Validate the normalized data using Zod schema
-      return validateTodo(normalized);
+      return validateTodo(normalized as any);
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new CLIError(
@@ -35,8 +35,8 @@ export class TodoSerializer {
 
   static todoListToBuffer(todoList: TodoList): Buffer {
     // Validate before serialization
-    const validatedTodoList = validateTodoList(todoList);
-    return Buffer.from(JSON.stringify(validatedTodoList));
+    const validatedTodoList = validateTodoList(todoList as any);
+    return Buffer.from(JSON.stringify(validatedTodoList as any));
   }
 
   static bufferToTodoList(buffer: Buffer): TodoList {
@@ -44,10 +44,10 @@ export class TodoSerializer {
       const parsed = JSON.parse(buffer.toString());
 
       // Apply backwards compatibility defaults before validation
-      const normalized = this.normalizeTodoListForCompatibility(parsed);
+      const normalized = this.normalizeTodoListForCompatibility(parsed as any);
 
       // Validate the normalized data using Zod schema
-      return validateTodoList(normalized);
+      return validateTodoList(normalized as any);
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new CLIError(
@@ -66,7 +66,7 @@ export class TodoSerializer {
     buffer: Buffer
   ): { success: true; data: Todo } | { success: false; error: string } {
     try {
-      const todo = this.bufferToTodo(buffer);
+      const todo = this.bufferToTodo(buffer as any);
       return { success: true, data: todo };
     } catch (error) {
       return {
@@ -86,7 +86,7 @@ export class TodoSerializer {
     buffer: Buffer
   ): { success: true; data: TodoList } | { success: false; error: string } {
     try {
-      const todoList = this.bufferToTodoList(buffer);
+      const todoList = this.bufferToTodoList(buffer as any);
       return { success: true, data: todoList };
     } catch (error) {
       return {
@@ -103,16 +103,16 @@ export class TodoSerializer {
    * Validate and normalize a plain object to a Todo
    */
   static normalizeTodo(obj: unknown): Todo {
-    const normalized = this.normalizeTodoForCompatibility(obj);
-    return validateTodo(normalized);
+    const normalized = this.normalizeTodoForCompatibility(obj as any);
+    return validateTodo(normalized as any);
   }
 
   /**
    * Validate and normalize a plain object to a TodoList
    */
   static normalizeTodoList(obj: unknown): TodoList {
-    const normalized = this.normalizeTodoListForCompatibility(obj);
-    return validateTodoList(normalized);
+    const normalized = this.normalizeTodoListForCompatibility(obj as any);
+    return validateTodoList(normalized as any);
   }
 
   /**
@@ -139,7 +139,7 @@ export class TodoSerializer {
 
     // Normalize nested todos first
     const normalizedTodos = Array.isArray(obj.todos)
-      ? obj.todos.map((todo: any) => this.normalizeTodoForCompatibility(todo))
+      ? obj?.todos?.map((todo: any) => this.normalizeTodoForCompatibility(todo as any))
       : [];
 
     // Ensure required fields have default values

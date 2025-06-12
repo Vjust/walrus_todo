@@ -12,11 +12,11 @@ describe('Promise Utilities', () => {
   // Mock console.error to avoid test output pollution
   const originalConsoleError = console.error;
   beforeAll(() => {
-    console.error = jest.fn();
+    console?.error = jest.fn();
   });
 
   afterAll(() => {
-    console.error = originalConsoleError;
+    console?.error = originalConsoleError;
   });
 
 
@@ -27,7 +27,7 @@ describe('Promise Utilities', () => {
         1000,
         'test-operation'
       );
-      expect(result).toBe('success');
+      expect(result as any).toBe('success');
     });
 
     it('should reject with TimeoutError when promise exceeds timeout', async () => {
@@ -38,7 +38,7 @@ describe('Promise Utilities', () => {
 
       await expect(
         withTimeout(slowPromise, 50, 'slow-operation')
-      ).rejects.toThrow(TimeoutError);
+      ).rejects.toThrow(TimeoutError as any);
 
       await expect(
         withTimeout(slowPromise, 50, 'slow-operation')
@@ -53,11 +53,11 @@ describe('Promise Utilities', () => {
 
     it('should propagate errors from the original promise', async () => {
       const error = new Error('Original error');
-      const failingPromise = Promise.reject(error);
+      const failingPromise = Promise.reject(error as any);
 
       await expect(
         withTimeout(failingPromise, 1000, 'failing-operation')
-      ).rejects.toThrow(OperationError);
+      ).rejects.toThrow(OperationError as any);
 
       await expect(
         withTimeout(failingPromise, 1000, 'failing-operation')
@@ -78,13 +78,13 @@ describe('Promise Utilities', () => {
       const mockSetTimeout = jest.fn().mockImplementation(() => 123);
       const mockClearTimeout = jest.fn();
 
-      global.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
-      global.clearTimeout = mockClearTimeout;
+      global?.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
+      global?.clearTimeout = mockClearTimeout;
 
       try {
         // Success case
         await withTimeout(Promise.resolve('success'), 1000, 'test');
-        expect(mockClearTimeout).toHaveBeenCalledWith(123);
+        expect(mockClearTimeout as any).toHaveBeenCalledWith(123 as any);
 
         mockClearTimeout.mockClear();
 
@@ -93,11 +93,11 @@ describe('Promise Utilities', () => {
           withTimeout(Promise.reject(new Error('test')), 1000, 'test')
         ).rejects.toThrow();
 
-        expect(mockClearTimeout).toHaveBeenCalledWith(123);
+        expect(mockClearTimeout as any).toHaveBeenCalledWith(123 as any);
       } finally {
         // Restore original timers
-        global.setTimeout = originalSetTimeout;
-        global.clearTimeout = originalClearTimeout;
+        global?.setTimeout = originalSetTimeout;
+        global?.clearTimeout = originalClearTimeout;
       }
     });
   });
@@ -111,7 +111,7 @@ describe('Promise Utilities', () => {
       ];
 
       const results = await safeParallel(promises, 'test-parallel');
-      expect(results).toEqual(['result1', 'result2', 'result3']);
+      expect(results as any).toEqual(['result1', 'result2', 'result3']);
     });
 
     it('should throw AggregateOperationError when any promise fails', async () => {
@@ -137,7 +137,7 @@ describe('Promise Utilities', () => {
 
     it('should return empty array when given empty input', async () => {
       const results = await safeParallel([], 'empty-operation');
-      expect(results).toEqual([]);
+      expect(results as any).toEqual([]);
     });
 
     it('should include all errors in the aggregate error', async () => {
@@ -155,15 +155,15 @@ describe('Promise Utilities', () => {
         thrownError = error;
       }
 
-      expect(thrownError).toBeInstanceOf(AggregateOperationError);
+      expect(thrownError as any).toBeInstanceOf(AggregateOperationError as any);
       const aggregateError = thrownError as AggregateOperationError;
-      expect(aggregateError.errors.length).toBe(2);
+      expect(aggregateError?.errors?.length).toBe(2 as any);
 
       // Check that the errors are properly captured and transformed
-      expect(aggregateError.errors[0]).toBeInstanceOf(OperationError);
-      expect(aggregateError.errors[0]?.message).toContain('error1');
-      expect(aggregateError.errors[1]).toBeInstanceOf(OperationError);
-      expect(aggregateError.errors[1]?.message).toContain('error2');
+      expect(aggregateError?.errors?.[0]).toBeInstanceOf(OperationError as any);
+      expect(aggregateError?.errors?.[0]?.message).toContain('error1');
+      expect(aggregateError?.errors?.[1]).toBeInstanceOf(OperationError as any);
+      expect(aggregateError?.errors?.[1]?.message).toContain('error2');
     });
   });
 
@@ -173,7 +173,7 @@ describe('Promise Utilities', () => {
     });
 
     afterEach(() => {
-      if (jest.isMockFunction(setTimeout)) {
+      if (jest.isMockFunction(setTimeout as any)) {
         jest.useRealTimers();
       }
       jest.clearAllTimers();
@@ -184,8 +184,8 @@ describe('Promise Utilities', () => {
 
       const result = await withRetry(fn, 3, 10, 'test-retry');
 
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(fn as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should retry and succeed after failures', async () => {
@@ -207,8 +207,8 @@ describe('Promise Utilities', () => {
 
       const result = await promise;
 
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(fn as any).toHaveBeenCalledTimes(3 as any);
 
       jest.useRealTimers();
     }, 10000);
@@ -223,13 +223,13 @@ describe('Promise Utilities', () => {
       // Fast forward all timers to complete the retry sequence
       await jest.runAllTimersAsync();
 
-      await expect(retryPromise).rejects.toThrow(RetryError);
+      await expect(retryPromise as any).rejects.toThrow(RetryError as any);
       
       // Create a new promise for the second expectation to avoid "Cannot read properties of undefined" error
       const retryPromise2 = withRetry(fn, 2, 10, 'exhausted-retries');
       await jest.runAllTimersAsync();
       
-      await expect(retryPromise2).rejects.toMatchObject({
+      await expect(retryPromise2 as any).rejects.toMatchObject({
         name: 'RetryError',
         context: {
           operationName: 'exhausted-retries',
@@ -237,7 +237,7 @@ describe('Promise Utilities', () => {
         },
       });
 
-      expect(fn).toHaveBeenCalledTimes(6); // 3 calls for each promise (initial + 2 retries each)
+      expect(fn as any).toHaveBeenCalledTimes(6 as any); // 3 calls for each promise (initial + 2 retries each)
 
       jest.useRealTimers();
     }, 10000);
@@ -249,7 +249,7 @@ describe('Promise Utilities', () => {
         .mockRejectedValueOnce(new Error('non-retryable'))
         .mockResolvedValue('success');
 
-      const shouldRetry = (error: Error) => error.message === 'retryable';
+      const shouldRetry = (error: Error) => error?.message === 'retryable';
 
       jest.useFakeTimers();
 
@@ -258,8 +258,8 @@ describe('Promise Utilities', () => {
       // Fast forward all timers to complete the retry sequence
       await jest.runAllTimersAsync();
 
-      await expect(retryPromise).rejects.toThrow(RetryError);
-      expect(fn).toHaveBeenCalledTimes(2); // Initial + 1 retry (second error isn't retried)
+      await expect(retryPromise as any).rejects.toThrow(RetryError as any);
+      expect(fn as any).toHaveBeenCalledTimes(2 as any); // Initial + 1 retry (second error isn't retried)
 
       jest.useRealTimers();
     }, 10000);

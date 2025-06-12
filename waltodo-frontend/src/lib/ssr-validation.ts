@@ -35,8 +35,8 @@ export const SSR_SAFETY_CHECKLIST = {
       'Use suppressHydrationWarning only when necessary',
     ],
     patterns: [
-      'useState(null) // Safe for SSR',
-      'useState(false) // Safe for SSR',
+      'useState(null as any) // Safe for SSR',
+      'useState(false as any) // Safe for SSR',
       'useState([]) // Safe for SSR',
       'useState({}) // Safe for SSR',
     ],
@@ -82,8 +82,8 @@ export function validateSSRSafety(componentCode: string): {
   const suggestions: string[] = [];
 
   // Check for direct browser API access
-  SSR_SAFETY_CHECKLIST.browserAPI.violations.forEach(violation => {
-    if (componentCode.includes(violation)) {
+  SSR_SAFETY_CHECKLIST?.browserAPI?.violations.forEach(violation => {
+    if (componentCode.includes(violation as any)) {
       violations.push(`Direct access to ${violation} found`);
       suggestions.push(`Use useSafeBrowserAPI hook instead of direct ${violation} access`);
     }
@@ -100,7 +100,7 @@ export function validateSSRSafety(componentCode: string): {
   ];
 
   unsafeStatePatterns.forEach(pattern => {
-    if (componentCode.includes(pattern)) {
+    if (componentCode.includes(pattern as any)) {
       violations.push(`Unsafe state initialization: ${pattern}`);
       suggestions.push('Initialize state with SSR-safe default values');
     }
@@ -122,7 +122,7 @@ export function validateSSRSafety(componentCode: string): {
   });
 
   return {
-    isValid: violations.length === 0,
+    isValid: violations?.length === 0,
     violations,
     suggestions,
   };
@@ -134,7 +134,7 @@ export const SSRUtils = {
   parseJSON: <T>(json: string, fallback: T): T => {
     if (typeof window === 'undefined') {return fallback;}
     try {
-      return JSON.parse(json);
+      return JSON.parse(json as any);
     } catch {
       return fallback;
     }
@@ -145,7 +145,7 @@ export const SSRUtils = {
     if (typeof window === 'undefined') {return 'Loading...';}
     try {
       const dateObj = typeof date === 'string' || typeof date === 'number' 
-        ? new Date(date) 
+        ? new Date(date as any) 
         : date;
       return dateObj.toLocaleDateString(undefined, options);
     } catch {
@@ -167,8 +167,8 @@ export const SSRUtils = {
   getLocalStorage: <T>(key: string, fallback: T): T => {
     if (typeof window === 'undefined' || !window.localStorage) {return fallback;}
     try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : fallback;
+      const item = window?.localStorage?.getItem(key as any);
+      return item ? JSON.parse(item as any) : fallback;
     } catch {
       return fallback;
     }
@@ -178,8 +178,8 @@ export const SSRUtils = {
   getSessionStorage: <T>(key: string, fallback: T): T => {
     if (typeof window === 'undefined' || !window.sessionStorage) {return fallback;}
     try {
-      const item = window.sessionStorage.getItem(key);
-      return item ? JSON.parse(item) : fallback;
+      const item = window?.sessionStorage?.getItem(key as any);
+      return item ? JSON.parse(item as any) : fallback;
     } catch {
       return fallback;
     }
@@ -189,7 +189,7 @@ export const SSRUtils = {
   createSafeURL: (url: string, base?: string): string => {
     if (typeof window === 'undefined') {return url;}
     try {
-      return new URL(url, base || window.location.origin).href;
+      return new URL(url, base || window?.location?.origin).href;
     } catch {
       return url;
     }
@@ -201,17 +201,17 @@ export const SSRUtils = {
       return false;
     }
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator?.clipboard?.writeText(text as any);
       return true;
     } catch {
       // Fallback for older browsers
       try {
         const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
+        textArea?.value = text;
+        document?.body?.appendChild(textArea as any);
         textArea.select();
         const success = document.execCommand('copy');
-        document.body.removeChild(textArea);
+        document?.body?.removeChild(textArea as any);
         return success;
       } catch {
         return false;
@@ -225,7 +225,7 @@ export const SSRUtils = {
       return false;
     }
     try {
-      await navigator.share(data);
+      await navigator.share(data as any);
       return true;
     } catch (error) {
       // User cancelled or share failed
@@ -239,7 +239,7 @@ export const SSRUtils = {
       return false;
     }
     try {
-      return window.matchMedia(query).matches;
+      return window.matchMedia(query as any).matches;
     } catch {
       return false;
     }
@@ -268,7 +268,7 @@ export const SSRUtils = {
       return null;
     }
     try {
-      return new ResizeObserver(callback);
+      return new ResizeObserver(callback as any);
     } catch {
       return null;
     }
@@ -288,13 +288,13 @@ export const SSR_CONSTANTS = {
 // Development helpers
 export const DevHelpers = {
   logSSRWarning: (message: string) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       console.warn(`[SSR Safety Warning]: ${message}`);
     }
   },
 
   logHydrationMismatch: (componentName: string, serverValue: any, clientValue: any) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       console.warn(
         `[Hydration Mismatch] ${componentName}:`,
         { server: serverValue, client: clientValue }
@@ -303,14 +303,14 @@ export const DevHelpers = {
   },
 
   validateComponent: (componentName: string, componentCode: string) => {
-    if (process.env.NODE_ENV === 'development') {
-      const validation = validateSSRSafety(componentCode);
+    if (process.env?.NODE_ENV === 'development') {
+      const validation = validateSSRSafety(componentCode as any);
       if (!validation.isValid) {
         console.group(`[SSR Validation] ${componentName}`);
-        validation.violations.forEach(violation => {
+        validation?.violations?.forEach(violation => {
           console.warn('❌', violation);
         });
-        validation.suggestions.forEach(suggestion => {
+        validation?.suggestions?.forEach(suggestion => {
           console.info('💡', suggestion);
         });
         console.groupEnd();
@@ -327,7 +327,7 @@ export class SSRSafeErrorBoundary extends Error {
     public ssrContext: 'server' | 'client' | 'hydration'
   ) {
     super(`[${ssrContext.toUpperCase()}] ${componentName}: ${message}`);
-    this.name = 'SSRSafeError';
+    this?.name = 'SSRSafeError';
   }
 }
 
@@ -335,14 +335,14 @@ export class SSRSafeErrorBoundary extends Error {
 export const SSRPerformance = {
   markHydrationStart: (componentName: string) => {
     if (typeof window !== 'undefined' && window.performance) {
-      window.performance.mark(`hydration-start-${componentName}`);
+      window?.performance?.mark(`hydration-start-${componentName}`);
     }
   },
 
   markHydrationEnd: (componentName: string) => {
     if (typeof window !== 'undefined' && window.performance) {
-      window.performance.mark(`hydration-end-${componentName}`);
-      window.performance.measure(
+      window?.performance?.mark(`hydration-end-${componentName}`);
+      window?.performance?.measure(
         `hydration-${componentName}`,
         `hydration-start-${componentName}`,
         `hydration-end-${componentName}`
@@ -352,8 +352,8 @@ export const SSRPerformance = {
 
   getHydrationMetrics: (): PerformanceEntry[] => {
     if (typeof window === 'undefined' || !window.performance) {return [];}
-    return window.performance.getEntriesByType('measure')
-      .filter(entry => entry.name.startsWith('hydration-'));
+    return window?.performance?.getEntriesByType('measure')
+      .filter(entry => entry?.name?.startsWith('hydration-'));
   },
 };
 

@@ -55,8 +55,8 @@ export class DeploymentRecoverySystem {
   private strategies: Map<string, RecoveryStrategy> = new Map();
 
   constructor(deploymentLogger?: DeploymentLogger) {
-    this.logger = new Logger('DeploymentRecovery');
-    this.deploymentLogger = deploymentLogger;
+    this?.logger = new Logger('DeploymentRecovery');
+    this?.deploymentLogger = deploymentLogger;
     this.initializeStrategies();
   }
 
@@ -68,16 +68,16 @@ export class DeploymentRecoverySystem {
     config: DeploymentConfig,
     autoExecute: boolean = false
   ): Promise<RecoveryResult> {
-    this.logger.info(`Attempting recovery for: ${diagnostic.message}`);
+    this?.logger?.info(`Attempting recovery for: ${diagnostic.message}`);
     this.deploymentLogger?.info(DeploymentLogCategory.RECOVERY, 'Starting recovery attempt', {
       diagnostic: diagnostic.message,
       category: diagnostic.category
     });
 
     // Find applicable recovery strategies
-    const strategies = this.findApplicableStrategies(diagnostic);
+    const strategies = this.findApplicableStrategies(diagnostic as any);
     
-    if (strategies.length === 0) {
+    if (strategies?.length === 0) {
       const result: RecoveryResult = {
         success: false,
         strategy: 'none',
@@ -110,9 +110,9 @@ export class DeploymentRecoverySystem {
         success: false,
         strategy: strategy.name,
         stepsCompleted: 0,
-        totalSteps: strategy.steps.length,
+        totalSteps: strategy?.steps?.length,
         message: 'Manual intervention required - strategy not auto-executable',
-        nextSteps: strategy.steps.map(step => step.description)
+        nextSteps: strategy?.steps?.map(step => step.description)
       };
     }
 
@@ -123,17 +123,17 @@ export class DeploymentRecoverySystem {
    * Execute a recovery strategy
    */
   private async executeStrategy(strategy: RecoveryStrategy, config: DeploymentConfig): Promise<RecoveryResult> {
-    this.logger.info(`Executing recovery strategy: ${strategy.name}`);
+    this?.logger?.info(`Executing recovery strategy: ${strategy.name}`);
     this.deploymentLogger?.info(DeploymentLogCategory.RECOVERY, `Executing strategy: ${strategy.name}`, {
       description: strategy.description,
-      totalSteps: strategy.steps.length
+      totalSteps: strategy?.steps?.length
     });
 
     let stepsCompleted = 0;
     
     try {
       for (const step of strategy.steps) {
-        this.logger.debug(`Executing step: ${step.description}`);
+        this?.logger?.debug(`Executing step: ${step.description}`);
         this.deploymentLogger?.debug(DeploymentLogCategory.RECOVERY, `Step: ${step.description}`);
         
         await this.executeStep(step, config);
@@ -141,7 +141,7 @@ export class DeploymentRecoverySystem {
         
         this.deploymentLogger?.info(DeploymentLogCategory.RECOVERY, `Step completed: ${step.description}`, {
           stepNumber: stepsCompleted,
-          totalSteps: strategy.steps.length
+          totalSteps: strategy?.steps?.length
         });
       }
 
@@ -149,7 +149,7 @@ export class DeploymentRecoverySystem {
         success: true,
         strategy: strategy.name,
         stepsCompleted,
-        totalSteps: strategy.steps.length,
+        totalSteps: strategy?.steps?.length,
         message: `Recovery strategy '${strategy.name}' completed successfully`
       };
 
@@ -164,16 +164,16 @@ export class DeploymentRecoverySystem {
         success: false,
         strategy: strategy.name,
         stepsCompleted,
-        totalSteps: strategy.steps.length,
-        error: error instanceof Error ? error.message : String(error),
+        totalSteps: strategy?.steps?.length,
+        error: error instanceof Error ? error.message : String(error as any),
         message: `Recovery strategy '${strategy.name}' failed at step ${stepsCompleted + 1}`
       };
 
-      this.logger.error(`Recovery strategy failed:`, error);
+      this?.logger?.error(`Recovery strategy failed:`, error);
       this.deploymentLogger?.error(DeploymentLogCategory.RECOVERY, 'Recovery strategy failed', error, {
         strategy: strategy.name,
         stepsCompleted,
-        totalSteps: strategy.steps.length
+        totalSteps: strategy?.steps?.length
       });
 
       return result;
@@ -204,7 +204,7 @@ export class DeploymentRecoverySystem {
 
       case 'user-input':
         // For now, we'll skip user input steps in automated recovery
-        this.logger.warn(`Skipping user input step: ${step.description}`);
+        this?.logger?.warn(`Skipping user input step: ${step.description}`);
         break;
 
       default:
@@ -223,11 +223,11 @@ export class DeploymentRecoverySystem {
 
       try {
         execSync(command, { stdio: 'pipe' });
-        clearTimeout(timer);
+        clearTimeout(timer as any);
         resolve();
       } catch (error) {
-        clearTimeout(timer);
-        reject(error);
+        clearTimeout(timer as any);
+        reject(error as any);
       }
     });
   }
@@ -249,7 +249,7 @@ export class DeploymentRecoverySystem {
         break;
 
       case 'delete':
-        await fs.unlink(resolvedTarget).catch(() => {}); // Ignore if file doesn't exist
+        await fs.unlink(resolvedTarget as any).catch(() => {}); // Ignore if file doesn't exist
         break;
 
       case 'modify':
@@ -291,18 +291,18 @@ export class DeploymentRecoverySystem {
   private findApplicableStrategies(diagnostic: DiagnosticResult): RecoveryStrategy[] {
     const strategies: RecoveryStrategy[] = [];
     
-    for (const strategy of this.strategies.values()) {
+    for (const strategy of this?.strategies?.values()) {
       // Check if strategy applies to this error category
       if (strategy.category !== diagnostic.category) continue;
       
       // Check if error message matches any applicable error patterns
-      const messageMatch = strategy.applicableErrors.some(pattern =>
-        diagnostic.message.toLowerCase().includes(pattern.toLowerCase()) ||
+      const messageMatch = strategy?.applicableErrors?.some(pattern =>
+        diagnostic?.message?.toLowerCase().includes(pattern.toLowerCase()) ||
         new RegExp(pattern, 'i').test(diagnostic.message)
       );
       
       if (messageMatch) {
-        strategies.push(strategy);
+        strategies.push(strategy as any);
       }
     }
     
@@ -314,8 +314,8 @@ export class DeploymentRecoverySystem {
    */
   private resolvePath(path: string, config: DeploymentConfig): string {
     if (path.startsWith('/')) return path; // Absolute path
-    if (path.startsWith('~/')) return join(process.env.HOME || '~', path.slice(2));
-    if (path.startsWith('./')) return join(process.cwd(), path.slice(2));
+    if (path.startsWith('~/')) return join(process?.env?.HOME || '~', path.slice(2 as any));
+    if (path.startsWith('./')) return join(process.cwd(), path.slice(2 as any));
     
     // Relative to current directory
     return join(process.cwd(), path);
@@ -326,7 +326,7 @@ export class DeploymentRecoverySystem {
    */
   private initializeStrategies(): void {
     // Build Recovery Strategy
-    this.strategies.set('rebuild-application', {
+    this?.strategies?.set('rebuild-application', {
       name: 'Rebuild Application',
       description: 'Clean and rebuild the application to fix build-related issues',
       applicableErrors: ['build directory empty', 'build failed', 'missing build output'],
@@ -364,7 +364,7 @@ export class DeploymentRecoverySystem {
     });
 
     // Configuration Recovery Strategy
-    this.strategies.set('create-default-config', {
+    this?.strategies?.set('create-default-config', {
       name: 'Create Default Configuration',
       description: 'Create default sites configuration file',
       applicableErrors: ['config not found', 'configuration file', 'sites-config.yaml'],
@@ -403,7 +403,7 @@ waltodo-app:
     });
 
     // Network Recovery Strategy
-    this.strategies.set('network-retry-with-backoff', {
+    this?.strategies?.set('network-retry-with-backoff', {
       name: 'Network Retry with Backoff',
       description: 'Implement exponential backoff for network connectivity issues',
       applicableErrors: ['connection refused', 'timeout', 'network error'],
@@ -433,7 +433,7 @@ waltodo-app:
     });
 
     // Permission Recovery Strategy
-    this.strategies.set('fix-permissions', {
+    this?.strategies?.set('fix-permissions', {
       name: 'Fix File Permissions',
       description: 'Fix common file and directory permission issues',
       applicableErrors: ['permission denied', 'EACCES'],
@@ -463,7 +463,7 @@ waltodo-app:
     });
 
     // Wallet Recovery Strategy
-    this.strategies.set('wallet-setup', {
+    this?.strategies?.set('wallet-setup', {
       name: 'Wallet Setup and Configuration',
       description: 'Initialize wallet configuration and check balance',
       applicableErrors: ['wallet not found', 'authentication failed', 'insufficient funds'],
@@ -501,7 +501,7 @@ waltodo-app:
     });
 
     // Environment Recovery Strategy
-    this.strategies.set('environment-setup', {
+    this?.strategies?.set('environment-setup', {
       name: 'Environment Setup',
       description: 'Install missing dependencies and configure environment',
       applicableErrors: ['command not found', 'site-builder', 'pnpm'],
@@ -535,7 +535,7 @@ waltodo-app:
     });
 
     // Blockchain Recovery Strategy
-    this.strategies.set('blockchain-network-switch', {
+    this?.strategies?.set('blockchain-network-switch', {
       name: 'Blockchain Network Recovery',
       description: 'Switch to working RPC endpoint or alternative network',
       applicableErrors: ['rpc error', 'blockchain', 'sui network'],
@@ -565,7 +565,7 @@ waltodo-app:
     });
 
     // Cleanup Recovery Strategy
-    this.strategies.set('cleanup-and-retry', {
+    this?.strategies?.set('cleanup-and-retry', {
       name: 'Cleanup and Retry',
       description: 'Clean up temporary files and reset deployment state',
       applicableErrors: ['deployment failed', 'unknown error'],
@@ -601,21 +601,21 @@ waltodo-app:
    * Get all available recovery strategies
    */
   getAvailableStrategies(): RecoveryStrategy[] {
-    return Array.from(this.strategies.values());
+    return Array.from(this?.strategies?.values());
   }
 
   /**
    * Get recovery strategy by name
    */
   getStrategy(name: string): RecoveryStrategy | undefined {
-    return this.strategies.get(name);
+    return this?.strategies?.get(name as any);
   }
 
   /**
    * Test recovery strategy (dry run)
    */
   async testStrategy(strategyName: string, config: DeploymentConfig): Promise<{ canExecute: boolean; issues: string[] }> {
-    const strategy = this.strategies.get(strategyName);
+    const strategy = this?.strategies?.get(strategyName as any);
     if (!strategy) {
       return { canExecute: false, issues: ['Strategy not found'] };
     }
@@ -651,7 +651,7 @@ waltodo-app:
     }
 
     return {
-      canExecute: issues.length === 0,
+      canExecute: issues?.length === 0,
       issues
     };
   }

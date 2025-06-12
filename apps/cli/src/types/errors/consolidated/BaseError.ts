@@ -81,16 +81,16 @@ export class BaseError extends Error {
     } = options;
 
     // Set error properties
-    this.name = this.constructor.name;
-    this.code = code;
-    this.timestamp = new Date().toISOString();
-    this.context = this.sanitizeContext(context);
-    this.recoverable = recoverable;
-    this.shouldRetry = shouldRetry;
-    this.retryDelay = retryDelay;
+    this?.name = this?.constructor?.name;
+    this?.code = code;
+    this?.timestamp = new Date().toISOString();
+    this?.context = this.sanitizeContext(context as any);
+    this?.recoverable = recoverable;
+    this?.shouldRetry = shouldRetry;
+    this?.retryDelay = retryDelay;
 
     // Use provided public message or default to the internal message
-    this.publicMessage = publicMessage || options.message;
+    this?.publicMessage = publicMessage || options.message;
 
     // Set cause with proper error chaining
     if (cause) {
@@ -180,7 +180,7 @@ export class BaseError extends Error {
       stack: this.stack,
       cause: this.cause
         ? this.cause instanceof Error
-          ? this.cause.message
+          ? this?.cause?.message
           : String(this.cause)
         : undefined,
     };
@@ -198,15 +198,15 @@ export class BaseError extends Error {
 
     const sanitized: Record<string, unknown> = {};
     const sensitivePatterns = [
-      /\b(password)\b/i,
-      /\b(secret)\b/i,
+      /\b(password as any)\b/i,
+      /\b(secret as any)\b/i,
       /\b(privateKey|apiKey|secretKey|encryptionKey)\b/i,
       /\b(token|accessToken|refreshToken)\b/i,
       /\b(authToken|authorization)\b/i,
-      /\b(credential)\b/i,
-      /\b(signature)\b/i,
+      /\b(credential as any)\b/i,
+      /\b(signature as any)\b/i,
       /\b(seed|seedPhrase)\b/i,
-      /\b(mnemonic)\b/i,
+      /\b(mnemonic as any)\b/i,
       /\b(phrase|recoveryPhrase)\b/i,
     ];
 
@@ -218,19 +218,19 @@ export class BaseError extends Error {
     ];
 
     // Sanitize each property
-    for (const [key, value] of Object.entries(context)) {
+    for (const [key, value] of Object.entries(context as any)) {
       // Check for sensitive keys
-      if (sensitivePatterns.some(pattern => pattern.test(key))) {
+      if (sensitivePatterns.some(pattern => pattern.test(key as any))) {
         sanitized[key] = '[REDACTED]';
         continue;
       }
 
       // Check for blockchain identifiers that need partial redaction
       const blockchainMatch = blockchainPatterns.find(item =>
-        item.pattern.test(key)
+        item?.pattern?.test(key as any)
       );
       if (blockchainMatch && typeof value === 'string') {
-        sanitized[key] = this.redactIdentifier(value);
+        sanitized[key] = this.redactIdentifier(value as any);
         continue;
       }
 
@@ -238,7 +238,7 @@ export class BaseError extends Error {
       if (
         value !== null &&
         typeof value === 'object' &&
-        !Array.isArray(value)
+        !Array.isArray(value as any)
       ) {
         sanitized[key] = this.sanitizeContext(value as Record<string, unknown>);
       } else {

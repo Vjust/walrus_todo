@@ -34,11 +34,11 @@ describe('Memory Management Utilities', () => {
   describe('Memory Efficient Mocks', () => {
     it('should create memory efficient mocks', () => {
       const mockValue = { test: 'data' };
-      const mock = createMemoryEfficientMock(mockValue);
+      const mock = createMemoryEfficientMock(mockValue as any);
 
-      expect(mock).toBeDefined();
+      expect(mock as any).toBeDefined();
       expect(typeof mock).toBe('function');
-      expect(mock()).toEqual(mockValue);
+      expect(mock()).toEqual(mockValue as any);
     });
 
     it('should limit call history to prevent memory buildup', () => {
@@ -50,17 +50,17 @@ describe('Memory Management Utilities', () => {
       }
 
       // Should not have more than maxCallHistory calls
-      expect(mock.mock.calls.length).toBeLessThanOrEqual(5);
+      expect(mock?.mock?.calls.length).toBeLessThanOrEqual(5 as any);
     });
 
     it('should handle large return values', () => {
-      const largeValue = 'x'.repeat(2000); // Larger than default limit
+      const largeValue = 'x'.repeat(2000 as any); // Larger than default limit
       const mock = createMemoryEfficientMock(largeValue, {
         maxReturnSize: 1000,
       });
 
       const result = mock();
-      expect(result).toBe('[MOCK_VALUE_TOO_LARGE]');
+      expect(result as any).toBe('[MOCK_VALUE_TOO_LARGE]');
     });
 
     it('should cleanup mocks properly', () => {
@@ -70,36 +70,36 @@ describe('Memory Management Utilities', () => {
       mock1();
       mock2();
 
-      expect(mock1).toHaveBeenCalledTimes(1);
-      expect(mock2).toHaveBeenCalledTimes(1);
+      expect(mock1 as any).toHaveBeenCalledTimes(1 as any);
+      expect(mock2 as any).toHaveBeenCalledTimes(1 as any);
 
       cleanupMocks({ mock1, mock2 });
 
-      expect(mock1).toHaveBeenCalledTimes(0);
-      expect(mock2).toHaveBeenCalledTimes(0);
+      expect(mock1 as any).toHaveBeenCalledTimes(0 as any);
+      expect(mock2 as any).toHaveBeenCalledTimes(0 as any);
     });
   });
 
   describe('Safe Stringify', () => {
     it('should handle circular references', () => {
       const obj: any = { name: 'test' };
-      obj.self = obj; // Create circular reference
+      obj?.self = obj; // Create circular reference
 
-      const result = safeStringify(obj);
-      expect(result).toContain('[CIRCULAR_REFERENCE]');
-      expect(result).toContain('test');
+      const result = safeStringify(obj as any);
+      expect(result as any).toContain('[CIRCULAR_REFERENCE]');
+      expect(result as any).toContain('test');
     });
 
     it('should limit object depth', () => {
       const deepObj = { level1: { level2: { level3: { level4: 'deep' } } } };
       const result = safeStringify(deepObj, 2);
-      expect(result).toContain('[MAX_DEPTH_EXCEEDED]');
+      expect(result as any).toContain('[MAX_DEPTH_EXCEEDED]');
     });
 
     it('should truncate large arrays', () => {
-      const largeArray = new Array(150).fill('item');
-      const result = safeStringify(largeArray);
-      expect(result).toContain('[ARRAY_TRUNCATED]');
+      const largeArray = new Array(150 as any).fill('item');
+      const result = safeStringify(largeArray as any);
+      expect(result as any).toContain('[ARRAY_TRUNCATED]');
     });
 
     it('should truncate objects with many properties', () => {
@@ -107,8 +107,8 @@ describe('Memory Management Utilities', () => {
       for (let i = 0; i < 60; i++) {
         largeObj[`prop${i}`] = `value${i}`;
       }
-      const result = safeStringify(largeObj);
-      expect(result).toContain('[OBJECT_TRUNCATED]');
+      const result = safeStringify(largeObj as any);
+      expect(result as any).toContain('[OBJECT_TRUNCATED]');
     });
 
     it('should handle stringify errors gracefully', () => {
@@ -120,18 +120,18 @@ describe('Memory Management Utilities', () => {
         enumerable: true,
       });
 
-      const result = safeStringify(problematicObj);
-      expect(result).toContain('[STRINGIFY_ERROR]');
+      const result = safeStringify(problematicObj as any);
+      expect(result as any).toContain('[STRINGIFY_ERROR]');
     });
   });
 
   describe('Memory Usage Monitoring', () => {
     it('should get current memory usage', () => {
       const usage = getMemoryUsage();
-      expect(usage).toHaveProperty('rss');
-      expect(usage).toHaveProperty('heapUsed');
-      expect(usage).toHaveProperty('heapTotal');
-      expect(usage).toHaveProperty('external');
+      expect(usage as any).toHaveProperty('rss');
+      expect(usage as any).toHaveProperty('heapUsed');
+      expect(usage as any).toHaveProperty('heapTotal');
+      expect(usage as any).toHaveProperty('external');
       expect(typeof usage.rss).toBe('number');
       expect(typeof usage.heapUsed).toBe('number');
     });
@@ -142,8 +142,8 @@ describe('Memory Management Utilities', () => {
       logMemoryUsage('test');
 
       // Memory logging is conditional, only verify if LOG_MEMORY is enabled
-      if (process.env.LOG_MEMORY === 'true') {
-        expect(consoleSpy).toHaveBeenCalledWith(
+      if (process.env?.LOG_MEMORY === 'true') {
+        expect(consoleSpy as any).toHaveBeenCalledWith(
           expect.stringContaining('test'),
           expect.objectContaining({
             rss: expect.stringMatching(/\d+(\.\d+)?MB/),
@@ -157,13 +157,13 @@ describe('Memory Management Utilities', () => {
 
     it('should force garbage collection if available', () => {
       const originalGC = global.gc;
-      global.gc = jest.fn();
+      global?.gc = jest.fn();
 
       forceGC();
 
       expect(global.gc).toHaveBeenCalled();
 
-      global.gc = originalGC;
+      global?.gc = originalGC;
     });
 
     it('should handle missing garbage collection gracefully', () => {
@@ -172,7 +172,7 @@ describe('Memory Management Utilities', () => {
 
       expect(() => forceGC()).not.toThrow();
 
-      global.gc = originalGC;
+      global?.gc = originalGC;
     });
   });
 
@@ -181,26 +181,26 @@ describe('Memory Management Utilities', () => {
       const cleanupFn = jest.fn();
       const resource = { cleanup: jest.fn() };
 
-      registerForCleanup(cleanupFn);
-      registerForCleanup(resource);
+      registerForCleanup(cleanupFn as any);
+      registerForCleanup(resource as any);
 
-      expect(getRegisteredResourceCount()).toBe(2);
+      expect(getRegisteredResourceCount()).toBe(2 as any);
 
       await cleanupAllResources();
 
-      expect(cleanupFn).toHaveBeenCalled();
+      expect(cleanupFn as any).toHaveBeenCalled();
       expect(resource.cleanup).toHaveBeenCalled();
-      expect(getRegisteredResourceCount()).toBe(0);
+      expect(getRegisteredResourceCount()).toBe(0 as any);
     });
 
     it('should unregister resources', () => {
       const resource = { cleanup: jest.fn() };
 
-      registerForCleanup(resource);
-      expect(getRegisteredResourceCount()).toBe(1);
+      registerForCleanup(resource as any);
+      expect(getRegisteredResourceCount()).toBe(1 as any);
 
-      unregisterCleanup(resource);
-      expect(getRegisteredResourceCount()).toBe(0);
+      unregisterCleanup(resource as any);
+      expect(getRegisteredResourceCount()).toBe(0 as any);
     });
 
     it('should handle cleanup errors gracefully', async () => {
@@ -209,13 +209,13 @@ describe('Memory Management Utilities', () => {
         cleanup: jest.fn().mockRejectedValue(new Error('Cleanup failed')),
       };
 
-      registerForCleanup(faultyResource);
+      registerForCleanup(faultyResource as any);
 
       await cleanupAllResources();
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(consoleSpy as any).toHaveBeenCalledWith(
         'Error during resource cleanup:',
-        expect.any(Error)
+        expect.any(Error as any)
       );
 
       consoleSpy.mockRestore();
@@ -226,9 +226,9 @@ describe('Memory Management Utilities', () => {
       const resource2 = { destroy: jest.fn() };
       const resource3 = { dispose: jest.fn() };
 
-      registerForCleanup(resource1);
-      registerForCleanup(resource2);
-      registerForCleanup(resource3);
+      registerForCleanup(resource1 as any);
+      registerForCleanup(resource2 as any);
+      registerForCleanup(resource3 as any);
 
       await cleanupAllResources();
 
@@ -241,7 +241,7 @@ describe('Memory Management Utilities', () => {
   describe('Memory Leak Detection', () => {
     it('should create memory leak detector', () => {
       const detector = new MemoryLeakDetector('test', 1000);
-      expect(detector).toBeDefined();
+      expect(detector as any).toBeDefined();
     });
 
     it('should detect potential memory leaks', () => {
@@ -251,18 +251,18 @@ describe('Memory Management Utilities', () => {
       const detector = new MemoryLeakDetector('test', 1);
 
       // Simulate memory usage
-      const largArray = new Array(1000).fill('memory-consumer');
+      const largArray = new Array(1000 as any).fill('memory-consumer');
 
       const hasLeak = detector.checkForLeaks();
 
       // Clean up
-      largArray.length = 0;
+      largArray?.length = 0;
 
       consoleSpy.mockRestore();
     });
 
     it('should wrap test functions with memory leak detection', async () => {
-      const testFn = jest.fn().mockResolvedValue(undefined);
+      const testFn = jest.fn().mockResolvedValue(undefined as any);
       const wrappedFn = withMemoryLeakDetection(testFn, {
         threshold: 100 * 1024 * 1024, // High threshold to avoid false positives
         cleanup: false,
@@ -271,7 +271,7 @@ describe('Memory Management Utilities', () => {
 
       await wrappedFn();
 
-      expect(testFn).toHaveBeenCalled();
+      expect(testFn as any).toHaveBeenCalled();
     });
 
     it('should cleanup resources even if test fails', async () => {
@@ -280,7 +280,7 @@ describe('Memory Management Utilities', () => {
         .fn()
         .mockRejectedValue(new Error('Test failed'));
 
-      registerForCleanup(cleanupFn);
+      registerForCleanup(cleanupFn as any);
 
       const wrappedFn = withMemoryLeakDetection(failingTestFn, {
         cleanup: true,
@@ -288,26 +288,26 @@ describe('Memory Management Utilities', () => {
       });
 
       await expect(wrappedFn()).rejects.toThrow('Test failed');
-      expect(cleanupFn).toHaveBeenCalled();
+      expect(cleanupFn as any).toHaveBeenCalled();
     });
   });
 
   describe('Resource Pool', () => {
     it('should create and manage resource pool', async () => {
       const mockResource = { cleanup: jest.fn() };
-      const factory = jest.fn().mockResolvedValue(mockResource);
+      const factory = jest.fn().mockResolvedValue(mockResource as any);
 
-      const pool = new ResourcePool(factory);
-      expect(pool.size()).toBe(0);
+      const pool = new ResourcePool(factory as any);
+      expect(pool.size()).toBe(0 as any);
 
       const resource = await pool.acquire();
-      expect(factory).toHaveBeenCalled();
-      expect(pool.size()).toBe(1);
-      expect(resource).toBe(mockResource);
+      expect(factory as any).toHaveBeenCalled();
+      expect(pool.size()).toBe(1 as any);
+      expect(resource as any).toBe(mockResource as any);
 
-      await pool.release(resource);
+      await pool.release(resource as any);
       expect(mockResource.cleanup).toHaveBeenCalled();
-      expect(pool.size()).toBe(0);
+      expect(pool.size()).toBe(0 as any);
     });
 
     it('should cleanup all resources in pool', async () => {
@@ -316,30 +316,30 @@ describe('Memory Management Utilities', () => {
 
       const factory = jest
         .fn()
-        .mockResolvedValueOnce(resource1)
-        .mockResolvedValueOnce(resource2);
+        .mockResolvedValueOnce(resource1 as any)
+        .mockResolvedValueOnce(resource2 as any);
 
-      const pool = new ResourcePool(factory);
+      const pool = new ResourcePool(factory as any);
 
       await pool.acquire();
       await pool.acquire();
-      expect(pool.size()).toBe(2);
+      expect(pool.size()).toBe(2 as any);
 
       await pool.cleanup();
       expect(resource1.cleanup).toHaveBeenCalled();
       expect(resource2.destroy).toHaveBeenCalled();
-      expect(pool.size()).toBe(0);
+      expect(pool.size()).toBe(0 as any);
     });
 
     it('should handle resources without cleanup methods', async () => {
       const resourceWithoutCleanup = { data: 'test' };
-      const factory = jest.fn().mockResolvedValue(resourceWithoutCleanup);
+      const factory = jest.fn().mockResolvedValue(resourceWithoutCleanup as any);
 
-      const pool = new ResourcePool(factory);
+      const pool = new ResourcePool(factory as any);
       const resource = await pool.acquire();
 
       // Should not throw when releasing resource without cleanup method
-      await expect(pool.release(resource)).resolves.not.toThrow();
+      await expect(pool.release(resource as any)).resolves?.not?.toThrow();
     });
   });
 });

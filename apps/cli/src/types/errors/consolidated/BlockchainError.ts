@@ -88,7 +88,7 @@ export class BlockchainError extends BaseError {
     });
 
     // Store operation
-    this.operation = operation;
+    this?.operation = operation;
 
     // Store sensitive properties privately with non-enumerable descriptors
     Object.defineProperties(this, {

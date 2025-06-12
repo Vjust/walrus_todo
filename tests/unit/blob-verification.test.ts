@@ -73,17 +73,17 @@ describe('BlobVerificationManager', () => {
     mockWalrusClient = getMockWalrusClient();
 
     // Override specific values for this test
-    mockWalrusClient.getConfig.mockResolvedValue({
+    mockWalrusClient?.getConfig?.mockResolvedValue({
       network: 'testnet',
-      version: '1.0.0',
+      version: '1?.0?.0',
       maxSize: 1000000,
     });
-    mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({
+    mockWalrusClient?.getWalBalance?.mockResolvedValue('2000');
+    mockWalrusClient?.getStorageUsage?.mockResolvedValue({
       used: '500',
       total: '2000',
     });
-    mockWalrusClient.writeBlob.mockResolvedValue({
+    mockWalrusClient?.writeBlob?.mockResolvedValue({
       blobId: mockBlobId,
       blobObject: { blob_id: mockBlobId } as BlobObject,
     });
@@ -94,13 +94,13 @@ describe('BlobVerificationManager', () => {
     );
 
     // Reset fetch mock
-    global.fetch = jest.fn();
+    global?.fetch = jest.fn();
   });
 
   describe('blob verification', () => {
     it('should verify blob with all checks enabled', async () => {
-      mockWalrusClient.readBlob.mockResolvedValue(mockData);
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(mockData as any);
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: mockBlobId,
         certified_epoch: 41,
         registered_epoch: 40,
@@ -140,7 +140,7 @@ describe('BlobVerificationManager', () => {
           $kind: 'V1',
         },
       } as unknown as BlobInfo);
-      mockWalrusClient.getBlobMetadata.mockResolvedValue(mockMetadata);
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue(mockMetadata as any);
 
       const result = await verificationManager.verifyBlob(
         mockBlobId,
@@ -153,8 +153,8 @@ describe('BlobVerificationManager', () => {
         }
       );
 
-      expect(result.success).toBe(true);
-      expect(result.details?.certified).toBe(true);
+      expect(result.success).toBe(true as any);
+      expect(result.details?.certified).toBe(true as any);
     });
 
     it('should handle network errors with retries', async () => {
@@ -173,12 +173,12 @@ describe('BlobVerificationManager', () => {
         mockMetadata
       );
 
-      expect(result.success).toBe(true);
-      expect(result.attempts).toBe(3);
+      expect(result.success).toBe(true as any);
+      expect(result.attempts).toBe(3 as any);
     });
 
     it('should fail on non-retryable errors', async () => {
-      mockWalrusClient.readBlob.mockRejectedValue(new Error('invalid blob id'));
+      mockWalrusClient?.readBlob?.mockRejectedValue(new Error('invalid blob id'));
 
       await expect(
         verificationManager.verifyBlob(mockBlobId, mockData, mockMetadata)
@@ -186,7 +186,7 @@ describe('BlobVerificationManager', () => {
     });
 
     it('should verify multiple checksums', async () => {
-      mockWalrusClient.readBlob.mockResolvedValue(
+      mockWalrusClient?.readBlob?.mockResolvedValue(
         Buffer.from('different data')
       );
 
@@ -198,8 +198,8 @@ describe('BlobVerificationManager', () => {
 
   describe('smart contract verification', () => {
     it('should verify certification status', async () => {
-      mockWalrusClient.readBlob.mockResolvedValue(mockData);
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(mockData as any);
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: mockBlobId,
         certified_epoch: undefined,
         registered_epoch: 40,
@@ -250,7 +250,7 @@ describe('BlobVerificationManager', () => {
     it('should monitor certification progress', async () => {
       jest.useFakeTimers();
 
-      mockWalrusClient.readBlob.mockResolvedValue(mockData);
+      mockWalrusClient?.readBlob?.mockResolvedValue(mockData as any);
       mockWalrusClient.getBlobInfo
         .mockResolvedValueOnce({
           blob_id: mockBlobId,
@@ -272,7 +272,7 @@ describe('BlobVerificationManager', () => {
             },
           ],
           metadata: {
-            V1: mockMetadata.metadata.V1,
+            V1: mockMetadata?.metadata?.V1,
             $kind: 'V1',
           },
         } as unknown as BlobInfo)
@@ -296,7 +296,7 @@ describe('BlobVerificationManager', () => {
             },
           ],
           metadata: {
-            V1: mockMetadata.metadata.V1,
+            V1: mockMetadata?.metadata?.V1,
             $kind: 'V1',
           },
         } as unknown as BlobInfo);
@@ -311,10 +311,10 @@ describe('BlobVerificationManager', () => {
         { interval: 1000, maxAttempts: 2 }
       );
 
-      jest.advanceTimersByTime(1000);
+      jest.advanceTimersByTime(1000 as any);
       await monitorPromise;
 
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2 as any);
     });
   });
 
@@ -334,10 +334,10 @@ describe('BlobVerificationManager', () => {
         mockMetadata
       );
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('testnet-replica1.wal.app'),
-        expect.any(Object)
+        expect.stringContaining('testnet-replica1?.wal?.app'),
+        expect.any(Object as any)
       );
     });
 
@@ -362,27 +362,27 @@ describe('BlobVerificationManager', () => {
       await verificationManager.verifyBlob(mockBlobId, mockData, mockMetadata);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('testnet-replica1.wal.app'),
-        expect.any(Object)
+        expect.stringContaining('testnet-replica1?.wal?.app'),
+        expect.any(Object as any)
       );
     });
   });
 
   describe('upload verification', () => {
     beforeEach(() => {
-      mockWalrusClient.writeBlob.mockResolvedValue({
+      mockWalrusClient?.writeBlob?.mockResolvedValue({
         blobId: mockBlobId,
         blobObject: { blob_id: mockBlobId },
       });
-      mockWalrusClient.readBlob.mockResolvedValue(mockData);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.readBlob?.mockResolvedValue(mockData as any);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
         'provider3',
         'provider4',
       ]);
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: mockBlobId,
         certified_epoch: 41,
         registered_epoch: 40,
@@ -402,7 +402,7 @@ describe('BlobVerificationManager', () => {
           },
         ],
         metadata: {
-          V1: mockMetadata.metadata.V1,
+          V1: mockMetadata?.metadata?.V1,
           $kind: 'V1',
         },
       } as unknown as BlobInfo);
@@ -414,24 +414,24 @@ describe('BlobVerificationManager', () => {
         waitTimeout: 1000,
       });
 
-      expect(result.blobId).toBe(mockBlobId);
-      expect(result.checksums).toEqual(expect.objectContaining(mockChecksums));
-      expect(result.certified).toBe(true);
-      expect(result.poaComplete).toBe(true);
-      expect(result.hasMinProviders).toBe(true);
-      expect(mockWalrusClient.writeBlob).toHaveBeenCalledWith(mockData);
+      expect(result.blobId).toBe(mockBlobId as any);
+      expect(result.checksums).toEqual(expect.objectContaining(mockChecksums as any));
+      expect(result.certified).toBe(true as any);
+      expect(result.poaComplete).toBe(true as any);
+      expect(result.hasMinProviders).toBe(true as any);
+      expect(mockWalrusClient.writeBlob).toHaveBeenCalledWith(mockData as any);
     });
 
     it('should handle upload failures', async () => {
-      mockWalrusClient.writeBlob.mockRejectedValue(new Error('Upload failed'));
+      mockWalrusClient?.writeBlob?.mockRejectedValue(new Error('Upload failed'));
 
-      await expect(verificationManager.verifyUpload(mockData)).rejects.toThrow(
+      await expect(verificationManager.verifyUpload(mockData as any)).rejects.toThrow(
         'Upload failed'
       );
     });
 
     it('should timeout waiting for certification', async () => {
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: mockBlobId,
         certified_epoch: undefined,
         registered_epoch: 40,
@@ -451,7 +451,7 @@ describe('BlobVerificationManager', () => {
           },
         ],
         metadata: {
-          V1: mockMetadata.metadata.V1,
+          V1: mockMetadata?.metadata?.V1,
           $kind: 'V1',
         },
       } as unknown as BlobInfo);
@@ -465,15 +465,15 @@ describe('BlobVerificationManager', () => {
     });
 
     it('should verify minimum provider requirement', async () => {
-      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue(['provider1']);
 
       const result = await verificationManager.verifyUpload(mockData, {
         waitForCertification: false,
         minProviders: 3,
       });
 
-      expect(result.hasMinProviders).toBe(false);
-      expect(result.checksums).toEqual(expect.objectContaining(mockChecksums));
+      expect(result.hasMinProviders).toBe(false as any);
+      expect(result.checksums).toEqual(expect.objectContaining(mockChecksums as any));
     });
 
     it('should support multiple hash algorithms', async () => {
@@ -483,31 +483,31 @@ describe('BlobVerificationManager', () => {
 
       expect(result.checksums).toEqual(
         expect.objectContaining({
-          sha256: expect.any(String),
-          sha512: expect.any(String),
-          blake2b: expect.any(String),
+          sha256: expect.any(String as any),
+          sha512: expect.any(String as any),
+          blake2b: expect.any(String as any),
         })
       );
 
       // Optional algorithms may be present
       const optionalAlgorithms = ['blake3', 'sha3_256', 'keccak256'];
       const hasOptionalAlgorithm = optionalAlgorithms.some(
-        algo => result.checksums[algo as keyof typeof result.checksums]
+        algo => result?.checksums?.[algo as keyof typeof result.checksums]
       );
-      expect(hasOptionalAlgorithm).toBe(true);
+      expect(hasOptionalAlgorithm as any).toBe(true as any);
     });
 
     it('should validate upload content immediately', async () => {
       mockWalrusClient.readBlob
-        .mockResolvedValueOnce(mockData) // First read succeeds
+        .mockResolvedValueOnce(mockData as any) // First read succeeds
         .mockResolvedValueOnce(Buffer.from('corrupted')); // Second read fails
 
       const result = await verificationManager.verifyUpload(mockData, {
         waitForCertification: false,
       });
 
-      expect(result.blobId).toBe(mockBlobId);
-      expect(result.checksums).toEqual(expect.objectContaining(mockChecksums));
+      expect(result.blobId).toBe(mockBlobId as any);
+      expect(result.checksums).toEqual(expect.objectContaining(mockChecksums as any));
 
       // Verify corrupted content is detected
       await expect(

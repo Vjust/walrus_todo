@@ -43,27 +43,27 @@ export class ConfigService {
 
     if (configDir && configDir.trim() !== '') {
       // If environment variable is set, use it directly
-      this.configPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
+      this?.configPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
     } else {
       // Otherwise look for config file in current directory first, then in home directory
       const currentDirConfig = path.join(process.cwd(), CLI_CONFIG.CONFIG_FILE);
-      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
       const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
 
       // Use current directory config if it exists, otherwise use home directory
-      this.configPath = fs.existsSync(currentDirConfig)
+      this?.configPath = fs.existsSync(currentDirConfig as any)
         ? currentDirConfig
         : homeDirConfig;
     }
 
     // Get storage path from environment configuration or use default
-    this.todosPath = path.resolve(
+    this?.todosPath = path.resolve(
       process.cwd(),
       getEnv('STORAGE_PATH') || 'Todos'
     );
 
     // Load initial configuration
-    this.config = this.loadConfig();
+    this?.config = this.loadConfig();
 
     // Update environment configuration with loaded values
     this.updateEnvironmentConfig();
@@ -72,7 +72,7 @@ export class ConfigService {
     // We need to handle this properly
     this.ensureTodosDirectory().catch((error: unknown) => {
       logger.error(
-        `Error creating todos directory: ${error instanceof Error ? error.message : String(error)}`
+        `Error creating todos directory: ${error instanceof Error ? error.message : String(error as any)}`
       );
       // Not throwing here as constructor can't be async
     });
@@ -88,36 +88,36 @@ export class ConfigService {
    */
   private updateEnvironmentConfig(): void {
     // Update environment configuration with values from config file
-    envConfig.updateConfig('NETWORK', this.config.network, 'config');
+    envConfig.updateConfig('NETWORK', this?.config?.network, 'config');
     envConfig.updateConfig(
       'WALLET_ADDRESS',
-      this.config.walletAddress,
+      this?.config?.walletAddress,
       'config'
     );
     envConfig.updateConfig(
       'ENCRYPTED_STORAGE',
-      this.config.encryptedStorage,
+      this?.config?.encryptedStorage,
       'config'
     );
 
     // If we have custom package ID from deployment or directly in config, use it
-    if (this.config.packageId) {
+    if (this?.config?.packageId) {
       envConfig.updateConfig(
         'TODO_PACKAGE_ID',
-        this.config.packageId,
+        this?.config?.packageId,
         'config'
       );
-    } else if (this.config.lastDeployment?.packageId) {
+    } else if (this?.config?.lastDeployment?.packageId) {
       envConfig.updateConfig(
         'TODO_PACKAGE_ID',
-        this.config.lastDeployment.packageId,
+        this?.config?.lastDeployment.packageId,
         'config'
       );
     }
 
     // If we have registry ID, use it
-    if (this.config.registryId) {
-      envConfig.updateConfig('REGISTRY_ID', this.config.registryId, 'config');
+    if (this?.config?.registryId) {
+      envConfig.updateConfig('REGISTRY_ID', this?.config?.registryId, 'config');
     }
   }
 
@@ -247,7 +247,7 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async saveConfig(config: Partial<Config>): Promise<void> {
-    this.config = { ...this.config, ...config };
+    this?.config = { ...this.config, ...config };
 
     try {
       // Use our config saver utility
@@ -284,14 +284,14 @@ export class ConfigService {
       // Ensure the directory exists
       try {
         try {
-          await fsPromises.access(configDir);
+          await fsPromises.access(configDir as any);
         } catch (error: unknown) {
           await fsPromises.mkdir(configDir, { recursive: true });
         }
         targetConfigPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
 
         // IMPORTANT: Update the configPath for future saves
-        this.configPath = targetConfigPath;
+        this?.configPath = targetConfigPath;
       } catch (error: unknown) {
         throw new CLIError(
           `Failed to create config directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -301,7 +301,7 @@ export class ConfigService {
     }
 
     // Merge the config
-    this.config = { ...this.config, ...config };
+    this?.config = { ...this.config, ...config };
 
     try {
       // Save to the determined path
@@ -326,14 +326,14 @@ export class ConfigService {
    * @returns {Promise<TodoList | null>} The Todo list data, or null if the list doesn't exist
    */
   private async loadListData(listName: string): Promise<TodoList | null> {
-    const listPath = this.getListPath(listName);
+    const listPath = this.getListPath(listName as any);
     try {
-      if (fs.existsSync(listPath)) {
+      if (fs.existsSync(listPath as any)) {
         const data = await fsPromises.readFile(listPath, 'utf-8');
         const dataStr =
           typeof data === 'string' ? data : data.toString('utf-8');
         try {
-          return JSON.parse(dataStr);
+          return JSON.parse(dataStr as any);
         } catch (parseError: unknown) {
           if (parseError instanceof SyntaxError) {
             throw new CLIError(
@@ -344,7 +344,7 @@ export class ConfigService {
           const typedError =
             parseError instanceof Error
               ? parseError
-              : new Error(String(parseError));
+              : new Error(String(parseError as any));
           throw typedError;
         }
       }
@@ -373,7 +373,7 @@ export class ConfigService {
     listName: string,
     list: TodoList
   ): Promise<TodoList> {
-    const listPath = this.getListPath(listName);
+    const listPath = this.getListPath(listName as any);
     try {
       await fsPromises.writeFile(listPath, JSON.stringify(list, null, 2));
       return list;
@@ -393,7 +393,7 @@ export class ConfigService {
    * @returns {Promise<TodoList | null>} The Todo list, or null if it doesn't exist
    */
   public async getLocalTodos(listName: string): Promise<TodoList | null> {
-    return this.loadListData(listName);
+    return this.loadListData(listName as any);
   }
 
   /**
@@ -427,7 +427,7 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async saveLocalTodo(listName: string, todo: Todo): Promise<void> {
-    let list = await this.loadListData(listName);
+    let list = await this.loadListData(listName as any);
     if (!list) {
       // Create a new list if it doesn't exist
       list = {
@@ -440,7 +440,7 @@ export class ConfigService {
         updatedAt: new Date().toISOString(),
       };
     }
-    list.todos.push(todo);
+    list?.todos?.push(todo as any);
     await this.saveListData(listName, list);
   }
 
@@ -454,12 +454,12 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async updateLocalTodo(listName: string, todo: Todo): Promise<void> {
-    const list = await this.loadListData(listName);
+    const list = await this.loadListData(listName as any);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
 
-    const index = list.todos.findIndex(t => t.id === todo.id);
+    const index = list?.todos?.findIndex(t => t?.id === todo.id);
     if (index === -1) {
       throw new CLIError(
         `Todo "${todo.id}" not found in list "${listName}"`,
@@ -467,8 +467,8 @@ export class ConfigService {
       );
     }
 
-    list.todos[index] = todo;
-    list.updatedAt = new Date().toISOString();
+    list?.todos?.[index] = todo;
+    list?.updatedAt = new Date().toISOString();
     await this.saveListData(listName, list);
   }
 
@@ -485,12 +485,12 @@ export class ConfigService {
     listName: string,
     todoId: string
   ): Promise<void> {
-    const list = await this.loadListData(listName);
+    const list = await this.loadListData(listName as any);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
 
-    const todoIndex = list.todos.findIndex(t => t.id === todoId);
+    const todoIndex = list?.todos?.findIndex(t => t?.id === todoId);
     if (todoIndex === -1) {
       throw new CLIError(
         `Todo "${todoId}" not found in list "${listName}"`,
@@ -498,8 +498,8 @@ export class ConfigService {
       );
     }
 
-    list.todos = list.todos.filter(t => t.id !== todoId);
-    list.updatedAt = new Date().toISOString();
+    list?.todos = list?.todos?.filter(t => t.id !== todoId);
+    list?.updatedAt = new Date().toISOString();
     await this.saveListData(listName, list);
   }
 
@@ -512,11 +512,11 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async deleteList(listName: string): Promise<void> {
-    const listPath = this.getListPath(listName);
+    const listPath = this.getListPath(listName as any);
     try {
       try {
-        await fsPromises.access(listPath);
-        await fsPromises.unlink(listPath);
+        await fsPromises.access(listPath as any);
+        await fsPromises.unlink(listPath as any);
       } catch (error: unknown) {
         // If file doesn't exist, that's fine - nothing to delete
         if (
@@ -546,9 +546,9 @@ export class ConfigService {
   public async getLocalTodoById(todoId: string): Promise<Todo | null> {
     const lists = await this.getAllLists();
     for (const listName of lists) {
-      const list = await this.loadListData(listName);
+      const list = await this.loadListData(listName as any);
       if (list) {
-        const todo = list.todos.find(t => t.id === todoId);
+        const todo = list?.todos?.find(t => t?.id === todoId);
         if (todo) return todo;
       }
     }
@@ -575,31 +575,31 @@ export class ConfigService {
     let configChanged = false;
 
     // Check each environment variable and update config if different
-    if (envNetwork && this.config.network !== envNetwork) {
-      this.config.network = envNetwork;
+    if (envNetwork && this?.config?.network !== envNetwork) {
+      this.config?.network = envNetwork;
       configChanged = true;
     }
 
-    if (envWalletAddress && this.config.walletAddress !== envWalletAddress) {
-      this.config.walletAddress = envWalletAddress;
+    if (envWalletAddress && this?.config?.walletAddress !== envWalletAddress) {
+      this.config?.walletAddress = envWalletAddress;
       configChanged = true;
     }
 
     if (
       envEncryptedStorage !== undefined &&
-      this.config.encryptedStorage !== envEncryptedStorage
+      this?.config?.encryptedStorage !== envEncryptedStorage
     ) {
-      this.config.encryptedStorage = envEncryptedStorage;
+      this.config?.encryptedStorage = envEncryptedStorage;
       configChanged = true;
     }
 
-    if (envPackageId && this.config.packageId !== envPackageId) {
-      this.config.packageId = envPackageId;
+    if (envPackageId && this?.config?.packageId !== envPackageId) {
+      this.config?.packageId = envPackageId;
       configChanged = true;
     }
 
-    if (envRegistryId && this.config.registryId !== envRegistryId) {
-      this.config.registryId = envRegistryId;
+    if (envRegistryId && this?.config?.registryId !== envRegistryId) {
+      this.config?.registryId = envRegistryId;
       configChanged = true;
     }
 

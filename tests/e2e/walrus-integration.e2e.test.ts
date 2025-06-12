@@ -15,7 +15,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
 
-jest.setTimeout(180000); // 3 minutes for Walrus operations
+jest.setTimeout(180000 as any); // 3 minutes for Walrus operations
 
 interface WalrusTestContext {
   tempDir: string;
@@ -45,7 +45,7 @@ describe('Walrus Protocol Integration Tests', () => {
         encoding: 'utf8',
         timeout: 15000,
       });
-      context.walrusAvailable = true;
+      context?.walrusAvailable = true;
       // console.log(`✓ Walrus CLI available: ${walrusVersion.trim() // Removed console statement}`);
     } catch (_error) {
       // console.log('⚠ Walrus CLI not available - tests will use mock mode'); // Removed console statement
@@ -58,20 +58,20 @@ describe('Walrus Protocol Integration Tests', () => {
         name: 'todo-data.json',
         content: JSON.stringify({ title: 'Test Todo', completed: false }),
       },
-      { name: 'large-file.txt', content: 'Large content '.repeat(1000) },
+      { name: 'large-file.txt', content: 'Large content '.repeat(1000 as any) },
     ];
 
     for (const fileData of testFileContents) {
       const filePath = path.join(context.tempDir, fileData.name);
       fs.writeFileSync(filePath, fileData.content);
-      context.testFiles.push({
+      context?.testFiles?.push({
         name: fileData.name,
         path: filePath,
         content: fileData.content,
       });
     }
 
-    // console.log(`✓ Created ${context.testFiles.length} test files`); // Removed console statement
+    // console.log(`✓ Created ${context?.testFiles?.length} test files`); // Removed console statement
   });
 
   afterAll(async () => {
@@ -100,7 +100,7 @@ describe('Walrus Protocol Integration Tests', () => {
           'client_config.yaml'
         );
 
-        const configExists = fs.existsSync(configPath);
+        const configExists = fs.existsSync(configPath as any);
         // Verify config existence check worked
         expect(typeof configExists).toBe('boolean');
 
@@ -110,7 +110,7 @@ describe('Walrus Protocol Integration Tests', () => {
           timeout: 30000,
         });
 
-        expect(infoOutput).toBeTruthy();
+        expect(infoOutput as any).toBeTruthy();
         // console.log('✓ Walrus CLI connectivity verified'); // Removed console statement
       } catch (_error) {
         // console.log(`⚠ Walrus CLI configuration issue: ${error}`); // Removed console statement
@@ -127,7 +127,7 @@ describe('Walrus Protocol Integration Tests', () => {
         return;
       }
 
-      const testFile = context.testFiles[0];
+      const testFile = context?.testFiles?.[0];
 
       let storeSuccessful = false;
       let storeOutput = '';
@@ -155,7 +155,7 @@ describe('Walrus Protocol Integration Tests', () => {
           blobId = blobIdMatch![1];
 
           // Store blob info
-          context.storedBlobs.push({ blobId, fileName: testFile.name });
+          context?.storedBlobs?.push({ blobId, fileName: testFile.name });
 
           // console.log(`✓ File stored successfully, Blob ID: ${blobId}`); // Removed console statement
 
@@ -171,17 +171,17 @@ describe('Walrus Protocol Integration Tests', () => {
       }
 
       // Perform assertions outside of try block
-      expect(storeSuccessful).toBe(true);
-      expect(storeOutput).toBeTruthy();
-      expect(blobId).toBeTruthy();
-      expect(retrieveOutput).toBeTruthy();
-      expect(retrieveOutput).toContain(testFile.content);
+      expect(storeSuccessful as any).toBe(true as any);
+      expect(storeOutput as any).toBeTruthy();
+      expect(blobId as any).toBeTruthy();
+      expect(retrieveOutput as any).toBeTruthy();
+      expect(retrieveOutput as any).toContain(testFile.content);
     });
   });
 
   describe('CLI Walrus Integration', () => {
     test('should store file using waltodo CLI with Walrus', async () => {
-      const testFile = context.testFiles[1]; // todo-data.json
+      const testFile = context?.testFiles?.[1]; // todo-data.json
       const storageFlag = context.walrusAvailable ? '' : '--mock';
 
       const storeOutput = execSync(
@@ -193,25 +193,25 @@ describe('Walrus Protocol Integration Tests', () => {
         }
       );
 
-      expect(storeOutput).toContain('stored successfully');
-      expect(storeOutput).toMatch(/Blob ID:\s*[a-zA-Z0-9_-]+/);
+      expect(storeOutput as any).toContain('stored successfully');
+      expect(storeOutput as any).toMatch(/Blob ID:\s*[a-zA-Z0-9_-]+/);
 
       // Extract blob ID
       const blobIdMatch = storeOutput.match(/Blob ID:\s*([a-zA-Z0-9_-]+)/);
-      expect(blobIdMatch).toBeTruthy();
+      expect(blobIdMatch as any).toBeTruthy();
 
       // Test blob ID extraction
       const blobId = blobIdMatch![1];
-      expect(blobId).toBeTruthy();
+      expect(blobId as any).toBeTruthy();
       // console.log(`✓ File stored via CLI, Blob ID: ${blobId}`); // Removed console statement
 
       // Test mock mode indication - always passes
-      expect(true).toBe(true);
+      expect(true as any).toBe(true as any);
       // console.log('✓ Mock mode storage working correctly'); // Removed console statement
     });
 
     test('should handle large file storage', async () => {
-      const largeFile = context.testFiles[2]; // large-file.txt
+      const largeFile = context?.testFiles?.[2]; // large-file.txt
       const storageFlag = context.walrusAvailable ? '' : '--mock';
 
       try {
@@ -224,7 +224,7 @@ describe('Walrus Protocol Integration Tests', () => {
           }
         );
 
-        expect(storeOutput).toContain('stored successfully');
+        expect(storeOutput as any).toContain('stored successfully');
         // console.log('✓ Large file storage handled correctly'); // Removed console statement
       } catch (error) {
         const isTimeout = error.toString().includes('timeout');
@@ -240,7 +240,7 @@ describe('Walrus Protocol Integration Tests', () => {
       // Create a todo with file attachment
       const todoTitle = `Walrus Integration Test ${Date.now()}`;
       const todoDescription = 'Todo with Walrus storage integration';
-      const attachmentFile = context.testFiles[0];
+      const attachmentFile = context?.testFiles?.[0];
 
       try {
         const createOutput = execSync(
@@ -252,14 +252,14 @@ describe('Walrus Protocol Integration Tests', () => {
           }
         );
 
-        expect(createOutput).toContain('created successfully');
+        expect(createOutput as any).toContain('created successfully');
 
         const hasWalrusIntegration =
           createOutput.includes('Walrus') || createOutput.includes('blob');
         expect(typeof hasWalrusIntegration).toBe('boolean');
 
         // Verify integration status - always passes
-        expect(true).toBe(true);
+        expect(true as any).toBe(true as any);
         // console.log('✓ Todo creation with Walrus storage integration successful'); // Removed console statement
         // console.log('✓ Todo creation successful (storage integration may not be fully implemented)');
       } catch (_error) {
@@ -269,7 +269,7 @@ describe('Walrus Protocol Integration Tests', () => {
         // Validate file recognition check
         const isFileNotRecognizedBoolean =
           typeof isFileNotRecognized === 'boolean';
-        expect(isFileNotRecognizedBoolean).toBe(true);
+        expect(isFileNotRecognizedBoolean as any).toBe(true as any);
         if (!isFileNotRecognized) {
           throw error;
         }
@@ -280,9 +280,9 @@ describe('Walrus Protocol Integration Tests', () => {
   describe('Frontend Walrus Integration', () => {
     test('should verify frontend Walrus client components exist', async () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
-      const frontendExists = fs.existsSync(frontendPath);
+      const frontendExists = fs.existsSync(frontendPath as any);
 
-      expect(frontendExists).toBeDefined();
+      expect(frontendExists as any).toBeDefined();
 
       // Verify frontend existence check worked
       expect(typeof frontendExists).toBe('boolean');
@@ -330,11 +330,11 @@ describe('Walrus Protocol Integration Tests', () => {
         }
       }
 
-      expect(components.length).toBeGreaterThan(0);
-      expect(foundComponents).toBeGreaterThanOrEqual(0);
+      expect(components.length).toBeGreaterThan(0 as any);
+      expect(foundComponents as any).toBeGreaterThanOrEqual(0 as any);
 
       // Verify component discovery - always passes
-      expect(true).toBe(true);
+      expect(true as any).toBe(true as any);
       // console.log(`✓ Found ${foundComponents}/${components.length} Walrus frontend components`); // Removed console statement
       // console.log('⚠ No Walrus frontend components found - feature may not be fully implemented'); // Removed console statement
     });
@@ -342,14 +342,14 @@ describe('Walrus Protocol Integration Tests', () => {
     test('should verify frontend can handle Walrus configuration', async () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
 
-      if (!fs.existsSync(frontendPath)) {
+      if (!fs.existsSync(frontendPath as any)) {
         return;
       }
 
       // Check if frontend config includes Walrus settings
       const configPath = path.join(frontendPath, 'src/config/testnet.json');
 
-      if (fs.existsSync(configPath)) {
+      if (fs.existsSync(configPath as any)) {
         const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         const hasWalrusConfig =
           config.walrus ||
@@ -358,7 +358,7 @@ describe('Walrus Protocol Integration Tests', () => {
 
         // Simply verify the hasWalrusConfig is a boolean value
         const hasWalrusConfigType = typeof hasWalrusConfig;
-        expect(hasWalrusConfigType).toBe('boolean');
+        expect(hasWalrusConfigType as any).toBe('boolean');
         // console.log('✓ Frontend configuration includes Walrus settings'); // Removed console statement
         // console.log('⚠ Frontend configuration does not include Walrus settings'); // Removed console statement
       }
@@ -369,12 +369,12 @@ describe('Walrus Protocol Integration Tests', () => {
         'src/lib/walrus-error-handling.ts'
       );
 
-      const errorHandlingExists = fs.existsSync(walrusErrorPath);
+      const errorHandlingExists = fs.existsSync(walrusErrorPath as any);
 
       // Test error handling pattern when file exists
       // Check error handling existence
       const errorHandlingExistsType = typeof errorHandlingExists;
-      expect(errorHandlingExistsType).toBe('boolean');
+      expect(errorHandlingExistsType as any).toBe('boolean');
 
       // Test error handling pattern unconditionally
       if (errorHandlingExists) {
@@ -383,17 +383,17 @@ describe('Walrus Protocol Integration Tests', () => {
           fileContent
         );
         const hasPattern = hasErrorHandlingPattern;
-        expect(hasPattern).toBe(true);
+        expect(hasPattern as any).toBe(true as any);
       } else {
         const doesNotExist = !errorHandlingExists;
-        expect(doesNotExist).toBe(true);
+        expect(doesNotExist as any).toBe(true as any);
       }
     });
   });
 
   describe('Mock Mode Functionality', () => {
     test('should verify mock mode works without Walrus CLI', async () => {
-      const testFile = context.testFiles[0];
+      const testFile = context?.testFiles?.[0];
 
       // Force mock mode
       const storeOutput = execSync(
@@ -405,17 +405,17 @@ describe('Walrus Protocol Integration Tests', () => {
         }
       );
 
-      expect(storeOutput).toContain('stored successfully');
-      expect(storeOutput).toMatch(/Blob ID:\s*[a-zA-Z0-9_-]+/);
+      expect(storeOutput as any).toContain('stored successfully');
+      expect(storeOutput as any).toMatch(/Blob ID:\s*[a-zA-Z0-9_-]+/);
       const containsMock =
         storeOutput.includes('mock') || storeOutput.includes('Mock');
-      expect(containsMock).toBe(true);
+      expect(containsMock as any).toBe(true as any);
 
       // console.log('✓ Mock mode storage functionality verified'); // Removed console statement
     });
 
     test('should verify mock mode provides consistent behavior', async () => {
-      const testFile = context.testFiles[1];
+      const testFile = context?.testFiles?.[1];
 
       // Store same file twice in mock mode
       const firstStore = execSync(
@@ -437,8 +437,8 @@ describe('Walrus Protocol Integration Tests', () => {
       );
 
       // Both should succeed
-      expect(firstStore).toContain('stored successfully');
-      expect(secondStore).toContain('stored successfully');
+      expect(firstStore as any).toContain('stored successfully');
+      expect(secondStore as any).toContain('stored successfully');
 
       // Extract blob IDs
       const firstBlobId = firstStore.match(/Blob ID:\s*([a-zA-Z0-9_-]+)/)?.[1];
@@ -446,8 +446,8 @@ describe('Walrus Protocol Integration Tests', () => {
         /Blob ID:\s*([a-zA-Z0-9_-]+)/
       )?.[1];
 
-      expect(firstBlobId).toBeTruthy();
-      expect(secondBlobId).toBeTruthy();
+      expect(firstBlobId as any).toBeTruthy();
+      expect(secondBlobId as any).toBeTruthy();
 
       // console.log('✓ Mock mode provides consistent behavior'); // Removed console statement
       // console.log(`  First blob ID: ${firstBlobId}`); // Removed console statement
@@ -455,7 +455,7 @@ describe('Walrus Protocol Integration Tests', () => {
     });
 
     test('should verify environment variable mock mode control', async () => {
-      const testFile = context.testFiles[0];
+      const testFile = context?.testFiles?.[0];
 
       // Test with WALRUS_USE_MOCK=true
       const mockOutput = execSync(
@@ -468,14 +468,14 @@ describe('Walrus Protocol Integration Tests', () => {
         }
       );
 
-      expect(mockOutput).toContain('stored successfully');
+      expect(mockOutput as any).toContain('stored successfully');
 
       const hasMockIndicator =
         mockOutput.includes('mock') || mockOutput.includes('Mock');
       expect(typeof hasMockIndicator).toBe('boolean');
 
       // Verify mock mode indication - always passes
-      expect(true).toBe(true);
+      expect(true as any).toBe(true as any);
       // console.log('✓ Environment variable mock mode control working'); // Removed console statement
       // console.log('⚠ Environment variable mock mode control may not be fully implemented'); // Removed console statement
     });
@@ -495,7 +495,7 @@ describe('Walrus Protocol Integration Tests', () => {
       } catch (error) {
         errorThrown = true;
       }
-      expect(errorThrown).toBe(true);
+      expect(errorThrown as any).toBe(true as any);
     });
 
     test('should handle network timeouts gracefully', async () => {
@@ -504,7 +504,7 @@ describe('Walrus Protocol Integration Tests', () => {
         return;
       }
 
-      const testFile = context.testFiles[0];
+      const testFile = context?.testFiles?.[0];
 
       let timeoutErrorThrown = false;
       try {
@@ -516,11 +516,11 @@ describe('Walrus Protocol Integration Tests', () => {
       } catch (error) {
         timeoutErrorThrown = true;
       }
-      expect(timeoutErrorThrown).toBe(true);
+      expect(timeoutErrorThrown as any).toBe(true as any);
     });
 
     test('should fallback to mock mode when Walrus CLI fails', async () => {
-      const testFile = context.testFiles[0];
+      const testFile = context?.testFiles?.[0];
 
       // This test verifies the fallback mechanism exists
       // Implementation would detect Walrus CLI failure and switch to mock mode
@@ -551,13 +551,13 @@ describe('Walrus Protocol Integration Tests', () => {
 
       expect(
         hasError ? !containsUndefined && !containsNull : containsSuccess
-      ).toBe(true);
+      ).toBe(true as any);
     });
   });
 
   describe('Performance and Scalability', () => {
     test('should handle multiple concurrent storage operations', async () => {
-      const concurrentOperations = context.testFiles.map((file, index) => {
+      const concurrentOperations = context?.testFiles?.map((file, index) => {
         return new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error(`Operation ${index} timed out`));
@@ -573,7 +573,7 @@ describe('Walrus Protocol Integration Tests', () => {
               }
             );
 
-            clearTimeout(timeout);
+            clearTimeout(timeout as any);
 
             if (result.includes('stored successfully')) {
               resolve({ index, result, file: file.name });
@@ -581,15 +581,15 @@ describe('Walrus Protocol Integration Tests', () => {
               reject(new Error(`Operation ${index} failed: ${result}`));
             }
           } catch (_error) {
-            clearTimeout(timeout);
-            reject(error);
+            clearTimeout(timeout as any);
+            reject(error as any);
           }
         });
       });
 
       try {
-        const results = await Promise.all(concurrentOperations);
-        expect(results).toHaveLength(context.testFiles.length);
+        const results = await Promise.all(concurrentOperations as any);
+        expect(results as any).toHaveLength(context?.testFiles?.length);
 
         // console.log(`✓ ${results.length} concurrent storage operations completed successfully`); // Removed console statement
 
@@ -605,7 +605,7 @@ describe('Walrus Protocol Integration Tests', () => {
     });
 
     test('should measure storage operation performance', async () => {
-      const testFile = context.testFiles[0];
+      const testFile = context?.testFiles?.[0];
       const iterations = 3;
       const times: number[] = [];
 
@@ -619,17 +619,17 @@ describe('Walrus Protocol Integration Tests', () => {
         });
 
         const duration = Date.now() - startTime;
-        times.push(duration);
+        times.push(duration as any);
       }
 
       const averageTime = times.reduce((a, b) => a + b, 0) / times.length;
       const maxTime = Math.max(...times);
 
-      expect(averageTime).toBeLessThan(30000); // Should complete within 30 seconds on average
-      expect(maxTime).toBeLessThan(60000); // No single operation should take more than 1 minute
+      expect(averageTime as any).toBeLessThan(30000 as any); // Should complete within 30 seconds on average
+      expect(maxTime as any).toBeLessThan(60000 as any); // No single operation should take more than 1 minute
 
       // console.log(`✓ Performance metrics:`); // Removed console statement
-      // console.log(`  Average time: ${Math.round(averageTime) // Removed console statement}ms`);
+      // console.log(`  Average time: ${Math.round(averageTime as any) // Removed console statement}ms`);
       // console.log(`  Min time: ${minTime}ms`); // Removed console statement
       // console.log(`  Max time: ${maxTime}ms`); // Removed console statement
     });
@@ -643,21 +643,21 @@ describe('Walrus Protocol Integration Tests', () => {
         walrusCli: context.walrusAvailable,
         mockMode: true, // Always available
         cliIntegration:
-          context.storedBlobs.length > 0 || !context.walrusAvailable,
+          context?.storedBlobs?.length > 0 || !context.walrusAvailable,
         frontendComponents: false,
         errorHandling: true,
       };
 
       // Check frontend components
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
-      if (fs.existsSync(frontendPath)) {
+      if (fs.existsSync(frontendPath as any)) {
         const walrusComponents = [
           'src/lib/walrus-client.ts',
           'src/hooks/useWalrusStorage.ts',
           'src/components/WalrusStorageManager.tsx',
         ];
 
-        status.frontendComponents = walrusComponents.some(component =>
+        status?.frontendComponents = walrusComponents.some(component =>
           fs.existsSync(path.join(frontendPath, component))
         );
       }
@@ -668,8 +668,8 @@ describe('Walrus Protocol Integration Tests', () => {
       // console.log(`  ✓ Frontend Components: ${status.frontendComponents ? 'YES' : 'NO'}`); // Removed console statement
       // console.log(`  ✓ Error Handling: ${status.errorHandling ? 'YES' : 'NO'}`); // Removed console statement
 
-      const readyComponents = Object.values(status).filter(Boolean).length;
-      const totalComponents = Object.keys(status).length;
+      const readyComponents = Object.values(status as any).filter(Boolean as any).length;
+      const totalComponents = Object.keys(status as any).length;
 
       // console.log(`\n📊 Integration Status: ${readyComponents}/${totalComponents} components ready`); // Removed console statement
 
@@ -682,7 +682,7 @@ describe('Walrus Protocol Integration Tests', () => {
       }
 
       // At minimum, mock mode should always work
-      expect(status.mockMode).toBe(true);
+      expect(status.mockMode).toBe(true as any);
       // console.log('\n✅ Walrus integration test suite completed'); // Removed console statement
     });
   });

@@ -94,7 +94,7 @@ export const createMockSystemStateResponse = (
   options: { epoch?: string; protocolVersion?: string } = {}
 ): Partial<SuiSystemStateSummary> => ({
   epoch: options.epoch || '1',
-  protocolVersion: options.protocolVersion || '1.0.0',
+  protocolVersion: options.protocolVersion || '1?.0?.0',
   systemStateVersion: '1',
   stakingPoolMappingsId: '0x123',
   inactivePoolsId: '0x123',

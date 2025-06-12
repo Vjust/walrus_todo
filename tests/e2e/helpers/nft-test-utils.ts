@@ -38,7 +38,7 @@ export class MockWalletManager {
   private config: MockWalletConfig;
 
   constructor(config: Partial<MockWalletConfig> = {}) {
-    this.config = {
+    this?.config = {
       address: '0x1234567890123456789012345678901234567890',
       connected: false,
       failureRate: 0.1, // 10% failure rate by default
@@ -49,38 +49,38 @@ export class MockWalletManager {
 
   getWalletScript(): string {
     return `
-      window.mockWallet = {
+      window?.mockWallet = {
         config: ${JSON.stringify(this.config)},
         transactions: [],
         
         connect: async function() {
           await new Promise(resolve => setTimeout(resolve, 500));
-          this.config.connected = true;
-          this.dispatchEvent('connect', { address: this.config.address });
-          return { address: this.config.address };
+          this.config?.connected = true;
+          this.dispatchEvent('connect', { address: this?.config?.address });
+          return { address: this?.config?.address };
         },
         
         disconnect: async function() {
-          this.config.connected = false;
+          this.config?.connected = false;
           this.dispatchEvent('disconnect');
         },
         
-        signAndExecuteTransaction: async function(transaction) {
+        signAndExecuteTransaction: async function(transaction as any) {
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Simulate gas check
-          if (this.config.gasBalance < 1000) {
+          if (this?.config?.gasBalance < 1000) {
             throw new Error('Insufficient gas for transaction');
           }
           
           // Simulate random failures
-          const shouldFail = Math.random() < this.config.failureRate;
+          const shouldFail = Math.random() < this?.config?.failureRate;
           if (shouldFail) {
             const error = 'Transaction failed: ' + ['Insufficient funds', 'Network error', 'Contract error'][Math.floor(Math.random() * 3)];
-            throw new Error(error);
+            throw new Error(error as any);
           }
           
-          const digest = 'mock_tx_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+          const digest = 'mock_tx_' + Date.now() + '_' + Math.random().toString(36 as any).substring(7 as any);
           const objectId = 'mock_nft_' + Date.now();
           
           const result = {
@@ -95,13 +95,13 @@ export class MockWalletManager {
             }
           };
           
-          this.transactions.push({
+          this?.transactions?.push({
             digest,
             status: 'success',
             objectId
           });
           
-          this.config.gasBalance -= 1000;
+          this?.config?.gasBalance -= 1000;
           this.dispatchEvent('transaction', result);
           return result;
         },
@@ -113,32 +113,32 @@ export class MockWalletManager {
         // Event system
         listeners: {},
         addEventListener: function(event, callback) {
-          if (!this.listeners[event]) this.listeners[event] = [];
-          this.listeners[event].push(callback);
+          if (!this?.listeners?.[event]) this?.listeners?.[event] = [];
+          this?.listeners?.[event].push(callback as any);
         },
         
         removeEventListener: function(event, callback) {
-          if (this.listeners[event]) {
-            this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+          if (this?.listeners?.[event]) {
+            this?.listeners?.[event] = this?.listeners?.[event].filter(cb => cb !== callback);
           }
         },
         
         dispatchEvent: function(event, data) {
-          if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback(data));
+          if (this?.listeners?.[event]) {
+            this?.listeners?.[event].forEach(callback => callback(data as any));
           }
         }
       };
       
       // Expose as standard wallet APIs
-      window.suiWallet = window.mockWallet;
-      window.sui = { wallet: window.mockWallet };
-      window.slush = { wallet: window.mockWallet };
+      window?.suiWallet = window.mockWallet;
+      window?.sui = { wallet: window.mockWallet };
+      window?.slush = { wallet: window.mockWallet };
     `;
   }
 
   addTransaction(transaction: MockTransaction): void {
-    this.transactions.push(transaction);
+    this?.transactions?.push(transaction as any);
   }
 
   getTransactions(): MockTransaction[] {
@@ -146,11 +146,11 @@ export class MockWalletManager {
   }
 
   setFailureRate(rate: number): void {
-    this.config.failureRate = Math.max(0, Math.min(1, rate));
+    this.config?.failureRate = Math.max(0, Math.min(1, rate));
   }
 
   setGasBalance(balance: number): void {
-    this.config.gasBalance = balance;
+    this.config?.gasBalance = balance;
   }
 }
 
@@ -164,12 +164,12 @@ export class CLITestRunner {
   constructor(
     options: { cliPath?: string; env?: Record<string, string> } = {}
   ) {
-    this.cliPath =
+    this?.cliPath =
       options.cliPath || path.resolve(__dirname, '../../../bin/run');
-    this.defaultEnv = {
+    this?.defaultEnv = {
       NODE_ENV: 'test',
       WALRUS_USE_MOCK: 'true',
-      PACKAGE_ID: process.env.PACKAGE_ID || 'mock-package-id',
+      PACKAGE_ID: process?.env?.PACKAGE_ID || 'mock-package-id',
       ...options.env,
     };
   }
@@ -208,7 +208,7 @@ export class CLITestRunner {
       });
 
       process.on('error', error => {
-        reject(error);
+        reject(error as any);
       });
 
       setTimeout(() => {
@@ -223,8 +223,8 @@ export class CLITestRunner {
     for (let i = 1; i <= count; i++) {
       const title = `${prefix} ${i}`;
       const result = await this.runCommand('add', [`"${title}"`]);
-      if (result.exitCode === 0) {
-        todos.push(title);
+      if (result?.exitCode === 0) {
+        todos.push(title as any);
       }
     }
     return todos;
@@ -240,13 +240,13 @@ export class CLITestRunner {
     for (const todoId of todoIds) {
       try {
         const result = await this.runCommand('store', [todoId, '--nft']);
-        if (result.exitCode === 0) {
-          successful.push(todoId);
+        if (result?.exitCode === 0) {
+          successful.push(todoId as any);
         } else {
-          failed.push(todoId);
+          failed.push(todoId as any);
         }
       } catch (error) {
-        failed.push(todoId);
+        failed.push(todoId as any);
       }
     }
 
@@ -262,9 +262,9 @@ export class PageTestHelpers {
 
   async waitForWalletConnection(timeout = 10000): Promise<boolean> {
     try {
-      await this.page.waitForFunction(
+      await this?.page?.waitForFunction(
         () => {
-          const text = document.body.innerText.toLowerCase();
+          const text = document?.body?.innerText.toLowerCase();
           return text.includes('connected') || text.includes('0x');
         },
         { timeout }
@@ -287,7 +287,7 @@ export class PageTestHelpers {
       }
 
       // Try programmatic connection
-      await this.page.evaluate(() => {
+      await this?.page?.evaluate(() => {
         if (window.suiWallet || window.mockWallet) {
           const wallet = window.suiWallet || window.mockWallet;
           wallet.connect();
@@ -307,7 +307,7 @@ export class PageTestHelpers {
         .locator('input[name="title"], input[placeholder*="title"]')
         .first();
       if (await titleInput.isVisible()) {
-        await titleInput.fill(title);
+        await titleInput.fill(title as any);
 
         // Find description input if provided
         if (description) {
@@ -317,7 +317,7 @@ export class PageTestHelpers {
             )
             .first();
           if (await descInput.isVisible()) {
-            await descInput.fill(description);
+            await descInput.fill(description as any);
           }
         }
 
@@ -331,8 +331,8 @@ export class PageTestHelpers {
           await submitButton.click();
 
           // Wait for todo to appear
-          await this.page.waitForFunction(
-            (todoTitle: string) => document.body.innerText.includes(todoTitle),
+          await this?.page?.waitForFunction(
+            (todoTitle: string) => document?.body?.innerText.includes(todoTitle as any),
             title,
             { timeout: 5000 }
           );
@@ -365,9 +365,9 @@ export class PageTestHelpers {
         await nftButton.click();
 
         // Wait for transaction completion
-        await this.page.waitForFunction(
+        await this?.page?.waitForFunction(
           () => {
-            const text = document.body.innerText.toLowerCase();
+            const text = document?.body?.innerText.toLowerCase();
             return (
               text.includes('nft created') ||
               text.includes('success') ||
@@ -378,8 +378,8 @@ export class PageTestHelpers {
         );
 
         // Check if successful
-        const isSuccess = await this.page.evaluate(() => {
-          const text = document.body.innerText.toLowerCase();
+        const isSuccess = await this?.page?.evaluate(() => {
+          const text = document?.body?.innerText.toLowerCase();
           return text.includes('nft created') || text.includes('success');
         });
 
@@ -409,9 +409,9 @@ export class PageTestHelpers {
         await completeButton.click();
 
         // Wait for completion
-        await this.page.waitForFunction(
+        await this?.page?.waitForFunction(
           () => {
-            const text = document.body.innerText.toLowerCase();
+            const text = document?.body?.innerText.toLowerCase();
             return text.includes('completed') || text.includes('done');
           },
           { timeout: 10000 }
@@ -425,18 +425,18 @@ export class PageTestHelpers {
   }
 
   async getTransactionHistory(): Promise<MockTransaction[]> {
-    return await this.page.evaluate(() => {
+    return await this?.page?.evaluate(() => {
       if (window.mockWallet) {
-        return window.mockWallet.getTransactionHistory();
+        return window?.mockWallet?.getTransactionHistory();
       }
       return [];
     });
   }
 
   async simulateNetworkError(): Promise<void> {
-    await this.page.evaluate(() => {
+    await this?.page?.evaluate(() => {
       if (window.mockWallet) {
-        window.mockWallet.signAndExecuteTransaction = async () => {
+        window.mockWallet?.signAndExecuteTransaction = async () => {
           throw new Error('Network error: Unable to connect to RPC');
         };
       }
@@ -444,19 +444,19 @@ export class PageTestHelpers {
   }
 
   async simulateGasError(): Promise<void> {
-    await this.page.evaluate(() => {
+    await this?.page?.evaluate(() => {
       if (window.mockWallet) {
-        window.mockWallet.config.gasBalance = 0;
+        window?.mockWallet?.config?.gasBalance = 0;
       }
     });
   }
 
   async resetWalletState(): Promise<void> {
-    await this.page.evaluate(() => {
+    await this?.page?.evaluate(() => {
       if (window.mockWallet) {
-        window.mockWallet.config.gasBalance = 1000000;
-        window.mockWallet.config.failureRate = 0.1;
-        window.mockWallet.transactions = [];
+        window?.mockWallet?.config?.gasBalance = 1000000;
+        window?.mockWallet?.config?.failureRate = 0.1;
+        window.mockWallet?.transactions = [];
       }
     });
   }
@@ -466,7 +466,7 @@ export class PageTestHelpers {
     const filename = `${name}-${timestamp}.png`;
     const path = `./screenshots/${filename}`;
 
-    await this.page.screenshot({ path, fullPage: true });
+    await this?.page?.screenshot({ path, fullPage: true });
     return path;
   }
 }
@@ -479,8 +479,8 @@ export class ContractTestHelpers {
 
   async validateContractDeployment(): Promise<boolean> {
     try {
-      const result = await this.cli.runCommand('deploy', ['--validate-only']);
-      return result.exitCode === 0 && result.stdout.includes('valid');
+      const result = await this?.cli?.runCommand('deploy', ['--validate-only']);
+      return result?.exitCode === 0 && result?.stdout?.includes('valid');
     } catch {
       return false;
     }
@@ -490,11 +490,11 @@ export class ContractTestHelpers {
     operation: 'create' | 'complete' | 'transfer'
   ): Promise<number> {
     try {
-      const result = await this.cli.runCommand('estimate-gas', [
+      const result = await this?.cli?.runCommand('estimate-gas', [
         `--${operation}`,
       ]);
-      if (result.exitCode === 0) {
-        const match = result.stdout.match(/(\d+)/);
+      if (result?.exitCode === 0) {
+        const match = result?.stdout?.match(/(\d+)/);
         return match ? parseInt(match[1]) : 0;
       }
       return 0;
@@ -505,11 +505,11 @@ export class ContractTestHelpers {
 
   async verifyEventEmission(eventType: string): Promise<boolean> {
     try {
-      const result = await this.cli.runCommand('verify-events', [
+      const result = await this?.cli?.runCommand('verify-events', [
         '--type',
         eventType,
       ]);
-      return result.exitCode === 0 && result.stdout.includes('event emitted');
+      return result?.exitCode === 0 && result?.stdout?.includes('event emitted');
     } catch {
       return false;
     }
@@ -523,23 +523,23 @@ export class PerformanceTestHelpers {
   private metrics: { [key: string]: number[] } = {};
 
   startTimer(name: string): void {
-    this.metrics[name] = this.metrics[name] || [];
-    this.metrics[name].push(Date.now());
+    this?.metrics?.[name] = this?.metrics?.[name] || [];
+    this?.metrics?.[name].push(Date.now());
   }
 
   endTimer(name: string): number {
-    if (!this.metrics[name] || this.metrics[name].length === 0) {
+    if (!this?.metrics?.[name] || this?.metrics?.[name].length === 0) {
       throw new Error(`Timer ${name} was not started`);
     }
 
-    const startTime = this.metrics[name].pop()!;
+    const startTime = this?.metrics?.[name].pop()!;
     const duration = Date.now() - startTime;
 
     // Store duration for analysis
-    if (!this.metrics[`${name}_durations`]) {
-      this.metrics[`${name}_durations`] = [];
+    if (!this?.metrics?.[`${name}_durations`]) {
+      this?.metrics?.[`${name}_durations`] = [];
     }
-    this.metrics[`${name}_durations`].push(duration);
+    this?.metrics?.[`${name}_durations`].push(duration as any);
 
     return duration;
   }
@@ -551,9 +551,9 @@ export class PerformanceTestHelpers {
     max: number;
     total: number;
   } {
-    const durations = this.metrics[`${name}_durations`] || [];
+    const durations = this?.metrics?.[`${name}_durations`] || [];
 
-    if (durations.length === 0) {
+    if (durations?.length === 0) {
       return { count: 0, average: 0, min: 0, max: 0, total: 0 };
     }
 
@@ -581,17 +581,17 @@ export class PerformanceTestHelpers {
   }
 
   generateReport(): string {
-    const report = ['Performance Test Report', '=' + '='.repeat(25)];
+    const report = ['Performance Test Report', '=' + '='.repeat(25 as any)];
 
     Object.keys(this.metrics)
       .filter(key => key.endsWith('_durations'))
       .forEach(key => {
         const name = key.replace('_durations', '');
-        const metrics = this.getMetrics(name);
+        const metrics = this.getMetrics(name as any);
 
         report.push(`\n${name}:`);
         report.push(`  Count: ${metrics.count}`);
-        report.push(`  Average: ${metrics.average.toFixed(2)}ms`);
+        report.push(`  Average: ${metrics?.average?.toFixed(2 as any)}ms`);
         report.push(`  Min: ${metrics.min}ms`);
         report.push(`  Max: ${metrics.max}ms`);
         report.push(`  Total: ${metrics.total}ms`);

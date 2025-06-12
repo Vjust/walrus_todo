@@ -76,7 +76,7 @@ export class SuiClientError extends Error {
     public code?: string,
     public cause?: Error
   ) {
-    super(message);
+    super(message as any);
     this.name = 'SuiClientError';
   }
 }

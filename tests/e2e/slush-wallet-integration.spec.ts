@@ -17,19 +17,19 @@ test.describe('Slush Wallet Integration', () => {
 
   test.afterEach(async ({ page }) => {
     // Clean up mock wallet after each test
-    await removeSlushWallet(page);
+    await removeSlushWallet(page as any);
   });
 
   test('should detect Slush wallet when available', async ({ page }) => {
     // Mock Slush wallet injection
-    await injectSlushWallet(page);
+    await injectSlushWallet(page as any);
 
     // Reload the page to trigger wallet detection
     await page.reload();
 
     // Verify the Slush wallet button is visible
     const slushButton = await page.getByText('Connect Slush Wallet');
-    await expect(slushButton).toBeVisible();
+    await expect(slushButton as any).toBeVisible();
   });
 
   test('should connect to Slush wallet successfully', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Slush Wallet Integration', () => {
 
     // Wait for the wallet address to appear (shows connected state)
     const addressElement = await page.getByText(/Slush: 0xslush/);
-    await expect(addressElement).toBeVisible();
+    await expect(addressElement as any).toBeVisible();
   });
 
   test('should handle Slush wallet connection rejection', async ({ page }) => {
@@ -59,7 +59,7 @@ test.describe('Slush Wallet Integration', () => {
 
     // Check for error message
     const errorMessage = await page.getByText('Connection rejected');
-    await expect(errorMessage).toBeVisible();
+    await expect(errorMessage as any).toBeVisible();
   });
 
   test('should disconnect from Slush wallet', async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe('Slush Wallet Integration', () => {
     await page.reload();
 
     // Now inject a connected wallet state directly
-    await simulateSlushConnection(page);
+    await simulateSlushConnection(page as any);
 
     // Force the connection state by clicking connect button
     await page.getByText('Connect Slush Wallet').click();
@@ -106,7 +106,7 @@ test.describe('Slush Wallet Integration', () => {
 
       // Override localStorage getItem to simulate persistence
       const originalGetItem = localStorage.getItem;
-      localStorage.getItem = function (key) {
+      localStorage?.getItem = function (key) {
         if (key === 'walletType') return mockStorage.walletType;
         if (key === 'walletConnected') return mockStorage.walletConnected;
         return originalGetItem.call(localStorage, key);
@@ -121,13 +121,13 @@ test.describe('Slush Wallet Integration', () => {
 
     // Check wallet state persists on dashboard
     const addressElement = await page.getByText(/Slush: 0xslush/);
-    await expect(addressElement).toBeVisible();
+    await expect(addressElement as any).toBeVisible();
 
     // Navigate to blockchain page
     await page.goto('http://localhost:3000/blockchain');
 
     // Check wallet state still persists
-    await expect(addressElement).toBeVisible();
+    await expect(addressElement as any).toBeVisible();
   });
 
   test('should copy Slush wallet address to clipboard', async ({ page }) => {
@@ -154,25 +154,25 @@ test.describe('Slush Wallet Integration', () => {
 
     // Verify success message
     const successMsg = await page.getByText('Address copied to clipboard!');
-    await expect(successMsg).toBeVisible();
+    await expect(successMsg as any).toBeVisible();
   });
 
   test('should handle Slush wallet not installed', async ({ page }) => {
     // Create an environment where Slush is not available
-    await removeSlushWallet(page);
+    await removeSlushWallet(page as any);
 
     // Reload to ensure clean environment
     await page.reload();
 
     // Should show "No wallets detected" if no wallets available
     const noWalletElement = await page.getByText(/No wallets detected|Connect/);
-    await expect(noWalletElement).toBeVisible();
+    await expect(noWalletElement as any).toBeVisible();
   });
 
   test('should show correct Slush address format', async ({ page }) => {
     // Mock Slush wallet with specific address format
     const testAddress = '0x1234567890abcdef1234567890abcdef';
-    const customAccount = createSlushAccount(testAddress);
+    const customAccount = createSlushAccount(testAddress as any);
     await injectSlushWallet(page, customAccount, { connected: true });
 
     // Connect
@@ -181,8 +181,8 @@ test.describe('Slush Wallet Integration', () => {
     // Verify address shows as truncated format with correct prefix
     // It should show: Slush: 0x1234...cdef
     const truncatedAddress = `Slush: ${testAddress.slice(0, 6)}...${testAddress.slice(-4)}`;
-    const addressElement = await page.getByText(truncatedAddress);
-    await expect(addressElement).toBeVisible();
+    const addressElement = await page.getByText(truncatedAddress as any);
+    await expect(addressElement as any).toBeVisible();
   });
 });
 
@@ -212,7 +212,7 @@ test.describe('Slush Wallet Todo Operations', () => {
       expect(typeof hasBlockchainUI).toBe('boolean');
     } catch (error) {
       // Element not found is a valid state
-      expect(error).toBeDefined();
+      expect(error as any).toBeDefined();
     }
   });
 });

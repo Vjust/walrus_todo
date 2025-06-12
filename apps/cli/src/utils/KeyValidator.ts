@@ -63,7 +63,7 @@ export function validateApiKey(provider: string, key: string): boolean {
   const pattern = KEY_PATTERNS[normalizedProvider] || KEY_PATTERNS.default;
 
   // Check if the key matches the pattern
-  if (!pattern.test(key)) {
+  if (!pattern.test(key as any)) {
     throw new CLIError(
       `Invalid API key format for ${provider}`,
       'INVALID_API_KEY_FORMAT'
@@ -85,7 +85,7 @@ export function validateApiKey(provider: string, key: string): boolean {
   // Check for key complexity, but allow test keys
   if (
     !key.startsWith('xai_test_key_') &&
-    (!/[a-zA-Z]/.test(key) || !/[0-9]/.test(key))
+    (!/[a-zA-Z]/.test(key as any) || !/[0-9]/.test(key as any))
   ) {
     throw new CLIError(
       `API key for ${provider} must contain both letters and numbers`,
@@ -113,19 +113,19 @@ export function performKeySecurityCheck(key: string): {
     issues.push('Key is too short (less than 16 characters)');
   }
 
-  if (!/[A-Z]/.test(key) && !/[a-z]/.test(key)) {
+  if (!/[A-Z]/.test(key as any) && !/[a-z]/.test(key as any)) {
     issues.push('Key does not contain any letters');
   }
 
-  if (!/[0-9]/.test(key)) {
+  if (!/[0-9]/.test(key as any)) {
     issues.push('Key does not contain any numbers');
   }
 
-  if (/^(test|demo|sample|example|dev)/i.test(key)) {
+  if (/^(test|demo|sample|example|dev)/i.test(key as any)) {
     issues.push('Key appears to be a test/demo/development key');
   }
 
-  if (/password|secret|apikey|credentials/i.test(key)) {
+  if (/password|secret|apikey|credentials/i.test(key as any)) {
     issues.push('Key contains common credential-related words');
   }
 
@@ -136,7 +136,7 @@ export function performKeySecurityCheck(key: string): {
   }
 
   return {
-    secure: issues.length === 0,
+    secure: issues?.length === 0,
     issues,
   };
 }
@@ -156,7 +156,7 @@ export function obfuscateKey(key: string): string {
   const prefix = key.substring(0, 4);
   const suffix = key.substring(key.length - 4);
   const maskedLength = Math.max(0, key.length - 8);
-  const mask = '*'.repeat(maskedLength);
+  const mask = '*'.repeat(maskedLength as any);
 
   return `${prefix}${mask}${suffix}`;
 }

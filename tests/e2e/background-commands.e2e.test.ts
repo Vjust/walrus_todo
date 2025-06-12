@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec as any);
 
 describe('Background Commands E2E', () => {
   let testDir: string;
@@ -26,8 +26,8 @@ describe('Background Commands E2E', () => {
     cliPath = path.join(process.cwd(), 'bin', 'run');
 
     // Set test environment
-    process.env.WALRUS_TODO_CONFIG_DIR = testDir;
-    process.env.WALRUS_USE_MOCK = 'true';
+    process.env?.WALRUS_TODO_CONFIG_DIR = testDir;
+    process.env?.WALRUS_USE_MOCK = 'true';
   });
 
   afterEach(() => {
@@ -38,8 +38,8 @@ describe('Background Commands E2E', () => {
       // Ignore cleanup errors
     }
 
-    delete process.env.WALRUS_TODO_CONFIG_DIR;
-    delete process.env.WALRUS_USE_MOCK;
+    delete process?.env?.WALRUS_TODO_CONFIG_DIR;
+    delete process?.env?.WALRUS_USE_MOCK;
   });
 
   describe('Basic Background Execution', () => {
@@ -49,9 +49,9 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(stdout).toContain('Command started in background');
-      expect(stdout).toContain('job ID:');
-      expect(stderr).toBe('');
+      expect(stdout as any).toContain('Command started in background');
+      expect(stdout as any).toContain('job ID:');
+      expect(stderr as any).toBe('');
     }, 10000);
 
     it('should run store command in background with --bg flag', async () => {
@@ -60,7 +60,7 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(stdout).toContain('Command started in background');
+      expect(stdout as any).toContain('Command started in background');
     }, 10000);
 
     it('should respect --foreground flag and run in foreground', async () => {
@@ -70,7 +70,7 @@ describe('Background Commands E2E', () => {
       );
 
       // Should not contain background job messages
-      expect(stdout).not.toContain('Command started in background');
+      expect(stdout as any).not.toContain('Command started in background');
     }, 10000);
   });
 
@@ -83,7 +83,7 @@ describe('Background Commands E2E', () => {
       );
 
       // Depending on implementation, this might go to background automatically
-      expect(stdout).toBeDefined();
+      expect(stdout as any).toBeDefined();
     }, 10000);
 
     it('should not auto-background short commands like list', async () => {
@@ -91,7 +91,7 @@ describe('Background Commands E2E', () => {
         cwd: testDir,
       });
 
-      expect(stdout).not.toContain('Command started in background');
+      expect(stdout as any).not.toContain('Command started in background');
     }, 10000);
   });
 
@@ -105,14 +105,14 @@ describe('Background Commands E2E', () => {
 
       // Extract job ID from output
       const jobIdMatch = storeOutput.match(/job ID: (\S+)/);
-      expect(jobIdMatch).toBeTruthy();
+      expect(jobIdMatch as any).toBeTruthy();
 
       // List jobs
       const { stdout: listOutput } = await execAsync(`node ${cliPath} jobs`, {
         cwd: testDir,
       });
 
-      expect(listOutput).toContain('Background Jobs');
+      expect(listOutput as any).toContain('Background Jobs');
     }, 15000);
 
     it('should show job status', async () => {
@@ -123,7 +123,7 @@ describe('Background Commands E2E', () => {
       );
 
       const jobIdMatch = storeOutput.match(/job ID: (\S+)/);
-      expect(jobIdMatch).toBeTruthy();
+      expect(jobIdMatch as any).toBeTruthy();
       const jobId = jobIdMatch![1];
 
       // Check job status
@@ -132,8 +132,8 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(statusOutput).toContain('Job Status');
-      expect(statusOutput).toContain(jobId);
+      expect(statusOutput as any).toContain('Job Status');
+      expect(statusOutput as any).toContain(jobId as any);
     }, 15000);
 
     it('should cancel running jobs', async () => {
@@ -144,7 +144,7 @@ describe('Background Commands E2E', () => {
       );
 
       const jobIdMatch = storeOutput.match(/job ID: (\S+)/);
-      expect(jobIdMatch).toBeTruthy();
+      expect(jobIdMatch as any).toBeTruthy();
       const jobId = jobIdMatch![1];
 
       // Cancel the job (with --force to skip confirmation)
@@ -153,7 +153,7 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(cancelOutput).toContain('cancelled');
+      expect(cancelOutput as any).toContain('cancelled');
     }, 15000);
   });
 
@@ -166,7 +166,7 @@ describe('Background Commands E2E', () => {
       );
 
       const jobIdMatch = storeOutput.match(/job ID: (\S+)/);
-      expect(jobIdMatch).toBeTruthy();
+      expect(jobIdMatch as any).toBeTruthy();
       const jobId = jobIdMatch![1];
 
       // Wait a bit for job to start
@@ -178,7 +178,7 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(statusOutput).toContain('Progress');
+      expect(statusOutput as any).toContain('Progress');
     }, 15000);
   });
 
@@ -195,7 +195,7 @@ describe('Background Commands E2E', () => {
       );
 
       results.forEach(({ stdout }) => {
-        expect(stdout).toContain('Command started in background');
+        expect(stdout as any).toContain('Command started in background');
       });
 
       // Check that all jobs are listed
@@ -203,7 +203,7 @@ describe('Background Commands E2E', () => {
         cwd: testDir,
       });
 
-      expect(listOutput).toContain('Background Jobs');
+      expect(listOutput as any).toContain('Background Jobs');
     }, 20000);
 
     it('should respect concurrency limits', async () => {
@@ -224,10 +224,10 @@ describe('Background Commands E2E', () => {
 
       // Some should succeed, some might be rejected due to limits
       const successful = results.filter(r =>
-        r.stdout.includes('Command started in background')
+        r?.stdout?.includes('Command started in background')
       );
-      expect(successful.length).toBeGreaterThan(0);
-      expect(successful.length).toBeLessThanOrEqual(15);
+      expect(successful.length).toBeGreaterThan(0 as any);
+      expect(successful.length).toBeLessThanOrEqual(15 as any);
     }, 30000);
   });
 
@@ -261,9 +261,9 @@ describe('Background Commands E2E', () => {
         cwd: testDir,
       });
 
-      expect(stdout).toContain('Background Command Orchestrator Status');
-      expect(stdout).toContain('Resource Usage');
-      expect(stdout).toContain('Memory');
+      expect(stdout as any).toContain('Background Command Orchestrator Status');
+      expect(stdout as any).toContain('Resource Usage');
+      expect(stdout as any).toContain('Memory');
     }, 10000);
 
     it('should cleanup old jobs', async () => {
@@ -282,7 +282,7 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(cleanupOutput).toContain('Cleaned up');
+      expect(cleanupOutput as any).toContain('Cleaned up');
     }, 15000);
   });
 
@@ -298,9 +298,9 @@ describe('Background Commands E2E', () => {
         cwd: testDir,
       });
 
-      expect(() => JSON.parse(stdout)).not.toThrow();
-      const jobs = JSON.parse(stdout);
-      expect(Array.isArray(jobs)).toBe(true);
+      expect(() => JSON.parse(stdout as any)).not.toThrow();
+      const jobs = JSON.parse(stdout as any);
+      expect(Array.isArray(jobs as any)).toBe(true as any);
     }, 15000);
   });
 
@@ -318,7 +318,7 @@ describe('Background Commands E2E', () => {
       child.kill('SIGTERM');
 
       // Should not throw
-      expect(true).toBe(true);
+      expect(true as any).toBe(true as any);
     }, 5000);
   });
 
@@ -329,9 +329,9 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(stdout).toContain('Command started in background');
-      expect(stdout).toContain('Monitor progress with:');
-      expect(stdout).toContain('View all jobs with:');
+      expect(stdout as any).toContain('Command started in background');
+      expect(stdout as any).toContain('Monitor progress with:');
+      expect(stdout as any).toContain('View all jobs with:');
     }, 10000);
 
     it('should integrate background mode with sync command', async () => {
@@ -340,7 +340,7 @@ describe('Background Commands E2E', () => {
         { cwd: testDir }
       );
 
-      expect(stdout).toContain('Command started in background');
+      expect(stdout as any).toContain('Command started in background');
     }, 10000);
 
     it('should show background job notifications on subsequent commands', async () => {
@@ -359,7 +359,7 @@ describe('Background Commands E2E', () => {
       });
 
       // Output might contain job completion notifications
-      expect(stdout).toBeDefined();
+      expect(stdout as any).toBeDefined();
     }, 15000);
   });
 });
@@ -377,8 +377,8 @@ describe('Background Commands Stress Tests', () => {
     );
     fs.mkdirSync(testDir, { recursive: true });
     cliPath = path.join(process.cwd(), 'bin', 'run');
-    process.env.WALRUS_TODO_CONFIG_DIR = testDir;
-    process.env.WALRUS_USE_MOCK = 'true';
+    process.env?.WALRUS_TODO_CONFIG_DIR = testDir;
+    process.env?.WALRUS_USE_MOCK = 'true';
   });
 
   afterEach(() => {
@@ -387,8 +387,8 @@ describe('Background Commands Stress Tests', () => {
     } catch (error) {
       // Ignore cleanup errors
     }
-    delete process.env.WALRUS_TODO_CONFIG_DIR;
-    delete process.env.WALRUS_USE_MOCK;
+    delete process?.env?.WALRUS_TODO_CONFIG_DIR;
+    delete process?.env?.WALRUS_USE_MOCK;
   });
 
   it('should handle rapid job creation and completion', async () => {
@@ -402,15 +402,15 @@ describe('Background Commands Stress Tests', () => {
       )
     );
 
-    const results = await Promise.all(jobPromises);
+    const results = await Promise.all(jobPromises as any);
     const endTime = Date.now();
 
     // Should complete within reasonable time (30 seconds)
-    expect(endTime - startTime).toBeLessThan(30000);
+    expect(endTime - startTime).toBeLessThan(30000 as any);
 
     // All jobs should start successfully
     results.forEach(({ stdout }) => {
-      expect(stdout).toContain('Command started in background');
+      expect(stdout as any).toContain('Command started in background');
     });
 
     // Check final job count
@@ -418,7 +418,7 @@ describe('Background Commands Stress Tests', () => {
       cwd: testDir,
     });
 
-    expect(listOutput).toContain('Background Jobs');
+    expect(listOutput as any).toContain('Background Jobs');
   }, 45000);
 
   it('should maintain performance with many completed jobs', async () => {
@@ -430,7 +430,7 @@ describe('Background Commands Stress Tests', () => {
       )
     );
 
-    await Promise.all(jobPromises);
+    await Promise.all(jobPromises as any);
 
     // Wait for jobs to complete
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -441,6 +441,6 @@ describe('Background Commands Stress Tests', () => {
     const endTime = Date.now();
 
     // Should respond quickly even with many jobs
-    expect(endTime - startTime).toBeLessThan(5000);
+    expect(endTime - startTime).toBeLessThan(5000 as any);
   }, 60000);
 });

@@ -16,11 +16,11 @@ import {
 export default function Dashboard() {
   // ALL HOOKS MUST BE DECLARED AT THE TOP - NO CONDITIONAL HOOKS
   const [selectedList, setSelectedList] = useState('default');
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0 as any);
   const [todoLists, setTodoLists] = useState<string[]>(['default']);
-  const [showCreateList, setShowCreateList] = useState(false);
+  const [showCreateList, setShowCreateList] = useState(false as any);
   const [newListName, setNewListName] = useState('');
-  const [componentMounted, setComponentMounted] = useState(false);
+  const [componentMounted, setComponentMounted] = useState(false as any);
   
   // Safe wallet context access - hook must be called unconditionally
   const walletContext = useWalletContext();
@@ -28,9 +28,9 @@ export default function Dashboard() {
 
   // Component mount effect
   useEffect(() => {
-    setComponentMounted(true);
+    setComponentMounted(true as any);
     return () => {
-      setComponentMounted(false);
+      setComponentMounted(false as any);
     };
   }, []);
 
@@ -55,7 +55,7 @@ export default function Dashboard() {
       setRefreshKey(prev => prev + 1);
       setSelectedList(newListName.trim());
       setNewListName('');
-      setShowCreateList(false);
+      setShowCreateList(false as any);
     } else {
       alert('Failed to create list. List name might already exist.');
     }
@@ -129,19 +129,19 @@ export default function Dashboard() {
                           ? 'bg-ocean-medium text-white font-medium'
                           : 'hover:bg-ocean-light/30 dark:hover:bg-ocean-medium/30'
                       }`}
-                      onClick={() => setSelectedList(list)}
+                      onClick={() => setSelectedList(list as any)}
                     >
-                      {list.charAt(0).toUpperCase() + list.slice(1)}
+                      {list.charAt(0 as any).toUpperCase() + list.slice(1 as any)}
                     </button>
                     {list !== 'default' && (
                       <button
                         type="button"
-                        onClick={() => handleDeleteList(list)}
+                        onClick={() => handleDeleteList(list as any)}
                         className='p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors'
                         title='Delete list'
                       >
                         <svg
-                          xmlns='http://www.w3.org/2000/svg'
+                          xmlns='http://www?.w3?.org/2000/svg'
                           className='h-4 w-4'
                           fill='none'
                           viewBox='0 0 24 24'
@@ -166,7 +166,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   className='ocean-button w-full'
-                  onClick={() => setShowCreateList(true)}
+                  onClick={() => setShowCreateList(true as any)}
                 >
                   <span>Create New List</span>
                 </button>
@@ -175,8 +175,8 @@ export default function Dashboard() {
                   <input
                     type='text'
                     value={newListName}
-                    onChange={e => setNewListName(e.target.value)}
-                    onKeyPress={e => e.key === 'Enter' && handleCreateList()}
+                    onChange={e => setNewListName(e?.target?.value)}
+                    onKeyPress={e => e?.key === 'Enter' && handleCreateList()}
                     placeholder='List name...'
                     className='w-full px-3 py-2 border border-ocean-light dark:border-ocean-medium rounded-lg focus:ring-2 focus:ring-ocean-medium focus:border-transparent bg-white dark:bg-ocean-deep text-ocean-deep dark:text-ocean-foam'
                     autoFocus
@@ -193,7 +193,7 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => {
-                        setShowCreateList(false);
+                        setShowCreateList(false as any);
                         setNewListName('');
                       }}
                       className='px-3 py-2 border border-ocean-light dark:border-ocean-medium rounded-lg hover:bg-ocean-light/30 dark:hover:bg-ocean-medium/30 transition-colors'
@@ -221,7 +221,7 @@ export default function Dashboard() {
           <div className='ocean-card'>
             <div className='flex justify-between items-center mb-4'>
               <h2 className='text-xl font-semibold text-ocean-deep dark:text-ocean-foam'>
-                {selectedList.charAt(0).toUpperCase() + selectedList.slice(1)}{' '}
+                {selectedList.charAt(0 as any).toUpperCase() + selectedList.slice(1 as any)}{' '}
                 List
               </h2>
 

@@ -21,22 +21,22 @@ export class ErrorHandler {
     
     if (error instanceof Error) {
       // Check for common network error patterns
-      if (error.name === 'AbortError') {
+      if (error?.name === 'AbortError') {
         return new WalrusNetworkError('Request was aborted', undefined, url, error);
       }
       
-      if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+      if (error?.name === 'TimeoutError' || error?.message?.includes('timeout')) {
         return new WalrusNetworkError('Request timed out', undefined, url, error);
       }
       
-      if (error.message.includes('fetch') || error.message.includes('network')) {
+      if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
         return new WalrusNetworkError('Network error occurred', undefined, url, error);
       }
       
       return new WalrusNetworkError(error.message, undefined, url, error);
     }
     
-    return new WalrusNetworkError(`Unknown network error: ${String(error)}`, undefined, url);
+    return new WalrusNetworkError(`Unknown network error: ${String(error as any)}`, undefined, url);
   }
 
   static handleValidationError(message: string, field?: string, value?: unknown): WalrusValidationError {
@@ -60,18 +60,18 @@ export class ErrorHandler {
       // Retry on 5xx errors, timeouts, and rate limiting
       return !error.status || 
              error.status >= 500 || 
-             error.status === 429 ||
-             error.message.includes('timeout') ||
-             error.message.includes('network');
+             error?.status === 429 ||
+             error?.message?.includes('timeout') ||
+             error?.message?.includes('network');
     }
     
     // Retry on network-related errors
-    return error.name === 'AbortError' ||
-           error.name === 'TimeoutError' ||
-           error.message.includes('fetch') ||
-           error.message.includes('network') ||
-           error.message.includes('ECONNRESET') ||
-           error.message.includes('ENOTFOUND');
+    return error?.name === 'AbortError' ||
+           error?.name === 'TimeoutError' ||
+           error?.message?.includes('fetch') ||
+           error?.message?.includes('network') ||
+           error?.message?.includes('ECONNRESET') ||
+           error?.message?.includes('ENOTFOUND');
   }
 
   static wrapError(error: unknown, context?: string): WalrusClientError {
@@ -84,8 +84,8 @@ export class ErrorHandler {
       return new WalrusClientError(message, undefined, error);
     }
     
-    const message = context ? `${context}: ${String(error)}` : String(error);
-    return new WalrusClientError(message);
+    const message = context ? `${context}: ${String(error as any)}` : String(error as any);
+    return new WalrusClientError(message as any);
   }
 
   static createErrorFromResponse(response: Response): WalrusNetworkError {
@@ -95,7 +95,7 @@ export class ErrorHandler {
 
   static async extractErrorMessage(response: Response): Promise<string> {
     try {
-      const contentType = response.headers.get('content-type');
+      const contentType = response?.headers?.get('content-type');
       
       if (contentType?.includes('application/json')) {
         const json = await response.json();

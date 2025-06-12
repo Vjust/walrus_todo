@@ -7,27 +7,27 @@
 export const TESTNET_CONFIG = {
   network: {
     name: 'testnet',
-    url: 'https://fullnode.testnet.sui.io:443',
-    faucetUrl: 'https://faucet.testnet.sui.io',
-    explorerUrl: 'https://testnet.suiexplorer.com',
-    websocketUrl: 'wss://fullnode.testnet.sui.io:443',
+    url: 'https://fullnode?.testnet?.sui.io:443',
+    faucetUrl: 'https://faucet?.testnet?.sui.io',
+    explorerUrl: 'https://testnet?.suiexplorer?.com',
+    websocketUrl: 'wss://fullnode?.testnet?.sui.io:443',
     fallbackUrls: [
-      'https://sui-testnet-endpoint.blockvision.org/v1',
-      'https://sui-testnet.publicnode.com',
-      'https://testnet.sui.rpcpool.com',
+      'https://sui-testnet-endpoint?.blockvision?.org/v1',
+      'https://sui-testnet?.publicnode?.com',
+      'https://testnet?.sui?.rpcpool.com',
     ],
     chainId: '4c78adac',
   },
   
   walrus: {
     packageId: '0xd84704c17fc870b8764832c535aa6b11f21a95cd6f5bb38a9b07d2cf42220c66',
-    networkUrl: 'https://wal.testnet.sui.io',
-    publisherUrl: 'https://publisher-testnet.walrus.site',
-    aggregatorUrl: 'https://aggregator-testnet.walrus.site',
-    apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+    networkUrl: 'https://wal?.testnet?.sui.io',
+    publisherUrl: 'https://publisher-testnet?.walrus?.site',
+    aggregatorUrl: 'https://aggregator-testnet?.walrus?.site',
+    apiPrefix: 'https://api-testnet?.walrus?.tech/1.0',
     fallbackPublisherUrls: [
-      'https://walrus-testnet-publisher.nodes.guru',
-      'https://walrus-testnet-publisher.blockscope.net',
+      'https://walrus-testnet-publisher?.nodes?.guru',
+      'https://walrus-testnet-publisher?.blockscope?.net',
     ],
   },
   

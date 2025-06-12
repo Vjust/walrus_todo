@@ -59,12 +59,12 @@ export function createMockAIProviderFactory(): MockAIProviderFactory {
         const options = params.options || {};
 
         // Check for TLS enforcement
-        if (options.baseUrl && !options.baseUrl.startsWith('https://')) {
+        if (options.baseUrl && !options?.baseUrl?.startsWith('https://')) {
           throw new Error('Non-secure HTTP URL detected in API request');
         }
 
         // Check for certificate validation
-        if (options.rejectUnauthorized === false) {
+        if (options?.rejectUnauthorized === false) {
           throw new Error(
             'Invalid SSL configuration: certificate validation disabled'
           );
@@ -100,22 +100,22 @@ export function createMockAIProviderFactory(): MockAIProviderFactory {
           const options = params.options || {};
 
           // Security checks
-          if (options.baseUrl && !options.baseUrl.startsWith('https://')) {
+          if (options.baseUrl && !options?.baseUrl?.startsWith('https://')) {
             throw new Error('Non-secure HTTP URL detected in API request');
           }
 
           // Check for SSRF attempts
-          const contextString = JSON.stringify(context);
+          const contextString = JSON.stringify(context as any);
           const ssrfPatterns = [
             'file://',
             'http://localhost',
-            'http://127.0.0.1',
+            'http://127?.0?.0.1',
             'http://[::1]',
             'http://internal',
             'gopher://',
           ];
 
-          if (ssrfPatterns.some(pattern => contextString.includes(pattern))) {
+          if (ssrfPatterns.some(pattern => contextString.includes(pattern as any))) {
             throw new Error('Potential SSRF attempt detected');
           }
 
@@ -127,7 +127,7 @@ export function createMockAIProviderFactory(): MockAIProviderFactory {
           ];
 
           if (
-            smugglingPatterns.some(pattern => contextString.includes(pattern))
+            smugglingPatterns.some(pattern => contextString.includes(pattern as any))
           ) {
             throw new Error('Potential request smuggling attempt detected');
           }
@@ -153,7 +153,7 @@ export function createMockAIProviderFactory(): MockAIProviderFactory {
           }
 
           // Simulate PII anonymization by checking context
-          const todoStr = context.todos || JSON.stringify(context);
+          const todoStr = context.todos || JSON.stringify(context as any);
 
           // Ensure PII is not present (simulating anonymization)
           const piiPatterns = [
@@ -177,7 +177,7 @@ export function createMockAIProviderFactory(): MockAIProviderFactory {
           ];
 
           for (const field of unnecessaryFields) {
-            if (todoStr.includes(field)) {
+            if (todoStr.includes(field as any)) {
               // Remove the field (simulating data minimization)
               // In a real implementation, this would be done before reaching the provider
             }
@@ -195,7 +195,7 @@ export function createMockAIProviderFactory(): MockAIProviderFactory {
   };
 
   return {
-    createProvider: jest.fn().mockImplementation(createMockAdapter),
+    createProvider: jest.fn().mockImplementation(createMockAdapter as any),
     getDefaultProvider: jest
       .fn()
       .mockImplementation(() =>

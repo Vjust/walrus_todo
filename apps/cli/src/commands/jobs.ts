@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { jobManager } from '../utils/PerformanceMonitor';
 import { backgroundOrchestrator } from '../utils/BackgroundCommandOrchestrator';
 import chalk = require('chalk');
@@ -82,7 +82,7 @@ export default class JobsCommand extends BaseCommand {
   };
 
   async run() {
-    const { args, flags } = await this.parse(JobsCommand);
+    const { args, flags } = await this.parse(JobsCommand as any);
     const action = args.action || 'list';
 
     // Handle orchestrator status report
@@ -106,7 +106,7 @@ export default class JobsCommand extends BaseCommand {
 
     // Handle cleanup operation
     if (flags.cleanup) {
-      return this.handleCleanup(flags['max-age']);
+      return this.handleCleanup(flags?.["max-age"]);
     }
 
     // Get jobs based on filters - use both job manager and orchestrator
@@ -117,17 +117,17 @@ export default class JobsCommand extends BaseCommand {
 
     // Remove duplicates by ID
     const uniqueJobs = jobs.filter(
-      (job, index, self) => index === self.findIndex(j => j.id === job.id)
+      (job, index, self) => index === self.findIndex(j => j?.id === job.id)
     );
 
     if (flags.active) {
       jobs = uniqueJobs.filter(
-        job => job.status === 'pending' || job.status === 'running'
+        job => job?.status === 'pending' || job?.status === 'running'
       );
     } else if (flags.completed) {
-      jobs = uniqueJobs.filter(job => job.status === 'completed');
+      jobs = uniqueJobs.filter(job => job?.status === 'completed');
     } else if (flags.failed) {
-      jobs = uniqueJobs.filter(job => job.status === 'failed');
+      jobs = uniqueJobs.filter(job => job?.status === 'failed');
     } else {
       jobs = uniqueJobs;
     }
@@ -136,19 +136,19 @@ export default class JobsCommand extends BaseCommand {
     jobs = jobs.slice(0, flags.limit);
 
     // Handle JSON output
-    if (flags.output === 'json') {
+    if (flags?.output === 'json') {
       this.log(JSON.stringify(jobs, null, 2));
       return;
     }
 
     // Handle watch mode
     if (flags.watch) {
-      return this.watchJobs(jobs);
+      return this.watchJobs(jobs as any);
     }
 
     // Display jobs
-    if (jobs.length === 0) {
-      this.displayNoJobs(flags);
+    if (jobs?.length === 0) {
+      this.displayNoJobs(flags as any);
       return;
     }
 
@@ -162,7 +162,7 @@ export default class JobsCommand extends BaseCommand {
       chalk.yellow(`🧹 Cleaning up jobs older than ${maxAgeDays} days...`)
     );
 
-    const removedCount = jobManager.cleanupOldJobs(maxAgeMs);
+    const removedCount = jobManager.cleanupOldJobs(maxAgeMs as any);
 
     if (removedCount > 0) {
       this.success(`Cleaned up ${removedCount} old jobs`);
@@ -176,7 +176,7 @@ export default class JobsCommand extends BaseCommand {
 
     if (flags.active) {
       message = 'No active jobs running';
-      this.info(message);
+      this.info(message as any);
       this.log(
         chalk.gray(
           '💡 Use --background flag with commands to run them in background'
@@ -184,12 +184,12 @@ export default class JobsCommand extends BaseCommand {
       );
     } else if (flags.completed) {
       message = 'No completed jobs found';
-      this.info(message);
+      this.info(message as any);
     } else if (flags.failed) {
       message = 'No failed jobs found';
-      this.info(message);
+      this.info(message as any);
     } else {
-      this.info(message);
+      this.info(message as any);
       this.log(chalk.gray('💡 Background jobs will appear here when created'));
     }
   }
@@ -205,33 +205,33 @@ export default class JobsCommand extends BaseCommand {
           : 'All';
     this.section(
       `${statusFilter} Background Jobs`,
-      `Found ${jobs.length} job(s)`
+      `Found ${jobs.length} job(s as any)`
     );
 
     // Group jobs by status for better organization
-    const groupedJobs = this.groupJobsByStatus(jobs);
+    const groupedJobs = this.groupJobsByStatus(jobs as any);
 
     // Display each status group
-    Object.entries(groupedJobs).forEach(([status, statusJobs]) => {
-      if (statusJobs.length === 0) return;
+    Object.entries(groupedJobs as any).forEach(([status, statusJobs]) => {
+      if (statusJobs?.length === 0) return;
 
-      const statusIcon = this.getStatusIcon(status);
-      const statusColor = this.getStatusColor(status);
+      const statusIcon = this.getStatusIcon(status as any);
+      const statusColor = this.getStatusColor(status as any);
 
       this.log(
         chalk.bold(
           `\n${statusIcon} ${statusColor(status.toUpperCase())} (${statusJobs.length})`
         )
       );
-      this.log(chalk.gray('─'.repeat(60)));
+      this.log(chalk.gray('─'.repeat(60 as any)));
 
       statusJobs.forEach(job => {
-        this.displayJob(job);
+        this.displayJob(job as any);
       });
     });
 
     // Display summary
-    this.displayJobsSummary(jobs);
+    this.displayJobsSummary(jobs as any);
   }
 
   private groupJobsByStatus(jobs: any[]): Record<string, any[]> {
@@ -245,7 +245,7 @@ export default class JobsCommand extends BaseCommand {
 
     jobs.forEach(job => {
       if (groups[job.status]) {
-        groups[job.status].push(job);
+        groups[job.status].push(job as any);
       }
     });
 
@@ -256,18 +256,18 @@ export default class JobsCommand extends BaseCommand {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration);
+    const durationStr = this.formatDuration(duration as any);
     const progressBar = this.createTextProgressBar(job.progress);
 
     // Main job info
     const argsStr = Array.isArray(job.args)
-      ? job.args.join(' ')
+      ? job?.args?.join(' ')
       : job.args || '';
     this.log(`${chalk.bold(job.id)} - ${chalk.cyan(job.command)} ${argsStr}`);
 
     // Progress and timing
     this.log(
-      `  ${progressBar} ${chalk.yellow(job.progress + '%')} | ${chalk.gray(durationStr)}`
+      `  ${progressBar} ${chalk.yellow(job.progress + '%')} | ${chalk.gray(durationStr as any)}`
     );
 
     // Items processed (if available)
@@ -278,7 +278,7 @@ export default class JobsCommand extends BaseCommand {
     }
 
     // Error message (if failed)
-    if (job.status === 'failed' && job.errorMessage) {
+    if (job?.status === 'failed' && job.errorMessage) {
       this.log(`  ${chalk.red('Error:')} ${job.errorMessage}`);
     }
 
@@ -292,15 +292,15 @@ export default class JobsCommand extends BaseCommand {
   private displayJobsSummary(jobs: any[]): void {
     const summary = {
       total: jobs.length,
-      running: jobs.filter(j => j.status === 'running').length,
-      pending: jobs.filter(j => j.status === 'pending').length,
-      completed: jobs.filter(j => j.status === 'completed').length,
-      failed: jobs.filter(j => j.status === 'failed').length,
-      cancelled: jobs.filter(j => j.status === 'cancelled').length,
+      running: jobs.filter(j => j?.status === 'running').length,
+      pending: jobs.filter(j => j?.status === 'pending').length,
+      completed: jobs.filter(j => j?.status === 'completed').length,
+      failed: jobs.filter(j => j?.status === 'failed').length,
+      cancelled: jobs.filter(j => j?.status === 'cancelled').length,
     };
 
     this.log(chalk.bold('\n📊 Summary'));
-    this.log(chalk.gray('─'.repeat(30)));
+    this.log(chalk.gray('─'.repeat(30 as any)));
     this.log(`Total: ${chalk.cyan(summary.total)}`);
 
     if (summary.running > 0)
@@ -360,7 +360,7 @@ export default class JobsCommand extends BaseCommand {
 
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -371,8 +371,8 @@ export default class JobsCommand extends BaseCommand {
     const empty = width - filled;
     return (
       chalk.green('[') +
-      chalk.green('█'.repeat(filled)) +
-      chalk.gray(' '.repeat(empty)) +
+      chalk.green('█'.repeat(filled as any)) +
+      chalk.gray(' '.repeat(empty as any)) +
       chalk.green(']')
     );
   }
@@ -386,22 +386,22 @@ export default class JobsCommand extends BaseCommand {
     }
 
     const job =
-      backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
+      backgroundOrchestrator.getJob(jobId as any) || jobManager.getJob(jobId as any);
     if (!job) {
       this.error(`Job not found: ${jobId}`, { exit: 1 });
     }
 
-    this.log(chalk.bold.cyan(`\n🔍 Job Status: ${job.id}\n`));
+    this.log(chalk?.bold?.cyan(`\n🔍 Job Status: ${job.id}\n`));
 
-    this.log(`Command: ${chalk.bold(job.command)} ${job.args.join(' ')}`);
+    this.log(`Command: ${chalk.bold(job.command)} ${job?.args?.join(' ')}`);
     this.log(
-      `Status: ${this.getStatusIcon(job.status)} ${chalk.bold(job.status.toUpperCase())}`
+      `Status: ${this.getStatusIcon(job.status)} ${chalk.bold(job?.status?.toUpperCase())}`
     );
 
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    this.log(`Duration: ${this.formatDuration(duration)}`);
+    this.log(`Duration: ${this.formatDuration(duration as any)}`);
 
     if (job.progress > 0) {
       const progressBar = this.createTextProgressBar(job.progress, 30);
@@ -409,7 +409,7 @@ export default class JobsCommand extends BaseCommand {
     }
 
     if (job.metadata?.currentStage) {
-      this.log(`Current Stage: ${job.metadata.currentStage}`);
+      this.log(`Current Stage: ${job?.metadata?.currentStage}`);
     }
 
     if (job.processedItems && job.totalItems) {
@@ -437,15 +437,15 @@ export default class JobsCommand extends BaseCommand {
     }
 
     const job =
-      backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
+      backgroundOrchestrator.getJob(jobId as any) || jobManager.getJob(jobId as any);
     if (!job) {
       this.error(`Job not found: ${jobId}`, { exit: 1 });
     }
 
     if (
-      job.status === 'completed' ||
-      job.status === 'failed' ||
-      job.status === 'cancelled'
+      job?.status === 'completed' ||
+      job?.status === 'failed' ||
+      job?.status === 'cancelled'
     ) {
       this.log(chalk.yellow(`Job ${jobId} is already ${job.status}`));
       return;
@@ -459,7 +459,7 @@ export default class JobsCommand extends BaseCommand {
       return;
     }
 
-    const success = backgroundOrchestrator.cancelJob(jobId);
+    const success = backgroundOrchestrator.cancelJob(jobId as any);
     if (success) {
       this.log(chalk.green(`✅ Job ${jobId} cancelled`));
     } else {
@@ -473,21 +473,21 @@ export default class JobsCommand extends BaseCommand {
     }
 
     const job =
-      backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
+      backgroundOrchestrator.getJob(jobId as any) || jobManager.getJob(jobId as any);
     if (!job) {
       this.error(`Job not found: ${jobId}`, { exit: 1 });
     }
 
     // Try to read logs from the job manager
-    const logContent = jobManager.readJobLog(jobId);
+    const logContent = jobManager.readJobLog(jobId as any);
 
     if (!logContent) {
       this.log(chalk.gray('No logs available for this job'));
       return;
     }
 
-    this.log(chalk.bold.cyan(`\n📄 Job Logs: ${jobId}\n`));
-    this.log(logContent);
+    this.log(chalk?.bold?.cyan(`\n📄 Job Logs: ${jobId}\n`));
+    this.log(logContent as any);
   }
 
   private async watchJobs(jobs: any[]): Promise<void> {
@@ -495,7 +495,7 @@ export default class JobsCommand extends BaseCommand {
 
     const interval = setInterval(() => {
       // Clear screen and show updated job list
-      process.stdout.write('\x1Bc');
+      process?.stdout?.write('\x1Bc');
 
       // Get fresh job data
       const allJobs = [
@@ -503,7 +503,7 @@ export default class JobsCommand extends BaseCommand {
         ...backgroundOrchestrator.getJobStatus(),
       ];
       const uniqueJobs = allJobs.filter(
-        (job, index, self) => index === self.findIndex(j => j.id === job.id)
+        (job, index, self) => index === self.findIndex(j => j?.id === job.id)
       );
 
       this.displayJobs(uniqueJobs.slice(0, 20), {});
@@ -512,9 +512,9 @@ export default class JobsCommand extends BaseCommand {
 
     // Handle Ctrl+C
     process.on('SIGINT', () => {
-      clearInterval(interval);
+      clearInterval(interval as any);
       this.log('\n👋 Stopped watching jobs');
-      process.exit(0);
+      process.exit(0 as any);
     });
   }
 }

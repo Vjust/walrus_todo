@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
 import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
@@ -59,7 +59,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(GenerateFrontendConfigCommand);
+    const { flags } = await this.parse(GenerateFrontendConfigCommand as any);
 
     try {
       // Get current configuration
@@ -68,10 +68,10 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
       // Determine values to use (flags override config)
       const network = flags.network || config.network;
       const packageId =
-        flags['package-id'] ||
+        flags?.["package-id"] ||
         config.packageId ||
         config.lastDeployment?.packageId;
-      const deployerAddress = flags['deployer-address'] || config.walletAddress;
+      const deployerAddress = flags?.["deployer-address"] || config.walletAddress;
 
       // Validate required values
       if (!network) {
@@ -122,7 +122,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
         const path = await import('path');
         const networkConfigPath = path.join(configDir, `${network}.ts`);
 
-        if (fs.existsSync(networkConfigPath)) {
+        if (fs.existsSync(networkConfigPath as any)) {
           this.log(
             chalk.yellow(`⚠ Configuration for ${network} already exists at:`)
           );
@@ -141,9 +141,9 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
         config.lastDeployment?.timestamp || 'unknown',
         deployerAddress,
         {
-          aiEnabled: flags['ai-enabled'],
-          blockchainVerification: flags['blockchain-verification'],
-          encryptedStorage: flags['encrypted-storage'],
+          aiEnabled: flags?.["ai-enabled"],
+          blockchainVerification: flags?.["blockchain-verification"],
+          encryptedStorage: flags?.["encrypted-storage"],
         }
       );
 
@@ -175,7 +175,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to generate frontend configuration: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to generate frontend configuration: ${error instanceof Error ? error.message : String(error as any)}`,
         'CONFIG_GENERATION_FAILED'
       );
     }

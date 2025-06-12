@@ -57,8 +57,8 @@ export class SecureCredentialService {
    * Initialize the credential service
    */
   constructor() {
-    this.vault = new EnhancedVaultManager('ai-credentials');
-    this.logger = Logger.getInstance();
+    this?.vault = new EnhancedVaultManager('ai-credentials');
+    this?.logger = Logger.getInstance();
 
     // Check for credentials needing rotation
     this.checkRotationNeeded();
@@ -70,8 +70,8 @@ export class SecureCredentialService {
    * @param adapter - Blockchain adapter instance
    */
   public setBlockchainAdapter(adapter: AICredentialAdapter): void {
-    this.blockchainAdapter = adapter;
-    this.logger.info('Blockchain adapter set for credential verification');
+    this?.blockchainAdapter = adapter;
+    this?.logger?.info('Blockchain adapter set for credential verification');
   }
 
   /**
@@ -97,10 +97,10 @@ export class SecureCredentialService {
     validateApiKey(provider, apiKey);
 
     // Perform security check on the key
-    const securityCheck = performKeySecurityCheck(apiKey);
+    const securityCheck = performKeySecurityCheck(apiKey as any);
     if (!securityCheck.secure) {
-      this.logger.warn(
-        `Security issues detected with ${provider} API key: ${securityCheck.issues.join(', ')}`
+      this?.logger?.warn(
+        `Security issues detected with ${provider} API key: ${securityCheck?.issues?.join(', ')}`
       );
     }
 
@@ -119,18 +119,18 @@ export class SecureCredentialService {
     };
 
     // Store in vault
-    await this.vault.storeSecret(`${provider}-api-key`, apiKey, {
+    await this?.vault?.storeSecret(`${provider}-api-key`, apiKey, {
       expiryDays:
         options.expiryDays ||
-        AI_CONFIG.CREDENTIAL_SECURITY.AUTO_ROTATION_DAYS * 2,
+        AI_CONFIG?.CREDENTIAL_SECURITY?.AUTO_ROTATION_DAYS * 2,
       rotationDays:
         options.rotationDays ||
-        AI_CONFIG.CREDENTIAL_SECURITY.AUTO_ROTATION_DAYS,
+        AI_CONFIG?.CREDENTIAL_SECURITY?.AUTO_ROTATION_DAYS,
       metadata,
     });
 
     // Clear from cache if exists
-    this.credentialCache.delete(provider);
+    this?.credentialCache?.delete(provider as any);
 
     let verified = false;
 
@@ -138,7 +138,7 @@ export class SecureCredentialService {
     if (options.verifyOnChain && this.blockchainAdapter) {
       try {
         const verificationResult =
-          await this.blockchainAdapter.verifyCredential({
+          await this?.blockchainAdapter?.verifyCredential({
             credentialId: metadata.credentialId,
             providerName: provider,
             publicKey: 'placeholder', // Would use a real public key in production
@@ -152,27 +152,27 @@ export class SecureCredentialService {
           });
 
         // Update metadata with verification info
-        metadata.verified = true;
-        metadata.verificationId = verificationResult.verificationId;
-        metadata.verificationDate = new Date().toISOString();
+        metadata?.verified = true;
+        metadata?.verificationId = verificationResult.verificationId;
+        metadata?.verificationDate = new Date().toISOString();
         verified = true;
 
         // Update stored metadata
-        await this.vault.storeSecret(`${provider}-api-key`, apiKey, {
+        await this?.vault?.storeSecret(`${provider}-api-key`, apiKey, {
           expiryDays:
             options.expiryDays ||
-            AI_CONFIG.CREDENTIAL_SECURITY.AUTO_ROTATION_DAYS * 2,
+            AI_CONFIG?.CREDENTIAL_SECURITY?.AUTO_ROTATION_DAYS * 2,
           rotationDays:
             options.rotationDays ||
-            AI_CONFIG.CREDENTIAL_SECURITY.AUTO_ROTATION_DAYS,
+            AI_CONFIG?.CREDENTIAL_SECURITY?.AUTO_ROTATION_DAYS,
           metadata,
         });
 
-        this.logger.info(
+        this?.logger?.info(
           `API key for ${provider} verified on blockchain with ID: ${verificationResult.verificationId}`
         );
       } catch (_error) {
-        this.logger.error(
+        this?.logger?.error(
           `SecureCredentialService: Failed to verify ${provider} credential on blockchain: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
           _error instanceof Error ? _error : undefined
         );
@@ -180,7 +180,7 @@ export class SecureCredentialService {
     }
 
     // Get metadata to create response
-    const metadataInfo = await this.vault.getSecretMetadata(
+    const metadataInfo = await this?.vault?.getSecretMetadata(
       `${provider}-api-key`
     );
 
@@ -216,7 +216,7 @@ export class SecureCredentialService {
   ): Promise<string> {
     // Check cache first if not bypassing
     if (!options.bypassCache) {
-      const cached = this.credentialCache.get(provider);
+      const cached = this?.credentialCache?.get(provider as any);
       if (cached && cached.expiry > Date.now()) {
         return cached.value;
       }
@@ -224,10 +224,10 @@ export class SecureCredentialService {
 
     try {
       // Get from vault
-      const apiKey = await this.vault.getSecret(`${provider}-api-key`);
+      const apiKey = await this?.vault?.getSecret(`${provider}-api-key`);
 
       // Get metadata for verification
-      const metadataInfo = await this.vault.getSecretMetadata(
+      const metadataInfo = await this?.vault?.getSecretMetadata(
         `${provider}-api-key`
       );
       const metadata = metadataInfo?.metadata as CredentialMetadata | undefined;
@@ -240,7 +240,7 @@ export class SecureCredentialService {
         metadata?.verificationId
       ) {
         try {
-          const isValid = await this.blockchainAdapter.checkVerificationStatus(
+          const isValid = await this?.blockchainAdapter?.checkVerificationStatus(
             metadata.verificationId
           );
           if (!isValid) {
@@ -249,17 +249,17 @@ export class SecureCredentialService {
               'VERIFICATION_INVALID'
             );
           }
-          this.logger.debug(
+          this?.logger?.debug(
             `Blockchain verification for ${provider} credential is valid`
           );
         } catch (_error) {
           if (
             _error instanceof CLIError &&
-            _error.code === 'VERIFICATION_INVALID'
+            _error?.code === 'VERIFICATION_INVALID'
           ) {
             throw _error;
           }
-          this.logger.warn(
+          this?.logger?.warn(
             `SecureCredentialService: Failed to check blockchain verification for ${provider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
             _error instanceof Error ? _error : undefined
           );
@@ -268,7 +268,7 @@ export class SecureCredentialService {
       }
 
       // Store in cache
-      this.credentialCache.set(provider, {
+      this?.credentialCache?.set(provider, {
         value: apiKey,
         expiry: Date.now() + this.cacheTTL,
       });
@@ -277,16 +277,16 @@ export class SecureCredentialService {
     } catch (_error) {
       // Check for environment variable as fallback
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      const envValue = process.env[envKey];
+      const envValue = process?.env?.[envKey];
 
       if (envValue) {
-        this.logger.info(`Using ${provider} API key from environment variable`);
+        this?.logger?.info(`Using ${provider} API key from environment variable`);
 
         // Validate the key
         try {
           validateApiKey(provider, envValue);
         } catch (validationError) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Environment variable ${envKey} contains an invalid API key: ${(validationError as Error).message}`
           );
         }
@@ -295,7 +295,7 @@ export class SecureCredentialService {
       }
 
       const baseError =
-        _error instanceof Error ? _error : new Error(String(_error));
+        _error instanceof Error ? _error : new Error(String(_error as any));
       throw new CLIError(
         `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one. Original error: ${baseError.message}`,
         'CREDENTIAL_NOT_FOUND'
@@ -314,7 +314,7 @@ export class SecureCredentialService {
   ): Promise<CredentialInfo> {
     try {
       // Get metadata from vault
-      const metadataInfo = await this.vault.getSecretMetadata(
+      const metadataInfo = await this?.vault?.getSecretMetadata(
         `${provider}-api-key`
       );
 
@@ -345,7 +345,7 @@ export class SecureCredentialService {
     } catch (_error) {
       // Check environment variable as fallback
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      if (process.env[envKey]) {
+      if (process?.env?.[envKey]) {
         return {
           provider,
           verified: false,
@@ -370,7 +370,7 @@ export class SecureCredentialService {
    */
   public async hasCredential(provider: AIProvider): Promise<boolean> {
     // Check vault
-    const hasInVault = await this.vault.hasSecret(`${provider}-api-key`);
+    const hasInVault = await this?.vault?.hasSecret(`${provider}-api-key`);
     if (hasInVault) {
       logger.debug(`Found credential for ${provider} in vault`);
       return true;
@@ -378,14 +378,14 @@ export class SecureCredentialService {
 
     // Check environment variable as fallback
     const envKey = `${provider.toUpperCase()}_API_KEY`;
-    const hasEnvKey = !!process.env[envKey];
+    const hasEnvKey = !!process?.env?.[envKey];
 
     logger.debug(
       `Checking for ${envKey} in environment: ${hasEnvKey ? 'FOUND' : 'NOT FOUND'}`
     );
     if (hasEnvKey) {
       logger.debug(
-        `${envKey} value length: ${process.env[envKey]?.length || 0}`
+        `${envKey} value length: ${process?.env?.[envKey]?.length || 0}`
       );
     }
 
@@ -399,7 +399,7 @@ export class SecureCredentialService {
    */
   public async listCredentials(): Promise<CredentialInfo[]> {
     // Get all secrets from vault
-    const secrets = await this.vault.listSecrets();
+    const secrets = await this?.vault?.listSecrets();
     const credentials: CredentialInfo[] = [];
 
     // Process vault credentials
@@ -408,10 +408,10 @@ export class SecureCredentialService {
 
       const provider = secret.replace('-api-key', '') as AIProvider;
       try {
-        const info = await this.getCredentialInfo(provider);
-        credentials.push(info);
+        const info = await this.getCredentialInfo(provider as any);
+        credentials.push(info as any);
       } catch (_error) {
-        this.logger.warn(
+        this?.logger?.warn(
           `Failed to get info for ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`
         );
       }
@@ -423,11 +423,11 @@ export class SecureCredentialService {
       AIProvider.OPENAI,
       AIProvider.ANTHROPIC,
     ]) {
-      const isAlreadyListed = credentials.some(c => c.provider === provider);
+      const isAlreadyListed = credentials.some(c => c?.provider === provider);
       if (isAlreadyListed) continue;
 
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      if (process.env[envKey]) {
+      if (process?.env?.[envKey]) {
         credentials.push({
           provider,
           verified: false,
@@ -450,7 +450,7 @@ export class SecureCredentialService {
   public async removeCredential(provider: AIProvider): Promise<boolean> {
     try {
       // Get metadata for blockchain revocation
-      const metadataInfo = await this.vault.getSecretMetadata(
+      const metadataInfo = await this?.vault?.getSecretMetadata(
         `${provider}-api-key`
       );
       const metadata = metadataInfo?.metadata as CredentialMetadata | undefined;
@@ -462,28 +462,28 @@ export class SecureCredentialService {
         metadata?.verificationId
       ) {
         try {
-          await this.blockchainAdapter.revokeVerification(
+          await this?.blockchainAdapter?.revokeVerification(
             metadata.verificationId
           );
-          this.logger.info(
+          this?.logger?.info(
             `Revoked blockchain verification for ${provider} credential`
           );
         } catch (_error) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Failed to revoke blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`
           );
         }
       }
 
       // Remove from vault
-      const removed = await this.vault.removeSecret(`${provider}-api-key`);
+      const removed = await this?.vault?.removeSecret(`${provider}-api-key`);
 
       // Remove from cache
-      this.credentialCache.delete(provider);
+      this?.credentialCache?.delete(provider as any);
 
       return removed;
     } catch (_error) {
-      this.logger.error(
+      this?.logger?.error(
         `Failed to remove ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
       return false;
@@ -509,7 +509,7 @@ export class SecureCredentialService {
       const apiKey = await this.getCredential(provider, { bypassCache: true });
 
       // Get metadata
-      const metadataInfo = await this.vault.getSecretMetadata(
+      const metadataInfo = await this?.vault?.getSecretMetadata(
         `${provider}-api-key`
       );
       if (!metadataInfo) {
@@ -522,7 +522,7 @@ export class SecureCredentialService {
       const metadata = (metadataInfo.metadata || {}) as CredentialMetadata;
 
       // Perform verification
-      const verificationResult = await this.blockchainAdapter.verifyCredential({
+      const verificationResult = await this?.blockchainAdapter?.verifyCredential({
         credentialId: metadata.credentialId || randomUUID(),
         providerName: provider,
         publicKey: 'placeholder', // Would use a real public key in production
@@ -538,19 +538,19 @@ export class SecureCredentialService {
       });
 
       // Update metadata
-      metadata.verified = true;
-      metadata.verificationId = verificationResult.verificationId;
-      metadata.verificationDate = new Date().toISOString();
+      metadata?.verified = true;
+      metadata?.verificationId = verificationResult.verificationId;
+      metadata?.verificationDate = new Date().toISOString();
 
       // Store updated metadata
-      await this.vault.storeSecret(`${provider}-api-key`, apiKey, {
+      await this?.vault?.storeSecret(`${provider}-api-key`, apiKey, {
         metadata,
       });
 
-      this.logger.info(`Verified ${provider} credential on blockchain`);
+      this?.logger?.info(`Verified ${provider} credential on blockchain`);
       return true;
     } catch (_error) {
-      this.logger.error(
+      this?.logger?.error(
         `Failed to verify ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
       throw new CLIError(
@@ -574,7 +574,7 @@ export class SecureCredentialService {
     try {
       // Get existing credential and metadata
       const apiKey = await this.getCredential(provider, { bypassCache: true });
-      const metadataInfo = await this.vault.getSecretMetadata(
+      const metadataInfo = await this?.vault?.getSecretMetadata(
         `${provider}-api-key`
       );
 
@@ -587,7 +587,7 @@ export class SecureCredentialService {
 
       // Update metadata
       const metadata = (metadataInfo.metadata || {}) as CredentialMetadata;
-      metadata.permissionLevel = permissionLevel;
+      metadata?.permissionLevel = permissionLevel;
 
       // Update blockchain verification if applicable
       if (
@@ -597,13 +597,13 @@ export class SecureCredentialService {
       ) {
         try {
           // Revoke existing verification
-          await this.blockchainAdapter.revokeVerification(
+          await this?.blockchainAdapter?.revokeVerification(
             metadata.verificationId
           );
 
           // Create new verification
           const verificationResult =
-            await this.blockchainAdapter.verifyCredential({
+            await this?.blockchainAdapter?.verifyCredential({
               credentialId: metadata.credentialId || randomUUID(),
               providerName: provider,
               publicKey: 'placeholder', // Would use a real public key in production
@@ -616,10 +616,10 @@ export class SecureCredentialService {
               },
             });
 
-          metadata.verificationId = verificationResult.verificationId;
-          metadata.verificationDate = new Date().toISOString();
+          metadata?.verificationId = verificationResult.verificationId;
+          metadata?.verificationDate = new Date().toISOString();
         } catch (_error) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Failed to update blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`
           );
           // Continue without blockchain verification update
@@ -627,15 +627,15 @@ export class SecureCredentialService {
       }
 
       // Save updated credential
-      await this.vault.storeSecret(`${provider}-api-key`, apiKey, {
+      await this?.vault?.storeSecret(`${provider}-api-key`, apiKey, {
         metadata,
       });
 
       // Clear cache
-      this.credentialCache.delete(provider);
+      this?.credentialCache?.delete(provider as any);
 
       // Return updated info
-      return await this.getCredentialInfo(provider);
+      return await this.getCredentialInfo(provider as any);
     } catch (_error) {
       throw new CLIError(
         `Failed to update permissions: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -660,7 +660,7 @@ export class SecureCredentialService {
 
     try {
       // Get existing metadata
-      const metadataInfo = await this.vault.getSecretMetadata(
+      const metadataInfo = await this?.vault?.getSecretMetadata(
         `${provider}-api-key`
       );
 
@@ -672,17 +672,17 @@ export class SecureCredentialService {
       }
 
       // Perform security check on the new key
-      const securityCheck = performKeySecurityCheck(newApiKey);
+      const securityCheck = performKeySecurityCheck(newApiKey as any);
       if (!securityCheck.secure) {
-        this.logger.warn(
-          `Security issues detected with new ${provider} API key: ${securityCheck.issues.join(', ')}`
+        this?.logger?.warn(
+          `Security issues detected with new ${provider} API key: ${securityCheck?.issues?.join(', ')}`
         );
       }
 
       // Update metadata
       const metadata = (metadataInfo.metadata || {}) as CredentialMetadata;
-      metadata.lastRotated = new Date().toISOString();
-      metadata.securityScore = securityCheck.secure ? 100 : 50;
+      metadata?.lastRotated = new Date().toISOString();
+      metadata?.securityScore = securityCheck.secure ? 100 : 50;
 
       // Update blockchain verification if applicable
       if (
@@ -692,13 +692,13 @@ export class SecureCredentialService {
       ) {
         try {
           // Revoke existing verification
-          await this.blockchainAdapter.revokeVerification(
+          await this?.blockchainAdapter?.revokeVerification(
             metadata.verificationId
           );
 
           // Create new verification
           const verificationResult =
-            await this.blockchainAdapter.verifyCredential({
+            await this?.blockchainAdapter?.verifyCredential({
               credentialId: metadata.credentialId || randomUUID(),
               providerName: provider,
               publicKey: 'placeholder', // Would use a real public key in production
@@ -713,32 +713,32 @@ export class SecureCredentialService {
               },
             });
 
-          metadata.verificationId = verificationResult.verificationId;
-          metadata.verificationDate = new Date().toISOString();
+          metadata?.verificationId = verificationResult.verificationId;
+          metadata?.verificationDate = new Date().toISOString();
         } catch (_error) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Failed to update blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`
           );
-          metadata.verified = false;
+          metadata?.verified = false;
           delete metadata.verificationId;
         }
       }
 
       // Rotate the credential
-      await this.vault.rotateSecret(`${provider}-api-key`, newApiKey);
+      await this?.vault?.rotateSecret(`${provider}-api-key`, newApiKey);
 
       // Update metadata
-      await this.vault.storeSecret(`${provider}-api-key`, newApiKey, {
+      await this?.vault?.storeSecret(`${provider}-api-key`, newApiKey, {
         metadata,
       });
 
       // Clear cache
-      this.credentialCache.delete(provider);
+      this?.credentialCache?.delete(provider as any);
 
-      this.logger.info(`Rotated API key for ${provider}`);
+      this?.logger?.info(`Rotated API key for ${provider}`);
 
       // Return updated info
-      return await this.getCredentialInfo(provider);
+      return await this.getCredentialInfo(provider as any);
     } catch (_error) {
       throw new CLIError(
         `Failed to rotate credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -754,20 +754,20 @@ export class SecureCredentialService {
    */
   public async checkRotationNeeded(): Promise<string[]> {
     try {
-      const rotationNeeded = await this.vault.checkRotationNeeded();
+      const rotationNeeded = await this?.vault?.checkRotationNeeded();
 
       const providers: string[] = [];
       for (const key of rotationNeeded) {
         if (key.endsWith('-api-key')) {
           const provider = key.replace('-api-key', '');
-          providers.push(provider);
-          this.logger.warn(`API key for ${provider} is due for rotation`);
+          providers.push(provider as any);
+          this?.logger?.warn(`API key for ${provider} is due for rotation`);
         }
       }
 
       return providers;
     } catch (_error) {
-      this.logger.error(
+      this?.logger?.error(
         `Failed to check for credentials needing rotation: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
       return [];

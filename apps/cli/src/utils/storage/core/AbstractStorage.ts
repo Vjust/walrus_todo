@@ -70,7 +70,7 @@ export abstract class AbstractStorage implements IStorage {
    * @param config - Partial configuration to update
    */
   public setConfig(config: Partial<StorageConfig>): void {
-    this.config = { ...this.config, ...config };
+    this?.config = { ...this.config, ...config };
   }
 
   /**
@@ -88,11 +88,11 @@ export abstract class AbstractStorage implements IStorage {
       logger.info('Disconnecting storage...');
 
       // Cancel any pending operations
-      this.abortController.abort('Disconnecting');
-      this.abortController = new AbortController();
+      this?.abortController?.abort('Disconnecting');
+      this?.abortController = new AbortController();
 
       // Reset connection state
-      this.connectionState = 'disconnected';
+      this?.connectionState = 'disconnected';
     }
   }
 
@@ -103,16 +103,16 @@ export abstract class AbstractStorage implements IStorage {
    */
   public async isConnected(): Promise<boolean> {
     if (
-      this.connectionState === 'connected' &&
+      this?.connectionState === 'connected' &&
       Date.now() - this.lastHealthCheck > this.healthCheckInterval
     ) {
       const isHealthy = await this.checkConnectionHealth();
       if (!isHealthy) {
-        this.connectionState = 'failed';
+        this?.connectionState = 'failed';
         return false;
       }
     }
-    return this.connectionState === 'connected';
+    return this?.connectionState === 'connected';
   }
 
   /**
@@ -174,7 +174,7 @@ export abstract class AbstractStorage implements IStorage {
       success: false,
       recommendedStorage: null,
       recommendation: 'allocate-new',
-      potentialSavings: BigInt(0),
+      potentialSavings: BigInt(0 as any),
       savingsPercentage: 0,
       recommendationDetails:
         'Storage optimization not implemented for this storage type',
@@ -192,7 +192,7 @@ export abstract class AbstractStorage implements IStorage {
   public async verify(id: string, expectedChecksum?: string): Promise<boolean> {
     try {
       // Retrieve the content
-      const { content, metadata } = await this.retrieve(id);
+      const { content, metadata } = await this.retrieve(id as any);
 
       // Extract checksum from metadata or use provided one
       const storedChecksum = metadata.checksum || expectedChecksum;
@@ -225,7 +225,7 @@ export abstract class AbstractStorage implements IStorage {
     data: Uint8Array,
     algorithm: string = 'sha256'
   ): string {
-    return crypto.createHash(algorithm).update(Buffer.from(data)).digest('hex');
+    return crypto.createHash(algorithm as any).update(Buffer.from(data as any)).digest('hex');
   }
 
   /**
@@ -242,7 +242,7 @@ export abstract class AbstractStorage implements IStorage {
     metadata: Record<string, string>,
     ttl: number = AbstractStorage.CACHE_TTL
   ): void {
-    AbstractStorage.cache.set(id, {
+    AbstractStorage?.cache?.set(id, {
       data: content,
       metadata,
       expires: Date.now() + ttl,
@@ -261,7 +261,7 @@ export abstract class AbstractStorage implements IStorage {
   protected getCachedContent(
     id: string
   ): { content: Uint8Array; metadata: Record<string, string> } | null {
-    const cached = AbstractStorage.cache.get(id);
+    const cached = AbstractStorage?.cache?.get(id as any);
     if (cached && cached.expires > Date.now()) {
       return {
         content: cached.data,
@@ -276,9 +276,9 @@ export abstract class AbstractStorage implements IStorage {
    */
   protected cleanCache(): void {
     const now = Date.now();
-    for (const [key, value] of AbstractStorage.cache.entries()) {
+    for (const [key, value] of AbstractStorage?.cache?.entries()) {
       if (value.expires <= now) {
-        AbstractStorage.cache.delete(key);
+        AbstractStorage?.cache?.delete(key as any);
       }
     }
   }
@@ -289,7 +289,7 @@ export abstract class AbstractStorage implements IStorage {
    * @returns A new AbortController
    */
   protected createFreshAbortController(): AbortController {
-    this.abortController = new AbortController();
+    this?.abortController = new AbortController();
     return this.abortController;
   }
 

@@ -20,8 +20,8 @@ import { WalrusDeploymentValidator } from '../helpers/deployment-validator';
 jest.mock('fs/promises');
 jest.mock('js-yaml');
 
-const mockedFs = jest.mocked(fs);
-const mockedYaml = jest.mocked(yaml);
+const mockedFs = jest.mocked(fs as any);
+const mockedYaml = jest.mocked(yaml as any);
 
 describe('Walrus Sites Configuration Validation', () => {
   let validator: WalrusDeploymentValidator;
@@ -43,8 +43,8 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
 `;
 
-      mockedFs.readFile.mockResolvedValue(validConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(validConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           network: 'testnet',
@@ -56,8 +56,8 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
-      expect(validation.errors).toHaveLength(0);
+      expect(validation.isValid).toBe(true as any);
+      expect(validation.errors).toHaveLength(0 as any);
     });
 
     test('should detect YAML syntax errors', async () => {
@@ -71,9 +71,9 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
 `;
 
-      mockedFs.readFile.mockResolvedValue(invalidConfig);
+      mockedFs?.readFile?.mockResolvedValue(invalidConfig as any);
       const yamlError = new yaml.YAMLException('unexpected end of the stream');
-      mockedYaml.load.mockImplementation(() => {
+      mockedYaml?.load?.mockImplementation(() => {
         throw yamlError;
       });
 
@@ -81,20 +81,20 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('Invalid YAML syntax: unexpected end of the stream');
     });
 
     test('should handle empty configuration files', async () => {
       // Arrange
-      mockedFs.readFile.mockResolvedValue('');
-      mockedYaml.load.mockReturnValue(null);
+      mockedFs?.readFile?.mockResolvedValue('');
+      mockedYaml?.load?.mockReturnValue(null as any);
 
       // Act
       const validation = await validator.validateSitesConfig('/path/to/empty-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('Empty or invalid configuration file');
     });
 
@@ -117,18 +117,18 @@ waltodo-production:
       to: "/new-path/*"
       status: 301
     - from: "/api/*"
-      to: "https://api.waltodo.com/api/*"
+      to: "https://api?.waltodo?.com/api/*"
       status: 307
   error_pages:
     404: "/404.html"
     500: "/500.html"
   custom_domains:
     - "waltodo.com"
-    - "www.waltodo.com"
+    - "www?.waltodo?.com"
 `;
 
-      mockedFs.readFile.mockResolvedValue(complexConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(complexConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-production': {
           source: '/dist',
           network: 'mainnet',
@@ -143,10 +143,10 @@ waltodo-production:
           },
           redirects: [
             { from: '/old-path/*', to: '/new-path/*', status: 301 },
-            { from: '/api/*', to: 'https://api.waltodo.com/api/*', status: 307 }
+            { from: '/api/*', to: 'https://api?.waltodo?.com/api/*', status: 307 }
           ],
           error_pages: { 404: '/404.html', 500: '/500.html' },
-          custom_domains: ['waltodo.com', 'www.waltodo.com']
+          custom_domains: ['waltodo.com', 'www?.waltodo?.com']
         }
       });
 
@@ -154,8 +154,8 @@ waltodo-production:
       const validation = await validator.validateSitesConfig('/path/to/complex-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
-      expect(validation.warnings).toHaveLength(0);
+      expect(validation.isValid).toBe(true as any);
+      expect(validation.warnings).toHaveLength(0 as any);
     });
   });
 
@@ -170,8 +170,8 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
 `;
 
-      mockedFs.readFile.mockResolvedValue(configWithoutSource);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(configWithoutSource as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           network: 'testnet',
           headers: { '/*': ['Cache-Control: public, max-age=3600'] }
@@ -182,7 +182,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('Missing required field: source');
     });
 
@@ -196,8 +196,8 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
 `;
 
-      mockedFs.readFile.mockResolvedValue(configWithoutNetwork);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(configWithoutNetwork as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           headers: { '/*': ['Cache-Control: public, max-age=3600'] }
@@ -208,7 +208,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('Missing required field: network');
     });
 
@@ -220,8 +220,8 @@ waltodo-app:
   network: "invalidnet"
 `;
 
-      mockedFs.readFile.mockResolvedValue(configWithInvalidNetwork);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(configWithInvalidNetwork as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           network: 'invalidnet'
@@ -232,7 +232,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('Invalid network: invalidnet. Must be \'testnet\' or \'mainnet\'');
     });
 
@@ -240,14 +240,14 @@ waltodo-app:
       // Arrange
       const emptyConfig = '{}';
 
-      mockedFs.readFile.mockResolvedValue(emptyConfig);
-      mockedYaml.load.mockReturnValue({});
+      mockedFs?.readFile?.mockResolvedValue(emptyConfig as any);
+      mockedYaml?.load?.mockReturnValue({});
 
       // Act
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('No site configurations found');
     });
   });
@@ -261,8 +261,8 @@ waltodo-app:
   network: "testnet"
 `;
 
-      mockedFs.readFile.mockResolvedValue(configWithoutHeaders);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(configWithoutHeaders as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           network: 'testnet'
@@ -273,7 +273,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       expect(validation.warnings).toContain('No security headers configured');
     });
 
@@ -288,8 +288,8 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
 `;
 
-      mockedFs.readFile.mockResolvedValue(configWithoutRedirects);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(configWithoutRedirects as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           network: 'testnet',
@@ -301,7 +301,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       expect(validation.warnings).toContain('No redirects configured');
     });
 
@@ -316,17 +316,17 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
   redirects:
     - from: "/api/*"
-      to: "https://api.waltodo.com/api/*"
+      to: "https://api?.waltodo?.com/api/*"
       status: 307
 `;
 
-      mockedFs.readFile.mockResolvedValue(configWithoutErrorPages);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(configWithoutErrorPages as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           network: 'testnet',
           headers: { '/*': ['Cache-Control: public, max-age=3600'] },
-          redirects: [{ from: '/api/*', to: 'https://api.waltodo.com/api/*', status: 307 }]
+          redirects: [{ from: '/api/*', to: 'https://api?.waltodo?.com/api/*', status: 307 }]
         }
       });
 
@@ -334,7 +334,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       expect(validation.warnings).toContain('No custom error pages configured');
     });
   });
@@ -355,8 +355,8 @@ waltodo-testnet:
       const validation = await validator.validateConfigForNetwork(testnetConfig, 'testnet');
 
       // Assert
-      expect(validation.isValid).toBe(true);
-      expect(validation.networkMatch).toBe(true);
+      expect(validation.isValid).toBe(true as any);
+      expect(validation.networkMatch).toBe(true as any);
       expect(validation.cachePolicy).toBe('development');
     });
 
@@ -375,8 +375,8 @@ waltodo-production:
       const validation = await validator.validateConfigForNetwork(mainnetConfig, 'mainnet');
 
       // Assert
-      expect(validation.isValid).toBe(true);
-      expect(validation.networkMatch).toBe(true);
+      expect(validation.isValid).toBe(true as any);
+      expect(validation.networkMatch).toBe(true as any);
       expect(validation.cachePolicy).toBe('production');
     });
 
@@ -395,8 +395,8 @@ waltodo-app:
       const validation = await validator.validateConfigForNetwork(mainnetConfigForTestnet, 'testnet');
 
       // Assert
-      expect(validation.isValid).toBe(true);
-      expect(validation.networkMatch).toBe(false);
+      expect(validation.isValid).toBe(true as any);
+      expect(validation.networkMatch).toBe(false as any);
       expect(validation.warnings).toContain('Configuration network (mainnet) doesn\'t match deployment network (testnet)');
     });
 
@@ -429,12 +429,12 @@ waltodo-dev:
       };
 
       // Act
-      const validation = await validator.validateEnvironmentVariables(completeEnv);
+      const validation = await validator.validateEnvironmentVariables(completeEnv as any);
 
       // Assert
-      expect(validation.isValid).toBe(true);
-      expect(validation.missingVariables).toHaveLength(0);
-      expect(validation.recommendations).toHaveLength(0);
+      expect(validation.isValid).toBe(true as any);
+      expect(validation.missingVariables).toHaveLength(0 as any);
+      expect(validation.recommendations).toHaveLength(0 as any);
     });
 
     test('should detect missing required variables', async () => {
@@ -445,10 +445,10 @@ waltodo-dev:
       };
 
       // Act
-      const validation = await validator.validateEnvironmentVariables(incompleteEnv);
+      const validation = await validator.validateEnvironmentVariables(incompleteEnv as any);
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.missingVariables).toContain('SITE_BUILDER_PATH');
     });
 
@@ -461,10 +461,10 @@ waltodo-dev:
       };
 
       // Act
-      const validation = await validator.validateEnvironmentVariables(minimalEnv);
+      const validation = await validator.validateEnvironmentVariables(minimalEnv as any);
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       expect(validation.recommendations).toContain('Set wallet path for automated deployment');
     });
 
@@ -473,10 +473,10 @@ waltodo-dev:
       const emptyEnv = {};
 
       // Act
-      const validation = await validator.validateEnvironmentVariables(emptyEnv);
+      const validation = await validator.validateEnvironmentVariables(emptyEnv as any);
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.missingVariables).toContain('WALRUS_CONFIG_PATH');
       expect(validation.missingVariables).toContain('SITE_BUILDER_PATH');
     });
@@ -493,8 +493,8 @@ target_network: testnet
 cache_duration: 3600
 `;
 
-      mockedFs.readFile.mockResolvedValue(legacyConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(legacyConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         site_name: 'waltodo-app',
         build_dir: '/build',
         target_network: 'testnet',
@@ -505,7 +505,7 @@ cache_duration: 3600
       const validation = await validator.validateSitesConfig('/path/to/legacy-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('No site configurations found');
     });
 
@@ -521,8 +521,8 @@ waltodo-app:
       - "Cache-Control: public, max-age=3600"
 `;
 
-      mockedFs.readFile.mockResolvedValue(versionedConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(versionedConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         version: '1.0',
         'waltodo-app': {
           source: '/build',
@@ -535,7 +535,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/versioned-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
     });
 
     test('should handle multiple site configurations', async () => {
@@ -556,8 +556,8 @@ waltodo-production:
       - "Cache-Control: public, max-age=86400"
 `;
 
-      mockedFs.readFile.mockResolvedValue(multiSiteConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(multiSiteConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-staging': {
           source: '/build',
           network: 'testnet',
@@ -574,7 +574,7 @@ waltodo-production:
       const validation = await validator.validateSitesConfig('/path/to/multi-site-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       // Should validate first site configuration
     });
   });
@@ -596,8 +596,8 @@ waltodo-secure:
       - "Content-Security-Policy: default-src 'self'"
 `;
 
-      mockedFs.readFile.mockResolvedValue(secureConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(secureConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-secure': {
           source: '/build',
           network: 'mainnet',
@@ -618,7 +618,7 @@ waltodo-secure:
       const validation = await validator.validateSitesConfig('/path/to/secure-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       expect(validation.warnings).not.toContain('No security headers configured');
     });
 
@@ -630,20 +630,20 @@ waltodo-app:
   network: "testnet"
   redirects:
     - from: "/api/*"
-      to: "https://api.waltodo.com/api/*"
+      to: "https://api?.waltodo?.com/api/*"
       status: 307
     - from: "/admin/*"
       to: "https://malicious-site.com/*"  # Should be flagged
       status: 301
 `;
 
-      mockedFs.readFile.mockResolvedValue(redirectConfig);
-      mockedYaml.load.mockReturnValue({
+      mockedFs?.readFile?.mockResolvedValue(redirectConfig as any);
+      mockedYaml?.load?.mockReturnValue({
         'waltodo-app': {
           source: '/build',
           network: 'testnet',
           redirects: [
-            { from: '/api/*', to: 'https://api.waltodo.com/api/*', status: 307 },
+            { from: '/api/*', to: 'https://api?.waltodo?.com/api/*', status: 307 },
             { from: '/admin/*', to: 'https://malicious-site.com/*', status: 301 }
           ]
         }
@@ -653,7 +653,7 @@ waltodo-app:
       const validation = await validator.validateSitesConfig('/path/to/redirect-config.yaml');
 
       // Assert
-      expect(validation.isValid).toBe(true);
+      expect(validation.isValid).toBe(true as any);
       // Note: In a real implementation, this would validate redirect URLs
     });
   });

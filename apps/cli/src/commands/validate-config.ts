@@ -1,4 +1,4 @@
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
 import ConfigCommand from './config';
 import { jobManager } from '../utils/PerformanceMonitor';
@@ -23,7 +23,7 @@ export default class ValidateConfigCommand extends BaseCommand {
   static flags = ConfigCommand.flags;
 
   async run(): Promise<void> {
-    const { flags, argv } = await this.parse(ValidateConfigCommand);
+    const { flags, argv } = await this.parse(ValidateConfigCommand as any);
 
     // Show deprecation notice
     this.log(
@@ -34,7 +34,7 @@ export default class ValidateConfigCommand extends BaseCommand {
 
     // Handle background mode directly for legacy support
     if (flags.background) {
-      return this.runLegacyValidationInBackground(flags);
+      return this.runLegacyValidationInBackground(flags as any);
     }
 
     // Build args for config command
@@ -44,12 +44,12 @@ export default class ValidateConfigCommand extends BaseCommand {
     const flagArgs: string[] = [];
     if (flags.network) flagArgs.push('--network', flags.network);
     if (flags.detailed) flagArgs.push('--detailed');
-    if (flags['report-file'])
-      flagArgs.push('--report-file', flags['report-file']);
+    if (flags?.["report-file"])
+      flagArgs.push('--report-file', flags?.["report-file"]);
     if (flags.background) flagArgs.push('--background');
 
     // Run the config command with validate action
-    await this.config.runCommand('config', [...args, ...flagArgs]);
+    await this?.config?.runCommand('config', [...args, ...flagArgs]);
   }
 
   /**
@@ -105,7 +105,7 @@ export default class ValidateConfigCommand extends BaseCommand {
         });
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(error as any);
         jobManager.writeJobLog(
           job.id,
           `Legacy validation failed: ${errorMessage}`

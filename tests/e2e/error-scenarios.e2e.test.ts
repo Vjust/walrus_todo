@@ -10,21 +10,21 @@ describe('End-to-End Error Scenarios', () => {
 
   beforeAll(() => {
     // Create test directory
-    fs.ensureDirSync(testDir);
-    process.env.WALRUS_TODO_CONFIG_DIR = testDir;
-    process.env.WALRUS_USE_MOCK = 'true';
+    fs.ensureDirSync(testDir as any);
+    process.env?.WALRUS_TODO_CONFIG_DIR = testDir;
+    process.env?.WALRUS_USE_MOCK = 'true';
   });
 
   afterAll(() => {
     // Clean up test directory
-    fs.removeSync(testDir);
-    delete process.env.WALRUS_TODO_CONFIG_DIR;
-    delete process.env.WALRUS_USE_MOCK;
+    fs.removeSync(testDir as any);
+    delete process?.env?.WALRUS_TODO_CONFIG_DIR;
+    delete process?.env?.WALRUS_USE_MOCK;
   });
 
   beforeEach(() => {
     // Reset test environment
-    fs.emptyDirSync(testDir);
+    fs.emptyDirSync(testDir as any);
 
     // Create a basic config file
     fs.writeJsonSync(configFile, {
@@ -32,8 +32,8 @@ describe('End-to-End Error Scenarios', () => {
       localStoragePath: todoFile,
       walrusConfig: {
         network: 'testnet',
-        aggregator: 'https://api.walrus.storage/v1',
-        publisher: 'https://publish.walrus.storage/v1',
+        aggregator: 'https://api?.walrus?.storage/v1',
+        publisher: 'https://publish?.walrus?.storage/v1',
       },
     });
   });
@@ -56,8 +56,8 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('Permission denied');
-      expect(result).toContain('Unable to write configuration');
+      expect(result as any).toContain('Permission denied');
+      expect(result as any).toContain('Unable to write configuration');
 
       // Restore permissions
       fs.chmodSync(configFile, 0o644);
@@ -97,8 +97,8 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('Failed to parse todos file');
-      expect(result).toContain('Consider restoring from backup');
+      expect(result as any).toContain('Failed to parse todos file');
+      expect(result as any).toContain('Consider restoring from backup');
     });
   });
 
@@ -128,8 +128,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(thrownError).toBeTruthy();
-      expect(thrownError).toBeInstanceOf(Error);
+      expect(thrownError as any).toBeTruthy();
+      expect(thrownError as any).toBeInstanceOf(Error as any);
 
       fetchStub.restore();
     });
@@ -156,8 +156,8 @@ describe('End-to-End Error Scenarios', () => {
         caughtError = error as Error;
       }
 
-      expect(caughtError).not.toBeNull();
-      expect(caughtError).toBeInstanceOf(Error);
+      expect(caughtError as any).not.toBeNull();
+      expect(caughtError as any).toBeInstanceOf(Error as any);
       expect(caughtError?.message).toContain('Rate limit exceeded');
       expect(caughtError?.message).toContain('Please wait before retrying');
 
@@ -187,8 +187,8 @@ describe('End-to-End Error Scenarios', () => {
         caughtError = error as Error;
       }
 
-      expect(caughtError).not.toBeNull();
-      expect(caughtError).toBeInstanceOf(Error);
+      expect(caughtError as any).not.toBeNull();
+      expect(caughtError as any).toBeInstanceOf(Error as any);
       expect(caughtError?.message).toContain('DNS lookup failed');
       expect(caughtError?.message).toContain('Unable to resolve host');
 
@@ -200,7 +200,7 @@ describe('End-to-End Error Scenarios', () => {
     it('should handle insufficient funds error', () => {
       // Simulate insufficient funds
       const execStub = sinon
-        .stub(exec)
+        .stub(exec as any)
         .callsArgWith(1, new Error('Insufficient balance for transaction'));
 
       let caughtError: Error | null = null;
@@ -216,8 +216,8 @@ describe('End-to-End Error Scenarios', () => {
         caughtError = error as Error;
       }
 
-      expect(caughtError).not.toBeNull();
-      expect(caughtError).toBeInstanceOf(Error);
+      expect(caughtError as any).not.toBeNull();
+      expect(caughtError as any).toBeInstanceOf(Error as any);
       expect(caughtError?.message).toContain('Insufficient balance');
       expect(caughtError?.message).toContain('Please fund your wallet');
 
@@ -230,7 +230,7 @@ describe('End-to-End Error Scenarios', () => {
       );
 
       // Mock transaction failure
-      const execStub = sinon.stub(exec).callsArgWith(1, transactionError);
+      const execStub = sinon.stub(exec as any).callsArgWith(1, transactionError);
 
       let errorThrown = false;
       let errorMessage = '';
@@ -252,8 +252,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Transaction validation failed/);
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(/Transaction validation failed/);
 
       execStub.restore();
     });
@@ -262,7 +262,7 @@ describe('End-to-End Error Scenarios', () => {
       // Simulate contract execution failure
       const contractError = new Error('Move abort: 0x1');
 
-      const execStub = sinon.stub(exec).callsArgWith(1, contractError);
+      const execStub = sinon.stub(exec as any).callsArgWith(1, contractError);
 
       let errorThrown = false;
       let errorMessage = '';
@@ -284,8 +284,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(
         /Smart contract execution failed.*Contract error code/
       );
 
@@ -317,8 +317,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(
         /Invalid API key.*Check your AI provider credentials/
       );
 
@@ -348,8 +348,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/AI service error.*Try again later/);
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(/AI service error.*Try again later/);
 
       fetchStub.restore();
     });
@@ -375,8 +375,8 @@ describe('End-to-End Error Scenarios', () => {
       );
 
       // Restructured to avoid conditional expects
-      expect(result).toContain('Restored configuration from backup');
-      expect(result).toContain('Todo list');
+      expect(result as any).toContain('Restored configuration from backup');
+      expect(result as any).toContain('Todo list');
     });
 
     it('should retry failed network requests', () => {
@@ -400,20 +400,20 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(callCount).toBe(3);
-      expect(result).toBeDefined();
+      expect(callCount as any).toBe(3 as any);
+      expect(result as any).toBeDefined();
       // Check result content unconditionally
       const resultContainsRetryMessage = result.includes(
         'Successfully connected after retry'
       );
-      expect(resultContainsRetryMessage).toBe(true);
+      expect(resultContainsRetryMessage as any).toBe(true as any);
 
       fetchStub.restore();
     });
 
     it('should provide fallback for unavailable features', () => {
       // Disable AI features
-      process.env.DISABLE_AI_FEATURES = 'true';
+      process.env?.DISABLE_AI_FEATURES = 'true';
 
       const result = execSync(
         `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai suggest`,
@@ -423,10 +423,10 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('AI features are currently disabled');
-      expect(result).toContain('Basic todo functionality remains available');
+      expect(result as any).toContain('AI features are currently disabled');
+      expect(result as any).toContain('Basic todo functionality remains available');
 
-      delete process.env.DISABLE_AI_FEATURES;
+      delete process?.env?.DISABLE_AI_FEATURES;
     });
 
     it('should gracefully degrade when storage is unavailable', () => {
@@ -443,8 +443,8 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('Storage unavailable, showing cached data');
-      expect(result).toContain('Limited functionality available');
+      expect(result as any).toContain('Storage unavailable, showing cached data');
+      expect(result as any).toContain('Limited functionality available');
 
       stub.restore();
     });
@@ -462,12 +462,12 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('Input contains invalid characters');
-      expect(result).toContain('Please use only allowed characters');
+      expect(result as any).toContain('Input contains invalid characters');
+      expect(result as any).toContain('Please use only allowed characters');
     });
 
     it('should handle extremely long input', () => {
-      const longInput = 'a'.repeat(10000);
+      const longInput = 'a'.repeat(10000 as any);
 
       const result = execSync(
         `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} add "${longInput}"`,
@@ -477,8 +477,8 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('Input exceeds maximum length');
-      expect(result).toContain('Please limit to 1000 characters');
+      expect(result as any).toContain('Input exceeds maximum length');
+      expect(result as any).toContain('Please limit to 1000 characters');
     });
 
     it('should handle invalid command combinations', () => {
@@ -498,15 +498,15 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Conflicting options/);
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(/Conflicting options/);
     });
   });
 
   describe('Concurrent Operation Errors', () => {
     it('should handle file lock conflicts', () => {
       // Simulate file lock
-      const lockFile = path.join(testDir, 'todos.json.lock');
+      const lockFile = path.join(testDir, 'todos?.json?.lock');
       fs.writeFileSync(lockFile, 'locked');
 
       const result = execSync(
@@ -517,10 +517,10 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('File is currently locked');
-      expect(result).toContain('Another operation in progress');
+      expect(result as any).toContain('File is currently locked');
+      expect(result as any).toContain('Another operation in progress');
 
-      fs.unlinkSync(lockFile);
+      fs.unlinkSync(lockFile as any);
     });
 
     it('should handle race conditions in updates', () => {
@@ -567,8 +567,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(
         /Concurrent modification|File lock|operation failed/
       );
 
@@ -578,7 +578,7 @@ describe('End-to-End Error Scenarios', () => {
 
   describe('Environment-Specific Errors', () => {
     it('should handle missing environment variables', () => {
-      delete process.env.WALRUS_TODO_CONFIG_DIR;
+      delete process?.env?.WALRUS_TODO_CONFIG_DIR;
 
       const result = execSync(
         `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} configure`,
@@ -587,14 +587,14 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
-      expect(result).toContain('Using default configuration directory');
-      expect(result).toContain('~/.walrus-todo');
+      expect(result as any).toContain('Using default configuration directory');
+      expect(result as any).toContain('~/.walrus-todo');
 
-      process.env.WALRUS_TODO_CONFIG_DIR = testDir;
+      process.env?.WALRUS_TODO_CONFIG_DIR = testDir;
     });
 
     it('should handle invalid environment variable values', () => {
-      process.env.WALRUS_NETWORK = 'invalid-network';
+      process.env?.WALRUS_NETWORK = 'invalid-network';
 
       let errorThrown = false;
       let errorMessage = '';
@@ -612,10 +612,10 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Invalid network|Valid networks/);
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(/Invalid network|Valid networks/);
 
-      delete process.env.WALRUS_NETWORK;
+      delete process?.env?.WALRUS_NETWORK;
     });
   });
 
@@ -645,8 +645,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(
         /Multiple errors|Network error|Disk full|Operation.*completed/
       );
 
@@ -657,9 +657,9 @@ describe('End-to-End Error Scenarios', () => {
     it('should provide helpful troubleshooting steps', () => {
       // Simulate complex error scenario
       const error = new Error('Connection refused');
-      error.cause = { code: 'ECONNREFUSED', syscall: 'connect' };
+      error?.cause = { code: 'ECONNREFUSED', syscall: 'connect' };
 
-      const fetchStub = sinon.stub(global, 'fetch').rejects(error);
+      const fetchStub = sinon.stub(global, 'fetch').rejects(error as any);
 
       let errorThrown = false;
       let errorMessage = '';
@@ -681,8 +681,8 @@ describe('End-to-End Error Scenarios', () => {
       }
 
       // Restructured to avoid conditional expects
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(
         /Connection refused.*Troubleshooting steps:.*1\. Check if the service is running.*2\. Verify the network configuration.*3\. Check firewall settings/s
       );
 

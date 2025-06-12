@@ -13,13 +13,13 @@ describe('Todo Lifecycle E2E Tests', () => {
 
   beforeAll(async () => {
     // Start API server
-    process.env.NODE_ENV = 'test';
-    process.env.API_KEY = apiKey;
-    process.env.ENABLE_AUTH = 'false';
-    process.env.PORT = String(serverPort);
+    process.env?.NODE_ENV = 'test';
+    process.env?.API_KEY = apiKey;
+    process.env?.ENABLE_AUTH = 'false';
+    process.env?.PORT = String(serverPort as any);
 
     apiServer = new ApiServer();
-    await apiServer.start(serverPort);
+    await apiServer.start(serverPort as any);
 
     // Set up API client
     apiClient = axios.create({
@@ -51,18 +51,18 @@ describe('Todo Lifecycle E2E Tests', () => {
         { encoding: 'utf8' }
       );
 
-      expect(output).toContain('Todo added successfully');
+      expect(output as any).toContain('Todo added successfully');
       
       // Extract ID from output
       const idMatch = output.match(/ID: ([a-zA-Z0-9-]+)/);
-      expect(idMatch).toBeTruthy();
+      expect(idMatch as any).toBeTruthy();
       todoId = idMatch![1];
     });
 
     test('Step 2: Verify todo exists via API', async () => {
       const response = await apiClient.get(`/todos/${todoId}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: todoId,
         title: todoTitle,
@@ -81,7 +81,7 @@ describe('Todo Lifecycle E2E Tests', () => {
 
       const response = await apiClient.put(`/todos/${todoId}`, updateData);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: todoId,
         title: updateData.title,
@@ -94,10 +94,10 @@ describe('Todo Lifecycle E2E Tests', () => {
         encoding: 'utf8',
       });
 
-      const todos = JSON.parse(output);
-      const updatedTodo = todos.find((t: any) => t.id === todoId);
+      const todos = JSON.parse(output as any);
+      const updatedTodo = todos.find((t: any) => t?.id === todoId);
       
-      expect(updatedTodo).toBeDefined();
+      expect(updatedTodo as any).toBeDefined();
       expect(updatedTodo.title).toContain('(Updated)');
       expect(updatedTodo.priority).toBe('medium');
     });
@@ -107,23 +107,23 @@ describe('Todo Lifecycle E2E Tests', () => {
         encoding: 'utf8',
       });
 
-      expect(output).toContain('completed');
+      expect(output as any).toContain('completed');
     });
 
     test('Step 6: Verify completion via API', async () => {
       const response = await apiClient.get(`/todos/${todoId}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: todoId,
         completed: true,
-        completedAt: expect.any(String),
+        completedAt: expect.any(String as any),
       });
     });
 
     test('Step 7: Delete todo via API', async () => {
       const response = await apiClient.delete(`/todos/${todoId}`);
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(204 as any);
     });
 
     test('Step 8: Verify deletion via CLI', () => {
@@ -131,10 +131,10 @@ describe('Todo Lifecycle E2E Tests', () => {
         encoding: 'utf8',
       });
 
-      const todos = JSON.parse(output);
-      const deletedTodo = todos.find((t: any) => t.id === todoId);
+      const todos = JSON.parse(output as any);
+      const deletedTodo = todos.find((t: any) => t?.id === todoId);
       
-      expect(deletedTodo).toBeUndefined();
+      expect(deletedTodo as any).toBeUndefined();
     });
   });
 
@@ -154,7 +154,7 @@ describe('Todo Lifecycle E2E Tests', () => {
         }
       }
 
-      expect(todoIds).toHaveLength(5);
+      expect(todoIds as any).toHaveLength(5 as any);
     });
 
     test('Batch update via API', async () => {
@@ -168,8 +168,8 @@ describe('Todo Lifecycle E2E Tests', () => {
 
       const response = await apiClient.post('/todos/batch', batchData);
       
-      expect(response.status).toBe(200);
-      expect(response.data.success).toBe(true);
+      expect(response.status).toBe(200 as any);
+      expect(response?.data?.success).toBe(true as any);
     });
 
     test('Verify batch update via CLI', () => {
@@ -177,10 +177,10 @@ describe('Todo Lifecycle E2E Tests', () => {
         encoding: 'utf8',
       });
 
-      const todos = JSON.parse(output);
+      const todos = JSON.parse(output as any);
       todoIds.forEach(id => {
-        const todo = todos.find((t: any) => t.id === id);
-        expect(todo).toBeDefined();
+        const todo = todos.find((t: any) => t?.id === id);
+        expect(todo as any).toBeDefined();
         expect(todo.tags).toEqual(['batch', 'test']);
       });
     });
@@ -190,7 +190,7 @@ describe('Todo Lifecycle E2E Tests', () => {
         const output = execSync(`node ${cliPath} complete ${id}`, {
           encoding: 'utf8',
         });
-        expect(output).toContain('completed');
+        expect(output as any).toContain('completed');
       });
     });
 
@@ -202,8 +202,8 @@ describe('Todo Lifecycle E2E Tests', () => {
 
       const response = await apiClient.post('/todos/batch', batchData);
       
-      expect(response.status).toBe(200);
-      expect(response.data.deleted).toBe(todoIds.length);
+      expect(response.status).toBe(200 as any);
+      expect(response?.data?.deleted).toBe(todoIds.length);
     });
   });
 
@@ -216,7 +216,7 @@ describe('Todo Lifecycle E2E Tests', () => {
         { encoding: 'utf8' }
       );
 
-      expect(output).toContain('suggestion');
+      expect(output as any).toContain('suggestion');
     });
 
     test('Create todo from AI suggestion', async () => {
@@ -226,17 +226,17 @@ describe('Todo Lifecycle E2E Tests', () => {
         tags: ['ai', 'meeting'],
       });
 
-      expect(response.status).toBe(201);
-      aiTodoId = response.data.id;
+      expect(response.status).toBe(201 as any);
+      aiTodoId = response?.data?.id;
     });
 
     test('Sync todo to Walrus', async () => {
       const response = await apiClient.post(`/sync/todos/${aiTodoId}/walrus`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         success: true,
-        blobId: expect.any(String),
+        blobId: expect.any(String as any),
       });
     });
 
@@ -246,13 +246,13 @@ describe('Todo Lifecycle E2E Tests', () => {
         { encoding: 'utf8' }
       );
 
-      expect(output).toContain('Sync status');
-      expect(output).toContain(aiTodoId);
+      expect(output as any).toContain('Sync status');
+      expect(output as any).toContain(aiTodoId as any);
     });
 
     test('Clean up AI todo', async () => {
       const response = await apiClient.delete(`/todos/${aiTodoId}`);
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(204 as any);
     });
   });
 
@@ -267,7 +267,7 @@ describe('Todo Lifecycle E2E Tests', () => {
 
     test('Handle API errors gracefully', async () => {
       const response = await apiClient.get('/todos/non-existent-id');
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(404 as any);
     });
 
     test('Handle malformed CLI input', () => {
@@ -292,21 +292,21 @@ describe('Todo Lifecycle E2E Tests', () => {
       }
 
       // All should succeed
-      expect(commands).toHaveLength(10);
+      expect(commands as any).toHaveLength(10 as any);
       
       // Verify via API
       const response = await apiClient.get('/todos');
-      const rapidTodos = response.data.todos.filter((t: any) => 
-        t.title.startsWith('Rapid Todo')
+      const rapidTodos = response?.data?.todos.filter((t: any) => 
+        t?.title?.startsWith('Rapid Todo')
       );
       
-      expect(rapidTodos.length).toBeGreaterThanOrEqual(10);
+      expect(rapidTodos.length).toBeGreaterThanOrEqual(10 as any);
 
       // Clean up
       const deletePromises = rapidTodos.map((t: any) => 
         apiClient.delete(`/todos/${t.id}`)
       );
-      await Promise.all(deletePromises);
+      await Promise.all(deletePromises as any);
     });
   });
 });

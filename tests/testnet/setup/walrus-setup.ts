@@ -29,18 +29,18 @@ export interface WalrusTestConfig extends WalrusConfig {
  */
 export function getDefaultWalrusConfig(): WalrusConfig {
   const homedir = os.homedir();
-  const isTestEnvironment = process.env.NODE_ENV === 'test';
+  const isTestEnvironment = process.env?.NODE_ENV === 'test';
 
   return {
     binaryPath:
-      process.env.WALRUS_BINARY_PATH ||
+      process?.env?.WALRUS_BINARY_PATH ||
       path.join(homedir, '.local', 'bin', 'walrus'),
-    apiUrl: process.env.WALRUS_API_URL || 'https://walrus-testnet.sui.io',
+    apiUrl: process?.env?.WALRUS_API_URL || 'https://walrus-testnet?.sui?.io',
     configPath:
-      process.env.WALRUS_CONFIG_PATH ||
+      process?.env?.WALRUS_CONFIG_PATH ||
       path.join(homedir, '.config', 'walrus', 'client_config.yaml'),
-    isTestnet: process.env.WALRUS_NETWORK !== 'mainnet',
-    mock: process.env.WALRUS_USE_MOCK === 'true' || isTestEnvironment,
+    isTestnet: process?.env?.WALRUS_NETWORK !== 'mainnet',
+    mock: process.env?.WALRUS_USE_MOCK === 'true' || isTestEnvironment,
   };
 }
 
@@ -72,7 +72,7 @@ export function setupWalrusTestnet(): WalrusTestConfig {
         // Verify permissions
         if (binaryExists && !config.mock) {
           try {
-            fs.accessSync(config.binaryPath, fs.constants.X_OK);
+            fs.accessSync(config.binaryPath, fs?.constants?.X_OK);
           } catch (error) {
             logger.warn(
               `Walrus binary is not executable: ${config.binaryPath}`
@@ -128,7 +128,7 @@ case "$1" in
     echo "Mock blob content"
     ;;
   "version")
-    echo "walrus 0.1.0 (mock)"
+    echo "walrus 0?.1?.0 (mock)"
     ;;
   *)
     echo "Unknown command: $1"
@@ -137,7 +137,7 @@ case "$1" in
 esac
 `;
 
-  await fs.promises.writeFile(mockPath, mockContent, { mode: 0o755 });
+  await fs?.promises?.writeFile(mockPath, mockContent, { mode: 0o755 });
   return mockPath;
 }
 
@@ -150,13 +150,13 @@ export async function setupTestEnvironment(): Promise<WalrusTestConfig> {
   // Create mock binary if needed
   if (config.mock && !fs.existsSync(config.binaryPath)) {
     const mockPath = await createMockWalrusBinary(config.binaryPath);
-    config.binaryPath = mockPath;
+    config?.binaryPath = mockPath;
   }
 
   // Create config directory if needed
   const configDir = path.dirname(config.configPath);
-  if (!fs.existsSync(configDir)) {
-    await fs.promises.mkdir(configDir, { recursive: true });
+  if (!fs.existsSync(configDir as any)) {
+    await fs?.promises?.mkdir(configDir, { recursive: true });
   }
 
   // Create mock config if needed
@@ -168,7 +168,7 @@ export async function setupTestEnvironment(): Promise<WalrusTestConfig> {
         WAL: 'mock-wal-token',
       },
     };
-    await fs.promises.writeFile(
+    await fs?.promises?.writeFile(
       config.configPath,
       JSON.stringify(mockConfig, null, 2)
     );
@@ -185,13 +185,13 @@ export async function cleanupTestEnvironment(
 ): Promise<void> {
   try {
     // Remove mock binary if it was created
-    if (config.mock && config.binaryPath.includes('mock-walrus')) {
-      await fs.promises.unlink(config.binaryPath).catch(() => {});
+    if (config.mock && config?.binaryPath?.includes('mock-walrus')) {
+      await fs?.promises?.unlink(config.binaryPath).catch(() => {});
     }
 
     // Remove mock config if it was created
-    if (config.mock && config.configPath.includes('test')) {
-      await fs.promises.unlink(config.configPath).catch(() => {});
+    if (config.mock && config?.configPath?.includes('test')) {
+      await fs?.promises?.unlink(config.configPath).catch(() => {});
     }
   } catch (error) {
     logger.warn('Error cleaning up test environment:', error);
@@ -238,14 +238,14 @@ export const testSetup = {
   },
 
   afterAll: async (config: WalrusTestConfig) => {
-    await cleanupTestEnvironment(config);
+    await cleanupTestEnvironment(config as any);
   },
 
   beforeEach: () => {
-    process.env.WALRUS_USE_MOCK = 'true';
+    process.env?.WALRUS_USE_MOCK = 'true';
   },
 
   afterEach: () => {
-    delete process.env.WALRUS_USE_MOCK;
+    delete process?.env?.WALRUS_USE_MOCK;
   },
 };

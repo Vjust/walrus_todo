@@ -12,12 +12,12 @@ export class KeyManagementService {
   private keypairCache: Ed25519Keypair | null = null;
 
   private constructor() {
-    this.secureStorage = new SecureStorage();
+    this?.secureStorage = new SecureStorage();
   }
 
   public static getInstance(): KeyManagementService {
     if (!KeyManagementService.instance) {
-      KeyManagementService.instance = new KeyManagementService();
+      KeyManagementService?.instance = new KeyManagementService();
     }
     return KeyManagementService.instance;
   }
@@ -29,7 +29,7 @@ export class KeyManagementService {
     }
 
     const privateKey =
-      await this.secureStorage.getSecureItem('SUI_PRIVATE_KEY');
+      await this?.secureStorage?.getSecureItem('SUI_PRIVATE_KEY');
     if (!privateKey) {
       throw new CLIError(
         'No private key found. Please configure your wallet first.',
@@ -38,13 +38,13 @@ export class KeyManagementService {
     }
 
     try {
-      this.keypairCache = Ed25519Keypair.fromSecretKey(
+      this?.keypairCache = Ed25519Keypair.fromSecretKey(
         Buffer.from(privateKey, 'base64')
       );
       return this.keypairCache;
     } catch (_error) {
       throw new CLIError(
-        `Failed to load keypair: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to load keypair: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'KEYPAIR_LOAD_FAILED'
       );
     }
@@ -56,17 +56,17 @@ export class KeyManagementService {
       const keypair = Ed25519Keypair.fromSecretKey(
         Buffer.from(privateKey, 'base64')
       );
-      await this.secureStorage.setSecureItem('SUI_PRIVATE_KEY', privateKey);
-      this.keypairCache = keypair;
+      await this?.secureStorage?.setSecureItem('SUI_PRIVATE_KEY', privateKey);
+      this?.keypairCache = keypair;
     } catch (_error) {
       throw new CLIError(
-        `Invalid private key format: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Invalid private key format: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'INVALID_PRIVATE_KEY'
       );
     }
   }
 
   clearCache(): void {
-    this.keypairCache = null;
+    this?.keypairCache = null;
   }
 }

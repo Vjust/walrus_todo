@@ -21,16 +21,16 @@ export default class TestOclifCommand extends Command {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(TestOclifCommand);
+    const { flags } = await this.parse(TestOclifCommand as any);
 
     this.log(chalk.green('✅ OCLIF integration is working correctly!'));
     
     if (flags.verbose) {
       this.log(chalk.blue('📋 Command details:'));
       this.log(`  • Command ID: ${this.id}`);
-      this.log(`  • CLI Binary: ${this.config.bin}`);
-      this.log(`  • OCLIF Version: ${this.config.version}`);
-      this.log(`  • Commands Directory: ${this.config.commands}`);
+      this.log(`  • CLI Binary: ${this?.config?.bin}`);
+      this.log(`  • OCLIF Version: ${this?.config?.version}`);
+      this.log(`  • Commands Directory: ${this?.config?.commands}`);
       this.log(`  • Auto-discovery: Enabled`);
     }
 

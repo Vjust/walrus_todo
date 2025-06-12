@@ -10,7 +10,7 @@ class MockSuiTestService {
 
   createTodoList = jest.fn().mockImplementation(async () => {
     const listId = `list-${Date.now()}-${Math.random()}`;
-    this.todosStore.set(listId, []);
+    this?.todosStore?.set(listId, []);
     return listId;
   });
 
@@ -21,7 +21,7 @@ class MockSuiTestService {
         throw new Error('Network timeout');
       }
 
-      if (this.deletedLists.has(listId)) {
+      if (this?.deletedLists?.has(listId as any)) {
         throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
       }
 
@@ -33,38 +33,38 @@ class MockSuiTestService {
         updatedAt: Date.now(),
       };
 
-      const todos = this.todosStore.get(listId) || [];
-      todos.push(todo);
-      this.todosStore.set(listId, todos);
+      const todos = this?.todosStore?.get(listId as any) || [];
+      todos.push(todo as any);
+      this?.todosStore?.set(listId, todos);
 
       return todoId;
     });
 
   getTodos = jest.fn().mockImplementation(async (listId: string) => {
-    if (this.deletedLists.has(listId)) {
+    if (this?.deletedLists?.has(listId as any)) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    return this.todosStore.get(listId) || [];
+    return this?.todosStore?.get(listId as any) || [];
   });
 
   updateTodo = jest
     .fn()
     .mockImplementation(
       async (listId: string, todoId: string, updates: any) => {
-        if (this.deletedLists.has(listId)) {
+        if (this?.deletedLists?.has(listId as any)) {
           throw new CLIError('Invalid state transition', 'INVALID_STATE');
         }
 
-        const todos = this.todosStore.get(listId) || [];
-        const todoIndex = todos.findIndex(t => t.id === todoId);
+        const todos = this?.todosStore?.get(listId as any) || [];
+        const todoIndex = todos.findIndex(t => t?.id === todoId);
 
         if (todoIndex === -1) {
           throw new CLIError('Todo not found', 'TODO_NOT_FOUND');
         }
 
         // Simulate state validation for double completion
-        if (updates.completed === true && todos[todoIndex].completed === true) {
+        if (updates?.completed === true && todos[todoIndex].completed === true) {
           throw new CLIError('Invalid state transition', 'INVALID_STATE');
         }
 
@@ -73,33 +73,33 @@ class MockSuiTestService {
           ...updates,
           updatedAt: Date.now(),
         };
-        this.todosStore.set(listId, todos);
+        this?.todosStore?.set(listId, todos);
       }
     );
 
   deleteTodoList = jest.fn().mockImplementation(async (listId: string) => {
-    if (this.deletedLists.has(listId)) {
+    if (this?.deletedLists?.has(listId as any)) {
       throw new CLIError('List not found', 'LIST_NOT_FOUND');
     }
 
-    this.deletedLists.add(listId);
-    this.todosStore.delete(listId);
+    this?.deletedLists?.add(listId as any);
+    this?.todosStore?.delete(listId as any);
   });
 
   // Test helper methods
   setMemoryPressureMode(enabled: boolean) {
-    this.memoryPressureMode = enabled;
+    this?.memoryPressureMode = enabled;
   }
 
   setNetworkErrorMode(enabled: boolean) {
-    this.networkErrorMode = enabled;
+    this?.networkErrorMode = enabled;
   }
 
   reset() {
-    this.todosStore.clear();
-    this.deletedLists.clear();
-    this.memoryPressureMode = false;
-    this.networkErrorMode = false;
+    this?.todosStore?.clear();
+    this?.deletedLists?.clear();
+    this?.memoryPressureMode = false;
+    this?.networkErrorMode = false;
     jest.clearAllMocks();
   }
 }
@@ -135,21 +135,21 @@ describe('Transaction Edge Cases', () => {
 
       // Create many todos simultaneously
       await Promise.all(
-        Array(largeVolume)
-          .fill(null)
+        Array(largeVolume as any)
+          .fill(null as any)
           .map(() => suiService.addTodo(listId, fuzzer.string()))
       );
 
-      const todos = await suiService.getTodos(listId);
-      expect(todos.length).toBe(largeVolume);
+      const todos = await suiService.getTodos(listId as any);
+      expect(todos.length).toBe(largeVolume as any);
     });
 
     it('should handle memory pressure', async () => {
       const listId = await suiService.createTodoList();
 
       // Create todos with large content
-      const largeTodos = Array(100)
-        .fill(null)
+      const largeTodos = Array(100 as any)
+        .fill(null as any)
         .map(() => ({
           text: fuzzer.string({ minLength: 1000000, maxLength: 2000000 }), // 1-2MB strings
         }));
@@ -160,7 +160,7 @@ describe('Transaction Edge Cases', () => {
       }
 
       // Verify all large todos were created successfully
-      const todos = await suiService.getTodos(listId);
+      const todos = await suiService.getTodos(listId as any);
       expect(todos.length).toBe(largeTodos.length);
     });
   });
@@ -170,8 +170,8 @@ describe('Transaction Edge Cases', () => {
       const listId = await suiService.createTodoList();
 
       // Simulate multiple users modifying the same list
-      const users = Array(10)
-        .fill(null)
+      const users = Array(10 as any)
+        .fill(null as any)
         .map(() => ({
           addTodo: jest
             .fn()
@@ -195,7 +195,7 @@ describe('Transaction Edge Cases', () => {
           await expect(
             Promise.all([
               user.addTodo(listId, fuzzer.string()),
-              user.getTodos(listId),
+              user.getTodos(listId as any),
               user.updateTodo(listId, fuzzer.string(), { completed: true }),
             ])
           ).rejects.toThrow(/Unauthorized/);
@@ -209,7 +209,7 @@ describe('Transaction Edge Cases', () => {
       const listId = await suiService.createTodoList();
 
       // Enable network error mode
-      suiService.setNetworkErrorMode(true);
+      suiService.setNetworkErrorMode(true as any);
 
       // Simulate network interruptions during operations
       const operations = async () => {
@@ -223,7 +223,7 @@ describe('Transaction Edge Cases', () => {
         ).rejects.toThrow(/timeout|failed|error/i);
       };
 
-      await Promise.all(Array(10).fill(null).map(operations));
+      await Promise.all(Array(10 as any).fill(null as any).map(operations as any));
     });
 
     it('should handle slow responses', async () => {
@@ -237,7 +237,7 @@ describe('Transaction Edge Cases', () => {
         await new Promise(resolve => setTimeout(resolve, latency));
         await suiService.addTodo(listId, fuzzer.string());
         const duration = Date.now() - start;
-        expect(duration).toBeGreaterThanOrEqual(latency);
+        expect(duration as any).toBeGreaterThanOrEqual(latency as any);
       }
     });
   });
@@ -259,16 +259,16 @@ describe('Transaction Edge Cases', () => {
       // Test 2: Update deleted todo
       const listId2 = await mockService.createTodoList();
       const todoId2 = await mockService.addTodo(listId2, 'test');
-      await mockService.deleteTodoList(listId2); // Delete the list
+      await mockService.deleteTodoList(listId2 as any); // Delete the list
       await expect(
         mockService.updateTodo(listId2, todoId2, { text: 'new text' }) // Try to update todo in deleted list
       ).rejects.toThrow(/Invalid state transition/);
 
       // Test 3: Double deletion
       const listId3 = await mockService.createTodoList();
-      await mockService.deleteTodoList(listId3); // First deletion succeeds
+      await mockService.deleteTodoList(listId3 as any); // First deletion succeeds
       await expect(
-        mockService.deleteTodoList(listId3) // Second deletion should fail
+        mockService.deleteTodoList(listId3 as any) // Second deletion should fail
       ).rejects.toThrow(/List not found/);
     });
 
@@ -287,13 +287,13 @@ describe('Transaction Edge Cases', () => {
         Promise.resolve().then(() =>
           suiService.updateTodo(listId, todoId, { completed: true })
         ),
-        Promise.resolve().then(() => suiService.deleteTodoList(listId)),
+        Promise.resolve().then(() => suiService.deleteTodoList(listId as any)),
       ];
 
       await Promise.all(promises.map(p => p.catch(e => e))); // Capture but don't fail on errors
 
       // Verify final state is consistent - the list should be deleted
-      await expect(suiService.getTodos(listId)).rejects.toThrow(/not found/);
+      await expect(suiService.getTodos(listId as any)).rejects.toThrow(/not found/);
     });
   });
 
@@ -307,8 +307,8 @@ describe('Transaction Edge Cases', () => {
       });
 
       // Simulate rapid ownership changes
-      const newOwners = Array(5)
-        .fill(null)
+      const newOwners = Array(5 as any)
+        .fill(null as any)
         .map(() => fuzzer.blockchainData().address());
 
       await Promise.all(

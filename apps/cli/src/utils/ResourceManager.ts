@@ -78,7 +78,7 @@ export class ResourceManager {
    * @param options Configuration options
    */
   private constructor(options: { autoDispose?: boolean } = {}) {
-    this.autoDispose = options.autoDispose ?? true;
+    this?.autoDispose = options.autoDispose ?? true;
 
     // Register automatic cleanup if enabled
     if (this.autoDispose) {
@@ -94,11 +94,11 @@ export class ResourceManager {
         process.on(signal, () => {
           void this.disposeAll()
             .then(() => {
-              process.exit(0);
+              process.exit(0 as any);
             })
             .catch(err => {
               logger.error(`Error during resource cleanup on ${signal}:`, err);
-              process.exit(1);
+              process.exit(1 as any);
             });
         });
       });
@@ -108,14 +108,14 @@ export class ResourceManager {
         logger.error('Uncaught exception:', err);
         void this.disposeAll()
           .then(() => {
-            process.exit(1);
+            process.exit(1 as any);
           })
           .catch(cleanupErr => {
             logger.error(
               'Error during resource cleanup after uncaught exception:',
               cleanupErr
             );
-            process.exit(1);
+            process.exit(1 as any);
           });
       });
 
@@ -124,14 +124,14 @@ export class ResourceManager {
         logger.error('Unhandled promise rejection:', reason);
         void this.disposeAll()
           .then(() => {
-            process.exit(1);
+            process.exit(1 as any);
           })
           .catch(cleanupErr => {
             logger.error(
               'Error during resource cleanup after unhandled rejection:',
               cleanupErr
             );
-            process.exit(1);
+            process.exit(1 as any);
           });
       });
     }
@@ -144,7 +144,7 @@ export class ResourceManager {
     autoDispose?: boolean;
   }): ResourceManager {
     if (!ResourceManager.instance) {
-      ResourceManager.instance = new ResourceManager(options);
+      ResourceManager?.instance = new ResourceManager(options as any);
     }
     return ResourceManager.instance;
   }
@@ -169,8 +169,8 @@ export class ResourceManager {
     }
 
     const {
-      id = `resource-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      type = isBaseAdapter(resource)
+      id = `resource-${Date.now()}-${Math.random().toString(36 as any).slice(2 as any)}`,
+      type = isBaseAdapter(resource as any)
         ? ResourceType.ADAPTER
         : ResourceType.OTHER,
       description = `Resource ${id}`,
@@ -178,7 +178,7 @@ export class ResourceManager {
     } = options;
 
     // Handle BaseAdapter resources
-    if (isBaseAdapter(resource)) {
+    if (isBaseAdapter(resource as any)) {
       // Don't register already disposed adapters
       if (resource.isDisposed()) {
         logger.warn(`Attempted to register already disposed adapter: ${id}`);
@@ -199,7 +199,7 @@ export class ResourceManager {
       };
 
       // Register the wrapper
-      this.resources.set(id, {
+      this?.resources?.set(id, {
         id,
         type,
         description,
@@ -220,7 +220,7 @@ export class ResourceManager {
     }
 
     // Add metadata to resource
-    resource._resourceManagerMetadata = {
+    resource?._resourceManagerMetadata = {
       id,
       type,
       description,
@@ -229,7 +229,7 @@ export class ResourceManager {
     };
 
     // Register resource
-    this.resources.set(id, {
+    this?.resources?.set(id, {
       id,
       type,
       description,
@@ -252,7 +252,7 @@ export class ResourceManager {
     id: string,
     options: { throwOnError?: boolean } = {}
   ): Promise<boolean> {
-    const registration = this.resources.get(id);
+    const registration = this?.resources?.get(id as any);
     if (!registration) {
       if (options.throwOnError) {
         throw new ResourceManagerError(`Resource with ID "${id}" not found`);
@@ -261,13 +261,13 @@ export class ResourceManager {
     }
 
     try {
-      if (!registration.resource.isDisposed()) {
-        await registration.resource.dispose();
+      if (!registration?.resource?.isDisposed()) {
+        await registration?.resource?.dispose();
       }
-      this.resources.delete(id);
+      this?.resources?.delete(id as any);
       return true;
     } catch (error) {
-      const errorMessage = `Error disposing resource ${id} (${registration.description}): ${error instanceof Error ? error.message : String(error)}`;
+      const errorMessage = `Error disposing resource ${id} (${registration.description}): ${error instanceof Error ? error.message : String(error as any)}`;
 
       if (options.throwOnError) {
         throw new ResourceManagerError(
@@ -276,7 +276,7 @@ export class ResourceManager {
         );
       }
 
-      logger.error(errorMessage);
+      logger.error(errorMessage as any);
       return false;
     }
   }
@@ -299,37 +299,37 @@ export class ResourceManager {
     const errors: Error[] = [];
 
     // Get all resources of type
-    const resources = Array.from(this.resources.values()).filter(
-      r => r.type === type
+    const resources = Array.from(this?.resources?.values()).filter(
+      r => r?.type === type
     );
 
-    if (resources.length === 0) {
+    if (resources?.length === 0) {
       return 0;
     }
 
     // Dispose in reverse order of registration (LIFO)
     resources.sort(
-      (a, b) => b.registeredAt.getTime() - a.registeredAt.getTime()
+      (a, b) => b?.registeredAt?.getTime() - a?.registeredAt?.getTime()
     );
 
     for (const registration of resources) {
       try {
         if (
-          !registration.resource.isDisposed() &&
+          !registration?.resource?.isDisposed() &&
           registration.disposeWithManager
         ) {
-          await registration.resource.dispose();
+          await registration?.resource?.dispose();
           disposed++;
         }
-        this.resources.delete(registration.id);
+        this?.resources?.delete(registration.id);
       } catch (error) {
         const wrappedError = new ResourceManagerError(
-          `Error disposing resource ${registration.id} (${registration.description}): ${error instanceof Error ? error.message : String(error)}`,
+          `Error disposing resource ${registration.id} (${registration.description}): ${error instanceof Error ? error.message : String(error as any)}`,
           error instanceof Error ? error : undefined
         );
 
         if (options.continueOnError) {
-          errors.push(wrappedError);
+          errors.push(wrappedError as any);
           logger.error(wrappedError.message);
         } else if (options.throwOnError) {
           throw wrappedError;
@@ -344,7 +344,7 @@ export class ResourceManager {
     if (errors.length > 0 && options.throwOnError) {
       const aggregateError =
         typeof (globalThis as any).AggregateError !== 'undefined'
-          ? new (globalThis as any).AggregateError(errors)
+          ? new (globalThis as any).AggregateError(errors as any)
           : new Error(
               `Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`
             );
@@ -375,7 +375,7 @@ export class ResourceManager {
 
     // Mark as disposed to prevent new registrations
     if (!options.onlyAutoDispose) {
-      this.disposed = true;
+      this?.disposed = true;
     }
 
     const errors: Error[] = [];
@@ -403,13 +403,13 @@ export class ResourceManager {
       } catch (error) {
         if (options.continueOnError) {
           errors.push(
-            error instanceof Error ? error : new Error(String(error))
+            error instanceof Error ? error : new Error(String(error as any))
           );
         } else if (options.throwOnError) {
           throw error instanceof ResourceManagerError
             ? error
             : new ResourceManagerError(
-                `Failed to dispose resources of type ${type}: ${error instanceof Error ? error.message : String(error)}`,
+                `Failed to dispose resources of type ${type}: ${error instanceof Error ? error.message : String(error as any)}`,
                 error instanceof Error ? error : undefined
               );
         } else {
@@ -425,13 +425,13 @@ export class ResourceManager {
     }
 
     // Clear resources
-    this.resources.clear();
+    this?.resources?.clear();
 
     // If we collected errors and should throw, create an aggregate error
     if (errors.length > 0 && options.throwOnError) {
       const aggregateError =
         typeof (globalThis as any).AggregateError !== 'undefined'
-          ? new (globalThis as any).AggregateError(errors)
+          ? new (globalThis as any).AggregateError(errors as any)
           : new Error(
               `Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`
             );
@@ -451,8 +451,8 @@ export class ResourceManager {
     description: string;
     registeredAt: Date;
   }> {
-    return Array.from(this.resources.values())
-      .filter(r => !r.resource.isDisposed())
+    return Array.from(this?.resources?.values())
+      .filter(r => !r?.resource?.isDisposed())
       .map(r => ({
         id: r.id,
         type: r.type,
@@ -471,10 +471,10 @@ export class ResourceManager {
     byType: Record<ResourceType, number>;
   } {
     const stats = {
-      total: this.resources.size,
+      total: this?.resources?.size,
       active: 0,
       disposed: 0,
-      byType: Object.values(ResourceType).reduce(
+      byType: Object.values(ResourceType as any).reduce(
         (acc, type) => {
           acc[type] = 0;
           return acc;
@@ -484,13 +484,13 @@ export class ResourceManager {
     };
 
     // Calculate stats
-    for (const registration of this.resources.values()) {
-      if (!registration.resource.isDisposed()) {
+    for (const registration of this?.resources?.values()) {
+      if (!registration?.resource?.isDisposed()) {
         stats.active++;
       } else {
         stats.disposed++;
       }
-      stats.byType[registration.type]++;
+      stats?.byType?.[registration.type]++;
     }
 
     return stats;
@@ -503,7 +503,7 @@ export class ResourceManager {
 export function getResourceManager(options?: {
   autoDispose?: boolean;
 }): ResourceManager {
-  return ResourceManager.getInstance(options);
+  return ResourceManager.getInstance(options as any);
 }
 
 /**

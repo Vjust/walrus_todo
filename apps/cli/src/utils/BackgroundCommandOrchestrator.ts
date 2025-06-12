@@ -66,8 +66,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
 
   constructor(configDir?: string) {
     super();
-    this.jobManager = new JobManager(configDir);
-    this.logger = new Logger('BackgroundOrchestrator');
+    this?.jobManager = new JobManager(configDir as any);
+    this?.logger = new Logger('BackgroundOrchestrator');
     this.initializeCommandProfiles();
     this.startResourceMonitoring();
     this.startCleanupScheduler();
@@ -155,10 +155,10 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     ];
 
     profiles.forEach(profile => {
-      this.commandProfiles.set(profile.command, profile);
+      this?.commandProfiles?.set(profile.command, profile);
     });
 
-    this.logger.info(`Initialized ${profiles.length} command profiles`);
+    this?.logger?.info(`Initialized ${profiles.length} command profiles`);
   }
 
   /**
@@ -169,7 +169,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     args: string[],
     flags: Record<string, unknown>
   ): boolean {
-    const profile = this.commandProfiles.get(command);
+    const profile = this?.commandProfiles?.get(command as any);
 
     // Explicit background flag
     if (flags.background || flags.bg) return true;
@@ -180,7 +180,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       // Check if system resources allow
       const usage = this.getCurrentResourceUsage();
       if (usage.activeJobs >= this.maxConcurrentJobs) {
-        this.logger.warn(
+        this?.logger?.warn(
           `Max concurrent jobs reached (${this.maxConcurrentJobs}), forcing background`
         );
         return true;
@@ -188,7 +188,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
 
       // Check if command is resource intensive and system is under load
       if (profile.resourceIntensive && usage.memory > 0.8) {
-        this.logger.info(
+        this?.logger?.info(
           `High memory usage detected, moving ${command} to background`
         );
         return true;
@@ -210,23 +210,23 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     flags: Record<string, unknown>,
     options: BackgroundOptions = {}
   ): Promise<string> {
-    const profile = this.commandProfiles.get(command);
+    const profile = this?.commandProfiles?.get(command as any);
 
     // Check concurrency limits
-    if (profile && !this.canStartNewJob(command)) {
+    if (profile && !this.canStartNewJob(command as any)) {
       throw new Error(
         `Cannot start ${command}: concurrency limit reached or dependencies not met`
       );
     }
 
     // Create background job
-    const job = this.jobManager.createJob(command, args, {
+    const job = this?.jobManager?.createJob(command, args, {
       ...flags,
       ...options,
       backgroundMode: true,
     });
 
-    this.logger.info(
+    this?.logger?.info(
       `Starting background job: ${job.id} for command: ${command}`
     );
 
@@ -237,9 +237,9 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       this.emit('jobStarted', job);
       return job.id;
     } catch (error) {
-      this.jobManager.failJob(
+      this?.jobManager?.failJob(
         job.id,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error as any)
       );
       this.emit('jobFailed', job, error);
       throw error;
@@ -253,7 +253,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     job: BackgroundJob,
     options: BackgroundOptions
   ): Promise<void> {
-    const profile = this.commandProfiles.get(job.command);
+    const profile = this?.commandProfiles?.get(job.command);
     const timeout = options.timeout || profile?.timeoutMs || 300000;
 
     // Build command arguments
@@ -268,7 +268,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     const executable = this.getExecutablePath();
     const fullArgs = [job.command, ...execArgs];
 
-    this.logger.debug(`Executing: ${executable} ${fullArgs.join(' ')}`);
+    this?.logger?.debug(`Executing: ${executable} ${fullArgs.join(' ')}`);
 
     // Spawn the process
     const childProcess = spawn(executable, fullArgs, {
@@ -277,47 +277,47 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       env: {
         ...process.env,
         WALRUS_BACKGROUND_JOB: job.id,
-        WALRUS_PARENT_PID: process.pid.toString(),
+        WALRUS_PARENT_PID: process?.pid?.toString(),
       },
     });
 
-    this.activeProcesses.set(job.id, childProcess);
-    this.jobManager.startJob(job.id, childProcess.pid);
+    this?.activeProcesses?.set(job.id, childProcess);
+    this?.jobManager?.startJob(job.id, childProcess.pid);
 
     // Set up progress monitoring
     this.setupProgressMonitoring(job, childProcess);
 
     // Set up timeout
     const timeoutHandle = setTimeout(() => {
-      this.logger.warn(`Job ${job.id} timed out after ${timeout}ms`);
+      this?.logger?.warn(`Job ${job.id} timed out after ${timeout}ms`);
       this.cancelJob(job.id);
     }, timeout);
 
     // Handle process completion
     childProcess.on('exit', (code, signal) => {
-      clearTimeout(timeoutHandle);
-      this.activeProcesses.delete(job.id);
+      clearTimeout(timeoutHandle as any);
+      this?.activeProcesses?.delete(job.id);
 
       if (code === 0) {
-        this.jobManager.completeJob(job.id, { exitCode: code });
+        this?.jobManager?.completeJob(job.id, { exitCode: code });
         this.emit('jobCompleted', job);
-        this.logger.info(`Job ${job.id} completed successfully`);
+        this?.logger?.info(`Job ${job.id} completed successfully`);
       } else {
         const errorMsg = signal
           ? `Killed by signal: ${signal}`
           : `Exit code: ${code}`;
-        this.jobManager.failJob(job.id, errorMsg);
-        this.emit('jobFailed', job, new Error(errorMsg));
-        this.logger.error(`Job ${job.id} failed: ${errorMsg}`);
+        this?.jobManager?.failJob(job.id, errorMsg);
+        this.emit('jobFailed', job, new Error(errorMsg as any));
+        this?.logger?.error(`Job ${job.id} failed: ${errorMsg}`);
       }
     });
 
     childProcess.on('error', error => {
-      clearTimeout(timeoutHandle);
-      this.activeProcesses.delete(job.id);
-      this.jobManager.failJob(job.id, error.message);
+      clearTimeout(timeoutHandle as any);
+      this?.activeProcesses?.delete(job.id);
+      this?.jobManager?.failJob(job.id, error.message);
       this.emit('jobFailed', job, error);
-      this.logger.error(`Job ${job.id} process error:`, error);
+      this?.logger?.error(`Job ${job.id} process error:`, error);
     });
 
     // Detach the process if requested
@@ -346,14 +346,14 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
 
       lines.forEach(line => {
         // Write to job log
-        this.jobManager.writeJobLog(job.id, line);
+        this?.jobManager?.writeJobLog(job.id, line);
 
         // Parse progress updates
-        const progressMatch = line.match(progressRegex);
+        const progressMatch = line.match(progressRegex as any);
         if (progressMatch) {
           const progress = parseInt(progressMatch[1]);
           const details = progressMatch[2];
-          this.jobManager.updateProgress(job.id, progress);
+          this?.jobManager?.updateProgress(job.id, progress);
 
           const update: ProgressUpdate = {
             jobId: job.id,
@@ -366,10 +366,10 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         }
 
         // Parse stage updates
-        const stageMatch = line.match(stageRegex);
+        const stageMatch = line.match(stageRegex as any);
         if (stageMatch) {
           const stage = stageMatch[1];
-          this.jobManager.updateJob(job.id, {
+          this?.jobManager?.updateJob(job.id, {
             metadata: {
               ...job.metadata,
               currentStage: stage,
@@ -380,11 +380,11 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     };
 
     if (process.stdout) {
-      process.stdout.on('data', processOutput);
+      process?.stdout?.on('data', processOutput);
     }
 
     if (process.stderr) {
-      process.stderr.on('data', processOutput);
+      process?.stderr?.on('data', processOutput);
     }
   }
 
@@ -392,29 +392,29 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Check if a new job can be started based on concurrency and dependencies
    */
   private canStartNewJob(command: string): boolean {
-    const profile = this.commandProfiles.get(command);
+    const profile = this?.commandProfiles?.get(command as any);
     if (!profile) return true;
 
     // Check global concurrency
-    const activeJobs = this.jobManager.getActiveJobs();
+    const activeJobs = this?.jobManager?.getActiveJobs();
     if (activeJobs.length >= this.maxConcurrentJobs) {
       return false;
     }
 
     // Check command-specific concurrency
-    const commandJobs = activeJobs.filter(job => job.command === command);
+    const commandJobs = activeJobs.filter(job => job?.command === command);
     if (commandJobs.length >= profile.maxConcurrency) {
       return false;
     }
 
     // Check dependencies
     if (profile.dependencies) {
-      const hasRunningDependencies = profile.dependencies.some(dep => {
-        return activeJobs.some(job => job.command === dep);
+      const hasRunningDependencies = profile?.dependencies?.some(dep => {
+        return activeJobs.some(job => job?.command === dep);
       });
 
       if (hasRunningDependencies) {
-        this.logger.debug(
+        this?.logger?.debug(
           `Cannot start ${command}: dependencies still running`
         );
         return false;
@@ -428,7 +428,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Cancel a background job
    */
   public cancelJob(jobId: string): boolean {
-    const process = this.activeProcesses.get(jobId);
+    const process = this?.activeProcesses?.get(jobId as any);
     if (process) {
       try {
         process.kill('SIGTERM');
@@ -440,29 +440,29 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
           }
         }, 5000);
 
-        this.activeProcesses.delete(jobId);
-        return this.jobManager.cancelJob(jobId);
+        this?.activeProcesses?.delete(jobId as any);
+        return this?.jobManager?.cancelJob(jobId as any);
       } catch (error) {
-        this.logger.error(`Failed to cancel job ${jobId}:`, error);
+        this?.logger?.error(`Failed to cancel job ${jobId}:`, error);
         return false;
       }
     }
 
-    return this.jobManager.cancelJob(jobId);
+    return this?.jobManager?.cancelJob(jobId as any);
   }
 
   /**
    * Get the status of all background jobs
    */
   public getJobStatus(): BackgroundJob[] {
-    return this.jobManager.getAllJobs();
+    return this?.jobManager?.getAllJobs();
   }
 
   /**
    * Get the status of a specific job
    */
   public getJob(jobId: string): BackgroundJob | undefined {
-    return this.jobManager.getJob(jobId);
+    return this?.jobManager?.getJob(jobId as any);
   }
 
   /**
@@ -477,18 +477,18 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       const startTime = Date.now();
 
       const check = () => {
-        const job = this.jobManager.getJob(jobId);
+        const job = this?.jobManager?.getJob(jobId as any);
         if (!job) {
           reject(new Error(`Job ${jobId} not found`));
           return;
         }
 
-        if (job.status === 'completed') {
-          resolve(job);
+        if (job?.status === 'completed') {
+          resolve(job as any);
           return;
         }
 
-        if (job.status === 'failed' || job.status === 'cancelled') {
+        if (job?.status === 'failed' || job?.status === 'cancelled') {
           reject(
             new Error(
               `Job ${jobId} ${job.status}: ${job.errorMessage || 'Unknown error'}`
@@ -513,15 +513,15 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Start resource monitoring
    */
   private startResourceMonitoring(): void {
-    this.resourceMonitor = setInterval(() => {
+    this?.resourceMonitor = setInterval(() => {
       const usage = this.getCurrentResourceUsage();
 
       this.emit('resourceUpdate', usage);
 
       // Auto-adjust concurrency based on resource usage
       if (usage.memory > 0.9 && this.maxConcurrentJobs > 2) {
-        this.maxConcurrentJobs = Math.max(2, this.maxConcurrentJobs - 1);
-        this.logger.warn(
+        this?.maxConcurrentJobs = Math.max(2, this.maxConcurrentJobs - 1);
+        this?.logger?.warn(
           `High memory usage, reducing max concurrent jobs to ${this.maxConcurrentJobs}`
         );
       } else if (
@@ -529,8 +529,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         usage.cpu < 0.5 &&
         this.maxConcurrentJobs < 10
       ) {
-        this.maxConcurrentJobs = Math.min(10, this.maxConcurrentJobs + 1);
-        this.logger.info(
+        this?.maxConcurrentJobs = Math.min(10, this.maxConcurrentJobs + 1);
+        this?.logger?.info(
           `Low resource usage, increasing max concurrent jobs to ${this.maxConcurrentJobs}`
         );
       }
@@ -545,8 +545,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
 
-    const activeJobs = this.jobManager.getActiveJobs().length;
-    const totalJobs = this.jobManager.getAllJobs().length;
+    const activeJobs = this?.jobManager?.getActiveJobs().length;
+    const totalJobs = this?.jobManager?.getAllJobs().length;
 
     return {
       memory: usedMem / totalMem,
@@ -560,9 +560,9 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Start cleanup scheduler for old jobs and logs
    */
   private startCleanupScheduler(): void {
-    this.cleanupInterval = setInterval(
+    this?.cleanupInterval = setInterval(
       () => {
-        this.jobManager.cleanupOldJobs();
+        this?.jobManager?.cleanupOldJobs();
       },
       60 * 60 * 1000
     ); // Every hour
@@ -582,7 +582,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     ];
 
     for (const execPath of possiblePaths) {
-      if (fs.existsSync(execPath)) {
+      if (fs.existsSync(execPath as any)) {
         return execPath;
       }
     }
@@ -598,13 +598,13 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
 
     // Default to node with the run script - but use the correct path
     const runScriptPath = path.join(process.cwd(), 'bin', 'run-enhanced.js');
-    if (fs.existsSync(runScriptPath)) {
+    if (fs.existsSync(runScriptPath as any)) {
       return `node ${runScriptPath}`;
     }
     
     // Last resort - use the built CLI directly
     const builtCliPath = path.join(process.cwd(), 'apps', 'cli', 'dist', 'index.js');
-    if (fs.existsSync(builtCliPath)) {
+    if (fs.existsSync(builtCliPath as any)) {
       return `node ${builtCliPath}`;
     }
 
@@ -617,7 +617,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   private flattenFlags(flags: Record<string, any>): string[] {
     const args: string[] = [];
 
-    Object.entries(flags).forEach(([key, value]) => {
+    Object.entries(flags as any).forEach(([key, value]) => {
       if (key === 'backgroundMode') return; // Internal flag
 
       if (typeof value === 'boolean') {
@@ -636,20 +636,20 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Generate a comprehensive status report
    */
   public generateStatusReport(): string {
-    const jobs = this.jobManager.getAllJobs();
+    const jobs = this?.jobManager?.getAllJobs();
     const activeJobs = jobs.filter(
-      j => j.status === 'running' || j.status === 'pending'
+      j => j?.status === 'running' || j?.status === 'pending'
     );
-    const completedJobs = jobs.filter(j => j.status === 'completed');
-    const failedJobs = jobs.filter(j => j.status === 'failed');
+    const completedJobs = jobs.filter(j => j?.status === 'completed');
+    const failedJobs = jobs.filter(j => j?.status === 'failed');
     const usage = this.getCurrentResourceUsage();
 
-    let report = chalk.bold.cyan('🔄 Background Command Orchestrator Status\n');
-    report += chalk.gray('─'.repeat(50)) + '\n\n';
+    let report = chalk?.bold?.cyan('🔄 Background Command Orchestrator Status\n');
+    report += chalk.gray('─'.repeat(50 as any)) + '\n\n';
 
     // Resource usage
     report += chalk.bold('📊 Resource Usage:\n');
-    report += `  Memory: ${(usage.memory * 100).toFixed(1)}%\n`;
+    report += `  Memory: ${(usage.memory * 100).toFixed(1 as any)}%\n`;
     report += `  Active Jobs: ${usage.activeJobs}/${this.maxConcurrentJobs}\n`;
     report += `  Total Jobs: ${usage.totalJobs}\n\n`;
 
@@ -659,14 +659,14 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       activeJobs.forEach(job => {
         const duration = Date.now() - job.startTime;
         const progress = job.progress || 0;
-        const progressBar = this.createProgressBar(progress);
+        const progressBar = this.createProgressBar(progress as any);
 
         report += `  ${this.getStatusIcon(job.status)} ${job.id}\n`;
-        report += `    Command: ${job.command} ${job.args.join(' ')}\n`;
+        report += `    Command: ${job.command} ${job?.args?.join(' ')}\n`;
         report += `    Progress: ${progressBar} ${progress}%\n`;
-        report += `    Duration: ${this.formatDuration(duration)}\n`;
+        report += `    Duration: ${this.formatDuration(duration as any)}\n`;
         if (job.metadata?.currentStage) {
-          report += `    Stage: ${job.metadata.currentStage}\n`;
+          report += `    Stage: ${job?.metadata?.currentStage}\n`;
         }
         report += '\n';
       });
@@ -684,7 +684,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         report += chalk.bold('✅ Recent Completions:\n');
         recentCompleted.forEach(job => {
           const duration = job.endTime! - job.startTime;
-          report += `  ✅ ${job.command} (${this.formatDuration(duration)})\n`;
+          report += `  ✅ ${job.command} (${this.formatDuration(duration as any)})\n`;
         });
         report += '\n';
       }
@@ -707,8 +707,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
 
     // Command profiles
     report += chalk.bold('⚙️ Command Profiles:\n');
-    this.commandProfiles.forEach((profile, command) => {
-      const activeCount = activeJobs.filter(j => j.command === command).length;
+    this?.commandProfiles?.forEach((profile, command) => {
+      const activeCount = activeJobs.filter(j => j?.command === command).length;
       report += `  ${command}: ${activeCount}/${profile.maxConcurrency} active\n`;
     });
 
@@ -735,12 +735,12 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   private createProgressBar(progress: number, width: number = 20): string {
     const filled = Math.floor((progress / 100) * width);
     const empty = width - filled;
-    return `[${chalk.green('█'.repeat(filled))}${' '.repeat(empty)}]`;
+    return `[${chalk.green('█'.repeat(filled as any))}${' '.repeat(empty as any)}]`;
   }
 
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -750,26 +750,26 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Shutdown the orchestrator and cleanup resources
    */
   public async shutdown(): Promise<void> {
-    this.logger.info('Shutting down Background Command Orchestrator');
+    this?.logger?.info('Shutting down Background Command Orchestrator');
 
     // Stop monitoring
     if (this.resourceMonitor) {
       clearInterval(this.resourceMonitor as NodeJS.Timeout);
-      this.resourceMonitor = null;
+      this?.resourceMonitor = null;
     }
 
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval as NodeJS.Timeout);
-      this.cleanupInterval = null;
+      this?.cleanupInterval = null;
     }
 
     // Cancel all active jobs
-    const activeJobs = this.jobManager.getActiveJobs();
+    const activeJobs = this?.jobManager?.getActiveJobs();
     const cancelPromises = activeJobs.map(job => this.cancelJob(job.id));
-    await Promise.all(cancelPromises);
+    await Promise.all(cancelPromises as any);
 
     // Clear active processes
-    this.activeProcesses.clear();
+    this?.activeProcesses?.clear();
 
     this.emit('shutdown');
   }
@@ -781,8 +781,8 @@ let _backgroundOrchestrator: BackgroundCommandOrchestrator | null = null;
 export function getBackgroundOrchestrator(): BackgroundCommandOrchestrator {
   // Skip orchestrator entirely if disabled
   if (
-    process.env.WALTODO_SKIP_ORCHESTRATOR === 'true' ||
-    process.env.WALTODO_NO_BACKGROUND === 'true'
+    process.env?.WALTODO_SKIP_ORCHESTRATOR === 'true' ||
+    process.env?.WALTODO_NO_BACKGROUND === 'true'
   ) {
     throw new Error('Background orchestrator disabled');
   }
@@ -791,7 +791,7 @@ export function getBackgroundOrchestrator(): BackgroundCommandOrchestrator {
     _backgroundOrchestrator = new BackgroundCommandOrchestrator();
 
     // Store reference globally for test cleanup
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env?.NODE_ENV === 'test') {
       (global as any).backgroundOrchestrator = _backgroundOrchestrator;
     }
   }
@@ -811,7 +811,7 @@ export async function resetBackgroundOrchestrator(): Promise<void> {
     _backgroundOrchestrator = null;
 
     // Clear global reference
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env?.NODE_ENV === 'test') {
       (global as any).backgroundOrchestrator = null;
     }
   }
@@ -838,16 +838,16 @@ export const backgroundOrchestrator = {
 };
 
 // Process cleanup - only in non-test environments
-if (process.env.NODE_ENV !== 'test') {
+if (process?.env?.NODE_ENV !== 'test') {
   process.on('SIGINT', () => {
     backgroundOrchestrator.shutdown().then(() => {
-      process.exit(0);
+      process.exit(0 as any);
     });
   });
 
   process.on('SIGTERM', () => {
     backgroundOrchestrator.shutdown().then(() => {
-      process.exit(0);
+      process.exit(0 as any);
     });
   });
 }

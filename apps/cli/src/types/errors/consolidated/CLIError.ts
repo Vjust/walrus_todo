@@ -82,13 +82,13 @@ export class CLIError extends BaseError {
     });
 
     // Store properties
-    this.command = command;
-    this.exitCode = exitCode;
-    this.invalidParams = invalidParams;
+    this?.command = command;
+    this?.exitCode = exitCode;
+    this?.invalidParams = invalidParams;
 
     // Store input privately to avoid leaking sensitive data
     if (input) {
-      this._input = input;
+      this?._input = input;
     }
   }
 

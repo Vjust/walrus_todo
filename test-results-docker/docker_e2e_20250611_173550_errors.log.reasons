@@ -1,0 +1,4 @@
+CLI Test - Global CLI: EXIT_CODE_MISMATCH
+CLI Test - Local Binary: EXIT_CODE_MISMATCH
+CLI Test - Node.js Direct: EXIT_CODE_MISMATCH
+CLI Test - pnpm Script: EXIT_CODE_MISMATCH

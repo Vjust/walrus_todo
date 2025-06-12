@@ -46,22 +46,22 @@ export class AIService {
     verificationService?: AIVerificationService
   ) {
     // Set default options with overrides from parameters
-    this.options = {
+    this?.options = {
       temperature: 0.7,
       maxTokens: 2000,
       ...options
     };
 
-    this.verificationService = verificationService;
+    this?.verificationService = verificationService;
 
     // Initialize with default fallback adapter immediately
     try {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
-      this.modelAdapter = defaultAdapter;
+      this?.modelAdapter = defaultAdapter;
     } catch (error) {
       logger.error('Failed to initialize with default adapter:', error);
       // Set a minimal fallback adapter to avoid null reference errors
-      this.modelAdapter = AIProviderFactory.createFallbackAdapter();
+      this?.modelAdapter = AIProviderFactory.createFallbackAdapter();
     }
 
     // Initialize the full model adapter asynchronously
@@ -69,7 +69,7 @@ export class AIService {
       .catch(error => {
         logger.error(
           'Model adapter initialization failed:',
-          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error.message : String(error as any),
           { provider, modelName }
         );
       });
@@ -95,7 +95,7 @@ export class AIService {
       const selectedProvider = provider || defaultProvider.provider;
       
       // Initialize the provider adapter
-      this.modelAdapter = await AIProviderFactory.createProvider({
+      this?.modelAdapter = await AIProviderFactory.createProvider({
         provider: selectedProvider,
         modelName: modelName || defaultProvider.modelName,
         options: this.options,
@@ -124,8 +124,8 @@ export class AIService {
    * @param reason - Optional reason for cancellation for logging purposes
    */
   public cancelAllOperations(reason: string = 'User cancelled operation'): void {
-    if (this.modelAdapter && typeof this.modelAdapter.cancelAllRequests === 'function') {
-      this.modelAdapter.cancelAllRequests(reason);
+    if (this.modelAdapter && typeof this.modelAdapter?.cancelAllRequests === 'function') {
+      this?.modelAdapter?.cancelAllRequests(reason as any);
     }
   }
 
@@ -141,14 +141,14 @@ export class AIService {
    */
   public async setProvider(provider: AIProvider, modelName?: string, options?: AIModelOptions): Promise<void> {
     try {
-      this.modelAdapter = await AIProviderFactory.createProvider({
+      this?.modelAdapter = await AIProviderFactory.createProvider({
         provider,
         modelName,
         options: { ...this.options, ...options },
         credentialService: secureCredentialService
       });
     } catch (error) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError = error instanceof Error ? error : new Error(String(error as any));
       logger.error(
         `Failed to set provider ${provider}:`,
         typedError.message,
@@ -178,10 +178,10 @@ export class AIService {
     const todoStr = todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr });
+      const response = await this?.modelAdapter?.processWithPromptTemplate(prompt, { todos: todoStr });
       return response.result;
     } catch (error) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError = error instanceof Error ? error : new Error(String(error as any));
       throw new Error(`Failed to summarize todos: ${typedError.message}`, { cause: typedError });
     }
   }
@@ -204,8 +204,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
     
-    const summary = await this.summarize(todos);
-    return this.verificationService.createVerifiedSummary(todos, summary, privacyLevel);
+    const summary = await this.summarize(todos as any);
+    return this?.verificationService?.createVerifiedSummary(todos, summary, privacyLevel);
   }
 
   /**
@@ -223,7 +223,7 @@ export class AIService {
     // Format todos with IDs for categorization
     const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
+    const response = await this?.modelAdapter?.completeStructured<Record<string, string[]>>({
       prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.5 },
@@ -250,8 +250,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
     
-    const categories = await this.categorize(todos);
-    return this.verificationService.createVerifiedCategorization(todos, categories, privacyLevel);
+    const categories = await this.categorize(todos as any);
+    return this?.verificationService?.createVerifiedCategorization(todos, categories, privacyLevel);
   }
 
   /**
@@ -271,7 +271,7 @@ export class AIService {
     // Format todos with IDs for prioritization
     const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, number>>({
+    const response = await this?.modelAdapter?.completeStructured<Record<string, number>>({
       prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.3 },
@@ -298,8 +298,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
     
-    const priorities = await this.prioritize(todos);
-    return this.verificationService.createVerifiedPrioritization(todos, priorities, privacyLevel);
+    const priorities = await this.prioritize(todos as any);
+    return this?.verificationService?.createVerifiedPrioritization(todos, priorities, privacyLevel);
   }
 
   /**
@@ -320,7 +320,7 @@ export class AIService {
     const todoStr = todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
 
     // Pass the todos in the input object
-    const response = await this.modelAdapter.completeStructured<string[]>({
+    const response = await this?.modelAdapter?.completeStructured<string[]>({
       prompt: prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.8 },
@@ -347,8 +347,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
     
-    const suggestions = await this.suggest(todos);
-    return this.verificationService.createVerifiedSuggestion(todos, suggestions, privacyLevel);
+    const suggestions = await this.suggest(todos as any);
+    return this?.verificationService?.createVerifiedSuggestion(todos, suggestions, privacyLevel);
   }
 
   /**
@@ -375,7 +375,7 @@ export class AIService {
     // Format todos with IDs for detailed analysis
     const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, any>>({
+    const response = await this?.modelAdapter?.completeStructured<Record<string, any>>({
       prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.5 },
@@ -402,8 +402,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
 
-    const analysis = await this.analyze(todos);
-    return this.verificationService.createVerifiedAnalysis(todos, analysis, privacyLevel);
+    const analysis = await this.analyze(todos as any);
+    return this?.verificationService?.createVerifiedAnalysis(todos, analysis, privacyLevel);
   }
 
   /**
@@ -421,7 +421,7 @@ export class AIService {
     );
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, {
+      const response = await this?.modelAdapter?.processWithPromptTemplate(prompt, {
         title: todo.title,
         description: todo.description || 'No description'
       });
@@ -434,7 +434,7 @@ export class AIService {
         throw new Error('Failed to parse tags response: ' + response.result);
       }
     } catch (error) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError = error instanceof Error ? error : new Error(String(error as any));
       throw new Error(`Failed to suggest tags: ${typedError.message}`, { cause: typedError });
     }
   }
@@ -453,14 +453,14 @@ export class AIService {
     );
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, {
+      const response = await this?.modelAdapter?.processWithPromptTemplate(prompt, {
         title: todo.title,
         description: todo.description || 'No description'
       });
 
       // Validate and normalize the priority response
-      const priority = response.result.trim().toLowerCase();
-      if (['high', 'medium', 'low'].includes(priority)) {
+      const priority = response?.result?.trim().toLowerCase();
+      if (['high', 'medium', 'low'].includes(priority as any)) {
         return priority as 'high' | 'medium' | 'low';
       } else {
         logger.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);

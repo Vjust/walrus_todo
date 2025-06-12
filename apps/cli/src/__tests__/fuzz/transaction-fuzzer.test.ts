@@ -22,7 +22,7 @@ describe('Transaction Fuzzing Tests', () => {
     suiService = new SuiTestService({
       activeNetwork: {
         name: 'testnet',
-        fullnode: 'https://fullnode.testnet.sui.io',
+        fullnode: 'https://fullnode?.testnet?.sui.io',
       },
       activeAccount: {
         address: fuzzer.blockchainData().address(),
@@ -77,7 +77,7 @@ describe('Transaction Fuzzing Tests', () => {
               break;
             }
             case 'update': {
-              const todos = await suiService.getTodos(listId);
+              const todos = await suiService.getTodos(listId as any);
               if (todos.length > 0) {
                 const randomTodo =
                   todos[Math.floor(Math.random() * todos.length)];
@@ -91,14 +91,14 @@ describe('Transaction Fuzzing Tests', () => {
               break;
             }
             case 'delete': {
-              await suiService.deleteTodoList(listId);
+              await suiService.deleteTodoList(listId as any);
               break;
             }
           }
         })
       );
 
-      expect(operations.length).toBeGreaterThan(0);
+      expect(operations.length).toBeGreaterThan(0 as any);
     });
 
     it('should handle malformed input data', async () => {
@@ -122,7 +122,7 @@ describe('Transaction Fuzzing Tests', () => {
 
       // Check that errors have proper message property
       const rejectedResults = results.filter(
-        result => result.status === 'rejected'
+        result => result?.status === 'rejected'
       );
       rejectedResults.forEach(result => {
         expect(result.status).toBe('rejected');
@@ -156,7 +156,7 @@ describe('Transaction Fuzzing Tests', () => {
                 { sender: fuzzer.blockchainData().address() },
                 op.metadata
               );
-              nftIds.push(nftId);
+              nftIds.push(nftId as any);
               break;
             }
             case 'transfer': {
@@ -189,7 +189,7 @@ describe('Transaction Fuzzing Tests', () => {
 
       // Check that errors have proper message property
       const rejectedResults = results.filter(
-        result => result.status === 'rejected'
+        result => result?.status === 'rejected'
       );
       rejectedResults.forEach(result => {
         expect(result.status).toBe('rejected');
@@ -227,7 +227,7 @@ describe('Transaction Fuzzing Tests', () => {
       );
 
       const rejectedResults = results.filter(
-        result => result.status === 'rejected'
+        result => result?.status === 'rejected'
       );
       rejectedResults.forEach(result => {
         expect(result.status).toBe('rejected');

@@ -69,11 +69,11 @@ export default class Daemon extends BaseCommand {
 
   constructor(argv: string[], config: any) {
     super(argv, config);
-    this.logger = new Logger('WalTodoDaemon');
+    this?.logger = new Logger('WalTodoDaemon');
   }
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(Daemon);
+    const { flags } = await this.parse(Daemon as any);
 
     // Handle stop command
     if (flags.stop) {
@@ -96,18 +96,18 @@ export default class Daemon extends BaseCommand {
     }
 
     const config: SyncEngineConfig = {
-      todosDirectory: flags['todos-dir'],
+      todosDirectory: flags?.["todos-dir"],
       apiConfig: {
-        baseURL: flags['api-url'],
+        baseURL: flags?.["api-url"],
         enableWebSocket: true,
         timeout: 30000,
         retryAttempts: 3,
         retryDelay: 1000,
       },
-      syncInterval: flags['sync-interval'] * 1000, // Convert to milliseconds
-      conflictResolution: flags['conflict-resolution'] as any,
-      enableRealTimeSync: !flags['no-real-time'],
-      maxConcurrentSyncs: flags['max-concurrent'],
+      syncInterval: flags?.["sync-interval"] * 1000, // Convert to milliseconds
+      conflictResolution: flags?.["conflict-resolution"] as any,
+      enableRealTimeSync: !flags?.["no-real-time"],
+      maxConcurrentSyncs: flags?.["max-concurrent"],
       syncDebounceMs: 2000,
     };
 
@@ -122,26 +122,26 @@ export default class Daemon extends BaseCommand {
     config: SyncEngineConfig,
     wallet: string
   ): Promise<void> {
-    this.logger.info('Starting WalTodo sync daemon...', {
+    this?.logger?.info('Starting WalTodo sync daemon...', {
       wallet: wallet.substring(0, 8) + '...',
-      apiURL: config.apiConfig.baseURL,
+      apiURL: config?.apiConfig?.baseURL,
       todosDir: config.todosDirectory,
       realTimeSync: config.enableRealTimeSync,
     });
 
     try {
       // Create and initialize sync engine
-      this.syncEngine = new SyncEngine(config);
+      this?.syncEngine = new SyncEngine(config as any);
 
       // Setup event handlers
       this.setupEventHandlers();
 
       // Initialize and start
-      await this.syncEngine.initialize(wallet);
-      await this.syncEngine.start();
+      await this?.syncEngine?.initialize(wallet as any);
+      await this?.syncEngine?.start();
 
-      this.logger.info('✅ WalTodo sync daemon started successfully');
-      this.logger.info('Press Ctrl+C to stop the daemon');
+      this?.logger?.info('✅ WalTodo sync daemon started successfully');
+      this?.logger?.info('Press Ctrl+C to stop the daemon');
 
       // Setup graceful shutdown
       this.setupShutdownHandlers();
@@ -149,7 +149,7 @@ export default class Daemon extends BaseCommand {
       // Keep the daemon running
       await this.keepAlive();
     } catch (error) {
-      this.logger.error('Failed to start sync daemon:', error instanceof Error ? error : new Error(String(error)));
+      this?.logger?.error('Failed to start sync daemon:', error instanceof Error ? error : new Error(String(error as any)));
       throw error;
     }
   }
@@ -158,7 +158,7 @@ export default class Daemon extends BaseCommand {
     config: SyncEngineConfig,
     wallet: string
   ): Promise<void> {
-    this.logger.info('Starting daemon in detached mode...');
+    this?.logger?.info('Starting daemon in detached mode...');
 
     // In a real implementation, this would fork a child process
     // For now, we'll run in background mode
@@ -167,12 +167,12 @@ export default class Daemon extends BaseCommand {
     const child: ChildProcess = spawn(
       process.execPath,
       [
-        process.argv[1], // Script path
+        process?.argv?.[1], // Script path
         'daemon',
         '--wallet',
         wallet,
         '--api-url',
-        config.apiConfig.baseURL,
+        config?.apiConfig?.baseURL,
         '--todos-dir',
         config.todosDirectory,
         '--sync-interval',
@@ -189,11 +189,11 @@ export default class Daemon extends BaseCommand {
       }
     );
 
-    if (child && 'unref' in child && typeof child.unref === 'function') {
+    if (child && 'unref' in child && typeof child?.unref === 'function') {
       child.unref();
     }
 
-    this.logger.info(`✅ Daemon started in detached mode (PID: ${child.pid})`);
+    this?.logger?.info(`✅ Daemon started in detached mode (PID: ${child.pid})`);
 
     // Save PID for stop command
     const pidFile = join(homedir(), '.waltodo-daemon.pid');
@@ -208,20 +208,20 @@ export default class Daemon extends BaseCommand {
       process.kill(parseInt(pid, 10), 'SIGTERM');
 
       // Remove PID file
-      await require('fs').promises.unlink(pidFile);
+      await require('fs').promises.unlink(pidFile as any);
 
-      this.logger.info('✅ Daemon stopped successfully');
+      this?.logger?.info('✅ Daemon stopped successfully');
     } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        this.logger.warn('No daemon PID file found');
-      } else if (error.code === 'ESRCH') {
-        this.logger.warn('Daemon process not found');
+      if (error?.code === 'ENOENT') {
+        this?.logger?.warn('No daemon PID file found');
+      } else if (error?.code === 'ESRCH') {
+        this?.logger?.warn('Daemon process not found');
         // Clean up stale PID file
         try {
-          await require('fs').promises.unlink(pidFile);
+          await require('fs').promises.unlink(pidFile as any);
         } catch {}
       } else {
-        this.logger.error('Failed to stop daemon:', error);
+        this?.logger?.error('Failed to stop daemon:', error);
         throw error;
       }
     }
@@ -230,17 +230,17 @@ export default class Daemon extends BaseCommand {
   private async showStatus(): Promise<void> {
     if (this.syncEngine) {
       // Running daemon
-      const status = this.syncEngine.getSyncStatus();
-      const apiStatus = this.syncEngine['apiClient']?.getStatus();
+      const status = this?.syncEngine?.getSyncStatus();
+      const apiStatus = this?.syncEngine?.['apiClient']?.getStatus();
 
       this.log('🔄 WalTodo Sync Daemon Status');
-      this.log('─'.repeat(40));
+      this.log('─'.repeat(40 as any));
       this.log(`Status: ${status.isActive ? '🟢 Running' : '🔴 Stopped'}`);
       this.log(
         `Last Sync: ${status.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never'}`
       );
       this.log(`Pending Changes: ${status.pendingChanges}`);
-      this.log(`Conflicts: ${status.conflicts.length}`);
+      this.log(`Conflicts: ${status?.conflicts?.length}`);
 
       if (apiStatus) {
         this.log(`API Connected: ${apiStatus.connected ? '🟢 Yes' : '🔴 No'}`);
@@ -251,7 +251,7 @@ export default class Daemon extends BaseCommand {
         this.log(`API URL: ${apiStatus.baseURL}`);
       }
 
-      if (status.conflicts.length > 0) {
+      if (status?.conflicts?.length > 0) {
         this.log('\n⚠️ Conflicts:');
         for (const conflict of status.conflicts) {
           this.log(`  - ${conflict.type}: ${conflict.itemId}`);
@@ -272,10 +272,10 @@ export default class Daemon extends BaseCommand {
         } catch {
           this.log('🔴 Daemon not running (stale PID file)');
           // Clean up stale PID file
-          await require('fs').promises.unlink(pidFile);
+          await require('fs').promises.unlink(pidFile as any);
         }
       } catch (error: any) {
-        if (error.code === 'ENOENT') {
+        if (error?.code === 'ENOENT') {
           this.log('🔴 Daemon not running');
         } else {
           throw error;
@@ -287,73 +287,73 @@ export default class Daemon extends BaseCommand {
   private setupEventHandlers(): void {
     if (!this.syncEngine) return;
 
-    this.syncEngine.on('initialized', () => {
-      this.logger.info('Sync engine initialized');
+    this?.syncEngine?.on('initialized', () => {
+      this?.logger?.info('Sync engine initialized');
     });
 
-    this.syncEngine.on('started', () => {
-      this.logger.info('Sync engine started');
+    this?.syncEngine?.on('started', () => {
+      this?.logger?.info('Sync engine started');
     });
 
-    this.syncEngine.on('file-changed', event => {
-      this.logger.debug(`File changed: ${event.relativePath} (${event.type})`);
+    this?.syncEngine?.on('file-changed', event => {
+      this?.logger?.debug(`File changed: ${event.relativePath} (${event.type})`);
     });
 
-    this.syncEngine.on('remote-change-applied', event => {
-      this.logger.info(`Remote change applied: ${event.type}`);
+    this?.syncEngine?.on('remote-change-applied', event => {
+      this?.logger?.info(`Remote change applied: ${event.type}`);
     });
 
-    this.syncEngine.on('sync-started', () => {
-      this.logger.debug('Synchronization started');
+    this?.syncEngine?.on('sync-started', () => {
+      this?.logger?.debug('Synchronization started');
     });
 
-    this.syncEngine.on('sync-completed', result => {
-      this.logger.info('Sync completed', {
+    this?.syncEngine?.on('sync-completed', result => {
+      this?.logger?.info('Sync completed', {
         files: result.syncedFiles,
-        conflicts: result.conflicts.length,
-        errors: result.errors.length,
+        conflicts: result?.conflicts?.length,
+        errors: result?.errors?.length,
         duration: `${result.duration}ms`,
       });
     });
 
-    this.syncEngine.on('sync-failed', result => {
-      this.logger.error('Sync failed', {
+    this?.syncEngine?.on('sync-failed', result => {
+      this?.logger?.error('Sync failed', {
         errors: result.errors,
         duration: `${result.duration}ms`,
       });
     });
 
-    this.syncEngine.on('conflict-detected', conflict => {
-      this.logger.warn(
+    this?.syncEngine?.on('conflict-detected', conflict => {
+      this?.logger?.warn(
         `Conflict detected: ${conflict.type} ${conflict.itemId}`
       );
     });
 
-    this.syncEngine.on('error', error => {
-      this.logger.error('Sync engine error:', error);
+    this?.syncEngine?.on('error', error => {
+      this?.logger?.error('Sync engine error:', error);
     });
 
-    this.syncEngine.on('api-disconnected', () => {
-      this.logger.warn('API disconnected, attempting to reconnect...');
+    this?.syncEngine?.on('api-disconnected', () => {
+      this?.logger?.warn('API disconnected, attempting to reconnect...');
     });
   }
 
   private setupShutdownHandlers(): void {
     const shutdown = async (signal: string) => {
       if (this.isShuttingDown) return;
-      this.isShuttingDown = true;
+      this?.isShuttingDown = true;
 
-      this.logger.info(`Received ${signal}, shutting down gracefully...`);
+      this?.logger?.info(`Received ${signal}, shutting down gracefully...`);
 
       try {
         if (this.syncEngine) {
-          await this.syncEngine.shutdown();
+          await this?.syncEngine?.shutdown();
         }
-        this.logger.info('✅ Daemon shutdown complete');
-        process.exit(0);
+        this?.logger?.info('✅ Daemon shutdown complete');
+        process.exit(0 as any);
       } catch (error) {
-        this.logger.error('Error during shutdown:', error);
-        process.exit(1);
+        this?.logger?.error('Error during shutdown:', error);
+        process.exit(1 as any);
       }
     };
 
@@ -363,12 +363,12 @@ export default class Daemon extends BaseCommand {
 
     // Handle uncaught errors
     process.on('uncaughtException', error => {
-      this.logger.error('Uncaught exception:', error);
+      this?.logger?.error('Uncaught exception:', error);
       shutdown('uncaughtException');
     });
 
     process.on('unhandledRejection', (reason, promise) => {
-      this.logger.error('Unhandled rejection:', { reason, promise });
+      this?.logger?.error('Unhandled rejection:', { reason, promise });
       shutdown('unhandledRejection');
     });
   }
@@ -378,7 +378,7 @@ export default class Daemon extends BaseCommand {
     return new Promise(resolve => {
       const keepAliveInterval = setInterval(() => {
         if (this.isShuttingDown) {
-          clearInterval(keepAliveInterval);
+          clearInterval(keepAliveInterval as any);
           resolve();
         }
       }, 1000);
@@ -390,7 +390,7 @@ export default class Daemon extends BaseCommand {
       // Try to get wallet from configuration
       const configService = await import('../services/config-service');
       const config =
-        await configService.ConfigService.getInstance().getConfig();
+        await configService?.ConfigService?.getInstance().getConfig();
       return config.sui?.wallet || null;
     } catch {
       return null;

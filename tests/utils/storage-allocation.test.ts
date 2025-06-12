@@ -74,26 +74,26 @@ describe('StorageManager - Allocation Tests', () => {
         } as CoinBalance);
 
       const result = await storageManager.checkBalances();
-      expect(result.walBalance.toString()).toBe(walBalance);
-      expect(result.storageFundBalance.toString()).toBe(storageBalance);
-      expect(result.isStorageFundSufficient).toBe(true);
+      expect(result?.walBalance?.toString()).toBe(walBalance as any);
+      expect(result?.storageFundBalance?.toString()).toBe(storageBalance as any);
+      expect(result.isStorageFundSufficient).toBe(true as any);
     });
 
     it('should throw error on insufficient WAL balance', async () => {
-      mockSuiClient.getBalance.mockResolvedValueOnce({
+      mockSuiClient?.getBalance?.mockResolvedValueOnce({
         coinType: 'WAL',
         totalBalance: '50',
         coinObjectCount: 1,
         lockedBalance: { number: '0' },
       } as CoinBalance);
 
-      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError);
+      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError as any);
     });
 
     it('should handle network errors during balance check', async () => {
-      mockSuiClient.getBalance.mockRejectedValue(new Error('Network error'));
+      mockSuiClient?.getBalance?.mockRejectedValue(new Error('Network error'));
 
-      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError);
+      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError as any);
     });
   });
 
@@ -101,7 +101,7 @@ describe('StorageManager - Allocation Tests', () => {
     beforeEach(() => {
       // Mock successful network environment check
       (execSync as jest.Mock).mockReturnValue(Buffer.from('testnet'));
-      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
+      mockSuiClient?.getLatestSuiSystemState?.mockResolvedValue({
         epoch: '100',
         protocolVersion: '1',
         referenceGasPrice: '1000',
@@ -158,10 +158,10 @@ describe('StorageManager - Allocation Tests', () => {
           lockedBalance: { number: '0' },
         } as CoinBalance); // Storage balance
 
-      mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(100),
-        writeCost: BigInt(50),
-        totalCost: BigInt(150),
+      mockWalrusClient?.storageCost?.mockResolvedValue({
+        storageCost: BigInt(100 as any),
+        writeCost: BigInt(50 as any),
+        totalCost: BigInt(150 as any),
       });
     });
 
@@ -170,14 +170,14 @@ describe('StorageManager - Allocation Tests', () => {
     });
 
     it('should validate storage requirements with sufficient balance', async () => {
-      mockSuiClient.getOwnedObjects.mockResolvedValue({
+      mockSuiClient?.getOwnedObjects?.mockResolvedValue({
         hasNextPage: false,
         data: [],
         nextCursor: null,
       });
 
-      const result = await storageManager.validateStorageRequirements(1024);
-      expect(result.canProceed).toBe(true);
+      const result = await storageManager.validateStorageRequirements(1024 as any);
+      expect(result.canProceed).toBe(true as any);
       expect(result.requiredCost?.totalCost.toString()).toBe('150');
       expect(result.balances?.walBalance.toString()).toBe('1000');
     });
@@ -200,22 +200,22 @@ describe('StorageManager - Allocation Tests', () => {
         } as CoinBalance); // Storage balance
 
       // No existing storage
-      mockSuiClient.getOwnedObjects.mockResolvedValue({
+      mockSuiClient?.getOwnedObjects?.mockResolvedValue({
         hasNextPage: false,
         data: [],
         nextCursor: null,
       });
 
       // Storage cost higher than balance
-      mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
+      mockWalrusClient?.storageCost?.mockResolvedValue({
+        storageCost: BigInt(1000 as any),
+        writeCost: BigInt(500 as any),
+        totalCost: BigInt(1500 as any),
       });
 
       await expect(
-        storageManager.validateStorageRequirements(1024)
-      ).rejects.toThrow(CLIError);
+        storageManager.validateStorageRequirements(1024 as any)
+      ).rejects.toThrow(CLIError as any);
     });
 
     it('should detect and use existing storage if available', async () => {
@@ -243,11 +243,11 @@ describe('StorageManager - Allocation Tests', () => {
         nextCursor: null,
       };
 
-      mockSuiClient.getOwnedObjects.mockResolvedValue(mockStorage);
+      mockSuiClient?.getOwnedObjects?.mockResolvedValue(mockStorage as any);
 
-      const result = await storageManager.validateStorageRequirements(1024);
-      expect(result.canProceed).toBe(true);
-      expect(result.existingStorage?.isValid).toBe(true);
+      const result = await storageManager.validateStorageRequirements(1024 as any);
+      expect(result.canProceed).toBe(true as any);
+      expect(result.existingStorage?.isValid).toBe(true as any);
       expect(result.existingStorage?.details?.id).toBe('0xstorage');
     });
   });

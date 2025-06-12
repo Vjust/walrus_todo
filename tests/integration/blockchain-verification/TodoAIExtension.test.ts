@@ -22,10 +22,10 @@ class TodoAIExtension {
     walrusClient: jest.Mocked<WalrusClientExt>,
     signer: Ed25519Keypair
   ) {
-    this.suiClient = suiClient;
-    this.walrusClient = walrusClient;
-    this.signer = signer;
-    this.verificationManager = new BlobVerificationManager(
+    this?.suiClient = suiClient;
+    this?.walrusClient = walrusClient;
+    this?.signer = signer;
+    this?.verificationManager = new BlobVerificationManager(
       suiClient,
       walrusClient,
       signer
@@ -52,18 +52,18 @@ class TodoAIExtension {
 
     try {
       // 1. Retrieve todo content
-      const todoData = await this.walrusClient.readBlob({ blobId: todoId });
+      const todoData = await this?.walrusClient?.readBlob({ blobId: todoId });
       if (!todoData) {
         throw new CLIError('Todo not found', 'TODO_NOT_FOUND');
       }
 
-      const todoContent = JSON.parse(Buffer.from(todoData).toString('utf-8'));
+      const todoContent = JSON.parse(Buffer.from(todoData as any).toString('utf-8'));
 
       // 2. Verify on blockchain if requested
       let verified = false;
       if (verifyBlockchain) {
         // Get verification info
-        const blobInfo = await this.walrusClient.getBlobInfo(todoId);
+        const blobInfo = await this?.walrusClient?.getBlobInfo(todoId as any);
         verified = !!blobInfo && blobInfo.certified_epoch !== undefined;
       }
 
@@ -94,7 +94,7 @@ class TodoAIExtension {
       };
     } catch (error) {
       throw new CLIError(
-        `Todo analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Todo analysis failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'AI_ANALYSIS_ERROR'
       );
     }
@@ -153,13 +153,13 @@ class TodoAIExtension {
       };
 
       if (deadline) {
-        todo.deadline = deadline.toISOString();
+        todo?.deadline = deadline.toISOString();
       }
 
       // 2. Register on blockchain if requested
       if (registerOnBlockchain) {
-        const todoBytes = new TextEncoder().encode(JSON.stringify(todo));
-        const response = await this.walrusClient.writeBlob({
+        const todoBytes = new TextEncoder().encode(JSON.stringify(todo as any));
+        const response = await this?.walrusClient?.writeBlob({
           blob: todoBytes,
           signer: this.signer,
           deletable: true,
@@ -172,7 +172,7 @@ class TodoAIExtension {
         });
 
         // Add blockchain info to todo
-        todo.blockchain = {
+        todo?.blockchain = {
           registered: true,
           blobId: response.blobId,
           transactionDigest: 'mock-transaction-digest',
@@ -189,7 +189,7 @@ class TodoAIExtension {
       };
     } catch (error) {
       throw new CLIError(
-        `Todo generation failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Todo generation failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'AI_GENERATION_ERROR'
       );
     }
@@ -209,20 +209,20 @@ class TodoAIExtension {
   }> {
     try {
       // 1. Get todo content
-      const todoData = await this.walrusClient.readBlob({ blobId: todoId });
+      const todoData = await this?.walrusClient?.readBlob({ blobId: todoId });
       if (!todoData) {
         throw new CLIError('Todo not found', 'TODO_NOT_FOUND');
       }
 
-      const todoContent = JSON.parse(Buffer.from(todoData).toString('utf-8'));
+      const todoContent = JSON.parse(Buffer.from(todoData as any).toString('utf-8'));
 
       // 2. Get blockchain verification
-      const blobInfo = await this.walrusClient.getBlobInfo(todoId);
+      const blobInfo = await this?.walrusClient?.getBlobInfo(todoId as any);
       const blockchainVerified =
         !!blobInfo && blobInfo.certified_epoch !== undefined;
 
       // 3. Get metadata
-      const metadata = await this.walrusClient.getBlobMetadata({
+      const metadata = await this?.walrusClient?.getBlobMetadata({
         blobId: todoId,
       });
       const metadataObj = metadata?.V1 || ({} as Record<string, unknown>);
@@ -247,7 +247,7 @@ class TodoAIExtension {
       };
     } catch (error) {
       throw new CLIError(
-        `Todo verification failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Todo verification failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'TODO_VERIFICATION_ERROR'
       );
     }
@@ -267,34 +267,34 @@ const mockSuiClient = {
 // Create a mock transaction signer
 const mockSigner = {
   connect: () => Promise.resolve(),
-  getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
-  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  getPublicKey: () => ({ toBytes: () => new Uint8Array(32 as any) }),
+  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64 as any),
   signPersonalMessage: async (
     _data: Uint8Array
   ): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    bytes: Buffer.from(new Uint8Array(32 as any)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signWithIntent: async (
     _data: Uint8Array,
     _intent: IntentScope
   ): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    bytes: Buffer.from(new Uint8Array(32 as any)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signTransactionBlock: async (
     _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
-    new Uint8Array(64),
+    new Uint8Array(64 as any),
   signTransaction: async (
     _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   toSuiAddress: () => 'mock-address',
   getKeyScheme: () => 'ED25519' as const,
@@ -311,7 +311,7 @@ describe('TodoAIExtension Integration', () => {
     mockWalrusClient = getMockWalrusClient();
 
     // Override specific methods for this test as needed
-    // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
+    // Example: mockWalrusClient?.getConfig?.mockResolvedValue({ ... });
 
     aiExtension = new TodoAIExtension(
       mockSuiClient,
@@ -339,11 +339,11 @@ describe('TodoAIExtension Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(todo))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(todo as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: todoId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -354,8 +354,8 @@ describe('TodoAIExtension Integration', () => {
             unencoded_length: '1000',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -365,19 +365,19 @@ describe('TodoAIExtension Integration', () => {
       });
 
       // Execute the analysis
-      const result = await aiExtension.analyzeTodo(todoId);
+      const result = await aiExtension.analyzeTodo(todoId as any);
 
       // Verify the results
-      expect(result.insights.length).toBeGreaterThan(0);
-      expect(result.verified).toBe(true);
-      expect(result.todoContent).toEqual(todo);
-      expect(result.blobId).toBe(todoId);
+      expect(result?.insights?.length).toBeGreaterThan(0 as any);
+      expect(result.verified).toBe(true as any);
+      expect(result.todoContent).toEqual(todo as any);
+      expect(result.blobId).toBe(todoId as any);
 
       // Verify client calls
       expect(mockWalrusClient.readBlob).toHaveBeenCalledWith({
         blobId: todoId,
       });
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(todoId);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(todoId as any);
     });
 
     it('should analyze a todo without blockchain verification when disabled', async () => {
@@ -394,8 +394,8 @@ describe('TodoAIExtension Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(todo))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(todo as any))
       );
 
       // Execute the analysis with verification disabled
@@ -404,9 +404,9 @@ describe('TodoAIExtension Integration', () => {
       });
 
       // Verify the results
-      expect(result.insights.length).toBeGreaterThan(0);
-      expect(result.verified).toBe(false);
-      expect(result.todoContent).toEqual(todo);
+      expect(result?.insights?.length).toBeGreaterThan(0 as any);
+      expect(result.verified).toBe(false as any);
+      expect(result.todoContent).toEqual(todo as any);
 
       // Verify client calls
       expect(mockWalrusClient.readBlob).toHaveBeenCalledWith({
@@ -419,10 +419,10 @@ describe('TodoAIExtension Integration', () => {
       const todoId = 'non-existent-todo';
 
       // Mock the blob not being found
-      mockWalrusClient.readBlob.mockRejectedValue(new Error('Blob not found'));
+      mockWalrusClient?.readBlob?.mockRejectedValue(new Error('Blob not found'));
 
       // Execute the analysis and expect it to fail
-      await expect(aiExtension.analyzeTodo(todoId)).rejects.toThrow(CLIError);
+      await expect(aiExtension.analyzeTodo(todoId as any)).rejects.toThrow(CLIError as any);
     });
   });
 
@@ -431,13 +431,13 @@ describe('TodoAIExtension Integration', () => {
       const prompt = 'Create a task for completing the project documentation';
 
       // Execute the generation
-      const result = await aiExtension.generateTodo(prompt);
+      const result = await aiExtension.generateTodo(prompt as any);
 
       // Verify the results
-      expect(result.todo.title).toContain(prompt.slice(0, 30));
-      expect(result.todo.priority).toBe('medium');
-      expect(result.todo.tags).toContain('ai-generated');
-      expect(result.todo.blockchain).toBeUndefined();
+      expect(result?.todo?.title).toContain(prompt.slice(0, 30));
+      expect(result?.todo?.priority).toBe('medium');
+      expect(result?.todo?.tags).toContain('ai-generated');
+      expect(result?.todo?.blockchain).toBeUndefined();
 
       // Verify client calls - should not interact with blockchain
       expect(mockWalrusClient.writeBlob).not.toHaveBeenCalled();
@@ -448,7 +448,7 @@ describe('TodoAIExtension Integration', () => {
       const deadline = new Date('2024-12-31');
 
       // Mock Walrus client response
-      mockWalrusClient.writeBlob.mockResolvedValue({
+      mockWalrusClient?.writeBlob?.mockResolvedValue({
         blobId: 'blockchain-todo-id',
         blobObject: { blob_id: 'blockchain-todo-id' },
       });
@@ -462,23 +462,23 @@ describe('TodoAIExtension Integration', () => {
       });
 
       // Verify the results
-      expect(result.todo.title).toContain(prompt.slice(0, 30));
-      expect(result.todo.priority).toBe('high');
-      expect(result.todo.deadline).toBe(deadline.toISOString());
-      expect(result.todo.blockchain).toBeDefined();
-      const blockchain = result.todo.blockchain!;
-      expect(blockchain.registered).toBe(true);
+      expect(result?.todo?.title).toContain(prompt.slice(0, 30));
+      expect(result?.todo?.priority).toBe('high');
+      expect(result?.todo?.deadline).toBe(deadline.toISOString());
+      expect(result?.todo?.blockchain).toBeDefined();
+      const blockchain = result?.todo?.blockchain!;
+      expect(blockchain.registered).toBe(true as any);
       expect(blockchain.blobId).toBe('blockchain-todo-id');
 
       // Verify generation details
-      expect(result.generationDetails.model).toBe('advanced-model');
-      expect(result.generationDetails.prompt).toBe(prompt);
+      expect(result?.generationDetails?.model).toBe('advanced-model');
+      expect(result?.generationDetails?.prompt).toBe(prompt as any);
 
       // Verify client calls
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
-      const writeArgs = mockWalrusClient.writeBlob.mock.calls[0][0];
-      expect(writeArgs.signer).toBe(mockSigner);
-      expect(writeArgs.deletable).toBe(true);
+      const writeArgs = mockWalrusClient?.writeBlob?.mock?.calls?.[0][0];
+      expect(writeArgs.signer).toBe(mockSigner as any);
+      expect(writeArgs.deletable).toBe(true as any);
       expect(writeArgs.attributes).toEqual({
         contentType: 'application/json',
         todoType: 'ai-generated',
@@ -490,7 +490,7 @@ describe('TodoAIExtension Integration', () => {
       const prompt = 'Create an urgent task for system backup';
 
       // Mock Walrus client error
-      mockWalrusClient.writeBlob.mockRejectedValue(
+      mockWalrusClient?.writeBlob?.mockRejectedValue(
         new Error('Blockchain registration failed')
       );
 
@@ -499,7 +499,7 @@ describe('TodoAIExtension Integration', () => {
         aiExtension.generateTodo(prompt, {
           registerOnBlockchain: true,
         })
-      ).rejects.toThrow(CLIError);
+      ).rejects.toThrow(CLIError as any);
     });
   });
 
@@ -524,11 +524,11 @@ describe('TodoAIExtension Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(todo))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(todo as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: todoId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -539,8 +539,8 @@ describe('TodoAIExtension Integration', () => {
             unencoded_length: '1000',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -549,7 +549,7 @@ describe('TodoAIExtension Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -562,20 +562,20 @@ describe('TodoAIExtension Integration', () => {
       });
 
       // Execute the verification
-      const result = await aiExtension.verifyAIGeneratedTodo(todoId);
+      const result = await aiExtension.verifyAIGeneratedTodo(todoId as any);
 
       // Verify the results
-      expect(result.authentic).toBe(true);
-      expect(result.verificationDetails.blockchainVerified).toBe(true);
-      expect(result.verificationDetails.contentIntact).toBe(true);
-      expect(result.verificationDetails.signatureValid).toBe(true);
-      expect(result.verificationDetails.metadata).toBeDefined();
+      expect(result.authentic).toBe(true as any);
+      expect(result?.verificationDetails?.blockchainVerified).toBe(true as any);
+      expect(result?.verificationDetails?.contentIntact).toBe(true as any);
+      expect(result?.verificationDetails?.signatureValid).toBe(true as any);
+      expect(result?.verificationDetails?.metadata).toBeDefined();
 
       // Verify client calls
       expect(mockWalrusClient.readBlob).toHaveBeenCalledWith({
         blobId: todoId,
       });
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(todoId);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(todoId as any);
       expect(mockWalrusClient.getBlobMetadata).toHaveBeenCalledWith({
         blobId: todoId,
       });
@@ -596,11 +596,11 @@ describe('TodoAIExtension Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(todo))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(todo as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: todoId,
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified on blockchain
@@ -611,8 +611,8 @@ describe('TodoAIExtension Integration', () => {
             unencoded_length: '1000',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -622,21 +622,21 @@ describe('TodoAIExtension Integration', () => {
       });
 
       // Execute the verification
-      const result = await aiExtension.verifyAIGeneratedTodo(todoId);
+      const result = await aiExtension.verifyAIGeneratedTodo(todoId as any);
 
       // Verify the results
-      expect(result.authentic).toBe(false);
-      expect(result.verificationDetails.blockchainVerified).toBe(false);
+      expect(result.authentic).toBe(false as any);
+      expect(result?.verificationDetails?.blockchainVerified).toBe(false as any);
     });
 
     it('should handle verification of non-existent todo', async () => {
       const todoId = 'non-existent-todo';
 
       // Mock the blob not being found
-      mockWalrusClient.readBlob.mockRejectedValue(new Error('Blob not found'));
+      mockWalrusClient?.readBlob?.mockRejectedValue(new Error('Blob not found'));
 
       // Execute the verification and expect it to fail
-      await expect(aiExtension.verifyAIGeneratedTodo(todoId)).rejects.toThrow(
+      await expect(aiExtension.verifyAIGeneratedTodo(todoId as any)).rejects.toThrow(
         CLIError
       );
     });

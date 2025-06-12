@@ -51,7 +51,7 @@ export class AIProviderFactory {
    * @param value - Boolean indicating if AI features were requested, defaults to true
    */
   public static setAIFeatureRequested(value: boolean = true): void {
-    this.isAIFeatureRequested = value;
+    this?.isAIFeatureRequested = value;
   }
 
   /**
@@ -73,21 +73,21 @@ export class AIProviderFactory {
   public static createDefaultAdapter(): AIModelAdapter {
     try {
       // Default to the simplest adapter
-      const apiKey = process.env.XAI_API_KEY;
+      const apiKey = process?.env?.XAI_API_KEY;
 
       // If we have an actual API key (not empty), use it
       if (apiKey && apiKey.length > 10) {
-        this.logger.debug(`Using XAI API key from environment variables`);
+        this?.logger?.debug(`Using XAI API key from environment variables`);
         return new XAIModelAdapter(apiKey, 'grok-beta', { temperature: 0.7 });
       }
 
       // If no API key, log a warning and return fallback
-      this.logger.debug(
+      this?.logger?.debug(
         `No XAI API key found in environment variables, using fallback adapter`
       );
       return this.createFallbackAdapter();
     } catch (_error) {
-      this.logger.error(
+      this?.logger?.error(
         `AIProviderFactory: Failed to create default adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         _error instanceof Error ? _error : undefined
       );
@@ -170,7 +170,7 @@ export class AIProviderFactory {
         const credService = credentialService || secureCredentialService;
 
         // Convert enum to string for credential service
-        const providerString = getProviderString(providerEnum);
+        const providerString = getProviderString(providerEnum as any);
 
         // Verify that we have credentials for this provider
         const hasCredential = await credService.hasCredential(
@@ -180,13 +180,13 @@ export class AIProviderFactory {
         if (!hasCredential) {
           // Only log warnings if AI features were explicitly requested
           if (this.isAIFeatureRequested) {
-            this.logger.warn(
+            this?.logger?.warn(
               `No credentials found for ${providerString}. Using fallback provider.`
             );
           } else {
-            this.logger.debug(`No credentials found for ${providerString}.`);
+            this?.logger?.debug(`No credentials found for ${providerString}.`);
           }
-          return this.createFallbackProvider(options);
+          return this.createFallbackProvider(options as any);
         }
 
         // Get the API key for the provider
@@ -200,36 +200,36 @@ export class AIProviderFactory {
         case AIProviderEnum.XAI:
           return new XAIModelAdapter(
             finalApiKey,
-            modelName || AI_CONFIG.MODELS.xai[0],
+            modelName || AI_CONFIG.MODELS?.xai?.[0],
             options
           );
 
         case AIProviderEnum.OPENAI:
           return new OpenAIModelAdapter(
             finalApiKey,
-            modelName || AI_CONFIG.MODELS.openai[0],
+            modelName || AI_CONFIG.MODELS?.openai?.[0],
             options
           );
 
         case AIProviderEnum.ANTHROPIC:
           // Would implement AnthropicModelAdapter here
-          this.logger.warn(
+          this?.logger?.warn(
             'Anthropic adapter not yet implemented, using fallback provider'
           );
-          return this.createFallbackProvider(options);
+          return this.createFallbackProvider(options as any);
 
         default:
-          this.logger.warn(
+          this?.logger?.warn(
             `Unknown provider: ${providerEnum}, using fallback provider`
           );
-          return this.createFallbackProvider(options);
+          return this.createFallbackProvider(options as any);
       }
     } catch (_error) {
-      this.logger.error(
+      this?.logger?.error(
         `AIProviderFactory: Failed to create provider adapter for ${provider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         _error instanceof Error ? _error : undefined
       );
-      return this.createFallbackProvider(options);
+      return this.createFallbackProvider(options as any);
     }
   }
 
@@ -270,7 +270,7 @@ export class AIProviderFactory {
       if (hasCredential) {
         return {
           provider: defaultProviderEnum,
-          modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString][0],
+          modelName: defaultModel || AI_CONFIG?.MODELS?.[defaultProviderString][0],
         };
       }
 
@@ -286,7 +286,7 @@ export class AIProviderFactory {
           );
           return {
             provider: fallbackProviderEnum,
-            modelName: AI_CONFIG.MODELS[fallbackProvider][0],
+            modelName: AI_CONFIG?.MODELS?.[fallbackProvider][0],
           };
         }
       }
@@ -296,13 +296,13 @@ export class AIProviderFactory {
         provider: defaultProviderEnum,
         modelName:
           defaultModel ||
-          AI_CONFIG.MODELS[
+          AI_CONFIG?.MODELS?.[
             defaultProviderString as keyof typeof AI_CONFIG.MODELS
           ]?.[0] ||
           'grok-beta',
       };
     } catch (_error) {
-      this.logger.error(
+      this?.logger?.error(
         `AIProviderFactory: Error determining default provider: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         _error instanceof Error ? _error : undefined
       );
@@ -347,7 +347,7 @@ export class AIProviderFactory {
         );
 
         if (hasCredential) {
-          this.logger.info(`Using fallback provider: ${fallbackProvider}`);
+          this?.logger?.info(`Using fallback provider: ${fallbackProvider}`);
           const apiKey = await secureCredentialService.getCredential(
             fallbackProvider as unknown as AIProviderEnum
           );
@@ -358,7 +358,7 @@ export class AIProviderFactory {
           if (providerEnum === AIProviderEnum.OPENAI) {
             return new OpenAIModelAdapter(
               apiKey,
-              AI_CONFIG.MODELS.openai[0],
+              AI_CONFIG.MODELS?.openai?.[0],
               options
             );
           }
@@ -366,7 +366,7 @@ export class AIProviderFactory {
           if (providerEnum === AIProviderEnum.XAI) {
             return new XAIModelAdapter(
               apiKey,
-              AI_CONFIG.MODELS.xai[0],
+              AI_CONFIG.MODELS?.xai?.[0],
               options
             );
           }
@@ -376,7 +376,7 @@ export class AIProviderFactory {
       } catch (_error) {
         // Only log debug messages if we actually requested AI features
         if (this.isAIFeatureRequested) {
-          this.logger.debug(
+          this?.logger?.debug(
             `AIProviderFactory: Failed to use fallback provider ${fallbackProvider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
             _error instanceof Error ? _error : undefined
           );
@@ -387,13 +387,13 @@ export class AIProviderFactory {
 
     // Only log a warning if AI features were explicitly requested
     if (this.isAIFeatureRequested) {
-      this.logger.warn(
+      this?.logger?.warn(
         'No valid AI provider credentials found. AI features will be limited. ' +
           'Add API credentials using: walrus_todo ai credentials add <provider> --key YOUR_API_KEY'
       );
     } else {
       // Otherwise, just log at debug level
-      this.logger.debug(
+      this?.logger?.debug(
         'No valid AI provider credentials found. AI features not available.'
       );
     }

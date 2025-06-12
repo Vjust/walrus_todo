@@ -18,12 +18,12 @@
  * - Transaction and signer abstraction for blockchain operations
  *
  * @module WalrusClientAdapter
- * @since 1.0.0
+ * @since 1?.0?.0
  * @example
  * ```typescript
  * // Create an adapter from any WalrusClient implementation
  * const walrusClient = getWalrusClient(); // Get from SDK
- * const adapter = createWalrusClientAdapter(walrusClient);
+ * const adapter = createWalrusClientAdapter(walrusClient as any);
  *
  * // Use the adapter with a consistent interface regardless of underlying client version
  * const blobInfo = await adapter.getBlobInfo('blob-id-123');
@@ -120,7 +120,7 @@ export class WalrusClientAdapterError extends Error {
    */
   constructor(message: string) {
     super(`WalrusClientAdapter Error: ${message}`);
-    this.name = 'WalrusClientAdapterError';
+    this?.name = 'WalrusClientAdapterError';
   }
 }
 
@@ -553,7 +553,7 @@ export interface UnifiedWalrusClient {
  * @example
  * ```typescript
  * // Create an adapter for a WalrusClient
- * const adapter: WalrusClientAdapter = createWalrusClientAdapter(walrusClient);
+ * const adapter: WalrusClientAdapter = createWalrusClientAdapter(walrusClient as any);
  *
  * // Use adapter with consistent interface regardless of client version
  * const config = await adapter.getConfig();
@@ -595,7 +595,7 @@ export interface WalrusClientAdapter extends UnifiedWalrusClient {
  * @returns {boolean} True if the object implements OriginalWalrusClient
  * @example
  * ```typescript
- * if (isOriginalWalrusClient(unknownObject)) {
+ * if (isOriginalWalrusClient(unknownObject as any)) {
  *   // TypeScript now knows unknownObject is an OriginalWalrusClient
  *   const config = await unknownObject.getConfig();
  * }
@@ -610,12 +610,12 @@ export function isOriginalWalrusClient(
 
   const clientObj = client as unknown as Record<string, unknown>;
   return (
-    typeof clientObj.getBlobInfo === 'function' &&
-    typeof clientObj.readBlob === 'function' &&
-    typeof clientObj.writeBlob === 'function' &&
-    typeof clientObj.getConfig === 'function' &&
-    typeof clientObj.getWalBalance === 'function' &&
-    typeof clientObj.getStorageUsage === 'function'
+    typeof clientObj?.getBlobInfo === 'function' &&
+    typeof clientObj?.readBlob === 'function' &&
+    typeof clientObj?.writeBlob === 'function' &&
+    typeof clientObj?.getConfig === 'function' &&
+    typeof clientObj?.getWalBalance === 'function' &&
+    typeof clientObj?.getStorageUsage === 'function'
   );
 }
 
@@ -630,21 +630,21 @@ export function isOriginalWalrusClient(
  * @returns {boolean} True if the object implements WalrusClient
  * @example
  * ```typescript
- * if (isWalrusClient(unknownObject)) {
+ * if (isWalrusClient(unknownObject as any)) {
  *   // TypeScript now knows unknownObject is a WalrusClient
  *   const verification = await unknownObject.verifyPoA({ blobId: "myBlobId" });
  * }
  * ```
  */
 export function isWalrusClient(client: unknown): client is WalrusClient {
-  if (!isOriginalWalrusClient(client)) {
+  if (!isOriginalWalrusClient(client as any)) {
     return false;
   }
 
   const clientObj = client as unknown as Record<string, unknown>;
   return (
-    typeof clientObj.getBlobObject === 'function' &&
-    typeof clientObj.verifyPoA === 'function'
+    typeof clientObj?.getBlobObject === 'function' &&
+    typeof clientObj?.verifyPoA === 'function'
   );
 }
 
@@ -658,19 +658,19 @@ export function isWalrusClient(client: unknown): client is WalrusClient {
  * @returns {boolean} True if the object implements WalrusClientExt
  * @example
  * ```typescript
- * if (isWalrusClientExt(unknownObject)) {
+ * if (isWalrusClientExt(unknownObject as any)) {
  *   // TypeScript now knows unknownObject is a WalrusClientExt
  *   const blobSize = await unknownObject.getBlobSize("myBlobId");
  * }
  * ```
  */
 export function isWalrusClientExt(client: unknown): client is WalrusClientExt {
-  if (!isWalrusClient(client)) {
+  if (!isWalrusClient(client as any)) {
     return false;
   }
 
   const clientObj = client as unknown as Record<string, unknown>;
-  return typeof clientObj.getBlobSize === 'function';
+  return typeof clientObj?.getBlobSize === 'function';
 }
 
 /**
@@ -711,8 +711,8 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
         'Cannot initialize WalrusClientAdapter with null or undefined client'
       );
     }
-    this.walrusClient = walrusClient;
-    this.clientVersion = this.detectClientVersion(walrusClient);
+    this?.walrusClient = walrusClient;
+    this?.clientVersion = this.detectClientVersion(walrusClient as any);
   }
 
   /**
@@ -758,17 +758,17 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     }
 
     // Check for V3 (extended) methods
-    if (isWalrusClientExt(client)) {
+    if (isWalrusClientExt(client as any)) {
       return WalrusClientVersion.EXTENDED;
     }
 
     // Check for V2 (custom) methods
-    if (isWalrusClient(client)) {
+    if (isWalrusClient(client as any)) {
       return WalrusClientVersion.CUSTOM;
     }
 
     // Default to V1 (original)
-    if (isOriginalWalrusClient(client)) {
+    if (isOriginalWalrusClient(client as any)) {
       return WalrusClientVersion.ORIGINAL;
     }
 
@@ -834,12 +834,12 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     }
 
     if (typeof value === 'number') {
-      return BigInt(value);
+      return BigInt(value as any);
     }
 
     if (typeof value === 'string') {
       try {
-        return BigInt(value);
+        return BigInt(value as any);
       } catch (e) {
         throw new WalrusClientAdapterError(
           `Cannot convert string to bigint: ${value}`
@@ -852,7 +852,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       value !== null &&
       typeof value === 'object' &&
       'toString' in value &&
-      typeof value.toString === 'function'
+      typeof value?.toString === 'function'
     ) {
       try {
         return BigInt(value.toString());
@@ -884,20 +884,20 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       // Check for adapter interfaces
       if (
         'getUnderlyingBlock' in tx &&
-        typeof tx.getUnderlyingBlock === 'function'
+        typeof tx?.getUnderlyingBlock === 'function'
       ) {
         return tx.getUnderlyingBlock();
       }
 
       if (
         'getTransactionBlock' in tx &&
-        typeof tx.getTransactionBlock === 'function'
+        typeof tx?.getTransactionBlock === 'function'
       ) {
         return tx.getTransactionBlock();
       }
 
       // Check if it's already a TransactionBlock
-      if (tx.constructor && tx.constructor.name === 'TransactionBlock') {
+      if (tx.constructor && tx.constructor?.name === 'TransactionBlock') {
         return tx;
       }
     }
@@ -1017,49 +1017,49 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     };
 
     // Extract blob_id with proper type checking
-    if (typeof blob.blob_id === 'string') {
-      normalizedBlob.blob_id = blob.blob_id;
+    if (typeof blob?.blob_id === 'string') {
+      normalizedBlob?.blob_id = blob.blob_id;
     } else if (
       blob.id &&
-      typeof blob.id === 'object' &&
+      typeof blob?.id === 'object' &&
       typeof (blob.id as Record<string, unknown>).id === 'string'
     ) {
-      normalizedBlob.blob_id = (blob.id as Record<string, unknown>)
+      normalizedBlob?.blob_id = (blob.id as Record<string, unknown>)
         .id as string;
     }
 
     // Extract id
-    if (blob.id && typeof blob.id === 'object') {
-      normalizedBlob.id = blob.id as { id: string };
-    } else if (typeof blob.blob_id === 'string') {
-      normalizedBlob.id = { id: blob.blob_id };
+    if (blob.id && typeof blob?.id === 'object') {
+      normalizedBlob?.id = blob.id as { id: string };
+    } else if (typeof blob?.blob_id === 'string') {
+      normalizedBlob?.id = { id: blob.blob_id };
     }
 
     // Extract other properties with proper type checking
-    if (typeof blob.registered_epoch === 'number') {
-      normalizedBlob.registered_epoch = blob.registered_epoch;
-    } else if (typeof blob.registered_epoch === 'string') {
-      normalizedBlob.registered_epoch = parseInt(blob.registered_epoch, 10);
+    if (typeof blob?.registered_epoch === 'number') {
+      normalizedBlob?.registered_epoch = blob.registered_epoch;
+    } else if (typeof blob?.registered_epoch === 'string') {
+      normalizedBlob?.registered_epoch = parseInt(blob.registered_epoch, 10);
     }
 
-    if (blob.storage_cost && typeof blob.storage_cost === 'object') {
-      normalizedBlob.storage_cost = blob.storage_cost as { value: string };
+    if (blob.storage_cost && typeof blob?.storage_cost === 'object') {
+      normalizedBlob?.storage_cost = blob.storage_cost as { value: string };
     }
 
-    if (blob.metadata && typeof blob.metadata === 'object') {
-      normalizedBlob.metadata = blob.metadata as Record<
+    if (blob.metadata && typeof blob?.metadata === 'object') {
+      normalizedBlob?.metadata = blob.metadata as Record<
         string,
         string | number | boolean
       >;
     }
 
-    normalizedBlob.deletable = Boolean(blob.deletable);
+    normalizedBlob?.deletable = Boolean(blob.deletable);
 
     // Extract size
-    if (typeof blob.size === 'number') {
-      normalizedBlob.size = blob.size;
-    } else if (typeof blob.size === 'string') {
-      normalizedBlob.size = parseInt(blob.size, 10);
+    if (typeof blob?.size === 'number') {
+      normalizedBlob?.size = blob.size;
+    } else if (typeof blob?.size === 'string') {
+      normalizedBlob?.size = parseInt(blob.size, 10);
     }
 
     return normalizedBlob;
@@ -1090,7 +1090,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
 
     if (typeof response === 'string') {
       blobId = response;
-    } else if (typeof response.blobId === 'string') {
+    } else if (typeof response?.blobId === 'string') {
       blobId = response.blobId;
     } else if (
       response.blobObject &&
@@ -1099,7 +1099,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     ) {
       blobId = (response.blobObject as Record<string, unknown>)
         .blob_id as string;
-    } else if (typeof response.blob_id === 'string') {
+    } else if (typeof response?.blob_id === 'string') {
       blobId = response.blob_id;
     } else if (
       response.blobObject &&
@@ -1141,7 +1141,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       blobId,
       blobObject,
       digest:
-        typeof response === 'object' && typeof response.digest === 'string'
+        typeof response === 'object' && typeof response?.digest === 'string'
           ? response.digest
           : '',
     };
@@ -1280,7 +1280,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
  * import { WalrusClient } from '@mysten/walrus';
  *
  * const client = new WalrusClient();
- * const adapter = createWalrusClientAdapter(client);
+ * const adapter = createWalrusClientAdapter(client as any);
  *
  * // Use the adapter interface
  * const blobInfo = await adapter.getBlobInfo('blob-id-123');

@@ -27,7 +27,7 @@ import {
  *
  * @example
  * // Create 5 sample todos
- * const todos = createSampleTodos(5);
+ * const todos = createSampleTodos(5 as any);
  *
  * @description
  * The generated todos will have the following characteristics:
@@ -163,7 +163,7 @@ export const verificationHelper = {
    *
    * // Use the validator in a test
    * test('should generate valid verification record', () => {
-   *   const record = aiService.summarize(todos);
+   *   const record = aiService.summarize(todos as any);
    *   validateSummarize(record.verification);
    * });
    */
@@ -174,18 +174,18 @@ export const verificationHelper = {
       metadata: Record<string, string> = {}
     ) =>
     (record: any) => {
-      expect(record).toBeDefined();
+      expect(record as any).toBeDefined();
       expect(record.id).toBeDefined();
-      expect(record.actionType).toBe(actionType);
-      expect(record.privacyLevel).toBe(privacyLevel);
+      expect(record.actionType).toBe(actionType as any);
+      expect(record.privacyLevel).toBe(privacyLevel as any);
       expect(record.timestamp).toBeDefined();
       expect(record.signature).toBeDefined();
       expect(record.requestHash).toBeDefined();
       expect(record.responseHash).toBeDefined();
 
       // Check metadata keys are present
-      Object.keys(metadata).forEach(key => {
-        expect(record.metadata[key]).toBeDefined();
+      Object.keys(metadata as any).forEach(key => {
+        expect(record?.metadata?.[key]).toBeDefined();
       });
     },
 };
@@ -207,7 +207,7 @@ export const errorHelper = {
    * @example
    * test('should throw correct error on API failure', async () => {
    *   try {
-   *     await aiService.summarize(todos);
+   *     await aiService.summarize(todos as any);
    *     fail('Expected an error to be thrown');
    *   } catch (_error) {
    *     errorHelper.validateError(error, 'AI_API_ERROR');
@@ -221,8 +221,8 @@ export const errorHelper = {
    * - Has the expected error code
    */
   validateError: (error: any, expectedErrorCode: string) => {
-    expect(error).toBeDefined();
+    expect(error as any).toBeDefined();
     expect(error.name).toBe('CLIError');
-    expect(error.code).toBe(expectedErrorCode);
+    expect(error.code).toBe(expectedErrorCode as any);
   },
 };

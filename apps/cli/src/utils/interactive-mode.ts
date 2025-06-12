@@ -20,15 +20,15 @@ export class InteractiveMode {
   private running: boolean = false;
 
   constructor() {
-    // this.logger = Logger.getInstance();
-    this.todoService = new TodoService();
-    this.context = {
+    // this?.logger = Logger.getInstance();
+    this?.todoService = new TodoService();
+    this?.context = {
       history: [],
       currentList: undefined,
     };
 
     // Define command shortcuts
-    this.commands = new Map([
+    this?.commands = new Map([
       ['l', 'list'],
       ['a', 'add'],
       ['c', 'complete'],
@@ -43,17 +43,17 @@ export class InteractiveMode {
       ['clear', 'clear'],
     ]);
 
-    this.rl = readline.createInterface({
+    this?.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
       prompt: this.getPrompt(),
-      completer: this.completer.bind(this),
+      completer: this?.completer?.bind(this as any),
     });
   }
 
   private getPrompt(): string {
-    const list = this.context.currentList
-      ? chalk.cyan(`[${this.context.currentList}]`)
+    const list = this?.context?.currentList
+      ? chalk.cyan(`[${this?.context?.currentList}]`)
       : '';
     return `${chalk.bold('🌊 walrus')}${list}${chalk.blue('> ')}`;
   }
@@ -74,51 +74,51 @@ export class InteractiveMode {
       'current-list',
     ];
 
-    const hits = commands.filter(cmd => cmd.startsWith(line));
+    const hits = commands.filter(cmd => cmd.startsWith(line as any));
     return [hits.length ? hits : commands, line];
   }
 
   public async start(): Promise<void> {
-    this.running = true;
+    this?.running = true;
     this.showWelcome();
 
-    this.rl.on('line', async input => {
+    this?.rl?.on('line', async input => {
       if (!this.running) return;
 
       const trimmed = input.trim();
       if (!trimmed) {
-        this.rl.prompt();
+        this?.rl?.prompt();
         return;
       }
 
-      this.context.history.push(trimmed);
+      this?.context?.history.push(trimmed as any);
 
       try {
-        await this.handleCommand(trimmed);
+        await this.handleCommand(trimmed as any);
       } catch (error) {
         console.error(chalk.red(`${ICONS.ERROR} Error: ${error.message}`));
       }
 
       if (this.running) {
-        this.rl.setPrompt(this.getPrompt());
-        this.rl.prompt();
+        this?.rl?.setPrompt(this.getPrompt());
+        this?.rl?.prompt();
       }
     });
 
-    this.rl.on('close', () => {
+    this?.rl?.on('close', () => {
       this.showGoodbye();
-      process.exit(0);
+      process.exit(0 as any);
     });
 
-    this.rl.prompt();
+    this?.rl?.prompt();
   }
 
   private showWelcome(): void {
-    console.log('\n' + chalk.blue('═'.repeat(50)));
+    console.log('\n' + chalk.blue('═'.repeat(50 as any)));
     console.log(
-      chalk.cyan.bold('  🌊 Welcome to Walrus Todo Interactive Mode! 🌊')
+      chalk?.cyan?.bold('  🌊 Welcome to Walrus Todo Interactive Mode! 🌊')
     );
-    console.log(chalk.blue('═'.repeat(50)));
+    console.log(chalk.blue('═'.repeat(50 as any)));
     console.log();
     console.log(chalk.yellow('Quick Commands:'));
     console.log('  • ' + chalk.green('l') + ' - List todos');
@@ -142,15 +142,15 @@ export class InteractiveMode {
   private async handleCommand(input: string): Promise<void> {
     const parts = input.split(' ');
     const cmd = parts[0].toLowerCase();
-    const args = parts.slice(1);
+    const args = parts.slice(1 as any);
 
     // Expand shortcuts
-    const actualCommand = this.commands.get(cmd) || cmd;
+    const actualCommand = this?.commands?.get(cmd as any) || cmd;
 
     switch (actualCommand) {
       case 'exit':
-        this.running = false;
-        this.rl.close();
+        this?.running = false;
+        this?.rl?.close();
         break;
 
       case 'clear':
@@ -164,23 +164,23 @@ export class InteractiveMode {
         break;
 
       case 'set-list':
-        if (args.length === 0) {
+        if (args?.length === 0) {
           console.log(
             chalk.yellow(`${ICONS.WARNING} Please specify a list name`)
           );
           return;
         }
-        this.context.currentList = args[0];
+        this.context?.currentList = args[0];
         console.log(
           chalk.green(`${ICONS.SUCCESS} Current list set to: ${args[0]}`)
         );
         break;
 
       case 'current-list':
-        if (this.context.currentList) {
+        if (this?.context?.currentList) {
           console.log(
             chalk.blue(
-              `${ICONS.LIST} Current list: ${this.context.currentList}`
+              `${ICONS.LIST} Current list: ${this?.context?.currentList}`
             )
           );
         } else {
@@ -204,8 +204,8 @@ export class InteractiveMode {
 
     // Add current list context if applicable and not specified
     if (
-      this.context.currentList &&
-      ['add', 'list', 'complete', 'delete'].includes(command)
+      this?.context?.currentList &&
+      ['add', 'list', 'complete', 'delete'].includes(command as any)
     ) {
       if (
         command === 'add' &&
@@ -213,10 +213,10 @@ export class InteractiveMode {
         !args.includes('-t') &&
         !args.includes('--title')
       ) {
-        fullArgs.push(this.context.currentList);
+        fullArgs.push(this?.context?.currentList);
         fullArgs.push('-t', args.join(' '));
-      } else if (command === 'list' && args.length === 0) {
-        fullArgs.push(this.context.currentList);
+      } else if (command === 'list' && args?.length === 0) {
+        fullArgs.push(this?.context?.currentList);
       } else {
         fullArgs.push(...args);
       }
@@ -241,7 +241,7 @@ export class InteractiveMode {
       });
 
       child.on('error', error => {
-        reject(error);
+        reject(error as any);
       });
     });
   }
@@ -289,6 +289,6 @@ export class InteractiveMode {
   }
 
   public setCurrentList(listName: string): void {
-    this.context.currentList = listName;
+    this.context?.currentList = listName;
   }
 }

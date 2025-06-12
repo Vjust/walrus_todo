@@ -65,7 +65,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
   // Factory functions for creating mock responses
   const createMockConfig = () => ({
     network: 'testnet',
-    version: '1.0.0',
+    version: '1?.0?.0',
     maxSize: 10485760,
   });
 
@@ -75,7 +75,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
   });
 
   const createMockBlob = (length?: number) =>
-    new Uint8Array(length || 4).fill(1);
+    new Uint8Array(length || 4).fill(1 as any);
 
   return {
     getConfig: jest
@@ -96,14 +96,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           blob_id: 'mock-blob-test-todo-id',
           registered_epoch: 100,
           certified_epoch: 150,
-          size: BigInt(4), // Match default blob size
+          size: BigInt(4 as any), // Match default blob size
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           storage: {
             id: { id: 'storage1' },
             start_epoch: 100,
             end_epoch: 200,
-            storage_size: BigInt(2048),
-            used_size: BigInt(4), // Match default blob size
+            storage_size: BigInt(2048 as any),
+            used_size: BigInt(4 as any), // Match default blob size
           },
           deletable: true,
         },
@@ -135,14 +135,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         blob_id: 'mock-blob-test-todo-id',
         registered_epoch: 100,
         certified_epoch: 150,
-        size: BigInt(4), // Match default blob size
+        size: BigInt(4 as any), // Match default blob size
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
-          storage_size: BigInt(2048),
-          used_size: BigInt(4), // Match default blob size
+          storage_size: BigInt(2048 as any),
+          used_size: BigInt(4 as any), // Match default blob size
         },
         deletable: true,
       })
@@ -158,13 +158,13 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         $kind: 'V1',
       })
     ),
-    verifyPoA: jest.fn().mockResolvedValue(true),
-    getBlobSize: jest.fn().mockResolvedValue(4), // Match default blob size
+    verifyPoA: jest.fn().mockResolvedValue(true as any),
+    getBlobSize: jest.fn().mockResolvedValue(4 as any), // Match default blob size
     storageCost: jest.fn().mockImplementation(() =>
       Promise.resolve({
-        storageCost: BigInt(100),
-        writeCost: BigInt(50),
-        totalCost: BigInt(150),
+        storageCost: BigInt(100 as any),
+        writeCost: BigInt(50 as any),
+        totalCost: BigInt(150 as any),
       })
     ),
     executeCreateStorageTransaction: jest.fn().mockResolvedValue({
@@ -194,14 +194,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         blob_id: 'mock-blob-id',
         registered_epoch: 100,
         certified_epoch: 150,
-        size: BigInt(4), // Match default blob size
+        size: BigInt(4 as any), // Match default blob size
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
-          storage_size: BigInt(2048),
-          used_size: BigInt(4), // Match default blob size
+          storage_size: BigInt(2048 as any),
+          used_size: BigInt(4 as any), // Match default blob size
         },
         deletable: true,
       },
@@ -232,7 +232,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         Promise.resolve(['provider1', 'provider2', 'provider3', 'provider4'])
       ),
     reset: jest.fn(),
-    connect: jest.fn().mockResolvedValue(undefined),
+    connect: jest.fn().mockResolvedValue(undefined as any),
     experimental: {
       getBlobData: jest
         .fn()
@@ -267,6 +267,6 @@ export function getLightweightMockWalrusClient() {
       blobObject: { id: { id: 'mock-blob-id' } },
     }),
     reset: jest.fn(),
-    connect: jest.fn().mockResolvedValue(undefined),
+    connect: jest.fn().mockResolvedValue(undefined as any),
   };
 }

@@ -115,8 +115,8 @@ export class DefaultSuiTransactionBlockAdapter
   private client: InstanceType<typeof SuiClient>;
 
   constructor(signer: SignerAdapter) {
-    this.signer = signer;
-    this.client = signer.getClient();
+    this?.signer = signer;
+    this?.client = signer.getClient();
   }
 
   /**
@@ -135,7 +135,7 @@ export class DefaultSuiTransactionBlockAdapter
   ): Promise<TransactionResponse> {
     try {
       // Pass only valid transaction options
-      const result = await this.signer.signAndExecuteTransaction(
+      const result = await this?.signer?.signAndExecuteTransaction(
         transaction as TransactionType
       );
 
@@ -175,9 +175,9 @@ export class DefaultSuiTransactionBlockAdapter
    */
   async dryRunTransaction(transaction: Transaction): Promise<unknown> {
     try {
-      const result = await this.client.devInspectTransactionBlock({
+      const result = await this?.client?.devInspectTransactionBlock({
         transactionBlock: transaction as TransactionType,
-        sender: this.signer.toSuiAddress(),
+        sender: this?.signer?.toSuiAddress(),
       });
 
       return result;
@@ -220,6 +220,6 @@ export class DefaultSuiTransactionBlockAdapter
   async dryRunTransactionBlock(
     transactionBlock: TransactionBlock
   ): Promise<unknown> {
-    return this.dryRunTransaction(transactionBlock);
+    return this.dryRunTransaction(transactionBlock as any);
   }
 }

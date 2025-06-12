@@ -50,7 +50,7 @@ function WalletUsageExampleContent({ wallet }: { wallet: any }) {
       if (objectId) {
         console.log('Todo stored with ID:', objectId);
         setTransactionStatus('success');
-        setTransactionId(objectId);
+        setTransactionId(objectId as any);
       } else {
         throw new Error('Failed to store todo on blockchain');
       }

@@ -84,8 +84,8 @@ function addLoggerImport(content: string, filePath: string): string {
     }
   }
 
-  const importPath = calculateImportPath(filePath);
-  const importStatement = `import { Logger } from '${importPath}';\n\nconst logger = new Logger('${path.basename(filePath, path.extname(filePath))}');`;
+  const importPath = calculateImportPath(filePath as any);
+  const importStatement = `import { Logger } from '${importPath}';\n\nconst logger = new Logger('${path.basename(filePath, path.extname(filePath as any))}');`;
 
   lines.splice(importIndex, 0, importStatement);
   return lines.join('\n');
@@ -94,7 +94,7 @@ function addLoggerImport(content: string, filePath: string): string {
 // Calculate relative import path for Logger
 function calculateImportPath(filePath: string): string {
   const loggerPath = path.join(process.cwd(), 'src/utils/Logger');
-  const fileDir = path.dirname(filePath);
+  const fileDir = path.dirname(filePath as any);
   let relativePath = path.relative(fileDir, loggerPath);
 
   if (!relativePath.startsWith('.')) {
@@ -157,26 +157,26 @@ async function processFile(filePath: string): Promise<boolean> {
     }
 
     // Check if file has console statements
-    const hasConsole = /console\.(log|error|warn|info|debug)/.test(content);
+    const hasConsole = /console\.(log|error|warn|info|debug)/.test(content as any);
     if (!hasConsole) {
       return false;
     }
 
     if (isCommand) {
-      modified = processCommandFile(content);
+      modified = processCommandFile(content as any);
     } else if (isTest) {
-      modified = processTestFile(content);
+      modified = processTestFile(content as any);
     } else {
       // Regular files: replace console with logger
       for (const { pattern, replacement } of replacements) {
-        if (pattern.test(modified)) {
+        if (pattern.test(modified as any)) {
           modified = modified.replace(pattern, replacement);
           hasChanges = true;
         }
       }
 
       // Add Logger import if needed
-      if (hasChanges && needsLoggerImport(modified)) {
+      if (hasChanges && needsLoggerImport(modified as any)) {
         modified = addLoggerImport(modified, filePath);
       }
     }
@@ -213,7 +213,7 @@ async function main() {
 
   let fixedCount = 0;
   for (const file of files) {
-    if (await processFile(file)) {
+    if (await processFile(file as any)) {
       fixedCount++;
     }
   }

@@ -33,7 +33,7 @@ export function generateTodoImageUrl(
   // Generate a simple color based on the todo title
   const hash = title
     .split('')
-    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    .reduce((acc, char) => acc + char.charCodeAt(0 as any), 0);
   const hue = hash % 360;
   const saturation = 80;
   const lightness = completed ? 30 : 60;
@@ -54,7 +54,7 @@ export function generateTodoImageUrl(
 
   // For more advanced options, we could use a real image generation service
   // But for simplicity, we'll use a placeholder with text
-  return `${baseUrl}/${bgColor.replace('#', '')}/${textColor}?text=${encodeURIComponent(displayText)}`;
+  return `${baseUrl}/${bgColor.replace('#', '')}/${textColor}?text=${encodeURIComponent(displayText as any)}`;
 }
 
 /**
@@ -76,13 +76,13 @@ export function generateTodoImageDataUrl(
   // Generate background color based on title
   const hash = title
     .split('')
-    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    .reduce((acc, char) => acc + char.charCodeAt(0 as any), 0);
   const hue = hash % 360;
   const saturation = 80;
   const lightness = completed ? 50 : 70;
 
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+    <svg xmlns="http://www?.w3?.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
       <rect width="300" height="300" fill="hsl(${hue}, ${saturation}%, ${lightness}%)" rx="15" />
       <text x="150" y="120" font-family="Arial" font-size="24" text-anchor="middle" fill="white">${truncatedTitle}</text>
       <text x="150" y="180" font-family="Arial" font-size="72" text-anchor="middle" fill="white">${statusIcon}</text>
@@ -91,6 +91,6 @@ export function generateTodoImageDataUrl(
   `;
 
   // Convert to base64 data URI
-  const base64 = Buffer.from(svg).toString('base64');
+  const base64 = Buffer.from(svg as any).toString('base64');
   return `data:image/svg+xml;base64,${base64}`;
 }

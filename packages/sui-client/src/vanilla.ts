@@ -57,17 +57,17 @@ export class VanillaSuiClient {
       checkVersionCompatibility();
       
       // Load configuration
-      this.config = await loadAppConfig(networkOverride);
-      this.currentNetwork = this.config.network.name as NetworkType;
+      this.config = await loadAppConfig(networkOverride as any);
+      this.currentNetwork = this.config?.network.name as NetworkType;
 
       // Create SuiClient instance with compatibility wrapper
       const baseOptions = { 
-        url: this.config.network.url,
+        url: this.config?.network.url,
         ...this.options 
       };
-      const compatOptions = createCompatibleSuiClientOptions(baseOptions);
+      const compatOptions = createCompatibleSuiClientOptions(baseOptions as any);
 
-      this.client = new SuiClient(compatOptions);
+      this.client = new SuiClient(compatOptions as any);
       
       console.log(`[VanillaSuiClient] Initialized for ${this.currentNetwork} network`);
     } catch (error) {
@@ -110,7 +110,7 @@ export class VanillaSuiClient {
    */
   async switchNetwork(network: NetworkType): Promise<void> {
     clearConfigCache();
-    await this.initialize(network);
+    await this.initialize(network as any);
   }
 
   /**
@@ -118,7 +118,7 @@ export class VanillaSuiClient {
    */
   createKeypairFromPrivateKey(privateKey: string): Ed25519Keypair {
     try {
-      return Ed25519Keypair.fromSecretKey(privateKey);
+      return Ed25519Keypair.fromSecretKey(privateKey as any);
     } catch (error) {
       throw new SuiClientError(
         `Failed to create keypair: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -179,7 +179,7 @@ export class VanillaSuiClient {
       }
 
       // Use compatibility wrapper for transaction result
-      return normalizeTransactionResult(result);
+      return normalizeTransactionResult(result as any);
     } catch (error) {
       if (error instanceof TransactionError) {
         throw error;
@@ -195,11 +195,11 @@ export class VanillaSuiClient {
    */
   createTodoNFTTransaction(params: CreateTodoParams, senderAddress: string): Transaction {
     const config = this.getConfig();
-    const packageId = config.contracts.todoNft.packageId;
-    const moduleName = config.contracts.todoNft.moduleName;
+    const packageId = config?.contracts?.todoNft.packageId;
+    const moduleName = config?.contracts?.todoNft.moduleName;
 
     const tx = new Transaction();
-    tx.setSender(senderAddress);
+    tx.setSender(senderAddress as any);
 
     tx.moveCall({
       target: `${packageId}::${moduleName}::create_todo`,
@@ -220,11 +220,11 @@ export class VanillaSuiClient {
    */
   updateTodoNFTTransaction(params: UpdateTodoParams, senderAddress: string): Transaction {
     const config = this.getConfig();
-    const packageId = config.contracts.todoNft.packageId;
-    const moduleName = config.contracts.todoNft.moduleName;
+    const packageId = config?.contracts?.todoNft.packageId;
+    const moduleName = config?.contracts?.todoNft.moduleName;
 
     const tx = new Transaction();
-    tx.setSender(senderAddress);
+    tx.setSender(senderAddress as any);
 
     tx.moveCall({
       target: `${packageId}::${moduleName}::update_todo`,
@@ -245,15 +245,15 @@ export class VanillaSuiClient {
    */
   completeTodoNFTTransaction(objectId: string, senderAddress: string): Transaction {
     const config = this.getConfig();
-    const packageId = config.contracts.todoNft.packageId;
-    const moduleName = config.contracts.todoNft.moduleName;
+    const packageId = config?.contracts?.todoNft.packageId;
+    const moduleName = config?.contracts?.todoNft.moduleName;
 
     const tx = new Transaction();
-    tx.setSender(senderAddress);
+    tx.setSender(senderAddress as any);
 
     tx.moveCall({
       target: `${packageId}::${moduleName}::complete_todo`,
-      arguments: [tx.object(objectId)],
+      arguments: [tx.object(objectId as any)],
     });
 
     return tx;
@@ -264,15 +264,15 @@ export class VanillaSuiClient {
    */
   deleteTodoNFTTransaction(objectId: string, senderAddress: string): Transaction {
     const config = this.getConfig();
-    const packageId = config.contracts.todoNft.packageId;
-    const moduleName = config.contracts.todoNft.moduleName;
+    const packageId = config?.contracts?.todoNft.packageId;
+    const moduleName = config?.contracts?.todoNft.moduleName;
 
     const tx = new Transaction();
-    tx.setSender(senderAddress);
+    tx.setSender(senderAddress as any);
 
     tx.moveCall({
       target: `${packageId}::${moduleName}::delete_todo`,
-      arguments: [tx.object(objectId)],
+      arguments: [tx.object(objectId as any)],
     });
 
     return tx;
@@ -289,7 +289,7 @@ export class VanillaSuiClient {
       const rawResponse = await client.getOwnedObjects({
         owner: ownerAddress,
         filter: {
-          StructType: `${config.contracts.todoNft.packageId}::${config.contracts.todoNft.moduleName}::${config.contracts.todoNft.structName}`,
+          StructType: `${config?.contracts?.todoNft.packageId}::${config?.contracts?.todoNft.moduleName}::${config?.contracts?.todoNft.structName}`,
         },
         options: {
           showContent: true,
@@ -299,13 +299,13 @@ export class VanillaSuiClient {
       });
 
       // Use compatibility wrapper for response
-      const response = normalizeOwnedObjectsResponse(rawResponse);
+      const response = normalizeOwnedObjectsResponse(rawResponse as any);
       const todos: Todo[] = [];
       
       for (const item of response.data) {
-        const todo = this.transformSuiObjectToTodo(item);
+        const todo = this.transformSuiObjectToTodo(item as any);
         if (todo) {
-          todos.push(todo);
+          todos.push(todo as any);
         }
       }
 
@@ -334,8 +334,8 @@ export class VanillaSuiClient {
       });
 
       // Use compatibility wrapper for response
-      const response = normalizeObjectResponse(rawResponse);
-      return this.transformSuiObjectToTodo(response);
+      const response = normalizeObjectResponse(rawResponse as any);
+      return this.transformSuiObjectToTodo(response as any);
     } catch (error) {
       throw new SuiClientError(
         `Failed to fetch todo by object ID: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -379,12 +379,12 @@ export class VanillaSuiClient {
   private transformSuiObjectToTodo(suiObject: any): Todo | null {
     if (
       !suiObject.data?.content ||
-      suiObject.data.content.dataType !== 'moveObject'
+      suiObject?.data?.content.dataType !== 'moveObject'
     ) {
       return null;
     }
 
-    const moveObject = suiObject.data.content;
+    const moveObject = suiObject?.data?.content;
     const fields = moveObject.fields;
 
     if (!fields) {
@@ -393,11 +393,11 @@ export class VanillaSuiClient {
 
     try {
       return {
-        id: suiObject.data.objectId,
-        objectId: suiObject.data.objectId,
+        id: suiObject?.data?.objectId,
+        objectId: suiObject?.data?.objectId,
         title: fields.title || 'Untitled',
         description: fields.description || '',
-        completed: fields.completed === true,
+        completed: fields?.completed === true,
         priority: 'medium', // Default priority
         tags: [],
         blockchainStored: true,
@@ -406,7 +406,7 @@ export class VanillaSuiClient {
         completedAt: fields.completed_at ? parseInt(fields.completed_at) : undefined,
         owner: fields.owner,
         metadata: fields.metadata || '',
-        isPrivate: fields.is_private === true,
+        isPrivate: fields?.is_private === true,
       };
     } catch (error) {
       console.error('[VanillaSuiClient] Error transforming Sui object to Todo:', error);
@@ -419,7 +419,7 @@ export class VanillaSuiClient {
  * Create a vanilla Sui client instance
  */
 export function createVanillaSuiClient(options?: SuiClientOptions): VanillaSuiClient {
-  return new VanillaSuiClient(options);
+  return new VanillaSuiClient(options as any);
 }
 
 /**

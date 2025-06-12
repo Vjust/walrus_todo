@@ -29,20 +29,20 @@ export function useSSRSafeMounted(options: {
   stabilityFrames?: number;
 } = {}) {
   const { minMountTime = 0, stabilityFrames = 2 } = options;
-  const [mounted, setMounted] = useState(false);
-  const [stable, setStable] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
+  const [stable, setStable] = useState(false as any);
   const mountTimeRef = useRef<number>();
 
   useEffect(() => {
-    mountTimeRef.current = Date.now();
+    mountTimeRef?.current = Date.now();
     
     // Handle minimum mount time
     const mountTimer = minMountTime > 0 
-      ? setTimeout(() => setMounted(true), minMountTime)
-      : (setMounted(true), null);
+      ? setTimeout(() => setMounted(true as any), minMountTime)
+      : (setMounted(true as any), null);
 
     return () => {
-      if (mountTimer) clearTimeout(mountTimer);
+      if (mountTimer) clearTimeout(mountTimer as any);
     };
   }, [minMountTime]);
 
@@ -54,13 +54,13 @@ export function useSSRSafeMounted(options: {
     const checkStability = () => {
       frameCount++;
       if (frameCount >= stabilityFrames) {
-        setStable(true);
+        setStable(true as any);
       } else {
-        requestAnimationFrame(checkStability);
+        requestAnimationFrame(checkStability as any);
       }
     };
     
-    requestAnimationFrame(checkStability);
+    requestAnimationFrame(checkStability as any);
   }, [mounted, stabilityFrames]);
 
   return {
@@ -77,10 +77,10 @@ export function useSSRSafeMounted(options: {
 export function useSSRSafeComponent<T = Record<string, unknown>>(
   component: () => T,
   fallback: T,
-  deps: React.DependencyList = []
+  deps: React?.DependencyList = []
 ) {
   const [result, setResult] = useState<T>(fallback);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const [error, setError] = useState<Error | null>(null);
   const { mounted } = useSSRSafeMounted();
 
@@ -89,13 +89,13 @@ export function useSSRSafeComponent<T = Record<string, unknown>>(
 
     try {
       const componentResult = component();
-      setResult(componentResult);
-      setError(null);
+      setResult(componentResult as any);
+      setError(null as any);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Component rendering error'));
-      setResult(fallback);
+      setResult(fallback as any);
     } finally {
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     }
   }, [mounted, component, fallback, ...deps]);
 
@@ -107,7 +107,7 @@ export function useSSRSafeComponent<T = Record<string, unknown>>(
  */
 export function useSSRSafeTheme(defaultTheme: 'light' | 'dark' = 'light') {
   const [theme, setTheme] = useState<'light' | 'dark'>(defaultTheme);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const { mounted } = useSSRSafeMounted();
 
   useEffect(() => {
@@ -123,10 +123,10 @@ export function useSSRSafeTheme(defaultTheme: 'light' | 'dark' = 'light') {
       const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
       setTheme(savedTheme || systemTheme);
     } catch {
-      setTheme(systemTheme);
+      setTheme(systemTheme as any);
     }
 
-    setIsLoaded(true);
+    setIsLoaded(true as any);
 
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -148,12 +148,12 @@ export function useSSRSafeTheme(defaultTheme: 'light' | 'dark' = 'light') {
 
   const toggleTheme = useCallback(() => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
+    setTheme(newTheme as any);
     
     if (mounted) {
       try {
         localStorage.setItem('theme', newTheme);
-        document.documentElement.classList.toggle('dark', newTheme === 'dark');
+        document?.documentElement?.classList.toggle('dark', newTheme === 'dark');
       } catch (error) {
         console.warn('Failed to save theme preference:', error);
       }
@@ -163,7 +163,7 @@ export function useSSRSafeTheme(defaultTheme: 'light' | 'dark' = 'light') {
   // Apply theme to document
   useEffect(() => {
     if (mounted && isLoaded) {
-      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document?.documentElement?.classList.toggle('dark', theme === 'dark');
     }
   }, [theme, mounted, isLoaded]);
 
@@ -180,7 +180,7 @@ export function useSSRSafeTheme(defaultTheme: 'light' | 'dark' = 'light') {
  * Hook for safely managing wallet state without hydration issues
  */
 export function useSSRSafeWallet() {
-  const [isWalletAvailable, setIsWalletAvailable] = useState(false);
+  const [isWalletAvailable, setIsWalletAvailable] = useState(false as any);
   const [walletType, setWalletType] = useState<string | null>(null);
   const { mounted } = useSSRSafeMounted();
 
@@ -196,7 +196,7 @@ export function useSSRSafeWallet() {
       
       if (hasMetaMask) setWalletType('metamask');
       else if (hasSuiWallet) setWalletType('sui');
-      else setWalletType(null);
+      else setWalletType(null as any);
     };
 
     checkWalletAvailability();
@@ -228,7 +228,7 @@ export function useSSRSafeLayout(options: {
 } = {}) {
   const { measurementDelay = 100, preserveHeight = false } = options;
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [isStable, setIsStable] = useState(false);
+  const [isStable, setIsStable] = useState(false as any);
   const containerRef = useRef<HTMLDivElement>(null);
   const { mounted, stable } = useSSRSafeMounted();
 
@@ -237,18 +237,18 @@ export function useSSRSafeLayout(options: {
 
     const measureDimensions = () => {
       if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+        const rect = containerRef?.current?.getBoundingClientRect();
         setDimensions({
           width: rect.width,
           height: rect.height,
         });
-        setIsStable(true);
+        setIsStable(true as any);
       }
     };
 
     // Delay measurement to allow content to render
     const timer = setTimeout(measureDimensions, measurementDelay);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer as any);
   }, [mounted, stable, measurementDelay]);
 
   const containerProps = {
@@ -274,7 +274,7 @@ export function useSSRSafeImage(src: string, options: {
 } = {}) {
   const { fallbackSrc, lowQualitySrc, preserveAspectRatio = true } = options;
   const [loadedSrc, setLoadedSrc] = useState<string>(lowQualitySrc || fallbackSrc || '');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true as any);
   const [error, setError] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const { mounted } = useSSRSafeMounted();
@@ -284,24 +284,24 @@ export function useSSRSafeImage(src: string, options: {
 
     const img = new Image();
     
-    img.onload = () => {
-      setLoadedSrc(src);
-      setIsLoading(false);
-      setError(null);
+    img?.onload = () => {
+      setLoadedSrc(src as any);
+      setIsLoading(false as any);
+      setError(null as any);
       if (preserveAspectRatio) {
         setDimensions({ width: img.naturalWidth, height: img.naturalHeight });
       }
     };
     
-    img.onerror = () => {
+    img?.onerror = () => {
       setError('Failed to load image');
       if (fallbackSrc) {
-        setLoadedSrc(fallbackSrc);
+        setLoadedSrc(fallbackSrc as any);
       }
-      setIsLoading(false);
+      setIsLoading(false as any);
     };
     
-    img.src = src;
+    img?.src = src;
   }, [src, fallbackSrc, preserveAspectRatio, mounted]);
 
   const aspectRatio = dimensions.width && dimensions.height 
@@ -328,27 +328,27 @@ export function useSSRSafeForm<T extends Record<string, any>>(
   storageKey?: string
 ) {
   const [formState, setFormState] = useState<T>(initialState);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const { mounted } = useSSRSafeMounted();
 
   // Load from storage on mount
   useEffect(() => {
     if (!mounted || !storageKey) {
-      setIsLoaded(true);
+      setIsLoaded(true as any);
       return;
     }
 
     try {
-      const stored = sessionStorage.getItem(storageKey);
+      const stored = sessionStorage.getItem(storageKey as any);
       if (stored) {
-        const parsedState = JSON.parse(stored);
+        const parsedState = JSON.parse(stored as any);
         setFormState({ ...initialState, ...parsedState });
       }
     } catch (error) {
       console.warn('Failed to load form state:', error);
     }
     
-    setIsLoaded(true);
+    setIsLoaded(true as any);
   }, [mounted, storageKey, initialState]);
 
   // Save to storage on changes
@@ -356,7 +356,7 @@ export function useSSRSafeForm<T extends Record<string, any>>(
     if (!mounted || !storageKey || !isLoaded) return;
 
     try {
-      sessionStorage.setItem(storageKey, JSON.stringify(formState));
+      sessionStorage.setItem(storageKey, JSON.stringify(formState as any));
     } catch (error) {
       console.warn('Failed to save form state:', error);
     }
@@ -367,10 +367,10 @@ export function useSSRSafeForm<T extends Record<string, any>>(
   }, []);
 
   const resetForm = useCallback(() => {
-    setFormState(initialState);
+    setFormState(initialState as any);
     if (mounted && storageKey) {
       try {
-        sessionStorage.removeItem(storageKey);
+        sessionStorage.removeItem(storageKey as any);
       } catch (error) {
         console.warn('Failed to clear form state:', error);
       }

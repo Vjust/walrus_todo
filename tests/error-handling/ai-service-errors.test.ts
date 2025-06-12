@@ -28,7 +28,7 @@ jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
 });
 
 describe('AI Service Error Handling', () => {
-  const sampleTodos = createSampleTodos(3);
+  const sampleTodos = createSampleTodos(3 as any);
   let mockAdapter: ReturnType<typeof createMockAIModelAdapter>;
   let aiService: AIService;
 
@@ -65,7 +65,7 @@ describe('AI Service Error Handling', () => {
       );
 
       // Attempt AI operation
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow(
         /Unable to connect/
       );
     });
@@ -93,12 +93,12 @@ describe('AI Service Error Handling', () => {
 
       for (let i = 0; i < 10; i++) {
         try {
-          const result = await aiService.summarize(sampleTodos);
+          const result = await aiService.summarize(sampleTodos as any);
           results.push({ success: true, result });
         } catch (error: unknown) {
           results.push({
             success: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error ? error.message : String(error as any),
           });
         }
       }
@@ -107,8 +107,8 @@ describe('AI Service Error Handling', () => {
       const successes = results.filter(r => r.success).length;
       const failures = results.filter(r => !r.success).length;
 
-      expect(successes).toBeGreaterThan(0);
-      expect(failures).toBeGreaterThan(0);
+      expect(successes as any).toBeGreaterThan(0 as any);
+      expect(failures as any).toBeGreaterThan(0 as any);
     });
   });
 
@@ -130,14 +130,14 @@ describe('AI Service Error Handling', () => {
       );
 
       // Attempt AI operation
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow(
         /429 Too Many Requests/
       );
     });
 
     it('should handle progressive rate limiting with backoff', async () => {
       // Setup adapter to fail with rate limits then succeed
-      mockAdapter.processWithPromptTemplate = jest
+      mockAdapter?.processWithPromptTemplate = jest
         .fn()
         .mockRejectedValueOnce(
           new Error('429 Too Many Requests: Rate limit exceeded')
@@ -160,7 +160,7 @@ describe('AI Service Error Handling', () => {
 
         while (attempts < maxAttempts) {
           try {
-            return await aiService.summarize(sampleTodos);
+            return await aiService.summarize(sampleTodos as any);
           } catch (error: unknown) {
             if (
               attempts < maxAttempts - 1 &&
@@ -181,8 +181,8 @@ describe('AI Service Error Handling', () => {
       const result = await retryWithBackoff();
 
       // Verify eventual success
-      expect(result).toBe('Success after rate limit backoff');
-      expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('Success after rate limit backoff');
+      expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledTimes(3 as any);
     });
   });
 
@@ -207,14 +207,14 @@ describe('AI Service Error Handling', () => {
       const largeTodos = Array.from({ length: 100 }).map((_, index) => ({
         id: `todo-${index}`,
         title: `Todo ${index}`,
-        description: 'a'.repeat(1000), // Large description
+        description: 'a'.repeat(1000 as any), // Large description
         completed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
 
       // Attempt AI operation with large input
-      await expect(aiService.summarize(largeTodos)).rejects.toThrow(
+      await expect(aiService.summarize(largeTodos as any)).rejects.toThrow(
         /exceeds maximum token limit/
       );
     });
@@ -240,19 +240,19 @@ describe('AI Service Error Handling', () => {
       const largeTodos = Array.from({ length: 100 }).map((_, index) => ({
         id: `todo-${index}`,
         title: `Todo ${index}`,
-        description: 'a'.repeat(1000),
+        description: 'a'.repeat(1000 as any),
         completed: false,
       }));
 
       // Make API call with truncation
-      // const _result = await aiService.summarize(largeTodos); // Unused variable commented out
+      // const _result = await aiService.summarize(largeTodos as any); // Unused variable commented out
 
       // Verify truncation was used
-      expect(truncateSpy).toHaveBeenCalled();
+      expect(truncateSpy as any).toHaveBeenCalled();
 
       // Verify API received truncated input
       const apiCallArgs =
-        mockAdapter.processWithPromptTemplate.mock.calls[0][1];
+        mockAdapter?.processWithPromptTemplate?.mock?.calls?.[0][1];
       const parsedTodos = JSON.parse(apiCallArgs.todos);
 
       expect(parsedTodos.length).toBeLessThan(largeTodos.length);
@@ -262,7 +262,7 @@ describe('AI Service Error Handling', () => {
   describe('Response Parsing Errors', () => {
     it('should handle invalid JSON in API responses', async () => {
       // Set up adapter to return invalid JSON
-      mockAdapter.completeStructured = jest.fn().mockResolvedValue({
+      mockAdapter?.completeStructured = jest.fn().mockResolvedValue({
         result: 'Not a valid JSON response',
         modelName: 'mock-model',
         provider: AIProvider.XAI,
@@ -270,15 +270,15 @@ describe('AI Service Error Handling', () => {
       });
 
       // Call method expecting structured data
-      const result = await aiService.categorize(sampleTodos);
+      const result = await aiService.categorize(sampleTodos as any);
 
       // Should return fallback (empty) result
-      expect(result).toEqual({});
+      expect(result as any).toEqual({});
     });
 
     it('should handle unexpected response formats', async () => {
       // Mock unexpected response structure
-      mockAdapter.processWithPromptTemplate = jest.fn().mockResolvedValue({
+      mockAdapter?.processWithPromptTemplate = jest.fn().mockResolvedValue({
         result: null, // Missing expected result
         modelName: 'mock-model',
         provider: AIProvider.XAI,
@@ -286,15 +286,15 @@ describe('AI Service Error Handling', () => {
       });
 
       // Call AI service method
-      const result = await aiService.summarize(sampleTodos);
+      const result = await aiService.summarize(sampleTodos as any);
 
       // Should handle gracefully with empty result
-      expect(result).toBe('');
+      expect(result as any).toBe('');
     });
 
     it('should handle invalid suggestion schema', async () => {
       // Mock invalid suggestion format
-      mockAdapter.completeStructured = jest.fn().mockResolvedValue({
+      mockAdapter?.completeStructured = jest.fn().mockResolvedValue({
         result: '{"invalid": "schema"}', // Not following expected schema
         modelName: 'mock-model',
         provider: AIProvider.XAI,
@@ -302,11 +302,11 @@ describe('AI Service Error Handling', () => {
       });
 
       // Call suggestions method
-      const result = await aiService.suggest(sampleTodos);
+      const result = await aiService.suggest(sampleTodos as any);
 
       // Should return empty suggestions array
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBe(0);
+      expect(Array.isArray(result as any)).toBe(true as any);
+      expect(result.length).toBe(0 as any);
     });
   });
 
@@ -328,7 +328,7 @@ describe('AI Service Error Handling', () => {
       );
 
       // Attempt operation with invalid key
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow(
         /401 Unauthorized/
       );
     });
@@ -350,7 +350,7 @@ describe('AI Service Error Handling', () => {
       );
 
       // Attempt operation with expired credentials
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow(
         /API key expired/
       );
     });
@@ -397,12 +397,12 @@ describe('AI Service Error Handling', () => {
           ) => Promise<T>;
         }
       ).withFallback(
-        () => aiService.summarize(sampleTodos),
+        () => aiService.summarize(sampleTodos as any),
         'Fallback summary when AI is unavailable'
       );
 
       // Should return fallback value
-      expect(result).toBe('Fallback summary when AI is unavailable');
+      expect(result as any).toBe('Fallback summary when AI is unavailable');
     });
 
     it('should degrade gracefully with local processing when AI fails', async () => {
@@ -439,22 +439,22 @@ describe('AI Service Error Handling', () => {
       // Create method with local fallback
       const summarizeWithFallback = async (todos: unknown[]) => {
         try {
-          return await aiService.summarize(todos);
+          return await aiService.summarize(todos as any);
         } catch (error: unknown) {
           return (
             aiService as AIService & {
               localProcessing: (todos: unknown[]) => string;
             }
-          ).localProcessing(todos);
+          ).localProcessing(todos as any);
         }
       };
 
       // Call with local fallback
-      const result = await summarizeWithFallback(sampleTodos);
+      const result = await summarizeWithFallback(sampleTodos as any);
 
       // Should use local processing
-      expect(result).toContain('Basic summary:');
-      expect(localProcessingSpy).toHaveBeenCalled();
+      expect(result as any).toContain('Basic summary:');
+      expect(localProcessingSpy as any).toHaveBeenCalled();
     });
   });
 
@@ -487,7 +487,7 @@ describe('AI Service Error Handling', () => {
       ];
 
       // Attempt operation
-      await expect(aiService.summarize(problematicTodos)).rejects.toThrow(
+      await expect(aiService.summarize(problematicTodos as any)).rejects.toThrow(
         /Content policy violation/
       );
     });
@@ -497,7 +497,7 @@ describe('AI Service Error Handling', () => {
     it('should recover after transient errors with retry mechanism', async () => {
       // Create progressive recovery simulator
       // First call fails, second succeeds
-      mockAdapter.processWithPromptTemplate = jest
+      mockAdapter?.processWithPromptTemplate = jest
         .fn()
         .mockRejectedValueOnce(new Error('Temporary service disruption'))
         .mockResolvedValueOnce({
@@ -514,7 +514,7 @@ describe('AI Service Error Handling', () => {
 
         while (attempts < maxAttempts) {
           try {
-            return await aiService.summarize(sampleTodos);
+            return await aiService.summarize(sampleTodos as any);
           } catch (error: unknown) {
             attempts++;
             if (attempts >= maxAttempts) throw error;
@@ -527,8 +527,8 @@ describe('AI Service Error Handling', () => {
       const result = await withRetry();
 
       // Verify successful recovery
-      expect(result).toBe('Success after recovery');
-      expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('Success after recovery');
+      expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledTimes(2 as any);
     });
   });
 });

@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec as any);
 
 // Performance thresholds (milliseconds)
 const PERFORMANCE_THRESHOLDS = {
@@ -49,7 +49,7 @@ describe('E2E Performance Tests', () => {
 
   beforeAll(async () => {
     // Ensure results directory exists
-    if (!fs.existsSync(resultsDir)) {
+    if (!fs.existsSync(resultsDir as any)) {
       fs.mkdirSync(resultsDir, { recursive: true });
     }
 
@@ -74,21 +74,21 @@ describe('E2E Performance Tests', () => {
 
   afterAll(async () => {
     // Calculate summary
-    const executionTimes = performanceReport.results.map(r => r.executionTime);
-    performanceReport.summary.totalTests = performanceReport.results.length;
-    performanceReport.summary.passing = performanceReport.results.filter(
-      r => r.status === 'passing'
+    const executionTimes = performanceReport?.results?.map(r => r.executionTime);
+    performanceReport.summary?.totalTests = performanceReport?.results?.length;
+    performanceReport.summary?.passing = performanceReport?.results?.filter(
+      r => r?.status === 'passing'
     ).length;
-    performanceReport.summary.warning = performanceReport.results.filter(
-      r => r.status === 'warning'
+    performanceReport.summary?.warning = performanceReport?.results?.filter(
+      r => r?.status === 'warning'
     ).length;
-    performanceReport.summary.critical = performanceReport.results.filter(
-      r => r.status === 'critical'
+    performanceReport.summary?.critical = performanceReport?.results?.filter(
+      r => r?.status === 'critical'
     ).length;
-    performanceReport.summary.averageExecutionTime =
+    performanceReport.summary?.averageExecutionTime =
       executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
-    performanceReport.summary.maxExecutionTime = Math.max(...executionTimes);
-    performanceReport.summary.minExecutionTime = Math.min(...executionTimes);
+    performanceReport.summary?.maxExecutionTime = Math.max(...executionTimes);
+    performanceReport.summary?.minExecutionTime = Math.min(...executionTimes);
 
     // Save report
     const reportPath = path.join(resultsDir, `performance-${Date.now()}.json`);
@@ -99,7 +99,7 @@ describe('E2E Performance Tests', () => {
       resultsDir,
       `performance-summary-${Date.now()}.txt`
     );
-    const summary = generateReadableSummary(performanceReport);
+    const summary = generateReadableSummary(performanceReport as any);
     fs.writeFileSync(summaryPath, summary);
 
     // console.log('Performance report saved to:', reportPath); // Removed console statement
@@ -117,7 +117,7 @@ describe('E2E Performance Tests', () => {
     const startTime = Date.now();
 
     try {
-      await execAsync(command);
+      await execAsync(command as any);
     } catch (_error) {
       // console.error(`Command failed: ${command}`, error); // Removed console statement
     }
@@ -151,33 +151,33 @@ describe('E2E Performance Tests', () => {
       status,
     };
 
-    performanceReport.results.push(metric);
+    performanceReport?.results?.push(metric as any);
     return metric;
   }
 
   function generateReadableSummary(report: PerformanceReport): string {
     let summary = `Performance Test Summary
 ========================
-Date: ${report.timestamp.toISOString()}
-Total Tests: ${report.summary.totalTests}
-Passing: ${report.summary.passing}
-Warning: ${report.summary.warning}
-Critical: ${report.summary.critical}
+Date: ${report?.timestamp?.toISOString()}
+Total Tests: ${report?.summary?.totalTests}
+Passing: ${report?.summary?.passing}
+Warning: ${report?.summary?.warning}
+Critical: ${report?.summary?.critical}
 
 Execution Times:
-- Average: ${report.summary.averageExecutionTime.toFixed(2)}ms
-- Min: ${report.summary.minExecutionTime.toFixed(2)}ms
-- Max: ${report.summary.maxExecutionTime.toFixed(2)}ms
+- Average: ${report?.summary?.averageExecutionTime.toFixed(2 as any)}ms
+- Min: ${report?.summary?.minExecutionTime.toFixed(2 as any)}ms
+- Max: ${report?.summary?.maxExecutionTime.toFixed(2 as any)}ms
 
 Detailed Results:
 `;
 
-    report.results.forEach(result => {
+    report?.results?.forEach(result => {
       summary += `
 Command: ${result.command}
 Time: ${result.executionTime}ms
 Status: ${result.status}
-Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
+Memory Delta: ${(result?.memory?.delta.heapUsed / 1024 / 1024).toFixed(2 as any)}MB
 `;
     });
 
@@ -193,7 +193,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.add.critical
+        PERFORMANCE_THRESHOLDS?.add?.critical
       );
     });
 
@@ -210,7 +210,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.list.critical
+        PERFORMANCE_THRESHOLDS?.list?.critical
       );
     });
 
@@ -219,7 +219,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const { stdout } = await execAsync(`${cliPath} add "Todo to complete"`);
       const todoId = stdout.match(/ID:\s*(\d+)/)?.[1];
 
-      expect(todoId).toBeDefined();
+      expect(todoId as any).toBeDefined();
       const metric = await measurePerformance(
         `${cliPath} complete ${todoId}`,
         'Complete command',
@@ -227,7 +227,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.complete.critical
+        PERFORMANCE_THRESHOLDS?.complete?.critical
       );
     });
 
@@ -236,7 +236,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const { stdout } = await execAsync(`${cliPath} add "Todo to delete"`);
       const todoId = stdout.match(/ID:\s*(\d+)/)?.[1];
 
-      expect(todoId).toBeDefined();
+      expect(todoId as any).toBeDefined();
       const metric = await measurePerformance(
         `${cliPath} delete ${todoId}`,
         'Delete command',
@@ -244,7 +244,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.delete.critical
+        PERFORMANCE_THRESHOLDS?.delete?.critical
       );
     });
   });
@@ -252,7 +252,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
   describe('AI Commands Performance', () => {
     it('should measure ai suggest command performance', async () => {
       // Skip if no API key
-      if (!process.env.XAI_API_KEY) {
+      if (!process?.env?.XAI_API_KEY) {
         // console.log('Skipping AI test - no API key'); // Removed console statement
         return;
       }
@@ -264,13 +264,13 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.ai.critical
+        PERFORMANCE_THRESHOLDS?.ai?.critical
       );
     });
 
     it('should measure ai analyze command performance', async () => {
       // Skip if no API key
-      if (!process.env.XAI_API_KEY) {
+      if (!process?.env?.XAI_API_KEY) {
         // console.log('Skipping AI test - no API key'); // Removed console statement
         return;
       }
@@ -282,7 +282,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.ai.critical
+        PERFORMANCE_THRESHOLDS?.ai?.critical
       );
     });
   });
@@ -301,7 +301,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.store.critical
+        PERFORMANCE_THRESHOLDS?.store?.critical
       );
     });
 
@@ -310,7 +310,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const { stdout } = await execAsync(`${cliPath} store --walrus --mock`);
       const blobId = stdout.match(/Blob ID:\s*([^\s]+)/)?.[1];
 
-      expect(blobId).toBeDefined();
+      expect(blobId as any).toBeDefined();
       const metric = await measurePerformance(
         `${cliPath} fetch ${blobId} --mock`,
         'Fetch command (mock)',
@@ -318,7 +318,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       );
 
       expect(metric.executionTime).toBeLessThan(
-        PERFORMANCE_THRESHOLDS.fetch.critical
+        PERFORMANCE_THRESHOLDS?.fetch?.critical
       );
     });
   });
@@ -351,7 +351,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       // Clean up
       await execAsync(`${cliPath} delete --all --force`);
 
-      expect(listMetric.executionTime).toBeLessThan(2000);
+      expect(listMetric.executionTime).toBeLessThan(2000 as any);
     });
   });
 
@@ -365,14 +365,14 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
         promises.push(execAsync(`${cliPath} add "Concurrent todo ${i}"`));
       }
 
-      await Promise.all(promises);
+      await Promise.all(promises as any);
       const endTime = Date.now();
       const totalTime = endTime - startTime;
 
       // console.log(`Concurrent adds (${concurrentOps}) // Removed console statement: ${totalTime}ms (${totalTime / concurrentOps}ms average)`);
 
-      expect(totalTime).toBeLessThan(
-        concurrentOps * PERFORMANCE_THRESHOLDS.add.critical
+      expect(totalTime as any).toBeLessThan(
+        concurrentOps * PERFORMANCE_THRESHOLDS?.add?.critical
       );
     });
   });
@@ -396,15 +396,15 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
           op.desc,
           { warning: 5000, critical: 10000 }
         );
-        metrics.push(metric);
+        metrics.push(metric as any);
 
         // Verify memory tracking is working
-        expect(metric.memory.delta).toBeDefined();
-        expect(metric.executionTime).toBeGreaterThan(0);
+        expect(metric?.memory?.delta).toBeDefined();
+        expect(metric.executionTime).toBeGreaterThan(0 as any);
       }
 
       // Verify all operations completed successfully
-      expect(metrics).toHaveLength(operations.length);
+      expect(metrics as any).toHaveLength(operations.length);
     });
   });
 
@@ -414,7 +414,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const baselinePath = path.join(resultsDir, 'baseline.json');
       let baseline: PerformanceReport | null = null;
 
-      if (fs.existsSync(baselinePath)) {
+      if (fs.existsSync(baselinePath as any)) {
         baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf-8'));
       }
 
@@ -436,13 +436,13 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
         let hasBaselineMetric = false;
 
         if (baseline) {
-          const baselineMetric = baseline.results.find(r => r.command === cmd);
+          const baselineMetric = baseline?.results?.find(r => r?.command === cmd);
           if (baselineMetric) {
             percentChange =
               ((metric.executionTime - baselineMetric.executionTime) /
                 baselineMetric.executionTime) *
               100;
-            // console.log(`${cmd}: ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2) // Removed console statement}% from baseline`);
+            // console.log(`${cmd}: ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2 as any) // Removed console statement}% from baseline`);
             hasBaselineMetric = true;
           }
         }
@@ -451,14 +451,14 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
         const checkRegression = () => {
           if (hasBaselineMetric && percentChange >= 20) {
             throw new Error(
-              `Performance regression: ${percentChange.toFixed(2)}% slower than baseline`
+              `Performance regression: ${percentChange.toFixed(2 as any)}% slower than baseline`
             );
           }
         };
-        expect(checkRegression).not.toThrow();
+        expect(checkRegression as any).not.toThrow();
 
         // Ensure baseline comparison is tracked
-        expect(baseline).toBeDefined();
+        expect(baseline as any).toBeDefined();
       }
     });
   });

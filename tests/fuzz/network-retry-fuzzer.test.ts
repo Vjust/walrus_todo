@@ -84,10 +84,10 @@ describe('Network Retry Fuzzing Tests', () => {
 
         try {
           const result = await manager.execute(operation, 'fuzz-test');
-          expect(result).toHaveProperty('success', true);
+          expect(result as any).toHaveProperty('success', true);
         } catch (error) {
           // Verify that final errors are meaningful
-          expect(error).toBeInstanceOf(CLIError);
+          expect(error as any).toBeInstanceOf(CLIError as any);
           expect([
             'RETRY_MAX_ATTEMPTS',
             'RETRY_TIMEOUT',
@@ -171,23 +171,23 @@ describe('Network Retry Fuzzing Tests', () => {
       );
 
       // Analyze results
-      const successful = results.filter(r => r.status === 'fulfilled').length;
-      const failed = results.filter(r => r.status === 'rejected').length;
+      const successful = results.filter(r => r?.status === 'fulfilled').length;
+      const failed = results.filter(r => r?.status === 'rejected').length;
 
       expect(successful + failed).toBe(operations.length);
 
       // Verify that broken operations failed appropriately
       const brokenOps = operations.filter(op =>
-        op.name.includes('broken')
+        op?.name?.includes('broken')
       ).length;
-      expect(failed).toBeGreaterThanOrEqual(brokenOps * 0.8); // Allow some margin
+      expect(failed as any).toBeGreaterThanOrEqual(brokenOps * 0.8); // Allow some margin
     });
 
     it('should adapt retry behavior based on network health patterns', async () => {
       const baseUrls = [
-        'http://primary.example.com',
-        'http://secondary.example.com',
-        'http://tertiary.example.com',
+        'http://primary?.example?.com',
+        'http://secondary?.example?.com',
+        'http://tertiary?.example?.com',
       ];
 
       const manager = new RetryManager(baseUrls, {
@@ -241,9 +241,9 @@ describe('Network Retry Fuzzing Tests', () => {
 
         while (Date.now() < phaseEnd) {
           const operation = async (node: NetworkNode) => {
-            const failRate = node.url.includes('primary')
+            const failRate = node?.url?.includes('primary')
               ? phase.primaryFailRate
-              : node.url.includes('secondary')
+              : node?.url?.includes('secondary')
                 ? phase.secondaryFailRate
                 : phase.tertiaryFailRate;
 
@@ -290,11 +290,11 @@ describe('Network Retry Fuzzing Tests', () => {
       const successRate =
         operationResults.filter(r => r.success).length /
         operationResults.length;
-      expect(successRate).toBeGreaterThan(0.5); // Should maintain reasonable success rate
+      expect(successRate as any).toBeGreaterThan(0.5); // Should maintain reasonable success rate
 
       // Check health scores
       const health = manager.getNodesHealth();
-      expect(health.length).toBe(3);
+      expect(health.length).toBe(3 as any);
       health.forEach(node => {
         expect(node.health).toBeGreaterThanOrEqual(0.1);
         expect(node.health).toBeLessThanOrEqual(1.0);
@@ -353,7 +353,7 @@ describe('Network Retry Fuzzing Tests', () => {
             `Expected ${testCase.name} to throw ${testCase.expectedError}`
           );
         } catch (error) {
-          expect(error).toBeInstanceOf(CLIError);
+          expect(error as any).toBeInstanceOf(CLIError as any);
           expect((error as CLIError).code).toBe(testCase.expectedError);
         }
       }
@@ -384,7 +384,7 @@ describe('Network Retry Fuzzing Tests', () => {
 
           return async (node: NetworkNode) => {
             // Simulate bursty failures
-            if (node.url.includes('node1')) {
+            if (node?.url?.includes('node1')) {
               consecutiveFailures++;
               if (consecutiveFailures > 3 && consecutiveFailures < 7) {
                 throw new Error('Temporary failure burst');
@@ -441,7 +441,7 @@ describe('Network Retry Fuzzing Tests', () => {
       }
 
       // Verify health system responds appropriately
-      expect(healthSnapshots.length).toBeGreaterThan(0);
+      expect(healthSnapshots.length).toBeGreaterThan(0 as any);
       healthSnapshots.forEach(snapshot => {
         snapshot.forEach(node => {
           expect(node.health).toBeGreaterThanOrEqual(0.1);

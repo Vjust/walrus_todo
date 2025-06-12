@@ -14,12 +14,12 @@ jest.mock('@/lib/walrus-url-utils', () => ({
     }
     throw new Error('Invalid URL');
   }),
-  generateHttpUrl: jest.fn((blobId: string) => `https://testnet.wal.app/blob/${blobId}`)
+  generateHttpUrl: jest.fn((blobId: string) => `https://testnet?.wal?.app/blob/${blobId}`)
 }));
 
 jest.mock('@/lib/walrus-client', () => ({
   walrusClient: {
-    getBlobUrl: jest.fn((blobId: string) => `https://aggregator-testnet.walrus.space/v1/${blobId}`)
+    getBlobUrl: jest.fn((blobId: string) => `https://aggregator-testnet?.walrus?.space/v1/${blobId}`)
   }
 }));
 
@@ -39,11 +39,11 @@ mockIntersectionObserver.mockReturnValue({
   unobserve: jest.fn(),
   disconnect: jest.fn()
 });
-window.IntersectionObserver = mockIntersectionObserver as any;
+window?.IntersectionObserver = mockIntersectionObserver as any;
 
 describe('TodoNFTImage', () => {
   const mockWalrusUrl = 'walrus://1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-  const mockHttpUrl = 'https://testnet.wal.app/blob/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+  const mockHttpUrl = 'https://testnet?.wal?.app/blob/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
   const mockBlobId = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   beforeEach(() => {
@@ -68,8 +68,8 @@ describe('TodoNFTImage', () => {
       );
 
       const image = screen.getByRole('img');
-      expect(image).toBeInTheDocument();
-      expect(image).toHaveAttribute('aria-label', 'Test NFT');
+      expect(image as any).toBeInTheDocument();
+      expect(image as any).toHaveAttribute('aria-label', 'Test NFT');
     });
 
     it('renders with different display modes', () => {
@@ -86,7 +86,7 @@ describe('TodoNFTImage', () => {
 
         // Find the button/role element which should have the size classes
         const buttonElement = container.querySelector('[role="button"]') as HTMLElement;
-        expect(buttonElement).toBeInTheDocument();
+        expect(buttonElement as any).toBeInTheDocument();
         
         // Check for the specific class pattern for each mode
         if (mode === 'thumbnail') {
@@ -111,7 +111,7 @@ describe('TodoNFTImage', () => {
       );
 
       const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).toHaveClass('custom-class');
+      expect(wrapper as any).toHaveClass('custom-class');
     });
   });
 
@@ -127,8 +127,8 @@ describe('TodoNFTImage', () => {
 
       // Since the image might be loading, check that the component renders
       const container = screen.getByRole('img');
-      expect(container).toBeInTheDocument();
-      expect(container).toHaveAttribute('aria-label', 'Walrus URL Test');
+      expect(container as any).toBeInTheDocument();
+      expect(container as any).toHaveAttribute('aria-label', 'Walrus URL Test');
     });
 
     it('handles HTTP URLs directly', () => {
@@ -142,12 +142,12 @@ describe('TodoNFTImage', () => {
 
       // Find the wrapper element with role="img" that has aria-label
       const wrapperElement = container.querySelector('[role="img"][aria-label]') as HTMLElement;
-      expect(wrapperElement).toBeInTheDocument();
-      expect(wrapperElement).toHaveAttribute('aria-label', 'HTTP URL Test');
+      expect(wrapperElement as any).toBeInTheDocument();
+      expect(wrapperElement as any).toHaveAttribute('aria-label', 'HTTP URL Test');
       
       // Also verify there's an actual img element inside
       const actualImage = container.querySelector('img');
-      expect(actualImage).toBeInTheDocument();
+      expect(actualImage as any).toBeInTheDocument();
     });
 
     it('handles direct blob IDs', () => {
@@ -160,8 +160,8 @@ describe('TodoNFTImage', () => {
       );
 
       const container = screen.getByRole('img');
-      expect(container).toBeInTheDocument();
-      expect(container).toHaveAttribute('aria-label', 'Blob ID Test');
+      expect(container as any).toBeInTheDocument();
+      expect(container as any).toHaveAttribute('aria-label', 'Blob ID Test');
     });
 
     it('shows error state for invalid URLs', () => {
@@ -175,7 +175,7 @@ describe('TodoNFTImage', () => {
 
       // The component should render even with invalid URL
       const container = screen.getByRole('img');
-      expect(container).toBeInTheDocument();
+      expect(container as any).toBeInTheDocument();
     });
   });
 
@@ -218,8 +218,8 @@ describe('TodoNFTImage', () => {
       );
 
       const button = screen.getByRole('button');
-      fireEvent.click(button);
-      expect(handleClick).toHaveBeenCalledTimes(1);
+      fireEvent.click(button as any);
+      expect(handleClick as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('expands image when clicked if expandable', () => {
@@ -232,7 +232,7 @@ describe('TodoNFTImage', () => {
       );
 
       const button = screen.getByRole('button');
-      fireEvent.click(button);
+      fireEvent.click(button as any);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByLabelText('Expanded image view')).toBeInTheDocument();
@@ -248,7 +248,7 @@ describe('TodoNFTImage', () => {
       );
 
       const image = screen.getByRole('img');
-      fireEvent.click(image);
+      fireEvent.click(image as any);
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
@@ -264,12 +264,12 @@ describe('TodoNFTImage', () => {
 
       // Open modal
       const button = screen.getByRole('button');
-      fireEvent.click(button);
+      fireEvent.click(button as any);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
 
       // Close modal
       const closeButton = screen.getByLabelText('Close modal');
-      fireEvent.click(closeButton);
+      fireEvent.click(closeButton as any);
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
@@ -284,7 +284,7 @@ describe('TodoNFTImage', () => {
 
       // Open modal
       const button = screen.getByRole('button');
-      fireEvent.click(button);
+      fireEvent.click(button as any);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
 
       // Press Escape
@@ -304,7 +304,7 @@ describe('TodoNFTImage', () => {
       );
 
       const button = screen.getByRole('button');
-      expect(button).toHaveAttribute('aria-label', 'Custom ARIA label');
+      expect(button as any).toHaveAttribute('aria-label', 'Custom ARIA label');
     });
 
     it('adds expandable hint to ARIA label when expandable', () => {
@@ -317,7 +317,7 @@ describe('TodoNFTImage', () => {
       );
 
       const button = screen.getByRole('button');
-      expect(button).toHaveAttribute('aria-label', expect.stringContaining('Click to expand'));
+      expect(button as any).toHaveAttribute('aria-label', expect.stringContaining('Click to expand'));
     });
 
     it('supports keyboard navigation', () => {
@@ -334,11 +334,11 @@ describe('TodoNFTImage', () => {
       
       // Test Enter key
       fireEvent.keyDown(button, { key: 'Enter' });
-      expect(handleClick).toHaveBeenCalledTimes(1);
+      expect(handleClick as any).toHaveBeenCalledTimes(1 as any);
 
       // Test Space key
       fireEvent.keyDown(button, { key: ' ' });
-      expect(handleClick).toHaveBeenCalledTimes(2);
+      expect(handleClick as any).toHaveBeenCalledTimes(2 as any);
     });
   });
 
@@ -352,7 +352,7 @@ describe('TodoNFTImage', () => {
         />
       );
 
-      expect(mockIntersectionObserver).toHaveBeenCalled();
+      expect(mockIntersectionObserver as any).toHaveBeenCalled();
     });
 
     it('does not use IntersectionObserver when lazy is false', () => {
@@ -366,7 +366,7 @@ describe('TodoNFTImage', () => {
         />
       );
 
-      expect(mockIntersectionObserver).not.toHaveBeenCalled();
+      expect(mockIntersectionObserver as any).not.toHaveBeenCalled();
     });
 
     it('becomes visible when intersecting', () => {
@@ -424,16 +424,16 @@ describe('TodoNFTImage', () => {
       );
 
       const container = screen.getByRole('img');
-      expect(container).toBeInTheDocument();
+      expect(container as any).toBeInTheDocument();
       
       // Fire error on the inner image if it exists
       const innerImage = container.querySelector('img');
       if (innerImage) {
-        fireEvent.error(innerImage);
+        fireEvent.error(innerImage as any);
       }
       
       // Component should still be in the document
-      expect(container).toBeInTheDocument();
+      expect(container as any).toBeInTheDocument();
     });
 
     it('uses fallback URL when provided', () => {
@@ -448,8 +448,8 @@ describe('TodoNFTImage', () => {
       );
 
       const container = screen.getByRole('img');
-      expect(container).toBeInTheDocument();
-      expect(container).toHaveAttribute('aria-label', 'Fallback Test');
+      expect(container as any).toBeInTheDocument();
+      expect(container as any).toHaveAttribute('aria-label', 'Fallback Test');
     });
   });
 
@@ -464,7 +464,7 @@ describe('TodoNFTImage', () => {
       );
 
       const buttonElement = container.querySelector('[role="button"]') as HTMLElement;
-      expect(buttonElement).toBeInTheDocument();
+      expect(buttonElement as any).toBeInTheDocument();
       expect(buttonElement.className).toContain('hover:scale-105');
     });
 
@@ -478,7 +478,7 @@ describe('TodoNFTImage', () => {
       );
 
       const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).not.toHaveClass('hover:scale-105');
+      expect(wrapper as any).not.toHaveClass('hover:scale-105');
     });
   });
 });

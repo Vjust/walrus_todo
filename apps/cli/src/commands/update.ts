@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { validateDate, validatePriority } from '../utils';
@@ -135,7 +135,7 @@ export default class UpdateCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(UpdateCommand);
+    const { args, flags } = await this.parse(UpdateCommand as any);
 
     // Check if background operation is requested
     if (flags.background) {
@@ -154,7 +154,7 @@ export default class UpdateCommand extends BaseCommand {
     // Create background job
     const job = jobManager.createJob(
       'update',
-      this.buildArgsArray(args),
+      this.buildArgsArray(args as any),
       flags
     );
 
@@ -177,14 +177,14 @@ export default class UpdateCommand extends BaseCommand {
     }
 
     // For batch operations, show estimated time
-    if (flags['batch-size'] && flags['batch-size'] > 1) {
+    if (flags?.["batch-size"] && flags?.["batch-size"] > 1) {
       this.log(
-        chalk.yellow(`⚡ Batch size: ${flags['batch-size']} items per batch`)
+        chalk.yellow(`⚡ Batch size: ${flags?.["batch-size"]} items per batch`)
       );
     }
 
     // Exit immediately, leaving background process running
-    process.exit(0);
+    process.exit(0 as any);
   }
 
   /**
@@ -249,7 +249,7 @@ export default class UpdateCommand extends BaseCommand {
       if (searchAllLists) {
         // Search across all lists
         const lists = await todoService.getAllListsWithContent();
-        for (const [name, list] of Object.entries(lists)) {
+        for (const [name, list] of Object.entries(lists as any)) {
           const found = await todoService.getTodoByTitleOrId(
             todoIdentifier,
             name
@@ -268,7 +268,7 @@ export default class UpdateCommand extends BaseCommand {
         }
       } else {
         // Search in specific list
-        const list = await todoService.getList(listName);
+        const list = await todoService.getList(listName as any);
         if (!list) {
           throw new CLIError(`List "${listName}" not found`, 'INVALID_LIST');
         }
@@ -285,7 +285,7 @@ export default class UpdateCommand extends BaseCommand {
       const updatedTodo = await this.processUpdate(todo, flags, newTitle);
 
       // Save the list
-      const list = await todoService.getList(finalListName);
+      const list = await todoService.getList(finalListName as any);
       if (!list) {
         throw new CLIError(`List "${finalListName}" not found`, 'INVALID_LIST');
       }
@@ -302,7 +302,7 @@ export default class UpdateCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to update todo: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to update todo: ${error instanceof Error ? error.message : String(error as any)}`,
         'UPDATE_FAILED'
       );
     }
@@ -320,7 +320,7 @@ export default class UpdateCommand extends BaseCommand {
 
     // Update title if provided (from positional args or flags)
     if (newTitle || flags.task) {
-      todo.title = newTitle || flags.task || todo.title;
+      todo?.title = newTitle || flags.task || todo.title;
       changes++;
     }
 
@@ -332,7 +332,7 @@ export default class UpdateCommand extends BaseCommand {
           'INVALID_PRIORITY'
         );
       }
-      todo.priority = flags.priority as Todo['priority'];
+      todo?.priority = flags.priority as Todo?.["priority"];
       changes++;
     }
 
@@ -344,31 +344,31 @@ export default class UpdateCommand extends BaseCommand {
           'INVALID_DATE'
         );
       }
-      todo.dueDate = flags.due;
+      todo?.dueDate = flags.due;
       changes++;
     }
 
     // Clear due date if requested
-    if (flags['clear-due']) {
-      todo.dueDate = undefined;
+    if (flags?.["clear-due"]) {
+      todo?.dueDate = undefined;
       changes++;
     }
 
     // Update tags if provided
     if (flags.tags) {
-      todo.tags = flags.tags.split(',').map((tag: string) => tag.trim());
+      todo?.tags = flags?.tags?.split(',').map((tag: string) => tag.trim());
       changes++;
     }
 
     // Clear tags if requested
-    if (flags['clear-tags']) {
-      todo.tags = [];
+    if (flags?.["clear-tags"]) {
+      todo?.tags = [];
       changes++;
     }
 
     // Update private flag if provided
     if (flags.private !== undefined) {
-      todo.private = flags.private;
+      todo?.private = flags.private;
       changes++;
     }
 
@@ -379,7 +379,7 @@ export default class UpdateCommand extends BaseCommand {
       );
     }
 
-    todo.updatedAt = new Date().toISOString();
+    todo?.updatedAt = new Date().toISOString();
 
     return { todo, changes };
   }
@@ -395,7 +395,7 @@ export default class UpdateCommand extends BaseCommand {
     const { todo } = updateResult;
 
     // Handle storage synchronization in background if requested
-    if (flags['sync-storage']) {
+    if (flags?.["sync-storage"]) {
       try {
         const backgroundOps = await createBackgroundOperationsManager();
         const syncJobId = await backgroundOps.uploadTodosInBackground([todo], {
@@ -411,13 +411,13 @@ export default class UpdateCommand extends BaseCommand {
         this.log(chalk.blue(`🔄 Storage sync queued: ${syncJobId}`));
       } catch (error) {
         this.warning(
-          `Failed to queue storage sync: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to queue storage sync: ${error instanceof Error ? error.message : String(error as any)}`
         );
       }
     }
 
     // Handle AI enhancement if requested
-    if (flags['ai-enhance']) {
+    if (flags?.["ai-enhance"]) {
       try {
         const backgroundOps = await createBackgroundOperationsManager();
         const aiJobId = await backgroundOps.processBatchInBackground(
@@ -435,7 +435,7 @@ export default class UpdateCommand extends BaseCommand {
         this.log(chalk.magenta(`🤖 AI enhancement queued: ${aiJobId}`));
       } catch (error) {
         this.warning(
-          `Failed to queue AI enhancement: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to queue AI enhancement: ${error instanceof Error ? error.message : String(error as any)}`
         );
       }
     }
@@ -466,13 +466,13 @@ export default class UpdateCommand extends BaseCommand {
     if (flags.due) {
       this.log(chalk.dim(`  • Due date set to ${flags.due}`));
     }
-    if (flags['clear-due']) {
+    if (flags?.["clear-due"]) {
       this.log(chalk.dim('  • Due date cleared'));
     }
     if (flags.tags) {
       this.log(chalk.dim(`  • Tags set to: ${todo.tags?.join(', ')}`));
     }
-    if (flags['clear-tags']) {
+    if (flags?.["clear-tags"]) {
       this.log(chalk.dim('  • Tags cleared'));
     }
     if (flags.private !== undefined) {
@@ -495,8 +495,8 @@ export default class UpdateCommand extends BaseCommand {
     const updateArgs = [
       scriptPath,
       job.id,
-      JSON.stringify(args),
-      JSON.stringify(flags),
+      JSON.stringify(args as any),
+      JSON.stringify(flags as any),
     ];
 
     const childProcess = spawn('node', updateArgs, {
@@ -509,13 +509,13 @@ export default class UpdateCommand extends BaseCommand {
 
     // Set up logging
     if (childProcess.stdout) {
-      childProcess.stdout.on('data', data => {
+      childProcess?.stdout?.on('data', data => {
         jobManager.writeJobLog(job.id, `STDOUT: ${data.toString()}`);
       });
     }
 
     if (childProcess.stderr) {
-      childProcess.stderr.on('data', data => {
+      childProcess?.stderr?.on('data', data => {
         jobManager.writeJobLog(job.id, `STDERR: ${data.toString()}`);
       });
     }

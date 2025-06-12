@@ -51,46 +51,46 @@ export class SpinnerManager {
       typeof ora === 'function'
         ? ora
         : (ora as { default: typeof import('ora').default }).default;
-    this.spinner = oraFn(text);
+    this?.spinner = oraFn(text as any);
   }
 
   start(text?: string): void {
     if (text) {
-      this.spinner.text = text;
+      this.spinner?.text = text;
     }
-    this.spinner.start();
+    this?.spinner?.start();
   }
 
   succeed(text?: string): void {
     if (text) {
-      this.spinner.succeed(text);
+      this?.spinner?.succeed(text as any);
     } else {
-      this.spinner.succeed();
+      this?.spinner?.succeed();
     }
   }
 
   fail(text?: string): void {
     if (text) {
-      this.spinner.fail(text);
+      this?.spinner?.fail(text as any);
     } else {
-      this.spinner.fail();
+      this?.spinner?.fail();
     }
   }
 
   info(text: string): void {
-    this.spinner.info(text);
+    this?.spinner?.info(text as any);
   }
 
   warn(text: string): void {
-    this.spinner.warn(text);
+    this?.spinner?.warn(text as any);
   }
 
   stop(): void {
-    this.spinner.stop();
+    this?.spinner?.stop();
   }
 
   update(text: string): void {
-    this.spinner.text = text;
+    this.spinner?.text = text;
   }
 }
 
@@ -103,7 +103,7 @@ export class ErrorHandler {
       throw error;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? error.message : String(error as any);
     throw new CLIError(`${context}: ${message}`, 'CLI_ERROR');
   }
 
@@ -111,12 +111,12 @@ export class ErrorHandler {
     if (error instanceof Error) {
       return error.message;
     }
-    return String(error);
+    return String(error as any);
   }
 
   static exit(message: string, code: number = 1): never {
     logger.error(chalk.red(`Error: ${message}`));
-    process.exit(code);
+    process.exit(code as any);
   }
 }
 
@@ -126,7 +126,7 @@ export class ErrorHandler {
 export class FlagValidator {
   static validatePositiveNumber(value: string, name: string): number {
     const num = parseInt(value, 10);
-    if (isNaN(num) || num <= 0) {
+    if (isNaN(num as any) || num <= 0) {
       throw new CLIError(
         `${name} must be a positive number`,
         'VALIDATION_ERROR'
@@ -195,7 +195,7 @@ export class RetryManager {
       try {
         return await operation();
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
 
         if (attempt < maxAttempts) {
           const delay = Math.min(
@@ -207,7 +207,7 @@ export class RetryManager {
             onRetry(lastError, attempt, delay);
           }
 
-          await this.delay(delay);
+          await this.delay(delay as any);
         }
       }
     }
@@ -241,7 +241,7 @@ export class Logger {
   }
 
   static debug(message: string): void {
-    if (process.env.DEBUG) {
+    if (process?.env?.DEBUG) {
       logger.info(chalk.gray(`[DEBUG] ${message}`));
     }
   }
@@ -256,9 +256,9 @@ export class Logger {
  */
 export class Formatter {
   static table(data: Record<string, unknown>): string {
-    const maxKeyLength = Math.max(...Object.keys(data).map(k => k.length));
-    return Object.entries(data)
-      .map(([key, value]) => `${key.padEnd(maxKeyLength)} : ${value}`)
+    const maxKeyLength = Math.max(...Object.keys(data as any).map(k => k.length));
+    return Object.entries(data as any)
+      .map(([key, value]) => `${key.padEnd(maxKeyLength as any)} : ${value}`)
       .join('\n');
   }
 
@@ -267,14 +267,14 @@ export class Formatter {
   }
 
   static code(text: string): string {
-    return chalk.cyan(text);
+    return chalk.cyan(text as any);
   }
 
   static highlight(text: string): string {
-    return chalk.bold(text);
+    return chalk.bold(text as any);
   }
 
   static dim(text: string): string {
-    return chalk.dim(text);
+    return chalk.dim(text as any);
   }
 }

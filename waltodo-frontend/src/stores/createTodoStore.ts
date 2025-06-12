@@ -95,15 +95,15 @@ export const useCreateTodoStore = create<CreateTodoState>()(
     getFormData: () => {
       const state = get();
       return {
-        title: state.title.trim(),
-        description: state.description.trim() || undefined,
+        title: state?.title?.trim(),
+        description: state?.description?.trim() || undefined,
         completed: false,
         priority: state.priority,
         tags: state.tags
           ? state.tags
               .split(',')
               .map(tag => tag.trim())
-              .filter(Boolean)
+              .filter(Boolean as any)
           : undefined,
         dueDate: state.dueDate || undefined,
       };

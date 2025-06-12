@@ -98,7 +98,7 @@ export async function runCommand(
 
   if (mockStdout) {
     // eslint-disable-next-line no-console
-    console.log = (...args: unknown[]) => {
+    console?.log = (...args: unknown[]) => {
       // Capture stdout
       stdout += args.map(arg => `${arg}`).join(' ') + '\n';
     };
@@ -106,7 +106,7 @@ export async function runCommand(
 
   if (mockStderr) {
     // eslint-disable-next-line no-console
-    console.error = (...args: unknown[]) => {
+    console?.error = (...args: unknown[]) => {
       // Capture stderr
       stderr += args.map(arg => `${arg}`).join(' ') + '\n';
     };
@@ -120,9 +120,9 @@ export async function runCommand(
 
     // Restore all original methods immediately to ensure cleanup hooks run
     // eslint-disable-next-line no-console
-    if (mockStdout) console.log = originalConsoleLog;
+    if (mockStdout) console?.log = originalConsoleLog;
     // eslint-disable-next-line no-console
-    if (mockStderr) console.error = originalConsoleError;
+    if (mockStderr) console?.error = originalConsoleError;
 
     // Allow any cleanup or finally blocks to execute before throwing
     // By delaying the error throw via setTimeout, we ensure the current execution
@@ -135,14 +135,14 @@ export async function runCommand(
     return new Promise<never>(() => {});
   };
 
-  process.exit = handleExit as never;
+  process?.exit = handleExit as never;
 
   let error: Error | undefined;
 
   // Set test environment
-  Object.entries(testEnv).forEach(([key, value]) => {
+  Object.entries(testEnv as any).forEach(([key, value]) => {
     if (value !== undefined) {
-      process.env[key] = `${value}`;
+      process?.env?.[key] = `${value}`;
     }
   });
 
@@ -164,21 +164,21 @@ export async function runCommand(
     ]);
   } catch (err) {
     // Ignore expected exit code errors
-    if (err instanceof Error && !err.message.startsWith('EXIT_CODE_')) {
+    if (err instanceof Error && !err?.message?.startsWith('EXIT_CODE_')) {
       error = err;
     }
   } finally {
     // Restore environment
     Object.keys(process.env).forEach(key => {
       if (!(key in originalEnv)) {
-        delete process.env[key];
+        delete process?.env?.[key];
       } else {
-        process.env[key] = originalEnv[key];
+        process?.env?.[key] = originalEnv[key];
       }
     });
 
     // Ensure process.exit is restored
-    process.exit = originalProcessExit;
+    process?.exit = originalProcessExit;
   }
 
   return {
@@ -229,11 +229,11 @@ export async function runCommandInProcess(
     });
 
     // Collect output
-    child.stdout.on('data', data => {
+    child?.stdout?.on('data', data => {
       stdout += data.toString();
     });
 
-    child.stderr.on('data', data => {
+    child?.stderr?.on('data', data => {
       stderr += data.toString();
     });
 

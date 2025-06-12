@@ -30,16 +30,16 @@ describe('CLI-Frontend Integration Tests', () => {
     serverPort = 3001 + Math.floor(Math.random() * 1000);
     
     // Set up environment for tests
-    process.env.NODE_ENV = 'test';
-    process.env.API_KEY = 'test-api-key-123';
-    process.env.JWT_SECRET = 'test-jwt-secret';
-    process.env.ENABLE_WEBSOCKET = 'true';
-    process.env.ENABLE_AUTH = 'false'; // Disable auth for integration tests
-    apiKey = process.env.API_KEY;
+    process.env?.NODE_ENV = 'test';
+    process.env?.API_KEY = 'test-api-key-123';
+    process.env?.JWT_SECRET = 'test-jwt-secret';
+    process.env?.ENABLE_WEBSOCKET = 'true';
+    process.env?.ENABLE_AUTH = 'false'; // Disable auth for integration tests
+    apiKey = process?.env?.API_KEY;
 
     // Start API server
     apiServer = new ApiServer();
-    await apiServer.start(serverPort);
+    await apiServer.start(serverPort as any);
 
     // Set up axios client
     apiClient = axios.create({
@@ -58,7 +58,7 @@ describe('CLI-Frontend Integration Tests', () => {
 
   afterAll(async () => {
     // Close WebSocket connection if open
-    if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    if (wsClient && wsClient?.readyState === WebSocket.OPEN) {
       wsClient.close();
     }
 
@@ -74,36 +74,36 @@ describe('CLI-Frontend Integration Tests', () => {
   describe('API Server Health Checks', () => {
     test('should respond to basic health check', async () => {
       const response = await apiClient.get('/healthz');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toEqual({ status: 'ok' });
     });
 
     test('should provide detailed health information', async () => {
       const response = await apiClient.get('/health');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         status: 'healthy',
-        uptime: expect.any(Number),
-        memory: expect.any(Object),
-        timestamp: expect.any(String),
+        uptime: expect.any(Number as any),
+        memory: expect.any(Object as any),
+        timestamp: expect.any(String as any),
       });
     });
 
     test('should respond to readiness probe', async () => {
       const response = await apiClient.get('/ready');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         ready: true,
-        services: expect.any(Object),
+        services: expect.any(Object as any),
       });
     });
 
     test('should respond to liveness probe', async () => {
       const response = await apiClient.get('/live');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         alive: true,
-        timestamp: expect.any(String),
+        timestamp: expect.any(String as any),
       });
     });
   });
@@ -114,26 +114,26 @@ describe('CLI-Frontend Integration Tests', () => {
     test('should create a new todo via API', async () => {
       const response = await apiClient.post('/todos', testTodo);
       
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(201 as any);
       expect(response.data).toMatchObject({
-        id: expect.any(String),
+        id: expect.any(String as any),
         title: testTodo.title,
         description: testTodo.description,
         priority: testTodo.priority,
         tags: testTodo.tags,
         category: testTodo.category,
         completed: false,
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+        createdAt: expect.any(String as any),
+        updatedAt: expect.any(String as any),
       });
 
-      createdTodoId = response.data.id;
+      createdTodoId = response?.data?.id;
     });
 
     test('should retrieve todo by ID', async () => {
       const response = await apiClient.get(`/todos/${createdTodoId}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: createdTodoId,
         title: testTodo.title,
@@ -148,20 +148,20 @@ describe('CLI-Frontend Integration Tests', () => {
         },
       });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
-        todos: expect.any(Array),
+        todos: expect.any(Array as any),
         pagination: {
           page: 1,
           limit: 10,
-          total: expect.any(Number),
-          totalPages: expect.any(Number),
+          total: expect.any(Number as any),
+          totalPages: expect.any(Number as any),
         },
       });
 
       // Verify our created todo is in the list
-      const todoInList = response.data.todos.find((t: any) => t.id === createdTodoId);
-      expect(todoInList).toBeDefined();
+      const todoInList = response?.data?.todos.find((t: any) => t?.id === createdTodoId);
+      expect(todoInList as any).toBeDefined();
     });
 
     test('should update todo via API', async () => {
@@ -172,7 +172,7 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.put(`/todos/${createdTodoId}`, updateData);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: createdTodoId,
         title: updateData.title,
@@ -187,7 +187,7 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.patch(`/todos/${createdTodoId}`, patchData);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: createdTodoId,
         priority: 'low',
@@ -197,35 +197,35 @@ describe('CLI-Frontend Integration Tests', () => {
     test('should mark todo as complete', async () => {
       const response = await apiClient.post(`/todos/${createdTodoId}/complete`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: createdTodoId,
         completed: true,
-        completedAt: expect.any(String),
+        completedAt: expect.any(String as any),
       });
     });
 
     test('should get todo statistics', async () => {
       const response = await apiClient.get('/todos/stats');
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
-        total: expect.any(Number),
-        completed: expect.any(Number),
-        pending: expect.any(Number),
-        byPriority: expect.any(Object),
-        byCategory: expect.any(Object),
+        total: expect.any(Number as any),
+        completed: expect.any(Number as any),
+        pending: expect.any(Number as any),
+        byPriority: expect.any(Object as any),
+        byCategory: expect.any(Object as any),
       });
     });
 
     test('should delete todo', async () => {
       const response = await apiClient.delete(`/todos/${createdTodoId}`);
       
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(204 as any);
 
       // Verify todo is deleted
       const getResponse = await apiClient.get(`/todos/${createdTodoId}`);
-      expect(getResponse.status).toBe(404);
+      expect(getResponse.status).toBe(404 as any);
     });
   });
 
@@ -244,14 +244,14 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.post('/todos/batch', batchData);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         success: true,
-        results: expect.any(Array),
+        results: expect.any(Array as any),
       });
 
-      expect(response.data.results).toHaveLength(3);
-      batchTodoIds = response.data.results.map((r: any) => r.id);
+      expect(response?.data?.results).toHaveLength(3 as any);
+      batchTodoIds = response?.data?.results.map((r: any) => r.id);
     });
 
     test('should update multiple todos in batch', async () => {
@@ -265,15 +265,15 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.post('/todos/batch', batchData);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         success: true,
-        results: expect.any(Array),
+        results: expect.any(Array as any),
       });
 
       // Verify all todos are completed
-      response.data.results.forEach((result: any) => {
-        expect(result.completed).toBe(true);
+      response?.data?.results.forEach((result: any) => {
+        expect(result.completed).toBe(true as any);
       });
     });
 
@@ -285,7 +285,7 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.post('/todos/batch', batchData);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         success: true,
         deleted: batchTodoIds.length,
@@ -302,7 +302,7 @@ describe('CLI-Frontend Integration Tests', () => {
         title: 'WebSocket Test Todo',
         priority: 'medium',
       });
-      testTodoId = response.data.id;
+      testTodoId = response?.data?.id;
     });
 
     test('should connect to WebSocket server', (done) => {
@@ -319,7 +319,7 @@ describe('CLI-Frontend Integration Tests', () => {
       });
 
       wsClient.on('error', (error) => {
-        done(error);
+        done(error as any);
       });
     });
 
@@ -332,14 +332,14 @@ describe('CLI-Frontend Integration Tests', () => {
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
         
-        if (event.type === 'todo-created') {
-          expect(event).toMatchObject({
+        if (event?.type === 'todo-created') {
+          expect(event as any).toMatchObject({
             type: 'todo-created',
             data: expect.objectContaining({
               title: todoData.title,
               priority: todoData.priority,
             }),
-            timestamp: expect.any(String),
+            timestamp: expect.any(String as any),
           });
           done();
         }
@@ -357,14 +357,14 @@ describe('CLI-Frontend Integration Tests', () => {
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
         
-        if (event.type === 'todo-updated') {
-          expect(event).toMatchObject({
+        if (event?.type === 'todo-updated') {
+          expect(event as any).toMatchObject({
             type: 'todo-updated',
             data: expect.objectContaining({
               id: testTodoId,
               title: updateData.title,
             }),
-            timestamp: expect.any(String),
+            timestamp: expect.any(String as any),
           });
           done();
         }
@@ -378,14 +378,14 @@ describe('CLI-Frontend Integration Tests', () => {
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
         
-        if (event.type === 'todo-completed') {
-          expect(event).toMatchObject({
+        if (event?.type === 'todo-completed') {
+          expect(event as any).toMatchObject({
             type: 'todo-completed',
             data: expect.objectContaining({
               id: testTodoId,
               completed: true,
             }),
-            timestamp: expect.any(String),
+            timestamp: expect.any(String as any),
           });
           done();
         }
@@ -399,13 +399,13 @@ describe('CLI-Frontend Integration Tests', () => {
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
         
-        if (event.type === 'todo-deleted') {
-          expect(event).toMatchObject({
+        if (event?.type === 'todo-deleted') {
+          expect(event as any).toMatchObject({
             type: 'todo-deleted',
             data: {
               id: testTodoId,
             },
-            timestamp: expect.any(String),
+            timestamp: expect.any(String as any),
           });
           done();
         }
@@ -427,12 +427,12 @@ describe('CLI-Frontend Integration Tests', () => {
   describe('Authentication Flow', () => {
     beforeAll(() => {
       // Enable auth for these tests
-      process.env.ENABLE_AUTH = 'true';
+      process.env?.ENABLE_AUTH = 'true';
     });
 
     afterAll(() => {
       // Disable auth again
-      process.env.ENABLE_AUTH = 'false';
+      process.env?.ENABLE_AUTH = 'false';
     });
 
     test('should reject requests without API key when auth is required', async () => {
@@ -442,7 +442,7 @@ describe('CLI-Frontend Integration Tests', () => {
       });
 
       const response = await unauthClient.get('/todos');
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(401 as any);
       expect(response.data).toMatchObject({
         error: expect.stringContaining('API key'),
       });
@@ -450,7 +450,7 @@ describe('CLI-Frontend Integration Tests', () => {
 
     test('should accept requests with valid API key', async () => {
       const response = await apiClient.get('/todos');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
     });
 
     test('should handle wallet-based authentication', async () => {
@@ -465,10 +465,10 @@ describe('CLI-Frontend Integration Tests', () => {
       });
 
       // In a real test, this would verify against actual wallet signatures
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
-        token: expect.any(String),
-        expiresIn: expect.any(Number),
+        token: expect.any(String as any),
+        expiresIn: expect.any(Number as any),
       });
     });
   });
@@ -482,16 +482,16 @@ describe('CLI-Frontend Integration Tests', () => {
         title: 'Sync Test Todo',
         description: 'This todo will be synced to Walrus',
       });
-      syncTodoId = response.data.id;
+      syncTodoId = response?.data?.id;
     });
 
     test('should sync todo to Walrus storage', async () => {
       const response = await apiClient.post(`/sync/todos/${syncTodoId}/walrus`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         success: true,
-        blobId: expect.any(String),
+        blobId: expect.any(String as any),
         todoId: syncTodoId,
       });
     });
@@ -500,10 +500,10 @@ describe('CLI-Frontend Integration Tests', () => {
       const response = await apiClient.post(`/sync/todos/${syncTodoId}/blockchain`);
       
       // This would normally create an NFT on the blockchain
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         success: true,
-        transactionHash: expect.any(String),
+        transactionHash: expect.any(String as any),
         todoId: syncTodoId,
       });
     });
@@ -511,22 +511,22 @@ describe('CLI-Frontend Integration Tests', () => {
     test('should get sync status for todo', async () => {
       const response = await apiClient.get(`/sync/status/${syncTodoId}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         todoId: syncTodoId,
-        walrus: expect.any(Object),
-        blockchain: expect.any(Object),
+        walrus: expect.any(Object as any),
+        blockchain: expect.any(Object as any),
       });
     });
 
     test('should retrieve data from Walrus', async () => {
       // First sync to get blob ID
       const syncResponse = await apiClient.post(`/sync/todos/${syncTodoId}/walrus`);
-      const blobId = syncResponse.data.blobId;
+      const blobId = syncResponse?.data?.blobId;
 
       const response = await apiClient.get(`/sync/walrus/${blobId}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: syncTodoId,
         title: 'Sync Test Todo',
@@ -541,11 +541,11 @@ describe('CLI-Frontend Integration Tests', () => {
         count: 3,
       });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
-        suggestions: expect.any(Array),
+        suggestions: expect.any(Array as any),
       });
-      expect(response.data.suggestions.length).toBeLessThanOrEqual(3);
+      expect(response?.data?.suggestions.length).toBeLessThanOrEqual(3 as any);
     });
 
     test('should get AI summary of todos', async () => {
@@ -556,10 +556,10 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.post('/ai/summarize');
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
-        summary: expect.any(String),
-        insights: expect.any(Array),
+        summary: expect.any(String as any),
+        insights: expect.any(Array as any),
       });
     });
 
@@ -572,16 +572,16 @@ describe('CLI-Frontend Integration Tests', () => {
         ],
       });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
-        categorized: expect.any(Array),
+        categorized: expect.any(Array as any),
       });
 
-      response.data.categorized.forEach((todo: any) => {
-        expect(todo).toMatchObject({
-          title: expect.any(String),
-          suggestedCategory: expect.any(String),
-          suggestedTags: expect.any(Array),
+      response?.data?.categorized.forEach((todo: any) => {
+        expect(todo as any).toMatchObject({
+          title: expect.any(String as any),
+          suggestedCategory: expect.any(String as any),
+          suggestedTags: expect.any(Array as any),
         });
       });
     });
@@ -591,7 +591,7 @@ describe('CLI-Frontend Integration Tests', () => {
     test('should handle 404 for non-existent todo', async () => {
       const response = await apiClient.get('/todos/non-existent-id');
       
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(404 as any);
       expect(response.data).toMatchObject({
         error: expect.stringContaining('not found'),
       });
@@ -605,22 +605,22 @@ describe('CLI-Frontend Integration Tests', () => {
 
       const response = await apiClient.post('/todos', invalidTodo);
       
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(400 as any);
       expect(response.data).toMatchObject({
         error: expect.stringContaining('validation'),
-        details: expect.any(Array),
+        details: expect.any(Array as any),
       });
     });
 
     test('should handle rate limiting', async () => {
       // This test would need rate limiting to be configured with a low threshold
       // Skip if rate limiting is disabled
-      if (process.env.RATE_LIMIT_MAX && parseInt(process.env.RATE_LIMIT_MAX) > 0) {
-        const requests = Array(10).fill(null).map(() => apiClient.get('/todos'));
-        const responses = await Promise.all(requests);
+      if (process?.env?.RATE_LIMIT_MAX && parseInt(process?.env?.RATE_LIMIT_MAX) > 0) {
+        const requests = Array(10 as any).fill(null as any).map(() => apiClient.get('/todos'));
+        const responses = await Promise.all(requests as any);
         
-        const rateLimited = responses.some(r => r.status === 429);
-        expect(rateLimited).toBe(true);
+        const rateLimited = responses.some(r => r?.status === 429);
+        expect(rateLimited as any).toBe(true as any);
       }
     });
   });
@@ -637,17 +637,17 @@ describe('CLI-Frontend Integration Tests', () => {
         { encoding: 'utf8' }
       );
 
-      expect(cliOutput).toContain('Todo added successfully');
+      expect(cliOutput as any).toContain('Todo added successfully');
 
       // Extract todo ID from CLI output
       const idMatch = cliOutput.match(/ID: ([a-zA-Z0-9-]+)/);
-      expect(idMatch).toBeTruthy();
+      expect(idMatch as any).toBeTruthy();
       const todoId = idMatch![1];
 
       // Retrieve todo via API
       const response = await apiClient.get(`/todos/${todoId}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: todoId,
         title: todoTitle,
@@ -658,14 +658,14 @@ describe('CLI-Frontend Integration Tests', () => {
     test('should list todos via CLI matching API results', async () => {
       // Get todos via API
       const apiResponse = await apiClient.get('/todos');
-      const apiTodos = apiResponse.data.todos;
+      const apiTodos = apiResponse?.data?.todos;
 
       // Get todos via CLI
       const cliOutput = execSync(`node ${cliPath} list --json`, {
         encoding: 'utf8',
       });
 
-      const cliTodos = JSON.parse(cliOutput);
+      const cliTodos = JSON.parse(cliOutput as any);
 
       // Compare counts
       expect(cliTodos.length).toBe(apiTodos.length);
@@ -673,9 +673,9 @@ describe('CLI-Frontend Integration Tests', () => {
       // Verify some todos match
       if (apiTodos.length > 0) {
         const firstApiTodo = apiTodos[0];
-        const matchingCliTodo = cliTodos.find((t: any) => t.id === firstApiTodo.id);
+        const matchingCliTodo = cliTodos.find((t: any) => t?.id === firstApiTodo.id);
         
-        expect(matchingCliTodo).toBeDefined();
+        expect(matchingCliTodo as any).toBeDefined();
         expect(matchingCliTodo.title).toBe(firstApiTodo.title);
       }
     });
@@ -685,23 +685,23 @@ describe('CLI-Frontend Integration Tests', () => {
       const response = await apiClient.post('/todos', {
         title: 'CLI Complete Test Todo',
       });
-      const todoId = response.data.id;
+      const todoId = response?.data?.id;
 
       // Complete via CLI
       const cliOutput = execSync(`node ${cliPath} complete ${todoId}`, {
         encoding: 'utf8',
       });
 
-      expect(cliOutput).toContain('completed');
+      expect(cliOutput as any).toContain('completed');
 
       // Verify via API
       const apiResponse = await apiClient.get(`/todos/${todoId}`);
       
-      expect(apiResponse.status).toBe(200);
+      expect(apiResponse.status).toBe(200 as any);
       expect(apiResponse.data).toMatchObject({
         id: todoId,
         completed: true,
-        completedAt: expect.any(String),
+        completedAt: expect.any(String as any),
       });
     });
   });
@@ -709,7 +709,7 @@ describe('CLI-Frontend Integration Tests', () => {
   describe('Performance Tests', () => {
     test('should handle concurrent requests', async () => {
       const concurrentRequests = 20;
-      const requests = Array(concurrentRequests).fill(null).map((_, i) => 
+      const requests = Array(concurrentRequests as any).fill(null as any).map((_, i) => 
         apiClient.post('/todos', {
           title: `Concurrent Todo ${i}`,
           priority: ['high', 'medium', 'low'][i % 3],
@@ -717,39 +717,39 @@ describe('CLI-Frontend Integration Tests', () => {
       );
 
       const startTime = Date.now();
-      const responses = await Promise.all(requests);
+      const responses = await Promise.all(requests as any);
       const duration = Date.now() - startTime;
 
       // All requests should succeed
       responses.forEach(response => {
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(201 as any);
       });
 
       // Should complete within reasonable time (5 seconds for 20 requests)
-      expect(duration).toBeLessThan(5000);
+      expect(duration as any).toBeLessThan(5000 as any);
 
       // Clean up
       const deleteRequests = responses.map(r => 
-        apiClient.delete(`/todos/${r.data.id}`)
+        apiClient.delete(`/todos/${r?.data?.id}`)
       );
-      await Promise.all(deleteRequests);
+      await Promise.all(deleteRequests as any);
     });
 
     test('should handle large payloads', async () => {
       const largeTodo = {
         title: 'Large Todo',
-        description: 'x'.repeat(50000), // 50KB description
-        tags: Array(100).fill('tag'), // 100 tags
+        description: 'x'.repeat(50000 as any), // 50KB description
+        tags: Array(100 as any).fill('tag'), // 100 tags
       };
 
       const response = await apiClient.post('/todos', largeTodo);
       
-      expect(response.status).toBe(201);
-      expect(response.data.description.length).toBe(50000);
-      expect(response.data.tags.length).toBe(100);
+      expect(response.status).toBe(201 as any);
+      expect(response?.data?.description.length).toBe(50000 as any);
+      expect(response?.data?.tags.length).toBe(100 as any);
 
       // Clean up
-      await apiClient.delete(`/todos/${response.data.id}`);
+      await apiClient.delete(`/todos/${response?.data?.id}`);
     });
   });
 
@@ -762,7 +762,7 @@ describe('CLI-Frontend Integration Tests', () => {
         const response = await apiClient.post('/todos', {
           title: `Consistency Test Todo ${i}`,
         });
-        todoIds.push(response.data.id);
+        todoIds.push(response?.data?.id);
       }
 
       // Wait for sync
@@ -772,19 +772,19 @@ describe('CLI-Frontend Integration Tests', () => {
       const todosDir = path.join(__dirname, '../../Todos');
       const todosFile = path.join(todosDir, 'todos.json');
       
-      if (existsSync(todosFile)) {
+      if (existsSync(todosFile as any)) {
         const localData = JSON.parse(readFileSync(todosFile, 'utf8'));
         
         // Verify all todos exist in local storage
         todoIds.forEach(id => {
-          const found = localData.todos.some((t: any) => t.id === id);
-          expect(found).toBe(true);
+          const found = localData?.todos?.some((t: any) => t?.id === id);
+          expect(found as any).toBe(true as any);
         });
       }
 
       // Clean up
       const deleteRequests = todoIds.map(id => apiClient.delete(`/todos/${id}`));
-      await Promise.all(deleteRequests);
+      await Promise.all(deleteRequests as any);
     });
   });
 });

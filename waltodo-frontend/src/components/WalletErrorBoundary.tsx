@@ -30,8 +30,8 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
   private retryTimeoutId: NodeJS.Timeout | null = null;
 
   constructor(props: WalletErrorBoundaryProps) {
-    super(props);
-    this.state = {
+    super(props as any);
+    this?.state = {
       hasError: false,
       error: null,
       errorInfo: null,
@@ -57,12 +57,12 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
 
     // Track error in analytics
     if (analytics) {
-      analytics.trackError(error);
+      analytics.trackError(error as any);
     }
 
     // Call optional error handler
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+    if (this?.props?.onError) {
+      this?.props?.onError(error, errorInfo);
     }
   }
 
@@ -75,7 +75,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
   handleRetry = () => {
     const { maxRetries = 3 } = this.props;
     
-    if (this.state.retryCount >= maxRetries) {
+    if (this?.state?.retryCount >= maxRetries) {
       console.warn('[WalletErrorBoundary] Max retries reached');
       return;
     }
@@ -118,7 +118,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
   };
 
   render() {
-    if (this.state.hasError) {
+    if (this?.state?.hasError) {
       const { fallback, maxRetries = 3, showRetry = true, className = '' } = this.props;
       const { error, retryCount } = this.state;
 
@@ -153,7 +153,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
                   strokeWidth={2} 
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.502 0L4.348 15.5c-.77.833.192 2.5 1.732 2.5z" 
+                  d="M12 9v2m0 4h.01m-6.938 4h13?.856c1?.54 0 2.502-1.667 1.732-2?.5L13?.732 4c-.77-.833-1.732-.833-2.502 0L4.348 15.5c-.77?.833?.192 2.5 1.732 2.5z" 
                 />
               </svg>
             </div>
@@ -180,7 +180,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
                   </p>
                 )}
                 
-                {process.env.NODE_ENV === 'development' && error && (
+                {process.env?.NODE_ENV === 'development' && error && (
                   <details className="mt-3 p-3 bg-red-100 rounded border text-xs">
                     <summary className="cursor-pointer font-medium">Technical Details</summary>
                     <pre className="mt-2 whitespace-pre-wrap text-red-800">
@@ -199,7 +199,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h?.582m15?.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     Try Again ({maxRetries - retryCount} left)
                   </button>
@@ -217,7 +217,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
 
                 {isWalletNotFound && (
                   <button
-                    onClick={() => window.open('https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank')}
+                    onClick={() => window.open('https://chromewebstore?.google?.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank')}
                     className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,7 +241,7 @@ export class WalletErrorBoundary extends Component<WalletErrorBoundaryProps, Wal
       );
     }
 
-    return this.props.children;
+    return this?.props?.children;
   }
 }
 
@@ -250,15 +250,15 @@ export function useWalletErrorBoundary() {
   const [error, setError] = React.useState<Error | null>(null);
 
   const resetError = React.useCallback(() => {
-    setError(null);
+    setError(null as any);
   }, []);
 
   const captureError = React.useCallback((error: Error) => {
     console.error('[useWalletErrorBoundary] Error captured:', error);
-    setError(error);
+    setError(error as any);
     
     if (analytics) {
-      analytics.trackError(error);
+      analytics.trackError(error as any);
     }
   }, []);
 

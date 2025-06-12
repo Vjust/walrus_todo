@@ -37,17 +37,17 @@ describe('StorageManager', () => {
       error: jest.fn(),
     } as unknown as jest.MockedObject<Logger>;
 
-    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
+    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger as any);
 
     // Create a mock SuiClient
     const mockSuiClient = {
       getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '1' }),
       getBalance: jest.fn().mockResolvedValue({
         coinType: 'WAL',
-        totalBalance: BigInt(1000).toString(),
+        totalBalance: BigInt(1000 as any).toString(),
         coinObjectCount: 1,
         lockedBalance: {
-          aggregate: BigInt(0).toString(),
+          aggregate: BigInt(0 as any).toString(),
           coinBalances: {},
         },
       }),
@@ -99,74 +99,74 @@ describe('StorageManager', () => {
 
   describe('Storage Allocation Check', () => {
     it('should pass when sufficient storage is available', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('2000');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '500',
         total: '2000',
       });
 
       await expect(
-        manager.ensureStorageAllocated(BigInt(1000))
-      ).resolves.not.toThrow();
+        manager.ensureStorageAllocated(BigInt(1000 as any))
+      ).resolves?.not?.toThrow();
     });
 
     it('should throw when insufficient storage', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('1500');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('1500');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '1000',
         total: '1500',
       });
 
       await expect(
-        manager.ensureStorageAllocated(BigInt(1000))
-      ).rejects.toThrow(StorageError);
+        manager.ensureStorageAllocated(BigInt(1000 as any))
+      ).rejects.toThrow(StorageError as any);
     });
 
     it('should warn when storage is below threshold', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('2000');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '1700', // 85% used
         total: '2000',
       });
 
-      await manager.ensureStorageAllocated(BigInt(100));
+      await manager.ensureStorageAllocated(BigInt(100 as any));
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         'Storage allocation running low',
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
 
     it('should throw when below minimum allocation', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('500'); // Below min 1000
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('500'); // Below min 1000
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '100',
         total: '500',
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(100))).rejects.toThrow(
+      await expect(manager.ensureStorageAllocated(BigInt(100 as any))).rejects.toThrow(
         'Insufficient WAL tokens'
       );
     });
 
     it('should handle missing balance data', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('0');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('0');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '100',
         total: '1000',
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(100))).rejects.toThrow(
+      await expect(manager.ensureStorageAllocated(BigInt(100 as any))).rejects.toThrow(
         ValidationError
       );
     });
 
     it('should handle client errors', async () => {
-      mockWalrusClient.getWalBalance.mockRejectedValue(
+      mockWalrusClient?.getWalBalance?.mockRejectedValue(
         new Error('Network error')
       );
 
-      await expect(manager.ensureStorageAllocated(BigInt(100))).rejects.toThrow(
+      await expect(manager.ensureStorageAllocated(BigInt(100 as any))).rejects.toThrow(
         BlockchainError
       );
     });
@@ -174,44 +174,44 @@ describe('StorageManager', () => {
 
   describe('Storage Allocation Status', () => {
     it('should return correct allocation status', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('2000');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '500',
         total: '2000',
       });
 
       const status = await manager.getStorageAllocation();
 
-      expect(status).toEqual({
-        allocated: BigInt(2000),
-        used: BigInt(500),
-        available: BigInt(1500),
-        minRequired: BigInt(1000),
+      expect(status as any).toEqual({
+        allocated: BigInt(2000 as any),
+        used: BigInt(500 as any),
+        available: BigInt(1500 as any),
+        minRequired: BigInt(1000 as any),
       });
     });
 
     it('should handle zero usage', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('1000');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('1000');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '0',
         total: '1000',
       });
 
       const status = await manager.getStorageAllocation();
 
-      expect(status.available).toBe(BigInt(1000));
+      expect(status.available).toBe(BigInt(1000 as any));
     });
 
     it('should handle maximum usage', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue('1000');
-      mockWalrusClient.getStorageUsage.mockResolvedValue({
+      mockWalrusClient?.getWalBalance?.mockResolvedValue('1000');
+      mockWalrusClient?.getStorageUsage?.mockResolvedValue({
         used: '1000',
         total: '1000',
       });
 
       const status = await manager.getStorageAllocation();
 
-      expect(status.available).toBe(BigInt(0));
+      expect(status.available).toBe(BigInt(0 as any));
     });
   });
 
@@ -223,7 +223,7 @@ describe('StorageManager', () => {
       const required = manager.calculateRequiredStorage(size, duration);
 
       // 2MB * 30 days = 60 WAL tokens + 1 safety margin
-      expect(required).toBe(BigInt(61));
+      expect(required as any).toBe(BigInt(61 as any));
     });
 
     it('should handle small files', () => {
@@ -233,7 +233,7 @@ describe('StorageManager', () => {
       const required = manager.calculateRequiredStorage(size, duration);
 
       // Less than 1MB per day = 1 WAL token + 1 safety margin
-      expect(required).toBe(BigInt(2));
+      expect(required as any).toBe(BigInt(2 as any));
     });
 
     it('should validate size', () => {

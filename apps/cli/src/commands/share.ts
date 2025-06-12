@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
@@ -77,7 +77,7 @@ export default class ShareCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(ShareCommand);
+      const { args, flags } = await this.parse(ShareCommand as any);
 
       // Parse input to support both positional and flag syntax
       let listName: string | undefined;
@@ -100,25 +100,25 @@ export default class ShareCommand extends BaseCommand {
       }
       // Error: missing required information
       else {
-        const availableLists = await this.todoService.getAllLists();
+        const availableLists = await this?.todoService?.getAllLists();
         let errorMessage = 'Please specify both a list and recipient.\n\n';
         errorMessage += 'Usage:\n';
-        errorMessage += `  ${chalk.cyan(`${this.config.bin} share <list> <recipient>`)}  # Recommended\n`;
-        errorMessage += `  ${chalk.cyan(`${this.config.bin} share <list> --recipient <user>`)}  # Alternative\n`;
+        errorMessage += `  ${chalk.cyan(`${this?.config?.bin} share <list> <recipient>`)}  # Recommended\n`;
+        errorMessage += `  ${chalk.cyan(`${this?.config?.bin} share <list> --recipient <user>`)}  # Alternative\n`;
 
         if (availableLists.length > 0) {
           errorMessage += `\nAvailable lists: ${chalk.cyan(availableLists.join(', '))}`;
         } else {
-          errorMessage += `\n${chalk.yellow('No lists exist yet. Create one with:')} ${chalk.cyan(`${this.config.bin} add "Your first todo"`)}`;
+          errorMessage += `\n${chalk.yellow('No lists exist yet. Create one with:')} ${chalk.cyan(`${this?.config?.bin} add "Your first todo"`)}`;
         }
 
         throw new CLIError(errorMessage, 'MISSING_PARAMETERS');
       }
 
       // Get the list
-      const todoList = await this.todoService.getList(listName);
+      const todoList = await this?.todoService?.getList(listName as any);
       if (!todoList) {
-        const availableLists = await this.todoService.getAllLists();
+        const availableLists = await this?.todoService?.getAllLists();
         throw new CLIError(
           `List "${listName}" not found.\n\nAvailable lists: ${availableLists.length > 0 ? chalk.cyan(availableLists.join(', ')) : 'none'}`,
           'LIST_NOT_FOUND'
@@ -126,17 +126,17 @@ export default class ShareCommand extends BaseCommand {
       }
 
       // Handle permissions
-      const permissionLevel = flags['read-only']
+      const permissionLevel = flags?.["read-only"]
         ? 'read'
         : flags.permissions || 'edit';
 
       // Update collaborators with permissions
-      todoList.collaborators = todoList.collaborators || [];
-      todoList.permissions = todoList.permissions || {};
+      todoList?.collaborators = todoList.collaborators || [];
+      todoList?.permissions = todoList.permissions || {};
 
       // Check if already shared
-      if (todoList.collaborators.includes(recipient)) {
-        const currentPermission = todoList.permissions[recipient] || 'edit';
+      if (todoList?.collaborators?.includes(recipient as any)) {
+        const currentPermission = todoList?.permissions?.[recipient] || 'edit';
         if (currentPermission === permissionLevel) {
           throw new CLIError(
             `User "${recipient}" already has ${permissionLevel} access to list "${listName}"`,
@@ -144,27 +144,27 @@ export default class ShareCommand extends BaseCommand {
           );
         } else {
           // Update permission level
-          todoList.permissions[recipient] = permissionLevel;
+          todoList?.permissions?.[recipient] = permissionLevel;
           this.log(
             chalk.green('✓'),
-            `Updated ${chalk.cyan(recipient)}'s permissions to ${chalk.bold(permissionLevel)} for list "${chalk.bold(listName)}"`
+            `Updated ${chalk.cyan(recipient as any)}'s permissions to ${chalk.bold(permissionLevel as any)} for list "${chalk.bold(listName as any)}"`
           );
-          await this.todoService.saveList(listName, todoList);
+          await this?.todoService?.saveList(listName, todoList);
           return;
         }
       }
 
       // Add new collaborator
-      todoList.collaborators.push(recipient);
-      todoList.permissions[recipient] = permissionLevel;
-      todoList.updatedAt = new Date().toISOString();
+      todoList?.collaborators?.push(recipient as any);
+      todoList?.permissions?.[recipient] = permissionLevel;
+      todoList?.updatedAt = new Date().toISOString();
 
-      await this.todoService.saveList(listName, todoList);
+      await this?.todoService?.saveList(listName, todoList);
 
       // Success message with permission info
       this.log(
         chalk.green('✓'),
-        `Todo list "${chalk.bold(listName)}" shared with ${chalk.cyan(recipient)}`
+        `Todo list "${chalk.bold(listName as any)}" shared with ${chalk.cyan(recipient as any)}`
       );
       this.log('  ', chalk.dim(`Permission level: ${permissionLevel}`));
 
@@ -178,7 +178,7 @@ export default class ShareCommand extends BaseCommand {
       }
       this.log(
         chalk.dim(
-          `  • View shared lists with: ${chalk.cyan(`${this.config.bin} list --shared`)}`
+          `  • View shared lists with: ${chalk.cyan(`${this?.config?.bin} list --shared`)}`
         )
       );
     } catch (error) {
@@ -186,7 +186,7 @@ export default class ShareCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to share list: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to share list: ${error instanceof Error ? error.message : String(error as any)}`,
         'SHARE_FAILED'
       );
     }

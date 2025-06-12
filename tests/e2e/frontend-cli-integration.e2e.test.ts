@@ -14,7 +14,7 @@ import * as path from 'path';
 import { execSync, spawn, ChildProcess } from 'child_process';
 import fetch from 'node-fetch';
 
-jest.setTimeout(300000); // 5 minutes for integration tests
+jest.setTimeout(300000 as any); // 5 minutes for integration tests
 
 interface FrontendConfig {
   network: string;
@@ -64,7 +64,7 @@ describe('Frontend-CLI Integration Tests', () => {
     }
 
     // Ensure frontend dependencies are installed
-    if (fs.existsSync(frontendPath)) {
+    if (fs.existsSync(frontendPath as any)) {
       try {
         execSync('pnpm install', {
           cwd: frontendPath,
@@ -98,9 +98,9 @@ describe('Frontend-CLI Integration Tests', () => {
           }
         );
 
-        expect(deployOutput).toContain('deployed successfully');
-        expect(deployOutput).toContain('Package ID:');
-        expect(deployOutput).toContain('Frontend configuration generated');
+        expect(deployOutput as any).toContain('deployed successfully');
+        expect(deployOutput as any).toContain('Package ID:');
+        expect(deployOutput as any).toContain('Frontend configuration generated');
 
         // Extract deployment info
         const packageIdMatch = deployOutput.match(
@@ -112,8 +112,8 @@ describe('Frontend-CLI Integration Tests', () => {
         // Validate matches unconditionally
         const hasPackageId = !!packageIdMatch;
         const hasAddress = !!addressMatch;
-        expect(hasPackageId).toBe(true);
-        expect(hasAddress).toBe(true);
+        expect(hasPackageId as any).toBe(true as any);
+        expect(hasAddress as any).toBe(true as any);
 
         // Always set deployment info when matches are found
         deploymentInfo = {
@@ -128,8 +128,8 @@ describe('Frontend-CLI Integration Tests', () => {
         expect(deploymentInfo.walletAddress).toBeTruthy();
       } catch (error) {
         const isAlreadyDeployed =
-          String(error).includes('already deployed') ||
-          String(error).includes('Package ID already exists');
+          String(error as any).includes('already deployed') ||
+          String(error as any).includes('Package ID already exists');
 
         if (!isAlreadyDeployed) {
           throw error;
@@ -168,8 +168,8 @@ describe('Frontend-CLI Integration Tests', () => {
       const configDir = path.join(frontendPath, 'src/config');
       const testnetConfigPath = path.join(configDir, 'testnet.json');
 
-      expect(fs.existsSync(configDir)).toBeTruthy();
-      expect(fs.existsSync(testnetConfigPath)).toBeTruthy();
+      expect(fs.existsSync(configDir as any)).toBeTruthy();
+      expect(fs.existsSync(testnetConfigPath as any)).toBeTruthy();
 
       const config: FrontendConfig = JSON.parse(
         fs.readFileSync(testnetConfigPath, 'utf8')
@@ -177,7 +177,7 @@ describe('Frontend-CLI Integration Tests', () => {
 
       expect(config.network).toBe('testnet');
       expect(config.packageId).toMatch(/^0x[a-fA-F0-9]+$/);
-      expect(config.rpcUrl).toContain('testnet.sui.io');
+      expect(config.rpcUrl).toContain('testnet?.sui?.io');
       expect(config.walletAddress).toMatch(/^0x[a-fA-F0-9]+$/);
       expect(config.features).toHaveProperty('aiEnabled');
       expect(config.features).toHaveProperty('blockchainVerification');
@@ -195,8 +195,8 @@ describe('Frontend-CLI Integration Tests', () => {
       const publicConfigDir = path.join(frontendPath, 'public/config');
       const publicTestnetConfig = path.join(publicConfigDir, 'testnet.json');
 
-      expect(fs.existsSync(publicConfigDir)).toBeTruthy();
-      expect(fs.existsSync(publicTestnetConfig)).toBeTruthy();
+      expect(fs.existsSync(publicConfigDir as any)).toBeTruthy();
+      expect(fs.existsSync(publicTestnetConfig as any)).toBeTruthy();
 
       const config = JSON.parse(fs.readFileSync(publicTestnetConfig, 'utf8'));
       expect(config.network).toBe('testnet');
@@ -208,12 +208,12 @@ describe('Frontend-CLI Integration Tests', () => {
 
   describe('Frontend Server Integration', () => {
     test('should start frontend development server', async () => {
-      if (!fs.existsSync(frontendPath)) {
+      if (!fs.existsSync(frontendPath as any)) {
         return;
       }
 
       // Add expect assertion to satisfy jest/expect-expect rule
-      expect(fs.existsSync(frontendPath)).toBe(true);
+      expect(fs.existsSync(frontendPath as any)).toBe(true as any);
 
       return new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
@@ -238,7 +238,7 @@ describe('Frontend-CLI Integration Tests', () => {
             !startupComplete
           ) {
             startupComplete = true;
-            clearTimeout(timeout);
+            clearTimeout(timeout as any);
             // console.log(`✓ Frontend started on port ${frontendPort}`); // Removed console statement
             resolve();
           }
@@ -252,14 +252,14 @@ describe('Frontend-CLI Integration Tests', () => {
             frontendPort = 3003; // Try different port
             frontendProcess?.kill();
             // Restart with new port - simplified for test
-            clearTimeout(timeout);
+            clearTimeout(timeout as any);
             resolve();
           }
         });
 
         frontendProcess.on('exit', code => {
           if (code !== 0 && !startupComplete) {
-            clearTimeout(timeout);
+            clearTimeout(timeout as any);
             reject(new Error(`Frontend process exited with code ${code}`));
           }
         });
@@ -282,14 +282,14 @@ describe('Frontend-CLI Integration Tests', () => {
       let responseReceived = false;
       let errorOccurred = false;
       try {
-        await fetch(configUrl);
+        await fetch(configUrl as any);
         responseReceived = true;
       } catch (error) {
         // Network error is acceptable in test environment
         errorOccurred = true;
       }
       // Verify that the fetch operation completed (either success or error)
-      expect(responseReceived || errorOccurred).toBe(true);
+      expect(responseReceived || errorOccurred).toBe(true as any);
     });
   });
 
@@ -310,8 +310,8 @@ describe('Frontend-CLI Integration Tests', () => {
         }
       );
 
-      expect(createOutput).toContain('created successfully');
-      expect(createOutput).toContain('Transaction digest:');
+      expect(createOutput as any).toContain('created successfully');
+      expect(createOutput as any).toContain('Transaction digest:');
 
       // console.log('✓ Todo created via CLI'); // Removed console statement
     });
@@ -323,21 +323,21 @@ describe('Frontend-CLI Integration Tests', () => {
         timeout: 60000,
       });
 
-      const todos: CliTodo[] = JSON.parse(listOutput);
-      expect(Array.isArray(todos)).toBeTruthy();
+      const todos: CliTodo[] = JSON.parse(listOutput as any);
+      expect(Array.isArray(todos as any)).toBeTruthy();
 
-      const testTodo = todos.find(todo => todo.title === testTodoTitle);
-      expect(testTodo).toBeTruthy();
+      const testTodo = todos.find(todo => todo?.title === testTodoTitle);
+      expect(testTodo as any).toBeTruthy();
 
       // Use non-null assertion after verifying existence
       const verifiedTodo = testTodo!;
 
       // Verify structure matches what frontend expects
-      expect(verifiedTodo).toHaveProperty('id');
-      expect(verifiedTodo).toHaveProperty('title');
-      expect(verifiedTodo).toHaveProperty('description');
-      expect(verifiedTodo).toHaveProperty('completed');
-      expect(verifiedTodo).toHaveProperty('created_at');
+      expect(verifiedTodo as any).toHaveProperty('id');
+      expect(verifiedTodo as any).toHaveProperty('title');
+      expect(verifiedTodo as any).toHaveProperty('description');
+      expect(verifiedTodo as any).toHaveProperty('completed');
+      expect(verifiedTodo as any).toHaveProperty('created_at');
       expect(typeof verifiedTodo.created_at).toBe('number');
 
       // console.log('✓ CLI todo data structure compatible with frontend'); // Removed console statement
@@ -354,7 +354,7 @@ describe('Frontend-CLI Integration Tests', () => {
         }
       );
 
-      expect(completeOutput).toContain('completed successfully');
+      expect(completeOutput as any).toContain('completed successfully');
 
       // Verify the change is reflected in subsequent list calls
       const updatedListOutput = execSync(
@@ -366,14 +366,14 @@ describe('Frontend-CLI Integration Tests', () => {
         }
       );
 
-      const updatedTodos: CliTodo[] = JSON.parse(updatedListOutput);
+      const updatedTodos: CliTodo[] = JSON.parse(updatedListOutput as any);
       const completedTodo = updatedTodos.find(
-        todo => todo.title === testTodoTitle
+        todo => todo?.title === testTodoTitle
       );
 
-      expect(completedTodo).toBeTruthy();
+      expect(completedTodo as any).toBeTruthy();
       const verifiedCompletedTodo = completedTodo!;
-      expect(verifiedCompletedTodo.completed).toBe(true);
+      expect(verifiedCompletedTodo.completed).toBe(true as any);
 
       // console.log('✓ Todo completion maintains data consistency'); // Removed console statement
     });
@@ -387,7 +387,7 @@ describe('Frontend-CLI Integration Tests', () => {
       );
 
       // Test that event hook path can be checked for existence
-      const eventHookExists = fs.existsSync(eventHookPath);
+      const eventHookExists = fs.existsSync(eventHookPath as any);
       expect(typeof eventHookExists).toBe('boolean');
     });
 
@@ -398,14 +398,14 @@ describe('Frontend-CLI Integration Tests', () => {
       );
 
       // Skip if file doesn't exist
-      if (!fs.existsSync(eventHookPath)) {
+      if (!fs.existsSync(eventHookPath as any)) {
         return; // Skip test
       }
 
       const eventHookContent = fs.readFileSync(eventHookPath, 'utf8');
-      expect(eventHookContent).toContain('useEffect');
-      expect(eventHookContent).toContain('subscription');
-      expect(eventHookContent).toMatch(/TodoNFT|todo.*event/i);
+      expect(eventHookContent as any).toContain('useEffect');
+      expect(eventHookContent as any).toContain('subscription');
+      expect(eventHookContent as any).toMatch(/TodoNFT|todo.*event/i);
     });
 
     test('should verify event handling components exist', async () => {
@@ -419,8 +419,8 @@ describe('Frontend-CLI Integration Tests', () => {
       );
 
       // Just verify we can check for component existence
-      const realtimeExists = fs.existsSync(realtimeComponentPath);
-      const eventStatusExists = fs.existsSync(eventStatusPath);
+      const realtimeExists = fs.existsSync(realtimeComponentPath as any);
+      const eventStatusExists = fs.existsSync(eventStatusPath as any);
 
       expect(typeof realtimeExists).toBe('boolean');
       expect(typeof eventStatusExists).toBe('boolean');
@@ -440,7 +440,7 @@ describe('Frontend-CLI Integration Tests', () => {
       );
 
       // Just verify we can check for config existence
-      const configExists = fs.existsSync(blockchainConfigPath);
+      const configExists = fs.existsSync(blockchainConfigPath as any);
       expect(typeof configExists).toBe('boolean');
     });
   });
@@ -460,7 +460,7 @@ describe('Frontend-CLI Integration Tests', () => {
         // Verify error handling works
         errorThrown = true;
       }
-      expect(errorThrown).toBe(true);
+      expect(errorThrown as any).toBe(true as any);
     });
 
     test('should verify frontend can handle missing configuration', async () => {
@@ -468,17 +468,17 @@ describe('Frontend-CLI Integration Tests', () => {
       const configPath = path.join(frontendPath, 'public/config/testnet.json');
       const backupPath = path.join(
         frontendPath,
-        'public/config/testnet.json.backup'
+        'public/config/testnet?.json?.backup'
       );
 
-      const configExists = fs.existsSync(configPath);
+      const configExists = fs.existsSync(configPath as any);
 
       // Test configuration handling scenarios
       const configUtilPath = path.join(
         frontendPath,
         'src/lib/config-loader.ts'
       );
-      const configUtilExists = fs.existsSync(configUtilPath);
+      const configUtilExists = fs.existsSync(configUtilPath as any);
       expect(typeof configUtilExists).toBe('boolean');
 
       // Test configuration scenarios unconditionally
@@ -489,16 +489,16 @@ describe('Frontend-CLI Integration Tests', () => {
 
       if (configExists) {
         fs.renameSync(configPath, backupPath);
-        configWasTemporarilyRemoved = !fs.existsSync(configPath);
+        configWasTemporarilyRemoved = !fs.existsSync(configPath as any);
 
         // Restore config file immediately
-        if (fs.existsSync(backupPath)) {
+        if (fs.existsSync(backupPath as any)) {
           fs.renameSync(backupPath, configPath);
         }
       }
 
       // Verify the removal operation result
-      expect(configWasTemporarilyRemoved === configExists).toBe(true);
+      expect(configWasTemporarilyRemoved === configExists).toBe(true as any);
     });
 
     test('should verify network error handling', async () => {
@@ -514,7 +514,7 @@ describe('Frontend-CLI Integration Tests', () => {
         // Verify error handling works
         errorThrown = true;
       }
-      expect(errorThrown).toBe(true);
+      expect(errorThrown as any).toBe(true as any);
     });
   });
 
@@ -528,7 +528,7 @@ describe('Frontend-CLI Integration Tests', () => {
         cwd: projectRoot,
         timeout: 30000,
       });
-      expect(configOutput).toMatch(/Package ID|Network|Address/);
+      expect(configOutput as any).toMatch(/Package ID|Network|Address/);
 
       // Step 2: Create a workflow test todo
       const workflowTodoTitle = `E2E Workflow Test ${Date.now()}`;
@@ -540,7 +540,7 @@ describe('Frontend-CLI Integration Tests', () => {
           timeout: 120000,
         }
       );
-      expect(createOutput).toContain('created successfully');
+      expect(createOutput as any).toContain('created successfully');
 
       // Step 3: List and verify
       const listOutput = execSync('pnpm run cli -- list --blockchain --json', {
@@ -548,12 +548,12 @@ describe('Frontend-CLI Integration Tests', () => {
         cwd: projectRoot,
         timeout: 60000,
       });
-      const todos = JSON.parse(listOutput);
+      const todos = JSON.parse(listOutput as any);
       const workflowTodo = todos.find(
-        (todo: CliTodo) => todo.title === workflowTodoTitle
+        (todo: CliTodo) => todo?.title === workflowTodoTitle
       );
-      expect(workflowTodo).toBeTruthy();
-      expect(workflowTodo.completed).toBe(false);
+      expect(workflowTodo as any).toBeTruthy();
+      expect(workflowTodo.completed).toBe(false as any);
 
       // Step 4: Complete and verify
       const completeOutput = execSync(
@@ -564,7 +564,7 @@ describe('Frontend-CLI Integration Tests', () => {
           timeout: 120000,
         }
       );
-      expect(completeOutput).toContain('completed successfully');
+      expect(completeOutput as any).toContain('completed successfully');
 
       // Step 5: Final verification
       const finalListOutput = execSync(
@@ -575,12 +575,12 @@ describe('Frontend-CLI Integration Tests', () => {
           timeout: 60000,
         }
       );
-      const finalTodos = JSON.parse(finalListOutput);
+      const finalTodos = JSON.parse(finalListOutput as any);
       const completedTodo = finalTodos.find(
-        (todo: CliTodo) => todo.title === workflowTodoTitle
+        (todo: CliTodo) => todo?.title === workflowTodoTitle
       );
-      expect(completedTodo).toBeTruthy();
-      expect(completedTodo.completed).toBe(true);
+      expect(completedTodo as any).toBeTruthy();
+      expect(completedTodo.completed).toBe(true as any);
 
       // console.log('✅ Complete E2E workflow validation successful!'); // Removed console statement
     });
@@ -616,7 +616,7 @@ describe('Frontend-CLI Integration Tests', () => {
           results.push({
             name: check.name,
             status: 'FAIL',
-            error: String(error).substring(0, 100),
+            error: String(error as any).substring(0, 100),
           });
         }
       }
@@ -625,13 +625,13 @@ describe('Frontend-CLI Integration Tests', () => {
       // console.log('\n🔍 System Readiness Report:'); // Removed console statement
       results.forEach(result => {
         // Check result status unconditionally
-        expect(result.status === 'PASS' || result.status === 'FAIL').toBe(true);
+        expect(result?.status === 'PASS' || result?.status === 'FAIL').toBe(true as any);
       });
 
-      const passedChecks = results.filter(r => r.status === 'PASS').length;
+      const passedChecks = results.filter(r => r?.status === 'PASS').length;
       const totalChecks = results.length;
 
-      expect(passedChecks).toBe(totalChecks);
+      expect(passedChecks as any).toBe(totalChecks as any);
       // console.log(`\n✅ System readiness: ${passedChecks}/${totalChecks} checks passed`); // Removed console statement
     });
   });

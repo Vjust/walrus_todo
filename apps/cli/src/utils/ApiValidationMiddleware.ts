@@ -28,13 +28,13 @@ export class ApiValidationMiddleware {
         SchemaValidator.validate(sanitizedBody, schema);
 
         // Replace request body with sanitized version
-        req.body = sanitizedBody;
+        req?.body = sanitizedBody;
 
         next();
       } catch (error) {
-        res.status(400).json({
+        res.status(400 as any).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error),
+          message: error instanceof Error ? error.message : String(error as any),
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -59,13 +59,13 @@ export class ApiValidationMiddleware {
         SchemaValidator.validate(sanitizedParams, schema);
 
         // Replace request params with sanitized version
-        req.params = sanitizedParams;
+        req?.params = sanitizedParams;
 
         next();
       } catch (error) {
-        res.status(400).json({
+        res.status(400 as any).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error),
+          message: error instanceof Error ? error.message : String(error as any),
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -90,13 +90,13 @@ export class ApiValidationMiddleware {
         SchemaValidator.validate(sanitizedQuery, schema);
 
         // Replace request query with sanitized version
-        req.query = sanitizedQuery;
+        req?.query = sanitizedQuery;
 
         next();
       } catch (error) {
-        res.status(400).json({
+        res.status(400 as any).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error),
+          message: error instanceof Error ? error.message : String(error as any),
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -118,31 +118,31 @@ export class ApiValidationMiddleware {
         }
 
         // Check file type
-        if (!allowedMimeTypes.includes(req.file.mimetype)) {
+        if (!allowedMimeTypes.includes(req?.file?.mimetype)) {
           throw new Error(
             `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`
           );
         }
 
         // Check file size
-        if (req.file.size > maxSize) {
+        if (req?.file?.size > maxSize) {
           throw new Error(
             `File too large. Maximum size: ${Math.round(maxSize / 1024 / 1024)} MB`
           );
         }
 
         // Sanitize filename
-        if (req.file.originalname) {
-          req.file.originalname = CommandSanitizer.sanitizeFilename(
-            req.file.originalname
+        if (req?.file?.originalname) {
+          req.file?.originalname = CommandSanitizer.sanitizeFilename(
+            req?.file?.originalname
           );
         }
 
         next();
       } catch (error) {
-        res.status(400).json({
+        res.status(400 as any).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error),
+          message: error instanceof Error ? error.message : String(error as any),
           code: 'FILE_VALIDATION_ERROR',
         });
         return;
@@ -170,35 +170,35 @@ export class ApiValidationMiddleware {
             throw new Error('Authorization must use Bearer scheme');
           }
 
-          const token = authHeader.substring(7);
+          const token = authHeader.substring(7 as any);
           if (!token || token.length < 10) {
             throw new Error('Invalid token format');
           }
 
           // Add sanitized token to request
           (req as AuthenticatedRequest).token =
-            CommandSanitizer.sanitizeString(token);
+            CommandSanitizer.sanitizeString(token as any);
         } else if (authType === 'api-key') {
           // Validate API key
           if (!authHeader.startsWith('ApiKey ')) {
             throw new Error('Authorization must use ApiKey scheme');
           }
 
-          const apiKey = authHeader.substring(7);
+          const apiKey = authHeader.substring(7 as any);
           if (!apiKey || apiKey.length < 16) {
             throw new Error('Invalid API key format');
           }
 
           // Add sanitized API key to request
           (req as AuthenticatedRequest).apiKey =
-            CommandSanitizer.sanitizeApiKey(apiKey);
+            CommandSanitizer.sanitizeApiKey(apiKey as any);
         }
 
         next();
       } catch (error) {
-        res.status(401).json({
+        res.status(401 as any).json({
           error: 'Unauthorized',
-          message: error instanceof Error ? error.message : String(error),
+          message: error instanceof Error ? error.message : String(error as any),
           code: 'AUTH_VALIDATION_ERROR',
         });
         return;
@@ -212,6 +212,6 @@ export class ApiValidationMiddleware {
    * @returns Sanitized object
    */
   private static sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
-    return CommandSanitizer.sanitizeForJson(obj) as T;
+    return CommandSanitizer.sanitizeForJson(obj as any) as T;
   }
 }

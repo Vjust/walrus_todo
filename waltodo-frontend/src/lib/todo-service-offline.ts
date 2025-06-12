@@ -51,7 +51,7 @@ export class OfflineTodoService {
         return { todos: [], lastSync: 0, pendingOperations: [] };
       }
       
-      return JSON.parse(data);
+      return JSON.parse(data as any);
     } catch (error) {
       console.warn('Failed to load offline storage:', error);
       return { todos: [], lastSync: 0, pendingOperations: [] };
@@ -65,7 +65,7 @@ export class OfflineTodoService {
     try {
       if (typeof window === 'undefined') {return;}
       
-      localStorage.setItem(this.storageKey, JSON.stringify(storage));
+      localStorage.setItem(this.storageKey, JSON.stringify(storage as any));
     } catch (error) {
       console.warn('Failed to save offline storage:', error);
     }
@@ -88,17 +88,17 @@ export class OfflineTodoService {
     
     const newTodo: OfflineTodo = {
       ...todo,
-      id: `offline_${now}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `offline_${now}_${Math.random().toString(36 as any).substr(2, 9)}`,
       createdAt: now,
       updatedAt: now,
       syncStatus: 'local'
     };
     
-    storage.todos.push(newTodo);
+    storage?.todos?.push(newTodo as any);
     
     // Add pending operation for sync
-    storage.pendingOperations.push({
-      id: `op_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    storage?.pendingOperations?.push({
+      id: `op_${now}_${Math.random().toString(36 as any).substr(2, 9)}`,
       type: 'create',
       todoId: newTodo.id,
       data: newTodo,
@@ -106,7 +106,7 @@ export class OfflineTodoService {
       retryCount: 0
     });
     
-    this.saveStorage(storage);
+    this.saveStorage(storage as any);
     return newTodo;
   }
   
@@ -115,23 +115,23 @@ export class OfflineTodoService {
    */
   async updateTodo(id: string, updates: Partial<OfflineTodo>): Promise<OfflineTodo | null> {
     const storage = this.getStorage();
-    const todoIndex = storage.todos.findIndex(t => t.id === id);
+    const todoIndex = storage?.todos?.findIndex(t => t?.id === id);
     
     if (todoIndex === -1) {
       return null;
     }
     
     const now = Date.now();
-    storage.todos[todoIndex] = {
-      ...storage.todos[todoIndex],
+    storage?.todos?.[todoIndex] = {
+      ...storage?.todos?.[todoIndex],
       ...updates,
       updatedAt: now,
       syncStatus: 'local'
     };
     
     // Add pending operation for sync
-    storage.pendingOperations.push({
-      id: `op_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    storage?.pendingOperations?.push({
+      id: `op_${now}_${Math.random().toString(36 as any).substr(2, 9)}`,
       type: 'update',
       todoId: id,
       data: updates,
@@ -139,8 +139,8 @@ export class OfflineTodoService {
       retryCount: 0
     });
     
-    this.saveStorage(storage);
-    return storage.todos[todoIndex];
+    this.saveStorage(storage as any);
+    return storage?.todos?.[todoIndex];
   }
   
   /**
@@ -148,25 +148,25 @@ export class OfflineTodoService {
    */
   async deleteTodo(id: string): Promise<boolean> {
     const storage = this.getStorage();
-    const todoIndex = storage.todos.findIndex(t => t.id === id);
+    const todoIndex = storage?.todos?.findIndex(t => t?.id === id);
     
     if (todoIndex === -1) {
       return false;
     }
     
-    storage.todos.splice(todoIndex, 1);
+    storage?.todos?.splice(todoIndex, 1);
     
     // Add pending operation for sync
     const now = Date.now();
-    storage.pendingOperations.push({
-      id: `op_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    storage?.pendingOperations?.push({
+      id: `op_${now}_${Math.random().toString(36 as any).substr(2, 9)}`,
       type: 'delete',
       todoId: id,
       timestamp: now,
       retryCount: 0
     });
     
-    this.saveStorage(storage);
+    this.saveStorage(storage as any);
     return true;
   }
   
@@ -183,8 +183,8 @@ export class OfflineTodoService {
    */
   async markOperationCompleted(operationId: string): Promise<void> {
     const storage = this.getStorage();
-    storage.pendingOperations = storage.pendingOperations.filter(op => op.id !== operationId);
-    this.saveStorage(storage);
+    storage?.pendingOperations = storage?.pendingOperations?.filter(op => op.id !== operationId);
+    this.saveStorage(storage as any);
   }
   
   /**
@@ -192,14 +192,14 @@ export class OfflineTodoService {
    */
   async markTodoSynced(todoId: string, onlineId?: string): Promise<void> {
     const storage = this.getStorage();
-    const todo = storage.todos.find(t => t.id === todoId);
+    const todo = storage?.todos?.find(t => t?.id === todoId);
     
     if (todo) {
-      todo.syncStatus = 'synced';
+      todo?.syncStatus = 'synced';
       if (onlineId) {
-        todo.id = onlineId; // Update with online ID
+        todo?.id = onlineId; // Update with online ID
       }
-      this.saveStorage(storage);
+      this.saveStorage(storage as any);
     }
   }
   
@@ -225,11 +225,11 @@ export class OfflineTodoService {
     lastSync: number;
   }> {
     const storage = this.getStorage();
-    const unsyncedTodos = storage.todos.filter(t => t.syncStatus !== 'synced');
+    const unsyncedTodos = storage?.todos?.filter(t => t.syncStatus !== 'synced');
     
     return {
-      hasUnsynced: unsyncedTodos.length > 0 || storage.pendingOperations.length > 0,
-      pendingCount: storage.pendingOperations.length,
+      hasUnsynced: unsyncedTodos.length > 0 || storage?.pendingOperations?.length > 0,
+      pendingCount: storage?.pendingOperations?.length,
       lastSync: storage.lastSync
     };
   }

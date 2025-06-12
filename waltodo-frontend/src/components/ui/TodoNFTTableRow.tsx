@@ -63,11 +63,11 @@ const ExpandedRowContent: React.FC<{ todo: TodoNFTDisplay }> = ({ todo }) => {
                 </div>
               )}
               
-              {todo.tags && todo.tags.length > 0 && (
+              {todo.tags && todo?.tags?.length > 0 && (
                 <div>
                   <dt className="text-gray-600 dark:text-gray-400">Tags:</dt>
                   <dd className="mt-1 flex flex-wrap gap-1">
-                    {todo.tags.map((tag, index) => (
+                    {todo?.tags?.map((tag, index) => (
                       <span key={index} className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-full">
                         {tag}
                       </span>
@@ -143,7 +143,7 @@ export const TodoNFTTableRow: React.FC<TodoNFTTableRowProps> = ({
   const todo = row.original;
 
   const renderCellContent = (cell: any) => {
-    const columnId = cell.column.id;
+    const columnId = cell?.column?.id;
     
     switch (columnId) {
       case 'select':
@@ -231,9 +231,9 @@ export const TodoNFTTableRow: React.FC<TodoNFTTableRowProps> = ({
         try {
           return (
             <div className="text-sm">
-              <div>{format(new Date(date), 'MMM d, yyyy')}</div>
+              <div>{format(new Date(date as any), 'MMM d, yyyy')}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDistanceToNow(new Date(date), { addSuffix: true })}
+                {formatDistanceToNow(new Date(date as any), { addSuffix: true })}
               </div>
             </div>
           );
@@ -253,7 +253,7 @@ export const TodoNFTTableRow: React.FC<TodoNFTTableRowProps> = ({
         );
 
       default:
-        return flexRender(cell.column.columnDef.cell, cell.getContext());
+        return flexRender(cell?.column?.columnDef.cell, cell.getContext());
     }
   };
 
@@ -262,7 +262,7 @@ export const TodoNFTTableRow: React.FC<TodoNFTTableRowProps> = ({
       <tr
         className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
           row.getIsSelected() ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-        } ${todo.loadingState === 'loading' ? 'opacity-50' : ''}`}
+        } ${todo?.loadingState === 'loading' ? 'opacity-50' : ''}`}
         style={{
           height: `${virtualRow.size}px`,
           transform: `translateY(${virtualRow.start - virtualRow.index * virtualRow.size}px)`,
@@ -272,9 +272,9 @@ export const TodoNFTTableRow: React.FC<TodoNFTTableRowProps> = ({
           <td
             key={cell.id}
             className="px-4 py-4 whitespace-nowrap text-sm"
-            style={{ width: cell.column.getSize() }}
+            style={{ width: cell?.column?.getSize() }}
           >
-            {renderCellContent(cell)}
+            {renderCellContent(cell as any)}
           </td>
         ))}
       </tr>

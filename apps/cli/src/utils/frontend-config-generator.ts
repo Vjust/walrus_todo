@@ -76,14 +76,14 @@ const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
   testnet: {
     name: 'testnet',
     url: NETWORK_URLS.testnet,
-    faucetUrl: 'https://faucet.testnet.sui.io',
-    explorerUrl: 'https://testnet.suiexplorer.com',
+    faucetUrl: 'https://faucet?.testnet?.sui.io',
+    explorerUrl: 'https://testnet?.suiexplorer?.com',
   },
   devnet: {
     name: 'devnet',
     url: NETWORK_URLS.devnet,
-    faucetUrl: 'https://faucet.devnet.sui.io',
-    explorerUrl: 'https://devnet.suiexplorer.com',
+    faucetUrl: 'https://faucet?.devnet?.sui.io',
+    explorerUrl: 'https://devnet?.suiexplorer?.com',
   },
   localnet: {
     name: 'localnet',
@@ -97,22 +97,22 @@ const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
  */
 const WALRUS_CONFIGS: Record<string, WalrusConfig> = {
   mainnet: {
-    networkUrl: 'https://wal.devnet.sui.io',
-    publisherUrl: 'https://publisher.walrus.site',
-    aggregatorUrl: 'https://aggregator.walrus.site',
-    apiPrefix: 'https://api.walrus.tech/1.0',
+    networkUrl: 'https://wal?.devnet?.sui.io',
+    publisherUrl: 'https://publisher?.walrus?.site',
+    aggregatorUrl: 'https://aggregator?.walrus?.site',
+    apiPrefix: 'https://api?.walrus?.tech/1.0',
   },
   testnet: {
-    networkUrl: 'https://wal.testnet.sui.io',
-    publisherUrl: 'https://publisher-testnet.walrus.site',
-    aggregatorUrl: 'https://aggregator-testnet.walrus.site',
-    apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+    networkUrl: 'https://wal?.testnet?.sui.io',
+    publisherUrl: 'https://publisher-testnet?.walrus?.site',
+    aggregatorUrl: 'https://aggregator-testnet?.walrus?.site',
+    apiPrefix: 'https://api-testnet?.walrus?.tech/1.0',
   },
   devnet: {
-    networkUrl: 'https://wal.devnet.sui.io',
-    publisherUrl: 'https://publisher-devnet.walrus.site',
-    aggregatorUrl: 'https://aggregator-devnet.walrus.site',
-    apiPrefix: 'https://api-devnet.walrus.tech/1.0',
+    networkUrl: 'https://wal?.devnet?.sui.io',
+    publisherUrl: 'https://publisher-devnet?.walrus?.site',
+    aggregatorUrl: 'https://aggregator-devnet?.walrus?.site',
+    apiPrefix: 'https://api-devnet?.walrus?.tech/1.0',
   },
   localnet: {
     networkUrl: 'http://localhost:31415',
@@ -131,8 +131,8 @@ export class FrontendConfigGenerator {
 
   constructor(projectRoot?: string) {
     const root = projectRoot || process.cwd();
-    this.frontendPath = path.join(root, 'waltodo-frontend');
-    this.configDir = path.join(this.frontendPath, 'src', 'config');
+    this?.frontendPath = path.join(root, 'waltodo-frontend');
+    this?.configDir = path.join(this.frontendPath, 'src', 'config');
   }
 
   /**
@@ -156,8 +156,8 @@ export class FrontendConfigGenerator {
       await this.ensureConfigDirectory();
 
       // Get network and Walrus configurations
-      const networkConfig = this.getNetworkConfig(network);
-      const walrusConfig = this.getWalrusConfig(network);
+      const networkConfig = this.getNetworkConfig(network as any);
+      const walrusConfig = this.getWalrusConfig(network as any);
 
       // Create deployment configuration
       const deploymentConfig: DeploymentConfig = {
@@ -194,7 +194,7 @@ export class FrontendConfigGenerator {
       logger.info(`Frontend configuration generated successfully`);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error ? error.message : String(error as any);
       logger.error(`Failed to generate frontend config: ${errorMessage}`);
       throw new CLIError(
         `Failed to generate frontend configuration: ${errorMessage}`,
@@ -208,10 +208,10 @@ export class FrontendConfigGenerator {
    */
   private async ensureConfigDirectory(): Promise<void> {
     try {
-      await fs.promises.mkdir(this.configDir, { recursive: true });
+      await fs?.promises?.mkdir(this.configDir, { recursive: true });
     } catch (error) {
       throw new CLIError(
-        `Failed to create config directory: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create config directory: ${error instanceof Error ? error.message : String(error as any)}`,
         'CONFIG_DIR_CREATE_FAILED'
       );
     }
@@ -255,7 +255,7 @@ export class FrontendConfigGenerator {
     const configPath = path.join(this.configDir, `${network}.ts`);
     const content = this.generateNetworkConfigContent(network, config);
 
-    await fs.promises.writeFile(configPath, content, 'utf-8');
+    await fs?.promises?.writeFile(configPath, content, 'utf-8');
     logger.debug(`Saved network config: ${configPath}`);
   }
 
@@ -269,7 +269,7 @@ export class FrontendConfigGenerator {
     const configPath = path.join(this.configDir, `${network}.json`);
     const content = JSON.stringify(config, null, 2);
 
-    await fs.promises.writeFile(configPath, content, 'utf-8');
+    await fs?.promises?.writeFile(configPath, content, 'utf-8');
     logger.debug(`Saved environment config: ${configPath}`);
   }
 
@@ -282,44 +282,44 @@ export class FrontendConfigGenerator {
   ): string {
     return `/**
  * Auto-generated configuration for ${network} network
- * Generated at: ${config.deployment.timestamp}
- * Package ID: ${config.deployment.packageId}
+ * Generated at: ${config?.deployment?.timestamp}
+ * Package ID: ${config?.deployment?.packageId}
  */
 
 export const ${network.toUpperCase()}_CONFIG = {
   network: {
-    name: '${config.network.name}',
-    url: '${config.network.url}',
-    ${config.network.faucetUrl ? `faucetUrl: '${config.network.faucetUrl}',` : ''}
-    explorerUrl: '${config.network.explorerUrl}',
+    name: '${config?.network?.name}',
+    url: '${config?.network?.url}',
+    ${config?.network?.faucetUrl ? `faucetUrl: '${config?.network?.faucetUrl}',` : ''}
+    explorerUrl: '${config?.network?.explorerUrl}',
   },
   
   walrus: {
-    networkUrl: '${config.walrus.networkUrl}',
-    publisherUrl: '${config.walrus.publisherUrl}',
-    aggregatorUrl: '${config.walrus.aggregatorUrl}',
-    apiPrefix: '${config.walrus.apiPrefix}',
+    networkUrl: '${config?.walrus?.networkUrl}',
+    publisherUrl: '${config?.walrus?.publisherUrl}',
+    aggregatorUrl: '${config?.walrus?.aggregatorUrl}',
+    apiPrefix: '${config?.walrus?.apiPrefix}',
   },
   
   deployment: {
-    packageId: '${config.deployment.packageId}',
-    digest: '${config.deployment.digest}',
-    timestamp: '${config.deployment.timestamp}',
-    deployerAddress: '${config.deployment.deployerAddress}',
+    packageId: '${config?.deployment?.packageId}',
+    digest: '${config?.deployment?.digest}',
+    timestamp: '${config?.deployment?.timestamp}',
+    deployerAddress: '${config?.deployment?.deployerAddress}',
   },
   
   contracts: {
     todoNft: {
-      packageId: '${config.contracts.todoNft.packageId}',
-      moduleName: '${config.contracts.todoNft.moduleName}',
-      structName: '${config.contracts.todoNft.structName}',
+      packageId: '${config?.contracts?.todoNft.packageId}',
+      moduleName: '${config?.contracts?.todoNft.moduleName}',
+      structName: '${config?.contracts?.todoNft.structName}',
     },
   },
   
   features: {
-    aiEnabled: ${config.features.aiEnabled},
-    blockchainVerification: ${config.features.blockchainVerification},
-    encryptedStorage: ${config.features.encryptedStorage},
+    aiEnabled: ${config?.features?.aiEnabled},
+    blockchainVerification: ${config?.features?.blockchainVerification},
+    encryptedStorage: ${config?.features?.encryptedStorage},
   },
 } as const;
 
@@ -334,7 +334,7 @@ export default ${network.toUpperCase()}_CONFIG;
     const indexPath = path.join(this.configDir, 'index.ts');
 
     // Get all existing network config files
-    const configFiles = await fs.promises.readdir(this.configDir);
+    const configFiles = await fs?.promises?.readdir(this.configDir);
     const networkFiles = configFiles
       .filter(file => file.endsWith('.ts') && file !== 'index.ts')
       .map(file => file.replace('.ts', ''));
@@ -373,12 +373,12 @@ export function getNetworkConfig(network: NetworkName) {
  * Get current network configuration from environment
  */
 export function getCurrentNetworkConfig() {
-  const network = (process.env.NEXT_PUBLIC_NETWORK || 'testnet') as NetworkName;
-  return getNetworkConfig(network);
+  const network = (process?.env?.NEXT_PUBLIC_NETWORK || 'testnet') as NetworkName;
+  return getNetworkConfig(network as any);
 }
 `;
 
-    await fs.promises.writeFile(indexPath, content, 'utf-8');
+    await fs?.promises?.writeFile(indexPath, content, 'utf-8');
     logger.debug(`Generated config index: ${indexPath}`);
   }
 
@@ -387,7 +387,7 @@ export function getCurrentNetworkConfig() {
    */
   async frontendExists(): Promise<boolean> {
     try {
-      const stats = await fs.promises.stat(this.frontendPath);
+      const stats = await fs?.promises?.stat(this.frontendPath);
       return stats.isDirectory();
     } catch (error: unknown) {
       return false;
@@ -408,5 +408,5 @@ export function getCurrentNetworkConfig() {
 export function createFrontendConfigGenerator(
   projectRoot?: string
 ): FrontendConfigGenerator {
-  return new FrontendConfigGenerator(projectRoot);
+  return new FrontendConfigGenerator(projectRoot as any);
 }

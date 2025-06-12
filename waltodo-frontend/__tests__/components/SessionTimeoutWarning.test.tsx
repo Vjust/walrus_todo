@@ -28,9 +28,9 @@ describe('SessionTimeoutWarning', () => {
     jest.useFakeTimers();
     
     // Restore and re-mock Date.now for each test
-    global.Date.now = originalNow;
+    global.Date?.now = originalNow;
     mockNow = originalNow();
-    global.Date.now = jest.fn(() => mockNow);
+    global.Date?.now = jest.fn(() => mockNow);
     
     // Mock setInterval to capture the callback for testing
     jest.spyOn(global, 'setInterval').mockImplementation((callback: any, _ms?: number) => {
@@ -48,7 +48,7 @@ describe('SessionTimeoutWarning', () => {
   
   afterEach(() => {
     jest.useRealTimers();
-    global.Date.now = originalNow;
+    global.Date?.now = originalNow;
   });
   
   it('does not show warning when user is active', () => {
@@ -118,13 +118,13 @@ describe('SessionTimeoutWarning', () => {
     
     // Warning should be visible
     const stayActiveButton = screen.getByText('Stay Active');
-    expect(stayActiveButton).toBeInTheDocument();
+    expect(stayActiveButton as any).toBeInTheDocument();
     
     // Click "Stay Active"
-    fireEvent.click(stayActiveButton);
+    fireEvent.click(stayActiveButton as any);
     
     // Should call resetActivityTimer
-    expect(mockResetActivityTimer).toHaveBeenCalledTimes(1);
+    expect(mockResetActivityTimer as any).toHaveBeenCalledTimes(1 as any);
     
     // Warning should be dismissed
     expect(screen.queryByText(/Session Timeout Warning/)).not.toBeInTheDocument();
@@ -147,10 +147,10 @@ describe('SessionTimeoutWarning', () => {
     
     // Warning should be visible
     const dismissButton = screen.getByText('Dismiss');
-    expect(dismissButton).toBeInTheDocument();
+    expect(dismissButton as any).toBeInTheDocument();
     
     // Click "Dismiss"
-    fireEvent.click(dismissButton);
+    fireEvent.click(dismissButton as any);
     
     // Warning should be dismissed
     expect(screen.queryByText(/Session Timeout Warning/)).not.toBeInTheDocument();

@@ -13,7 +13,7 @@ export class NetworkValidator {
   private readonly config: NetworkConfig;
 
   constructor(config: NetworkConfig) {
-    this.config = config;
+    this?.config = config;
   }
 
   /**
@@ -25,7 +25,7 @@ export class NetworkValidator {
       const output = execSync('sui client active-env', { encoding: 'utf8' });
       const environment = output.trim().toLowerCase() as NetworkEnvironment;
 
-      if (!this.isValidEnvironment(environment)) {
+      if (!this.isValidEnvironment(environment as any)) {
         throw new WalrusError(`Invalid Sui environment: ${environment}`);
       }
 
@@ -35,7 +35,7 @@ export class NetworkValidator {
         throw error;
       }
       throw new WalrusError(
-        `Failed to get Sui environment: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get Sui environment: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -52,14 +52,14 @@ export class NetworkValidator {
       const config = await walrusClient.getConfig();
       const environment = config?.network?.toLowerCase() as NetworkEnvironment;
 
-      if (!this.isValidEnvironment(environment)) {
+      if (!this.isValidEnvironment(environment as any)) {
         throw new WalrusError(`Invalid Walrus environment: ${environment}`);
       }
 
       return environment;
     } catch (error) {
       throw new WalrusError(
-        `Failed to get Walrus environment: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get Walrus environment: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -72,7 +72,7 @@ export class NetworkValidator {
   private isValidEnvironment(
     environment: string
   ): environment is NetworkEnvironment {
-    return ['mainnet', 'testnet', 'devnet', 'localnet'].includes(environment);
+    return ['mainnet', 'testnet', 'devnet', 'localnet'].includes(environment as any);
   }
 
   /**
@@ -86,7 +86,7 @@ export class NetworkValidator {
       });
     } catch (error) {
       throw new WalrusError(
-        `Failed to switch Sui environment: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to switch Sui environment: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -101,23 +101,23 @@ export class NetworkValidator {
   ): Promise<void> {
     // Get current environments
     const suiEnvironment = this.getSuiEnvironment();
-    const walrusEnvironment = await this.getWalrusEnvironment(walrusClient);
+    const walrusEnvironment = await this.getWalrusEnvironment(walrusClient as any);
 
     // Check if Sui environment matches expected
-    if (suiEnvironment !== this.config.expectedEnvironment) {
-      if (this.config.autoSwitch) {
-        this.switchSuiEnvironment(this.config.expectedEnvironment);
+    if (suiEnvironment !== this?.config?.expectedEnvironment) {
+      if (this?.config?.autoSwitch) {
+        this.switchSuiEnvironment(this?.config?.expectedEnvironment);
       } else {
         throw new WalrusError(
-          `Sui environment mismatch. Expected: ${this.config.expectedEnvironment}, got: ${suiEnvironment}`
+          `Sui environment mismatch. Expected: ${this?.config?.expectedEnvironment}, got: ${suiEnvironment}`
         );
       }
     }
 
     // Check if Walrus environment matches Sui
-    if (walrusEnvironment !== this.config.expectedEnvironment) {
+    if (walrusEnvironment !== this?.config?.expectedEnvironment) {
       throw new WalrusError(
-        `Walrus environment mismatch. Expected: ${this.config.expectedEnvironment}, got: ${walrusEnvironment}`
+        `Walrus environment mismatch. Expected: ${this?.config?.expectedEnvironment}, got: ${walrusEnvironment}`
       );
     }
   }
@@ -133,14 +133,14 @@ export class NetworkValidator {
     isValid: boolean;
   }> {
     const suiEnvironment = this.getSuiEnvironment();
-    const walrusEnvironment = await this.getWalrusEnvironment(walrusClient);
+    const walrusEnvironment = await this.getWalrusEnvironment(walrusClient as any);
 
     return {
       suiEnvironment,
       walrusEnvironment,
       isValid:
         suiEnvironment === walrusEnvironment &&
-        suiEnvironment === this.config.expectedEnvironment,
+        suiEnvironment === this?.config?.expectedEnvironment,
     };
   }
 }

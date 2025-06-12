@@ -130,15 +130,15 @@ export class NFTStorage extends AbstractStorage {
       packageId,
     } as NFTStorageConfig);
 
-    this.address = address;
-    this.packageId = packageId;
-    this.collectionId = configOverrides.collectionId || null;
+    this?.address = address;
+    this?.packageId = packageId;
+    this?.collectionId = configOverrides.collectionId || null;
 
     // Initialize client
-    this.client = new StorageClient({
-      suiUrl: this.config.networkUrl,
-      network: this.config.networkEnvironment,
-      useMockMode: this.config.useMockMode,
+    this?.client = new StorageClient({
+      suiUrl: this?.config?.networkUrl,
+      network: this?.config?.networkEnvironment,
+      useMockMode: this?.config?.useMockMode,
       address: address,
       validateEnvironment: true,
     });
@@ -150,19 +150,19 @@ export class NFTStorage extends AbstractStorage {
    * @param signer - The signer for transactions
    */
   public setSigner(signer: TransactionSigner): void {
-    this.signer = signer;
+    this?.signer = signer;
 
     // Initialize transaction manager if client is ready
-    if (this.connectionState === 'connected' && this.signer) {
-      this.transaction = new StorageTransaction(
-        this.client.getSuiClient(),
+    if (this?.connectionState === 'connected' && this.signer) {
+      this?.transaction = new StorageTransaction(
+        this?.client?.getSuiClient(),
         this.signer
       );
 
       // Initialize blob storage if needed
       if (!this.blobStorage) {
-        this.blobStorage = new BlobStorage(this.address);
-        this.blobStorage.setSigner(this.signer);
+        this?.blobStorage = new BlobStorage(this.address);
+        this?.blobStorage?.setSigner(this.signer);
       }
     }
   }
@@ -173,7 +173,7 @@ export class NFTStorage extends AbstractStorage {
    * @param collectionId - The collection ID
    */
   public setCollectionId(collectionId: string): void {
-    this.collectionId = collectionId;
+    this?.collectionId = collectionId;
   }
 
   /**
@@ -183,30 +183,30 @@ export class NFTStorage extends AbstractStorage {
    * @throws {BlockchainError} if initialization fails
    */
   public async connect(): Promise<void> {
-    if (this.connectionState === 'connected') {
+    if (this?.connectionState === 'connected') {
       return;
     }
 
-    this.connectionState = 'connecting';
+    this?.connectionState = 'connecting';
 
     try {
       // Create a fresh abort controller
-      this.abortController = new AbortController();
+      this?.abortController = new AbortController();
 
       // Initialize client
-      await this.client.init();
+      await this?.client?.init();
 
       // Initialize transaction manager if signer is available
       if (this.signer) {
-        this.transaction = new StorageTransaction(
-          this.client.getSuiClient(),
+        this?.transaction = new StorageTransaction(
+          this?.client?.getSuiClient(),
           this.signer
         );
 
         // Initialize blob storage
-        this.blobStorage = new BlobStorage(this.address);
-        this.blobStorage.setSigner(this.signer);
-        await this.blobStorage.connect();
+        this?.blobStorage = new BlobStorage(this.address);
+        this?.blobStorage?.setSigner(this.signer);
+        await this?.blobStorage?.connect();
       }
 
       // Verify package ID exists
@@ -218,10 +218,10 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Update connection state and timestamp
-      this.connectionState = 'connected';
-      this.lastHealthCheck = Date.now();
+      this?.connectionState = 'connected';
+      this?.lastHealthCheck = Date.now();
     } catch (error) {
-      this.connectionState = 'failed';
+      this?.connectionState = 'failed';
 
       if (
         error instanceof ValidationError ||
@@ -231,7 +231,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to connect to NFT storage: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to connect to NFT storage: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'connect NFT storage',
           recoverable: true,
@@ -250,7 +250,7 @@ export class NFTStorage extends AbstractStorage {
     if (this.connectionState !== 'disconnected') {
       // Disconnect blob storage if connected
       if (this.blobStorage) {
-        await this.blobStorage.disconnect();
+        await this?.blobStorage?.disconnect();
       }
 
       // Run parent disconnect
@@ -266,13 +266,13 @@ export class NFTStorage extends AbstractStorage {
   protected async checkConnectionHealth(): Promise<boolean> {
     try {
       // Check blockchain health
-      const suiClient = this.client.getSuiClient();
+      const suiClient = this?.client?.getSuiClient();
       const systemState = await suiClient.getLatestSuiSystemState();
 
       // Check blob storage health if available
       let blobHealthy = true;
       if (this.blobStorage) {
-        blobHealthy = await this.blobStorage.isConnected();
+        blobHealthy = await this?.blobStorage?.isConnected();
       }
 
       // Both must be healthy for overall health
@@ -280,7 +280,7 @@ export class NFTStorage extends AbstractStorage {
 
       // Update health check timestamp on success
       if (isHealthy) {
-        this.lastHealthCheck = Date.now();
+        this?.lastHealthCheck = Date.now();
       }
 
       return isHealthy;
@@ -340,13 +340,13 @@ export class NFTStorage extends AbstractStorage {
       );
 
       // Execute transaction
-      const txResult = await this.transaction.executeTransaction(
+      const txResult = await this?.transaction?.executeTransaction(
         tx,
         'create-todo-nft',
         {
-          maxRetries: this.config.maxRetries,
-          baseDelay: this.config.retryBaseDelay,
-          signal: this.abortController.signal,
+          maxRetries: this?.config?.maxRetries,
+          baseDelay: this?.config?.retryBaseDelay,
+          signal: this?.abortController?.signal,
         }
       );
 
@@ -358,17 +358,17 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Get created NFT object ID
-      if (!txResult.createdObjects || txResult.createdObjects.length === 0) {
+      if (!txResult.createdObjects || txResult.createdObjects?.length === 0) {
         throw new BlockchainError('No NFT was created', {
           operation: 'create todo NFT',
           recoverable: false,
         });
       }
 
-      const nftId = txResult.createdObjects[0];
+      const nftId = txResult?.createdObjects?.[0];
 
       // Retrieve the created NFT to get its details
-      const nftInfo = await this.getTodoNFT(nftId);
+      const nftInfo = await this.getTodoNFT(nftId as any);
 
       return nftInfo;
     } catch (error) {
@@ -381,7 +381,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'create todo NFT',
           recoverable: false,
@@ -406,7 +406,7 @@ export class NFTStorage extends AbstractStorage {
     description: string,
     blobId: string,
     completed: boolean
-  ): Promise<TransactionBlock> {
+  ): Promise<Transaction> {
     // Validate transaction manager
     if (!this.transaction) {
       throw new ValidationError('Transaction manager not initialized', {
@@ -421,18 +421,18 @@ export class NFTStorage extends AbstractStorage {
       tx.moveCall({
         target: `${this.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          tx.pure(title),
-          tx.pure(description),
-          tx.pure(blobId),
-          tx.pure(completed),
+          tx.pure(title as any),
+          tx.pure(description as any),
+          tx.pure(blobId as any),
+          tx.pure(completed as any),
           tx.object(this.collectionId),
         ],
       });
 
-      return tx as TransactionBlock;
+      return tx as Transaction;
     } catch (error) {
       throw new BlockchainError(
-        `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'create NFT transaction',
           recoverable: false,
@@ -464,12 +464,12 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Normalize object ID (in case it's a transaction digest)
-      const objectId = await this.normalizeObjectId(nftId);
+      const objectId = await this.normalizeObjectId(nftId as any);
 
       // Retrieve the NFT
       const result = await StorageOperationHandler.execute(
         async () => {
-          const response = await this.client.getSuiClient().getObject({
+          const response = await this?.client?.getSuiClient().getObject({
             id: objectId,
             options: {
               showDisplay: true,
@@ -489,7 +489,7 @@ export class NFTStorage extends AbstractStorage {
         },
         {
           operation: 'get todo NFT',
-          maxRetries: this.config.maxRetries,
+          maxRetries: this?.config?.maxRetries,
         }
       );
 
@@ -505,7 +505,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Extract NFT details from the response
-      const content = result.data.data.content as Record<string, unknown>;
+      const content = result?.data?.data.content as Record<string, unknown>;
       if (!content || !content.fields) {
         throw new BlockchainError('Invalid NFT data format', {
           operation: 'get todo NFT',
@@ -533,7 +533,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to get Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'get todo NFT',
           recoverable: true,
@@ -575,17 +575,17 @@ export class NFTStorage extends AbstractStorage {
       // Use proper transaction methods
       tx.moveCall({
         target: `${this.packageId}::todo_nft::update_completion_status`,
-        arguments: [tx.object(nftId), tx.pure(completed)],
+        arguments: [tx.object(nftId as any), tx.pure(completed as any)],
       });
 
       // Execute transaction
-      const txResult = await this.transaction.executeTransaction(
+      const txResult = await this?.transaction?.executeTransaction(
         tx,
         'update-todo-nft',
         {
-          maxRetries: this.config.maxRetries,
-          baseDelay: this.config.retryBaseDelay,
-          signal: this.abortController.signal,
+          maxRetries: this?.config?.maxRetries,
+          baseDelay: this?.config?.retryBaseDelay,
+          signal: this?.abortController?.signal,
         }
       );
 
@@ -607,7 +607,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to update Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to update Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'update todo NFT',
           recoverable: false,
@@ -639,7 +639,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this.blobStorage.store(content, metadata);
+    return this?.blobStorage?.store(content, metadata);
   }
 
   /**
@@ -662,7 +662,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this.blobStorage.retrieve(id);
+    return this?.blobStorage?.retrieve(id as any);
   }
 
   /**
@@ -689,7 +689,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this.blobStorage.update(id, content, metadata);
+    return this?.blobStorage?.update(id, content, metadata);
   }
 
   /**
@@ -710,7 +710,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this.blobStorage.ensureStorageAllocated(sizeBytes);
+    return this?.blobStorage?.ensureStorageAllocated(sizeBytes as any);
   }
 
   /**
@@ -730,7 +730,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this.blobStorage.getStorageUsage();
+    return this?.blobStorage?.getStorageUsage();
   }
 
   /**
@@ -775,7 +775,7 @@ export class NFTStorage extends AbstractStorage {
       // It might be a transaction digest, try to get created objects
       const txResult = await StorageOperationHandler.execute(
         () =>
-          this.client.getSuiClient().getTransactionBlock({
+          this?.client?.getSuiClient().getTransaction({
             digest: idOrDigest,
             options: {
               showEffects: true,
@@ -790,7 +790,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Find NFT object in created objects
-      const nftObject = txResult.data.effects.created.find(obj => {
+      const nftObject = txResult?.data?.effects.created.find(obj => {
         const reference = (obj as { reference?: { objectId: string } })
           ?.reference;
         return reference && reference.objectId;

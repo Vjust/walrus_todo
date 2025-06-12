@@ -25,7 +25,7 @@ export const resetBlockchainEventManager = () => {
   jest.clearAllMocks();
   
   // Reset connection state to default
-  mockBlockchainEventManager.getConnectionState.mockReturnValue({
+  mockBlockchainEventManager?.getConnectionState?.mockReturnValue({
     connected: false,
     connecting: false,
     error: null,
@@ -35,8 +35,8 @@ export const resetBlockchainEventManager = () => {
   });
   
   // Reset all mock implementations to default behavior
-  mockBlockchainEventManager.initialize.mockResolvedValue(undefined);
-  mockBlockchainEventManager.subscribeToEvents.mockResolvedValue(undefined);
+  mockBlockchainEventManager?.initialize?.mockResolvedValue(undefined as any);
+  mockBlockchainEventManager?.subscribeToEvents?.mockResolvedValue(undefined as any);
 };
 
 // Auto-reset before each test

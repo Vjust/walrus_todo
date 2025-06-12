@@ -73,7 +73,7 @@ export function InitializationGuard({
   showProgress = true
 }: InitializationGuardProps) {
   const hydrated = useHydrated();
-  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false as any);
   const [initStage, setInitStage] = useState('Starting...');
   
   // Get initialization context
@@ -102,10 +102,10 @@ export function InitializationGuard({
   useEffect(() => {
     if (hydrated && !isAppReady) {
       const timer = setTimeout(() => {
-        setHasTimedOut(true);
+        setHasTimedOut(true as any);
       }, timeout);
       
-      return () => clearTimeout(timer);
+      return () => clearTimeout(timer as any);
     }
   }, [hydrated, isAppReady, timeout]);
   

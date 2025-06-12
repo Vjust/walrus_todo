@@ -26,34 +26,34 @@ const mockSuiClient = {
 // Create a mock transaction signer
 const mockSigner = {
   connect: () => Promise.resolve(),
-  getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
-  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  getPublicKey: () => ({ toBytes: () => new Uint8Array(32 as any) }),
+  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64 as any),
   signPersonalMessage: async (
     _data: Uint8Array
   ): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    bytes: Buffer.from(new Uint8Array(32 as any)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signWithIntent: async (
     _data: Uint8Array,
     _intent: IntentScope
   ): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    bytes: Buffer.from(new Uint8Array(32 as any)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signTransactionBlock: async (
     _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
-    new Uint8Array(64),
+    new Uint8Array(64 as any),
   signTransaction: async (
     _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   toSuiAddress: () => 'mock-address',
   getKeyScheme: () => 'ED25519' as const,
@@ -70,7 +70,7 @@ describe('CredentialVerificationService Integration', () => {
     mockWalrusClient = getMockWalrusClient();
 
     // Override specific methods for this test as needed
-    // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
+    // Example: mockWalrusClient?.getConfig?.mockResolvedValue({ ... });
 
     service = new CredentialVerificationService(
       mockSuiClient,
@@ -86,25 +86,25 @@ describe('CredentialVerificationService Integration', () => {
         },
         'verifyDigitalSignature'
       )
-      .mockResolvedValue(true);
+      .mockResolvedValue(true as any);
     jest
       .spyOn(
         service as unknown as { verifyTimestamps: () => boolean },
         'verifyTimestamps'
       )
-      .mockReturnValue(true);
+      .mockReturnValue(true as any);
     jest
       .spyOn(
         service as unknown as { checkRevocationStatus: () => Promise<boolean> },
         'checkRevocationStatus'
       )
-      .mockResolvedValue(true);
+      .mockResolvedValue(true as any);
     jest
       .spyOn(
         service as unknown as { validateSchema: () => boolean },
         'validateSchema'
       )
-      .mockReturnValue(true);
+      .mockReturnValue(true as any);
   });
 
   afterEach(() => {
@@ -116,12 +116,12 @@ describe('CredentialVerificationService Integration', () => {
       // Create a sample credential
       const credentialId = 'test-credential-id';
       const now = new Date();
-      const tomorrow = new Date(now);
+      const tomorrow = new Date(now as any);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const credential = {
         '@context': [
-          'https://www.w3.org/2018/credentials/v1',
+          'https://www?.w3?.org/2018/credentials/v1',
           'https://w3id.org/security/suites/ed25519-2020/v1',
         ],
         id: 'uuid:1234-5678-9012',
@@ -145,11 +145,11 @@ describe('CredentialVerificationService Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(credential))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(credential as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -160,8 +160,8 @@ describe('CredentialVerificationService Integration', () => {
             unencoded_length: '1000',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -170,7 +170,7 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -183,18 +183,18 @@ describe('CredentialVerificationService Integration', () => {
       });
 
       // Execute the verification
-      const result = await service.verifyCredential(credentialId);
+      const result = await service.verifyCredential(credentialId as any);
 
       // Verify the results - all should be boolean types
-      expect(result.valid).toBe(true);
-      expect(result.signature).toBe(true);
-      expect(result.timestamp).toBe(true);
-      expect(result.revocation).toBe(true);
-      expect(result.schemaCompliance).toBe(true);
+      expect(result.valid).toBe(true as any);
+      expect(result.signature).toBe(true as any);
+      expect(result.timestamp).toBe(true as any);
+      expect(result.revocation).toBe(true as any);
+      expect(result.schemaCompliance).toBe(true as any);
       expect(result.issuer).toBe('did:sui:0x123abc');
       expect(result.subject).toBe('did:sui:0x456def');
-      expect(result.issuanceDate).toBeInstanceOf(Date);
-      expect(result.expirationDate).toBeInstanceOf(Date);
+      expect(result.issuanceDate).toBeInstanceOf(Date as any);
+      expect(result.expirationDate).toBeInstanceOf(Date as any);
 
       // Verify the client calls
       expect(mockWalrusClient.readBlob).toHaveBeenCalledWith({
@@ -203,7 +203,7 @@ describe('CredentialVerificationService Integration', () => {
       expect(mockWalrusClient.getBlobMetadata).toHaveBeenCalledWith({
         blobId: credentialId,
       });
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(credentialId);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(credentialId as any);
 
       // Verify private method calls with proper types
       const serviceMethods = service as unknown as {
@@ -222,11 +222,11 @@ describe('CredentialVerificationService Integration', () => {
       // Create a sample credential
       const credentialId = 'test-credential-id';
       const now = new Date();
-      const tomorrow = new Date(now);
+      const tomorrow = new Date(now as any);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const credential = {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
+        '@context': ['https://www?.w3?.org/2018/credentials/v1'],
         id: 'uuid:1234-5678-9012',
         type: ['VerifiableCredential', 'TodoAccess'],
         issuer: 'did:sui:0x123abc',
@@ -247,11 +247,11 @@ describe('CredentialVerificationService Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(credential))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(credential as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -262,8 +262,8 @@ describe('CredentialVerificationService Integration', () => {
             unencoded_length: '1000',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -272,7 +272,7 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -283,8 +283,8 @@ describe('CredentialVerificationService Integration', () => {
             unencoded_length: '1000',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -293,7 +293,7 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -312,29 +312,29 @@ describe('CredentialVerificationService Integration', () => {
         checkRevocationStatus: jest.Mock;
         validateSchema: jest.Mock;
       };
-      serviceMethods.verifyDigitalSignature.mockResolvedValue(false);
+      serviceMethods?.verifyDigitalSignature?.mockResolvedValue(false as any);
       // Keep other validations as true
 
       // Execute the verification
-      const result = await service.verifyCredential(credentialId);
+      const result = await service.verifyCredential(credentialId as any);
 
       // Verify the results - ensure all are boolean types
-      expect(result.valid).toBe(false);
-      expect(result.signature).toBe(false);
-      expect(result.timestamp).toBe(true); // Other validations still pass
-      expect(result.revocation).toBe(true);
-      expect(result.schemaCompliance).toBe(true);
+      expect(result.valid).toBe(false as any);
+      expect(result.signature).toBe(false as any);
+      expect(result.timestamp).toBe(true as any); // Other validations still pass
+      expect(result.revocation).toBe(true as any);
+      expect(result.schemaCompliance).toBe(true as any);
     });
 
     it('should fail verification when credential is expired', async () => {
       // Create a sample credential
       const credentialId = 'test-credential-id';
       const now = new Date();
-      const yesterday = new Date(now);
+      const yesterday = new Date(now as any);
       yesterday.setDate(yesterday.getDate() - 1);
 
       const credential = {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
+        '@context': ['https://www?.w3?.org/2018/credentials/v1'],
         id: 'uuid:1234-5678-9012',
         type: ['VerifiableCredential', 'TodoAccess'],
         issuer: 'did:sui:0x123abc',
@@ -356,11 +356,11 @@ describe('CredentialVerificationService Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(credential))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(credential as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -376,7 +376,7 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -392,25 +392,25 @@ describe('CredentialVerificationService Integration', () => {
       const serviceMethods = service as unknown as {
         verifyTimestamps: jest.Mock;
       };
-      serviceMethods.verifyTimestamps.mockReturnValue(false);
+      serviceMethods?.verifyTimestamps?.mockReturnValue(false as any);
 
       // Execute the verification
-      const result = await service.verifyCredential(credentialId);
+      const result = await service.verifyCredential(credentialId as any);
 
       // Verify the results - ensure all are boolean types
-      expect(result.valid).toBe(false);
-      expect(result.timestamp).toBe(false); // Timestamp validation fails
+      expect(result.valid).toBe(false as any);
+      expect(result.timestamp).toBe(false as any); // Timestamp validation fails
     });
 
     it('should fail verification when credential has been revoked', async () => {
       // Create a sample credential
       const credentialId = 'test-credential-id';
       const now = new Date();
-      const tomorrow = new Date(now);
+      const tomorrow = new Date(now as any);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const credential = {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
+        '@context': ['https://www?.w3?.org/2018/credentials/v1'],
         id: 'uuid:1234-5678-9012',
         type: ['VerifiableCredential', 'TodoAccess'],
         issuer: 'did:sui:0x123abc',
@@ -432,11 +432,11 @@ describe('CredentialVerificationService Integration', () => {
       };
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(credential))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(credential as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -452,7 +452,7 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -468,18 +468,18 @@ describe('CredentialVerificationService Integration', () => {
       const serviceMethods = service as unknown as {
         checkRevocationStatus: jest.Mock;
       };
-      serviceMethods.checkRevocationStatus.mockResolvedValue(false);
+      serviceMethods?.checkRevocationStatus?.mockResolvedValue(false as any);
       // Keep other validations as true
 
       // Execute the verification
-      const result = await service.verifyCredential(credentialId);
+      const result = await service.verifyCredential(credentialId as any);
 
       // Verify the results - ensure all are boolean types
-      expect(result.valid).toBe(false);
-      expect(result.revocation).toBe(false); // Revocation check fails
-      expect(result.signature).toBe(true); // Other validations still pass
-      expect(result.timestamp).toBe(true);
-      expect(result.schemaCompliance).toBe(true);
+      expect(result.valid).toBe(false as any);
+      expect(result.revocation).toBe(false as any); // Revocation check fails
+      expect(result.signature).toBe(true as any); // Other validations still pass
+      expect(result.timestamp).toBe(true as any);
+      expect(result.schemaCompliance).toBe(true as any);
     });
 
     it('should fail verification when credential has invalid schema', async () => {
@@ -511,11 +511,11 @@ describe('CredentialVerificationService Integration', () => {
       );
 
       // Set up mock responses
-      mockWalrusClient.readBlob.mockResolvedValue(
-        new TextEncoder().encode(JSON.stringify(invalidCredential))
+      mockWalrusClient?.readBlob?.mockResolvedValue(
+        new TextEncoder().encode(JSON.stringify(invalidCredential as any))
       );
 
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -531,7 +531,7 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -544,21 +544,21 @@ describe('CredentialVerificationService Integration', () => {
       });
 
       // Execute the verification using the fresh service instance
-      const result = await testService.verifyCredential(credentialId);
+      const result = await testService.verifyCredential(credentialId as any);
 
       // Verify the results - ensure all are boolean types
-      expect(result.valid).toBe(false);
-      expect(result.schemaCompliance).toBe(false); // Schema validation fails
+      expect(result.valid).toBe(false as any);
+      expect(result.schemaCompliance).toBe(false as any); // Schema validation fails
     });
 
     it('should handle missing credentials', async () => {
       const credentialId = 'non-existent-credential';
 
       // Mock the blob not being found
-      mockWalrusClient.readBlob.mockRejectedValue(new Error('Blob not found'));
+      mockWalrusClient?.readBlob?.mockRejectedValue(new Error('Blob not found'));
 
       // Execute the verification and expect it to fail
-      await expect(service.verifyCredential(credentialId)).rejects.toThrow(
+      await expect(service.verifyCredential(credentialId as any)).rejects.toThrow(
         CLIError
       );
     });
@@ -579,36 +579,36 @@ describe('CredentialVerificationService Integration', () => {
       };
 
       // Mock Walrus client response
-      mockWalrusClient.writeBlob.mockResolvedValue({
+      mockWalrusClient?.writeBlob?.mockResolvedValue({
         blobId: 'new-credential-id',
         blobObject: { blob_id: 'new-credential-id' },
       });
 
       // Issue the credential
-      const result = await service.issueCredential(credentialData);
+      const result = await service.issueCredential(credentialData as any);
 
       // Verify the results
       expect(result.credentialId).toBe('new-credential-id');
       expect(result.credential).toBeDefined();
-      expect(result.registered).toBe(true);
+      expect(result.registered).toBe(true as any);
       expect(result.transactionDigest).toBeDefined();
 
       // Verify the credential structure
-      expect(result.credential['@context']).toContain(
-        'https://www.w3.org/2018/credentials/v1'
+      expect(result?.credential?.['@context']).toContain(
+        'https://www?.w3?.org/2018/credentials/v1'
       );
-      expect(result.credential.type).toContain('TodoAccess');
-      expect(result.credential.issuer).toBe('did:sui:0x123abc');
-      expect(result.credential.credentialSubject.id).toBe('did:sui:0x456def');
-      expect(result.credential.credentialSubject.access).toBe('read-write');
-      expect(result.credential.proof).toBeDefined();
-      expect(result.credential.expirationDate).toBeDefined();
+      expect(result?.credential?.type).toContain('TodoAccess');
+      expect(result?.credential?.issuer).toBe('did:sui:0x123abc');
+      expect(result?.credential?.credentialSubject.id).toBe('did:sui:0x456def');
+      expect(result?.credential?.credentialSubject.access).toBe('read-write');
+      expect(result?.credential?.proof).toBeDefined();
+      expect(result?.credential?.expirationDate).toBeDefined();
 
       // Verify the Walrus client was called correctly
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
-      const writeArgs = mockWalrusClient.writeBlob.mock.calls[0][0];
-      expect(writeArgs.signer).toBe(mockSigner);
-      expect(writeArgs.deletable).toBe(false);
+      const writeArgs = mockWalrusClient?.writeBlob?.mock?.calls?.[0][0];
+      expect(writeArgs.signer).toBe(mockSigner as any);
+      expect(writeArgs.deletable).toBe(false as any);
       expect(writeArgs.attributes).toEqual({
         contentType: 'application/json',
         credentialType: 'TodoAccess',
@@ -630,10 +630,10 @@ describe('CredentialVerificationService Integration', () => {
       };
 
       // Mock Walrus client error
-      mockWalrusClient.writeBlob.mockRejectedValue(new Error('Storage error'));
+      mockWalrusClient?.writeBlob?.mockRejectedValue(new Error('Storage error'));
 
       // Attempt to issue the credential and expect failure
-      await expect(service.issueCredential(credentialData)).rejects.toThrow(
+      await expect(service.issueCredential(credentialData as any)).rejects.toThrow(
         CLIError
       );
     });
@@ -644,7 +644,7 @@ describe('CredentialVerificationService Integration', () => {
       const credentialId = 'credential-to-revoke';
 
       // Mock the credential existing
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: credentialId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -658,25 +658,25 @@ describe('CredentialVerificationService Integration', () => {
       );
 
       // Verify the results
-      expect(result.revoked).toBe(true);
+      expect(result.revoked).toBe(true as any);
       expect(result.transactionDigest).toBeDefined();
 
       // Verify the client was called
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(credentialId);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(credentialId as any);
     });
 
     it('should handle revocation of non-existent credential', async () => {
       const credentialId = 'non-existent-credential';
 
       // Mock the credential not existing
-      mockWalrusClient.getBlobInfo.mockRejectedValue(
+      mockWalrusClient?.getBlobInfo?.mockRejectedValue(
         new Error('Blob not found')
       );
 
       // Attempt to revoke and expect failure
       await expect(
         service.revokeCredential(credentialId, 'compromised')
-      ).rejects.toThrow(CLIError);
+      ).rejects.toThrow(CLIError as any);
     });
   });
 });

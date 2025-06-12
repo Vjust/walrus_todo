@@ -110,11 +110,11 @@ describe('Simple Input Validation Security Tests', () => {
     mockAIService = {
       summarize: jest.fn().mockImplementation(async (todos: SimpleTodo[]) => {
         // Check for null/undefined inputs
-        if (!todos || !Array.isArray(todos)) {
+        if (!todos || !Array.isArray(todos as any)) {
           throw new Error('Invalid input: todos must be a non-empty array');
         }
         
-        const todoStr = JSON.stringify(todos);
+        const todoStr = JSON.stringify(todos as any);
         
         // Basic XSS validation
         if (todoStr.includes('<script>') || todoStr.includes('onerror=')) {
@@ -135,7 +135,7 @@ describe('Simple Input Validation Security Tests', () => {
       }),
       
       categorize: jest.fn().mockImplementation(async (todos: SimpleTodo[]) => {
-        const todoStr = JSON.stringify(todos);
+        const todoStr = JSON.stringify(todos as any);
         
         // Validate input doesn't contain malicious content
         const maliciousPatterns = [
@@ -165,20 +165,20 @@ describe('Simple Input Validation Security Tests', () => {
     it('should detect and reject XSS in todo content', async () => {
       const maliciousTodos = createMaliciousInput('xss');
       
-      await expect(mockAIService.summarize(maliciousTodos))
+      await expect(mockAIService.summarize(maliciousTodos as any))
         .rejects.toThrow('XSS attempt detected');
       
-      await expect(mockAIService.categorize(maliciousTodos))
+      await expect(mockAIService.categorize(maliciousTodos as any))
         .rejects.toThrow('Malicious pattern detected');
     });
 
     it('should allow safe content to pass through', async () => {
       const safeTodos = createMaliciousInput('safe');
       
-      await expect(mockAIService.summarize(safeTodos))
+      await expect(mockAIService.summarize(safeTodos as any))
         .resolves.toBe('Safe summary result');
       
-      await expect(mockAIService.categorize(safeTodos))
+      await expect(mockAIService.categorize(safeTodos as any))
         .resolves.toEqual({ safe: ['todo-1'] });
     });
   });
@@ -187,10 +187,10 @@ describe('Simple Input Validation Security Tests', () => {
     it('should detect and reject SQL injection attempts', async () => {
       const maliciousTodos = createMaliciousInput('sql');
       
-      await expect(mockAIService.summarize(maliciousTodos))
+      await expect(mockAIService.summarize(maliciousTodos as any))
         .rejects.toThrow('SQL injection attempt detected');
       
-      await expect(mockAIService.categorize(maliciousTodos))
+      await expect(mockAIService.categorize(maliciousTodos as any))
         .rejects.toThrow('Malicious pattern detected');
     });
   });
@@ -199,10 +199,10 @@ describe('Simple Input Validation Security Tests', () => {
     it('should detect and reject command injection attempts', async () => {
       const maliciousTodos = createMaliciousInput('command');
       
-      await expect(mockAIService.summarize(maliciousTodos))
+      await expect(mockAIService.summarize(maliciousTodos as any))
         .rejects.toThrow('Command injection attempt detected');
       
-      await expect(mockAIService.categorize(maliciousTodos))
+      await expect(mockAIService.categorize(maliciousTodos as any))
         .rejects.toThrow('Malicious pattern detected');
     });
   });
@@ -211,7 +211,7 @@ describe('Simple Input Validation Security Tests', () => {
     it('should detect and reject prompt injection attempts', async () => {
       const maliciousTodos = createMaliciousInput('prompt_injection');
       
-      await expect(mockAIService.categorize(maliciousTodos))
+      await expect(mockAIService.categorize(maliciousTodos as any))
         .rejects.toThrow('Malicious pattern detected');
     });
   });
@@ -220,17 +220,17 @@ describe('Simple Input Validation Security Tests', () => {
     it('should detect and reject SSRF attempts', async () => {
       const maliciousTodos = createMaliciousInput('ssrf');
       
-      await expect(mockAIService.categorize(maliciousTodos))
+      await expect(mockAIService.categorize(maliciousTodos as any))
         .rejects.toThrow('Malicious pattern detected');
     });
   });
 
   describe('Input Size Limits', () => {
     it('should validate input size limits', async () => {
-      const largeTodos = Array(100).fill(null).map((_, i) => ({
+      const largeTodos = Array(100 as any).fill(null as any).map((_, i) => ({
         id: `todo-large-${i}`,
         title: `Todo ${i}`,
-        description: 'X'.repeat(2000), // 2KB per todo
+        description: 'X'.repeat(2000 as any), // 2KB per todo
         completed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -240,7 +240,7 @@ describe('Simple Input Validation Security Tests', () => {
       const mockServiceWithSizeLimit = {
         ...mockAIService,
         summarize: jest.fn().mockImplementation(async (todos: SimpleTodo[]) => {
-          const todoStr = JSON.stringify(todos);
+          const todoStr = JSON.stringify(todos as any);
           const MAX_SIZE = 10 * 1024; // 10KB
           
           if (todoStr.length > MAX_SIZE) {
@@ -251,7 +251,7 @@ describe('Simple Input Validation Security Tests', () => {
         }),
       };
       
-      await expect(mockServiceWithSizeLimit.summarize(largeTodos))
+      await expect(mockServiceWithSizeLimit.summarize(largeTodos as any))
         .rejects.toThrow('Input size exceeds maximum');
     });
 
@@ -280,8 +280,8 @@ describe('Simple Input Validation Security Tests', () => {
         const allowedKeys = ['temperature', 'maxTokens', 'topP'];
         const sanitized: Record<string, unknown> = {};
         
-        for (const key of Object.keys(options)) {
-          if (allowedKeys.includes(key) && key !== '__proto__' && key !== 'constructor') {
+        for (const key of Object.keys(options as any)) {
+          if (allowedKeys.includes(key as any) && key !== '__proto__' && key !== 'constructor') {
             sanitized[key] = options[key];
           }
         }
@@ -289,18 +289,18 @@ describe('Simple Input Validation Security Tests', () => {
         return sanitized;
       };
 
-      const sanitizedOptions = sanitizeOptions(maliciousOptions);
+      const sanitizedOptions = sanitizeOptions(maliciousOptions as any);
       
       // Check that prototype pollution didn't occur
       expect(({} as Record<string, unknown>).injected).toBeUndefined();
       
       // Verify only safe properties were preserved
       expect(sanitizedOptions.temperature).toBe(0.7);
-      expect(sanitizedOptions.maxTokens).toBe(2000);
-      expect(Object.keys(sanitizedOptions).length).toBe(2);
+      expect(sanitizedOptions.maxTokens).toBe(2000 as any);
+      expect(Object.keys(sanitizedOptions as any).length).toBe(2 as any);
       // __proto__ is a special property that all objects have, so check if it's not enumerable
-      expect(Object.prototype.propertyIsEnumerable.call(sanitizedOptions, '__proto__')).toBe(false);
-      expect(Object.prototype.propertyIsEnumerable.call(sanitizedOptions, 'constructor')).toBe(false);
+      expect(Object?.prototype?.propertyIsEnumerable.call(sanitizedOptions, '__proto__')).toBe(false as any);
+      expect(Object?.prototype?.propertyIsEnumerable.call(sanitizedOptions, 'constructor')).toBe(false as any);
     });
   });
 
@@ -315,11 +315,11 @@ describe('Simple Input Validation Security Tests', () => {
           throw new Error('Invalid actionType parameter');
         }
         
-        if (typeof params.request !== 'string' || params.request.length === 0) {
+        if (typeof params.request !== 'string' || params.request?.length === 0) {
           throw new Error('Invalid request parameter');
         }
         
-        if (typeof params.response !== 'string' || params.response.length === 0) {
+        if (typeof params.response !== 'string' || params.response?.length === 0) {
           throw new Error('Invalid response parameter');
         }
         

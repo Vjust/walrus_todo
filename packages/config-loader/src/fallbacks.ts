@@ -53,15 +53,15 @@ export const LOCALNET_CONFIG: AppConfig = {
 export const TESTNET_CONFIG: AppConfig = {
   network: {
     name: 'testnet',
-    url: 'https://fullnode.testnet.sui.io',
-    explorerUrl: 'https://testnet.suivision.xyz',
-    faucetUrl: 'https://faucet.testnet.sui.io'
+    url: 'https://fullnode?.testnet?.sui.io',
+    explorerUrl: 'https://testnet?.suivision?.xyz',
+    faucetUrl: 'https://faucet?.testnet?.sui.io'
   },
   walrus: {
-    networkUrl: 'https://wal.testnet.sui.io',
-    publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
-    aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space',
-    apiPrefix: 'https://api.walrus-testnet.walrus.space/v1'
+    networkUrl: 'https://wal?.testnet?.sui.io',
+    publisherUrl: 'https://publisher.walrus-testnet?.walrus?.space',
+    aggregatorUrl: 'https://aggregator.walrus-testnet?.walrus?.space',
+    apiPrefix: 'https://api.walrus-testnet?.walrus?.space/v1'
   },
   deployment: {
     packageId: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -86,7 +86,7 @@ export const TESTNET_CONFIG: AppConfig = {
   environment: {
     mode: 'production',
     debug: false,
-    apiEndpoint: 'https://fullnode.testnet.sui.io'
+    apiEndpoint: 'https://fullnode?.testnet?.sui.io'
   }
 };
 
@@ -96,15 +96,15 @@ export const TESTNET_CONFIG: AppConfig = {
 export const DEVNET_CONFIG: AppConfig = {
   network: {
     name: 'devnet',
-    url: 'https://fullnode.devnet.sui.io',
-    explorerUrl: 'https://devnet.suivision.xyz',
-    faucetUrl: 'https://faucet.devnet.sui.io'
+    url: 'https://fullnode?.devnet?.sui.io',
+    explorerUrl: 'https://devnet?.suivision?.xyz',
+    faucetUrl: 'https://faucet?.devnet?.sui.io'
   },
   walrus: {
-    networkUrl: 'https://wal.devnet.sui.io',
-    publisherUrl: 'https://publisher.walrus-devnet.walrus.space',
-    aggregatorUrl: 'https://aggregator.walrus-devnet.walrus.space',
-    apiPrefix: 'https://api.walrus-devnet.walrus.space/v1'
+    networkUrl: 'https://wal?.devnet?.sui.io',
+    publisherUrl: 'https://publisher.walrus-devnet?.walrus?.space',
+    aggregatorUrl: 'https://aggregator.walrus-devnet?.walrus?.space',
+    apiPrefix: 'https://api.walrus-devnet?.walrus?.space/v1'
   },
   deployment: {
     packageId: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -129,7 +129,7 @@ export const DEVNET_CONFIG: AppConfig = {
   environment: {
     mode: 'development',
     debug: true,
-    apiEndpoint: 'https://fullnode.devnet.sui.io'
+    apiEndpoint: 'https://fullnode?.devnet?.sui.io'
   }
 };
 
@@ -139,15 +139,15 @@ export const DEVNET_CONFIG: AppConfig = {
 export const MAINNET_CONFIG: AppConfig = {
   network: {
     name: 'mainnet',
-    url: 'https://fullnode.mainnet.sui.io',
+    url: 'https://fullnode?.mainnet?.sui.io',
     explorerUrl: 'https://suivision.xyz',
     faucetUrl: undefined // No faucet on mainnet
   },
   walrus: {
-    networkUrl: 'https://wal.mainnet.sui.io',
-    publisherUrl: 'https://publisher.walrus.space',
-    aggregatorUrl: 'https://aggregator.walrus.space',
-    apiPrefix: 'https://api.walrus.space/v1'
+    networkUrl: 'https://wal?.mainnet?.sui.io',
+    publisherUrl: 'https://publisher?.walrus?.space',
+    aggregatorUrl: 'https://aggregator?.walrus?.space',
+    apiPrefix: 'https://api?.walrus?.space/v1'
   },
   deployment: {
     packageId: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -172,7 +172,7 @@ export const MAINNET_CONFIG: AppConfig = {
   environment: {
     mode: 'production',
     debug: false,
-    apiEndpoint: 'https://fullnode.mainnet.sui.io'
+    apiEndpoint: 'https://fullnode?.mainnet?.sui.io'
   }
 };
 
@@ -212,5 +212,5 @@ export function isSupportedNetwork(network: string): network is NetworkName {
  * Get list of supported networks
  */
 export function getSupportedNetworks(): NetworkName[] {
-  return Object.keys(FALLBACK_CONFIGS) as NetworkName[];
+  return Object.keys(FALLBACK_CONFIGS as any) as NetworkName[];
 }

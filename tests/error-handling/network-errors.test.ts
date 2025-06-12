@@ -12,7 +12,7 @@ import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 describe('Network Error Handling', () => {
   // Mock network implementation
   // const _mockNetworkNode = {
-  //   url: 'https://test-api.example.com',
+  //   url: 'https://test-api?.example?.com',
   //   priority: 0,
   //   consecutiveFailures: 0,
   //   healthScore: 1.0,
@@ -23,7 +23,7 @@ describe('Network Error Handling', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     retryManager = new RetryManager(
-      ['https://test-api.example.com', 'https://backup-api.example.com'],
+      ['https://test-api?.example?.com', 'https://backup-api?.example?.com'],
       {
         initialDelay: 50,
         maxDelay: 1000,
@@ -57,8 +57,8 @@ describe('Network Error Handling', () => {
       jest.runAllTimers();
 
       // Verify results
-      expect(result).toBe('success');
-      expect(mockOperation).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('success');
+      expect(mockOperation as any).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should respect max retries for persistent failures', async () => {
@@ -77,8 +77,8 @@ describe('Network Error Handling', () => {
       jest.runAllTimers();
 
       // Verify results
-      await expect(promise).rejects.toThrow('Maximum retries');
-      expect(mockOperation).toHaveBeenCalledTimes(4); // Initial + 3 retries
+      await expect(promise as any).rejects.toThrow('Maximum retries');
+      expect(mockOperation as any).toHaveBeenCalledTimes(4 as any); // Initial + 3 retries
     });
 
     it('should use exponential backoff for retries', async () => {
@@ -99,8 +99,8 @@ describe('Network Error Handling', () => {
       await promise;
 
       // Verify delay timings follow exponential pattern
-      const delays = mockTimers.mock.calls.map(call => call[1]);
-      expect(delays[0]).toBeGreaterThan(50); // Base delay
+      const delays = mockTimers?.mock?.calls.map(call => call[1]);
+      expect(delays[0]).toBeGreaterThan(50 as any); // Base delay
       expect(delays[1]).toBeGreaterThan(delays[0]); // Should increase
       expect(delays[2]).toBeGreaterThan(delays[1]); // Should increase more
     });
@@ -122,16 +122,16 @@ describe('Network Error Handling', () => {
       );
 
       // Fast-forward past timeout but before operation completes
-      jest.advanceTimersByTime(600);
+      jest.advanceTimersByTime(600 as any);
 
       // Should reject with timeout error
-      await expect(promise).rejects.toThrow(/timeout/i);
+      await expect(promise as any).rejects.toThrow(/timeout/i);
     });
 
     it('should respect overall operation timeout', async () => {
       // Create retry manager with short max duration
       const shortTimeoutRetryManager = new RetryManager(
-        ['https://test-api.example.com'],
+        ['https://test-api?.example?.com'],
         {
           maxDuration: 500,
           initialDelay: 100,
@@ -151,10 +151,10 @@ describe('Network Error Handling', () => {
       );
 
       // Fast-forward past max duration
-      jest.advanceTimersByTime(600);
+      jest.advanceTimersByTime(600 as any);
 
       // Verify it fails with timeout error
-      await expect(promise).rejects.toThrow('Operation timed out');
+      await expect(promise as any).rejects.toThrow('Operation timed out');
     });
   });
 
@@ -169,7 +169,7 @@ describe('Network Error Handling', () => {
 
       // Create retry manager specific for rate limiting
       const rateLimitRetryManager = new RetryManager(
-        ['https://test-api.example.com'],
+        ['https://test-api?.example?.com'],
         {
           initialDelay: 50,
           maxRetries: 5,
@@ -187,8 +187,8 @@ describe('Network Error Handling', () => {
 
       // Verify results
       const result = await promise;
-      expect(result).toBe('success');
-      expect(mockOperation).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(mockOperation as any).toHaveBeenCalledTimes(3 as any);
     });
   });
 
@@ -196,7 +196,7 @@ describe('Network Error Handling', () => {
     it('should implement circuit breaker for failing nodes', async () => {
       // Create retry manager with circuit breaker
       const circuitBreakerRetryManager = new RetryManager(
-        ['https://failing-api.example.com', 'https://working-api.example.com'],
+        ['https://failing-api?.example?.com', 'https://working-api?.example?.com'],
         {
           initialDelay: 50,
           maxRetries: 5,
@@ -220,7 +220,7 @@ describe('Network Error Handling', () => {
         operations.push(
           circuitBreakerRetryManager
             .execute(async node => {
-              if (node.url.includes('failing')) {
+              if (node?.url?.includes('failing')) {
                 return mockFailingOperation();
               } else {
                 return mockWorkingOperation();
@@ -234,10 +234,10 @@ describe('Network Error Handling', () => {
       jest.runAllTimers();
 
       // Wait for all operations
-      const results = await Promise.all(operations);
+      const results = await Promise.all(operations as any);
 
       // Verify circuit breaker avoided failing node after threshold
-      expect(mockFailingOperation.mock.calls.length).toBeLessThan(10);
+      expect(mockFailingOperation?.mock?.calls.length).toBeLessThan(10 as any);
       expect(results[results.length - 1]).toBe('success');
     });
   });
@@ -252,7 +252,7 @@ describe('Network Error Handling', () => {
       });
 
       // Mock an operation that throws this error
-      const mockOperation = jest.fn().mockRejectedValue(customError);
+      const mockOperation = jest.fn().mockRejectedValue(customError as any);
 
       // Execute without retry for unrecoverable error
       await expect(
@@ -309,30 +309,30 @@ describe('Network Error Handling', () => {
           result => ({ success: true, result }),
           error => ({
             success: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error ? error.message : String(error as any),
           })
         )
       );
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
       // Verify progressive failure pattern
       const successes = results.filter(r => r.success).length;
       const failures = results.filter(r => !r.success).length;
 
       // Should have some successes and some failures
-      expect(successes).toBeGreaterThan(0);
-      expect(failures).toBeGreaterThan(0);
+      expect(successes as any).toBeGreaterThan(0 as any);
+      expect(failures as any).toBeGreaterThan(0 as any);
 
       // Later requests should fail more often
       const firstHalf = results.slice(0, 5);
-      const secondHalf = results.slice(5);
+      const secondHalf = results.slice(5 as any);
 
       const firstHalfSuccesses = firstHalf.filter(r => r.success).length;
       const secondHalfSuccesses = secondHalf.filter(r => r.success).length;
 
       // Second half should have fewer successes due to progressive degradation
-      expect(secondHalfSuccesses).toBeLessThan(firstHalfSuccesses);
+      expect(secondHalfSuccesses as any).toBeLessThan(firstHalfSuccesses as any);
     });
   });
 });

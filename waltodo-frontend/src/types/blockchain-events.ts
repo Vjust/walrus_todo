@@ -158,7 +158,7 @@ export interface UseTodoStateSyncReturn extends UseBlockchainEventsReturn {
 export interface TodoEventNotification {
   id: string;
   message: string;
-  type: TodoNFTEvent['type'];
+  type: TodoNFTEvent?.["type"];
   timestamp: string; // ISO string timestamp
   todoId?: string;
   autoRemove?: boolean;

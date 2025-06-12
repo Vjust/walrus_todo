@@ -26,8 +26,8 @@ describe('Validation Schemas', () => {
         expirationDays: 365,
       };
 
-      const result = validateTodo(validTodo);
-      expect(result.success).toBe(true);
+      const result = validateTodo(validTodo as any);
+      expect(result.success).toBe(true as any);
       expect(result.data).toBeDefined();
     });
 
@@ -37,19 +37,19 @@ describe('Validation Schemas', () => {
         description: 'Test description',
       };
 
-      const result = validateTodo(invalidTodo);
-      expect(result.success).toBe(false);
+      const result = validateTodo(invalidTodo as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Title is required');
     });
 
     it('should reject todo with title too long', () => {
       const invalidTodo = {
-        title: 'a'.repeat(101),
+        title: 'a'.repeat(101 as any),
         description: 'Test description',
       };
 
-      const result = validateTodo(invalidTodo);
-      expect(result.success).toBe(false);
+      const result = validateTodo(invalidTodo as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Title must be 100 characters or less');
     });
 
@@ -59,8 +59,8 @@ describe('Validation Schemas', () => {
         tags: 'tag1, tag2, , tag3,',
       };
 
-      const result = validateTodo(todo);
-      expect(result.success).toBe(true);
+      const result = validateTodo(todo as any);
+      expect(result.success).toBe(true as any);
       expect(result.data?.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
 
@@ -70,8 +70,8 @@ describe('Validation Schemas', () => {
         dueDate: '2020-01-01',
       };
 
-      const result = validateTodo(invalidTodo);
-      expect(result.success).toBe(false);
+      const result = validateTodo(invalidTodo as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Due date must be today or in the future');
     });
 
@@ -81,19 +81,19 @@ describe('Validation Schemas', () => {
         tags: Array.from({ length: 15 }, (_, i) => `tag${i}`).join(', '),
       };
 
-      const result = validateTodo(todo);
-      expect(result.success).toBe(true);
-      expect(result.data?.tags?.length).toBe(VALIDATION_RULES.TAGS.MAX_COUNT);
+      const result = validateTodo(todo as any);
+      expect(result.success).toBe(true as any);
+      expect(result.data?.tags?.length).toBe(VALIDATION_RULES?.TAGS?.MAX_COUNT);
     });
 
     it('should reject tags that are too long', () => {
       const todo = {
         title: 'Test Todo',
-        tags: 'a'.repeat(31),
+        tags: 'a'.repeat(31 as any),
       };
 
-      const result = validateTodo(todo);
-      expect(result.success).toBe(false);
+      const result = validateTodo(todo as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Each tag must be 30 characters or less');
     });
   });
@@ -114,8 +114,8 @@ describe('Validation Schemas', () => {
         expirationDays: 180,
       };
 
-      const result = validateTodoNFT(validTodoNFT);
-      expect(result.success).toBe(true);
+      const result = validateTodoNFT(validTodoNFT as any);
+      expect(result.success).toBe(true as any);
       expect(result.data).toBeDefined();
     });
 
@@ -129,8 +129,8 @@ describe('Validation Schemas', () => {
         listName: 'test-list',
       };
 
-      const result = validateTodoNFT(invalidTodoNFT);
-      expect(result.success).toBe(false);
+      const result = validateTodoNFT(invalidTodoNFT as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Image size must be less than');
     });
 
@@ -143,8 +143,8 @@ describe('Validation Schemas', () => {
         listName: 'test-list',
       };
 
-      const result = validateTodoNFT(invalidTodoNFT);
-      expect(result.success).toBe(false);
+      const result = validateTodoNFT(invalidTodoNFT as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Image must be JPEG, PNG, GIF, or WebP');
     });
 
@@ -154,8 +154,8 @@ describe('Validation Schemas', () => {
         listName: '',
       };
 
-      const result = validateTodoNFT(invalidTodoNFT);
-      expect(result.success).toBe(false);
+      const result = validateTodoNFT(invalidTodoNFT as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('List name is required');
     });
   });
@@ -172,8 +172,8 @@ describe('Validation Schemas', () => {
         },
       };
 
-      const result = validateSearch(validSearch);
-      expect(result.success).toBe(true);
+      const result = validateSearch(validSearch as any);
+      expect(result.success).toBe(true as any);
       expect(result.data).toBeDefined();
     });
 
@@ -182,18 +182,18 @@ describe('Validation Schemas', () => {
         query: '',
       };
 
-      const result = validateSearch(invalidSearch);
-      expect(result.success).toBe(false);
+      const result = validateSearch(invalidSearch as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Search query must be at least 1 character');
     });
 
     it('should reject search query that is too long', () => {
       const invalidSearch = {
-        query: 'a'.repeat(101),
+        query: 'a'.repeat(101 as any),
       };
 
-      const result = validateSearch(invalidSearch);
-      expect(result.success).toBe(false);
+      const result = validateSearch(invalidSearch as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Search query must be 100 characters or less');
     });
 
@@ -208,7 +208,7 @@ describe('Validation Schemas', () => {
 
       dangerousSearches.forEach(query => {
         const result = validateSearch({ query });
-        expect(result.success).toBe(false);
+        expect(result.success).toBe(false as any);
         expect(result.errors?.[0]?.message).toContain('Invalid search query');
       });
     });
@@ -217,21 +217,21 @@ describe('Validation Schemas', () => {
   describe('validateConfig', () => {
     it('should validate a valid config', () => {
       const validConfig = {
-        apiUrl: 'https://api.example.com',
+        apiUrl: 'https://api?.example?.com',
         walrusConfig: {
-          publisherUrl: 'https://publisher.walrus.space',
-          aggregatorUrl: 'https://aggregator.walrus.space',
+          publisherUrl: 'https://publisher?.walrus?.space',
+          aggregatorUrl: 'https://aggregator?.walrus?.space',
         },
         suiConfig: {
           network: 'testnet',
-          rpcUrl: 'https://testnet.sui.io',
+          rpcUrl: 'https://testnet?.sui?.io',
         },
         enableAnalytics: true,
         enableNotifications: false,
       };
 
-      const result = validateConfig(validConfig);
-      expect(result.success).toBe(true);
+      const result = validateConfig(validConfig as any);
+      expect(result.success).toBe(true as any);
       expect(result.data).toBeDefined();
     });
 
@@ -240,18 +240,18 @@ describe('Validation Schemas', () => {
         apiUrl: 'not-a-url',
       };
 
-      const result = validateConfig(invalidConfig);
-      expect(result.success).toBe(false);
+      const result = validateConfig(invalidConfig as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Invalid API URL');
     });
 
     it('should reject URLs that are too long', () => {
       const invalidConfig = {
-        apiUrl: 'https://example.com/' + 'a'.repeat(500),
+        apiUrl: 'https://example.com/' + 'a'.repeat(500 as any),
       };
 
-      const result = validateConfig(invalidConfig);
-      expect(result.success).toBe(false);
+      const result = validateConfig(invalidConfig as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('API URL too long');
     });
   });
@@ -261,7 +261,7 @@ describe('Validation Schemas', () => {
       const validFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
       
       const result = validateFileUpload({ file: validFile });
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
       expect(result.data).toBeDefined();
     });
 
@@ -269,7 +269,7 @@ describe('Validation Schemas', () => {
       const largeFile = new File(['x'.repeat(11 * 1024 * 1024)], 'large.jpg', { type: 'image/jpeg' });
       
       const result = validateFileUpload({ file: largeFile });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('File size must be less than');
     });
 
@@ -277,7 +277,7 @@ describe('Validation Schemas', () => {
       const invalidFile = new File(['content'], 'test.exe', { type: 'application/exe' });
       
       const result = validateFileUpload({ file: invalidFile });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('File must be an image');
     });
   });
@@ -288,18 +288,18 @@ describe('Validation Schemas', () => {
         content: 'This is safe user input without any dangerous code.',
       };
 
-      const result = validateUserInput(safeInput);
-      expect(result.success).toBe(true);
+      const result = validateUserInput(safeInput as any);
+      expect(result.success).toBe(true as any);
       expect(result.data).toBeDefined();
     });
 
     it('should reject content that is too long', () => {
       const longInput = {
-        content: 'a'.repeat(10001),
+        content: 'a'.repeat(10001 as any),
       };
 
-      const result = validateUserInput(longInput);
-      expect(result.success).toBe(false);
+      const result = validateUserInput(longInput as any);
+      expect(result.success).toBe(false as any);
       expect(result.errors?.[0]?.message).toContain('Content too long');
     });
 
@@ -314,7 +314,7 @@ describe('Validation Schemas', () => {
 
       dangerousInputs.forEach(content => {
         const result = validateUserInput({ content });
-        expect(result.success).toBe(false);
+        expect(result.success).toBe(false as any);
         expect(result.errors?.[0]?.message).toContain('Content contains potentially dangerous code');
       });
     });

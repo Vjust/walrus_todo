@@ -81,7 +81,7 @@ class TestReportAggregator {
   private outputDir: string;
 
   constructor(outputDir: string = 'test-reports') {
-    this.outputDir = outputDir;
+    this?.outputDir = outputDir;
     if (!fs.existsSync(this.outputDir)) {
       fs.mkdirSync(this.outputDir, { recursive: true });
     }
@@ -130,14 +130,14 @@ class TestReportAggregator {
           suite.name
         );
       } catch (error) {
-        logger.error(`Error running ${suite.name} tests:`, error instanceof Error ? error : new Error(String(error)));
+        logger.error(`Error running ${suite.name} tests:`, error instanceof Error ? error : new Error(String(error as any)));
       }
     }
 
     // Load coverage data if available
     const coverage = await this.loadCoverageData();
 
-    return this.aggregateResults(coverage);
+    return this.aggregateResults(coverage as any);
   }
 
   /**
@@ -153,7 +153,7 @@ class TestReportAggregator {
     ];
 
     for (const { file, suite } of resultFiles) {
-      if (fs.existsSync(file)) {
+      if (fs.existsSync(file as any)) {
         await this.loadJestResults(file, suite);
       }
     }
@@ -164,7 +164,7 @@ class TestReportAggregator {
     // Load coverage data
     const coverage = await this.loadCoverageData();
 
-    return this.aggregateResults(coverage);
+    return this.aggregateResults(coverage as any);
   }
 
   /**
@@ -184,7 +184,7 @@ class TestReportAggregator {
         failed: data.numFailedTests,
         skipped: data.numPendingTests,
         total: data.numTotalTests,
-        duration: data.testResults.reduce(
+        duration: data?.testResults?.reduce(
           (sum: number, r: { duration: number }) => sum + r.duration,
           0
         ),
@@ -192,9 +192,9 @@ class TestReportAggregator {
         timestamp: new Date().toISOString(),
       };
 
-      this.results.push(result);
+      this?.results?.push(result as any);
     } catch (error) {
-      logger.error(`Error loading ${filepath}:`, error instanceof Error ? error : new Error(String(error)));
+      logger.error(`Error loading ${filepath}:`, error instanceof Error ? error : new Error(String(error as any)));
     }
   }
 
@@ -234,10 +234,10 @@ class TestReportAggregator {
    */
   private async loadStressTestResults(): Promise<void> {
     const stressReportDir = 'stress-test-reports';
-    if (!fs.existsSync(stressReportDir)) return;
+    if (!fs.existsSync(stressReportDir as any)) return;
 
     const files = fs
-      .readdirSync(stressReportDir)
+      .readdirSync(stressReportDir as any)
       .filter(f => f.endsWith('.json'))
       .sort()
       .slice(-1); // Get the most recent
@@ -274,7 +274,7 @@ class TestReportAggregator {
           });
         }
 
-        this.results.push({
+        this?.results?.push({
           suite: 'stress',
           passed: totalPassed,
           failed: totalFailed,
@@ -285,7 +285,7 @@ class TestReportAggregator {
           timestamp: data.timestamp,
         });
       } catch (error) {
-        logger.error(`Error loading stress test results:`, error instanceof Error ? error : new Error(String(error)));
+        logger.error(`Error loading stress test results:`, error instanceof Error ? error : new Error(String(error as any)));
       }
     }
   }
@@ -295,7 +295,7 @@ class TestReportAggregator {
    */
   private async loadCoverageData(): Promise<CoverageInfo | undefined> {
     const coveragePath = 'coverage/coverage-summary.json';
-    if (!fs.existsSync(coveragePath)) return undefined;
+    if (!fs.existsSync(coveragePath as any)) return undefined;
 
     try {
       const fileContent = fs.readFileSync(coveragePath, 'utf-8');
@@ -303,13 +303,13 @@ class TestReportAggregator {
         typeof fileContent === 'string' ? fileContent : fileContent.toString()
       );
       return {
-        lines: data.total.lines,
-        statements: data.total.statements,
-        functions: data.total.functions,
-        branches: data.total.branches,
+        lines: data?.total?.lines,
+        statements: data?.total?.statements,
+        functions: data?.total?.functions,
+        branches: data?.total?.branches,
       };
     } catch (error) {
-      logger.error('Error loading coverage data:', error instanceof Error ? error : new Error(String(error)));
+      logger.error('Error loading coverage data:', error instanceof Error ? error : new Error(String(error as any)));
       return undefined;
     }
   }
@@ -318,15 +318,15 @@ class TestReportAggregator {
    * Aggregate all test results
    */
   private aggregateResults(coverage?: CoverageInfo): AggregatedResults {
-    const totalTests = this.results.reduce((sum, r) => sum + r.total, 0);
-    const totalPassed = this.results.reduce((sum, r) => sum + r.passed, 0);
-    const totalFailed = this.results.reduce((sum, r) => sum + r.failed, 0);
-    const totalSkipped = this.results.reduce((sum, r) => sum + r.skipped, 0);
-    const totalDuration = this.results.reduce((sum, r) => sum + r.duration, 0);
+    const totalTests = this?.results?.reduce((sum, r) => sum + r.total, 0);
+    const totalPassed = this?.results?.reduce((sum, r) => sum + r.passed, 0);
+    const totalFailed = this?.results?.reduce((sum, r) => sum + r.failed, 0);
+    const totalSkipped = this?.results?.reduce((sum, r) => sum + r.skipped, 0);
+    const totalDuration = this?.results?.reduce((sum, r) => sum + r.duration, 0);
 
     // Calculate performance metrics
-    const allTestCases = this.results.flatMap(r => r.testCases);
-    const performance = this.calculatePerformanceMetrics(allTestCases);
+    const allTestCases = this?.results?.flatMap(r => r.testCases);
+    const performance = this.calculatePerformanceMetrics(allTestCases as any);
 
     return {
       title: 'Walrus Todo Test Report',
@@ -349,7 +349,7 @@ class TestReportAggregator {
   private calculatePerformanceMetrics(
     testCases: TestCase[]
   ): PerformanceMetrics {
-    if (testCases.length === 0) {
+    if (testCases?.length === 0) {
       return {
         avgTestDuration: 0,
         slowestTests: [],
@@ -371,11 +371,11 @@ class TestReportAggregator {
     };
 
     for (const test of testCases) {
-      if (test.duration != null && test.duration < 100) (buckets['<100ms'] as number)++;
-      else if (test.duration != null && test.duration < 500) (buckets['100-500ms'] as number)++;
-      else if (test.duration != null && test.duration < 1000) (buckets['500ms-1s'] as number)++;
-      else if (test.duration != null && test.duration < 5000) (buckets['1s-5s'] as number)++;
-      else if (test.duration != null) (buckets['>5s'] as number)++;
+      if (test.duration != null && test.duration < 100) (buckets?.["<100ms"] as number)++;
+      else if (test.duration != null && test.duration < 500) (buckets?.["100-500ms"] as number)++;
+      else if (test.duration != null && test.duration < 1000) (buckets?.["500ms-1s"] as number)++;
+      else if (test.duration != null && test.duration < 5000) (buckets?.["1s-5s"] as number)++;
+      else if (test.duration != null) (buckets?.[">5s"] as number)++;
     }
 
     return {
@@ -513,11 +513,11 @@ class TestReportAggregator {
         </div>
         <div class="summary-card">
             <div class="metric-label">Duration</div>
-            <div class="metric-value">${(results.totalDuration / 1000).toFixed(2)}s</div>
+            <div class="metric-value">${(results.totalDuration / 1000).toFixed(2 as any)}s</div>
         </div>
         <div class="summary-card">
             <div class="metric-label">Success Rate</div>
-            <div class="success-rate">${results.successRate.toFixed(2)}%</div>
+            <div class="success-rate">${results?.successRate?.toFixed(2 as any)}%</div>
         </div>
     </div>
 
@@ -526,10 +526,10 @@ class TestReportAggregator {
         ? `
     <h2>Code Coverage</h2>
     <div class="coverage-section">
-        ${this.renderCoverageBar('Lines', results.coverage.lines)}
-        ${this.renderCoverageBar('Statements', results.coverage.statements)}
-        ${this.renderCoverageBar('Functions', results.coverage.functions)}
-        ${this.renderCoverageBar('Branches', results.coverage.branches)}
+        ${this.renderCoverageBar('Lines', results?.coverage?.lines)}
+        ${this.renderCoverageBar('Statements', results?.coverage?.statements)}
+        ${this.renderCoverageBar('Functions', results?.coverage?.functions)}
+        ${this.renderCoverageBar('Branches', results?.coverage?.branches)}
     </div>
     `
         : ''
@@ -558,8 +558,8 @@ class TestReportAggregator {
                 <td>${suite.passed}</td>
                 <td>${suite.failed}</td>
                 <td>${suite.skipped}</td>
-                <td>${suite.total > 0 ? ((suite.passed / suite.total) * 100).toFixed(2) : 0}%</td>
-                <td>${(suite.duration / 1000).toFixed(2)}s</td>
+                <td>${suite.total > 0 ? ((suite.passed / suite.total) * 100).toFixed(2 as any) : 0}%</td>
+                <td>${(suite.duration / 1000).toFixed(2 as any)}s</td>
             </tr>
             `
               )
@@ -574,11 +574,11 @@ class TestReportAggregator {
     <div class="summary-grid">
         <div class="summary-card">
             <div class="metric-label">Average Test Duration</div>
-            <div class="metric-value">${results.performance.avgTestDuration.toFixed(2)}ms</div>
+            <div class="metric-value">${results?.performance?.avgTestDuration.toFixed(2 as any)}ms</div>
         </div>
         <div class="summary-card">
             <div class="metric-label">Test Duration Distribution</div>
-            ${Object.entries(results.performance.testsByDuration)
+            ${Object.entries(results?.performance?.testsByDuration)
               .map(
                 ([bucket, count]) => `
                 <div>${bucket}: ${count} tests</div>
@@ -599,13 +599,13 @@ class TestReportAggregator {
             </tr>
         </thead>
         <tbody>
-            ${results.performance.slowestTests
+            ${results?.performance?.slowestTests
               .map(
                 test => `
             <tr class="slow-test">
                 <td>${test.name}</td>
                 <td>${test.suite}</td>
-                <td>${test.duration.toFixed(2)}ms</td>
+                <td>${test?.duration?.toFixed(2 as any)}ms</td>
                 <td>${test.status}</td>
             </tr>
             `
@@ -617,7 +617,7 @@ class TestReportAggregator {
         : ''
     }
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn?.jsdelivr?.net/npm/chart.js"></script>
     <script>
         // Add charts here if needed
     </script>
@@ -638,11 +638,11 @@ class TestReportAggregator {
     <div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span>${label}</span>
-            <span>${metric.covered}/${metric.total} (${metric.pct.toFixed(2)}%)</span>
+            <span>${metric.covered}/${metric.total} (${metric?.pct?.toFixed(2 as any)}%)</span>
         </div>
         <div class="coverage-bar">
             <div class="coverage-filled" style="width: ${metric.pct}%;">
-                ${metric.pct.toFixed(1)}%
+                ${metric?.pct?.toFixed(1 as any)}%
             </div>
         </div>
     </div>
@@ -663,8 +663,8 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
 - **Passed**: ${results.totalPassed} ✅
 - **Failed**: ${results.totalFailed} ❌
 - **Skipped**: ${results.totalSkipped} ⏭️
-- **Success Rate**: ${results.successRate.toFixed(2)}%
-- **Total Duration**: ${(results.totalDuration / 1000).toFixed(2)}s
+- **Success Rate**: ${results?.successRate?.toFixed(2 as any)}%
+- **Total Duration**: ${(results.totalDuration / 1000).toFixed(2 as any)}s
 
 `;
 
@@ -673,10 +673,10 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
 
 | Metric | Coverage | Details |
 |--------|----------|---------|
-| Lines | ${results.coverage.lines.pct.toFixed(2)}% | ${results.coverage.lines.covered}/${results.coverage.lines.total} |
-| Statements | ${results.coverage.statements.pct.toFixed(2)}% | ${results.coverage.statements.covered}/${results.coverage.statements.total} |
-| Functions | ${results.coverage.functions.pct.toFixed(2)}% | ${results.coverage.functions.covered}/${results.coverage.functions.total} |
-| Branches | ${results.coverage.branches.pct.toFixed(2)}% | ${results.coverage.branches.covered}/${results.coverage.branches.total} |
+| Lines | ${results?.coverage?.lines.pct.toFixed(2 as any)}% | ${results?.coverage?.lines.covered}/${results?.coverage?.lines.total} |
+| Statements | ${results?.coverage?.statements.pct.toFixed(2 as any)}% | ${results?.coverage?.statements.covered}/${results?.coverage?.statements.total} |
+| Functions | ${results?.coverage?.functions.pct.toFixed(2 as any)}% | ${results?.coverage?.functions.covered}/${results?.coverage?.functions.total} |
+| Branches | ${results?.coverage?.branches.pct.toFixed(2 as any)}% | ${results?.coverage?.branches.covered}/${results?.coverage?.branches.total} |
 
 `;
     }
@@ -690,22 +690,22 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
     for (const suite of results.suites) {
       const successRate =
         suite.total > 0
-          ? ((suite.passed / suite.total) * 100).toFixed(2)
+          ? ((suite.passed / suite.total) * 100).toFixed(2 as any)
           : '0.00';
-      markdown += `| ${suite.suite} | ${suite.total} | ${suite.passed} | ${suite.failed} | ${suite.skipped} | ${successRate}% | ${(suite.duration / 1000).toFixed(2)}s |\n`;
+      markdown += `| ${suite.suite} | ${suite.total} | ${suite.passed} | ${suite.failed} | ${suite.skipped} | ${successRate}% | ${(suite.duration / 1000).toFixed(2 as any)}s |\n`;
     }
 
     if (results.performance) {
       markdown += `
 ## Performance Analysis
 
-- **Average Test Duration**: ${results.performance.avgTestDuration.toFixed(2)}ms
+- **Average Test Duration**: ${results?.performance?.avgTestDuration.toFixed(2 as any)}ms
 
 ### Test Duration Distribution
 
 `;
       for (const [bucket, count] of Object.entries(
-        results.performance.testsByDuration
+        results?.performance?.testsByDuration
       )) {
         markdown += `- ${bucket}: ${count} tests\n`;
       }
@@ -716,8 +716,8 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
 | Test | Suite | Duration | Status |
 |------|-------|----------|--------|
 `;
-      for (const test of results.performance.slowestTests) {
-        markdown += `| ${test.name} | ${test.suite} | ${test.duration.toFixed(2)}ms | ${test.status} |\n`;
+      for (const test of results?.performance?.slowestTests) {
+        markdown += `| ${test.name} | ${test.suite} | ${test?.duration?.toFixed(2 as any)}ms | ${test.status} |\n`;
       }
     }
 
@@ -740,7 +740,7 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
    */
   generateTextReport(results: AggregatedResults): void {
     let text = `${results.title}
-${'='.repeat(results.title.length)}
+${'='.repeat(results?.title?.length)}
 
 Generated: ${new Date(results.timestamp).toLocaleString()}
 
@@ -750,18 +750,18 @@ Total Tests: ${results.totalTests}
 Passed: ${results.totalPassed}
 Failed: ${results.totalFailed}
 Skipped: ${results.totalSkipped}
-Success Rate: ${results.successRate.toFixed(2)}%
-Duration: ${(results.totalDuration / 1000).toFixed(2)}s
+Success Rate: ${results?.successRate?.toFixed(2 as any)}%
+Duration: ${(results.totalDuration / 1000).toFixed(2 as any)}s
 
 `;
 
     if (results.coverage) {
       text += `Code Coverage
 ------------
-Lines: ${results.coverage.lines.pct.toFixed(2)}% (${results.coverage.lines.covered}/${results.coverage.lines.total})
-Statements: ${results.coverage.statements.pct.toFixed(2)}% (${results.coverage.statements.covered}/${results.coverage.statements.total})
-Functions: ${results.coverage.functions.pct.toFixed(2)}% (${results.coverage.functions.covered}/${results.coverage.functions.total})
-Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branches.covered}/${results.coverage.branches.total})
+Lines: ${results?.coverage?.lines.pct.toFixed(2 as any)}% (${results?.coverage?.lines.covered}/${results?.coverage?.lines.total})
+Statements: ${results?.coverage?.statements.pct.toFixed(2 as any)}% (${results?.coverage?.statements.covered}/${results?.coverage?.statements.total})
+Functions: ${results?.coverage?.functions.pct.toFixed(2 as any)}% (${results?.coverage?.functions.covered}/${results?.coverage?.functions.total})
+Branches: ${results?.coverage?.branches.pct.toFixed(2 as any)}% (${results?.coverage?.branches.covered}/${results?.coverage?.branches.total})
 
 `;
     }
@@ -773,9 +773,9 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
     for (const suite of results.suites) {
       const successRate =
         suite.total > 0
-          ? ((suite.passed / suite.total) * 100).toFixed(2)
+          ? ((suite.passed / suite.total) * 100).toFixed(2 as any)
           : '0.00';
-      text += `${suite.suite}: ${suite.passed}/${suite.total} passed (${successRate}%) - ${(suite.duration / 1000).toFixed(2)}s\n`;
+      text += `${suite.suite}: ${suite.passed}/${suite.total} passed (${successRate}%) - ${(suite.duration / 1000).toFixed(2 as any)}s\n`;
     }
 
     // Output to console and file
@@ -790,13 +790,13 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
    * Generate all report formats
    */
   generateAllReports(results: AggregatedResults): void {
-    this.generateHtmlReport(results);
-    this.generateMarkdownReport(results);
-    this.generateJsonReport(results);
-    this.generateTextReport(results);
+    this.generateHtmlReport(results as any);
+    this.generateMarkdownReport(results as any);
+    this.generateJsonReport(results as any);
+    this.generateTextReport(results as any);
 
     // Update README with latest test results
-    this.updateReadmeBadge(results);
+    this.updateReadmeBadge(results as any);
   }
 
   /**
@@ -814,18 +814,18 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
               ? 'orange'
               : 'red';
 
-    const badgeUrl = `https://img.shields.io/badge/tests-${results.totalPassed}%20passed%20%2F%20${results.totalFailed}%20failed-${badgeColor}`;
+    const badgeUrl = `https://img?.shields?.io/badge/tests-${results.totalPassed}%20passed%20%2F%20${results.totalFailed}%20failed-${badgeColor}`;
     const badgeMarkdown = `![Test Status](${badgeUrl})`;
 
     const readmePath = path.join(process.cwd(), 'README.md');
-    if (fs.existsSync(readmePath)) {
+    if (fs.existsSync(readmePath as any)) {
       let readme: string = fs.readFileSync(readmePath, 'utf-8').toString();
 
       // Replace existing test badge or add new one
       const badgeRegex =
         /!\[Test Status\]\(https:\/\/img\.shields\.io\/badge\/tests-.*?\)/;
 
-      if (badgeRegex.test(readme)) {
+      if (badgeRegex.test(readme as any)) {
         readme = readme.replace(badgeRegex, badgeMarkdown);
       } else {
         // Add badge after coverage badge if exists
@@ -851,7 +851,7 @@ async function main() {
   const aggregator = new TestReportAggregator();
 
   // Parse command line arguments
-  const args = process.argv.slice(2);
+  const args = process?.argv?.slice(2 as any);
   const runTests = args.includes('--run-tests');
   const format =
     args.find(arg => arg.startsWith('--format='))?.split('=')[1] || 'all';
@@ -870,33 +870,33 @@ async function main() {
     // Generate reports
     switch (format) {
       case 'html':
-        aggregator.generateHtmlReport(results);
+        aggregator.generateHtmlReport(results as any);
         break;
       case 'markdown':
-        aggregator.generateMarkdownReport(results);
+        aggregator.generateMarkdownReport(results as any);
         break;
       case 'json':
-        aggregator.generateJsonReport(results);
+        aggregator.generateJsonReport(results as any);
         break;
       case 'text':
-        aggregator.generateTextReport(results);
+        aggregator.generateTextReport(results as any);
         break;
       default:
-        aggregator.generateAllReports(results);
+        aggregator.generateAllReports(results as any);
     }
 
     // Exit with error code if tests failed
     if (results.totalFailed > 0) {
-      process.exit(1);
+      process.exit(1 as any);
     }
   } catch (error) {
-    logger.error('Error aggregating test reports:', error instanceof Error ? error : new Error(String(error)));
-    process.exit(1);
+    logger.error('Error aggregating test reports:', error instanceof Error ? error : new Error(String(error as any)));
+    process.exit(1 as any);
   }
 }
 
 // Execute if run directly
-if (require.main === module) {
+if (require?.main === module) {
   main();
 }
 

@@ -54,7 +54,7 @@ export async function loadNetworkConfig(
       return {
         config: cached.config,
         fromCache: true,
-        isFallback: cached.source === 'fallback',
+        isFallback: cached?.source === 'fallback',
         source: 'cache'
       };
     }
@@ -64,8 +64,8 @@ export async function loadNetworkConfig(
     // Try to load from file first
     const fileConfig = await loadConfigFromFile(network, opts.configPath);
     if (fileConfig) {
-      const normalizedConfig = normalizeConfig(fileConfig);
-      validateConfig(normalizedConfig);
+      const normalizedConfig = normalizeConfig(fileConfig as any);
+      validateConfig(normalizedConfig as any);
 
       // Cache successful load
       if (opts.enableCache) {
@@ -85,7 +85,7 @@ export async function loadNetworkConfig(
   }
 
   // Fall back to default configuration
-  if (opts.fallbackToLocalnet || isSupportedNetwork(network)) {
+  if (opts.fallbackToLocalnet || isSupportedNetwork(network as any)) {
     const fallbackConfig = getFallbackConfig(network as NetworkName);
     
     // Cache fallback
@@ -127,7 +127,7 @@ async function loadConfigFromFile(
     
     if (typeof fetch !== 'undefined') {
       // Browser or Node.js with fetch
-      response = await fetch(configUrl);
+      response = await fetch(configUrl as any);
     } else if (typeof window === 'undefined') {
       // Node.js without fetch - use dynamic import
       const { readFile } = await import('fs/promises');
@@ -136,18 +136,18 @@ async function loadConfigFromFile(
       try {
         // Try relative to current working directory
         const configData = await readFile(join(process.cwd(), 'public', configPath, `${network}.json`), 'utf-8');
-        return JSON.parse(configData);
+        return JSON.parse(configData as any);
       } catch {
         // Try relative to module location
         const configData = await readFile(join(__dirname, '..', '..', 'public', configPath, `${network}.json`), 'utf-8');
-        return JSON.parse(configData);
+        return JSON.parse(configData as any);
       }
     } else {
       throw new Error('No fetch implementation available');
     }
 
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response?.status === 404) {
         return null; // File not found, use fallback
       }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -156,12 +156,12 @@ async function loadConfigFromFile(
     const config = await response.json();
     return config;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('404')) {
+    if (error instanceof Error && error?.message?.includes('404')) {
       return null; // File not found
     }
     throw new ConfigLoadError(
       `Failed to load config from ${configUrl}`,
-      error instanceof Error ? error : new Error(String(error))
+      error instanceof Error ? error : new Error(String(error as any))
     );
   }
 }
@@ -178,33 +178,33 @@ function normalizeConfig(fileConfig: NetworkConfigFile): AppConfig {
       faucetUrl: getFaucetUrl(fileConfig.network)
     },
     walrus: {
-      networkUrl: fileConfig.walrus.networkUrl || getDefaultWalrusNetworkUrl(fileConfig.network),
-      publisherUrl: fileConfig.walrus.publisherUrl,
-      aggregatorUrl: fileConfig.walrus.aggregatorUrl,
-      apiPrefix: fileConfig.walrus.apiPrefix || getDefaultWalrusApiPrefix(fileConfig.network)
+      networkUrl: fileConfig?.walrus?.networkUrl || getDefaultWalrusNetworkUrl(fileConfig.network),
+      publisherUrl: fileConfig?.walrus?.publisherUrl,
+      aggregatorUrl: fileConfig?.walrus?.aggregatorUrl,
+      apiPrefix: fileConfig?.walrus?.apiPrefix || getDefaultWalrusApiPrefix(fileConfig.network)
     },
     deployment: {
-      packageId: fileConfig.deployment.packageId,
-      upgradeCapId: fileConfig.deployment.upgradeCapId,
-      deployerAddress: fileConfig.deployment.deployerAddress,
-      timestamp: fileConfig.deployment.timestamp,
-      gasUsed: fileConfig.deployment.gasUsed,
-      transactionHash: fileConfig.deployment.transactionHash
+      packageId: fileConfig?.deployment?.packageId,
+      upgradeCapId: fileConfig?.deployment?.upgradeCapId,
+      deployerAddress: fileConfig?.deployment?.deployerAddress,
+      timestamp: fileConfig?.deployment?.timestamp,
+      gasUsed: fileConfig?.deployment?.gasUsed,
+      transactionHash: fileConfig?.deployment?.transactionHash
     },
     contracts: {
       todoNft: {
-        packageId: fileConfig.deployment.packageId,
+        packageId: fileConfig?.deployment?.packageId,
         moduleName: 'todo_nft',
         structName: 'TodoNFT'
       }
     },
     features: {
-      aiIntegration: fileConfig.features.aiIntegration,
-      batchOperations: fileConfig.features.batchOperations,
-      storageOptimization: fileConfig.features.storageOptimization,
-      realTimeUpdates: fileConfig.features.realTimeUpdates,
-      blockchainVerification: fileConfig.features.blockchainVerification,
-      encryptedStorage: fileConfig.features.encryptedStorage
+      aiIntegration: fileConfig?.features?.aiIntegration,
+      batchOperations: fileConfig?.features?.batchOperations,
+      storageOptimization: fileConfig?.features?.storageOptimization,
+      realTimeUpdates: fileConfig?.features?.realTimeUpdates,
+      blockchainVerification: fileConfig?.features?.blockchainVerification,
+      encryptedStorage: fileConfig?.features?.encryptedStorage
     },
     environment: fileConfig.environment
   };
@@ -214,23 +214,23 @@ function normalizeConfig(fileConfig: NetworkConfigFile): AppConfig {
  * Validate configuration completeness
  */
 function validateConfig(config: AppConfig): void {
-  if (!config.network.name) {
+  if (!config?.network?.name) {
     throw new ConfigValidationError('Network name is required', 'network.name');
   }
 
-  if (!config.network.url) {
+  if (!config?.network?.url) {
     throw new ConfigValidationError('Network RPC URL is required', 'network.url');
   }
 
-  if (!config.walrus.publisherUrl) {
+  if (!config?.walrus?.publisherUrl) {
     throw new ConfigValidationError('Walrus publisher URL is required', 'walrus.publisherUrl');
   }
 
-  if (!config.walrus.aggregatorUrl) {
+  if (!config?.walrus?.aggregatorUrl) {
     throw new ConfigValidationError('Walrus aggregator URL is required', 'walrus.aggregatorUrl');
   }
 
-  if (!config.deployment.packageId || config.deployment.packageId === '0x0') {
+  if (!config?.deployment?.packageId || config.deployment?.packageId === '0x0') {
     // eslint-disable-next-line no-console
     console.warn('Package ID not set - blockchain features may not work properly');
   }
@@ -240,14 +240,14 @@ function validateConfig(config: AppConfig): void {
  * Get cached configuration if valid
  */
 function getCachedConfig(cacheKey: string, cacheTimeout: number): CacheEntry | null {
-  const cached = configCache.get(cacheKey);
+  const cached = configCache.get(cacheKey as any);
   if (!cached) {
     return null;
   }
 
   const now = Date.now();
   if (now - cached.timestamp > cacheTimeout) {
-    configCache.delete(cacheKey);
+    configCache.delete(cacheKey as any);
     return null;
   }
 
@@ -280,13 +280,13 @@ function getExplorerUrl(network: string): string {
     case 'mainnet':
       return 'https://suivision.xyz';
     case 'testnet':
-      return 'https://testnet.suivision.xyz';
+      return 'https://testnet?.suivision?.xyz';
     case 'devnet':
-      return 'https://devnet.suivision.xyz';
+      return 'https://devnet?.suivision?.xyz';
     case 'localnet':
       return 'http://localhost:9001';
     default:
-      return 'https://testnet.suivision.xyz';
+      return 'https://testnet?.suivision?.xyz';
   }
 }
 
@@ -296,9 +296,9 @@ function getExplorerUrl(network: string): string {
 function getFaucetUrl(network: string): string | undefined {
   switch (network) {
     case 'testnet':
-      return 'https://faucet.testnet.sui.io';
+      return 'https://faucet?.testnet?.sui.io';
     case 'devnet':
-      return 'https://faucet.devnet.sui.io';
+      return 'https://faucet?.devnet?.sui.io';
     case 'localnet':
       return 'http://localhost:9123/gas';
     case 'mainnet':
@@ -314,15 +314,15 @@ function getFaucetUrl(network: string): string | undefined {
 function getDefaultWalrusNetworkUrl(network: string): string {
   switch (network) {
     case 'mainnet':
-      return 'https://wal.mainnet.sui.io';
+      return 'https://wal?.mainnet?.sui.io';
     case 'testnet':
-      return 'https://wal.testnet.sui.io';
+      return 'https://wal?.testnet?.sui.io';
     case 'devnet':
-      return 'https://wal.devnet.sui.io';
+      return 'https://wal?.devnet?.sui.io';
     case 'localnet':
       return 'http://localhost:31415';
     default:
-      return 'https://wal.testnet.sui.io';
+      return 'https://wal?.testnet?.sui.io';
   }
 }
 
@@ -332,14 +332,14 @@ function getDefaultWalrusNetworkUrl(network: string): string {
 function getDefaultWalrusApiPrefix(network: string): string {
   switch (network) {
     case 'mainnet':
-      return 'https://api.walrus.space/v1';
+      return 'https://api?.walrus?.space/v1';
     case 'testnet':
-      return 'https://api.walrus-testnet.walrus.space/v1';
+      return 'https://api.walrus-testnet?.walrus?.space/v1';
     case 'devnet':
-      return 'https://api.walrus-devnet.walrus.space/v1';
+      return 'https://api.walrus-devnet?.walrus?.space/v1';
     case 'localnet':
       return 'http://localhost:31418/v1';
     default:
-      return 'https://api.walrus-testnet.walrus.space/v1';
+      return 'https://api.walrus-testnet?.walrus?.space/v1';
   }
 }

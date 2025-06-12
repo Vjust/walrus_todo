@@ -66,16 +66,16 @@ export class BlockchainEventManager {
   async initialize(walletAddress?: string): Promise<void> {
     try {
       const config = await loadNetworkConfig(
-        process.env.NEXT_PUBLIC_NETWORK || 'testnet'
+        process?.env?.NEXT_PUBLIC_NETWORK || 'testnet'
       );
       
       if (!config) {
         throw new Error('Failed to load network configuration');
       }
 
-      this.suiClient = new SuiClient({ url: config.network.url });
-      this.packageId = config.deployment.packageId;
-      this.walletAddress = walletAddress || null;
+      this?.suiClient = new SuiClient({ url: config?.network?.url });
+      this?.packageId = config?.deployment?.packageId;
+      this?.walletAddress = walletAddress || null;
 
       // Blockchain event manager initialized
     } catch (error) {
@@ -87,19 +87,19 @@ export class BlockchainEventManager {
    * Add event listener for specific event types
    */
   addEventListener(eventType: string, handler: BlockchainEventHandler): void {
-    if (!this.handlers.has(eventType)) {
-      this.handlers.set(eventType, []);
+    if (!this?.handlers?.has(eventType as any)) {
+      this?.handlers?.set(eventType, []);
     }
-    this.handlers.get(eventType)!.push(handler);
+    this?.handlers?.get(eventType as any)!.push(handler as any);
   }
 
   /**
    * Remove event listener
    */
   removeEventListener(eventType: string, handler: BlockchainEventHandler): void {
-    const handlers = this.handlers.get(eventType);
+    const handlers = this?.handlers?.get(eventType as any);
     if (handlers) {
-      const index = handlers.indexOf(handler);
+      const index = handlers.indexOf(handler as any);
       if (index > -1) {
         handlers.splice(index, 1);
       }
@@ -114,7 +114,7 @@ export class BlockchainEventManager {
       return;
     }
 
-    this.isListening = true;
+    this?.isListening = true;
     // Starting blockchain event listener...
 
     try {
@@ -127,7 +127,7 @@ export class BlockchainEventManager {
       }
     } catch (error) {
       // Failed to start blockchain event listening
-      this.isListening = false;
+      this?.isListening = false;
     }
   }
 
@@ -135,17 +135,17 @@ export class BlockchainEventManager {
    * Stop listening for blockchain events
    */
   stopListening(): void {
-    this.isListening = false;
+    this?.isListening = false;
     
     // Clean up all subscriptions
-    this.subscriptions.forEach(cleanup => {
+    this?.subscriptions?.forEach(cleanup => {
       try {
         cleanup();
       } catch (error) {
         // Error cleaning up subscription
       }
     });
-    this.subscriptions.clear();
+    this?.subscriptions?.clear();
     
     // Blockchain event listener stopped
   }
@@ -154,7 +154,7 @@ export class BlockchainEventManager {
    * Update wallet address and restart subscriptions
    */
   async updateWalletAddress(walletAddress: string): Promise<void> {
-    this.walletAddress = walletAddress;
+    this?.walletAddress = walletAddress;
     
     if (this.isListening) {
       // Restart subscriptions with new wallet
@@ -171,7 +171,7 @@ export class BlockchainEventManager {
 
     try {
       // Subscribe to all events from the TodoNFT module
-      const subscription = await this.suiClient.subscribeEvent({
+      const subscription = await this?.suiClient?.subscribeEvent({
         filter: {
           MoveModule: {
             package: this.packageId,
@@ -184,7 +184,7 @@ export class BlockchainEventManager {
       });
 
       // Store cleanup function
-      this.subscriptions.set('todo_events', () => {
+      this?.subscriptions?.set('todo_events', () => {
         // Subscription cleanup will be handled by the return value
       });
 
@@ -202,7 +202,7 @@ export class BlockchainEventManager {
 
     try {
       // Subscribe to object changes for the wallet
-      const subscription = await this.suiClient.subscribeEvent({
+      const subscription = await this?.suiClient?.subscribeEvent({
         filter: {
           Sender: walletAddress
         },
@@ -212,7 +212,7 @@ export class BlockchainEventManager {
       });
 
       // Store cleanup function
-      this.subscriptions.set(`wallet_${walletAddress}`, () => {
+      this?.subscriptions?.set(`wallet_${walletAddress}`, () => {
         // Subscription cleanup will be handled by the return value
       });
 
@@ -239,16 +239,16 @@ export class BlockchainEventManager {
       // Parse event type and data based on the Move event structure
       if (type.includes('TodoNFTCreated') || type.includes('TodoCreated')) {
         eventType = TodoEventType.TODO_CREATED;
-        todoData = this.parseCreatedEvent(parsedJson);
+        todoData = this.parseCreatedEvent(parsedJson as any);
       } else if (type.includes('TodoNFTCompleted') || type.includes('TodoCompleted')) {
         eventType = TodoEventType.TODO_COMPLETED;
-        todoData = this.parseCompletedEvent(parsedJson);
+        todoData = this.parseCompletedEvent(parsedJson as any);
       } else if (type.includes('TodoNFTUpdated')) {
         eventType = TodoEventType.TODO_UPDATED;
-        todoData = this.parseUpdatedEvent(parsedJson);
+        todoData = this.parseUpdatedEvent(parsedJson as any);
       } else if (type.includes('TodoNFTTransferred') || type.includes('TodoTransferred')) {
         eventType = TodoEventType.TODO_TRANSFERRED;
-        todoData = this.parseTransferredEvent(parsedJson);
+        todoData = this.parseTransferredEvent(parsedJson as any);
       } else {
         // Generic todo update
         eventType = TodoEventType.TODO_UPDATED;
@@ -259,7 +259,7 @@ export class BlockchainEventManager {
       this.emitEvent({
         type: eventType,
         data: todoData,
-        timestamp: new Date(Number(timestampMs) || Date.now()).toISOString(),
+        timestamp: new Date(Number(timestampMs as any) || Date.now()).toISOString(),
         transactionId: (id as any)?.txDigest,
         objectId: String(parsedJson?.todo_id || parsedJson?.object_id || '')
       });
@@ -273,13 +273,13 @@ export class BlockchainEventManager {
    */
   private processWalletEvent(walletAddress: string, eventData: SuiEventData): void {
     // Process events specifically for this wallet
-    this.processBlockchainEvent(eventData);
+    this.processBlockchainEvent(eventData as any);
   }
 
   /**
    * Parse TodoCreated event data
    */
-  private parseCreatedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
+  private parseCreatedEvent(parsedJson: SuiEventData?.["parsedJson"]): Partial<Todo> | null {
     if (!parsedJson) {return null;}
 
     return {
@@ -297,7 +297,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoCompleted event data
    */
-  private parseCompletedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
+  private parseCompletedEvent(parsedJson: SuiEventData?.["parsedJson"]): Partial<Todo> | null {
     if (!parsedJson) {return null;}
 
     return {
@@ -316,7 +316,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoUpdated event data
    */
-  private parseUpdatedEvent(parsedJson: SuiEventData['parsedJson']): Partial<Todo> | null {
+  private parseUpdatedEvent(parsedJson: SuiEventData?.["parsedJson"]): Partial<Todo> | null {
     if (!parsedJson) {return null;}
 
     return {
@@ -336,7 +336,7 @@ export class BlockchainEventManager {
   /**
    * Parse TodoTransferred event data
    */
-  private parseTransferredEvent(parsedJson: SuiEventData['parsedJson']): TransferEventData | null {
+  private parseTransferredEvent(parsedJson: SuiEventData?.["parsedJson"]): TransferEventData | null {
     if (!parsedJson) {return null;}
 
     return {
@@ -350,11 +350,11 @@ export class BlockchainEventManager {
    * Emit event to all registered handlers
    */
   private emitEvent(event: BlockchainEvent): void {
-    const handlers = this.handlers.get(event.type);
+    const handlers = this?.handlers?.get(event.type);
     if (handlers) {
       handlers.forEach(handler => {
         try {
-          handler(event);
+          handler(event as any);
         } catch (error) {
           // Error in event handler
         }
@@ -362,11 +362,11 @@ export class BlockchainEventManager {
     }
 
     // Also emit to wildcard listeners
-    const wildcardHandlers = this.handlers.get('*');
+    const wildcardHandlers = this?.handlers?.get('*');
     if (wildcardHandlers) {
       wildcardHandlers.forEach(handler => {
         try {
-          handler(event);
+          handler(event as any);
         } catch (error) {
           // Error in wildcard event handler
         }
@@ -381,7 +381,7 @@ export class BlockchainEventManager {
    */
   async subscribeToEvents(owner?: string): Promise<void> {
     if (owner) {
-      await this.updateWalletAddress(owner);
+      await this.updateWalletAddress(owner as any);
     }
     await this.startListening();
   }
@@ -391,7 +391,7 @@ export class BlockchainEventManager {
    */
   unsubscribeAll(): void {
     this.stopListening();
-    this.handlers.clear();
+    this?.handlers?.clear();
   }
 
   /**
@@ -399,9 +399,9 @@ export class BlockchainEventManager {
    */
   destroy(): void {
     this.unsubscribeAll();
-    this.suiClient = null;
-    this.packageId = null;
-    this.walletAddress = null;
+    this?.suiClient = null;
+    this?.packageId = null;
+    this?.walletAddress = null;
   }
 
   /**
@@ -414,7 +414,7 @@ export class BlockchainEventManager {
       error: null,
       lastReconnectAttempt: 0,
       reconnectAttempts: 0,
-      subscriptionCount: this.subscriptions.size,
+      subscriptionCount: this?.subscriptions?.size,
     };
   }
 
@@ -471,12 +471,12 @@ export function getEventManager(): BlockchainEventManager {
 
 export function transformEventToTodoUpdate(event: TodoNFTEvent): Partial<Todo> | null {
   return {
-    id: event.data.todo_id,
-    title: event.data.title || 'Updated Todo',
-    owner: event.data.owner,
+    id: event?.data?.todo_id,
+    title: event?.data?.title || 'Updated Todo',
+    owner: event?.data?.owner,
     blockchainStored: true,
-    objectId: event.data.todo_id,
-    updatedAt: new Date(event.data.timestamp).toISOString(),
+    objectId: event?.data?.todo_id,
+    updatedAt: new Date(event?.data?.timestamp).toISOString(),
   };
 }
 

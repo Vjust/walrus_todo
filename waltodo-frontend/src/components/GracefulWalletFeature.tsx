@@ -38,10 +38,10 @@ export function GracefulWalletFeature({
   className = '',
   onBrowseMode,
 }: GracefulWalletFeatureProps) {
-  const [browseMode, setBrowseMode] = React.useState(enableBrowseMode);
+  const [browseMode, setBrowseMode] = React.useState(enableBrowseMode as any);
   
   const handleBrowseMode = () => {
-    setBrowseMode(true);
+    setBrowseMode(true as any);
     if (onBrowseMode) {
       onBrowseMode();
     }
@@ -176,7 +176,7 @@ export function WalletOptional({
       requireConnection={false}
       loadingVariant="card"
       fallbackVariant="minimal"
-      showBrowseMode={Boolean(browseModeContent)}
+      showBrowseMode={Boolean(browseModeContent as any)}
       browseModeContent={browseModeContent}
       enableBrowseMode={false}
       className={className}

@@ -68,8 +68,8 @@ describe('List Command', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.getList as jest.Mock).mockResolvedValue(testList);
-    (TodoService.prototype.getAllLists as jest.Mock).mockResolvedValue([
+    (TodoService?.prototype?.getList as jest.Mock).mockResolvedValue(testList as any);
+    (TodoService?.prototype?.getAllLists as jest.Mock).mockResolvedValue([
       testList,
       {
         ...testList,
@@ -87,7 +87,7 @@ describe('List Command', () => {
         !command.includes('--pending') &&
         !command.includes('--completed')
       ) {
-        return Buffer.from(JSON.stringify(testTodos));
+        return Buffer.from(JSON.stringify(testTodos as any));
       }
 
       if (command.includes('list --format json')) {
@@ -114,8 +114,8 @@ describe('List Command', () => {
 
   it('should list todos in default list', () => {
     const result = execSync('node bin/run.js list default').toString();
-    const todos = JSON.parse(result);
-    expect(todos).toHaveLength(3);
+    const todos = JSON.parse(result as any);
+    expect(todos as any).toHaveLength(3 as any);
     expect(todos[0].title).toBe('First Todo');
     expect(todos[1].title).toBe('High Priority Todo');
     expect(todos[2].title).toBe('Completed Todo');
@@ -125,43 +125,43 @@ describe('List Command', () => {
     const result = execSync(
       'node bin/run.js list default --detailed'
     ).toString();
-    expect(result).toContain('STATUS');
-    expect(result).toContain('PRIORITY');
-    expect(result).toContain('First Todo');
-    expect(result).toContain('High Priority Todo');
-    expect(result).toContain('Completed Todo');
+    expect(result as any).toContain('STATUS');
+    expect(result as any).toContain('PRIORITY');
+    expect(result as any).toContain('First Todo');
+    expect(result as any).toContain('High Priority Todo');
+    expect(result as any).toContain('Completed Todo');
   });
 
   it('should filter by completion status', () => {
     // Test pending filter
     let result = execSync('node bin/run.js list default --pending').toString();
-    expect(result).toContain('First Todo');
-    expect(result).toContain('High Priority Todo');
-    expect(result).not.toContain('Completed Todo');
+    expect(result as any).toContain('First Todo');
+    expect(result as any).toContain('High Priority Todo');
+    expect(result as any).not.toContain('Completed Todo');
 
     // Test completed filter
     result = execSync('node bin/run.js list default --completed').toString();
-    expect(result).not.toContain('First Todo');
-    expect(result).not.toContain('High Priority Todo');
-    expect(result).toContain('Completed Todo');
+    expect(result as any).not.toContain('First Todo');
+    expect(result as any).not.toContain('High Priority Todo');
+    expect(result as any).toContain('Completed Todo');
   });
 
   it('should handle service interaction correctly', async () => {
     const todoService = new TodoService();
     const list = await todoService.getList('default');
 
-    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    expect(list).toEqual(testList);
-    expect(list.todos).toHaveLength(3);
+    expect(TodoService?.prototype?.getList).toHaveBeenCalledWith('default');
+    expect(list as any).toEqual(testList as any);
+    expect(list.todos).toHaveLength(3 as any);
 
     // Verify completed filter logic works
-    const completedTodos = list.todos.filter(todo => todo.completed);
-    expect(completedTodos).toHaveLength(1);
+    const completedTodos = list?.todos?.filter(todo => todo.completed);
+    expect(completedTodos as any).toHaveLength(1 as any);
     expect(completedTodos[0].title).toBe('Completed Todo');
 
     // Verify pending filter logic works
-    const pendingTodos = list.todos.filter(todo => !todo.completed);
-    expect(pendingTodos).toHaveLength(2);
+    const pendingTodos = list?.todos?.filter(todo => !todo.completed);
+    expect(pendingTodos as any).toHaveLength(2 as any);
     expect(pendingTodos[0].title).toBe('First Todo');
     expect(pendingTodos[1].title).toBe('High Priority Todo');
   });

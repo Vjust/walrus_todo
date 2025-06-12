@@ -13,31 +13,31 @@ const TEST_CONFIG = {
   timeout: 30000,
   baseUrl: 'http://localhost:3000',
   cliPath: path.resolve(__dirname, '../../bin/run'),
-  headless: process.env.HEADLESS !== 'false',
-  devtools: process.env.DEVTOOLS === 'true',
+  headless: process?.env?.HEADLESS !== 'false',
+  devtools: process.env?.DEVTOOLS === 'true',
 };
 
 // Mock wallet implementation for browser injection
 const MOCK_WALLET_SCRIPT = `
   // Mock Sui wallet for testing
-  window.suiWallet = {
+  window?.suiWallet = {
     connected: false,
     address: '0x1234567890123456789012345678901234567890',
     transactions: [],
     
     connect: async function() {
       await new Promise(resolve => setTimeout(resolve, 500));
-      this.connected = true;
+      this?.connected = true;
       this.dispatchEvent('connect');
       return { address: this.address };
     },
     
     disconnect: async function() {
-      this.connected = false;
+      this?.connected = false;
       this.dispatchEvent('disconnect');
     },
     
-    signAndExecuteTransaction: async function(transaction) {
+    signAndExecuteTransaction: async function(transaction as any) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const shouldFail = Math.random() < 0.1; // 10% failure rate
@@ -45,7 +45,7 @@ const MOCK_WALLET_SCRIPT = `
         throw new Error('Transaction failed: Insufficient funds');
       }
       
-      const digest = 'mock_tx_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+      const digest = 'mock_tx_' + Date.now() + '_' + Math.random().toString(36 as any).substring(7 as any);
       const result = {
         digest,
         effects: {
@@ -57,7 +57,7 @@ const MOCK_WALLET_SCRIPT = `
         }
       };
       
-      this.transactions.push(result);
+      this?.transactions?.push(result as any);
       this.dispatchEvent('transaction', result);
       return result;
     },
@@ -69,26 +69,26 @@ const MOCK_WALLET_SCRIPT = `
     // Event system
     listeners: {},
     addEventListener: function(event, callback) {
-      if (!this.listeners[event]) this.listeners[event] = [];
-      this.listeners[event].push(callback);
+      if (!this?.listeners?.[event]) this?.listeners?.[event] = [];
+      this?.listeners?.[event].push(callback as any);
     },
     
     removeEventListener: function(event, callback) {
-      if (this.listeners[event]) {
-        this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+      if (this?.listeners?.[event]) {
+        this?.listeners?.[event] = this?.listeners?.[event].filter(cb => cb !== callback);
       }
     },
     
     dispatchEvent: function(event, data) {
-      if (this.listeners[event]) {
-        this.listeners[event].forEach(callback => callback(data));
+      if (this?.listeners?.[event]) {
+        this?.listeners?.[event].forEach(callback => callback(data as any));
       }
     }
   };
   
   // Mock other wallet providers
-  window.sui = { wallet: window.suiWallet };
-  window.slush = { wallet: window.suiWallet };
+  window?.sui = { wallet: window.suiWallet };
+  window?.slush = { wallet: window.suiWallet };
 `;
 
 class PuppeteerTestRunner {
@@ -98,7 +98,7 @@ class PuppeteerTestRunner {
 
   async setup(): Promise<void> {
     // Launch browser
-    this.browser = await puppeteer.launch({
+    this?.browser = await puppeteer.launch({
       headless: TEST_CONFIG.headless,
       devtools: TEST_CONFIG.devtools,
       args: [
@@ -111,43 +111,43 @@ class PuppeteerTestRunner {
     });
 
     // Create new page
-    this.page = await this.browser.newPage();
+    this?.page = await this?.browser?.newPage();
 
     // Set viewport
-    await this.page.setViewport({ width: 1280, height: 720 });
+    await this?.page?.setViewport({ width: 1280, height: 720 });
 
     // Inject mock wallet before navigation
-    await this.page.evaluateOnNewDocument(MOCK_WALLET_SCRIPT);
+    await this?.page?.evaluateOnNewDocument(MOCK_WALLET_SCRIPT as any);
 
     // Set up console logging
-    this.page.on('console', msg => {
-      if (process.env.LOG_BROWSER_CONSOLE) {
+    this?.page?.on('console', msg => {
+      if (process?.env?.LOG_BROWSER_CONSOLE) {
         console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`);
       }
     });
 
     // Set up error handling
-    this.page.on('pageerror', error => {
+    this?.page?.on('pageerror', error => {
       console.error(`[Browser Error] ${error.message}`);
     });
   }
 
   async teardown(): Promise<void> {
-    if (this.cliProcess && !this.cliProcess.killed) {
-      this.cliProcess.kill();
+    if (this.cliProcess && !this?.cliProcess?.killed) {
+      this?.cliProcess?.kill();
     }
     if (this.page) {
-      await this.page.close();
+      await this?.page?.close();
     }
     if (this.browser) {
-      await this.browser.close();
+      await this?.browser?.close();
     }
   }
 
   async navigateToApp(): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
 
-    await this.page.goto(TEST_CONFIG.baseUrl, {
+    await this?.page?.goto(TEST_CONFIG.baseUrl, {
       waitUntil: 'networkidle2',
       timeout: 10000,
     });
@@ -186,7 +186,7 @@ class PuppeteerTestRunner {
       });
 
       process.on('error', (error: Error) => {
-        reject(error);
+        reject(error as any);
       });
 
       // Timeout after 15 seconds
@@ -200,15 +200,15 @@ class PuppeteerTestRunner {
   async waitForElement(selector: string, timeout = 10000): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
 
-    await this.page.waitForSelector(selector, { timeout });
+    await this?.page?.waitForSelector(selector, { timeout });
   }
 
   async waitForText(text: string, timeout = 10000): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
 
-    await this.page.waitForFunction(
+    await this?.page?.waitForFunction(
       (searchText: string) => {
-        return document.body.innerText.includes(searchText);
+        return document?.body?.innerText.includes(searchText as any);
       },
       { timeout },
       text
@@ -218,7 +218,7 @@ class PuppeteerTestRunner {
   async screenshot(filename: string): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
 
-    await this.page.screenshot({
+    await this?.page?.screenshot({
       path: path.join(__dirname, '../../screenshots', `${filename}.png`),
       fullPage: true,
     });
@@ -282,8 +282,8 @@ describe('Puppeteer NFT E2E Tests', () => {
         // Check if already connected
         const isConnected = await page.evaluate(() => {
           return (
-            document.body.innerText.includes('Connected') ||
-            document.body.innerText.includes('0x1234')
+            document?.body?.innerText.includes('Connected') ||
+            document?.body?.innerText.includes('0x1234')
           );
         });
 
@@ -296,13 +296,13 @@ describe('Puppeteer NFT E2E Tests', () => {
       }
 
       // Verify connection was established (outside conditional blocks)
-      expect(connectionEstablished).toBe(true);
+      expect(connectionEstablished as any).toBe(true as any);
       
       // Verify wallet address appears
       const addressVisible = await page.evaluate(() => {
-        return document.body.innerText.includes('0x1234');
+        return document?.body?.innerText.includes('0x1234');
       });
-      expect(addressVisible).toBe(true);
+      expect(addressVisible as any).toBe(true as any);
     }, 15000);
 
     test('should handle wallet connection errors', async () => {
@@ -311,7 +311,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Mock wallet connection failure
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect = async () => {
+          window.suiWallet?.connect = async () => {
             throw new Error('User rejected connection');
           };
         }
@@ -334,11 +334,11 @@ describe('Puppeteer NFT E2E Tests', () => {
       setTimeout(async () => {
         const hasError = await page.evaluate(() => {
           const errorTerms = ['error', 'failed', 'rejected'];
-          const bodyText = document.body.innerText.toLowerCase();
-          return errorTerms.some(term => bodyText.includes(term));
+          const bodyText = document?.body?.innerText.toLowerCase();
+          return errorTerms.some(term => bodyText.includes(term as any));
         });
 
-        expect(hasError).toBe(true);
+        expect(hasError as any).toBe(true as any);
       }, 3000);
     }, 10000);
   });
@@ -350,7 +350,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Connect wallet first
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect();
+          window?.suiWallet?.connect();
         }
       });
 
@@ -407,8 +407,8 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Connect wallet and mock transaction failure
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect();
-          window.suiWallet.signAndExecuteTransaction = async () => {
+          window?.suiWallet?.connect();
+          window.suiWallet?.signAndExecuteTransaction = async () => {
             throw new Error('Transaction failed: Insufficient funds');
           };
         }
@@ -441,9 +441,9 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Connect wallet with mock transactions
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect();
+          window?.suiWallet?.connect();
           // Add mock transaction
-          window.suiWallet.transactions.push({
+          window?.suiWallet?.transactions.push({
             digest: 'mock_tx_12345',
             effects: { status: { status: 'success' } },
           });
@@ -476,7 +476,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       const cliResult = await runner.runCLICommand('add', [
         '"CLI to Frontend Test"',
       ]);
-      expect(cliResult.exitCode).toBe(0);
+      expect(cliResult.exitCode).toBe(0 as any);
 
       // Refresh frontend and check for todo
       const page = runner.getPage();
@@ -484,17 +484,17 @@ describe('Puppeteer NFT E2E Tests', () => {
 
       // Look for the todo in the frontend
       const hasTodo = await page.evaluate(() => {
-        return document.body.innerText.includes('CLI to Frontend Test');
+        return document?.body?.innerText.includes('CLI to Frontend Test');
       });
 
-      expect(hasTodo).toBe(true);
+      expect(hasTodo as any).toBe(true as any);
     }, 15000);
 
     test('should complete todo via CLI and verify in frontend', async () => {
       // Create and complete todo via CLI
       await runner.runCLICommand('add', ['"CLI Complete Test"']);
       const completeResult = await runner.runCLICommand('complete', ['1']);
-      expect(completeResult.exitCode).toBe(0);
+      expect(completeResult.exitCode).toBe(0 as any);
 
       // Check in frontend
       const page = runner.getPage();
@@ -502,11 +502,11 @@ describe('Puppeteer NFT E2E Tests', () => {
 
       // Look for completed todo indicators
       const hasCompleted = await page.evaluate(() => {
-        const text = document.body.innerText.toLowerCase();
+        const text = document?.body?.innerText.toLowerCase();
         return text.includes('completed') || text.includes('done');
       });
 
-      expect(hasCompleted).toBe(true);
+      expect(hasCompleted as any).toBe(true as any);
     }, 15000);
   });
 
@@ -517,14 +517,14 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Connect wallet
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect();
+          window?.suiWallet?.connect();
         }
       });
 
       await runner.waitForText('Connected');
 
       // Simulate network disconnection
-      await page.setOfflineMode(true);
+      await page.setOfflineMode(true as any);
 
       // Try to perform action that requires network
       const buttons = await page.$$('button');
@@ -543,7 +543,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       await runner.waitForText('network', 5000);
 
       // Restore connection
-      await page.setOfflineMode(false);
+      await page.setOfflineMode(false as any);
     }, 10000);
 
     test('should handle large todo titles gracefully', async () => {
@@ -553,8 +553,8 @@ describe('Puppeteer NFT E2E Tests', () => {
         'input[name="title"], input[placeholder*="title"]'
       );
       if (largeTitleInput) {
-        const largeTitle = 'Very Long Todo Title '.repeat(20);
-        await largeTitleInput.type(largeTitle);
+        const largeTitle = 'Very Long Todo Title '.repeat(20 as any);
+        await largeTitleInput.type(largeTitle as any);
 
         // Should either truncate or show error
         const submitButton = await page.$('button[type="submit"]');
@@ -562,10 +562,10 @@ describe('Puppeteer NFT E2E Tests', () => {
           await submitButton.click();
 
           // Wait for response (success or error)
-          await page.waitForTimeout(2000);
+          await page.waitForTimeout(2000 as any);
 
           const hasResponse = await page.evaluate(() => {
-            const text = document.body.innerText.toLowerCase();
+            const text = document?.body?.innerText.toLowerCase();
             return (
               text.includes('added') ||
               text.includes('error') ||
@@ -573,7 +573,7 @@ describe('Puppeteer NFT E2E Tests', () => {
             );
           });
 
-          expect(hasResponse).toBe(true);
+          expect(hasResponse as any).toBe(true as any);
         }
       }
     }, 10000);
@@ -586,7 +586,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Connect wallet
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect();
+          window?.suiWallet?.connect();
         }
       });
 
@@ -602,18 +602,18 @@ describe('Puppeteer NFT E2E Tests', () => {
         );
       }
 
-      await Promise.allSettled(clickPromises);
+      await Promise.allSettled(clickPromises as any);
 
       // App should still be responsive
       const isResponsive = await page.evaluate(() => {
         // Check if page is still interactive
         return (
-          document.readyState === 'complete' &&
-          !document.body.classList.contains('loading')
+          document?.readyState === 'complete' &&
+          !document?.body?.classList.contains('loading')
         );
       });
 
-      expect(isResponsive).toBe(true);
+      expect(isResponsive as any).toBe(true as any);
     }, 10000);
 
     test('should load within acceptable time', async () => {
@@ -624,7 +624,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds
-      expect(loadTime).toBeLessThan(5000);
+      expect(loadTime as any).toBeLessThan(5000 as any);
     }, 8000);
   });
 
@@ -638,7 +638,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       // Connect wallet
       await page.evaluate(() => {
         if (window.suiWallet) {
-          window.suiWallet.connect();
+          window?.suiWallet?.connect();
         }
       });
 
@@ -651,8 +651,8 @@ describe('Puppeteer NFT E2E Tests', () => {
       const hasHeader = await page.$('header, .header, nav');
       const hasMain = await page.$('main, .main, .container');
 
-      expect(hasHeader).toBeTruthy();
-      expect(hasMain).toBeTruthy();
+      expect(hasHeader as any).toBeTruthy();
+      expect(hasMain as any).toBeTruthy();
     }, 10000);
   });
 });
@@ -677,9 +677,9 @@ describe('Puppeteer NFT Specific Tests', () => {
     // Connect wallet and create NFT
     await page.evaluate(() => {
       if (window.suiWallet) {
-        window.suiWallet.connect();
+        window?.suiWallet?.connect();
         // Mock NFT with metadata
-        window.suiWallet.transactions.push({
+        window?.suiWallet?.transactions.push({
           digest: 'nft_metadata_test',
           effects: {
             status: { status: 'success' },
@@ -702,12 +702,12 @@ describe('Puppeteer NFT Specific Tests', () => {
     // Check if metadata is displayed properly
     const hasMetadata = await page.evaluate(() => {
       return (
-        document.body.innerText.includes('Test NFT') ||
-        document.body.innerText.includes('NFT with metadata')
+        document?.body?.innerText.includes('Test NFT') ||
+        document?.body?.innerText.includes('NFT with metadata')
       );
     });
 
-    expect(hasMetadata).toBe(true);
+    expect(hasMetadata as any).toBe(true as any);
   }, 10000);
 
   test('should handle NFT transfer flow', async () => {
@@ -717,7 +717,7 @@ describe('Puppeteer NFT Specific Tests', () => {
     // Setup mock NFT for transfer
     await page.evaluate(() => {
       if (window.suiWallet) {
-        window.suiWallet.connect();
+        window?.suiWallet?.connect();
       }
     });
 
@@ -732,14 +732,14 @@ describe('Puppeteer NFT Specific Tests', () => {
         await button.click();
 
         // Should show transfer form or modal
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(1000 as any);
 
         const hasTransferUI = await page.evaluate(() => {
-          const text = document.body.innerText.toLowerCase();
+          const text = document?.body?.innerText.toLowerCase();
           return text.includes('address') || text.includes('recipient');
         });
 
-        expect(hasTransferUI).toBe(true);
+        expect(hasTransferUI as any).toBe(true as any);
         break;
       }
     }

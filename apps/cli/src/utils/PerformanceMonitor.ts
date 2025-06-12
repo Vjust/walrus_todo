@@ -44,15 +44,15 @@ export class PerformanceMonitor {
   private maxMetrics = 10000; // Prevent memory overflow
 
   constructor(metricsDir = '.waltodo-cache/performance') {
-    this.logger = new Logger('PerformanceMonitor');
-    this.metricsFile = path.join(process.cwd(), metricsDir, 'metrics.json');
+    this?.logger = new Logger('PerformanceMonitor');
+    this?.metricsFile = path.join(process.cwd(), metricsDir, 'metrics.json');
     this.ensureMetricsDir();
     this.loadExistingMetrics();
   }
 
   private ensureMetricsDir(): void {
     const dir = path.dirname(this.metricsFile);
-    if (!fs.existsSync(dir)) {
+    if (!fs.existsSync(dir as any)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   }
@@ -61,15 +61,15 @@ export class PerformanceMonitor {
     try {
       if (fs.existsSync(this.metricsFile)) {
         const data = fs.readFileSync(this.metricsFile, 'utf-8');
-        this.metrics = JSON.parse(data);
+        this?.metrics = JSON.parse(data as any);
         // Keep only recent metrics to prevent memory issues
-        if (this.metrics.length > this.maxMetrics) {
-          this.metrics = this.metrics.slice(-this.maxMetrics);
+        if (this?.metrics?.length > this.maxMetrics) {
+          this?.metrics = this?.metrics?.slice(-this.maxMetrics);
         }
       }
     } catch (error) {
-      this.logger.warn('Failed to load existing metrics:', error);
-      this.metrics = [];
+      this?.logger?.warn('Failed to load existing metrics:', error);
+      this?.metrics = [];
     }
   }
 
@@ -77,12 +77,12 @@ export class PerformanceMonitor {
     const start = performance.now();
     const cpuStart = process.cpuUsage();
 
-    this.activeOperations.set(operationId, {
+    this?.activeOperations?.set(operationId, {
       start,
       cpuStart,
     });
 
-    this.logger.debug(`Started tracking: ${operation} (${operationId})`);
+    this?.logger?.debug(`Started tracking: ${operation} (${operationId})`);
   }
 
   endOperation(
@@ -91,7 +91,7 @@ export class PerformanceMonitor {
     success = true,
     metadata?: Record<string, any>
   ): PerformanceMetric {
-    const activeOp = this.activeOperations.get(operationId);
+    const activeOp = this?.activeOperations?.get(operationId as any);
     if (!activeOp) {
       throw new Error(`No active operation found for ID: ${operationId}`);
     }
@@ -112,20 +112,20 @@ export class PerformanceMonitor {
       cpuUsage,
     };
 
-    this.metrics.push(metric);
-    this.activeOperations.delete(operationId);
+    this?.metrics?.push(metric as any);
+    this?.activeOperations?.delete(operationId as any);
 
     // Keep metrics under limit
-    if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
+    if (this?.metrics?.length > this.maxMetrics) {
+      this?.metrics = this?.metrics?.slice(-this.maxMetrics);
     }
 
-    this.logger.debug(
-      `Completed tracking: ${operation} (${duration.toFixed(2)}ms)`
+    this?.logger?.debug(
+      `Completed tracking: ${operation} (${duration.toFixed(2 as any)}ms)`
     );
 
     // Auto-save periodically
-    if (this.metrics.length % 10 === 0) {
+    if (this?.metrics?.length % 10 === 0) {
       this.saveMetrics();
     }
 
@@ -147,7 +147,7 @@ export class PerformanceMonitor {
     } catch (error) {
       this.endOperation(operationId, operation, false, {
         ...metadata,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
       throw error;
     }
@@ -168,7 +168,7 @@ export class PerformanceMonitor {
     } catch (error) {
       this.endOperation(operationId, operation, false, {
         ...metadata,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
       throw error;
     }
@@ -177,10 +177,10 @@ export class PerformanceMonitor {
   generateReport(timeRangeMs?: number): PerformanceReport {
     const now = Date.now();
     const relevantMetrics = timeRangeMs
-      ? this.metrics.filter(m => now - m.timestamp <= timeRangeMs)
+      ? this?.metrics?.filter(m => now - m.timestamp <= timeRangeMs)
       : this.metrics;
 
-    if (relevantMetrics.length === 0) {
+    if (relevantMetrics?.length === 0) {
       return {
         totalOperations: 0,
         avgDuration: 0,
@@ -217,11 +217,11 @@ export class PerformanceMonitor {
       operationBreakdown[metric.operation].count++;
     }
 
-    for (const [operation, stats] of Object.entries(operationBreakdown)) {
-      const opMetrics = relevantMetrics.filter(m => m.operation === operation);
-      stats.avgDuration =
+    for (const [operation, stats] of Object.entries(operationBreakdown as any)) {
+      const opMetrics = relevantMetrics.filter(m => m?.operation === operation);
+      stats?.avgDuration =
         opMetrics.reduce((sum, m) => sum + m.duration, 0) / opMetrics.length;
-      stats.successRate =
+      stats?.successRate =
         opMetrics.filter(m => m.success).length / opMetrics.length;
     }
 
@@ -253,30 +253,30 @@ export class PerformanceMonitor {
   }
 
   getFailedOperations(): PerformanceMetric[] {
-    return this.metrics.filter(m => !m.success);
+    return this?.metrics?.filter(m => !m.success);
   }
 
   saveMetrics(): void {
     try {
       fs.writeFileSync(this.metricsFile, JSON.stringify(this.metrics, null, 2));
-      this.logger.debug(
-        `Saved ${this.metrics.length} metrics to ${this.metricsFile}`
+      this?.logger?.debug(
+        `Saved ${this?.metrics?.length} metrics to ${this.metricsFile}`
       );
     } catch (error) {
-      this.logger.error('Failed to save metrics:', error);
+      this?.logger?.error('Failed to save metrics:', error);
     }
   }
 
   clearMetrics(): void {
-    this.metrics = [];
+    this?.metrics = [];
     if (fs.existsSync(this.metricsFile)) {
       fs.unlinkSync(this.metricsFile);
     }
-    this.logger.info('Performance metrics cleared');
+    this?.logger?.info('Performance metrics cleared');
   }
 
   exportReport(format: 'json' | 'csv' = 'json', timeRangeMs?: number): string {
-    const report = this.generateReport(timeRangeMs);
+    const report = this.generateReport(timeRangeMs as any);
 
     if (format === 'json') {
       return JSON.stringify(report, null, 2);
@@ -291,9 +291,9 @@ export class PerformanceMonitor {
       const rows = Object.entries(report.operationBreakdown).map(
         ([op, stats]) => [
           op,
-          stats.count.toString(),
-          stats.avgDuration.toFixed(2),
-          (stats.successRate * 100).toFixed(2) + '%',
+          stats?.count?.toString(),
+          stats?.avgDuration?.toFixed(2 as any),
+          (stats.successRate * 100).toFixed(2 as any) + '%',
         ]
       );
 
@@ -329,9 +329,9 @@ export class JobManager {
 
   constructor(configDir?: string) {
     const baseDir = configDir || path.join(process.cwd(), '.waltodo-cache');
-    this.jobsDir = path.join(baseDir, 'jobs');
-    this.jobsFile = path.join(this.jobsDir, 'jobs.json');
-    this.logger = new Logger('JobManager');
+    this?.jobsDir = path.join(baseDir, 'jobs');
+    this?.jobsFile = path.join(this.jobsDir, 'jobs.json');
+    this?.logger = new Logger('JobManager');
     this.ensureJobsDir();
     this.loadJobs();
   }
@@ -346,24 +346,24 @@ export class JobManager {
     try {
       if (fs.existsSync(this.jobsFile)) {
         const data = fs.readFileSync(this.jobsFile, 'utf8');
-        const jobs: BackgroundJob[] = JSON.parse(data);
+        const jobs: BackgroundJob[] = JSON.parse(data as any);
         jobs.forEach(job => {
-          this.activeJobs.set(job.id, job);
+          this?.activeJobs?.set(job.id, job);
         });
-        this.logger.debug(`Loaded ${jobs.length} jobs from storage`);
+        this?.logger?.debug(`Loaded ${jobs.length} jobs from storage`);
       }
     } catch (error) {
-      this.logger.warn('Failed to load jobs:', error);
+      this?.logger?.warn('Failed to load jobs:', error);
     }
   }
 
   private saveJobs(): void {
     try {
-      const jobs = Array.from(this.activeJobs.values());
+      const jobs = Array.from(this?.activeJobs?.values());
       fs.writeFileSync(this.jobsFile, JSON.stringify(jobs, null, 2));
-      this.logger.debug(`Saved ${jobs.length} jobs to storage`);
+      this?.logger?.debug(`Saved ${jobs.length} jobs to storage`);
     } catch (error) {
-      this.logger.error('Failed to save jobs:', error);
+      this?.logger?.error('Failed to save jobs:', error);
     }
   }
 
@@ -389,22 +389,22 @@ export class JobManager {
       metadata: {},
     };
 
-    this.activeJobs.set(id, job);
+    this?.activeJobs?.set(id, job);
     this.saveJobs();
-    this.logger.info(`Created background job: ${id} for command: ${command}`);
+    this?.logger?.info(`Created background job: ${id} for command: ${command}`);
 
     return job;
   }
 
   public updateJob(jobId: string, updates: Partial<BackgroundJob>): void {
-    const job = this.activeJobs.get(jobId);
+    const job = this?.activeJobs?.get(jobId as any);
     if (!job) {
-      this.logger.warn(`Job not found for update: ${jobId}`);
+      this?.logger?.warn(`Job not found for update: ${jobId}`);
       return;
     }
 
     Object.assign(job, updates);
-    this.activeJobs.set(jobId, job);
+    this?.activeJobs?.set(jobId, job);
     this.saveJobs();
   }
 
@@ -414,12 +414,12 @@ export class JobManager {
     processedItems?: number,
     totalItems?: number
   ): void {
-    const job = this.activeJobs.get(jobId);
+    const job = this?.activeJobs?.get(jobId as any);
     if (!job) return;
 
-    job.progress = Math.min(100, Math.max(0, progress));
-    if (processedItems !== undefined) job.processedItems = processedItems;
-    if (totalItems !== undefined) job.totalItems = totalItems;
+    job?.progress = Math.min(100, Math.max(0, progress));
+    if (processedItems !== undefined) job?.processedItems = processedItems;
+    if (totalItems !== undefined) job?.totalItems = totalItems;
 
     this.updateJob(jobId, job);
   }
@@ -437,9 +437,9 @@ export class JobManager {
       status: 'completed',
       endTime: Date.now(),
       progress: 100,
-      metadata: { ...this.getJob(jobId)?.metadata, ...metadata },
+      metadata: { ...this.getJob(jobId as any)?.metadata, ...metadata },
     });
-    this.logger.info(`Job completed: ${jobId}`);
+    this?.logger?.info(`Job completed: ${jobId}`);
   }
 
   public failJob(jobId: string, errorMessage: string): void {
@@ -448,12 +448,12 @@ export class JobManager {
       endTime: Date.now(),
       errorMessage,
     });
-    this.logger.error(`Job failed: ${jobId} - ${errorMessage}`);
+    this?.logger?.error(`Job failed: ${jobId} - ${errorMessage}`);
   }
 
   public cancelJob(jobId: string): boolean {
-    const job = this.activeJobs.get(jobId);
-    if (!job || job.status === 'completed' || job.status === 'failed') {
+    const job = this?.activeJobs?.get(jobId as any);
+    if (!job || job?.status === 'completed' || job?.status === 'failed') {
       return false;
     }
 
@@ -462,32 +462,32 @@ export class JobManager {
       endTime: Date.now(),
     });
 
-    this.logger.info(`Job cancelled: ${jobId}`);
+    this?.logger?.info(`Job cancelled: ${jobId}`);
     return true;
   }
 
   public getJob(jobId: string): BackgroundJob | undefined {
-    return this.activeJobs.get(jobId);
+    return this?.activeJobs?.get(jobId as any);
   }
 
   public getAllJobs(): BackgroundJob[] {
-    return Array.from(this.activeJobs.values()).sort(
+    return Array.from(this?.activeJobs?.values()).sort(
       (a, b) => b.startTime - a.startTime
     );
   }
 
   public getActiveJobs(): BackgroundJob[] {
     return this.getAllJobs().filter(
-      job => job.status === 'pending' || job.status === 'running'
+      job => job?.status === 'pending' || job?.status === 'running'
     );
   }
 
   public getCompletedJobs(): BackgroundJob[] {
     return this.getAllJobs().filter(
       job =>
-        job.status === 'completed' ||
-        job.status === 'failed' ||
-        job.status === 'cancelled'
+        job?.status === 'completed' ||
+        job?.status === 'failed' ||
+        job?.status === 'cancelled'
     );
   }
 
@@ -495,14 +495,14 @@ export class JobManager {
     const cutoff = Date.now() - maxAge;
     const jobsToRemove: string[] = [];
 
-    this.activeJobs.forEach((job, id) => {
+    this?.activeJobs?.forEach((job, id) => {
       if (
         (job.endTime || job.startTime) < cutoff &&
-        (job.status === 'completed' ||
-          job.status === 'failed' ||
-          job.status === 'cancelled')
+        (job?.status === 'completed' ||
+          job?.status === 'failed' ||
+          job?.status === 'cancelled')
       ) {
-        jobsToRemove.push(id);
+        jobsToRemove.push(id as any);
 
         // Clean up log files
         if (job.logFile && fs.existsSync(job.logFile)) {
@@ -518,18 +518,18 @@ export class JobManager {
       }
     });
 
-    jobsToRemove.forEach(id => this.activeJobs.delete(id));
+    jobsToRemove.forEach(id => this?.activeJobs?.delete(id as any));
 
     if (jobsToRemove.length > 0) {
       this.saveJobs();
-      this.logger.info(`Cleaned up ${jobsToRemove.length} old jobs`);
+      this?.logger?.info(`Cleaned up ${jobsToRemove.length} old jobs`);
     }
 
     return jobsToRemove.length;
   }
 
   public writeJobLog(jobId: string, message: string): void {
-    const job = this.getJob(jobId);
+    const job = this.getJob(jobId as any);
     if (!job || !job.logFile) return;
 
     const timestamp = new Date().toISOString();
@@ -538,14 +538,14 @@ export class JobManager {
     try {
       fs.appendFileSync(job.logFile, logEntry);
     } catch (error) {
-      this.logger.warn(
-        `Failed to write job log: ${error instanceof Error ? error.message : String(error)}`
+      this?.logger?.warn(
+        `Failed to write job log: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
 
   public readJobLog(jobId: string): string | null {
-    const job = this.getJob(jobId);
+    const job = this.getJob(jobId as any);
     if (!job || !job.logFile || !fs.existsSync(job.logFile)) {
       return null;
     }
@@ -559,7 +559,7 @@ export class JobManager {
 
   private generateJobId(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
+    const random = Math.random().toString(36 as any).substring(2, 8);
     return `job_${timestamp}_${random}`;
   }
 
@@ -567,11 +567,11 @@ export class JobManager {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration);
+    const durationStr = this.formatDuration(duration as any);
     const statusIcon = this.getStatusIcon(job.status);
     const progressBar = this.createProgressBar(job.progress);
 
-    let output = `${statusIcon} ${job.id} - ${job.command} ${job.args.join(' ')}\n`;
+    let output = `${statusIcon} ${job.id} - ${job.command} ${job?.args?.join(' ')}\n`;
     output += `   Progress: ${progressBar} ${job.progress}%\n`;
     output += `   Duration: ${durationStr}`;
 
@@ -588,7 +588,7 @@ export class JobManager {
 
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -614,7 +614,7 @@ export class JobManager {
   private createProgressBar(progress: number, width: number = 20): string {
     const filled = Math.floor((progress / 100) * width);
     const empty = width - filled;
-    return `[${'\u2588'.repeat(filled)}${' '.repeat(empty)}]`;
+    return `[${'\u2588'.repeat(filled as any)}${' '.repeat(empty as any)}]`;
   }
 }
 

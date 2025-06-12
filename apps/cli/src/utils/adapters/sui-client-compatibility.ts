@@ -46,11 +46,11 @@ export function createCompatibleSuiClient(
   options?: CompatibleSuiClientOptions
 ): SuiClientClass {
   try {
-    return new SuiClient(options);
+    return new SuiClient(options as any);
   } catch (error) {
     logger.error('Failed to create SuiClient:', error);
     throw new Error(
-      `Failed to create SuiClient: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to create SuiClient: ${error instanceof Error ? error.message : String(error as any)}`
     );
   }
 }
@@ -65,9 +65,9 @@ export function getCompatibleFullnodeUrl(
   network: 'mainnet' | 'testnet' | 'devnet' | 'localnet' = 'testnet'
 ): string {
   const urls = {
-    mainnet: 'https://fullnode.mainnet.sui.io:443',
-    testnet: 'https://fullnode.testnet.sui.io:443',
-    devnet: 'https://fullnode.devnet.sui.io:443',
+    mainnet: 'https://fullnode?.mainnet?.sui.io:443',
+    testnet: 'https://fullnode?.testnet?.sui.io:443',
+    devnet: 'https://fullnode?.devnet?.sui.io:443',
     localnet: 'http://localhost:9000',
   };
 

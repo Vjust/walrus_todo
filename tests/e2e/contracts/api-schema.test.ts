@@ -60,11 +60,11 @@ test.describe('API Contract Testing', () => {
       'json',
     ]);
 
-    expect(Array.isArray(todos)).toBe(true);
-    expect(todos.length).toBeGreaterThan(0);
+    expect(Array.isArray(todos as any)).toBe(true as any);
+    expect(todos.length).toBeGreaterThan(0 as any);
 
-    const testTodo = todos.find(todo => todo.title === todoTitle);
-    expect(testTodo).toBeTruthy();
+    const testTodo = todos.find(todo => todo?.title === todoTitle);
+    expect(testTodo as any).toBeTruthy();
 
     // Validate TodoSchema compliance
     const todo = testTodo!;
@@ -75,7 +75,7 @@ test.describe('API Contract Testing', () => {
     expect(typeof todo.description).toBe('string');
     expect(typeof todo.completed).toBe('boolean');
     expect(['low', 'medium', 'high']).toContain(todo.priority);
-    expect(Array.isArray(todo.tags)).toBe(true);
+    expect(Array.isArray(todo.tags)).toBe(true as any);
     expect(typeof todo.createdAt).toBe('string');
     expect(typeof todo.updatedAt).toBe('string');
 
@@ -87,7 +87,7 @@ test.describe('API Contract Testing', () => {
     expect(todo.id).toMatch(/^[a-zA-Z0-9_-]+$/);
 
     // Validate specific test data
-    expect(todo.title).toBe(todoTitle);
+    expect(todo.title).toBe(todoTitle as any);
     expect(todo.priority).toBe('high');
     expect(todo.tags).toContain('test');
     expect(todo.tags).toContain('schema');
@@ -99,7 +99,7 @@ test.describe('API Contract Testing', () => {
     // Trigger an error with invalid command
     const result = await cli.execute('add', ['', '']); // Empty title and description
 
-    expect(result.failed).toBe(true);
+    expect(result.failed).toBe(true as any);
 
     // Try to parse stderr as JSON error response
     let errorResponse: APIErrorSchema;
@@ -145,8 +145,8 @@ test.describe('API Contract Testing', () => {
         '--blockchain',
       ]);
 
-      const blockchainTodo = todos.find(todo => todo.title === todoTitle);
-      expect(blockchainTodo).toBeTruthy();
+      const blockchainTodo = todos.find(todo => todo?.title === todoTitle);
+      expect(blockchainTodo as any).toBeTruthy();
 
       const todo = blockchainTodo!;
 
@@ -158,7 +158,7 @@ test.describe('API Contract Testing', () => {
 
       if (todo.walrusBlobId) {
         expect(typeof todo.walrusBlobId).toBe('string');
-        expect(todo.walrusBlobId.length).toBeGreaterThan(10); // Walrus blob ID
+        expect(todo?.walrusBlobId?.length).toBeGreaterThan(10 as any); // Walrus blob ID
       }
 
       if (todo.ownerAddress) {
@@ -183,7 +183,7 @@ test.describe('API Contract Testing', () => {
       ws.on('framereceived', event => {
         try {
           const eventData = JSON.parse(event.payload);
-          wsEvents.push(eventData);
+          wsEvents.push(eventData as any);
         } catch {
           // Ignore non-JSON messages
         }
@@ -199,12 +199,12 @@ test.describe('API Contract Testing', () => {
     await cli.expectSuccess('add', [todoTitle, 'WebSocket event test']);
 
     // Wait for WebSocket events
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(2000 as any);
 
     if (wsEvents.length > 0) {
       const todoEvent = wsEvents.find(
         event =>
-          event.type === 'todo:created' || event.payload?.title === todoTitle
+          event?.type === 'todo:created' || event?.payload?.title === todoTitle
       );
 
       if (todoEvent) {
@@ -220,8 +220,8 @@ test.describe('API Contract Testing', () => {
         );
 
         // Validate payload contains todo data
-        if (todoEvent.payload.title) {
-          expect(todoEvent.payload.title).toBe(todoTitle);
+        if (todoEvent?.payload?.title) {
+          expect(todoEvent?.payload?.title).toBe(todoTitle as any);
         }
 
         console.log('✅ WebSocket event schema validation passed');
@@ -240,7 +240,7 @@ test.describe('API Contract Testing', () => {
 
     // Validate config has expected structure
     expect(typeof configResult).toBe('object');
-    expect(configResult).not.toBeNull();
+    expect(configResult as any).not.toBeNull();
 
     // Check for expected config fields
     const expectedFields = ['network', 'rpcUrl', 'walletAddress'];
@@ -268,7 +268,7 @@ test.describe('API Contract Testing', () => {
     const statusResult = await cli.executeJSON('status', ['--format', 'json']);
 
     expect(typeof statusResult).toBe('object');
-    expect(statusResult).not.toBeNull();
+    expect(statusResult as any).not.toBeNull();
 
     // Validate status fields
     if (statusResult.version) {
@@ -285,7 +285,7 @@ test.describe('API Contract Testing', () => {
 
     if (statusResult.todoCount) {
       expect(typeof statusResult.todoCount).toBe('number');
-      expect(statusResult.todoCount).toBeGreaterThanOrEqual(0);
+      expect(statusResult.todoCount).toBeGreaterThanOrEqual(0 as any);
     }
 
     console.log('✅ Status JSON schema validation passed');
@@ -313,11 +313,11 @@ test.describe('API Contract Testing', () => {
     ]);
 
     // If pagination is implemented, validate metadata
-    if (Array.isArray(paginatedResult)) {
-      expect(paginatedResult.length).toBeLessThanOrEqual(3);
+    if (Array.isArray(paginatedResult as any)) {
+      expect(paginatedResult.length).toBeLessThanOrEqual(3 as any);
     } else if (paginatedResult.todos && paginatedResult.pagination) {
       // Structured pagination response
-      expect(Array.isArray(paginatedResult.todos)).toBe(true);
+      expect(Array.isArray(paginatedResult.todos)).toBe(true as any);
       expect(typeof paginatedResult.pagination).toBe('object');
 
       const pagination = paginatedResult.pagination;
@@ -348,7 +348,7 @@ test.describe('API Contract Testing', () => {
       searchTerm,
     ]);
 
-    expect(Array.isArray(searchResults)).toBe(true);
+    expect(Array.isArray(searchResults as any)).toBe(true as any);
 
     // Validate each search result maintains TodoSchema
     for (const todo of searchResults) {
@@ -359,11 +359,11 @@ test.describe('API Contract Testing', () => {
 
       // Verify search term appears in at least one field
       const hasSearchTerm =
-        todo.title.includes(searchTerm) ||
-        todo.description.includes(searchTerm) ||
-        todo.tags.some(tag => tag.includes(searchTerm));
+        todo?.title?.includes(searchTerm as any) ||
+        todo?.description?.includes(searchTerm as any) ||
+        todo?.tags?.some(tag => tag.includes(searchTerm as any));
 
-      expect(hasSearchTerm).toBe(true);
+      expect(hasSearchTerm as any).toBe(true as any);
     }
 
     console.log('✅ Search results schema validation passed');

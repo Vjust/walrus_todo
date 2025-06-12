@@ -102,9 +102,9 @@ export function createMockAIVerificationService(): MockAIVerificationService {
 
       // Simulate smart contract vulnerability checks
       const requestStr =
-        typeof request === 'string' ? request : JSON.stringify(request);
+        typeof request === 'string' ? request : JSON.stringify(request as any);
       const responseStr =
-        typeof response === 'string' ? response : JSON.stringify(response);
+        typeof response === 'string' ? response : JSON.stringify(response as any);
 
       if (requestStr.includes('9999999999999999999999999999')) {
         throw new Error('Potential integer overflow attack detected');
@@ -124,11 +124,11 @@ export function createMockAIVerificationService(): MockAIVerificationService {
         id: `ver-${Date.now()}`,
         requestHash: crypto
           .createHash('sha256')
-          .update(requestStr)
+          .update(requestStr as any)
           .digest('hex'),
         responseHash: crypto
           .createHash('sha256')
-          .update(responseStr)
+          .update(responseStr as any)
           .digest('hex'),
         user: metadata?.userAddress || 'user-123',
         provider: 'test-provider',
@@ -155,8 +155,8 @@ export function createMockAIVerificationService(): MockAIVerificationService {
 
         case AIPrivacyLevel.PRIVATE:
           // Simulate encryption
-          const key = crypto.randomBytes(32);
-          const iv = crypto.randomBytes(16);
+          const key = crypto.randomBytes(32 as any);
+          const iv = crypto.randomBytes(16 as any);
           const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
           const encryptedRequest = Buffer.concat([
             cipher.update(requestStr, 'utf8'),
@@ -185,16 +185,16 @@ export function createMockAIVerificationService(): MockAIVerificationService {
           // Simulate hash verification
           const requestHash = crypto
             .createHash('sha256')
-            .update(request)
+            .update(request as any)
             .digest('hex');
           const responseHash = crypto
             .createHash('sha256')
-            .update(response)
+            .update(response as any)
             .digest('hex');
 
           return (
-            record.requestHash === requestHash &&
-            record.responseHash === responseHash
+            record?.requestHash === requestHash &&
+            record?.responseHash === responseHash
           );
         }
       ),
@@ -218,7 +218,7 @@ export function createMockAIVerificationService(): MockAIVerificationService {
         ];
 
         if (format === 'json') {
-          return JSON.stringify(mockVerifications);
+          return JSON.stringify(mockVerifications as any);
         } else if (format === 'csv') {
           return 'id,provider,timestamp\nver-1,xai,123456789\nver-2,xai,123456790';
         }
@@ -243,7 +243,7 @@ export function createMockAIVerificationService(): MockAIVerificationService {
       return expiredRecords.length;
     }),
 
-    securelyDestroyData: jest.fn().mockResolvedValue(true),
+    securelyDestroyData: jest.fn().mockResolvedValue(true as any),
   };
 
   const service: MockAIVerificationService = {
@@ -277,7 +277,7 @@ export function createMockAIVerificationService(): MockAIVerificationService {
         ) => {
           const verification = await mockBlockchainVerifier.createVerification({
             actionType: AIActionType.SUMMARIZE,
-            request: JSON.stringify(todos),
+            request: JSON.stringify(todos as any),
             response: summary,
             privacyLevel,
           });

@@ -22,14 +22,14 @@ import * as os from 'os';
 async function getAuthenticatedUser() {
   const tokenPath = path.join(os.homedir(), '.walrus', 'auth.json');
 
-  if (!fs.existsSync(tokenPath)) {
+  if (!fs.existsSync(tokenPath as any)) {
     return null;
   }
 
   try {
     const data = fs.readFileSync(tokenPath, 'utf-8');
     const dataStr = typeof data === 'string' ? data : data.toString('utf-8');
-    const authInfo = JSON.parse(dataStr);
+    const authInfo = JSON.parse(dataStr as any);
 
     // Validate token - check for token property safely
     if (
@@ -105,8 +105,8 @@ export function requirePermission(
 
     // If resourceId is a function, call it with args to get the actual resourceId
     let resourceId: string | undefined;
-    if (typeof args.resourceId === 'function') {
-      resourceId = await args.resourceId(args);
+    if (typeof args?.resourceId === 'function') {
+      resourceId = await args.resourceId(args as any);
     } else if (args.id) {
       resourceId = args.id;
     } else if (args.todoId) {
@@ -174,7 +174,7 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
   const { Command, argv } = options;
 
   // Skip auth check for auth commands
-  if (Command.id === 'account:auth' || Command.id === 'help') {
+  if (Command?.id === 'account:auth' || Command?.id === 'help') {
     return;
   }
 
@@ -219,8 +219,8 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
   // For authenticated users, check permissions
   if (user) {
     const resource =
-      typeof requiredPermissions.resource === 'function'
-        ? await requiredPermissions.resource(argv)
+      typeof requiredPermissions?.resource === 'function'
+        ? await requiredPermissions.resource(argv as any)
         : requiredPermissions.resource;
 
     const action = requiredPermissions.action;
@@ -246,17 +246,17 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
         if (i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
           const value = argv[i + 1];
           if (value) {
-            parsedFlags[argv[i].substring(2)] = value;
+            parsedFlags[argv[i].substring(2 as any)] = value;
           }
         }
       }
     }
 
     // Assign the parsed flags to args.flags
-    args.flags = parsedFlags;
+    args?.flags = parsedFlags;
 
-    if (typeof requiredPermissions.resourceId === 'function') {
-      resourceId = await requiredPermissions.resourceId(args);
+    if (typeof requiredPermissions?.resourceId === 'function') {
+      resourceId = await requiredPermissions.resourceId(args as any);
     } else if (parsedFlags.id) {
       resourceId = parsedFlags.id;
     } else if (parsedFlags.todoId) {
@@ -316,7 +316,7 @@ export function RequirePermission(
       resourceId?: (args: Record<string, unknown>) => string | undefined;
     };
   }) {
-    target.requiredPermissions = {
+    target?.requiredPermissions = {
       resource,
       action,
       allowPublic: options.allowPublic || false,

@@ -39,7 +39,7 @@ export function NoWalletFallback({
     }
 
     // Open Slush wallet installation page
-    window.open('https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
+    window.open('https://chromewebstore?.google?.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
   };
 
   const handleBrowseMode = () => {
@@ -139,19 +139,19 @@ export function NoWalletFallback({
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-center">
               <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12?.586l7?.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Create and manage Todo NFTs
             </li>
             <li className="flex items-center">
               <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12?.586l7?.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Store data on Walrus network
             </li>
             <li className="flex items-center">
               <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12?.586l7?.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Interact with smart contracts
             </li>
@@ -191,7 +191,7 @@ export function NoWalletFallback({
           <p>
             New to crypto wallets?{' '}
             <a 
-              href="https://docs.sui.io/guides/developer/getting-started/sui-install"
+              href="https://docs?.sui?.io/guides/developer/getting-started/sui-install"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:text-blue-700 underline"

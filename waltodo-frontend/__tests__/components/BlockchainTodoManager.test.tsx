@@ -73,9 +73,9 @@ describe('BlockchainTodoManager', () => {
     jest.clearAllMocks();
     
     // Setup default mocks
-    (useWalletContext as jest.Mock).mockReturnValue(defaultWalletContext);
-    (useSuiTodos as jest.Mock).mockReturnValue(defaultSuiTodosHook);
-    (useTodoOperation as jest.Mock).mockReturnValue(defaultTodoOperation);
+    (useWalletContext as jest.Mock).mockReturnValue(defaultWalletContext as any);
+    (useSuiTodos as jest.Mock).mockReturnValue(defaultSuiTodosHook as any);
+    (useTodoOperation as jest.Mock).mockReturnValue(defaultTodoOperation as any);
     
     // Mock toast
     (toast.success as jest.Mock).mockImplementation(() => {});
@@ -155,7 +155,7 @@ describe('BlockchainTodoManager', () => {
       fireEvent.click(screen.getByText('Create Todo'));
 
       await waitFor(() => {
-        expect(mockCreateTodo).toHaveBeenCalledWith({
+        expect(mockCreateTodo as any).toHaveBeenCalledWith({
           title: 'New Todo',
           description: 'New Description',
           priority: 'high',
@@ -166,7 +166,7 @@ describe('BlockchainTodoManager', () => {
 
       expect(toast.success).toHaveBeenCalledWith(
         'TodoNFT created successfully!',
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
 
@@ -180,12 +180,12 @@ describe('BlockchainTodoManager', () => {
         expect(screen.getByText('Title is required')).toBeInTheDocument();
       });
 
-      expect(mockCreateTodo).not.toHaveBeenCalled();
+      expect(mockCreateTodo as any).not.toHaveBeenCalled();
     });
 
     it('should handle creation errors', async () => {
       const error = new Error('Insufficient gas');
-      mockCreateTodo.mockRejectedValue(error);
+      mockCreateTodo.mockRejectedValue(error as any);
 
       render(<BlockchainTodoManager />);
       
@@ -199,7 +199,7 @@ describe('BlockchainTodoManager', () => {
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
           'Insufficient gas',
-          expect.any(Object)
+          expect.any(Object as any)
         );
       });
     });
@@ -233,15 +233,15 @@ describe('BlockchainTodoManager', () => {
       render(<BlockchainTodoManager />);
       
       const completeButton = screen.getByTestId('complete-todo-1');
-      fireEvent.click(completeButton);
+      fireEvent.click(completeButton as any);
 
       await waitFor(() => {
-        expect(mockCompleteTodo).toHaveBeenCalledWith('1');
+        expect(mockCompleteTodo as any).toHaveBeenCalledWith('1');
       });
 
       expect(toast.success).toHaveBeenCalledWith(
         'Todo completed!',
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
 
@@ -252,51 +252,51 @@ describe('BlockchainTodoManager', () => {
       });
 
       // Mock window.confirm
-      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true as any);
 
       render(<BlockchainTodoManager />);
       
       const deleteButton = screen.getByTestId('delete-todo-1');
-      fireEvent.click(deleteButton);
+      fireEvent.click(deleteButton as any);
 
-      expect(confirmSpy).toHaveBeenCalledWith(
+      expect(confirmSpy as any).toHaveBeenCalledWith(
         'Are you sure you want to delete this TodoNFT? This action cannot be undone.'
       );
 
       await waitFor(() => {
-        expect(mockDeleteTodo).toHaveBeenCalledWith('1');
+        expect(mockDeleteTodo as any).toHaveBeenCalledWith('1');
       });
 
       expect(toast.success).toHaveBeenCalledWith(
         'Todo deleted!',
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
 
     it('should cancel delete when not confirmed', async () => {
-      const _confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+      const _confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false as any);
 
       render(<BlockchainTodoManager />);
       
       const deleteButton = screen.getByTestId('delete-todo-1');
-      fireEvent.click(deleteButton);
+      fireEvent.click(deleteButton as any);
 
-      expect(mockDeleteTodo).not.toHaveBeenCalled();
+      expect(mockDeleteTodo as any).not.toHaveBeenCalled();
     });
 
     it('should handle operation errors gracefully', async () => {
       const error = new Error('Network error');
-      mockCompleteTodo.mockRejectedValue(error);
+      mockCompleteTodo.mockRejectedValue(error as any);
 
       render(<BlockchainTodoManager />);
       
       const completeButton = screen.getByTestId('complete-todo-1');
-      fireEvent.click(completeButton);
+      fireEvent.click(completeButton as any);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
           'Failed to complete todo: Network error',
-          expect.any(Object)
+          expect.any(Object as any)
         );
       });
     });
@@ -351,13 +351,13 @@ describe('BlockchainTodoManager', () => {
       const titleInput = screen.getByLabelText(/title/i);
       titleInput.focus();
       
-      expect(document.activeElement).toBe(titleInput);
+      expect(document.activeElement).toBe(titleInput as any);
       
       // Tab to next element
       fireEvent.keyDown(titleInput, { key: 'Tab' });
       
       const descriptionInput = screen.getByLabelText(/description/i);
-      expect(document.activeElement).toBe(descriptionInput);
+      expect(document.activeElement).toBe(descriptionInput as any);
     });
   });
 });

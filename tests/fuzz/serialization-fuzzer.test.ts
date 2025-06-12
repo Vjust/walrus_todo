@@ -49,17 +49,17 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const todo of validTodos) {
         try {
-          const buffer = TodoSerializer.todoToBuffer(todo);
-          const deserialized = TodoSerializer.bufferToTodo(buffer);
+          const buffer = TodoSerializer.todoToBuffer(todo as any);
+          const deserialized = TodoSerializer.bufferToTodo(buffer as any);
 
-          expect(deserialized).toEqual(todo);
+          expect(deserialized as any).toEqual(todo as any);
           expect(deserialized.id).toBe(todo.id);
           expect(deserialized.title).toBe(todo.title);
           expect(deserialized.completed).toBe(todo.completed);
         } catch (error) {
           // If validation fails, that's expected for fuzz testing
           // Just ensure the error is a validation error
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
           expect(error.message).toMatch(/validation|invalid|failed/i);
         }
       }
@@ -119,7 +119,7 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const buffer of corruptedBuffers) {
         expect(() => {
-          TodoSerializer.bufferToTodo(buffer);
+          TodoSerializer.bufferToTodo(buffer as any);
         }).toThrow();
       }
     });
@@ -205,11 +205,11 @@ describe('Serialization Fuzzing Tests', () => {
                 updatedAt: new Date().toISOString(),
                 private: false,
               };
-              obj.self = obj; // Create circular reference
+              obj?.self = obj; // Create circular reference
 
               // This should throw when trying to stringify
               try {
-                return Buffer.from(JSON.stringify(obj));
+                return Buffer.from(JSON.stringify(obj as any));
               } catch {
                 return Buffer.from('{}');
               }
@@ -225,7 +225,7 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const buffer of malformedStructures) {
         expect(() => {
-          TodoSerializer.bufferToTodo(buffer);
+          TodoSerializer.bufferToTodo(buffer as any);
         }).toThrow(); // Just expect any error for malformed data
       }
     });
@@ -295,7 +295,7 @@ describe('Serialization Fuzzing Tests', () => {
               // Create moderate nesting to avoid memory issues
               let current = todo.customData as Record<string, unknown>;
               for (let i = 0; i < 50; i++) {
-                current.nested = { level: i };
+                current?.nested = { level: i };
                 current = current.nested as Record<string, unknown>;
               }
               return todo as Todo;
@@ -304,7 +304,7 @@ describe('Serialization Fuzzing Tests', () => {
             case 'max_unicode': {
               return {
                 id: fuzzer.string(),
-                title: '🔥'.repeat(10) + '💫'.repeat(10) + '⚡'.repeat(10),
+                title: '🔥'.repeat(10 as any) + '💫'.repeat(10 as any) + '⚡'.repeat(10 as any),
                 description: fuzzer.string({
                   minLength: 100,
                   maxLength: 200,
@@ -343,13 +343,13 @@ describe('Serialization Fuzzing Tests', () => {
         // Test serialization with extreme sizes
         // Note: May throw due to memory constraints
         try {
-          const buffer = TodoSerializer.todoToBuffer(todo);
-          const deserialized = TodoSerializer.bufferToTodo(buffer);
+          const buffer = TodoSerializer.todoToBuffer(todo as any);
+          const deserialized = TodoSerializer.bufferToTodo(buffer as any);
 
           // Basic validation - checking structure is maintained
-          expect(deserialized).toHaveProperty('id');
-          expect(deserialized).toHaveProperty('title');
-          expect(deserialized).toHaveProperty('completed');
+          expect(deserialized as any).toHaveProperty('id');
+          expect(deserialized as any).toHaveProperty('title');
+          expect(deserialized as any).toHaveProperty('completed');
         } catch (error) {
           // For extreme sizes, we expect validation errors or memory errors
           if (error instanceof RangeError || error instanceof Error) {
@@ -418,18 +418,18 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const todoList of validTodoLists) {
         try {
-          const buffer = TodoSerializer.todoListToBuffer(todoList);
-          const deserialized = TodoSerializer.bufferToTodoList(buffer);
+          const buffer = TodoSerializer.todoListToBuffer(todoList as any);
+          const deserialized = TodoSerializer.bufferToTodoList(buffer as any);
 
-          expect(deserialized).toEqual(todoList);
+          expect(deserialized as any).toEqual(todoList as any);
           expect(deserialized.id).toBe(todoList.id);
           expect(deserialized.name).toBe(todoList.name);
           expect(deserialized.owner).toBe(todoList.owner);
-          expect(deserialized.todos.length).toBe(todoList.todos.length);
+          expect(deserialized?.todos?.length).toBe(todoList?.todos?.length);
         } catch (error) {
           // If validation fails, that's expected for fuzz testing
           // Just ensure the error is a validation error
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
           expect(error.message).toMatch(/validation|invalid|failed/i);
         }
       }
@@ -478,7 +478,7 @@ describe('Serialization Fuzzing Tests', () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               };
-              return Buffer.from(JSON.stringify(list));
+              return Buffer.from(JSON.stringify(list as any));
             }
 
             case 'partial_json': {
@@ -495,7 +495,7 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const buffer of corruptedListBuffers) {
         expect(() => {
-          TodoSerializer.bufferToTodoList(buffer);
+          TodoSerializer.bufferToTodoList(buffer as any);
         }).toThrow();
       }
     });
@@ -585,7 +585,7 @@ describe('Serialization Fuzzing Tests', () => {
               // Create moderate nesting in metadata to avoid memory issues
               let current = list.metadata as Record<string, unknown>;
               for (let i = 0; i < 25; i++) {
-                current.level = { depth: i, data: fuzzer.string() };
+                current?.level = { depth: i, data: fuzzer.string() };
                 current = current.level as Record<string, unknown>;
               }
               return list as TodoList;
@@ -609,14 +609,14 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const todoList of extremeLists) {
         try {
-          const buffer = TodoSerializer.todoListToBuffer(todoList);
-          const deserialized = TodoSerializer.bufferToTodoList(buffer);
+          const buffer = TodoSerializer.todoListToBuffer(todoList as any);
+          const deserialized = TodoSerializer.bufferToTodoList(buffer as any);
 
           // Basic validation
-          expect(deserialized).toHaveProperty('id');
-          expect(deserialized).toHaveProperty('name');
-          expect(deserialized).toHaveProperty('owner');
-          expect(Array.isArray(deserialized.todos)).toBe(true);
+          expect(deserialized as any).toHaveProperty('id');
+          expect(deserialized as any).toHaveProperty('name');
+          expect(deserialized as any).toHaveProperty('owner');
+          expect(Array.isArray(deserialized.todos)).toBe(true as any);
         } catch (error) {
           // For extreme sizes, we expect validation errors or memory errors
           if (error instanceof RangeError || error instanceof Error) {
@@ -658,12 +658,12 @@ describe('Serialization Fuzzing Tests', () => {
           private: false,
         };
 
-        const buffer = TodoSerializer.todoToBuffer(todo);
-        const deserialized = TodoSerializer.bufferToTodo(buffer);
+        const buffer = TodoSerializer.todoToBuffer(todo as any);
+        const deserialized = TodoSerializer.bufferToTodo(buffer as any);
 
-        expect(deserialized.title).toContain(char);
-        expect(deserialized.description).toContain(char);
-        expect(deserialized.tags[0]).toContain(char);
+        expect(deserialized.title).toContain(char as any);
+        expect(deserialized.description).toContain(char as any);
+        expect(deserialized?.tags?.[0]).toContain(char as any);
       }
     });
 
@@ -706,7 +706,7 @@ describe('Serialization Fuzzing Tests', () => {
 
       for (const buffer of encodingCases) {
         expect(() => {
-          TodoSerializer.bufferToTodo(buffer);
+          TodoSerializer.bufferToTodo(buffer as any);
         }).toThrow();
       }
     });
@@ -737,25 +737,25 @@ describe('Serialization Fuzzing Tests', () => {
         todo =>
           new Promise((resolve, reject) => {
             try {
-              const buffer = TodoSerializer.todoToBuffer(todo);
-              const deserialized = TodoSerializer.bufferToTodo(buffer);
-              resolve(deserialized);
+              const buffer = TodoSerializer.todoToBuffer(todo as any);
+              const deserialized = TodoSerializer.bufferToTodo(buffer as any);
+              resolve(deserialized as any);
             } catch (error) {
               // For fuzz testing, validation errors are acceptable
               // We only reject if it's a serious error (not validation)
-              if (error.message && error.message.includes('validation')) {
-                resolve(null); // Treat validation errors as "handled"
+              if (error.message && error?.message?.includes('validation')) {
+                resolve(null as any); // Treat validation errors as "handled"
               } else {
-                reject(error);
+                reject(error as any);
               }
             }
           })
       );
 
-      const results = await Promise.allSettled(operations);
+      const results = await Promise.allSettled(operations as any);
 
       // Most operations should succeed or handle validation gracefully
-      const successful = results.filter(r => r.status === 'fulfilled');
+      const successful = results.filter(r => r?.status === 'fulfilled');
       expect(successful.length).toBeGreaterThanOrEqual(
         Math.floor(concurrentOperations * 0.8)
       ); // At least 80% success

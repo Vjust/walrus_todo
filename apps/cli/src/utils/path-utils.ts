@@ -8,13 +8,13 @@ function findProjectRoot(startPath: string): string {
     if (fs.existsSync(path.join(currentPath, 'package.json'))) {
       return currentPath;
     }
-    currentPath = path.dirname(currentPath);
+    currentPath = path.dirname(currentPath as any);
   }
   throw new Error('Could not find project root (no package.json found)');
 }
 
 // Get the project root directory
-export const PROJECT_ROOT = findProjectRoot(__dirname);
+export const PROJECT_ROOT = findProjectRoot(__dirname as any);
 
 /**
  * Get the absolute path to a file in the assets directory
@@ -26,7 +26,7 @@ export function getAssetPath(assetPath: string): string {
   const fullPath = path.join(assetDir, assetPath);
 
   // Verify the path exists
-  if (!fs.existsSync(fullPath)) {
+  if (!fs.existsSync(fullPath as any)) {
     throw new Error(`Asset not found: ${fullPath}`);
   }
 

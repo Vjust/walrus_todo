@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 // import { SuiClient } from '../utils/adapters/sui-client-adapter';
 // Ed25519Keypair imported but not used
 import chalk = require('chalk');
@@ -65,7 +65,7 @@ export default class StoreListCommand extends BaseCommand {
    * @protected
    */
   protected startSpinner(text: string) {
-    this.log(chalk.blue(text));
+    this.log(chalk.blue(text as any));
   }
 
   /**
@@ -85,7 +85,7 @@ export default class StoreListCommand extends BaseCommand {
    */
   async run(): Promise<void> {
     try {
-      const { flags } = await this.parse(StoreListCommand);
+      const { flags } = await this.parse(StoreListCommand as any);
 
       this.startSpinner('Loading configuration...');
       const config = await configService.getConfig();
@@ -93,12 +93,12 @@ export default class StoreListCommand extends BaseCommand {
       const network = flags.network || config.network || 'testnet';
       const mockMode = flags.mock || false;
 
-      this.walrusStorage = createWalrusStorage(network, mockMode);
+      this?.walrusStorage = createWalrusStorage(network, mockMode);
 
       // Validate network configuration
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
         throw new CLIError(
-          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS as any).join(', ')}`,
           'INVALID_NETWORK'
         );
       }
@@ -118,7 +118,7 @@ export default class StoreListCommand extends BaseCommand {
       if (flags.file) {
         // Load from file
         const filePath = path.resolve(process.cwd(), flags.file);
-        if (!fs.existsSync(filePath)) {
+        if (!fs.existsSync(filePath as any)) {
           throw new CLIError(`File not found: ${filePath}`, 'FILE_NOT_FOUND');
         }
 
@@ -129,7 +129,7 @@ export default class StoreListCommand extends BaseCommand {
               ? fileContent
               : fileContent.toString('utf-8');
           try {
-            todoList = JSON.parse(contentStr);
+            todoList = JSON.parse(contentStr as any);
           } catch (parseError) {
             if (parseError instanceof SyntaxError) {
               throw new CLIError(
@@ -144,7 +144,7 @@ export default class StoreListCommand extends BaseCommand {
             throw error; // Re-throw CLIError as-is
           }
           throw new CLIError(
-            `Failed to read list file: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to read list file: ${error instanceof Error ? error.message : String(error as any)}`,
             'FILE_READ_ERROR'
           );
         }
@@ -171,7 +171,7 @@ export default class StoreListCommand extends BaseCommand {
       }
 
       this.log(chalk.cyan(`\nPreparing to store todo list: ${todoList.name}`));
-      this.log(chalk.dim(`Contains ${todoList.todos.length} todos`));
+      this.log(chalk.dim(`Contains ${todoList?.todos?.length} todos`));
 
       // Initialize SUI client
       const networkUrl = NETWORK_URLS[network as keyof typeof NETWORK_URLS];
@@ -187,8 +187,8 @@ export default class StoreListCommand extends BaseCommand {
 
       // Initialize and validate Walrus storage connection
       this.startSpinner('Connecting to Walrus storage...');
-      await this.walrusStorage.connect();
-      const isConnected = this.walrusStorage.getConnectionStatus();
+      await this?.walrusStorage?.connect();
+      const isConnected = this?.walrusStorage?.getConnectionStatus();
       if (!isConnected) {
         throw new CLIError(
           'Failed to establish connection with Walrus storage',
@@ -213,7 +213,7 @@ export default class StoreListCommand extends BaseCommand {
 
         // Storage verification
         this.startSpinner('Verifying storage capacity...');
-        await this.walrusStorage.ensureStorageAllocated(1000000);
+        await this?.walrusStorage?.ensureStorageAllocated(1000000 as any);
         this.stopSpinner(true, 'Storage capacity verified');
 
         // In a real implementation, we would store the list to Walrus
@@ -234,37 +234,37 @@ export default class StoreListCommand extends BaseCommand {
 
         // Display success message
         this.log(
-          '\n' + chalk.green.bold('✨ Todo list successfully stored! ✨')
+          '\n' + chalk?.green?.bold('✨ Todo list successfully stored! ✨')
         );
-        this.log('\n' + chalk.blue.bold('Storage Summary:'));
+        this.log('\n' + chalk?.blue?.bold('Storage Summary:'));
         this.log(chalk.dim('----------------------------------------'));
         this.log(chalk.green('✓ List name:'), chalk.cyan(todoList.name));
         this.log(
           chalk.green('✓ Total todos:'),
-          chalk.cyan(todoList.todos.length)
+          chalk.cyan(todoList?.todos?.length)
         );
         this.log(
           chalk.green('✓ Stored on Walrus with blob ID:'),
-          chalk.dim(blobId)
+          chalk.dim(blobId as any)
         );
-        this.log(chalk.green('✓ Network:'), chalk.cyan(network));
+        this.log(chalk.green('✓ Network:'), chalk.cyan(network as any));
 
-        this.log('\n' + chalk.blue.bold('How to Retrieve:'));
+        this.log('\n' + chalk?.blue?.bold('How to Retrieve:'));
         this.log(chalk.dim('----------------------------------------'));
         this.log(chalk.yellow('1. By blob ID:'));
         this.log(
-          chalk.dim(`   ${this.config.bin} retrieve --blob-id ${blobId}`)
+          chalk.dim(`   ${this?.config?.bin} retrieve --blob-id ${blobId}`)
         );
       } finally {
         // Cleanup connection
-        await this.walrusStorage.disconnect();
+        await this?.walrusStorage?.disconnect();
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to store list: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to store list: ${error instanceof Error ? error.message : String(error as any)}`,
         'STORE_LIST_FAILED'
       );
     }

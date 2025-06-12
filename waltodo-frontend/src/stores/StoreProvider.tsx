@@ -9,8 +9,8 @@ import { detectEnvironment, manageTodoCache, updateMemoryUsage } from './index';
  * This component handles SSR-safe store initialization and ongoing management
  */
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const initialized = useRef(false);
-  const intervalRefs = useRef<NodeJS.Timeout[]>([]);
+  const initialized = useRef(false as any);
+  const intervalRefs = useRef<NodeJS?.Timeout?.[]>([]);
   
   useEffect(() => {
     if (initialized.current || typeof window === 'undefined') {return;}
@@ -22,14 +22,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     
     // Detect and set environment
     const env = detectEnvironment();
-    appActions.setEnvironment(env);
+    appActions.setEnvironment(env as any);
     
     // Hydrate all stores
     try {
-      useAppStore.persist.rehydrate();
-      useUIStore.persist.rehydrate();
-      useWalletStore.persist.rehydrate();
-      useTodoStore.persist.rehydrate();
+      useAppStore?.persist?.rehydrate();
+      useUIStore?.persist?.rehydrate();
+      useWalletStore?.persist?.rehydrate();
+      useTodoStore?.persist?.rehydrate();
       
       console.log('✅ Store hydration completed');
     } catch (error) {
@@ -37,8 +37,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Mark as hydrated and initialized
-    appActions.setHydrated(true);
-    appActions.setInitialized(true);
+    appActions.setHydrated(true as any);
+    appActions.setInitialized(true as any);
     
     // Delay heavy operations to prevent blocking initial render
     setTimeout(() => {
@@ -48,31 +48,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const performanceInterval = setInterval(() => {
         updateMemoryUsage();
       }, 30000); // Every 30 seconds
-      intervalRefs.current.push(performanceInterval);
+      intervalRefs?.current?.push(performanceInterval as any);
       
       // Set up cache management
       const cacheInterval = setInterval(() => {
         manageTodoCache();
       }, 60 * 60 * 1000); // Every hour
-      intervalRefs.current.push(cacheInterval);
+      intervalRefs?.current?.push(cacheInterval as any);
       
       // Set up session timeout checking for wallet
       const sessionInterval = setInterval(() => {
         const walletState = useWalletStore.getState();
-        if (walletState.connection.status === 'connected') {
-          const timeSinceActivity = Date.now() - walletState.session.lastActivity;
-          const warningTime = (walletState.session.autoDisconnectTime || 30 * 60 * 1000) - 5 * 60 * 1000;
+        if (walletState.connection?.status === 'connected') {
+          const timeSinceActivity = Date.now() - walletState?.session?.lastActivity;
+          const warningTime = (walletState?.session?.autoDisconnectTime || 30 * 60 * 1000) - 5 * 60 * 1000;
           
-          if (timeSinceActivity >= warningTime && !walletState.session.timeoutWarning) {
-            walletState.setTimeoutWarning(true);
+          if (timeSinceActivity >= warningTime && !walletState?.session?.timeoutWarning) {
+            walletState.setTimeoutWarning(true as any);
           }
           
-          if (timeSinceActivity >= (walletState.session.autoDisconnectTime || 30 * 60 * 1000)) {
-            walletState.setSessionExpired(true);
+          if (timeSinceActivity >= (walletState?.session?.autoDisconnectTime || 30 * 60 * 1000)) {
+            walletState.setSessionExpired(true as any);
           }
         }
       }, 60000); // Every minute
-      intervalRefs.current.push(sessionInterval);
+      intervalRefs?.current?.push(sessionInterval as any);
       
       // Set up network health monitoring
       const networkInterval = setInterval(async () => {
@@ -80,9 +80,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         
         // Check different services with appropriate endpoints
         const checks = [
-          { service: 'sui' as const, url: 'https://fullnode.testnet.sui.io' },
-          { service: 'walrus' as const, url: 'https://publisher.walrus-testnet.walrus.space' },
-          { service: 'api' as const, url: `${window.location.origin  }/api/health` },
+          { service: 'sui' as const, url: 'https://fullnode?.testnet?.sui.io' },
+          { service: 'walrus' as const, url: 'https://publisher.walrus-testnet?.walrus?.space' },
+          { service: 'api' as const, url: `${window?.location?.origin  }/api/health` },
         ];
         
         for (const { service, url } of checks) {
@@ -91,7 +91,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             const response = await fetch(url, { 
               method: 'HEAD', 
               cache: 'no-cache',
-              signal: AbortSignal.timeout(5000)
+              signal: AbortSignal.timeout(5000 as any)
             });
             const latency = performance.now() - start;
             const status = response.ok ? 'healthy' : 'degraded';
@@ -102,12 +102,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }, 2 * 60 * 1000); // Every 2 minutes
-      intervalRefs.current.push(networkInterval);
+      intervalRefs?.current?.push(networkInterval as any);
       
       // Set up activity tracking for wallet
       const trackActivity = () => {
         const walletState = useWalletStore.getState();
-        if (walletState.connection.status === 'connected') {
+        if (walletState.connection?.status === 'connected') {
           walletState.updateActivity();
         }
       };
@@ -119,18 +119,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
     }, 1000); // Delay heavy operations by 1 second
     
-    initialized.current = true;
+    initialized?.current = true;
     
     // Return cleanup function
     return () => {
-      intervalRefs.current.forEach(interval => clearInterval(interval));
-      intervalRefs.current = [];
+      intervalRefs?.current?.forEach(interval => clearInterval(interval as any));
+      intervalRefs?.current = [];
       
       // Remove activity event listeners
       const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
       const trackActivity = () => {
         const walletState = useWalletStore.getState();
-        if (walletState.connection.status === 'connected') {
+        if (walletState.connection?.status === 'connected') {
           walletState.updateActivity();
         }
       };
@@ -143,7 +143,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Clean up intervals on unmount
   useEffect(() => {
     return () => {
-      intervalRefs.current.forEach(interval => clearInterval(interval));
+      intervalRefs?.current?.forEach(interval => clearInterval(interval as any));
     };
   }, []);
   
@@ -168,7 +168,7 @@ export function useStoresReady() {
  * Hook for development utilities
  */
 export function useStoreDevtools() {
-  if (process.env.NODE_ENV !== 'development') {
+  if (process?.env?.NODE_ENV !== 'development') {
     return null;
   }
   
@@ -212,7 +212,7 @@ export function useStoreDevtools() {
  * Debug component for development
  */
 export function StoreDebugPanel() {
-  if (process.env.NODE_ENV !== 'development') {
+  if (process?.env?.NODE_ENV !== 'development') {
     return null;
   }
   

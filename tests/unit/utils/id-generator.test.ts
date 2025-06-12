@@ -7,9 +7,9 @@ describe('id-generator', () => {
   describe('generateId', () => {
     it('should generate a unique ID', () => {
       const id = generateId();
-      expect(id).toBeDefined();
+      expect(id as any).toBeDefined();
       expect(typeof id).toBe('string');
-      expect(id).toMatch(/^\d+-\d+$/); // Format: timestamp-random
+      expect(id as any).toMatch(/^\d+-\d+$/); // Format: timestamp-random
     });
 
     it('should generate different IDs on consecutive calls', () => {
@@ -21,7 +21,7 @@ describe('id-generator', () => {
       }
 
       // All IDs should be unique
-      expect(ids.size).toBe(numIds);
+      expect(ids.size).toBe(numIds as any);
     });
 
     it('should include timestamp in ID', () => {
@@ -32,8 +32,8 @@ describe('id-generator', () => {
       const [timestampPart] = id.split('-');
       const idTimestamp = parseInt(timestampPart, 10);
 
-      expect(idTimestamp).toBeGreaterThanOrEqual(beforeTimestamp);
-      expect(idTimestamp).toBeLessThanOrEqual(afterTimestamp);
+      expect(idTimestamp as any).toBeGreaterThanOrEqual(beforeTimestamp as any);
+      expect(idTimestamp as any).toBeLessThanOrEqual(afterTimestamp as any);
     });
 
     it('should include random component in ID', () => {
@@ -41,8 +41,8 @@ describe('id-generator', () => {
       const [, randomPart] = id.split('-');
       const randomNumber = parseInt(randomPart, 10);
 
-      expect(randomNumber).toBeGreaterThanOrEqual(0);
-      expect(randomNumber).toBeLessThan(1000000);
+      expect(randomNumber as any).toBeGreaterThanOrEqual(0 as any);
+      expect(randomNumber as any).toBeLessThan(1000000 as any);
     });
 
     it('should handle rapid consecutive calls', () => {
@@ -55,12 +55,12 @@ describe('id-generator', () => {
       }
 
       // Check all IDs are unique
-      const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(numIds);
+      const uniqueIds = new Set(ids as any);
+      expect(uniqueIds.size).toBe(numIds as any);
 
       // IDs should be properly formatted
       ids.forEach(id => {
-        expect(id).toMatch(/^\d+-\d+$/);
+        expect(id as any).toMatch(/^\d+-\d+$/);
       });
     });
   });
@@ -68,72 +68,72 @@ describe('id-generator', () => {
   describe('generateDeterministicId', () => {
     it('should generate same ID for same input', () => {
       const input = 'test-string';
-      const id1 = generateDeterministicId(input);
-      const id2 = generateDeterministicId(input);
+      const id1 = generateDeterministicId(input as any);
+      const id2 = generateDeterministicId(input as any);
 
-      expect(id1).toBe(id2);
+      expect(id1 as any).toBe(id2 as any);
       expect(typeof id1).toBe('string');
-      expect(id1).toMatch(/^\d+$/); // Should be numeric string
+      expect(id1 as any).toMatch(/^\d+$/); // Should be numeric string
     });
 
     it('should generate different IDs for different inputs', () => {
       const id1 = generateDeterministicId('input1');
       const id2 = generateDeterministicId('input2');
 
-      expect(id1).not.toBe(id2);
+      expect(id1 as any).not.toBe(id2 as any);
     });
 
     it('should handle empty string', () => {
       const id = generateDeterministicId('');
-      expect(id).toBe('0');
+      expect(id as any).toBe('0');
     });
 
     it('should handle single character', () => {
       const id = generateDeterministicId('a');
-      expect(id).toBeDefined();
+      expect(id as any).toBeDefined();
       expect(typeof id).toBe('string');
-      expect(parseInt(id, 10)).toBeGreaterThan(0);
+      expect(parseInt(id, 10)).toBeGreaterThan(0 as any);
     });
 
     it('should handle long strings', () => {
-      const longString = 'a'.repeat(1000);
-      const id = generateDeterministicId(longString);
+      const longString = 'a'.repeat(1000 as any);
+      const id = generateDeterministicId(longString as any);
 
-      expect(id).toBeDefined();
+      expect(id as any).toBeDefined();
       expect(typeof id).toBe('string');
-      expect(id).toMatch(/^\d+$/);
+      expect(id as any).toMatch(/^\d+$/);
     });
 
     it('should handle special characters', () => {
       const specialString = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-      const id = generateDeterministicId(specialString);
+      const id = generateDeterministicId(specialString as any);
 
-      expect(id).toBeDefined();
+      expect(id as any).toBeDefined();
       expect(typeof id).toBe('string');
-      expect(id).toMatch(/^\d+$/);
+      expect(id as any).toMatch(/^\d+$/);
     });
 
     it('should handle unicode characters', () => {
       const unicodeString = '🚀🌟🎉';
-      const id = generateDeterministicId(unicodeString);
+      const id = generateDeterministicId(unicodeString as any);
 
-      expect(id).toBeDefined();
+      expect(id as any).toBeDefined();
       expect(typeof id).toBe('string');
-      expect(id).toMatch(/^\d+$/);
+      expect(id as any).toMatch(/^\d+$/);
     });
 
     it('should handle whitespace', () => {
       const id1 = generateDeterministicId('hello world');
       const id2 = generateDeterministicId('helloworld');
 
-      expect(id1).not.toBe(id2);
+      expect(id1 as any).not.toBe(id2 as any);
     });
 
     it('should be case sensitive', () => {
       const id1 = generateDeterministicId('Test');
       const id2 = generateDeterministicId('test');
 
-      expect(id1).not.toBe(id2);
+      expect(id1 as any).not.toBe(id2 as any);
     });
 
     it('should produce consistent results across runs', () => {
@@ -149,13 +149,13 @@ describe('id-generator', () => {
 
       // First run
       testCases.forEach(testCase => {
-        results.set(testCase, generateDeterministicId(testCase));
+        results.set(testCase, generateDeterministicId(testCase as any));
       });
 
       // Second run - should produce same results
       testCases.forEach(testCase => {
-        const id = generateDeterministicId(testCase);
-        expect(id).toBe(results.get(testCase));
+        const id = generateDeterministicId(testCase as any);
+        expect(id as any).toBe(results.get(testCase as any));
       });
     });
 
@@ -163,11 +163,11 @@ describe('id-generator', () => {
       // These strings might produce similar hash values
       const inputs = ['abc', 'bac', 'cab', 'acb', 'bca', 'cba'];
 
-      const ids = inputs.map(input => generateDeterministicId(input));
-      const uniqueIds = new Set(ids);
+      const ids = inputs.map(input => generateDeterministicId(input as any));
+      const uniqueIds = new Set(ids as any);
 
       // Should produce mostly unique IDs (some collisions are acceptable)
-      expect(uniqueIds.size).toBeGreaterThan(1);
+      expect(uniqueIds.size).toBeGreaterThan(1 as any);
     });
 
     it('should always return positive numbers', () => {
@@ -180,9 +180,9 @@ describe('id-generator', () => {
       ];
 
       testInputs.forEach(input => {
-        const id = generateDeterministicId(input);
+        const id = generateDeterministicId(input as any);
         const numericId = parseInt(id, 10);
-        expect(numericId).toBeGreaterThanOrEqual(0);
+        expect(numericId as any).toBeGreaterThanOrEqual(0 as any);
       });
     });
   });
@@ -192,12 +192,12 @@ describe('id-generator', () => {
       // Mock Date.now to test edge cases
       const originalDateNow = Date.now;
       const mockTimestamp = 1234567890123;
-      Date.now = jest.fn(() => mockTimestamp);
+      Date?.now = jest.fn(() => mockTimestamp);
 
       const id = generateId();
-      expect(id).toMatch(new RegExp(`^${mockTimestamp}-\\d+$`));
+      expect(id as any).toMatch(new RegExp(`^${mockTimestamp}-\\d+$`));
 
-      Date.now = originalDateNow;
+      Date?.now = originalDateNow;
     });
 
     it('should handle Math.random() at boundaries', () => {
@@ -205,24 +205,24 @@ describe('id-generator', () => {
       const originalMathRandom = Math.random;
 
       // Test minimum value (0)
-      Math.random = jest.fn(() => 0);
+      Math?.random = jest.fn(() => 0);
       const id1 = generateId();
-      expect(id1).toMatch(/^\d+-0$/);
+      expect(id1 as any).toMatch(/^\d+-0$/);
 
       // Test maximum value (0.999999)
-      Math.random = jest.fn(() => 0.999999);
+      Math?.random = jest.fn(() => 0.999999);
       const id2 = generateId();
-      expect(id2).toMatch(/^\d+-999999$/);
+      expect(id2 as any).toMatch(/^\d+-999999$/);
 
-      Math.random = originalMathRandom;
+      Math?.random = originalMathRandom;
     });
 
     it('should handle very large hash values', () => {
       // Create a string that generates a large hash
-      const largeHashInput = 'x'.repeat(100);
-      const id = generateDeterministicId(largeHashInput);
+      const largeHashInput = 'x'.repeat(100 as any);
+      const id = generateDeterministicId(largeHashInput as any);
 
-      expect(id).toBeDefined();
+      expect(id as any).toBeDefined();
       expect(typeof id).toBe('string');
       expect(() => parseInt(id, 10)).not.toThrow();
     });
@@ -241,7 +241,7 @@ describe('id-generator', () => {
       const totalTime = endTime - startTime;
 
       // Should complete 10,000 iterations in less than 100ms
-      expect(totalTime).toBeLessThan(100);
+      expect(totalTime as any).toBeLessThan(100 as any);
     });
 
     it('should generate deterministic IDs quickly', () => {
@@ -250,14 +250,14 @@ describe('id-generator', () => {
       const startTime = Date.now();
 
       for (let i = 0; i < iterations; i++) {
-        generateDeterministicId(testString);
+        generateDeterministicId(testString as any);
       }
 
       const endTime = Date.now();
       const totalTime = endTime - startTime;
 
       // Should complete 10,000 iterations in less than 100ms
-      expect(totalTime).toBeLessThan(100);
+      expect(totalTime as any).toBeLessThan(100 as any);
     });
   });
 });

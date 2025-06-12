@@ -69,7 +69,7 @@ describe('DeployCommand', () => {
           '200000000',
         ]);
 
-      await expect(commandPromise).rejects.toThrow('Move files not found');
+      await expect(commandPromise as any).rejects.toThrow('Move files not found');
     });
 
     it('saves deployment config after successful deployment', async () => {
@@ -77,7 +77,7 @@ describe('DeployCommand', () => {
       const writeFileSyncSpy = jest
         .spyOn(fs, 'writeFileSync')
         .mockImplementation(() => undefined);
-      jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+      jest.spyOn(fs, 'existsSync').mockReturnValue(true as any);
       jest.spyOn(fs, 'mkdtempSync').mockReturnValue('/temp/test-deploy');
       jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       jest.spyOn(fs, 'readdirSync').mockReturnValue(['todo.move'] as never[]);
@@ -116,7 +116,7 @@ describe('DeployCommand', () => {
         .mockReturnValue('0xtest-address');
       jest
         .spyOn(commandExecutor, 'publishSuiPackage')
-        .mockReturnValue(mockOutput);
+        .mockReturnValue(mockOutput as any);
 
       await test
         .stdout()
@@ -131,7 +131,7 @@ describe('DeployCommand', () => {
         ])
         .it('saves deployment config', () => {
           // Verify saveConfig was called with deployment info
-          expect(configService.configService.saveConfig).toHaveBeenCalledWith(
+          expect(configService?.configService?.saveConfig).toHaveBeenCalledWith(
             expect.objectContaining({
               network: 'testnet',
               walletAddress: '0xtest-address',
@@ -139,13 +139,13 @@ describe('DeployCommand', () => {
                 packageId: 'test-package-id-123',
                 digest: 'test-digest-456',
                 network: 'testnet',
-                timestamp: expect.any(String),
+                timestamp: expect.any(String as any),
               }),
             })
           );
 
           // Verify fs.writeFileSync was called (through writeFileSafe)
-          expect(writeFileSyncSpy).toHaveBeenCalled();
+          expect(writeFileSyncSpy as any).toHaveBeenCalled();
         });
     });
   });

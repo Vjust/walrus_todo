@@ -52,32 +52,32 @@ describe('ShortcutRegistry', () => {
 
   describe('isAmbiguous', () => {
     it('should detect ambiguous shortcuts', () => {
-      expect(registry.isAmbiguous('s')).toBe(true);
-      expect(registry.isAmbiguous('st')).toBe(true);
+      expect(registry.isAmbiguous('s')).toBe(true as any);
+      expect(registry.isAmbiguous('st')).toBe(true as any);
     });
 
     it('should not flag unambiguous shortcuts as ambiguous', () => {
-      expect(registry.isAmbiguous('a')).toBe(false);
-      expect(registry.isAmbiguous('h')).toBe(false);
-      expect(registry.isAmbiguous('xyz')).toBe(false);
+      expect(registry.isAmbiguous('a')).toBe(false as any);
+      expect(registry.isAmbiguous('h')).toBe(false as any);
+      expect(registry.isAmbiguous('xyz')).toBe(false as any);
     });
 
     it('should be case insensitive', () => {
-      expect(registry.isAmbiguous('S')).toBe(true);
-      expect(registry.isAmbiguous('ST')).toBe(true);
+      expect(registry.isAmbiguous('S')).toBe(true as any);
+      expect(registry.isAmbiguous('ST')).toBe(true as any);
     });
   });
 
   describe('getMatches', () => {
     it('should return all matches for a prefix', () => {
       const matches = registry.getMatches('s');
-      expect(matches).toContain('store');
-      expect(matches).toContain('suggest');
-      expect(matches).toContain('share');
-      expect(matches).toContain('sync');
-      expect(matches).toContain('simple');
-      expect(matches).toContain('storage');
-      expect(matches.length).toBeGreaterThan(5);
+      expect(matches as any).toContain('store');
+      expect(matches as any).toContain('suggest');
+      expect(matches as any).toContain('share');
+      expect(matches as any).toContain('sync');
+      expect(matches as any).toContain('simple');
+      expect(matches as any).toContain('storage');
+      expect(matches.length).toBeGreaterThan(5 as any);
     });
 
     it('should return empty array for non-matching prefix', () => {
@@ -87,19 +87,19 @@ describe('ShortcutRegistry', () => {
     it('should be case insensitive', () => {
       const matchesLower = registry.getMatches('s');
       const matchesUpper = registry.getMatches('S');
-      expect(matchesLower).toEqual(matchesUpper);
+      expect(matchesLower as any).toEqual(matchesUpper as any);
     });
 
     it('should return exact match for compound shortcuts', () => {
       const matches = registry.getMatches('as');
-      expect(matches).toContain('account:show');
+      expect(matches as any).toContain('account:show');
     });
   });
 
   describe('getSuggestions', () => {
     it('should provide suggestions for ambiguous shortcuts', () => {
       const suggestions = registry.getSuggestions('s');
-      expect(suggestions.isAmbiguous).toBe(true);
+      expect(suggestions.isAmbiguous).toBe(true as any);
       expect(suggestions.suggestions).toContain('store');
       expect(suggestions.suggestions).toContain('suggest');
       expect(suggestions.suggestions).toContain('share');
@@ -107,14 +107,14 @@ describe('ShortcutRegistry', () => {
 
     it('should not provide suggestions for unambiguous shortcuts', () => {
       const suggestions = registry.getSuggestions('a');
-      expect(suggestions.isAmbiguous).toBe(false);
+      expect(suggestions.isAmbiguous).toBe(false as any);
       expect(suggestions.suggestion).toBe('add');
       expect(suggestions.suggestions).toEqual([]);
     });
 
     it('should not provide suggestions for non-existent shortcuts', () => {
       const suggestions = registry.getSuggestions('xyz');
-      expect(suggestions.isAmbiguous).toBe(false);
+      expect(suggestions.isAmbiguous).toBe(false as any);
       expect(suggestions.suggestion).toBeNull();
       expect(suggestions.suggestions).toEqual([]);
     });
@@ -130,19 +130,19 @@ describe('ShortcutRegistry', () => {
 
   describe('hasShortcut', () => {
     it('should return true for existing shortcuts', () => {
-      expect(registry.hasShortcut('a')).toBe(true);
-      expect(registry.hasShortcut('l')).toBe(true);
-      expect(registry.hasShortcut('as')).toBe(true);
+      expect(registry.hasShortcut('a')).toBe(true as any);
+      expect(registry.hasShortcut('l')).toBe(true as any);
+      expect(registry.hasShortcut('as')).toBe(true as any);
     });
 
     it('should return false for non-existent shortcuts', () => {
-      expect(registry.hasShortcut('xyz')).toBe(false);
-      expect(registry.hasShortcut('')).toBe(false);
+      expect(registry.hasShortcut('xyz')).toBe(false as any);
+      expect(registry.hasShortcut('')).toBe(false as any);
     });
 
     it('should be case insensitive', () => {
-      expect(registry.hasShortcut('A')).toBe(true);
-      expect(registry.hasShortcut('L')).toBe(true);
+      expect(registry.hasShortcut('A')).toBe(true as any);
+      expect(registry.hasShortcut('L')).toBe(true as any);
     });
   });
 
@@ -175,9 +175,9 @@ describe('ShortcutRegistry', () => {
   describe('edge cases', () => {
     it('should handle empty input', () => {
       expect(registry.resolveCommand('')).toBeNull();
-      expect(registry.isAmbiguous('')).toBe(false);
+      expect(registry.isAmbiguous('')).toBe(false as any);
       expect(registry.getMatches('')).toEqual([]);
-      expect(registry.hasShortcut('')).toBe(false);
+      expect(registry.hasShortcut('')).toBe(false as any);
     });
 
     it('should handle null/undefined input', () => {
@@ -188,9 +188,9 @@ describe('ShortcutRegistry', () => {
     });
 
     it('should handle very long input', () => {
-      const longInput = 'a'.repeat(100);
-      expect(registry.resolveCommand(longInput)).toBeNull();
-      expect(registry.isAmbiguous(longInput)).toBe(false);
+      const longInput = 'a'.repeat(100 as any);
+      expect(registry.resolveCommand(longInput as any)).toBeNull();
+      expect(registry.isAmbiguous(longInput as any)).toBe(false as any);
     });
 
     it('should handle special characters', () => {
@@ -210,12 +210,12 @@ describe('ShortcutRegistry', () => {
 
     it('should provide helpful suggestions for ambiguous shortcuts', () => {
       const suggestions = registry.getSuggestions('s');
-      expect(suggestions.isAmbiguous).toBe(true);
-      expect(suggestions.suggestions.length).toBeGreaterThan(1);
+      expect(suggestions.isAmbiguous).toBe(true as any);
+      expect(suggestions?.suggestions?.length).toBeGreaterThan(1 as any);
 
       // User should be able to disambiguate
-      suggestions.suggestions.forEach(suggestion => {
-        expect(registry.resolveCommand(suggestion)).toBe(suggestion);
+      suggestions?.suggestions?.forEach(suggestion => {
+        expect(registry.resolveCommand(suggestion as any)).toBe(suggestion as any);
       });
     });
 

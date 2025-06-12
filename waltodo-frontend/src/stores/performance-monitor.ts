@@ -38,17 +38,17 @@ class StorePerformanceMonitor {
       isSlowAction: executionTime > this.slowActionThreshold,
     };
 
-    this.metrics.push(metric);
+    this?.metrics?.push(metric as any);
 
     // Keep only recent metrics
-    if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
+    if (this?.metrics?.length > this.maxMetrics) {
+      this?.metrics = this?.metrics?.slice(-this.maxMetrics);
     }
 
     // Log slow actions only if enabled
-    if (metric.isSlowAction && PERFORMANCE_CONFIG.features.logSlowActions) {
+    if (metric.isSlowAction && PERFORMANCE_CONFIG?.features?.logSlowActions) {
       console.warn(
-        `🐌 Slow store action: ${storeName}.${actionName} took ${executionTime.toFixed(2)}ms`
+        `🐌 Slow store action: ${storeName}.${actionName} took ${executionTime.toFixed(2 as any)}ms`
       );
     }
   }
@@ -57,20 +57,20 @@ class StorePerformanceMonitor {
    * Get performance summary
    */
   getPerformanceSummary() {
-    const slowActions = this.metrics.filter(m => m.isSlowAction);
-    const totalActions = this.metrics.length;
-    const avgExecutionTime = this.metrics.reduce((sum, m) => sum + m.executionTime, 0) / totalActions;
+    const slowActions = this?.metrics?.filter(m => m.isSlowAction);
+    const totalActions = this?.metrics?.length;
+    const avgExecutionTime = this?.metrics?.reduce((sum, m) => sum + m.executionTime, 0) / totalActions;
 
     // Group by store
     const byStore: Record<string, ActionMetrics[]> = {};
-    this.metrics.forEach(metric => {
+    this?.metrics?.forEach(metric => {
       if (!byStore[metric.storeName]) {
         byStore[metric.storeName] = [];
       }
-      byStore[metric.storeName].push(metric);
+      byStore[metric.storeName].push(metric as any);
     });
 
-    const storeStats = Object.entries(byStore).map(([storeName, metrics]) => ({
+    const storeStats = Object.entries(byStore as any).map(([storeName, metrics]) => ({
       storeName,
       totalActions: metrics.length,
       slowActions: metrics.filter(m => m.isSlowAction).length,
@@ -93,7 +93,7 @@ class StorePerformanceMonitor {
    */
   getSlowActionsForStore(storeName: string) {
     return this.metrics
-      .filter(m => m.storeName === storeName && m.isSlowAction)
+      .filter(m => m?.storeName === storeName && m.isSlowAction)
       .sort((a, b) => b.executionTime - a.executionTime);
   }
 
@@ -101,7 +101,7 @@ class StorePerformanceMonitor {
    * Clear all metrics
    */
   clearMetrics() {
-    this.metrics = [];
+    this?.metrics = [];
   }
 
   /**
@@ -115,19 +115,19 @@ class StorePerformanceMonitor {
    * Set slow action threshold
    */
   setThreshold(ms: number) {
-    this.slowActionThreshold = ms;
+    this?.slowActionThreshold = ms;
   }
 
   /**
    * Enable/disable monitoring
    */
   setEnabled(enabled: boolean) {
-    this.enabled = enabled;
+    this?.enabled = enabled;
     
     // Clean up memory tracking if disabling
     if (!enabled && this.memoryTrackingInterval) {
       clearInterval(this.memoryTrackingInterval);
-      this.memoryTrackingInterval = null;
+      this?.memoryTrackingInterval = null;
     }
   }
 
@@ -135,29 +135,29 @@ class StorePerformanceMonitor {
    * Start memory tracking if enabled
    */
   private startMemoryTracking() {
-    if (!PERFORMANCE_CONFIG.memory.trackingEnabled || this.memoryTrackingInterval) {
+    if (!PERFORMANCE_CONFIG?.memory?.trackingEnabled || this.memoryTrackingInterval) {
       return;
     }
 
-    this.memoryTrackingInterval = setInterval(() => {
+    this?.memoryTrackingInterval = setInterval(() => {
       if (typeof window !== 'undefined' && 'performance' in window && 'memory' in (performance as any)) {
         const memory = (performance as any).memory;
         const heapUsedMB = memory.usedJSHeapSize / (1024 * 1024);
         
-        if (heapUsedMB > PERFORMANCE_CONFIG.memory.criticalThresholdMB) {
-          console.error(`🚨 Critical memory usage: ${heapUsedMB.toFixed(2)}MB`);
-        } else if (heapUsedMB > PERFORMANCE_CONFIG.memory.warningThresholdMB) {
-          console.warn(`⚠️ High memory usage: ${heapUsedMB.toFixed(2)}MB`);
+        if (heapUsedMB > PERFORMANCE_CONFIG?.memory?.criticalThresholdMB) {
+          console.error(`🚨 Critical memory usage: ${heapUsedMB.toFixed(2 as any)}MB`);
+        } else if (heapUsedMB > PERFORMANCE_CONFIG?.memory?.warningThresholdMB) {
+          console.warn(`⚠️ High memory usage: ${heapUsedMB.toFixed(2 as any)}MB`);
         }
       }
-    }, PERFORMANCE_CONFIG.memory.trackingIntervalMs);
+    }, PERFORMANCE_CONFIG?.memory?.trackingIntervalMs);
   }
 
   /**
    * Initialize performance monitor
    */
   initialize() {
-    if (this.enabled && PERFORMANCE_CONFIG.memory.trackingEnabled) {
+    if (this.enabled && PERFORMANCE_CONFIG?.memory?.trackingEnabled) {
       this.startMemoryTracking();
     }
   }
@@ -168,7 +168,7 @@ class StorePerformanceMonitor {
   cleanup() {
     if (this.memoryTrackingInterval) {
       clearInterval(this.memoryTrackingInterval);
-      this.memoryTrackingInterval = null;
+      this?.memoryTrackingInterval = null;
     }
     this.clearMetrics();
   }
@@ -207,7 +207,7 @@ export function measureStoreAction<T extends (...args: any[]) => any>(
  */
 export function throttleAction<T extends (...args: any[]) => any>(
   action: T,
-  delay: number = PERFORMANCE_CONFIG.optimization.defaultThrottleMs
+  delay: number = PERFORMANCE_CONFIG?.optimization?.defaultThrottleMs
 ): T {
   let lastCall = 0;
   let timeoutId: NodeJS.Timeout | null = null;
@@ -221,7 +221,7 @@ export function throttleAction<T extends (...args: any[]) => any>(
     } else {
       // Queue the action to run after the delay
       if (timeoutId) {
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId as any);
       }
       
       timeoutId = setTimeout(() => {
@@ -238,13 +238,13 @@ export function throttleAction<T extends (...args: any[]) => any>(
  */
 export function debounceAction<T extends (...args: any[]) => any>(
   action: T,
-  delay: number = PERFORMANCE_CONFIG.optimization.defaultDebounceMs
+  delay: number = PERFORMANCE_CONFIG?.optimization?.defaultDebounceMs
 ): T {
   let timeoutId: NodeJS.Timeout | null = null;
 
   return ((...args: any[]) => {
     if (timeoutId) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId as any);
     }
     
     timeoutId = setTimeout(() => {
@@ -259,14 +259,14 @@ export function debounceAction<T extends (...args: any[]) => any>(
  */
 export function batchActions<T extends (...args: any[]) => any>(
   action: T,
-  batchSize: number = PERFORMANCE_CONFIG.optimization.defaultBatchSize,
-  batchDelay: number = PERFORMANCE_CONFIG.optimization.defaultBatchDelayMs
+  batchSize: number = PERFORMANCE_CONFIG?.optimization?.defaultBatchSize,
+  batchDelay: number = PERFORMANCE_CONFIG?.optimization?.defaultBatchDelayMs
 ): T {
   let batch: any[][] = [];
   let timeoutId: NodeJS.Timeout | null = null;
 
   const processBatch = () => {
-    if (batch.length === 0) return;
+    if (batch?.length === 0) return;
     
     const currentBatch = [...batch];
     batch = [];
@@ -277,12 +277,12 @@ export function batchActions<T extends (...args: any[]) => any>(
   };
 
   return ((...args: any[]) => {
-    batch.push(args);
+    batch.push(args as any);
     
     // Process immediately if batch is full
     if (batch.length >= batchSize) {
       if (timeoutId) {
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId as any);
       }
       processBatch();
     } else if (!timeoutId) {
@@ -303,7 +303,7 @@ export function createSelector<T, R>(
   let hasResult = false;
 
   return (state: T): R => {
-    const newResult = selector(state);
+    const newResult = selector(state as any);
     
     if (!hasResult || (equalityFn ? !equalityFn(lastResult, newResult) : lastResult !== newResult)) {
       lastResult = newResult;
@@ -321,18 +321,18 @@ export const debugPerformance = {
   getSummary: () => storePerformanceMonitor.getPerformanceSummary(),
   getSlowActions: (storeName?: string) => 
     storeName 
-      ? storePerformanceMonitor.getSlowActionsForStore(storeName)
+      ? storePerformanceMonitor.getSlowActionsForStore(storeName as any)
       : storePerformanceMonitor.getPerformanceSummary().slowActions,
   clearMetrics: () => storePerformanceMonitor.clearMetrics(),
   exportMetrics: () => storePerformanceMonitor.exportMetrics(),
-  setThreshold: (ms: number) => storePerformanceMonitor.setThreshold(ms),
-  setEnabled: (enabled: boolean) => storePerformanceMonitor.setEnabled(enabled),
+  setThreshold: (ms: number) => storePerformanceMonitor.setThreshold(ms as any),
+  setEnabled: (enabled: boolean) => storePerformanceMonitor.setEnabled(enabled as any),
   cleanup: () => storePerformanceMonitor.cleanup(),
   getConfig: () => PERFORMANCE_CONFIG,
 };
 
 // Make debug utilities globally available in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' && !PERFORMANCE_CONFIG.monitoring.enableInProduction) {
+if (typeof window !== 'undefined' && process.env?.NODE_ENV === 'development' && !PERFORMANCE_CONFIG?.monitoring?.enableInProduction) {
   (window as any).debugPerformance = debugPerformance;
 }
 

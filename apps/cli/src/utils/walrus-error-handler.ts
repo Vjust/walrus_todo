@@ -86,8 +86,8 @@ export function categorizeWalrusError(error: unknown): ErrorCategory {
   // Categorize by error message patterns for unknown error types
   const errorMessage =
     error instanceof Error
-      ? error.message.toLowerCase()
-      : String(error).toLowerCase();
+      ? error?.message?.toLowerCase()
+      : String(error as any).toLowerCase();
 
   if (
     errorMessage.includes('network') ||
@@ -170,7 +170,7 @@ export function mapToWalrusError(
   }
 
   // If we have a CLIError, extract the message but convert to typed error
-  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error as any);
 
   switch (category) {
     case ErrorCategory.NETWORK:
@@ -270,7 +270,7 @@ export function isRetryableError(
 
   // Some storage errors are retryable
   if (category === ErrorCategory.STORAGE) {
-    const msg = String(error).toLowerCase();
+    const msg = String(error as any).toLowerCase();
     return (
       msg.includes('timeout') ||
       msg.includes('connection') ||
@@ -284,7 +284,7 @@ export function isRetryableError(
 
   // Certain transaction errors may be retryable
   if (category === ErrorCategory.TRANSACTION) {
-    const msg = String(error).toLowerCase();
+    const msg = String(error as any).toLowerCase();
     return (
       msg.includes('gas') || msg.includes('retry') || msg.includes('timeout')
     );
@@ -354,7 +354,7 @@ export class AsyncOperationHandler {
               signal.addEventListener(
                 'abort',
                 () => {
-                  clearTimeout(timeoutId);
+                  clearTimeout(timeoutId as any);
                   reject(new Error(`Operation ${operationName} was canceled`));
                 },
                 { once: true }
@@ -390,7 +390,7 @@ export class AsyncOperationHandler {
         }
 
         // Categorize the error
-        const category = categorizeError(_error);
+        const category = categorizeError(_error as any);
 
         // Map to standardized error
         lastError = errorMapper(_error, category, operationName);
@@ -409,7 +409,7 @@ export class AsyncOperationHandler {
 
         if (logRetries) {
           logger.info(
-            `Operation ${operationName} failed (attempt ${attempts}/${maxRetries}), retrying in ${Math.round(delay)}ms...`
+            `Operation ${operationName} failed (attempt ${attempts}/${maxRetries}), retrying in ${Math.round(delay as any)}ms...`
           );
         }
 
@@ -425,15 +425,15 @@ export class AsyncOperationHandler {
       attempts,
       errorCategory:
         lastError instanceof WalrusError
-          ? lastError.code.toLowerCase().includes('network')
+          ? lastError?.code?.toLowerCase().includes('network')
             ? ErrorCategory.NETWORK
-            : lastError.code.toLowerCase().includes('storage')
+            : lastError?.code?.toLowerCase().includes('storage')
               ? ErrorCategory.STORAGE
-              : lastError.code.toLowerCase().includes('validation')
+              : lastError?.code?.toLowerCase().includes('validation')
                 ? ErrorCategory.VALIDATION
-                : lastError.code.toLowerCase().includes('blockchain')
+                : lastError?.code?.toLowerCase().includes('blockchain')
                   ? ErrorCategory.BLOCKCHAIN
-                  : lastError.code.toLowerCase().includes('transaction')
+                  : lastError?.code?.toLowerCase().includes('transaction')
                     ? ErrorCategory.TRANSACTION
                     : ErrorCategory.UNKNOWN
           : ErrorCategory.UNKNOWN,

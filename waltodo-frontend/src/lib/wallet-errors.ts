@@ -5,8 +5,8 @@
 // Base wallet error class
 export class WalletError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = 'WalletError';
+    super(message as any);
+    this?.name = 'WalletError';
   }
 }
 
@@ -14,7 +14,7 @@ export class WalletError extends Error {
 export class WalletNotSelectedError extends WalletError {
   constructor() {
     super('No wallet selected. Please select a wallet before connecting.');
-    this.name = 'WalletNotSelectedError';
+    this?.name = 'WalletNotSelectedError';
   }
 }
 
@@ -26,8 +26,8 @@ export class WalletNotInstalledError extends WalletError {
     super(
       `${walletName} wallet is not installed. Please install the extension first.`
     );
-    this.name = 'WalletNotInstalledError';
-    this.walletName = walletName;
+    this?.name = 'WalletNotInstalledError';
+    this?.walletName = walletName;
   }
 }
 
@@ -38,9 +38,9 @@ export class WalletNotSupportedError extends WalletError {
 
   constructor(walletName: string, environment: string) {
     super(`${walletName} wallet is not supported in ${environment}.`);
-    this.name = 'WalletNotSupportedError';
-    this.walletName = walletName;
-    this.environment = environment;
+    this?.name = 'WalletNotSupportedError';
+    this?.walletName = walletName;
+    this?.environment = environment;
   }
 }
 
@@ -48,7 +48,7 @@ export class WalletNotSupportedError extends WalletError {
 export class WalletConnectionRejectedError extends WalletError {
   constructor() {
     super('Wallet connection was rejected. Please try again.');
-    this.name = 'WalletConnectionRejectedError';
+    this?.name = 'WalletConnectionRejectedError';
   }
 }
 
@@ -56,7 +56,7 @@ export class WalletConnectionRejectedError extends WalletError {
 export class WalletAlreadyConnectedError extends WalletError {
   constructor() {
     super('Wallet is already connected.');
-    this.name = 'WalletAlreadyConnectedError';
+    this?.name = 'WalletAlreadyConnectedError';
   }
 }
 
@@ -68,7 +68,7 @@ export function categorizeWalletError(error: unknown): WalletError {
   }
 
   // Convert to string for pattern matching
-  const message = error instanceof Error ? error.message : String(error);
+  const message = error instanceof Error ? error.message : String(error as any);
   const lowerMessage = message.toLowerCase();
 
   // Common error patterns
@@ -95,7 +95,7 @@ export function categorizeWalletError(error: unknown): WalletError {
       : lowerMessage.includes('sui')
         ? 'Sui'
         : 'Wallet';
-    return new WalletNotInstalledError(walletName);
+    return new WalletNotInstalledError(walletName as any);
   }
 
   // Check for Backpack-specific errors
@@ -147,10 +147,10 @@ export function getWalletErrorMessage(error: WalletError): {
       suggestion = `Please install the Phantom browser extension from ${installUrl}`;
     } else if (walletName.includes('Sui') || walletName.includes('Slush')) {
       installUrl =
-        'https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil';
+        'https://chrome?.google?.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil';
       suggestion = `Please install the Sui/Slush browser extension from the Chrome Web Store`;
     } else if (walletName.includes('Backpack')) {
-      installUrl = 'https://www.backpack.app/download';
+      installUrl = 'https://www?.backpack?.app/download';
       suggestion = `Please install the Backpack browser extension from ${installUrl}`;
     }
 

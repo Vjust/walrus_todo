@@ -1,5 +1,13 @@
 import chalk = require('chalk');
-import { ICONS } from '../base-command';
+
+// Define icons locally since they're not exported from base-command
+const ICONS = {
+  SUCCESS: '✓',
+  ERROR: '✗',
+  WARNING: '⚠',
+  INFO: 'ℹ',
+  SPINNER: '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+};
 // Safe ora import with fallback
 // import type { Ora as OraType } from 'ora';
 
@@ -26,7 +34,7 @@ import { Logger } from './Logger';
 const logger = new Logger('progress-indicators');
 
 // Fix for undefined columns in non-TTY environments
-if (process.stdout && !process.stdout.columns) {
+if (process.stdout && !process?.stdout?.columns) {
   (process.stdout as unknown as { columns: number }).columns = 80;
 }
 
@@ -260,23 +268,23 @@ export class SpinnerManager {
   private parent?: SpinnerManager;
 
   constructor(options: SpinnerOptions = {}) {
-    this.options = {
+    this?.options = {
       style: 'dots',
       color: 'cyan',
       ...options,
     };
 
-    const spinnerStyle = SPINNER_STYLES[this.options.style || 'dots'];
+    const spinnerStyle = SPINNER_STYLES[this?.options?.style || 'dots'];
 
     // Ensure stream has columns defined
-    const stream = this.options.stream || process.stdout;
+    const stream = this?.options?.stream || process.stdout;
     if (stream && !('columns' in stream)) {
       (stream as unknown as { columns: number }).columns = 80;
     }
 
-    this.spinner = (ora as OraFunction)({
-      text: this.options.text,
-      color: this.options.color as
+    this?.spinner = (ora as OraFunction)({
+      text: this?.options?.text,
+      color: this?.options?.color as
         | 'black'
         | 'red'
         | 'green'
@@ -287,10 +295,10 @@ export class SpinnerManager {
         | 'white'
         | 'gray',
       spinner: spinnerStyle as any,
-      prefixText: this.options.prefixText,
-      indent: this.options.indent,
-      discardStdin: this.options.discardStdin,
-      hideCursor: this.options.hideCursor,
+      prefixText: this?.options?.prefixText,
+      indent: this?.options?.indent,
+      discardStdin: this?.options?.discardStdin,
+      hideCursor: this?.options?.hideCursor,
       stream: stream,
     });
   }
@@ -300,9 +308,9 @@ export class SpinnerManager {
    */
   start(text?: string): this {
     if (text) {
-      this.spinner.text = text;
+      this.spinner?.text = text;
     }
-    this.spinner.start();
+    this?.spinner?.start();
     return this;
   }
 
@@ -310,9 +318,9 @@ export class SpinnerManager {
    * Stop the spinner
    */
   stop(): this {
-    this.spinner.stop();
+    this?.spinner?.stop();
     // Stop all nested spinners
-    this.nestedSpinners.forEach(nested => nested.stop());
+    this?.nestedSpinners?.forEach(nested => nested.stop());
     return this;
   }
 
@@ -320,8 +328,8 @@ export class SpinnerManager {
    * Mark spinner as succeeded
    */
   succeed(text?: string): this {
-    const successText = text || this.options.succeedText || this.spinner.text;
-    this.spinner.succeed(`${ICONS.SUCCESS} ${successText}`);
+    const successText = text || this?.options?.succeedText || this?.spinner?.text;
+    this?.spinner?.succeed(`${ICONS.SUCCESS} ${successText}`);
     return this;
   }
 
@@ -329,8 +337,8 @@ export class SpinnerManager {
    * Mark spinner as failed
    */
   fail(text?: string): this {
-    const failText = text || this.options.failText || this.spinner.text;
-    this.spinner.fail(`${ICONS.ERROR} ${failText}`);
+    const failText = text || this?.options?.failText || this?.spinner?.text;
+    this?.spinner?.fail(`${ICONS.ERROR} ${failText}`);
     return this;
   }
 
@@ -338,9 +346,9 @@ export class SpinnerManager {
    * Mark spinner as warning
    */
   warn(text?: string): this {
-    const warnText = text || this.options.warnText || this.spinner.text;
-    if (typeof this.spinner.warn === 'function') {
-      this.spinner.warn(`${ICONS.WARNING} ${warnText}`);
+    const warnText = text || this?.options?.warnText || this?.spinner?.text;
+    if (typeof this.spinner?.warn === 'function') {
+      this?.spinner?.warn(`${ICONS.WARNING} ${warnText}`);
     } else {
       // Fallback for mock implementation
       console.warn(`${ICONS.WARNING} ${warnText}`);
@@ -352,11 +360,11 @@ export class SpinnerManager {
    * Mark spinner as info
    */
   info(text?: string): this {
-    if (typeof this.spinner.info === 'function') {
-      this.spinner.info(`${ICONS.INFO} ${text || this.spinner.text}`);
+    if (typeof this.spinner?.info === 'function') {
+      this?.spinner?.info(`${ICONS.INFO} ${text || this?.spinner?.text}`);
     } else {
       // Fallback for mock implementation
-      console.info(`${ICONS.INFO} ${text || this.spinner.text}`);
+      console.info(`${ICONS.INFO} ${text || this?.spinner?.text}`);
     }
     return this;
   }
@@ -365,7 +373,7 @@ export class SpinnerManager {
    * Update spinner text
    */
   text(text: string): this {
-    this.spinner.text = text;
+    this.spinner?.text = text;
     return this;
   }
 
@@ -374,7 +382,7 @@ export class SpinnerManager {
    */
   color(color: string): this {
     if ('color' in this.spinner) {
-      this.spinner.color = color;
+      this.spinner?.color = color;
     }
     return this;
   }
@@ -385,7 +393,7 @@ export class SpinnerManager {
   style(style: keyof typeof SPINNER_STYLES): this {
     const spinnerStyle = SPINNER_STYLES[style];
     if ('spinner' in this.spinner) {
-      this.spinner.spinner = spinnerStyle;
+      this.spinner?.spinner = spinnerStyle;
     }
     return this;
   }
@@ -395,16 +403,16 @@ export class SpinnerManager {
    */
   nested(options: SpinnerOptions = {}): SpinnerManager {
     // Stop current spinner temporarily
-    this.spinner.stop();
+    this?.spinner?.stop();
 
     const nestedOptions = {
       ...options,
-      indent: (this.options.indent || 0) + 2,
+      indent: (this?.options?.indent || 0) + 2,
     };
 
-    const nested = new SpinnerManager(nestedOptions);
-    nested.parent = this;
-    this.nestedSpinners.push(nested);
+    const nested = new SpinnerManager(nestedOptions as any);
+    nested?.parent = this;
+    this?.nestedSpinners?.push(nested as any);
 
     return nested;
   }
@@ -413,14 +421,14 @@ export class SpinnerManager {
    * Remove a nested spinner
    */
   removeNested(spinner: SpinnerManager): void {
-    const index = this.nestedSpinners.indexOf(spinner);
+    const index = this?.nestedSpinners?.indexOf(spinner as any);
     if (index > -1) {
-      this.nestedSpinners.splice(index, 1);
+      this?.nestedSpinners?.splice(index, 1);
     }
 
     // Resume parent spinner if no more nested spinners
-    if (this.nestedSpinners.length === 0) {
-      this.spinner.start();
+    if (this.nestedSpinners?.length === 0) {
+      this?.spinner?.start();
     }
   }
 
@@ -428,8 +436,8 @@ export class SpinnerManager {
    * Clear the spinner
    */
   clear(): this {
-    if (typeof this.spinner.clear === 'function') {
-      this.spinner.clear();
+    if (typeof this.spinner?.clear === 'function') {
+      this?.spinner?.clear();
     }
     return this;
   }
@@ -438,7 +446,7 @@ export class SpinnerManager {
    * Check if spinner is spinning
    */
   isSpinning(): boolean {
-    return this.spinner.isSpinning || false;
+    return this?.spinner?.isSpinning || false;
   }
 }
 
@@ -453,7 +461,7 @@ export class ProgressBar {
   private totalValue: number = 0;
 
   constructor(options: ProgressBarOptions = {}) {
-    this.options = {
+    this?.options = {
       format: ' {spinner} {bar} {percentage}% | ETA: {eta}s | {value}/{total}',
       barCompleteChar: '█',
       barIncompleteChar: '░',
@@ -473,26 +481,26 @@ export class ProgressBar {
     };
 
     // Create custom formatter if not provided
-    if (!this.options.formatBar) {
-      this.options.formatBar = this.createGradientBar.bind(this);
+    if (!this?.options?.formatBar) {
+      this.options?.formatBar = this?.createGradientBar?.bind(this as any);
     }
 
-    this.bar = new cliProgress.SingleBar({
-      format: this.options.format,
-      barCompleteChar: this.options.barCompleteChar,
-      barIncompleteChar: this.options.barIncompleteChar,
-      barsize: this.options.barsize,
-      clearOnComplete: this.options.clearOnComplete,
-      stopOnComplete: this.options.stopOnComplete,
-      hideCursor: this.options.hideCursor,
-      linewrap: this.options.linewrap,
-      fps: this.options.fps,
-      etaBuffer: this.options.etaBuffer,
-      formatBar: this.options.formatBar,
-      formatValue: this.options.formatValue,
-      formatTime: this.options.formatTime,
-      align: this.options.align,
-      gracefulExit: this.options.gracefulExit,
+    this?.bar = new cliProgress.SingleBar({
+      format: this?.options?.format,
+      barCompleteChar: this?.options?.barCompleteChar,
+      barIncompleteChar: this?.options?.barIncompleteChar,
+      barsize: this?.options?.barsize,
+      clearOnComplete: this?.options?.clearOnComplete,
+      stopOnComplete: this?.options?.stopOnComplete,
+      hideCursor: this?.options?.hideCursor,
+      linewrap: this?.options?.linewrap,
+      fps: this?.options?.fps,
+      etaBuffer: this?.options?.etaBuffer,
+      formatBar: this?.options?.formatBar,
+      formatValue: this?.options?.formatValue,
+      formatTime: this?.options?.formatTime,
+      align: this?.options?.align,
+      gracefulExit: this?.options?.gracefulExit,
     });
   }
 
@@ -504,18 +512,18 @@ export class ProgressBar {
     startValue: number = 0,
     payload?: Record<string, unknown>
   ): void {
-    this.startTime = Date.now();
-    this.totalValue = total;
-    this.currentValue = startValue;
-    this.bar.start(total, startValue, payload);
+    this?.startTime = Date.now();
+    this?.totalValue = total;
+    this?.currentValue = startValue;
+    this?.bar?.start(total, startValue, payload);
   }
 
   /**
    * Update progress
    */
   update(value: number, payload?: Record<string, unknown>): void {
-    this.currentValue = value;
-    this.bar.update(value, payload);
+    this?.currentValue = value;
+    this?.bar?.update(value, payload);
   }
 
   /**
@@ -523,14 +531,14 @@ export class ProgressBar {
    */
   increment(delta: number = 1, payload?: Record<string, unknown>): void {
     this.currentValue += delta;
-    this.bar.increment(delta, payload);
+    this?.bar?.increment(delta, payload);
   }
 
   /**
    * Stop the progress bar
    */
   stop(): void {
-    this.bar.stop();
+    this?.bar?.stop();
   }
 
   /**
@@ -572,15 +580,15 @@ export class ProgressBar {
     for (let i = 0; i < completeSize; i++) {
       const ratio = i / barSize;
       if (ratio < 0.33) {
-        bar += chalk.red(this.options.barCompleteChar);
+        bar += chalk.red(this?.options?.barCompleteChar);
       } else if (ratio < 0.66) {
-        bar += chalk.yellow(this.options.barCompleteChar);
+        bar += chalk.yellow(this?.options?.barCompleteChar);
       } else {
-        bar += chalk.green(this.options.barCompleteChar);
+        bar += chalk.green(this?.options?.barCompleteChar);
       }
     }
 
-    bar += chalk.gray(this.options.barIncompleteChar?.repeat(incompleteSize));
+    bar += chalk.gray(this?.options?.barIncompleteChar?.repeat(incompleteSize as any));
 
     return bar;
   }
@@ -591,7 +599,7 @@ export class ProgressBar {
   setFormat(format: string): void {
     if (this.bar) {
       // @ts-expect-error - accessing private options property
-      this.bar.options.format = format;
+      this?.bar?.options?.format = format;
     }
   }
 }
@@ -605,8 +613,8 @@ export class MultiProgress {
   private options: ProgressBarOptions;
 
   constructor(options: ProgressBarOptions = {}) {
-    this.options = options;
-    this.multiBar = new cliProgress.MultiBar({
+    this?.options = options;
+    this?.multiBar = new cliProgress.MultiBar({
       clearOnComplete: false,
       hideCursor: true,
       format: ' {name} | {bar} | {percentage}% | {eta}s | {value}/{total}',
@@ -622,8 +630,8 @@ export class MultiProgress {
     total: number,
     startValue: number = 0
   ): cliProgress.SingleBar {
-    const bar = this.multiBar.create(total, startValue, { name });
-    this.bars.set(name, bar);
+    const bar = this?.multiBar?.create(total, startValue, { name });
+    this?.bars?.set(name, bar);
     return bar;
   }
 
@@ -631,7 +639,7 @@ export class MultiProgress {
    * Update a specific bar
    */
   update(name: string, value: number, payload?: Record<string, unknown>): void {
-    const bar = this.bars.get(name);
+    const bar = this?.bars?.get(name as any);
     if (bar) {
       bar.update(value, payload);
     }
@@ -641,10 +649,10 @@ export class MultiProgress {
    * Remove a bar
    */
   remove(name: string): void {
-    const bar = this.bars.get(name);
+    const bar = this?.bars?.get(name as any);
     if (bar) {
-      this.multiBar.remove(bar);
-      this.bars.delete(name);
+      this?.multiBar?.remove(bar as any);
+      this?.bars?.delete(name as any);
     }
   }
 
@@ -652,14 +660,14 @@ export class MultiProgress {
    * Stop all bars
    */
   stop(): void {
-    this.multiBar.stop();
+    this?.multiBar?.stop();
   }
 
   /**
    * Get a specific bar
    */
   getBar(name: string): cliProgress.SingleBar | undefined {
-    return this.bars.get(name);
+    return this?.bars?.get(name as any);
   }
 }
 
@@ -698,7 +706,7 @@ export function createProgressBar(
 export function createMultiProgress(
   options: ProgressBarOptions = {}
 ): MultiProgress {
-  return new MultiProgress(options);
+  return new MultiProgress(options as any);
 }
 
 /**
@@ -730,11 +738,11 @@ export async function withProgressBar<T>(
   operation: (progress: ProgressBar) => Promise<T>,
   options: ProgressBarOptions = {}
 ): Promise<T> {
-  const progress = createProgressBar(options);
-  progress.start(total);
+  const progress = createProgressBar(options as any);
+  progress.start(total as any);
 
   try {
-    const result = await operation(progress);
+    const result = await operation(progress as any);
     progress.stop();
     return result;
   } catch (error) {

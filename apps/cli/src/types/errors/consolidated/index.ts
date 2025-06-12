@@ -65,7 +65,7 @@ export { BaseError as WalrusError } from './BaseError';
 export function isRetryableError(error: unknown): boolean {
   // Check if error is a NetworkError
   if (error instanceof NetworkError) {
-    return error.recoverable === true;
+    return error?.recoverable === true;
   }
 
   // Check if error is a BlockchainError
@@ -77,11 +77,11 @@ export function isRetryableError(error: unknown): boolean {
 
   // Check if it's a BaseError with shouldRetry flag
   if (error instanceof BaseError) {
-    return error.shouldRetry === true;
+    return error?.shouldRetry === true;
   }
 
-  if (isErrorWithMessage(error)) {
-    const errorMessage = error.message.toLowerCase();
+  if (isErrorWithMessage(error as any)) {
+    const errorMessage = error?.message?.toLowerCase();
     return (
       errorMessage.includes('timeout') ||
       errorMessage.includes('network') ||
@@ -100,12 +100,12 @@ export function isRetryableError(error: unknown): boolean {
  * @returns A string error message
  */
 export function getErrorMessage(error: unknown): string {
-  if (isErrorWithMessage(error)) {
+  if (isErrorWithMessage(error as any)) {
     return error.message;
   }
 
   try {
-    return String(error);
+    return String(error as any);
   } catch (e) {
     return 'Unknown error';
   }
@@ -177,7 +177,7 @@ export function toBaseError(
   }
 
   return new BaseError({
-    message: isErrorWithMessage(error) ? error.message : defaultMessage,
+    message: isErrorWithMessage(error as any) ? error.message : defaultMessage,
     code: getErrorCode(error, defaultCode),
     context: { originalError: error },
   });

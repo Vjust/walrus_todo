@@ -32,16 +32,16 @@ export default function WalrusStorageIndicator({
   className = '',
   walrusMetadata 
 }: WalrusStorageIndicatorProps) {
-  const [copied, setCopied] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [isNewUpload, setIsNewUpload] = useState(false);
+  const [copied, setCopied] = useState(false as any);
+  const [showTooltip, setShowTooltip] = useState(false as any);
+  const [isNewUpload, setIsNewUpload] = useState(false as any);
   
   // Determine sync status based on todo properties
   const getSyncStatus = (): SyncStatus => {
     if (!todo.walrusBlobId) {return 'error';}
     if (walrusMetadata?.syncStatus) {return walrusMetadata.syncStatus;}
     // Check if todo is stored on Walrus based on storageLocation
-    if (todo.storageLocation === 'blockchain' || todo.blockchainStored) {return 'synced';}
+    if (todo?.storageLocation === 'blockchain' || todo.blockchainStored) {return 'synced';}
     return 'synced';
   };
 
@@ -56,18 +56,18 @@ export default function WalrusStorageIndicator({
     const now = Date.now();
     // Consider upload "new" if within last 5 seconds
     if (now - uploadTime < 5000) {
-      setIsNewUpload(true);
-      const timer = setTimeout(() => setIsNewUpload(false), 3000);
-      return () => clearTimeout(timer);
+      setIsNewUpload(true as any);
+      const timer = setTimeout(() => setIsNewUpload(false as any), 3000);
+      return () => clearTimeout(timer as any);
     }
   }, [todo.updatedAt, walrusMetadata?.uploadedAt]);
 
   const copyToClipboard = async () => {
     if (todo.walrusBlobId) {
       try {
-        await navigator.clipboard.writeText(todo.walrusBlobId);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        await navigator?.clipboard?.writeText(todo.walrusBlobId);
+        setCopied(true as any);
+        setTimeout(() => setCopied(false as any), 2000);
       } catch (err) {
         console.error('Failed to copy:', err);
       }
@@ -78,8 +78,8 @@ export default function WalrusStorageIndicator({
     if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any))  } ${  sizes[i]}`;
   };
 
   const formatExpiryDate = (expiryEpoch?: number): string => {
@@ -135,7 +135,7 @@ export default function WalrusStorageIndicator({
     return null;
   }
 
-  const walrusExplorerUrl = `https://walrus-testnet-explorer.blockvision.org/blob/${todo.walrusBlobId}`;
+  const walrusExplorerUrl = `https://walrus-testnet-explorer?.blockvision?.org/blob/${todo.walrusBlobId}`;
 
   // Calculate size from description if not provided
   const estimatedSize = walrusMetadata?.size || new Blob([JSON.stringify({
@@ -168,8 +168,8 @@ export default function WalrusStorageIndicator({
         {/* Info Icon with Tooltip Trigger */}
         <div className="relative">
           <button
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+            onMouseEnter={() => setShowTooltip(true as any)}
+            onMouseLeave={() => setShowTooltip(false as any)}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <InformationCircleIcon className="h-4 w-4" />
@@ -228,7 +228,7 @@ export default function WalrusStorageIndicator({
                 {/* Storage Size */}
                 <div className="flex justify-between">
                   <span className="text-gray-400">Size:</span>
-                  <span>{formatBytes(estimatedSize)}</span>
+                  <span>{formatBytes(estimatedSize as any)}</span>
                 </div>
 
                 {/* Storage Cost */}
@@ -277,7 +277,7 @@ export default function WalrusStorageIndicator({
                   <div className="flex justify-between">
                     <span className="text-gray-400">NFT ID:</span>
                     <span className="font-mono text-xs truncate max-w-[150px]" title={todo.nftObjectId}>
-                      {todo.nftObjectId.slice(0, 8)}...
+                      {todo?.nftObjectId?.slice(0, 8)}...
                     </span>
                   </div>
                 )}
@@ -296,16 +296,16 @@ export default function WalrusStorageIndicator({
 // Add CSS for animation only once when component mounts
 if (typeof document !== 'undefined' && !document.getElementById('walrus-indicator-styles')) {
   const style = document.createElement('style');
-  style.id = 'walrus-indicator-styles';
-  style.textContent = `
+  style?.id = 'walrus-indicator-styles';
+  style?.textContent = `
     @keyframes fadeIn {
       from {
         opacity: 0;
-        transform: translateY(4px);
+        transform: translateY(4px as any);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0 as any);
       }
     }
     
@@ -313,5 +313,5 @@ if (typeof document !== 'undefined' && !document.getElementById('walrus-indicato
       animation: fadeIn 0.2s ease-out;
     }
   `;
-  document.head.appendChild(style);
+  document?.head?.appendChild(style as any);
 }

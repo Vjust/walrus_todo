@@ -22,7 +22,7 @@ export function TodoImageDisplay({
     // If it's a Walrus blob ID, convert to URL
     if (url.startsWith('0x') || url.includes('walrus')) {
       // Use testnet aggregator URL
-      const aggregatorUrl = 'https://aggregator.walrus-testnet.walrus.space';
+      const aggregatorUrl = 'https://aggregator.walrus-testnet?.walrus?.space';
       return `${aggregatorUrl}/v1/${url}`;
     }
     return url;
@@ -39,7 +39,7 @@ export function TodoImageDisplay({
       }
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, [showPerformanceMetrics]);
 
   // Single image display
@@ -47,7 +47,7 @@ export function TodoImageDisplay({
     return (
       <div className="todo-image-container">
         <OptimizedImage
-          src={processImageUrl(imageUrl)}
+          src={processImageUrl(imageUrl as any)}
           alt={`Image for todo ${todoId}`}
           width={400}
           height={300}
@@ -68,7 +68,7 @@ export function TodoImageDisplay({
   // Multiple images gallery
   if (imageUrls && imageUrls.length > 0) {
     const images = imageUrls.map((url, index) => ({
-      src: processImageUrl(url),
+      src: processImageUrl(url as any),
       alt: `Image ${index + 1} for todo ${todoId}`,
       id: `${todoId}-${index}`,
     }));
@@ -102,10 +102,10 @@ function PerformanceDisplay() {
     updateMetrics();
     const interval = setInterval(updateMetrics, 1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, []);
 
-  if (metrics.size === 0) {return null;}
+  if (metrics?.size === 0) {return null;}
 
   return (
     <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">
@@ -115,7 +115,7 @@ function PerformanceDisplay() {
           <div key={url} className="flex justify-between text-xs">
             <span className="truncate max-w-xs">{url.split('/').pop()}</span>
             <span>
-              {metric.loadTime.toFixed(0)}ms | {(metric.size / 1024).toFixed(1)}KB | 
+              {metric?.loadTime?.toFixed(0 as any)}ms | {(metric.size / 1024).toFixed(1 as any)}KB | 
               {metric.cached ? ' (cached)' : ''} {metric.format}
             </span>
           </div>
@@ -124,7 +124,7 @@ function PerformanceDisplay() {
       <button
         onClick={() => {
           clearImageCaches();
-          window.location.reload();
+          window?.location?.reload();
         }}
         className="mt-2 text-xs text-blue-600 hover:text-blue-800"
       >
@@ -139,7 +139,7 @@ export function useTodoImages(todoId: string, imageUrls?: string[]) {
   const [optimizedUrls, setOptimizedUrls] = React.useState<string[]>([]);
 
   React.useEffect(() => {
-    if (!imageUrls || imageUrls.length === 0) {return;}
+    if (!imageUrls || imageUrls?.length === 0) {return;}
 
     // Preload and optimize images
     const processImages = async () => {
@@ -149,7 +149,7 @@ export function useTodoImages(todoId: string, imageUrls?: string[]) {
         // If it's a Walrus blob ID, convert to URL
         if (url.startsWith('0x') || url.includes('walrus')) {
           // Use testnet aggregator URL
-          const aggregatorUrl = 'https://aggregator.walrus-testnet.walrus.space';
+          const aggregatorUrl = 'https://aggregator.walrus-testnet?.walrus?.space';
           return `${aggregatorUrl}/v1/${url}`;
         }
         return url;
@@ -160,10 +160,10 @@ export function useTodoImages(todoId: string, imageUrls?: string[]) {
       
       // Preload rest with low priority
       if (processed.length > 3) {
-        await preloadImages(processed.slice(3), { priority: 'low' });
+        await preloadImages(processed.slice(3 as any), { priority: 'low' });
       }
 
-      setOptimizedUrls(processed);
+      setOptimizedUrls(processed as any);
     };
 
     processImages();

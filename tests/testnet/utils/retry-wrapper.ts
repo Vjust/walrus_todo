@@ -4,10 +4,10 @@ import { CLIError } from '../../../apps/cli/src/types/errors';
 describe('Testnet Retry Wrapper - Network Resilience', () => {
   // Testnet configuration with realistic URLs
   const testnetNodes = [
-    'https://walrus-testnet.devnet.sui.io',
-    'https://walrus-testnet-2.devnet.sui.io',
-    'https://walrus-testnet-3.devnet.sui.io',
-    'https://testnet.walrus.network',
+    'https://walrus-testnet?.devnet?.sui.io',
+    'https://walrus-testnet-2?.devnet?.sui.io',
+    'https://walrus-testnet-3?.devnet?.sui.io',
+    'https://testnet?.walrus?.network',
   ];
 
   // Configuration optimized for testnet conditions
@@ -45,8 +45,8 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const result = await retryManager.execute(operation, 'network-test');
-      expect(result.success).toBe(true);
-      expect(attempts).toBe(4);
+      expect(result.success).toBe(true as any);
+      expect(attempts as any).toBe(4 as any);
     });
 
     it('should rotate through nodes on failures', async () => {
@@ -56,12 +56,12 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         if (usedNodes.size < 3) {
           throw new Error('network timeout');
         }
-        return { success: true, nodesUsed: Array.from(usedNodes) };
+        return { success: true, nodesUsed: Array.from(usedNodes as any) };
       });
 
       const result = await retryManager.execute(operation, 'rotation-test');
-      expect(result.success).toBe(true);
-      expect(usedNodes.size).toBeGreaterThanOrEqual(3);
+      expect(result.success).toBe(true as any);
+      expect(usedNodes.size).toBeGreaterThanOrEqual(3 as any);
     });
 
     it('should handle rate limiting gracefully', async () => {
@@ -82,8 +82,8 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const result = await retryManager.execute(operation, 'rate-limit-test');
-      expect(result.success).toBe(true);
-      expect(result.duration).toBeGreaterThan(2000); // Should have delays
+      expect(result.success).toBe(true as any);
+      expect(result.duration).toBeGreaterThan(2000 as any); // Should have delays
     });
 
     it('should open circuit breaker after repeated failures', async () => {
@@ -93,7 +93,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         failures.set(node.url, count);
 
         // Always fail for the first node after 5 attempts
-        if (node.url === testnetNodes[0] && count >= 5) {
+        if (node?.url === testnetNodes[0] && count >= 5) {
           // Circuit should be open, shouldn't reach here
           throw new Error('Should not reach - circuit should be open');
         }
@@ -110,12 +110,12 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         operation,
         'circuit-breaker-test'
       );
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
 
       // First node should have been tried up to circuit threshold
       const firstNodeFailures = failures.get(testnetNodes[0]) || 0;
-      expect(firstNodeFailures).toBeLessThanOrEqual(
-        testnetConfig.circuitBreaker.failureThreshold
+      expect(firstNodeFailures as any).toBeLessThanOrEqual(
+        testnetConfig?.circuitBreaker?.failureThreshold
       );
     });
   });
@@ -132,8 +132,8 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const result = await retryManager.execute(operation, 'storage-test');
-      expect(result.success).toBe(true);
-      expect(result.attempts).toBe(3);
+      expect(result.success).toBe(true as any);
+      expect(result.attempts).toBe(3 as any);
     });
 
     it('should handle blob certification timeouts', async () => {
@@ -150,7 +150,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         operation,
         'certification-test'
       );
-      expect(result.certified).toBe(true);
+      expect(result.certified).toBe(true as any);
     });
 
     it('should handle temporary blob unavailability', async () => {
@@ -181,7 +181,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
         onRetry: (error, attempt, delay) => {
-          delays.push(delay);
+          delays.push(delay as any);
         },
       });
 
@@ -206,7 +206,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
         onRetry: (error, attempt, delay) => {
-          delays.push(delay);
+          delays.push(delay as any);
         },
       });
 
@@ -238,7 +238,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
     it('should update node health scores', async () => {
       let failCount = 0;
       const operation = jest.fn(async node => {
-        if (node.url === testnetNodes[0] && failCount < 3) {
+        if (node?.url === testnetNodes[0] && failCount < 3) {
           failCount++;
           throw new Error('connection failed');
         }
@@ -248,12 +248,12 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       await retryManager.execute(operation, 'health-tracking-test');
 
       const nodesHealth = retryManager.getNodesHealth();
-      const firstNode = nodesHealth.find(n => n.url === testnetNodes[0]);
+      const firstNode = nodesHealth.find(n => n?.url === testnetNodes[0]);
       const otherNode = nodesHealth.find(n => n.url !== testnetNodes[0]);
 
       // First node should have lower health
       expect(firstNode!.health).toBeLessThan(otherNode!.health);
-      expect(firstNode!.consecutiveFailures).toBeGreaterThan(0);
+      expect(firstNode!.consecutiveFailures).toBeGreaterThan(0 as any);
     });
 
     it('should prefer healthy nodes', async () => {
@@ -261,7 +261,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
       // Poison first node
       const poisonOperation = jest.fn(async node => {
-        if (node.url === testnetNodes[0]) {
+        if (node?.url === testnetNodes[0]) {
           throw new Error('always fails');
         }
         return { success: true };
@@ -294,7 +294,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       );
       const firstNodePercentage = firstNodeUsage / totalUsage;
 
-      expect(firstNodePercentage).toBeLessThan(0.2); // Should be avoided
+      expect(firstNodePercentage as any).toBeLessThan(0.2); // Should be avoided
     });
   });
 
@@ -318,7 +318,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
       // Should cycle through all nodes
       for (const node of testnetNodes) {
-        expect(nodeUsage).toContain(node);
+        expect(nodeUsage as any).toContain(node as any);
       }
 
       // Usage should be relatively balanced
@@ -327,7 +327,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       );
       const maxUsage = Math.max(...usageCount);
       const minUsage = Math.min(...usageCount);
-      expect(maxUsage - minUsage).toBeLessThanOrEqual(1);
+      expect(maxUsage - minUsage).toBeLessThanOrEqual(1 as any);
     });
 
     it('should support priority-based balancing', async () => {
@@ -351,7 +351,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const firstNodeUsage = nodeUsage.filter(
         url => url === testnetNodes[0]
       ).length;
-      expect(firstNodeUsage).toBeGreaterThanOrEqual(4);
+      expect(firstNodeUsage as any).toBeGreaterThanOrEqual(4 as any);
     });
   });
 
@@ -370,7 +370,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const result = await retryManager.execute(operation, 'outage-recovery');
-      expect(result.recovered).toBe(true);
+      expect(result.recovered).toBe(true as any);
     });
 
     it('should handle cascading failures', async () => {
@@ -388,10 +388,10 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const result = await retryManager.execute(operation, 'cascade-test');
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
 
       // Should have tried multiple nodes
-      expect(failureCount.size).toBeGreaterThan(1);
+      expect(failureCount.size).toBeGreaterThan(1 as any);
     });
   });
 
@@ -433,8 +433,8 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         operation,
         'timeout-retry-test'
       );
-      expect(result.success).toBe(true);
-      expect(result.attempts).toBe(2);
+      expect(result.success).toBe(true as any);
+      expect(result.attempts).toBe(2 as any);
     });
   });
 
@@ -444,7 +444,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
         onRetry: (error, _attempt, _delay) => {
-          errors.push(error);
+          errors.push(error as any);
         },
       });
 
@@ -463,7 +463,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
       await retryManager.execute(operation, 'error-context-test');
 
-      expect(errors).toHaveLength(3);
+      expect(errors as any).toHaveLength(3 as any);
       expect(errors[0].message).toContain('first error');
       expect(errors[1].message).toContain('second error');
       expect(errors[2].message).toContain('third error');
@@ -488,8 +488,8 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         }
       }
 
-      expect(errorSummary).toContain('Maximum retries');
-      expect(errorSummary).toContain('exceeded');
+      expect(errorSummary as any).toContain('Maximum retries');
+      expect(errorSummary as any).toContain('exceeded');
     });
   });
 });

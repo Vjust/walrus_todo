@@ -20,16 +20,16 @@ export * from './WalrusDeploymentHealthManager';
 
 export function validateDate(dateStr: string): boolean {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(dateStr)) return false;
+  if (!dateRegex.test(dateStr as any)) return false;
 
-  const date = new Date(dateStr);
+  const date = new Date(dateStr as any);
   return !isNaN(date.getTime());
 }
 
 export function validatePriority(
   priority: string
 ): priority is 'high' | 'medium' | 'low' {
-  return ['high', 'medium', 'low'].includes(priority);
+  return ['high', 'medium', 'low'].includes(priority as any);
 }
 
 export function formatTodoOutput(todo: {
@@ -48,7 +48,7 @@ export function formatTodoOutput(todo: {
     }[todo.priority] || '•';
 
   return `${status} ${priority} ${todo.title}${todo.dueDate ? ` (due: ${todo.dueDate})` : ''}${
-    todo.tags.length ? ` [${todo.tags.join(', ')}]` : ''
+    todo?.tags?.length ? ` [${todo?.tags?.join(', ')}]` : ''
   }`;
 }
 
@@ -121,7 +121,7 @@ export function isNonEmptyString(value: unknown): value is string {
 export function isNonEmptyArray<T>(
   value: T[] | undefined | null
 ): value is T[] {
-  return Array.isArray(value) && value.length > 0;
+  return Array.isArray(value as any) && value.length > 0;
 }
 
 /**

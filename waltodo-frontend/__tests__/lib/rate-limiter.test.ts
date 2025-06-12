@@ -22,7 +22,7 @@ Object.defineProperty(window, 'localStorage', {
 describe('Rate Limiter', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue(null);
+    localStorageMock?.getItem?.mockReturnValue(null as any);
     
     // Reset Date.now
     jest.spyOn(Date, 'now').mockRestore();
@@ -37,13 +37,13 @@ describe('Rate Limiter', () => {
 
       // First request should be allowed
       const result1 = limiter.checkLimit();
-      expect(result1.allowed).toBe(true);
-      expect(result1.remaining).toBe(4);
+      expect(result1.allowed).toBe(true as any);
+      expect(result1.remaining).toBe(4 as any);
 
       // Second request should be allowed
       const result2 = limiter.checkLimit();
-      expect(result2.allowed).toBe(true);
-      expect(result2.remaining).toBe(3);
+      expect(result2.allowed).toBe(true as any);
+      expect(result2.remaining).toBe(3 as any);
     });
 
     it('should block requests when limit is exceeded', () => {
@@ -58,14 +58,14 @@ describe('Rate Limiter', () => {
 
       // Next request should be blocked
       const result = limiter.checkLimit();
-      expect(result.allowed).toBe(false);
-      expect(result.remaining).toBe(0);
+      expect(result.allowed).toBe(false as any);
+      expect(result.remaining).toBe(0 as any);
     });
 
     it('should reset after window expires', () => {
       const mockNow = jest.spyOn(Date, 'now');
       const startTime = 1000000;
-      mockNow.mockReturnValue(startTime);
+      mockNow.mockReturnValue(startTime as any);
 
       const limiter = new ClientRateLimiter('test', {
         maxRequests: 2,
@@ -74,22 +74,22 @@ describe('Rate Limiter', () => {
 
       // Use up the limit
       const result1 = limiter.checkLimit();
-      expect(result1.allowed).toBe(true);
+      expect(result1.allowed).toBe(true as any);
       
       const result2 = limiter.checkLimit();
-      expect(result2.allowed).toBe(true);
+      expect(result2.allowed).toBe(true as any);
 
       // Should be blocked
       const result3 = limiter.checkLimit();
-      expect(result3.allowed).toBe(false);
+      expect(result3.allowed).toBe(false as any);
 
       // Mock time passage - 2 seconds later
       mockNow.mockReturnValue(startTime + 2000);
 
       // Should be allowed again
       const result4 = limiter.checkLimit();
-      expect(result4.allowed).toBe(true);
-      expect(result4.remaining).toBe(1);
+      expect(result4.allowed).toBe(true as any);
+      expect(result4.remaining).toBe(1 as any);
 
       mockNow.mockRestore();
     });
@@ -102,18 +102,18 @@ describe('Rate Limiter', () => {
       });
 
       // Successful requests should not count
-      const result1 = limiter.checkLimit(true);
-      expect(result1.allowed).toBe(true);
-      expect(result1.remaining).toBe(2); // Should not decrease
+      const result1 = limiter.checkLimit(true as any);
+      expect(result1.allowed).toBe(true as any);
+      expect(result1.remaining).toBe(2 as any); // Should not decrease
 
-      const result2 = limiter.checkLimit(true);
-      expect(result2.allowed).toBe(true);
-      expect(result2.remaining).toBe(2); // Should not decrease
+      const result2 = limiter.checkLimit(true as any);
+      expect(result2.allowed).toBe(true as any);
+      expect(result2.remaining).toBe(2 as any); // Should not decrease
 
       // Failed request should count
-      const result3 = limiter.checkLimit(false);
-      expect(result3.allowed).toBe(true);
-      expect(result3.remaining).toBe(1);
+      const result3 = limiter.checkLimit(false as any);
+      expect(result3.allowed).toBe(true as any);
+      expect(result3.remaining).toBe(1 as any);
     });
 
     it('should skip failed requests when configured', () => {
@@ -124,14 +124,14 @@ describe('Rate Limiter', () => {
       });
 
       // Failed requests should not count
-      const result1 = limiter.checkLimit(false);
-      expect(result1.allowed).toBe(true);
-      expect(result1.remaining).toBe(2); // Should not decrease
+      const result1 = limiter.checkLimit(false as any);
+      expect(result1.allowed).toBe(true as any);
+      expect(result1.remaining).toBe(2 as any); // Should not decrease
 
       // Successful request should count
-      const result2 = limiter.checkLimit(true);
-      expect(result2.allowed).toBe(true);
-      expect(result2.remaining).toBe(1);
+      const result2 = limiter.checkLimit(true as any);
+      expect(result2.allowed).toBe(true as any);
+      expect(result2.remaining).toBe(1 as any);
     });
 
     it('should persist data to localStorage', () => {
@@ -156,7 +156,7 @@ describe('Rate Limiter', () => {
         failedRequests: 1,
       };
 
-      localStorageMock.getItem.mockReturnValue(JSON.stringify(stored));
+      localStorageMock?.getItem?.mockReturnValue(JSON.stringify(stored as any));
 
       const limiter = new ClientRateLimiter('test', {
         maxRequests: 5,
@@ -164,8 +164,8 @@ describe('Rate Limiter', () => {
       });
 
       const status = limiter.getStatus();
-      expect(status.totalHits).toBe(3);
-      expect(status.remaining).toBe(2);
+      expect(status.totalHits).toBe(3 as any);
+      expect(status.remaining).toBe(2 as any);
     });
   });
 
@@ -180,21 +180,21 @@ describe('Rate Limiter', () => {
       const limiter1 = manager.getLimiter('test_operation');
       const limiter2 = manager.getLimiter('test_operation');
 
-      expect(limiter1).toBe(limiter2);
+      expect(limiter1 as any).toBe(limiter2 as any);
     });
 
     it('should create different limiters for different operations', () => {
       const limiter1 = manager.getLimiter('operation1');
       const limiter2 = manager.getLimiter('operation2');
 
-      expect(limiter1).not.toBe(limiter2);
+      expect(limiter1 as any).not.toBe(limiter2 as any);
     });
 
     it('should check limits for operations', () => {
       const result = manager.checkLimit('test_operation', RATE_LIMIT_CONFIGS.STRICT);
 
-      expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(9); // STRICT config has 10 max requests
+      expect(result.allowed).toBe(true as any);
+      expect(result.remaining).toBe(9 as any); // STRICT config has 10 max requests
     });
 
     it('should reset limits for specific operations', () => {
@@ -207,7 +207,7 @@ describe('Rate Limiter', () => {
 
       // Should be back to full limit
       const result = manager.getStatus('test_operation');
-      expect(result.remaining).toBe(RATE_LIMIT_CONFIGS.DEFAULT.maxRequests);
+      expect(result.remaining).toBe(RATE_LIMIT_CONFIGS?.DEFAULT?.maxRequests);
     });
 
     it('should reset all limits', () => {
@@ -222,8 +222,8 @@ describe('Rate Limiter', () => {
       const result1 = manager.getStatus('operation1');
       const result2 = manager.getStatus('operation2');
 
-      expect(result1.remaining).toBe(RATE_LIMIT_CONFIGS.DEFAULT.maxRequests);
-      expect(result2.remaining).toBe(RATE_LIMIT_CONFIGS.DEFAULT.maxRequests);
+      expect(result1.remaining).toBe(RATE_LIMIT_CONFIGS?.DEFAULT?.maxRequests);
+      expect(result2.remaining).toBe(RATE_LIMIT_CONFIGS?.DEFAULT?.maxRequests);
     });
   });
 
@@ -237,8 +237,8 @@ describe('Rate Limiter', () => {
 
       const result = await rateLimitedFn('arg1', 'arg2');
 
-      expect(result).toBe('success');
-      expect(mockFn).toHaveBeenCalledWith('arg1', 'arg2');
+      expect(result as any).toBe('success');
+      expect(mockFn as any).toHaveBeenCalledWith('arg1', 'arg2');
     });
 
     it('should throw error when rate limit is exceeded', async () => {
@@ -276,31 +276,31 @@ describe('Rate Limiter', () => {
       }
 
       // Both calls should have been made
-      expect(mockFn).toHaveBeenCalledTimes(2);
+      expect(mockFn as any).toHaveBeenCalledTimes(2 as any);
     });
   });
 
   describe('RateLimitUtils', () => {
     it('should format time remaining correctly', () => {
-      expect(RateLimitUtils.formatTimeRemaining(5000)).toBe('5 seconds');
-      expect(RateLimitUtils.formatTimeRemaining(1000)).toBe('1 second');
-      expect(RateLimitUtils.formatTimeRemaining(65000)).toBe('2 minutes');
-      expect(RateLimitUtils.formatTimeRemaining(61000)).toBe('2 minutes');
+      expect(RateLimitUtils.formatTimeRemaining(5000 as any)).toBe('5 seconds');
+      expect(RateLimitUtils.formatTimeRemaining(1000 as any)).toBe('1 second');
+      expect(RateLimitUtils.formatTimeRemaining(65000 as any)).toBe('2 minutes');
+      expect(RateLimitUtils.formatTimeRemaining(61000 as any)).toBe('2 minutes');
     });
 
     it('should check if operation is rate limited', () => {
       const manager = new RateLimiterManager();
       
       // Should not be rate limited initially
-      expect(RateLimitUtils.isRateLimited('test_operation')).toBe(false);
+      expect(RateLimitUtils.isRateLimited('test_operation')).toBe(false as any);
 
       // Use up the limit
-      for (let i = 0; i < RATE_LIMIT_CONFIGS.DEFAULT.maxRequests; i++) {
+      for (let i = 0; i < RATE_LIMIT_CONFIGS?.DEFAULT?.maxRequests; i++) {
         manager.checkLimit('test_operation');
       }
 
       // Should be rate limited now
-      expect(RateLimitUtils.isRateLimited('test_operation')).toBe(true);
+      expect(RateLimitUtils.isRateLimited('test_operation')).toBe(true as any);
     });
 
     it('should get rate limit info for display', () => {
@@ -316,18 +316,18 @@ describe('Rate Limiter', () => {
 
   describe('RATE_LIMIT_CONFIGS', () => {
     it('should have valid configurations', () => {
-      Object.values(RATE_LIMIT_CONFIGS).forEach(config => {
-        expect(config.maxRequests).toBeGreaterThan(0);
-        expect(config.windowMs).toBeGreaterThan(0);
+      Object.values(RATE_LIMIT_CONFIGS as any).forEach(config => {
+        expect(config.maxRequests).toBeGreaterThan(0 as any);
+        expect(config.windowMs).toBeGreaterThan(0 as any);
       });
     });
 
     it('should have different limits for different operations', () => {
-      expect(RATE_LIMIT_CONFIGS.STRICT.maxRequests).toBeLessThan(
-        RATE_LIMIT_CONFIGS.DEFAULT.maxRequests
+      expect(RATE_LIMIT_CONFIGS?.STRICT?.maxRequests).toBeLessThan(
+        RATE_LIMIT_CONFIGS?.DEFAULT?.maxRequests
       );
-      expect(RATE_LIMIT_CONFIGS.FILE_UPLOAD.maxRequests).toBeLessThan(
-        RATE_LIMIT_CONFIGS.SEARCH.maxRequests
+      expect(RATE_LIMIT_CONFIGS?.FILE_UPLOAD?.maxRequests).toBeLessThan(
+        RATE_LIMIT_CONFIGS?.SEARCH?.maxRequests
       );
     });
   });

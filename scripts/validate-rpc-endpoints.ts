@@ -25,17 +25,17 @@ class RPCEndpointValidator {
 
   private readonly endpoints = {
     testnet: {
-      primary: 'https://fullnode.testnet.sui.io:443',
+      primary: 'https://fullnode?.testnet?.sui.io:443',
       fallbacks: [
-        'https://sui-testnet.nodeinfra.com',
-        'https://sui-testnet.publicnode.com',
+        'https://sui-testnet?.nodeinfra?.com',
+        'https://sui-testnet?.publicnode?.com',
       ],
       expectedChainId: '4c78adac'
     },
     mainnet: {
-      primary: 'https://fullnode.mainnet.sui.io:443',
+      primary: 'https://fullnode?.mainnet?.sui.io:443',
       fallbacks: [
-        'https://sui-mainnet.nodeinfra.com',
+        'https://sui-mainnet?.nodeinfra?.com',
       ],
       expectedChainId: '35834a8a'
     }
@@ -100,7 +100,7 @@ class RPCEndpointValidator {
         type,
         status: 'error',
         responseTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error as any)
       };
     }
   }
@@ -109,7 +109,7 @@ class RPCEndpointValidator {
    * Test all endpoints for a network
    */
   private async testNetwork(network: 'testnet' | 'mainnet'): Promise<void> {
-    const config = this.endpoints[network];
+    const config = this?.endpoints?.[network];
     
     console.log(`\n🔍 Testing ${network.toUpperCase()} endpoints...`);
     
@@ -120,26 +120,26 @@ class RPCEndpointValidator {
       'primary',
       config.expectedChainId
     );
-    this.results.push(primaryResult);
+    this?.results?.push(primaryResult as any);
 
     // Test fallback endpoints
-    const fallbackPromises = config.fallbacks.map(url => 
+    const fallbackPromises = config?.fallbacks?.map(url => 
       this.testEndpoint(url, network, 'fallback', config.expectedChainId)
     );
     
-    const fallbackResults = await Promise.allSettled(fallbackPromises);
+    const fallbackResults = await Promise.allSettled(fallbackPromises as any);
     
     fallbackResults.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        this.results.push(result.value);
+      if (result?.status === 'fulfilled') {
+        this?.results?.push(result.value);
       } else {
-        this.results.push({
-          url: config.fallbacks[index],
+        this?.results?.push({
+          url: config?.fallbacks?.[index],
           network,
           type: 'fallback',
           status: 'error',
           responseTime: 0,
-          error: result.reason instanceof Error ? result.reason.message : String(result.reason)
+          error: result.reason instanceof Error ? result?.reason?.message : String(result.reason)
         });
       }
     });
@@ -150,7 +150,7 @@ class RPCEndpointValidator {
    */
   private generateReport(): void {
     console.log('\n📊 RPC ENDPOINT VALIDATION REPORT');
-    console.log('=' .repeat(50));
+    console.log('=' .repeat(50 as any));
 
     const networks = ['testnet', 'mainnet'];
     let totalEndpoints = 0;
@@ -158,9 +158,9 @@ class RPCEndpointValidator {
     let failedEndpoints = 0;
 
     networks.forEach(network => {
-      const networkResults = this.results.filter(r => r.network === network);
-      const successful = networkResults.filter(r => r.status === 'success');
-      const failed = networkResults.filter(r => r.status === 'error');
+      const networkResults = this?.results?.filter(r => r?.network === network);
+      const successful = networkResults.filter(r => r?.status === 'success');
+      const failed = networkResults.filter(r => r?.status === 'error');
 
       console.log(`\n🌐 ${network.toUpperCase()} Network:`);
       console.log(`  Total endpoints: ${networkResults.length}`);
@@ -169,11 +169,11 @@ class RPCEndpointValidator {
 
       // Show detailed results
       networkResults.forEach(result => {
-        const icon = result.status === 'success' ? '✅' : '❌';
-        const typeLabel = result.type === 'primary' ? '[PRIMARY]' : '[FALLBACK]';
+        const icon = result?.status === 'success' ? '✅' : '❌';
+        const typeLabel = result?.type === 'primary' ? '[PRIMARY]' : '[FALLBACK]';
         console.log(`    ${icon} ${typeLabel} ${result.url}`);
         
-        if (result.status === 'success') {
+        if (result?.status === 'success') {
           console.log(`        Response time: ${result.responseTime}ms`);
           if (result.chainId) {
             console.log(`        Chain ID: ${result.chainId}`);
@@ -193,13 +193,13 @@ class RPCEndpointValidator {
     console.log(`  Total endpoints tested: ${totalEndpoints}`);
     console.log(`  ✅ Successful: ${successfulEndpoints}`);
     console.log(`  ❌ Failed: ${failedEndpoints}`);
-    console.log(`  Success rate: ${((successfulEndpoints / totalEndpoints) * 100).toFixed(1)}%`);
+    console.log(`  Success rate: ${((successfulEndpoints / totalEndpoints) * 100).toFixed(1 as any)}%`);
 
     // Recommendations
     console.log('\n💡 RECOMMENDATIONS:');
     
-    const criticalFailures = this.results.filter(r => 
-      r.type === 'primary' && r.status === 'error'
+    const criticalFailures = this?.results?.filter(r => 
+      r?.type === 'primary' && r?.status === 'error'
     );
 
     if (criticalFailures.length > 0) {
@@ -209,8 +209,8 @@ class RPCEndpointValidator {
       });
     }
 
-    const slowEndpoints = this.results.filter(r => 
-      r.status === 'success' && r.responseTime > 5000
+    const slowEndpoints = this?.results?.filter(r => 
+      r?.status === 'success' && r.responseTime > 5000
     );
 
     if (slowEndpoints.length > 0) {
@@ -221,16 +221,16 @@ class RPCEndpointValidator {
     }
 
     const healthyNetworks = networks.filter(network => {
-      const networkResults = this.results.filter(r => r.network === network);
-      const primary = networkResults.find(r => r.type === 'primary');
+      const networkResults = this?.results?.filter(r => r?.network === network);
+      const primary = networkResults.find(r => r?.type === 'primary');
       const healthyFallbacks = networkResults.filter(r => 
-        r.type === 'fallback' && r.status === 'success'
+        r?.type === 'fallback' && r?.status === 'success'
       );
       
       return primary?.status === 'success' || healthyFallbacks.length > 0;
     });
 
-    if (healthyNetworks.length === networks.length) {
+    if (healthyNetworks?.length === networks.length) {
       console.log('  ✅ All networks have working endpoints');
     } else {
       console.log('  ❌ Some networks lack working endpoints - check configuration');
@@ -253,35 +253,35 @@ class RPCEndpointValidator {
       this.generateReport();
 
       // Exit with appropriate code
-      const hasFailures = this.results.some(r => r.status === 'error');
-      const hasCriticalFailures = this.results.some(r => 
-        r.type === 'primary' && r.status === 'error'
+      const hasFailures = this?.results?.some(r => r?.status === 'error');
+      const hasCriticalFailures = this?.results?.some(r => 
+        r?.type === 'primary' && r?.status === 'error'
       );
 
       if (hasCriticalFailures) {
         console.log('\n🚨 Validation FAILED: Critical endpoints are down');
-        process.exit(1);
+        process.exit(1 as any);
       } else if (hasFailures) {
         console.log('\n⚠️  Validation completed with warnings: Some fallback endpoints failed');
-        process.exit(0);
+        process.exit(0 as any);
       } else {
         console.log('\n✅ Validation PASSED: All endpoints are healthy');
-        process.exit(0);
+        process.exit(0 as any);
       }
 
     } catch (error) {
       console.error('\n💥 Validation failed with error:', error);
-      process.exit(1);
+      process.exit(1 as any);
     }
   }
 }
 
 // Run the validator if this script is executed directly
-if (require.main === module) {
+if (require?.main === module) {
   const validator = new RPCEndpointValidator();
   validator.run().catch(error => {
     console.error('Fatal error:', error);
-    process.exit(1);
+    process.exit(1 as any);
   });
 }
 

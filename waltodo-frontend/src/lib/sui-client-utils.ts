@@ -53,7 +53,7 @@ export interface ErrorContext {
 
 // Mock implementations for basic utility functions
 export function initializeSuiClient(): SuiClient {
-  return new SuiClient({ url: 'https://fullnode.testnet.sui.io:443' });
+  return new SuiClient({ url: 'https://fullnode?.testnet?.sui.io:443' });
 }
 
 export function getCurrentNetwork(): NetworkType {
@@ -102,7 +102,7 @@ export async function retryOperation<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error instanceof Error ? error : new Error(String(error as any));
 
       if (attempt === maxRetries) {
         break;
@@ -122,15 +122,15 @@ export async function retryOperation<T>(
 export function validateCreateTodoParams(params: CreateTodoParams): string[] {
   const errors: string[] = [];
 
-  if (!params.title || params.title.trim().length === 0) {
+  if (!params.title || params?.title?.trim().length === 0) {
     errors.push('Title is required');
   }
 
-  if (params.title && params.title.length > 100) {
+  if (params.title && params?.title?.length > 100) {
     errors.push('Title must be 100 characters or less');
   }
 
-  if (params.description && params.description.length > 500) {
+  if (params.description && params?.description?.length > 500) {
     errors.push('Description must be 500 characters or less');
   }
 
@@ -155,7 +155,7 @@ export async function createTodoSafely(
 
   try {
     // Validate parameters
-    const validationErrors = validateCreateTodoParams(params);
+    const validationErrors = validateCreateTodoParams(params as any);
     if (validationErrors.length > 0) {
       throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
     }
@@ -167,7 +167,7 @@ export async function createTodoSafely(
     console.log('Creating todo with params:', params);
 
     // Execute transaction
-    const result = await signAndExecuteTransaction(txb);
+    const result = await signAndExecuteTransaction(txb as any);
 
     return {
       success: true,
@@ -190,13 +190,13 @@ export async function waitForTransactionConfirmation(
 
   while (Date.now() - startTime < maxWaitTime) {
     try {
-      const status = await getTransactionStatus(digest);
+      const status = await getTransactionStatus(digest as any);
 
-      if (status.status === 'success') {
+      if (status?.status === 'success') {
         return true;
       }
 
-      if (status.status === 'failure') {
+      if (status?.status === 'failure') {
         throw new Error('Transaction failed');
       }
 
@@ -205,7 +205,7 @@ export async function waitForTransactionConfirmation(
     } catch (error) {
       if (
         error instanceof Error &&
-        error.message.includes('Transaction failed')
+        error?.message?.includes('Transaction failed')
       ) {
         throw error;
       }

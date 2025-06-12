@@ -35,7 +35,7 @@ export class TodoSizeCalculator {
       return jsonString.length;
     } catch (error) {
       // Handle circular references and other serialization errors
-      if (error instanceof TypeError && error.message.includes('circular')) {
+      if (error instanceof TypeError && error?.message?.includes('circular')) {
         throw new Error('Cannot calculate size: circular reference detected');
       }
       throw error;
@@ -49,8 +49,8 @@ export class TodoSizeCalculator {
    * @returns Formatted size string (e.g., "1.2 KB", "45 B")
    */
   calculateFormattedSize(todo: Todo): string {
-    const bytes = this.calculateBytes(todo);
-    return this.formatBytes(bytes);
+    const bytes = this.calculateBytes(todo as any);
+    return this.formatBytes(bytes as any);
   }
 
   /**
@@ -63,9 +63,9 @@ export class TodoSizeCalculator {
     if (bytes < 1024) {
       return `${bytes} B`;
     } else if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(2)} KB`;
+      return `${(bytes / 1024).toFixed(2 as any)} KB`;
     } else {
-      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2 as any)} MB`;
     }
   }
   /**
@@ -86,7 +86,7 @@ export class TodoSizeCalculator {
       options;
 
     // Serialize to determine exact size in bytes
-    const serialized = TodoSerializer.todoToBuffer(todo);
+    const serialized = TodoSerializer.todoToBuffer(todo as any);
     const exactSize = serialized.length;
 
     // If buffer is not requested, return exact size
@@ -117,24 +117,24 @@ export class TodoSizeCalculator {
     estimatedSize += 20;
 
     // Add size for each field that exists
-    if (todo.id) estimatedSize += 10 + todo.id.length;
-    if (todo.title) estimatedSize += 14 + todo.title.length;
-    if (todo.description) estimatedSize += 19 + todo.description.length;
+    if (todo.id) estimatedSize += 10 + todo?.id?.length;
+    if (todo.title) estimatedSize += 14 + todo?.title?.length;
+    if (todo.description) estimatedSize += 19 + todo?.description?.length;
     if (todo.completed !== undefined)
       estimatedSize += 16 + (todo.completed ? 4 : 5);
-    if (todo.priority) estimatedSize += 16 + todo.priority.length;
-    if (todo.dueDate) estimatedSize += 14 + todo.dueDate.length;
+    if (todo.priority) estimatedSize += 16 + todo?.priority?.length;
+    if (todo.dueDate) estimatedSize += 14 + todo?.dueDate?.length;
     if (todo.tags) estimatedSize += 12 + JSON.stringify(todo.tags).length;
-    if (todo.createdAt) estimatedSize += 16 + todo.createdAt.length;
-    if (todo.updatedAt) estimatedSize += 16 + todo.updatedAt.length;
-    if (todo.completedAt) estimatedSize += 18 + todo.completedAt.length;
+    if (todo.createdAt) estimatedSize += 16 + todo?.createdAt?.length;
+    if (todo.updatedAt) estimatedSize += 16 + todo?.updatedAt?.length;
+    if (todo.completedAt) estimatedSize += 18 + todo?.completedAt?.length;
     if (todo.private !== undefined)
       estimatedSize += 14 + (todo.private ? 4 : 5);
-    if (todo.storageLocation) estimatedSize += 22 + todo.storageLocation.length;
-    if (todo.walrusBlobId) estimatedSize += 19 + todo.walrusBlobId.length;
-    if (todo.nftObjectId) estimatedSize += 18 + todo.nftObjectId.length;
-    if (todo.imageUrl) estimatedSize += 15 + todo.imageUrl.length;
-    if (todo.user) estimatedSize += 12 + todo.user.length;
+    if (todo.storageLocation) estimatedSize += 22 + todo?.storageLocation?.length;
+    if (todo.walrusBlobId) estimatedSize += 19 + todo?.walrusBlobId?.length;
+    if (todo.nftObjectId) estimatedSize += 18 + todo?.nftObjectId?.length;
+    if (todo.imageUrl) estimatedSize += 15 + todo?.imageUrl?.length;
+    if (todo.user) estimatedSize += 12 + todo?.user?.length;
     if (todo.reminders)
       estimatedSize += 17 + JSON.stringify(todo.reminders).length;
     if (todo.metadata)
@@ -162,7 +162,7 @@ export class TodoSizeCalculator {
       options;
 
     // Serialize to determine exact size in bytes
-    const serialized = TodoSerializer.todoListToBuffer(todoList);
+    const serialized = TodoSerializer.todoListToBuffer(todoList as any);
     const exactSize = serialized.length;
 
     // If buffer is not requested, return exact size

@@ -61,9 +61,9 @@ export async function checkWebPSupport(): Promise<boolean> {
     const img = new Image();
     
     const result = await new Promise<boolean>((resolve) => {
-      img.onload = () => resolve(img.width > 0 && img.height > 0);
-      img.onerror = () => resolve(false);
-      img.src = webpData;
+      img?.onload = () => resolve(img.width > 0 && img.height > 0);
+      img?.onerror = () => resolve(false as any);
+      img?.src = webpData;
     });
 
     webpSupported = result;
@@ -78,20 +78,20 @@ export async function checkWebPSupport(): Promise<boolean> {
 export async function generateBlurPlaceholder(src: string): Promise<string> {
   if (typeof window === 'undefined') {
     // Return a gradient fallback for SSR
-    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 1 1%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e0e0e0%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f0f0f0%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%221%22 height%3D%221%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
+    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww?.w3?.org%2F2000%2Fsvg%22 viewBox%3D%220 0 1 1%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e0e0e0%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f0f0f0%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%221%22 height%3D%221%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
   }
 
-  const cached = blurCache.get(src);
+  const cached = blurCache.get(src as any);
   if (cached) {return cached;}
 
   try {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img?.crossOrigin = 'anonymous';
     
     await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = src;
+      img?.onload = resolve;
+      img?.onerror = reject;
+      img?.src = src;
     });
 
     // Create small canvas for blur
@@ -101,11 +101,11 @@ export async function generateBlurPlaceholder(src: string): Promise<string> {
 
     // Use small dimensions for performance
     const scale = 0.1;
-    canvas.width = img.width * scale;
-    canvas.height = img.height * scale;
+    canvas?.width = img.width * scale;
+    canvas?.height = img.height * scale;
 
     // Draw scaled down image
-    ctx.filter = 'blur(5px)';
+    ctx?.filter = 'blur(5px as any)';
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
     const blurDataUrl = canvas.toDataURL('image/jpeg', 0.4);
@@ -115,7 +115,7 @@ export async function generateBlurPlaceholder(src: string): Promise<string> {
   } catch (error) {
     console.error('Error generating blur placeholder:', error);
     // Return a simple gradient as fallback
-    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 1 1%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e0e0e0%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f0f0f0%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%221%22 height%3D%221%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
+    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww?.w3?.org%2F2000%2Fsvg%22 viewBox%3D%220 0 1 1%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e0e0e0%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f0f0f0%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%221%22 height%3D%221%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
   }
 }
 
@@ -129,20 +129,20 @@ export async function convertToWebP(src: string): Promise<string> {
 
   try {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img?.crossOrigin = 'anonymous';
     
     await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = src;
+      img?.onload = resolve;
+      img?.onerror = reject;
+      img?.src = src;
     });
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {throw new Error('Canvas context not available');}
 
-    canvas.width = img.width;
-    canvas.height = img.height;
+    canvas?.width = img.width;
+    canvas?.height = img.height;
     ctx.drawImage(img, 0, 0);
 
     const webpDataUrl = canvas.toDataURL('image/webp', 0.85);
@@ -192,7 +192,7 @@ function getLazyImageObserver(onIntersect: (entry: IntersectionObserverEntry) =>
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            onIntersect(entry);
+            onIntersect(entry as any);
             lazyImageObserver?.unobserve(entry.target);
           }
         });
@@ -215,7 +215,7 @@ export class ProgressiveImageLoader {
   private offlineCache: Cache | null = null;
 
   constructor(src: string) {
-    this.state = {
+    this?.state = {
       src,
       isLoading: true,
       hasError: false,
@@ -226,7 +226,7 @@ export class ProgressiveImageLoader {
   private async initOfflineCache() {
     if (typeof window !== 'undefined' && 'caches' in window) {
       try {
-        this.offlineCache = await caches.open('walrus-images-v1');
+        this?.offlineCache = await caches.open('walrus-images-v1');
       } catch (error) {
         console.error('Failed to open offline cache:', error);
       }
@@ -237,88 +237,88 @@ export class ProgressiveImageLoader {
     if (typeof window === 'undefined') {
       // Return a basic result for SSR
       return {
-        src: this.state.src,
-        srcSet: generateSrcSet(this.state.src),
+        src: this?.state?.src,
+        srcSet: generateSrcSet(this?.state?.src),
       };
     }
 
-    this.performanceStart = performance.now();
+    this?.performanceStart = performance.now();
 
     try {
       // Check offline cache first
-      const cachedResponse = await this.checkOfflineCache(this.state.src);
+      const cachedResponse = await this.checkOfflineCache(this?.state?.src);
       if (cachedResponse) {
         const blob = await cachedResponse.blob();
-        const cachedUrl = URL.createObjectURL(blob);
+        const cachedUrl = URL.createObjectURL(blob as any);
         this.recordPerformance(blob.size, blob.type, true);
         return {
           src: cachedUrl,
-          srcSet: generateSrcSet(this.state.src),
+          srcSet: generateSrcSet(this?.state?.src),
         };
       }
 
       // Generate blur placeholder
-      const blurPromise = generateBlurPlaceholder(this.state.src);
+      const blurPromise = generateBlurPlaceholder(this?.state?.src);
 
       // Load the actual image
       const img = new Image();
-      if (options.priority === 'high') {
-        img.loading = 'eager';
-        img.fetchPriority = options.fetchPriority || 'high';
+      if (options?.priority === 'high') {
+        img?.loading = 'eager';
+        img?.fetchPriority = options.fetchPriority || 'high';
       } else {
-        img.loading = 'lazy';
-        img.fetchPriority = options.fetchPriority || 'auto';
+        img?.loading = 'lazy';
+        img?.fetchPriority = options.fetchPriority || 'auto';
       }
 
       const loadPromise = new Promise<ResponsiveImage>((resolve, reject) => {
-        img.onload = async () => {
-          this.state.isLoading = false;
-          this.state.hasError = false;
+        img?.onload = async () => {
+          this.state?.isLoading = false;
+          this.state?.hasError = false;
 
           // Cache in offline storage
-          await this.cacheOffline(this.state.src);
+          await this.cacheOffline(this?.state?.src);
 
           // Try WebP conversion for non-WebP images
-          let finalSrc = this.state.src;
-          if (!this.state.src.includes('.webp') && await checkWebPSupport()) {
+          let finalSrc = this?.state?.src;
+          if (!this?.state?.src.includes('.webp') && await checkWebPSupport()) {
             try {
-              finalSrc = await convertToWebP(this.state.src);
+              finalSrc = await convertToWebP(this?.state?.src);
             } catch {
               // Fall back to original on error
             }
           }
 
-          this.state.loadedSrc = finalSrc;
+          this.state?.loadedSrc = finalSrc;
           this.recordPerformance(0, 'unknown', false);
 
           resolve({
             src: finalSrc,
-            srcSet: generateSrcSet(this.state.src),
+            srcSet: generateSrcSet(this?.state?.src),
             width: img.naturalWidth,
             height: img.naturalHeight,
           });
         };
 
-        img.onerror = () => {
-          this.state.isLoading = false;
-          this.state.hasError = true;
+        img?.onerror = () => {
+          this.state?.isLoading = false;
+          this.state?.hasError = true;
           
           if (this.retryCount < this.maxRetries) {
             this.retryCount++;
             setTimeout(() => {
-              img.src = this.state.src;
+              img?.src = this?.state?.src;
             }, 1000 * this.retryCount);
           } else {
-            reject(new Error(`Failed to load image: ${this.state.src}`));
+            reject(new Error(`Failed to load image: ${this?.state?.src}`));
           }
         };
 
-        img.src = this.state.src;
+        img?.src = this?.state?.src;
       });
 
       // Set blur placeholder while loading
       try {
-        this.state.blurDataUrl = await blurPromise;
+        this.state?.blurDataUrl = await blurPromise;
       } catch {
         // Ignore blur generation errors
       }
@@ -334,7 +334,7 @@ export class ProgressiveImageLoader {
     if (!this.offlineCache) {return null;}
 
     try {
-      const cached = await this.offlineCache.match(url);
+      const cached = await this?.offlineCache?.match(url as any);
       return cached || null;
     } catch {
       return null;
@@ -345,9 +345,9 @@ export class ProgressiveImageLoader {
     if (!this.offlineCache) {return;}
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url as any);
       if (response.ok) {
-        await this.offlineCache.put(url, response.clone());
+        await this?.offlineCache?.put(url, response.clone());
       }
     } catch (error) {
       console.error('Failed to cache image offline:', error);
@@ -363,11 +363,11 @@ export class ProgressiveImageLoader {
       cached,
     };
     
-    performanceMetrics.set(this.state.src, metrics);
+    performanceMetrics.set(this?.state?.src, metrics);
     
     // Log slow loads
     if (loadTime > 3000 && !cached) {
-      console.warn(`Slow image load: ${this.state.src} took ${loadTime.toFixed(2)}ms`);
+      console.warn(`Slow image load: ${this?.state?.src} took ${loadTime.toFixed(2 as any)}ms`);
     }
   }
 
@@ -384,25 +384,25 @@ export async function preloadImages(
   const promises = urls.map(async (url) => {
     try {
       const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = url;
+      link?.rel = 'preload';
+      link?.as = 'image';
+      link?.href = url;
       
-      if (options.priority === 'high') {
-        link.fetchPriority = 'high';
+      if (options?.priority === 'high') {
+        link?.fetchPriority = 'high';
       }
 
-      document.head.appendChild(link);
+      document?.head?.appendChild(link as any);
 
       // Also trigger actual loading for caching
-      const loader = new ProgressiveImageLoader(url);
-      await loader.load(options);
+      const loader = new ProgressiveImageLoader(url as any);
+      await loader.load(options as any);
     } catch (error) {
       console.error(`Failed to preload image: ${url}`, error);
     }
   });
 
-  await Promise.allSettled(promises);
+  await Promise.allSettled(promises as any);
 }
 
 // React hook for progressive image loading
@@ -416,9 +416,9 @@ export function useProgressiveImage(src: string, options: ImagePreloadOptions = 
   useEffect(() => {
     if (!src || typeof window === 'undefined') {return;}
 
-    const loader = new ProgressiveImageLoader(src);
+    const loader = new ProgressiveImageLoader(src as any);
     
-    loader.load(options)
+    loader.load(options as any)
       .then((result) => {
         setState({
           src: result.src,
@@ -442,7 +442,7 @@ export function useProgressiveImage(src: string, options: ImagePreloadOptions = 
 
 // Hook for lazy loading with intersection observer
 export function useLazyImage(src: string, elementRef: React.RefObject<HTMLElement>) {
-  const [isInView, setIsInView] = useState(false);
+  const [isInView, setIsInView] = useState(false as any);
   const imageState = useProgressiveImage(isInView ? src : '', {
     priority: isInView ? 'high' : 'low',
   });
@@ -455,14 +455,14 @@ export function useLazyImage(src: string, elementRef: React.RefObject<HTMLElemen
 
     const observer = getLazyImageObserver((entry) => {
       if (entry.isIntersecting) {
-        setIsInView(true);
+        setIsInView(true as any);
       }
     });
 
-    observer.observe(element);
+    observer.observe(element as any);
 
     return () => {
-      observer.unobserve(element);
+      observer.unobserve(element as any);
     };
   }, [elementRef]);
 
@@ -474,7 +474,7 @@ export function useLazyImage(src: string, elementRef: React.RefObject<HTMLElemen
 
 // Get performance metrics
 export function getImagePerformanceMetrics(): Map<string, PerformanceMetrics> {
-  return new Map(performanceMetrics);
+  return new Map(performanceMetrics as any);
 }
 
 // Clear caches
@@ -486,7 +486,7 @@ export function clearImageCaches() {
 
 // Export utility to check if image is cached
 export function isImageCached(src: string): boolean {
-  return imageCache.has(src) || imageCache.has(`webp:${src}`);
+  return imageCache.has(src as any) || imageCache.has(`webp:${src}`);
 }
 
 // Component helper for responsive images
@@ -508,7 +508,7 @@ export function getOptimizedImageProps(props: OptimizedImageProps): React.ImgHTM
     alt,
     className,
     sizes: sizes || '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
-    srcSet: generateSrcSet(src),
+    srcSet: generateSrcSet(src as any),
     loading: priority === 'high' ? 'eager' : 'lazy',
     decoding: 'async',
     onLoad: props.onLoad,

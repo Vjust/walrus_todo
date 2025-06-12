@@ -103,7 +103,7 @@ export class ValidationError extends BaseError {
     });
 
     // Store field
-    this.field = field;
+    this?.field = field;
   }
 
   /**

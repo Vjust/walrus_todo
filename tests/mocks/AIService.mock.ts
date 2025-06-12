@@ -75,7 +75,7 @@ export function createMockAIService(
   verificationService?: AIVerificationService
 ): MockAIService {
   const mockModelAdapter = {
-    getProviderName: jest.fn().mockReturnValue(provider),
+    getProviderName: jest.fn().mockReturnValue(provider as any),
     getModelName: jest.fn().mockReturnValue(modelName || 'gpt-4'),
     complete: jest.fn().mockResolvedValue('Mock response'),
     completeStructured: jest.fn().mockResolvedValue({
@@ -96,7 +96,7 @@ export function createMockAIService(
   const mockService: MockAIService = {
     summarize: jest.fn().mockImplementation(async (todos: Todo[]) => {
       // Simulate PII detection and anonymization
-      const todoStr = JSON.stringify(todos);
+      const todoStr = JSON.stringify(todos as any);
 
       // Check for PII patterns and reject if found (simulating anonymization)
       const piiPatterns = [
@@ -126,9 +126,9 @@ export function createMockAIService(
           differentialPrivacyEnabled: true,
           noisedCounts: true,
           categories: {
-            work: todos.filter(t => t.title.includes('work')).map(t => t.id),
+            work: todos.filter(t => t?.title?.includes('work')).map(t => t.id),
             personal: todos
-              .filter(t => !t.title.includes('work'))
+              .filter(t => !t?.title?.includes('work'))
               .map(t => t.id),
           },
         };
@@ -137,8 +137,8 @@ export function createMockAIService(
       return {
         differentialPrivacyEnabled: false,
         categories: {
-          work: todos.filter(t => t.title.includes('work')).map(t => t.id),
-          personal: todos.filter(t => !t.title.includes('work')).map(t => t.id),
+          work: todos.filter(t => t?.title?.includes('work')).map(t => t.id),
+          personal: todos.filter(t => !t?.title?.includes('work')).map(t => t.id),
         },
       };
     }),
@@ -146,7 +146,7 @@ export function createMockAIService(
     analyze: jest.fn().mockImplementation(async (todos: Todo[]) => {
       // Check permissions for analyze operation
       if (mockService.permissionManager) {
-        const hasPermission = mockService.permissionManager.checkPermission(
+        const hasPermission = mockService?.permissionManager?.checkPermission(
           provider,
           'analyze'
         );
@@ -161,20 +161,20 @@ export function createMockAIService(
     prioritize: jest.fn().mockResolvedValue([]),
     suggest: jest.fn().mockResolvedValue(['Mock suggestion']),
     complete: jest.fn().mockResolvedValue('Mock completion'),
-    getProviderName: jest.fn().mockReturnValue(provider),
+    getProviderName: jest.fn().mockReturnValue(provider as any),
     getModelName: jest.fn().mockReturnValue(modelName || 'gpt-4'),
     cancelAllRequests: jest.fn(),
     setOperationType: jest.fn(),
-    verifyCredentials: jest.fn().mockResolvedValue(true),
-    isOperationPermitted: jest.fn().mockResolvedValue(true),
+    verifyCredentials: jest.fn().mockResolvedValue(true as any),
+    isOperationPermitted: jest.fn().mockResolvedValue(true as any),
 
     // Internal properties
     modelAdapter: mockModelAdapter,
     options,
     verificationService,
     permissionManager: {
-      checkPermission: jest.fn().mockReturnValue(true),
-      verifyOperationPermission: jest.fn().mockResolvedValue(undefined),
+      checkPermission: jest.fn().mockReturnValue(true as any),
+      verifyOperationPermission: jest.fn().mockResolvedValue(undefined as any),
     },
     auditLogger: {
       log: jest.fn(),

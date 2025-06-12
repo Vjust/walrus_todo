@@ -27,42 +27,42 @@ export class LegacyWalrusStorageAdapter {
    * @param useMockMode - Whether to use mock mode
    */
   constructor(address: string, useMockMode = false) {
-    this.todoStorage = new TodoStorage(address, { useMockMode });
+    this?.todoStorage = new TodoStorage(address, { useMockMode });
   }
 
   /**
    * Initializes the storage.
    */
   async init(): Promise<void> {
-    await this.todoStorage.connect();
+    await this?.todoStorage?.connect();
   }
 
   /**
    * Connects to the storage.
    */
   async connect(): Promise<void> {
-    await this.todoStorage.connect();
+    await this?.todoStorage?.connect();
   }
 
   /**
    * Disconnects from the storage.
    */
   async disconnect(): Promise<void> {
-    await this.todoStorage.disconnect();
+    await this?.todoStorage?.disconnect();
   }
 
   /**
    * Checks if the storage is connected.
    */
   async isConnected(): Promise<boolean> {
-    return this.todoStorage.isConnected();
+    return this?.todoStorage?.isConnected();
   }
 
   /**
    * Sets the signer for transactions.
    */
   setSigner(signer: TransactionSigner): void {
-    this.todoStorage.setSigner(signer);
+    this?.todoStorage?.setSigner(signer as any);
   }
 
   /**
@@ -71,7 +71,7 @@ export class LegacyWalrusStorageAdapter {
   getActiveAddress(): string {
     // This is equivalent to calling client.getAddress() in our new implementation
     // but we simulate the old behavior
-    const config = this.todoStorage.getConfig() as { address?: string };
+    const config = this?.todoStorage?.getConfig() as { address?: string };
     if (!config || !config.address) {
       throw new CLIError('No active address set: WALRUS_NO_ADDRESS');
     }
@@ -82,35 +82,35 @@ export class LegacyWalrusStorageAdapter {
    * Stores a todo in storage.
    */
   async storeTodo(todo: Todo): Promise<string> {
-    return this.todoStorage.storeTodo(todo);
+    return this?.todoStorage?.storeTodo(todo as any);
   }
 
   /**
    * Retrieves a todo from storage.
    */
   async retrieveTodo(blobId: string): Promise<Todo> {
-    return this.todoStorage.retrieveTodo(blobId);
+    return this?.todoStorage?.retrieveTodo(blobId as any);
   }
 
   /**
    * Updates a todo in storage.
    */
   async updateTodo(todo: Todo, blobId: string): Promise<string> {
-    return this.todoStorage.updateTodo(todo, blobId);
+    return this?.todoStorage?.updateTodo(todo, blobId);
   }
 
   /**
    * Stores a todo list in storage.
    */
   async storeTodoList(todoList: TodoList): Promise<string> {
-    return this.todoStorage.storeTodoList(todoList);
+    return this?.todoStorage?.storeTodoList(todoList as any);
   }
 
   /**
    * Retrieves a todo list from storage.
    */
   async retrieveTodoList(blobId: string): Promise<TodoList> {
-    return this.todoStorage.retrieveTodoList(blobId);
+    return this?.todoStorage?.retrieveTodoList(blobId as any);
   }
 
   /**
@@ -125,15 +125,15 @@ export class LegacyWalrusStorageAdapter {
     content: null;
     data: undefined;
   }> {
-    const result = await this.todoStorage.ensureStorageAllocated(sizeBytes);
+    const result = await this?.todoStorage?.ensureStorageAllocated(sizeBytes as any);
 
     // Convert to format expected by old code
     return {
       id: { id: result.id },
-      storage_size: result.totalSize.toString(),
-      used_size: result.usedSize.toString(),
-      end_epoch: result.endEpoch.toString(),
-      start_epoch: result.startEpoch.toString(),
+      storage_size: result?.totalSize?.toString(),
+      used_size: result?.usedSize?.toString(),
+      end_epoch: result?.endEpoch?.toString(),
+      start_epoch: result?.startEpoch?.toString(),
       content: null,
       data: undefined,
     };
@@ -151,13 +151,13 @@ export class LegacyWalrusStorageAdapter {
     content: null;
     data: undefined;
   } | null> {
-    const usage = await this.todoStorage.getStorageUsage();
-    if (usage.storageObjects.length === 0) {
+    const usage = await this?.todoStorage?.getStorageUsage();
+    if (usage.storageObjects?.length === 0) {
       return null;
     }
 
     // Find best storage object (one with most space available)
-    const bestObject = usage.storageObjects.sort(
+    const bestObject = usage?.storageObjects?.sort(
       (a, b) => b.remainingBytes - a.remainingBytes
     )[0];
 
@@ -168,10 +168,10 @@ export class LegacyWalrusStorageAdapter {
     // Convert to format expected by old code
     return {
       id: { id: bestObject.id },
-      storage_size: bestObject.totalSize.toString(),
-      used_size: bestObject.usedSize.toString(),
-      end_epoch: bestObject.endEpoch.toString(),
-      start_epoch: bestObject.startEpoch.toString(),
+      storage_size: bestObject?.totalSize?.toString(),
+      used_size: bestObject?.usedSize?.toString(),
+      end_epoch: bestObject?.endEpoch?.toString(),
+      start_epoch: bestObject?.startEpoch?.toString(),
       content: null,
       data: undefined,
     };
@@ -192,35 +192,35 @@ export class LegacyWalrusImageStorageAdapter {
    * @param useMockMode - Whether to use mock mode
    */
   constructor(address: string, useMockMode = false) {
-    this.imageStorage = new ImageStorage(address, { useMockMode });
+    this?.imageStorage = new ImageStorage(address, { useMockMode });
   }
 
   /**
    * Initializes the storage.
    */
   async init(): Promise<void> {
-    await this.imageStorage.connect();
+    await this?.imageStorage?.connect();
   }
 
   /**
    * Connects to the storage.
    */
   async connect(): Promise<void> {
-    await this.imageStorage.connect();
+    await this?.imageStorage?.connect();
   }
 
   /**
    * Disconnects from the storage.
    */
   async disconnect(): Promise<void> {
-    await this.imageStorage.disconnect();
+    await this?.imageStorage?.disconnect();
   }
 
   /**
    * Sets the signer for transactions.
    */
   setSigner(signer: TransactionSigner): void {
-    this.imageStorage.setSigner(signer);
+    this?.imageStorage?.setSigner(signer as any);
   }
 
   /**
@@ -232,7 +232,7 @@ export class LegacyWalrusImageStorageAdapter {
     contentType: string,
     options?: { metadata?: Record<string, string> }
   ): Promise<string> {
-    return this.imageStorage.storeImage(
+    return this?.imageStorage?.storeImage(
       imageData,
       filename,
       contentType,
@@ -246,7 +246,7 @@ export class LegacyWalrusImageStorageAdapter {
   async retrieveImage(
     blobId: string
   ): Promise<{ imageData: Uint8Array; metadata: Record<string, string> }> {
-    const result = await this.imageStorage.retrieveImage(blobId);
+    const result = await this?.imageStorage?.retrieveImage(blobId as any);
     return {
       imageData: result.imageData,
       metadata: result.metadata,
@@ -265,15 +265,15 @@ export class LegacyWalrusImageStorageAdapter {
     content: null;
     data: undefined;
   }> {
-    const result = await this.imageStorage.ensureStorageAllocated(sizeBytes);
+    const result = await this?.imageStorage?.ensureStorageAllocated(sizeBytes as any);
 
     // Convert to format expected by old code
     return {
       id: { id: result.id },
-      storage_size: result.totalSize.toString(),
-      used_size: result.usedSize.toString(),
-      end_epoch: result.endEpoch.toString(),
-      start_epoch: result.startEpoch.toString(),
+      storage_size: result?.totalSize?.toString(),
+      used_size: result?.usedSize?.toString(),
+      end_epoch: result?.endEpoch?.toString(),
+      start_epoch: result?.startEpoch?.toString(),
       content: null,
       data: undefined,
     };
@@ -299,19 +299,19 @@ export class LegacySuiNftStorageAdapter {
     signer: TransactionSigner,
     config: { address: string; packageId: string; collectionId?: string }
   ) {
-    this.nftStorage = new NFTStorage(config.address, config.packageId, {
+    this?.nftStorage = new NFTStorage(config.address, config.packageId, {
       collectionId: config.collectionId,
     });
 
     // Set the signer
-    this.nftStorage.setSigner(signer);
+    this?.nftStorage?.setSigner(signer as any);
   }
 
   /**
    * Creates a Todo NFT.
    */
   async createTodoNft(todo: Todo, walrusBlobId: string): Promise<string> {
-    const result = await this.nftStorage.createTodoNFT(todo, walrusBlobId);
+    const result = await this?.nftStorage?.createTodoNFT(todo, walrusBlobId);
     return result.objectId;
   }
 
@@ -325,7 +325,7 @@ export class LegacySuiNftStorageAdapter {
     completed: boolean;
     walrusBlobId: string;
   }> {
-    const result = await this.nftStorage.getTodoNFT(nftId);
+    const result = await this?.nftStorage?.getTodoNFT(nftId as any);
 
     // Convert to format expected by old code
     return {
@@ -341,7 +341,7 @@ export class LegacySuiNftStorageAdapter {
    * Updates a Todo NFT's completion status.
    */
   async updateTodoNftCompletionStatus(nftId: string): Promise<string> {
-    return this.nftStorage.updateTodoNFTCompletionStatus(nftId, true);
+    return this?.nftStorage?.updateTodoNFTCompletionStatus(nftId, true);
   }
 }
 
@@ -352,7 +352,7 @@ export function createLegacyWalrusStorage(
   useMockMode = false
 ): LegacyWalrusStorageAdapter {
   // Get address from environment or config
-  const address = process.env.SUI_ADDRESS || '0x0000000000000';
+  const address = process?.env?.SUI_ADDRESS || '0x0000000000000';
   return new LegacyWalrusStorageAdapter(address, useMockMode);
 }
 
@@ -363,7 +363,7 @@ export function createLegacyWalrusImageStorage(
   useMockMode = false
 ): LegacyWalrusImageStorageAdapter {
   // Get address from environment or config
-  const address = process.env.SUI_ADDRESS || '0x0000000000000';
+  const address = process?.env?.SUI_ADDRESS || '0x0000000000000';
   return new LegacyWalrusImageStorageAdapter(address, useMockMode);
 }
 

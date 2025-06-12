@@ -22,8 +22,8 @@ import {
 // Define CLIError locally for the test
 class CLIError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = 'CLIError';
+    super(message as any);
+    this?.name = 'CLIError';
   }
 }
 
@@ -230,9 +230,9 @@ describe('Permission System Security Tests', () => {
 
     // Create mock permission manager that defaults to allowing all operations
     const mockDefaultPermissionManager = {
-      checkPermission: jest.fn().mockResolvedValue(true),
-      setPermissionLevel: jest.fn().mockResolvedValue(true),
-      getPermissionLevel: jest.fn().mockResolvedValue(2), // STANDARD level
+      checkPermission: jest.fn().mockResolvedValue(true as any),
+      setPermissionLevel: jest.fn().mockResolvedValue(true as any),
+      getPermissionLevel: jest.fn().mockResolvedValue(2 as any), // STANDARD level
       registerOperationPermission: jest.fn(),
       verifyOperationPermission: jest.fn().mockResolvedValue({ allowed: true }),
       getAllowedOperations: jest
@@ -243,7 +243,7 @@ describe('Permission System Security Tests', () => {
     mockInitializePermissionManager.mockReturnValue(
       mockDefaultPermissionManager
     );
-    mockGetPermissionManager.mockReturnValue(mockDefaultPermissionManager);
+    mockGetPermissionManager.mockReturnValue(mockDefaultPermissionManager as any);
 
     // Default mock implementation for AIProviderFactory
     (
@@ -308,7 +308,7 @@ describe('Permission System Security Tests', () => {
   describe('Permission Level Enforcement', () => {
     it('should enforce different permission levels for AI operations', async () => {
       // Setup credentials with different permission levels
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           switch (provider) {
             case 'readonly_provider':
@@ -327,14 +327,14 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (provider: string) => {
           return [
             'readonly_provider',
             'standard_provider',
             'advanced_provider',
             'admin_provider',
-          ].includes(provider);
+          ].includes(provider as any);
         }
       );
 
@@ -382,84 +382,84 @@ describe('Permission System Security Tests', () => {
         20,
         AIPermissionLevel.ADMIN
       );
-      extendedPermissionManager.initialized = true;
+      extendedPermissionManager?.initialized = true;
 
       // Test READ_ONLY operations with READ_ONLY provider
       await expect(
         permissionManager.checkPermission('readonly_provider', 'summarize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('readonly_provider', 'analyze')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('readonly_provider', 'categorize')
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
       await expect(
         permissionManager.checkPermission('readonly_provider', 'suggest')
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
       await expect(
         permissionManager.checkPermission('readonly_provider', 'train')
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
       await expect(
         permissionManager.checkPermission(
           'readonly_provider',
           'manage_providers'
         )
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
 
       // Test STANDARD operations with STANDARD provider
       await expect(
         permissionManager.checkPermission('standard_provider', 'summarize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('standard_provider', 'analyze')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('standard_provider', 'categorize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('standard_provider', 'suggest')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('standard_provider', 'train')
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
       await expect(
         permissionManager.checkPermission(
           'standard_provider',
           'manage_providers'
         )
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
 
       // Test ADVANCED operations with ADVANCED provider
       await expect(
         permissionManager.checkPermission('advanced_provider', 'summarize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('advanced_provider', 'categorize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('advanced_provider', 'train')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission(
           'advanced_provider',
           'manage_providers'
         )
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
 
       // Test ADMIN operations with ADMIN provider
       await expect(
         permissionManager.checkPermission('admin_provider', 'summarize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('admin_provider', 'categorize')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('admin_provider', 'train')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
       await expect(
         permissionManager.checkPermission('admin_provider', 'manage_providers')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
     });
 
     it('should prevent operations based on permission level in AIService', async () => {
@@ -470,11 +470,11 @@ describe('Permission System Security Tests', () => {
           .mockImplementation((provider: string, operation: string) => {
             // Only allow specific operations
             if (provider === 'xai' && operation === 'summarize')
-              return Promise.resolve(true);
+              return Promise.resolve(true as any);
             if (provider === 'xai' && operation === 'analyze')
-              return Promise.resolve(false);
-            if (provider === 'anthropic') return Promise.resolve(true);
-            return Promise.resolve(false);
+              return Promise.resolve(false as any);
+            if (provider === 'anthropic') return Promise.resolve(true as any);
+            return Promise.resolve(false as any);
           }),
         verifyOperationPermission: jest.fn(),
       };
@@ -502,34 +502,34 @@ describe('Permission System Security Tests', () => {
       );
 
       // XAI service should only be able to summarize
-      await expect(xaiService.summarize(sampleTodos)).resolves.not.toThrow();
-      await expect(xaiService.analyze(sampleTodos)).rejects.toThrow(
+      await expect(xaiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
+      await expect(xaiService.analyze(sampleTodos as any)).rejects.toThrow(
         /insufficient permissions/i
       );
 
       // Anthropic service should be able to do both
       await expect(
-        anthropicService.summarize(sampleTodos)
-      ).resolves.not.toThrow();
+        anthropicService.summarize(sampleTodos as any)
+      ).resolves?.not?.toThrow();
       await expect(
-        anthropicService.analyze(sampleTodos)
-      ).resolves.not.toThrow();
+        anthropicService.analyze(sampleTodos as any)
+      ).resolves?.not?.toThrow();
     });
 
     it('should enforce permission boundaries during runtime updates', async () => {
       // Setup credentials
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           return createCredential(provider, AIPermissionLevel.STANDARD);
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (_provider: string) => true
       );
 
       // Setup blockchain verification for permissions
-      mockBlockchainVerifier.verifyOperation.mockImplementation(
+      mockBlockchainVerifier?.verifyOperation?.mockImplementation(
         async (_params: {
           actionType: number;
           request: string;
@@ -562,7 +562,7 @@ describe('Permission System Security Tests', () => {
       // Should be allowed with STANDARD permission
       await expect(
         permissionManager.checkPermission('test-provider', 'custom_operation')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
 
       // Update the operation to require higher permission
       permissionManager.registerOperationPermission(
@@ -574,7 +574,7 @@ describe('Permission System Security Tests', () => {
       // Should now be denied with STANDARD permission
       await expect(
         permissionManager.checkPermission('test-provider', 'custom_operation')
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
 
       // Verify blockchain verification was called
       await permissionManager.verifyOperationPermission(
@@ -583,11 +583,11 @@ describe('Permission System Security Tests', () => {
       );
       expect(mockBlockchainVerifier.verifyOperation).toHaveBeenCalledWith(
         expect.objectContaining({
-          actionType: expect.any(Number),
-          request: expect.any(String),
-          response: expect.any(String),
-          provider: expect.any(String),
-          metadata: expect.any(Object),
+          actionType: expect.any(Number as any),
+          request: expect.any(String as any),
+          response: expect.any(String as any),
+          provider: expect.any(String as any),
+          metadata: expect.any(Object as any),
         })
       );
     });
@@ -596,7 +596,7 @@ describe('Permission System Security Tests', () => {
   describe('Privilege Escalation Prevention', () => {
     it('should prevent privilege escalation attempts', async () => {
       // Setup credential manager to prevent privilege escalation
-      mockCredentialManager.updatePermissions.mockImplementation(
+      mockCredentialManager?.updatePermissions?.mockImplementation(
         async (provider: string, permissionLevel: AIPermissionLevel) => {
           // For testing purposes, only allow escalation to STANDARD
           // Real implementation would check current user permissions
@@ -607,7 +607,7 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           return createCredential(provider, AIPermissionLevel.READ_ONLY);
         }
@@ -628,7 +628,7 @@ describe('Permission System Security Tests', () => {
           'test-provider',
           AIPermissionLevel.STANDARD
         )
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
 
       // Admin permission escalation should fail
       await expect(
@@ -636,7 +636,7 @@ describe('Permission System Security Tests', () => {
           'test-provider',
           AIPermissionLevel.ADMIN
         )
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
 
       // Verify credential manager was called with correct parameters
       expect(mockCredentialManager.updatePermissions).toHaveBeenCalledWith(
@@ -651,13 +651,13 @@ describe('Permission System Security Tests', () => {
 
     it('should prevent backdoor permission routes', async () => {
       // Setup credential manager
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           return createCredential(provider, AIPermissionLevel.STANDARD);
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (_provider: string) => true
       );
 
@@ -693,17 +693,17 @@ describe('Permission System Security Tests', () => {
       // Verify standard operation is allowed
       await expect(
         permissionManager.checkPermission('test-provider', 'standard_op')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
 
       // Verify advanced operation is denied
       await expect(
         permissionManager.checkPermission('test-provider', 'advanced_op')
-      ).resolves.toBe(false);
+      ).resolves.toBe(false as any);
 
       // Backdoor operation should be allowed based on its own permission level
       await expect(
         permissionManager.checkPermission('test-provider', 'backdoor_op')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
 
       // Create mock AI service that implements the backdoor
       const mockAIService = {
@@ -747,13 +747,13 @@ describe('Permission System Security Tests', () => {
       };
 
       // Unsecured backdoor should work (this is the vulnerability)
-      await expect(mockAIService.backdoor_op(sampleTodos)).resolves.toBe(
+      await expect(mockAIService.backdoor_op(sampleTodos as any)).resolves.toBe(
         'Backdoor result'
       );
 
       // Secured backdoor should fail (this is correct)
       await expect(
-        mockAIService.secured_backdoor_op(sampleTodos)
+        mockAIService.secured_backdoor_op(sampleTodos as any)
       ).rejects.toThrow('Insufficient permissions for advanced operation');
 
       // This demonstrates the need for permission checks at each level,
@@ -770,13 +770,13 @@ describe('Permission System Security Tests', () => {
           .mockImplementation((provider: string, operation: string) => {
             // Only allow specific operations for specific providers
             if (provider === 'xai' && operation === 'summarize')
-              return Promise.resolve(true);
+              return Promise.resolve(true as any);
             if (
               provider === 'anthropic' &&
-              ['summarize', 'analyze'].includes(operation)
+              ['summarize', 'analyze'].includes(operation as any)
             )
-              return Promise.resolve(true);
-            return Promise.resolve(false);
+              return Promise.resolve(true as any);
+            return Promise.resolve(false as any);
           }),
         verifyOperationPermission: jest.fn(),
       };
@@ -804,18 +804,18 @@ describe('Permission System Security Tests', () => {
       );
 
       // XAI service should only be able to summarize
-      await expect(xaiService.summarize(sampleTodos)).resolves.not.toThrow();
-      await expect(xaiService.analyze(sampleTodos)).rejects.toThrow(
+      await expect(xaiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
+      await expect(xaiService.analyze(sampleTodos as any)).rejects.toThrow(
         /insufficient permissions/i
       );
 
       // Anthropic service should be able to do both
       await expect(
-        anthropicService.summarize(sampleTodos)
-      ).resolves.not.toThrow();
+        anthropicService.summarize(sampleTodos as any)
+      ).resolves?.not?.toThrow();
       await expect(
-        anthropicService.analyze(sampleTodos)
-      ).resolves.not.toThrow();
+        anthropicService.analyze(sampleTodos as any)
+      ).resolves?.not?.toThrow();
     });
 
     it('should prevent unauthorized provider switching', async () => {
@@ -827,7 +827,7 @@ describe('Permission System Security Tests', () => {
         // Permissions are often tied to the provider
         // This simulates a vulnerability where the provider can be changed
         setProvider: function (newProvider: AIProvider) {
-          this.provider = newProvider;
+          this?.provider = newProvider;
         },
 
         // Secure implementation that requires permissions for the switch
@@ -850,7 +850,7 @@ describe('Permission System Security Tests', () => {
             throw new Error('Insufficient permissions to change provider');
           }
 
-          this.provider = newProvider;
+          this?.provider = newProvider;
         },
 
         performOperation: async function (
@@ -889,16 +889,16 @@ describe('Permission System Security Tests', () => {
             // Anthropic has more permissions
             if (provider === AIProvider.ANTHROPIC) {
               return Promise.resolve(
-                ['summarize', 'analyze', 'categorize'].includes(operation)
+                ['summarize', 'analyze', 'categorize'].includes(operation as any)
               );
             }
 
             // No provider has manage_providers permission
             if (operation === 'manage_providers') {
-              return Promise.resolve(false);
+              return Promise.resolve(false as any);
             }
 
-            return Promise.resolve(false);
+            return Promise.resolve(false as any);
           }),
         verifyOperationPermission: jest.fn(),
       };
@@ -938,7 +938,7 @@ describe('Permission System Security Tests', () => {
   describe('Blockchain Permission Verification', () => {
     it('should verify permissions on the blockchain', async () => {
       // Setup blockchain verifier
-      mockBlockchainVerifier.verifyOperation.mockImplementation(
+      mockBlockchainVerifier?.verifyOperation?.mockImplementation(
         async (_params: {
           actionType: number;
           request: string;
@@ -953,13 +953,13 @@ describe('Permission System Security Tests', () => {
       );
 
       // Setup credential manager
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           return createCredential(provider, AIPermissionLevel.STANDARD, true);
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (_provider: string) => true
       );
 
@@ -986,7 +986,7 @@ describe('Permission System Security Tests', () => {
       );
 
       // Should succeed and have verification ID
-      expect(result.allowed).toBe(true);
+      expect(result.allowed).toBe(true as any);
       expect(result.verificationId).toBe('op-123');
 
       // Verify blockchain verifier was called with correct parameters
@@ -998,7 +998,7 @@ describe('Permission System Security Tests', () => {
           provider: 'test-provider',
           metadata: expect.objectContaining({
             operation: 'blockchain_verified_op',
-            permissionLevel: AIPermissionLevel.STANDARD.toString(),
+            permissionLevel: AIPermissionLevel?.STANDARD?.toString(),
           }),
         })
       );
@@ -1006,7 +1006,7 @@ describe('Permission System Security Tests', () => {
 
     it('should enforce blockchain validation of credentials', async () => {
       // Setup credentials with blockchain verification
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           if (provider === 'verified_provider') {
             return createCredential(provider, AIPermissionLevel.STANDARD, true);
@@ -1015,7 +1015,7 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (_provider: string) => true
       );
 
@@ -1032,7 +1032,7 @@ describe('Permission System Security Tests', () => {
           }),
       };
 
-      mockCredentialManager.setBlockchainAdapter(mockAdapter);
+      mockCredentialManager.setBlockchainAdapter(mockAdapter as any);
 
       // Create permission manager that requires blockchain verification
       const permissionManager = new AIPermissionManager(
@@ -1056,7 +1056,7 @@ describe('Permission System Security Tests', () => {
       // Verified provider should be allowed
       await expect(
         permissionManager.checkPermission('verified_provider', 'verified_op')
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
 
       // Non-verified provider should be denied if requiring blockchain verification
       // This would need modifications to the AIPermissionManager implementation
@@ -1070,7 +1070,7 @@ describe('Permission System Security Tests', () => {
       const auditLogSpy = jest.fn<void, [AuditLogEntry]>();
 
       // Setup credential manager with audit logging
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           // Log the access attempt
           auditLogSpy({
@@ -1084,7 +1084,7 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (provider: string) => {
           // Log the check attempt
           auditLogSpy({
@@ -1114,14 +1114,14 @@ describe('Permission System Security Tests', () => {
       await permissionManager.checkPermission('test-provider', 'summarize');
 
       // Verify audit logs were created
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         expect.objectContaining({
           event: 'credential_check',
           provider: 'test-provider',
         })
       );
 
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         expect.objectContaining({
           event: 'credential_access',
           provider: 'test-provider',
@@ -1134,7 +1134,7 @@ describe('Permission System Security Tests', () => {
       const auditLogSpy = jest.fn<void, [AuditLogEntry]>();
 
       // Setup credential manager with audit logging
-      mockCredentialManager.updatePermissions.mockImplementation(
+      mockCredentialManager?.updatePermissions?.mockImplementation(
         async (provider: string, permissionLevel: AIPermissionLevel) => {
           // Log the permission change
           auditLogSpy({
@@ -1149,7 +1149,7 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           return createCredential(provider, AIPermissionLevel.STANDARD);
         }
@@ -1174,7 +1174,7 @@ describe('Permission System Security Tests', () => {
       );
 
       // Verify audit logs were created
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         expect.objectContaining({
           event: 'permission_updated',
           provider: 'test-provider',
@@ -1256,7 +1256,7 @@ describe('Permission System Security Tests', () => {
             const constraints = this.getConstraints();
 
             // Check if operation is allowed
-            if (!constraints.allowedOperations.includes(operation)) {
+            if (!constraints?.allowedOperations?.includes(operation as any)) {
               throw new Error(
                 `Operation ${operation} not allowed with permission level ${this.permissionLevel}`
               );
@@ -1288,13 +1288,13 @@ describe('Permission System Security Tests', () => {
       // Test READ_ONLY constraints
       expect(
         readOnlyService.validateConstraints('summarize', sampleTodos)
-      ).toBe(true);
+      ).toBe(true as any);
       expect(() =>
         readOnlyService.validateConstraints('categorize', sampleTodos)
       ).toThrow(/not allowed/);
 
       // Create large todo list that exceeds READ_ONLY limit
-      const largeTodoList = Array(10).fill(sampleTodo);
+      const largeTodoList = Array(10 as any).fill(sampleTodo as any);
       expect(() =>
         readOnlyService.validateConstraints('summarize', largeTodoList)
       ).toThrow(/Too many todos/);
@@ -1302,10 +1302,10 @@ describe('Permission System Security Tests', () => {
       // Test STANDARD constraints
       expect(
         standardService.validateConstraints('summarize', sampleTodos)
-      ).toBe(true);
+      ).toBe(true as any);
       expect(
         standardService.validateConstraints('categorize', sampleTodos)
-      ).toBe(true);
+      ).toBe(true as any);
       expect(() =>
         standardService.validateConstraints('train', sampleTodos)
       ).toThrow(/not allowed/);
@@ -1313,7 +1313,7 @@ describe('Permission System Security Tests', () => {
       // Test ADVANCED constraints
       expect(
         advancedService.validateConstraints('summarize', sampleTodos)
-      ).toBe(true);
+      ).toBe(true as any);
       expect(advancedService.validateConstraints('train', sampleTodos)).toBe(
         true
       );
@@ -1335,16 +1335,16 @@ describe('Permission System Security Tests', () => {
           const now = Date.now();
 
           // Initialize or update rate limit tracking
-          if (!this.usageTracking.has(provider)) {
-            this.usageTracking.set(provider, { count: 0, lastReset: now });
+          if (!this?.usageTracking?.has(provider as any)) {
+            this?.usageTracking?.set(provider, { count: 0, lastReset: now });
           }
 
-          const tracking = this.usageTracking.get(provider)!;
+          const tracking = this?.usageTracking?.get(provider as any)!;
 
           // Reset count if window has passed
           if (now - tracking.lastReset > this.RATE_WINDOW) {
-            tracking.count = 0;
-            tracking.lastReset = now;
+            tracking?.count = 0;
+            tracking?.lastReset = now;
           }
 
           // Increment count
@@ -1356,11 +1356,11 @@ describe('Permission System Security Tests', () => {
 
         shouldReducePermissions: function (provider: string): boolean {
           // Check if provider has exceeded usage limits
-          if (!this.usageTracking.has(provider)) {
+          if (!this?.usageTracking?.has(provider as any)) {
             return false;
           }
 
-          const tracking = this.usageTracking.get(provider)!;
+          const tracking = this?.usageTracking?.get(provider as any)!;
 
           // If usage is excessive, reduce permissions
           return tracking.count >= this.RATE_LIMIT;
@@ -1370,10 +1370,10 @@ describe('Permission System Security Tests', () => {
           provider: string,
           permissionManager: ExtendedAIPermissionManager
         ): Promise<void> {
-          if (this.shouldReducePermissions(provider)) {
+          if (this.shouldReducePermissions(provider as any)) {
             // Get current permission level
             const currentLevel =
-              await permissionManager.getPermissionLevel(provider);
+              await permissionManager.getPermissionLevel(provider as any);
 
             // If already at minimum level, don't change
             if (currentLevel <= AIPermissionLevel.READ_ONLY) {
@@ -1391,17 +1391,17 @@ describe('Permission System Security Tests', () => {
       };
 
       // Setup credential manager
-      mockCredentialManager.getCredentialObject.mockImplementation(
+      mockCredentialManager?.getCredentialObject?.mockImplementation(
         async (provider: string) => {
           return createCredential(provider, AIPermissionLevel.STANDARD);
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(
+      mockCredentialManager?.hasCredential?.mockImplementation(
         async (_provider: string) => true
       );
 
-      mockCredentialManager.updatePermissions.mockImplementation(
+      mockCredentialManager?.updatePermissions?.mockImplementation(
         async (provider: string, level: AIPermissionLevel) => {
           return createCredential(provider, level);
         }

@@ -56,7 +56,7 @@ const ERROR_MESSAGES: Record<string, Partial<UserFriendlyError>> = {
     ],
     quickTips: [
       'You can retry this command with the --retry flag',
-      'Check service status at status.walrus.io',
+      'Check service status at status?.walrus?.io',
     ],
   },
 
@@ -165,7 +165,7 @@ const COMMAND_ERROR_GUIDANCE: Record<
   store: {
     STORAGE_ERROR: {
       suggestions: [
-        'Ensure Walrus CLI is installed: curl -sSf https://docs.wal.app/setup/walrus-install.sh | sh',
+        'Ensure Walrus CLI is installed: curl -sSf https://docs?.wal?.app/setup/walrus-install.sh | sh',
         'Check Walrus configuration: cat ~/.config/walrus/client_config.yaml',
         'Use --mock flag for testing without real storage',
       ],
@@ -212,13 +212,13 @@ export function createErrorMessage(
 ): UserFriendlyError {
   // Get base error info
   let baseError =
-    ERROR_MESSAGES[error.constructor.name] ||
-    ERROR_MESSAGES[getErrorCode(error)];
+    ERROR_MESSAGES[error?.constructor?.name] ||
+    ERROR_MESSAGES[getErrorCode(error as any)];
 
   // Get command-specific guidance if available
   if (context?.command) {
     const commandGuidance =
-      COMMAND_ERROR_GUIDANCE[context.command]?.[getErrorCode(error)];
+      COMMAND_ERROR_GUIDANCE[context.command]?.[getErrorCode(error as any)];
     if (commandGuidance) {
       baseError = { ...baseError, ...commandGuidance };
     }
@@ -251,7 +251,7 @@ export function createErrorMessage(
 
   // Add context-specific suggestions
   if (context) {
-    userError.suggestions = enhanceSuggestionsWithContext(
+    userError?.suggestions = enhanceSuggestionsWithContext(
       userError.suggestions,
       context
     );
@@ -294,10 +294,10 @@ function getErrorCode(error: Error): string {
   }
   if ('code' in error) {
     return (
-      (error as { code?: string }).code || error.constructor.name.toUpperCase()
+      (error as { code?: string }).code || error?.constructor?.name.toUpperCase()
     );
   }
-  return error.constructor.name.toUpperCase();
+  return error?.constructor?.name.toUpperCase();
 }
 
 /**
@@ -378,43 +378,43 @@ export function displayFriendlyError(
 
   // Title with emoji and urgency color
   const titleColor =
-    userError.urgency === 'high'
-      ? chalk.red.bold
-      : userError.urgency === 'medium'
-        ? chalk.yellow.bold
-        : chalk.blue.bold;
+    userError?.urgency === 'high'
+      ? chalk?.red?.bold
+      : userError?.urgency === 'medium'
+        ? chalk?.yellow?.bold
+        : chalk?.blue?.bold;
 
   lines.push(`\n${userError.emoji} ${titleColor(userError.title)}`);
   lines.push(chalk.red(userError.message));
 
   // Did you mean suggestions
-  if (userError.didYouMean && userError.didYouMean.length > 0) {
+  if (userError.didYouMean && userError?.didYouMean?.length > 0) {
     lines.push(`\n${chalk.cyan('Did you mean:')}`);
-    userError.didYouMean.forEach(suggestion => {
+    userError?.didYouMean?.forEach(suggestion => {
       lines.push(`  ${chalk.green('→')} ${suggestion}`);
     });
   }
 
   // Suggestions
-  if (userError.suggestions.length > 0) {
+  if (userError?.suggestions?.length > 0) {
     lines.push(`\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('How to fix:')}`);
-    userError.suggestions.forEach((suggestion, i) => {
+    userError?.suggestions?.forEach((suggestion, i) => {
       lines.push(`  ${chalk.cyan(`${i + 1}.`)} ${suggestion}`);
     });
   }
 
   // Quick tips
-  if (userError.quickTips && userError.quickTips.length > 0) {
+  if (userError.quickTips && userError?.quickTips?.length > 0) {
     lines.push(
       `\n${chalk.magenta(ICONS.INFO)} ${chalk.magenta('Quick tips:')}`
     );
-    userError.quickTips.forEach(tip => {
-      lines.push(`  ${chalk.gray('•')} ${chalk.italic(tip)}`);
+    userError?.quickTips?.forEach(tip => {
+      lines.push(`  ${chalk.gray('•')} ${chalk.italic(tip as any)}`);
     });
   }
 
   // Encouragement for high urgency errors
-  if (userError.urgency === 'high') {
+  if (userError?.urgency === 'high') {
     lines.push(`\n${chalk.green("Don't worry, we'll get through this! 💪")}`);
   }
 
@@ -432,7 +432,7 @@ export function enhanceBaseCommandError(
   const friendlyError = displayFriendlyError(error, context);
 
   // Use console.error to ensure it's displayed even in quiet mode
-  logger.error(friendlyError);
+  logger.error(friendlyError as any);
 
   // Throw the original error to maintain compatibility
   throw error;
@@ -448,7 +448,7 @@ export function getErrorContext(
   const context: ErrorContext = {
     command:
       command.id ||
-      command.constructor.name.toLowerCase().replace('command', ''),
+      command?.constructor?.name.toLowerCase().replace('command', ''),
   };
 
   // Extract context from error properties
@@ -457,8 +457,8 @@ export function getErrorContext(
       field?: string;
       value?: unknown;
     };
-    context.field = validationError.field;
-    context.value = validationError.value;
+    context?.field = validationError.field;
+    context?.value = validationError.value;
   }
 
   if (error instanceof TransactionError) {
@@ -466,8 +466,8 @@ export function getErrorContext(
       transactionId?: string;
       operation?: string;
     };
-    context.transactionId = txError.transactionId;
-    context.operation = txError.operation;
+    context?.transactionId = txError.transactionId;
+    context?.operation = txError.operation;
   }
 
   if (error instanceof StorageError) {
@@ -475,8 +475,8 @@ export function getErrorContext(
       blobId?: string;
       operation?: string;
     };
-    context.blobId = storageError.blobId;
-    context.operation = storageError.operation;
+    context?.blobId = storageError.blobId;
+    context?.operation = storageError.operation;
   }
 
   if (error instanceof NetworkError) {
@@ -485,10 +485,10 @@ export function getErrorContext(
       attempt?: number;
       maxAttempts?: number;
     };
-    context.operation = networkError.operation;
+    context?.operation = networkError.operation;
     if (networkError.attempt) {
-      context.attempt = networkError.attempt;
-      context.maxAttempts = networkError.maxAttempts;
+      context?.attempt = networkError.attempt;
+      context?.maxAttempts = networkError.maxAttempts;
     }
   }
 

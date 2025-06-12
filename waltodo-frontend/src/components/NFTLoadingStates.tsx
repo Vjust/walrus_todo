@@ -25,7 +25,7 @@ export const ButtonSkeleton: React.FC<{ className?: string }> = ({ className = '
 );
 
 // Card skeleton for grid view
-export const NFTCardSkeleton: React.FC = () => (
+export const NFTCardSkeleton: React?.FC = () => (
   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
     {/* Image skeleton */}
     <ImageSkeleton className="w-full h-48" />
@@ -57,7 +57,7 @@ export const NFTCardSkeleton: React.FC = () => (
 );
 
 // Row skeleton for list view
-export const NFTRowSkeleton: React.FC = () => (
+export const NFTRowSkeleton: React?.FC = () => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex items-center gap-4">
     {/* Thumbnail */}
     <ImageSkeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
@@ -162,7 +162,7 @@ export const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: s
         <path 
           className="opacity-75" 
           fill="currentColor" 
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5?.291A7?.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
     </div>
@@ -182,7 +182,7 @@ export const LoadingText: React.FC<{
       const interval = setInterval(() => {
         setDots(prev => prev.length >= 3 ? '' : `${prev  }.`);
       }, 500);
-      return () => clearInterval(interval);
+      return () => clearInterval(interval as any);
     }
   }, [variant]);
   

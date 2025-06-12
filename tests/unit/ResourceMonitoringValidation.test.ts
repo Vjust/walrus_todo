@@ -48,7 +48,7 @@ jest.mock('../../apps/cli/src/utils/Logger', () => ({
     error: jest.fn(),
     debug: jest.fn(),
     addHandler: jest.fn(),
-    isTestEnvironment: jest.fn().mockReturnValue(true),
+    isTestEnvironment: jest.fn().mockReturnValue(true as any),
   })),
   LogLevel: {
     DEBUG: 'debug',
@@ -61,13 +61,13 @@ jest.mock('../../apps/cli/src/utils/Logger', () => ({
 // Mock polyfills and other dependencies
 jest.mock('../../apps/cli/src/utils/polyfills/aggregate-error', () => ({}));
 jest.mock('../../apps/cli/src/types/adapters/BaseAdapter', () => ({
-  isBaseAdapter: jest.fn().mockReturnValue(false),
+  isBaseAdapter: jest.fn().mockReturnValue(false as any),
 }));
 jest.mock('../../apps/cli/src/types/errors/ResourceManagerError', () => ({
   ResourceManagerError: class extends Error {
     constructor(message: string) {
-      super(message);
-      this.name = 'ResourceManagerError';
+      super(message as any);
+      this?.name = 'ResourceManagerError';
     }
   },
 }));
@@ -79,7 +79,7 @@ const mockChildProcess = require('child_process');
 class MockProcess extends require('events').EventEmitter {
   constructor(public pid: number) {
     super();
-    this.killed = false;
+    this?.killed = false;
   }
   killed = false;
   unref = jest.fn();
@@ -108,7 +108,7 @@ describe('Resource Monitoring Validation', () => {
 
   beforeAll(() => {
     // Setup comprehensive fs mocks
-    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
+    (mockFs.existsSync as jest.Mock).mockReturnValue(false as any);
     (mockFs.mkdirSync as jest.Mock).mockImplementation(() => undefined);
     (mockFs.writeFileSync as jest.Mock).mockImplementation(() => undefined);
     (mockFs.readFileSync as jest.Mock).mockReturnValue('[]');
@@ -145,10 +145,10 @@ describe('Resource Monitoring Validation', () => {
     const resourceUpdateCallbacks: Function[] = [];
     
     orchestrator = {
-      shutdown: jest.fn().mockResolvedValue(undefined),
+      shutdown: jest.fn().mockResolvedValue(undefined as any),
       on: jest.fn().mockImplementation((event: string, callback: Function) => {
         if (event === 'resourceUpdate') {
-          resourceUpdateCallbacks.push(callback);
+          resourceUpdateCallbacks.push(callback as any);
         }
       }),
       triggerResourceUpdate: jest.fn().mockImplementation(() => {
@@ -158,10 +158,10 @@ describe('Resource Monitoring Validation', () => {
           activeJobs: 2,
           totalJobs: 3,
         };
-        resourceUpdateCallbacks.forEach(callback => callback(mockUsage));
+        resourceUpdateCallbacks.forEach(callback => callback(mockUsage as any));
       }),
       executeInBackground: jest.fn().mockImplementation(async (command: string) => {
-        return `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `job-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`;
       }),
       getJobStatus: jest.fn().mockReturnValue([
         { id: 'job1', status: 'running', command: 'store' },
@@ -175,8 +175,8 @@ describe('Resource Monitoring Validation', () => {
       }),
       maxConcurrentJobs: 10,
       activeProcesses: new Map(),
-      waitForJob: jest.fn().mockResolvedValue(undefined),
-      cancelJob: jest.fn().mockResolvedValue(undefined),
+      waitForJob: jest.fn().mockResolvedValue(undefined as any),
+      cancelJob: jest.fn().mockResolvedValue(undefined as any),
     } as any;
     
     performanceMonitor = {
@@ -199,8 +199,8 @@ describe('Resource Monitoring Validation', () => {
     } as any;
     
     resourceManager = {
-      disposeAll: jest.fn().mockResolvedValue(undefined),
-      getInstance: jest.fn().mockReturnValue(resourceManager),
+      disposeAll: jest.fn().mockResolvedValue(undefined as any),
+      getInstance: jest.fn().mockReturnValue(resourceManager as any),
       registerResource: jest.fn(),
     } as any;
     
@@ -208,7 +208,7 @@ describe('Resource Monitoring Validation', () => {
 
     // Set up event listener to capture resource updates
     orchestrator.on('resourceUpdate', (usage: ResourceUsage) => {
-      resourceUpdateEvents.push(usage);
+      resourceUpdateEvents.push(usage as any);
     });
 
     jest.clearAllMocks();
@@ -216,7 +216,7 @@ describe('Resource Monitoring Validation', () => {
 
   afterEach(async () => {
     try {
-      if (orchestrator && typeof orchestrator.shutdown === 'function') {
+      if (orchestrator && typeof orchestrator?.shutdown === 'function') {
         await orchestrator.shutdown();
       }
     } catch (error) {
@@ -225,7 +225,7 @@ describe('Resource Monitoring Validation', () => {
     }
     
     try {
-      if (resourceManager && typeof resourceManager.disposeAll === 'function') {
+      if (resourceManager && typeof resourceManager?.disposeAll === 'function') {
         await resourceManager.disposeAll({ continueOnError: true });
       }
     } catch (error) {
@@ -245,19 +245,19 @@ describe('Resource Monitoring Validation', () => {
       // Simulate the first resource update interval
       (orchestrator as any).triggerResourceUpdate();
       
-      expect(resourceUpdateEvents.length).toBeGreaterThanOrEqual(1);
+      expect(resourceUpdateEvents.length).toBeGreaterThanOrEqual(1 as any);
 
       // Simulate another resource update
       (orchestrator as any).triggerResourceUpdate();
 
-      expect(resourceUpdateEvents.length).toBeGreaterThanOrEqual(2);
+      expect(resourceUpdateEvents.length).toBeGreaterThanOrEqual(2 as any);
 
       // Verify timing consistency
       const firstEvent = resourceUpdateEvents[0];
-      expect(firstEvent).toHaveProperty('memory');
-      expect(firstEvent).toHaveProperty('cpu');
-      expect(firstEvent).toHaveProperty('activeJobs');
-      expect(firstEvent).toHaveProperty('totalJobs');
+      expect(firstEvent as any).toHaveProperty('memory');
+      expect(firstEvent as any).toHaveProperty('cpu');
+      expect(firstEvent as any).toHaveProperty('activeJobs');
+      expect(firstEvent as any).toHaveProperty('totalJobs');
     });
 
     it('should maintain accurate resource usage data', async () => {
@@ -270,29 +270,29 @@ describe('Resource Monitoring Validation', () => {
           orchestrator.executeInBackground('store', [`file${i}.txt`], {})
         );
       }
-      await Promise.all(jobPromises);
+      await Promise.all(jobPromises as any);
 
       // Clear events and trigger monitoring
       resourceUpdateEvents = [];
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(5000 as any);
       await Promise.resolve();
 
       // Check if we have resource updates
       if (resourceUpdateEvents.length > 0) {
         const usage = resourceUpdateEvents[0];
-        expect(usage).toHaveProperty('activeJobs');
-        expect(usage).toHaveProperty('totalJobs');
-        expect(usage).toHaveProperty('memory');
-        expect(usage).toHaveProperty('cpu');
-        expect(usage.memory).toBeGreaterThanOrEqual(0);
-        expect(usage.memory).toBeLessThanOrEqual(1);
+        expect(usage as any).toHaveProperty('activeJobs');
+        expect(usage as any).toHaveProperty('totalJobs');
+        expect(usage as any).toHaveProperty('memory');
+        expect(usage as any).toHaveProperty('cpu');
+        expect(usage.memory).toBeGreaterThanOrEqual(0 as any);
+        expect(usage.memory).toBeLessThanOrEqual(1 as any);
       } else {
         // If no resource updates, just verify the structure exists
-        const currentUsage = orchestrator['getCurrentResourceUsage']();
-        expect(currentUsage).toHaveProperty('activeJobs');
-        expect(currentUsage).toHaveProperty('totalJobs');
-        expect(currentUsage).toHaveProperty('memory');
-        expect(currentUsage).toHaveProperty('cpu');
+        const currentUsage = orchestrator?.["getCurrentResourceUsage"]();
+        expect(currentUsage as any).toHaveProperty('activeJobs');
+        expect(currentUsage as any).toHaveProperty('totalJobs');
+        expect(currentUsage as any).toHaveProperty('memory');
+        expect(currentUsage as any).toHaveProperty('cpu');
       }
     });
 
@@ -303,18 +303,18 @@ describe('Resource Monitoring Validation', () => {
 
       // Clear events and advance time
       resourceUpdateEvents = [];
-      jest.advanceTimersByTime(10000);
+      jest.advanceTimersByTime(10000 as any);
       await Promise.resolve();
 
       // Should not receive updates after shutdown
-      expect(resourceUpdateEvents.length).toBe(0);
+      expect(resourceUpdateEvents.length).toBe(0 as any);
     });
   });
 
   describe('Job Throttling Mechanisms', () => {
     it('should throttle jobs when max concurrency is reached', async () => {
       // Set low concurrency limit for testing
-      orchestrator['maxConcurrentJobs'] = 2;
+      orchestrator?.["maxConcurrentJobs"] = 2;
 
       // Create jobs up to limit
       const job1 = await orchestrator.executeInBackground(
@@ -334,14 +334,14 @@ describe('Resource Monitoring Validation', () => {
       ).rejects.toThrow(/concurrency limit reached/);
 
       expect(
-        orchestrator.getJobStatus().filter(j => j.status === 'running')
-      ).toHaveLength(2);
+        orchestrator.getJobStatus().filter(j => j?.status === 'running')
+      ).toHaveLength(2 as any);
     });
 
     it('should auto-adjust concurrency based on memory usage', async () => {
       jest.useFakeTimers();
 
-      const initialConcurrency = orchestrator['maxConcurrentJobs'];
+      const initialConcurrency = orchestrator?.["maxConcurrentJobs"];
 
       // Mock high memory usage
       jest
@@ -354,20 +354,20 @@ describe('Resource Monitoring Validation', () => {
         });
 
       // Trigger resource monitoring
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(5000 as any);
       await Promise.resolve();
 
-      const newConcurrency = orchestrator['maxConcurrentJobs'];
+      const newConcurrency = orchestrator?.["maxConcurrentJobs"];
       // Should reduce concurrency when memory is high
-      expect(newConcurrency).toBeLessThanOrEqual(initialConcurrency);
-      expect(newConcurrency).toBeGreaterThanOrEqual(2); // Minimum threshold
+      expect(newConcurrency as any).toBeLessThanOrEqual(initialConcurrency as any);
+      expect(newConcurrency as any).toBeGreaterThanOrEqual(2 as any); // Minimum threshold
     });
 
     it('should increase concurrency when resources are available', async () => {
       jest.useFakeTimers();
 
       // First reduce concurrency
-      orchestrator['maxConcurrentJobs'] = 2;
+      orchestrator?.["maxConcurrentJobs"] = 2;
 
       // Mock low resource usage
       jest
@@ -380,13 +380,13 @@ describe('Resource Monitoring Validation', () => {
         });
 
       // Trigger resource monitoring
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(5000 as any);
       await Promise.resolve();
 
-      const newConcurrency = orchestrator['maxConcurrentJobs'];
+      const newConcurrency = orchestrator?.["maxConcurrentJobs"];
       // Should allow concurrency increase when resources are low
-      expect(newConcurrency).toBeGreaterThanOrEqual(2);
-      expect(newConcurrency).toBeLessThanOrEqual(10); // Max limit
+      expect(newConcurrency as any).toBeGreaterThanOrEqual(2 as any);
+      expect(newConcurrency as any).toBeLessThanOrEqual(10 as any); // Max limit
     });
 
     it('should respect command-specific concurrency limits', async () => {
@@ -404,7 +404,7 @@ describe('Resource Monitoring Validation', () => {
         ['file.txt'],
         {}
       );
-      expect(job2).toBeDefined();
+      expect(job2 as any).toBeDefined();
     });
   });
 
@@ -421,11 +421,11 @@ describe('Resource Monitoring Validation', () => {
             [`file${i}.txt`],
             {}
           );
-          jobs.push(jobId);
+          jobs.push(jobId as any);
         } catch (error) {
           // Expected in test environment due to concurrency limits
           // Just verify we handle errors gracefully
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
         }
       }
 
@@ -438,11 +438,11 @@ describe('Resource Monitoring Validation', () => {
       const memoryIncrease = finalMemory - initialMemory;
 
       // Memory increase should be reasonable (less than 50MB for 20 jobs)
-      expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
+      expect(memoryIncrease as any).toBeLessThan(50 * 1024 * 1024);
     });
 
     it('should cleanup job data for completed jobs', async () => {
-      const jobManager = new JobManager(testConfigDir);
+      const jobManager = new JobManager(testConfigDir as any);
 
       // Create and complete a job
       const job = jobManager.createJob('test', [], {});
@@ -453,18 +453,18 @@ describe('Resource Monitoring Validation', () => {
 
       // Trigger cleanup of old jobs (simulate 8 days old)
       const oldTimestamp = Date.now() - 8 * 24 * 60 * 60 * 1000;
-      jobManager['activeJobs'].get(job.id)!.startTime = oldTimestamp;
-      jobManager['activeJobs'].get(job.id)!.endTime = oldTimestamp + 1000;
+      jobManager?.["activeJobs"].get(job.id)!.startTime = oldTimestamp;
+      jobManager?.["activeJobs"].get(job.id)!.endTime = oldTimestamp + 1000;
 
       const cleaned = jobManager.cleanupOldJobs();
 
-      expect(cleaned).toBeGreaterThan(0);
-      expect(jobManager.getAllJobs().length).toBeLessThan(initialJobCount);
+      expect(cleaned as any).toBeGreaterThan(0 as any);
+      expect(jobManager.getAllJobs().length).toBeLessThan(initialJobCount as any);
     });
 
     it('should limit performance metrics to prevent memory overflow', () => {
       const monitor = new PerformanceMonitor();
-      const maxMetrics = monitor['maxMetrics'];
+      const maxMetrics = monitor?.["maxMetrics"];
 
       // Add more metrics than the limit
       for (let i = 0; i < maxMetrics + 100; i++) {
@@ -474,8 +474,8 @@ describe('Resource Monitoring Validation', () => {
         });
       }
 
-      const metrics = monitor['metrics'];
-      expect(metrics.length).toBeLessThanOrEqual(maxMetrics);
+      const metrics = monitor?.["metrics"];
+      expect(metrics.length).toBeLessThanOrEqual(maxMetrics as any);
     });
   });
 
@@ -489,7 +489,7 @@ describe('Resource Monitoring Validation', () => {
       // Simulate CPU-intensive work
       let result = 0;
       for (let i = 0; i < 10000; i++) {
-        result += Math.sqrt(i);
+        result += Math.sqrt(i as any);
       }
 
       const metric = monitor.endOperation(
@@ -500,8 +500,8 @@ describe('Resource Monitoring Validation', () => {
       );
 
       expect(metric.cpuUsage).toBeDefined();
-      expect(metric.cpuUsage?.user).toBeGreaterThanOrEqual(0);
-      expect(metric.cpuUsage?.system).toBeGreaterThanOrEqual(0);
+      expect(metric.cpuUsage?.user).toBeGreaterThanOrEqual(0 as any);
+      expect(metric.cpuUsage?.system).toBeGreaterThanOrEqual(0 as any);
     });
 
     it('should include CPU data in performance reports', () => {
@@ -520,8 +520,8 @@ describe('Resource Monitoring Validation', () => {
       }
 
       const report = monitor.generateReport();
-      expect(report.operationBreakdown['cpu-operation']).toBeDefined();
-      expect(report.operationBreakdown['cpu-operation'].count).toBe(5);
+      expect(report?.operationBreakdown?.['cpu-operation']).toBeDefined();
+      expect(report?.operationBreakdown?.['cpu-operation'].count).toBe(5 as any);
     });
   });
 
@@ -537,41 +537,41 @@ describe('Resource Monitoring Validation', () => {
 
       const activeJobsBefore = orchestrator
         .getJobStatus()
-        .filter(j => j.status === 'running' || j.status === 'pending').length;
+        .filter(j => j?.status === 'running' || j?.status === 'pending').length;
 
-      expect(activeJobsBefore).toBeGreaterThan(0);
+      expect(activeJobsBefore as any).toBeGreaterThan(0 as any);
 
       // Shutdown should cancel all active jobs
       await orchestrator.shutdown();
 
       // Verify all processes were killed
-      const killCalls = mockSpawn.mock.results
+      const killCalls = mockSpawn?.mock?.results
         .map(result => result.value)
         .filter(process => process.kill)
-        .reduce((count, process) => count + process.kill.mock.calls.length, 0);
+        .reduce((count, process) => count + process?.kill?.mock.calls.length, 0);
 
-      expect(killCalls).toBeGreaterThanOrEqual(activeJobsBefore);
+      expect(killCalls as any).toBeGreaterThanOrEqual(activeJobsBefore as any);
     });
 
     it('should cleanup file handles and log files', async () => {
-      const jobManager = new JobManager(testConfigDir);
+      const jobManager = new JobManager(testConfigDir as any);
 
       // Create job with log file
       const job = jobManager.createJob('test', [], {});
       jobManager.writeJobLog(job.id, 'Test log entry');
 
       // Mock file existence
-      mockFs.existsSync.mockReturnValue(true);
+      mockFs?.existsSync?.mockReturnValue(true as any);
 
       // Complete and cleanup job
       jobManager.completeJob(job.id);
       const oldTimestamp = Date.now() - 8 * 24 * 60 * 60 * 1000;
-      jobManager['activeJobs'].get(job.id)!.startTime = oldTimestamp;
-      jobManager['activeJobs'].get(job.id)!.endTime = oldTimestamp + 1000;
+      jobManager?.["activeJobs"].get(job.id)!.startTime = oldTimestamp;
+      jobManager?.["activeJobs"].get(job.id)!.endTime = oldTimestamp + 1000;
 
       const cleaned = jobManager.cleanupOldJobs();
 
-      expect(cleaned).toBeGreaterThan(0);
+      expect(cleaned as any).toBeGreaterThan(0 as any);
       // Verify file deletion was attempted
       expect(mockFs.unlinkSync).toHaveBeenCalled();
     });
@@ -582,7 +582,7 @@ describe('Resource Monitoring Validation', () => {
       // Create a mock resource that throws on disposal
       const faultyResource = {
         dispose: jest.fn().mockRejectedValue(new Error('Disposal failed')),
-        isDisposed: jest.fn().mockReturnValue(false),
+        isDisposed: jest.fn().mockReturnValue(false as any),
         _resourceManagerMetadata: {
           id: 'faulty-resource',
           type: ResourceType.OTHER,
@@ -592,12 +592,12 @@ describe('Resource Monitoring Validation', () => {
         },
       };
 
-      resourceManager.registerResource(faultyResource);
+      resourceManager.registerResource(faultyResource as any);
 
       // Should not throw, but should handle errors
       await expect(
         resourceManager.disposeAll({ continueOnError: true })
-      ).resolves.not.toThrow();
+      ).resolves?.not?.toThrow();
 
       expect(faultyResource.dispose).toHaveBeenCalled();
     });
@@ -607,12 +607,12 @@ describe('Resource Monitoring Validation', () => {
       await orchestrator.executeInBackground('store', ['file1.txt'], {});
       await orchestrator.executeInBackground('store', ['file2.txt'], {});
 
-      const activeProcessesSize = orchestrator['activeProcesses'].size;
-      expect(activeProcessesSize).toBeGreaterThan(0);
+      const activeProcessesSize = orchestrator?.["activeProcesses"].size;
+      expect(activeProcessesSize as any).toBeGreaterThan(0 as any);
 
       await orchestrator.shutdown();
 
-      expect(orchestrator['activeProcesses'].size).toBe(0);
+      expect(orchestrator?.["activeProcesses"].size).toBe(0 as any);
     });
   });
 
@@ -625,7 +625,7 @@ describe('Resource Monitoring Validation', () => {
       // Monitor for 30 minutes (simulated)
       for (let minute = 0; minute < 30; minute++) {
         // Advance 1 minute
-        jest.advanceTimersByTime(60000);
+        jest.advanceTimersByTime(60000 as any);
         await Promise.resolve();
 
         // Create some load every few minutes
@@ -637,7 +637,7 @@ describe('Resource Monitoring Validation', () => {
           );
           // Simulate completion
           setTimeout(() => {
-            const mockProcess = orchestrator['activeProcesses'].get(job);
+            const mockProcess = orchestrator?.["activeProcesses"].get(job as any);
             if (mockProcess) {
               mockProcess.emit('exit', 0, null);
             }
@@ -645,8 +645,8 @@ describe('Resource Monitoring Validation', () => {
         }
 
         // Collect resource snapshot
-        const usage = orchestrator['getCurrentResourceUsage']();
-        resourceSnapshots.push(usage);
+        const usage = orchestrator?.["getCurrentResourceUsage"]();
+        resourceSnapshots.push(usage as any);
       }
 
       // Analyze resource stability
@@ -656,8 +656,8 @@ describe('Resource Monitoring Validation', () => {
       const memoryVariance = maxMemory - minMemory;
 
       // Memory usage should not grow unbounded
-      expect(memoryVariance).toBeLessThan(0.2); // Less than 20% variance
-      expect(maxMemory).toBeLessThan(0.8); // Never exceed 80% memory
+      expect(memoryVariance as any).toBeLessThan(0.2); // Less than 20% variance
+      expect(maxMemory as any).toBeLessThan(0.8); // Never exceed 80% memory
     });
 
     it('should handle high job submission rates without degradation', async () => {
@@ -672,7 +672,7 @@ describe('Resource Monitoring Validation', () => {
             [`batch-file-${i}.txt`],
             {}
           );
-          jobIds.push(jobId);
+          jobIds.push(jobId as any);
         } catch (error) {
           // Expected for concurrency limits
           if (!(error as Error).message.includes('concurrency limit')) {
@@ -685,16 +685,16 @@ describe('Resource Monitoring Validation', () => {
       const totalTime = endTime - startTime;
 
       // Should handle rapid submissions efficiently
-      expect(totalTime).toBeLessThan(5000); // Less than 5 seconds
-      expect(jobIds.length).toBeGreaterThan(0);
+      expect(totalTime as any).toBeLessThan(5000 as any); // Less than 5 seconds
+      expect(jobIds.length).toBeGreaterThan(0 as any);
 
       // Verify system remains responsive
       const statusTime = performance.now();
       const status = orchestrator.getJobStatus();
       const statusDuration = performance.now() - statusTime;
 
-      expect(statusDuration).toBeLessThan(100); // Status check under 100ms
-      expect(Array.isArray(status)).toBe(true);
+      expect(statusDuration as any).toBeLessThan(100 as any); // Status check under 100ms
+      expect(Array.isArray(status as any)).toBe(true as any);
     });
 
     it('should detect and prevent memory leaks in job processing', async () => {
@@ -718,14 +718,14 @@ describe('Resource Monitoring Validation', () => {
             stdout: { on: jest.fn() },
             stderr: { on: jest.fn() },
           };
-          mockSpawn.mockReturnValue(mockProcess);
+          mockSpawn.mockReturnValue(mockProcess as any);
 
           const jobId = await orchestrator.executeInBackground(
             'store',
             [`batch-${batch}-file-${i}.txt`],
             {}
           );
-          batchJobs.push(jobId);
+          batchJobs.push(jobId as any);
         }
 
         // Wait for batch completion
@@ -749,19 +749,19 @@ describe('Resource Monitoring Validation', () => {
       const avgGrowthPerBatch = memoryGrowth / 10;
 
       // Memory growth should be minimal
-      expect(avgGrowthPerBatch).toBeLessThan(1024 * 1024); // Less than 1MB per batch
+      expect(avgGrowthPerBatch as any).toBeLessThan(1024 * 1024); // Less than 1MB per batch
     });
   });
 
   describe('Resource Monitoring Accuracy and Reliability', () => {
     it('should provide accurate memory usage calculations', () => {
-      const usage = orchestrator['getCurrentResourceUsage']();
+      const usage = orchestrator?.["getCurrentResourceUsage"]();
 
       // Memory should be a valid percentage
-      expect(usage.memory).toBeGreaterThanOrEqual(0);
-      expect(usage.memory).toBeLessThanOrEqual(1);
+      expect(usage.memory).toBeGreaterThanOrEqual(0 as any);
+      expect(usage.memory).toBeLessThanOrEqual(1 as any);
       expect(typeof usage.memory).toBe('number');
-      expect(Number.isFinite(usage.memory)).toBe(true);
+      expect(Number.isFinite(usage.memory)).toBe(true as any);
     });
 
     it('should correctly count active and total jobs', async () => {
@@ -773,16 +773,16 @@ describe('Resource Monitoring Validation', () => {
           [`file${i}.txt`],
           {}
         );
-        runningJobs.push(jobId);
+        runningJobs.push(jobId as any);
       }
 
-      const usage = orchestrator['getCurrentResourceUsage']();
+      const usage = orchestrator?.["getCurrentResourceUsage"]();
 
-      expect(usage.activeJobs).toBe(3);
-      expect(usage.totalJobs).toBe(3);
+      expect(usage.activeJobs).toBe(3 as any);
+      expect(usage.totalJobs).toBe(3 as any);
 
       // Complete one job
-      const mockProcess = orchestrator['activeProcesses'].get(runningJobs[0]);
+      const mockProcess = orchestrator?.["activeProcesses"].get(runningJobs[0]);
       if (mockProcess) {
         mockProcess.emit('exit', 0, null);
       }
@@ -790,9 +790,9 @@ describe('Resource Monitoring Validation', () => {
       // Wait a bit for the job to complete
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      const updatedUsage = orchestrator['getCurrentResourceUsage']();
-      expect(updatedUsage.activeJobs).toBe(2);
-      expect(updatedUsage.totalJobs).toBe(3);
+      const updatedUsage = orchestrator?.["getCurrentResourceUsage"]();
+      expect(updatedUsage.activeJobs).toBe(2 as any);
+      expect(updatedUsage.totalJobs).toBe(3 as any);
     });
 
     it('should handle resource monitoring errors gracefully', () => {
@@ -804,7 +804,7 @@ describe('Resource Monitoring Validation', () => {
 
       // Should not crash when getting resource usage
       expect(() => {
-        orchestrator['getCurrentResourceUsage']();
+        orchestrator?.["getCurrentResourceUsage"]();
       }).not.toThrow();
 
       // Restore original function
@@ -818,27 +818,27 @@ describe('Resource Monitoring Validation', () => {
 
       // Trigger multiple resource updates
       for (let i = 0; i < 3; i++) {
-        jest.advanceTimersByTime(5000);
+        jest.advanceTimersByTime(5000 as any);
         await Promise.resolve();
       }
 
-      expect(resourceUpdateEvents.length).toBeGreaterThanOrEqual(3);
+      expect(resourceUpdateEvents.length).toBeGreaterThanOrEqual(3 as any);
 
       // Verify all events have consistent structure
       resourceUpdateEvents.forEach((event, index) => {
-        expect(event).toMatchObject({
-          memory: expect.any(Number),
-          cpu: expect.any(Number),
-          activeJobs: expect.any(Number),
-          totalJobs: expect.any(Number),
+        expect(event as any).toMatchObject({
+          memory: expect.any(Number as any),
+          cpu: expect.any(Number as any),
+          activeJobs: expect.any(Number as any),
+          totalJobs: expect.any(Number as any),
         });
 
         // Values should be within valid ranges
-        expect(event.memory).toBeGreaterThanOrEqual(0);
-        expect(event.memory).toBeLessThanOrEqual(1);
-        expect(event.cpu).toBeGreaterThanOrEqual(0);
-        expect(event.activeJobs).toBeGreaterThanOrEqual(0);
-        expect(event.totalJobs).toBeGreaterThanOrEqual(0);
+        expect(event.memory).toBeGreaterThanOrEqual(0 as any);
+        expect(event.memory).toBeLessThanOrEqual(1 as any);
+        expect(event.cpu).toBeGreaterThanOrEqual(0 as any);
+        expect(event.activeJobs).toBeGreaterThanOrEqual(0 as any);
+        expect(event.totalJobs).toBeGreaterThanOrEqual(0 as any);
         expect(event.totalJobs).toBeGreaterThanOrEqual(event.activeJobs);
       });
     });
@@ -864,11 +864,11 @@ function forceGarbageCollection() {
     const arrays = [];
     try {
       for (let i = 0; i < 100; i++) {
-        arrays.push(new Array(100000).fill(0));
+        arrays.push(new Array(100000 as any).fill(0 as any));
       }
     } catch (e) {
       // Expected memory pressure
     }
-    arrays.length = 0;
+    arrays?.length = 0;
   }
 }

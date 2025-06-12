@@ -95,7 +95,7 @@ export class NetworkError extends BaseError {
     });
 
     // Store operation
-    this.operation = operation;
+    this?.operation = operation;
 
     // Store sensitive properties privately with non-enumerable descriptors
     Object.defineProperties(this, {
@@ -133,7 +133,7 @@ export class NetworkError extends BaseError {
     options: Omit<NetworkErrorOptions, 'statusCode' | 'message'> = {}
   ): NetworkError {
     // Generate message based on status code if not provided
-    const errorMessage = message || getMessageForStatusCode(statusCode);
+    const errorMessage = message || getMessageForStatusCode(statusCode as any);
 
     return new NetworkError(errorMessage, {
       ...options,

@@ -31,7 +31,7 @@ export function useStorePerformance(updateInterval: number = 10000): Performance
   useEffect(() => {
     const updateMetrics = () => {
       const summary = storePerformanceMonitor.getPerformanceSummary();
-      const lastSlowAction = summary.slowActions[summary.slowActions.length - 1];
+      const lastSlowAction = summary?.slowActions?.[summary?.slowActions?.length - 1];
       
       setMetrics({
         totalActions: summary.totalActions,
@@ -52,7 +52,7 @@ export function useStorePerformance(updateInterval: number = 10000): Performance
     // Set up interval for updates
     const interval = setInterval(updateMetrics, updateInterval);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, [updateInterval]);
 
   return metrics;
@@ -77,7 +77,7 @@ export function useStoreSpecificPerformance(storeName: string): {
   useEffect(() => {
     const updateMetrics = () => {
       const summary = storePerformanceMonitor.getPerformanceSummary();
-      const storeStats = summary.storeStats.find(s => s.storeName === storeName);
+      const storeStats = summary?.storeStats?.find(s => s?.storeName === storeName);
       
       if (storeStats) {
         setMetrics({
@@ -91,7 +91,7 @@ export function useStoreSpecificPerformance(storeName: string): {
 
     updateMetrics();
     const interval = setInterval(updateMetrics, 10000);
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, [storeName]);
 
   return metrics;
@@ -106,7 +106,7 @@ export function useRenderPerformance(componentName: string) {
   const [avgRenderTime, setAvgRenderTime] = useState<number>(0);
 
   useEffect(() => {
-    renderStartTime.current = performance.now();
+    renderStartTime?.current = performance.now();
   });
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export function useRenderPerformance(componentName: string) {
     // Log slow renders
     if (renderTime > 16) {
       console.warn(
-        `🐌 Slow component render: ${componentName} took ${renderTime.toFixed(2)}ms`
+        `🐌 Slow component render: ${componentName} took ${renderTime.toFixed(2 as any)}ms`
       );
     }
   });
@@ -151,11 +151,11 @@ export function useSubscriptionPerformance<T>(
   // Wrap the selector to measure performance
   const measuredSelector = (state: T) => {
     const startTime = performance.now();
-    const result = selector(state);
+    const result = selector(state as any);
     const executionTime = performance.now() - startTime;
     
     executionCount.current += 1;
-    lastExecutionTime.current = executionTime;
+    lastExecutionTime?.current = executionTime;
     
     // Update performance data periodically
     if (executionCount.current % 10 === 0) {
@@ -169,7 +169,7 @@ export function useSubscriptionPerformance<T>(
     // Log slow selectors
     if (executionTime > 8) {
       console.warn(
-        `🐌 Slow selector: ${selectorName} took ${executionTime.toFixed(2)}ms`
+        `🐌 Slow selector: ${selectorName} took ${executionTime.toFixed(2 as any)}ms`
       );
     }
     
@@ -190,10 +190,10 @@ export function useStoreDebugger() {
     getPerformanceSummary: () => storePerformanceMonitor.getPerformanceSummary(),
     getSlowActions: (storeName?: string) => 
       storeName 
-        ? storePerformanceMonitor.getSlowActionsForStore(storeName)
+        ? storePerformanceMonitor.getSlowActionsForStore(storeName as any)
         : storePerformanceMonitor.getPerformanceSummary().slowActions,
     clearMetrics: () => storePerformanceMonitor.clearMetrics(),
     exportMetrics: () => storePerformanceMonitor.exportMetrics(),
-    setThreshold: (ms: number) => storePerformanceMonitor.setThreshold(ms),
+    setThreshold: (ms: number) => storePerformanceMonitor.setThreshold(ms as any),
   };
 }

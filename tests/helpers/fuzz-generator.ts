@@ -8,7 +8,7 @@ export class FuzzGenerator {
   constructor(private seed?: string) {
     if (seed) {
       // Use seed for reproducible tests
-      crypto.createHash('sha256').update(seed);
+      crypto.createHash('sha256').update(seed as any);
     }
   }
 
@@ -140,9 +140,9 @@ export class FuzzGenerator {
     const maxLen = Math.min(options.maxLength || 1024, 65536); // Cap at 64KB
     const length = this.number(minLen, maxLen);
 
-    const data = new Uint8Array(length);
-    crypto.getRandomValues(data);
-    return Buffer.from(data);
+    const data = new Uint8Array(length as any);
+    crypto.getRandomValues(data as any);
+    return Buffer.from(data as any);
   }
 
   // Generate random object with specified schema

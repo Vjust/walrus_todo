@@ -41,24 +41,24 @@ describe('Playwright Blockchain Interaction Tests', () => {
       waitForTimeout: jest.fn(),
       reload: jest.fn(),
       waitForLoadState: jest.fn(),
-    } as any;
+    } as unknown as Page;
 
     context = {
-      newPage: jest.fn().mockResolvedValue(page),
+      newPage: jest.fn().mockResolvedValue(page as any),
       close: jest.fn(),
-    } as any;
+    } as unknown as BrowserContext;
 
     // Setup default mock responses
-    (page.goto as jest.Mock).mockResolvedValue(undefined);
-    (page.waitForSelector as jest.Mock).mockResolvedValue(undefined);
-    (page.click as jest.Mock).mockResolvedValue(undefined);
-    (page.fill as jest.Mock).mockResolvedValue(undefined);
-    (page.selectOption as jest.Mock).mockResolvedValue(undefined);
+    (page.goto as jest.Mock).mockResolvedValue(undefined as any);
+    (page.waitForSelector as jest.Mock).mockResolvedValue(undefined as any);
+    (page.click as jest.Mock).mockResolvedValue(undefined as any);
+    (page.fill as jest.Mock).mockResolvedValue(undefined as any);
+    (page.selectOption as jest.Mock).mockResolvedValue(undefined as any);
     (page.getByTestId as jest.Mock).mockReturnValue({
       click: jest.fn(),
       fill: jest.fn(),
       textContent: jest.fn(),
-      isVisible: jest.fn().mockResolvedValue(true),
+      isVisible: jest.fn().mockResolvedValue(true as any),
       waitFor: jest.fn(),
     });
   });
@@ -88,7 +88,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
 
       // Verify connection status
       const isVisible = await connectedIndicator.isVisible();
-      expect(isVisible).toBe(true);
+      expect(isVisible as any).toBe(true as any);
 
       // Verify calls were made
       expect(page.goto).toHaveBeenCalledWith(`${FRONTEND_URL}/blockchain`);
@@ -115,7 +115,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await errorMessage.waitFor();
 
       const errorText = await errorMessage.textContent();
-      expect(errorText).toContain('User rejected the request');
+      expect(errorText as any).toContain('User rejected the request');
     });
 
     test('should maintain session across page refreshes', async () => {
@@ -139,7 +139,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify still connected
       const stillConnected = page.getByTestId('wallet-connected-indicator');
       const isVisible = await stillConnected.isVisible();
-      expect(isVisible).toBe(true);
+      expect(isVisible as any).toBe(true as any);
     });
   });
 
@@ -151,7 +151,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
         click: jest.fn(),
         fill: jest.fn(),
         textContent: jest.fn().mockResolvedValue('0x1234...5678'),
-        isVisible: jest.fn().mockResolvedValue(true),
+        isVisible: jest.fn().mockResolvedValue(true as any),
         waitFor: jest.fn(),
       });
     });
@@ -194,12 +194,12 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify transaction details
       const transactionDigest = page.getByTestId('transaction-digest');
       const digestText = await transactionDigest.textContent();
-      expect(digestText).toContain('mock-transaction-digest-123');
+      expect(digestText as any).toContain('mock-transaction-digest-123');
 
       // Verify NFT appears in list
       const nftItem = page.getByTestId('todo-nft-item-nft-object-id-123');
       const nftVisible = await nftItem.isVisible();
-      expect(nftVisible).toBe(true);
+      expect(nftVisible as any).toBe(true as any);
     });
 
     test('should handle insufficient gas errors', async () => {
@@ -223,12 +223,12 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await errorMessage.waitFor();
 
       const errorText = await errorMessage.textContent();
-      expect(errorText).toContain('Insufficient gas');
+      expect(errorText as any).toContain('Insufficient gas');
 
       // Verify gas estimation suggestion appears
       const gasEstimation = page.getByTestId('gas-estimation-suggestion');
       const gasVisible = await gasEstimation.isVisible();
-      expect(gasVisible).toBe(true);
+      expect(gasVisible as any).toBe(true as any);
     });
 
     test('should validate transaction before signing', async () => {
@@ -237,7 +237,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
 
       // Fill form with very long title (should exceed limits)
       const titleInput = page.getByTestId('todo-title-input');
-      await titleInput.fill('a'.repeat(150)); // Exceeds 100 character limit
+      await titleInput.fill('a'.repeat(150 as any)); // Exceeds 100 character limit
 
       const submitButton = page.getByTestId('create-todo-submit');
       await submitButton.click();
@@ -247,12 +247,12 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await validationError.waitFor();
 
       const errorText = await validationError.textContent();
-      expect(errorText).toContain('must be less than 100 characters');
+      expect(errorText as any).toContain('must be less than 100 characters');
 
       // Verify no transaction was attempted
       const transactionDialog = page.getByTestId('transaction-dialog');
       const dialogVisible = await transactionDialog.isVisible();
-      expect(dialogVisible).toBe(false);
+      expect(dialogVisible as any).toBe(false as any);
     });
   });
 
@@ -267,7 +267,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
             click: jest.fn(),
             fill: jest.fn(),
             textContent: jest.fn().mockResolvedValue('Test NFT'),
-            isVisible: jest.fn().mockResolvedValue(true),
+            isVisible: jest.fn().mockResolvedValue(true as any),
             waitFor: jest.fn(),
             locator: jest.fn().mockReturnValue({
               click: jest.fn(),
@@ -279,7 +279,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
           click: jest.fn(),
           fill: jest.fn(),
           textContent: jest.fn(),
-          isVisible: jest.fn().mockResolvedValue(true),
+          isVisible: jest.fn().mockResolvedValue(true as any),
           waitFor: jest.fn(),
         };
       });
@@ -309,7 +309,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify NFT is marked as completed
       const completedNft = page.getByTestId('todo-nft-item-test-nft-1');
       const nftContent = await completedNft.textContent();
-      expect(nftContent).toContain('completed');
+      expect(nftContent as any).toContain('completed');
     });
 
     test('should update NFT metadata on blockchain', async () => {
@@ -344,7 +344,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify title was updated
       const updatedNft = page.getByTestId('todo-nft-item-test-nft-1');
       const nftTitle = await updatedNft.textContent();
-      expect(nftTitle).toContain('Updated NFT Title');
+      expect(nftTitle as any).toContain('Updated NFT Title');
     });
 
     test('should delete NFT from blockchain', async () => {
@@ -368,7 +368,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify NFT is removed from list
       const deletedNft = page.getByTestId('todo-nft-item-test-nft-1');
       const isVisible = await deletedNft.isVisible();
-      expect(isVisible).toBe(false);
+      expect(isVisible as any).toBe(false as any);
     });
   });
 
@@ -379,7 +379,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Current network should be testnet
       const networkStatus = page.getByTestId('network-status');
       const currentNetwork = await networkStatus.textContent();
-      expect(currentNetwork).toContain('testnet');
+      expect(currentNetwork as any).toContain('testnet');
 
       // Open network switcher
       const networkSwitcher = page.getByTestId('network-switcher');
@@ -397,7 +397,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await newNetworkStatus.waitFor();
 
       const updatedNetwork = await newNetworkStatus.textContent();
-      expect(updatedNetwork).toContain('devnet');
+      expect(updatedNetwork as any).toContain('devnet');
 
       // Verify NFT list is refreshed for new network
       const refreshIndicator = page.getByTestId('refreshing-nfts');
@@ -430,12 +430,12 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await networkError.waitFor();
 
       const errorText = await networkError.textContent();
-      expect(errorText).toContain('Network request failed');
+      expect(errorText as any).toContain('Network request failed');
 
       // Should show retry option
       const retryButton = page.getByTestId('retry-button');
       const retryVisible = await retryButton.isVisible();
-      expect(retryVisible).toBe(true);
+      expect(retryVisible as any).toBe(true as any);
     });
 
     test('should validate network configuration', async () => {
@@ -461,7 +461,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await validationError.waitFor();
 
       const errorText = await validationError.textContent();
-      expect(errorText).toContain('Invalid RPC URL');
+      expect(errorText as any).toContain('Invalid RPC URL');
     });
   });
 
@@ -501,7 +501,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await verificationResult.waitFor();
 
       const resultText = await verificationResult.textContent();
-      expect(resultText).toContain('Verified on blockchain');
+      expect(resultText as any).toContain('Verified on blockchain');
     });
 
     test('should handle missing NFT on blockchain', async () => {
@@ -526,7 +526,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await verificationError.waitFor();
 
       const errorText = await verificationError.textContent();
-      expect(errorText).toContain('NFT not found on blockchain');
+      expect(errorText as any).toContain('NFT not found on blockchain');
     });
 
     test('should sync local state with blockchain state', async () => {
@@ -547,7 +547,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify sync results
       const syncResults = page.getByTestId('sync-results');
       const resultsText = await syncResults.textContent();
-      expect(resultsText).toContain('Synchronized');
+      expect(resultsText as any).toContain('Synchronized');
     });
   });
 
@@ -565,7 +565,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       // Verify transaction entries
       const transactionEntries = page.getByTestId('transaction-entry');
       const entries = await transactionEntries.count();
-      expect(entries).toBeGreaterThan(0);
+      expect(entries as any).toBeGreaterThan(0 as any);
     });
 
     test('should monitor pending transactions', async () => {
@@ -586,7 +586,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await pendingIndicator.waitFor();
 
       const pendingText = await pendingIndicator.textContent();
-      expect(pendingText).toContain('Transaction pending');
+      expect(pendingText as any).toContain('Transaction pending');
 
       // Wait for confirmation
       const confirmedIndicator = page.getByTestId('transaction-confirmed');
@@ -615,7 +615,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await timeoutWarning.waitFor({ timeout: 31000 });
 
       const warningText = await timeoutWarning.textContent();
-      expect(warningText).toContain(
+      expect(warningText as any).toContain(
         'Transaction is taking longer than expected'
       );
     });
@@ -644,7 +644,7 @@ describe('Playwright Blockchain Interaction Tests', () => {
       await securityWarning.waitFor();
 
       const warningText = await securityWarning.textContent();
-      expect(warningText).toContain('Transaction appears suspicious');
+      expect(warningText as any).toContain('Transaction appears suspicious');
     });
 
     test('should recover from wallet disconnection', async () => {

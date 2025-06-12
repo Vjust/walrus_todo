@@ -25,12 +25,12 @@ describe('Consolidated TodoService', () => {
   it('should be a singleton', () => {
     const instance1 = TodoService.getInstance();
     const instance2 = TodoService.getInstance();
-    expect(instance1).toBe(instance2);
+    expect(instance1 as any).toBe(instance2 as any);
   });
 
   it('should export a todoService instance', () => {
-    expect(todoService).toBeDefined();
-    expect(todoService).toBeInstanceOf(TodoService);
+    expect(todoService as any).toBeDefined();
+    expect(todoService as any).toBeInstanceOf(TodoService as any);
   });
 
   describe('getAllLists', () => {
@@ -44,8 +44,8 @@ describe('Consolidated TodoService', () => {
 
       const lists = await todoService.getAllLists();
 
-      expect(lists).toEqual(['list1', 'list2']);
-      expect(mockReaddir).toHaveBeenCalled();
+      expect(lists as any).toEqual(['list1', 'list2']);
+      expect(mockReaddir as any).toHaveBeenCalled();
     });
 
     it('should return an empty array if readdir fails', async () => {
@@ -54,21 +54,21 @@ describe('Consolidated TodoService', () => {
 
       const lists = await todoService.getAllLists();
 
-      expect(lists).toEqual([]);
-      expect(mockReaddir).toHaveBeenCalled();
+      expect(lists as any).toEqual([]);
+      expect(mockReaddir as any).toHaveBeenCalled();
     });
   });
 
   describe('createList', () => {
     it('should create a new list if it does not exist', async () => {
       // Mock getList to return null, indicating list doesn't exist
-      jest.spyOn(todoService, 'getList').mockResolvedValue(null);
+      jest.spyOn(todoService, 'getList').mockResolvedValue(null as any);
       // Mock saveList to do nothing
-      jest.spyOn(todoService, 'saveList').mockResolvedValue(undefined);
+      jest.spyOn(todoService, 'saveList').mockResolvedValue(undefined as any);
 
       const list = await todoService.createList('newList', 'testOwner');
 
-      expect(list).toBeDefined();
+      expect(list as any).toBeDefined();
       expect(list.name).toBe('newList');
       expect(list.owner).toBe('testOwner');
       expect(list.todos).toEqual([]);
@@ -105,9 +105,9 @@ describe('Consolidated TodoService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      jest.spyOn(todoService, 'getList').mockResolvedValue(mockList);
+      jest.spyOn(todoService, 'getList').mockResolvedValue(mockList as any);
       // Mock saveList to do nothing
-      jest.spyOn(todoService, 'saveList').mockResolvedValue(undefined);
+      jest.spyOn(todoService, 'saveList').mockResolvedValue(undefined as any);
 
       const todo = await todoService.addTodo('testList', {
         title: 'Test Todo',
@@ -115,14 +115,14 @@ describe('Consolidated TodoService', () => {
         priority: 'high' as const,
       });
 
-      expect(todo).toBeDefined();
+      expect(todo as any).toBeDefined();
       expect(todo.title).toBe('Test Todo');
       expect(todo.description).toBe('Test Description');
       expect(todo.priority).toBe('high');
-      expect(todo.completed).toBe(false);
+      expect(todo.completed).toBe(false as any);
       expect(todoService.saveList).toHaveBeenCalled();
-      expect(mockList.todos.length).toBe(1);
-      expect(mockList.todos[0]).toBe(todo);
+      expect(mockList?.todos?.length).toBe(1 as any);
+      expect(mockList?.todos?.[0]).toBe(todo as any);
     });
 
     it('should create a list if it does not exist', async () => {
@@ -138,20 +138,20 @@ describe('Consolidated TodoService', () => {
       };
       jest
         .spyOn(todoService, 'getList')
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(mockList);
+        .mockResolvedValueOnce(null as any)
+        .mockResolvedValueOnce(mockList as any);
 
       // Mock createList to return the mock list
-      jest.spyOn(todoService, 'createList').mockResolvedValue(mockList);
+      jest.spyOn(todoService, 'createList').mockResolvedValue(mockList as any);
 
       // Mock saveList to do nothing
-      jest.spyOn(todoService, 'saveList').mockResolvedValue(undefined);
+      jest.spyOn(todoService, 'saveList').mockResolvedValue(undefined as any);
 
       const todo = await todoService.addTodo('newList', {
         title: 'Test Todo',
       });
 
-      expect(todo).toBeDefined();
+      expect(todo as any).toBeDefined();
       expect(todo.title).toBe('Test Todo');
       expect(todoService.createList).toHaveBeenCalledWith('newList', 'local');
       expect(todoService.saveList).toHaveBeenCalled();
@@ -166,11 +166,11 @@ describe('Consolidated TodoService', () => {
         title: 'Test Todo',
         description: '',
         completed: true,
-        completedAt: expect.any(String),
+        completedAt: expect.any(String as any),
         priority: 'medium' as const,
         tags: [],
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+        createdAt: expect.any(String as any),
+        updatedAt: expect.any(String as any),
         private: true,
         storageLocation: 'local' as const,
       });
@@ -179,7 +179,7 @@ describe('Consolidated TodoService', () => {
 
       expect(todoService.updateTodo).toHaveBeenCalledWith('testList', '456', {
         completed: true,
-        completedAt: expect.any(String),
+        completedAt: expect.any(String as any),
       });
     });
   });
@@ -249,7 +249,7 @@ describe('Consolidated TodoService', () => {
 
       const result = await todoService.findTodoById('333');
 
-      expect(result).toBeDefined();
+      expect(result as any).toBeDefined();
       expect(result?.todo.id).toBe('333');
       expect(result?.todo.title).toBe('Todo 3');
       expect(result?.listName).toBe('list2');
@@ -281,7 +281,7 @@ describe('Consolidated TodoService', () => {
 
       const result = await todoService.findTodoById('unknown');
 
-      expect(result).toBeNull();
+      expect(result as any).toBeNull();
     });
   });
 });

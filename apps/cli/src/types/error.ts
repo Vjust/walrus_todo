@@ -29,7 +29,7 @@ export interface ErrorWithMessage {
  * @returns {boolean} True if the object is an ErrorWithMessage, false otherwise
  *
  * @example
- * if (isErrorWithMessage(result)) {
+ * if (isErrorWithMessage(result as any)) {
  *   logger.error(result.message);
  * }
  */
@@ -54,19 +54,19 @@ export function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
  * try {
  *   // some operation
  * } catch (err) {
- *   const normalizedError = toErrorWithMessage(err);
+ *   const normalizedError = toErrorWithMessage(err as any);
  *   logError(normalizedError.message);
  * }
  */
 export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
-  if (isErrorWithMessage(maybeError)) return maybeError;
+  if (isErrorWithMessage(maybeError as any)) return maybeError;
 
   try {
-    return new Error(JSON.stringify(maybeError));
+    return new Error(JSON.stringify(maybeError as any));
   } catch (error: unknown) {
     // Fallback in case there's an error stringifying the maybeError
     // Like with circular references for example.
-    return new Error(String(maybeError));
+    return new Error(String(maybeError as any));
   }
 }
 
@@ -80,13 +80,13 @@ export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
  *
  * @example
  * try {
- *   await todoService.create(input);
+ *   await todoService.create(input as any);
  * } catch (err) {
- *   logger.error(`Failed to create todo: ${getErrorMessage(err)}`);
+ *   logger.error(`Failed to create todo: ${getErrorMessage(err as any)}`);
  * }
  */
 export function getErrorMessage(error: unknown): string {
-  return toErrorWithMessage(error).message;
+  return toErrorWithMessage(error as any).message;
 }
 
 /**
@@ -111,9 +111,9 @@ export class CLIError extends Error {
    * @param {string} [code='GENERAL_ERROR'] - An error code for categorization
    */
   constructor(message: string, code: string = 'GENERAL_ERROR') {
-    super(message);
-    this.code = code;
-    this.name = 'CLIError';
+    super(message as any);
+    this?.code = code;
+    this?.name = 'CLIError';
   }
 }
 
@@ -137,7 +137,7 @@ export class WalrusError extends CLIError {
    */
   constructor(message: string, code: string = 'WALRUS_ERROR') {
     super(message, code);
-    this.name = 'WalrusError';
+    this?.name = 'WalrusError';
   }
 
   /**

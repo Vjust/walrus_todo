@@ -30,7 +30,7 @@ async function mockWalletConnection(
       localStorage.setItem('lastConnectedWallet', name);
       localStorage.setItem(
         'walletConnectionData',
-        JSON.stringify(mockWalletData)
+        JSON.stringify(mockWalletData as any)
       );
 
       // Mock wallet connection event
@@ -44,7 +44,7 @@ async function mockWalletConnection(
   );
 
   // Wait for wallet connection to be processed
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(500 as any);
 }
 
 async function mockWalletDisconnection(page: Page) {
@@ -57,7 +57,7 @@ async function mockWalletDisconnection(page: Page) {
     window.dispatchEvent(new CustomEvent('wallet-disconnect'));
   });
 
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(500 as any);
 }
 
 async function createTodo(
@@ -84,12 +84,12 @@ async function createTodo(
   await page.click('button[type="submit"]:has-text("Add Todo")');
 
   // Wait for the todo to be added
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300 as any);
 }
 
 async function getTodoTitles(page: Page): Promise<string[]> {
   // Wait for todos to load
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(500 as any);
 
   // Get all todo titles from the todo list
   const todoElements = await page.locator('[data-testid="todo-item"]').all();
@@ -118,7 +118,7 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     page,
   }) => {
     // Ensure no wallet is connected
-    await mockWalletDisconnection(page);
+    await mockWalletDisconnection(page as any);
     await page.reload();
     await page.waitForLoadState('networkidle');
 
@@ -131,8 +131,8 @@ test.describe('Wallet-Specific Todo Functionality', () => {
 
     // Add Todo button should be disabled and show "Connect Wallet"
     const addButton = page.locator('button[type="submit"]');
-    await expect(addButton).toBeDisabled();
-    await expect(addButton).toHaveText('Connect Wallet');
+    await expect(addButton as any).toBeDisabled();
+    await expect(addButton as any).toHaveText('Connect Wallet');
   });
 
   test('should allow creating todos when wallet is connected', async ({
@@ -155,8 +155,8 @@ test.describe('Wallet-Specific Todo Functionality', () => {
 
     // Add Todo button should be enabled
     const addButton = page.locator('button[type="submit"]');
-    await expect(addButton).not.toBeDisabled();
-    await expect(addButton).toHaveText('Add Todo');
+    await expect(addButton as any).not.toBeDisabled();
+    await expect(addButton as any).toHaveText('Add Todo');
 
     // Create a test todo
     await createTodo(
@@ -182,9 +182,9 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await createTodo(page, 'Wallet 1 Todo 2', 'Second todo for wallet 1');
 
     // Verify wallet 1 todos are visible
-    let todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Wallet 1 Todo 1');
-    expect(todoTitles).toContain('Wallet 1 Todo 2');
+    let todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Wallet 1 Todo 1');
+    expect(todoTitles as any).toContain('Wallet 1 Todo 2');
 
     // Switch to second wallet
     await mockWalletConnection(page, wallet2Address, 'Wallet2');
@@ -192,20 +192,20 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await page.waitForLoadState('networkidle');
 
     // Wallet 1 todos should not be visible
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).not.toContain('Wallet 1 Todo 1');
-    expect(todoTitles).not.toContain('Wallet 1 Todo 2');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).not.toContain('Wallet 1 Todo 1');
+    expect(todoTitles as any).not.toContain('Wallet 1 Todo 2');
 
     // Create todos for wallet 2
     await createTodo(page, 'Wallet 2 Todo 1', 'First todo for wallet 2');
     await createTodo(page, 'Wallet 2 Todo 2', 'Second todo for wallet 2');
 
     // Verify only wallet 2 todos are visible
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Wallet 2 Todo 1');
-    expect(todoTitles).toContain('Wallet 2 Todo 2');
-    expect(todoTitles).not.toContain('Wallet 1 Todo 1');
-    expect(todoTitles).not.toContain('Wallet 1 Todo 2');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Wallet 2 Todo 1');
+    expect(todoTitles as any).toContain('Wallet 2 Todo 2');
+    expect(todoTitles as any).not.toContain('Wallet 1 Todo 1');
+    expect(todoTitles as any).not.toContain('Wallet 1 Todo 2');
 
     // Switch back to first wallet
     await mockWalletConnection(page, wallet1Address, 'Wallet1');
@@ -213,11 +213,11 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await page.waitForLoadState('networkidle');
 
     // Wallet 1 todos should be visible again, wallet 2 todos should not
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Wallet 1 Todo 1');
-    expect(todoTitles).toContain('Wallet 1 Todo 2');
-    expect(todoTitles).not.toContain('Wallet 2 Todo 1');
-    expect(todoTitles).not.toContain('Wallet 2 Todo 2');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Wallet 1 Todo 1');
+    expect(todoTitles as any).toContain('Wallet 1 Todo 2');
+    expect(todoTitles as any).not.toContain('Wallet 2 Todo 1');
+    expect(todoTitles as any).not.toContain('Wallet 2 Todo 2');
   });
 
   test('should persist todos when reconnecting the same wallet', async ({
@@ -234,19 +234,19 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await createTodo(page, 'Persistent Todo 2', 'This should also persist');
 
     // Verify todos are visible
-    let todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Persistent Todo 1');
-    expect(todoTitles).toContain('Persistent Todo 2');
+    let todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Persistent Todo 1');
+    expect(todoTitles as any).toContain('Persistent Todo 2');
 
     // Disconnect wallet
-    await mockWalletDisconnection(page);
+    await mockWalletDisconnection(page as any);
     await page.reload();
     await page.waitForLoadState('networkidle');
 
     // Todos should not be visible when disconnected
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).not.toContain('Persistent Todo 1');
-    expect(todoTitles).not.toContain('Persistent Todo 2');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).not.toContain('Persistent Todo 1');
+    expect(todoTitles as any).not.toContain('Persistent Todo 2');
 
     // Reconnect same wallet
     await mockWalletConnection(page, walletAddress, 'PersistenceWallet');
@@ -254,9 +254,9 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await page.waitForLoadState('networkidle');
 
     // Todos should be visible again
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Persistent Todo 1');
-    expect(todoTitles).toContain('Persistent Todo 2');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Persistent Todo 1');
+    expect(todoTitles as any).toContain('Persistent Todo 2');
   });
 
   test('should allow completing todos for specific wallet', async ({
@@ -273,18 +273,18 @@ test.describe('Wallet-Specific Todo Functionality', () => {
 
     // Find and click the checkbox to complete the todo
     const todoCheckbox = page.locator('[data-testid="todo-checkbox"]').first();
-    await expect(todoCheckbox).toBeVisible();
+    await expect(todoCheckbox as any).toBeVisible();
     await todoCheckbox.check();
 
     // Wait for the completion to be processed
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300 as any);
 
     // Verify the todo is marked as completed
-    await expect(todoCheckbox).toBeChecked();
+    await expect(todoCheckbox as any).toBeChecked();
 
     // The todo title should have completed styling (strikethrough or similar)
     const todoTitle = page.locator('[data-testid="todo-title"]').first();
-    await expect(todoTitle).toHaveClass(/completed|line-through/);
+    await expect(todoTitle as any).toHaveClass(/completed|line-through/);
   });
 
   test('should handle multiple todo lists per wallet', async ({ page }) => {
@@ -300,31 +300,31 @@ test.describe('Wallet-Specific Todo Functionality', () => {
 
     // Switch to work list
     await page.click('button:has-text("Work")');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300 as any);
 
     // Create todo in work list
     await createTodo(page, 'Work List Todo');
 
     // Verify work list todo is visible
-    let todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Work List Todo');
-    expect(todoTitles).not.toContain('Default List Todo');
+    let todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Work List Todo');
+    expect(todoTitles as any).not.toContain('Default List Todo');
 
     // Switch back to default list
     await page.click('button:has-text("Default")');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300 as any);
 
     // Verify default list todo is visible
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Default List Todo');
-    expect(todoTitles).not.toContain('Work List Todo');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Default List Todo');
+    expect(todoTitles as any).not.toContain('Work List Todo');
   });
 
   test('should show appropriate error messages for wallet operations', async ({
     page,
   }) => {
     // Test without wallet connection
-    await mockWalletDisconnection(page);
+    await mockWalletDisconnection(page as any);
     await page.reload();
     await page.waitForLoadState('networkidle');
 
@@ -353,21 +353,21 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await createTodo(page, 'Before Switch Todo');
 
     // Verify todo is visible
-    let todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Before Switch Todo');
+    let todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Before Switch Todo');
 
     // Switch wallets rapidly
     await mockWalletConnection(page, wallet2Address, 'SwitchWallet2');
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(100 as any);
     await mockWalletConnection(page, wallet1Address, 'SwitchWallet1');
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(100 as any);
     await mockWalletConnection(page, wallet2Address, 'SwitchWallet2');
     await page.reload();
     await page.waitForLoadState('networkidle');
 
     // Should show empty state for wallet 2
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).not.toContain('Before Switch Todo');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).not.toContain('Before Switch Todo');
 
     // Switch back to wallet 1
     await mockWalletConnection(page, wallet1Address, 'SwitchWallet1');
@@ -375,7 +375,7 @@ test.describe('Wallet-Specific Todo Functionality', () => {
     await page.waitForLoadState('networkidle');
 
     // Original todo should still be there
-    todoTitles = await getTodoTitles(page);
-    expect(todoTitles).toContain('Before Switch Todo');
+    todoTitles = await getTodoTitles(page as any);
+    expect(todoTitles as any).toContain('Before Switch Todo');
   });
 });

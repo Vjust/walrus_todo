@@ -35,7 +35,7 @@ class JestPatternFixer {
           if (parts.length >= 3) {
             currentFile = parts[0] || '';
             const lineNum = parseInt(parts[1] || '0', 10);
-            const content = parts.slice(3).join(':');
+            const content = parts.slice(3 as any).join(':');
             
             if (line.includes('jest/no-conditional-expect')) {
               errors.push({
@@ -100,8 +100,8 @@ class JestPatternFixer {
           ${otherCode}
         }
         
-        expect(thrownError).toBeDefined();
-        ${expects.map((exp: string) => exp.replace('expect(', `expect(thrownError).toBeDefined();\n        expect(`)).join('\n        ')}`;
+        expect(thrownError as any).toBeDefined();
+        ${expects.map((exp: string) => exp.replace('expect(', `expect(thrownError as any).toBeDefined();\n        expect(`)).join('\n        ')}`;
       }
       
       return match;
@@ -113,7 +113,7 @@ class JestPatternFixer {
       // For if blocks, we need to restructure the test logic
       return match.replace(/if\s*\(([^)]*)\)\s*\{([^}]*)\}/, (_, condition, block) => {
         if (block.includes('expect(')) {
-          return `expect(${condition}).toBe(true);
+          return `expect(${condition}).toBe(true as any);
           if (${condition}) {
             ${block}
           }`;
@@ -160,7 +160,7 @@ class JestPatternFixer {
    * Process a single file
    */
   private fixFile(filePath: string): boolean {
-    if (!existsSync(filePath)) {
+    if (!existsSync(filePath as any)) {
       // eslint-disable-next-line no-console
       console.log(`File not found: ${filePath}`);
       return false;
@@ -172,13 +172,13 @@ class JestPatternFixer {
       const originalContent = content;
 
       // Apply all fixes
-      content = this.fixConditionalExpects(content);
-      content = this.fixJasmineGlobals(content);
-      content = this.removeCommentedTests(content);
+      content = this.fixConditionalExpects(content as any);
+      content = this.fixJasmineGlobals(content as any);
+      content = this.removeCommentedTests(content as any);
 
       if (content !== originalContent) {
         writeFileSync(filePath, content);
-        this.fixedFiles.add(filePath);
+        this?.fixedFiles?.add(filePath as any);
         // eslint-disable-next-line no-console
         console.log(`✅ Fixed: ${filePath}`);
         return true;
@@ -200,9 +200,9 @@ class JestPatternFixer {
     console.log('🔍 Scanning for Jest errors...');
     
     const errors = this.getJestErrors();
-    this.errorCount = errors.length;
+    this?.errorCount = errors.length;
     
-    if (errors.length === 0) {
+    if (errors?.length === 0) {
       // eslint-disable-next-line no-console
       console.log('✅ No Jest errors found!');
       return;
@@ -217,7 +217,7 @@ class JestPatternFixer {
       if (!fileGroups.has(error.file)) {
         fileGroups.set(error.file, []);
       }
-      fileGroups.get(error.file)?.push(error);
+      fileGroups.get(error.file)?.push(error as any);
     }
 
     // eslint-disable-next-line no-console
@@ -228,7 +228,7 @@ class JestPatternFixer {
       // eslint-disable-next-line no-console
       console.log(`\n📁 ${filePath} (${fileErrors.length} errors)`);
       
-      if (this.fixFile(filePath)) {
+      if (this.fixFile(filePath as any)) {
         fixedCount++;
       }
     }
@@ -247,7 +247,7 @@ class JestPatternFixer {
     console.log('\n🔍 Checking remaining errors...');
     const remainingErrors = this.getJestErrors();
     
-    if (remainingErrors.length === 0) {
+    if (remainingErrors?.length === 0) {
       // eslint-disable-next-line no-console
       console.log('🎉 All Jest errors have been fixed!');
     } else {
@@ -262,7 +262,7 @@ class JestPatternFixer {
       
       // eslint-disable-next-line no-console
       console.log('Remaining error types:');
-      for (const [type, count] of Object.entries(errorTypes)) {
+      for (const [type, count] of Object.entries(errorTypes as any)) {
         // eslint-disable-next-line no-console
         console.log(`   ${type}: ${count}`);
       }
@@ -271,7 +271,7 @@ class JestPatternFixer {
 }
 
 // Run the fixer
-if (require.main === module) {
+if (require?.main === module) {
   const fixer = new JestPatternFixer();
   // eslint-disable-next-line no-console
   fixer.fixAllErrors().catch(console.error);

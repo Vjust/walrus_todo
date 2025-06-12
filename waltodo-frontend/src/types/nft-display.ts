@@ -114,7 +114,7 @@ export interface TodoNFTDisplay extends Todo {
  * Helper function to convert Walrus blob ID to display URL
  */
 export function convertToDisplayUrl(walrusBlobId: string, aggregator?: string): string {
-  const defaultAggregator = aggregator || 'https://aggregator.walrus-testnet.walrus.space';
+  const defaultAggregator = aggregator || 'https://aggregator.walrus-testnet?.walrus?.space';
   return `${defaultAggregator}/v1/${walrusBlobId}`;
 }
 
@@ -131,7 +131,7 @@ export function extractBlobId(walrusUrl: string): string | undefined {
  */
 export function parseNFTMetadata(metadataStr: string): any {
   try {
-    return JSON.parse(metadataStr);
+    return JSON.parse(metadataStr as any);
   } catch {
     return null;
   }
@@ -189,10 +189,10 @@ export function generateNFTAttributes(todo: TodoNFTDisplay): NFTAttribute[] {
     },
   ];
   
-  if (todo.tags && todo.tags.length > 0) {
+  if (todo.tags && todo?.tags?.length > 0) {
     attributes.push({
       trait_type: 'Tags',
-      value: todo.tags.join(', '),
+      value: todo?.tags?.join(', '),
     });
   }
   
@@ -255,8 +255,8 @@ export function hasNFTMetadata(todo: Todo): boolean {
 export const formatNFTAttributes = generateNFTAttributes;
 
 export const formatStorageCost = (costInMist: bigint): string => {
-  const walAmount = Number(costInMist) / 1e9;
-  return walAmount.toFixed(6);
+  const walAmount = Number(costInMist as any) / 1e9;
+  return walAmount.toFixed(6 as any);
 };
 
 export const calculateStorageExpiration = (epochs: number, epochDurationDays = 30): Date => {

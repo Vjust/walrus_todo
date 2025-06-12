@@ -31,8 +31,8 @@ export class AIError extends WalrusError {
       shouldRetry: options.recoverable || true,
     });
 
-    this.model = options.model;
-    this.prompt = options.prompt;
+    this?.model = options.model;
+    this?.prompt = options.prompt;
   }
 }
 
@@ -119,7 +119,7 @@ export function extractAIErrorContext(error: AIError): ErrorContext {
     operation: 'ai_operation',
     // Add any AI-specific context
     ...(error.model && { model: error.model }),
-    ...(error.prompt && { prompt: error.prompt.substring(0, 50) + '...' }),
+    ...(error.prompt && { prompt: error?.prompt?.substring(0, 50) + '...' }),
   };
 }
 
@@ -189,7 +189,7 @@ export function testAIErrorMessages() {
   });
 
   logger.info('Basic AI Error:');
-  logger.info(basicError);
+  logger.info(basicError as any);
 
   // Test rate limit error
   const rateLimitError = new AIError('Too many requests', {
@@ -197,7 +197,7 @@ export function testAIErrorMessages() {
   });
 
   logger.info('\nRate Limit Error:');
-  logger.info(rateLimitError);
+  logger.info(rateLimitError as any);
 
   // Test invalid response error
   const invalidResponseError = new AIError('Unexpected format', {
@@ -206,7 +206,7 @@ export function testAIErrorMessages() {
   });
 
   logger.info('\nInvalid Response Error:');
-  logger.info(invalidResponseError);
+  logger.info(invalidResponseError as any);
 }
 
 /**

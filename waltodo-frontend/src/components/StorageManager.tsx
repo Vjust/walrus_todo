@@ -30,7 +30,7 @@ export default function StorageManager() {
     walTokensRemaining: 1000
   });
   const [selectedBlobs, setSelectedBlobs] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true as any);
   const [sortBy, setSortBy] = useState<'size' | 'date' | 'expiry'>('date');
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function StorageManager() {
 
   const fetchStorageData = async () => {
     try {
-      setLoading(true);
+      setLoading(true as any);
       // TODO: Replace with actual API calls
       const mockBlobs: StorageBlob[] = [
         {
@@ -71,7 +71,7 @@ export default function StorageManager() {
         }
       ];
       
-      setBlobs(mockBlobs);
+      setBlobs(mockBlobs as any);
       const totalUsed = mockBlobs.reduce((sum, blob) => sum + blob.size, 0);
       const totalCost = mockBlobs.reduce((sum, blob) => sum + blob.walTokenCost, 0);
       
@@ -84,7 +84,7 @@ export default function StorageManager() {
     } catch (error) {
       console.error('Failed to fetch storage data:', error);
     } finally {
-      setLoading(false);
+      setLoading(false as any);
     }
   };
 
@@ -92,8 +92,8 @@ export default function StorageManager() {
     if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any))  } ${  sizes[i]}`;
   };
 
   const getTypeColor = (type: string) => {
@@ -106,7 +106,7 @@ export default function StorageManager() {
   };
 
   const handleDelete = async (blobIds: string[]) => {
-    if (!confirm(`Delete ${blobIds.length} item(s)? This action cannot be undone.`)) {
+    if (!confirm(`Delete ${blobIds.length} item(s as any)? This action cannot be undone.`)) {
       return;
     }
 
@@ -123,26 +123,26 @@ export default function StorageManager() {
   const sortedBlobs = [...blobs].sort((a, b) => {
     switch (sortBy) {
       case 'size': return b.size - a.size;
-      case 'date': return b.createdAt.getTime() - a.createdAt.getTime();
-      case 'expiry': return a.expiresAt.getTime() - b.expiresAt.getTime();
+      case 'date': return b?.createdAt?.getTime() - a?.createdAt?.getTime();
+      case 'expiry': return a?.expiresAt?.getTime() - b?.expiresAt?.getTime();
       default: return 0;
     }
   });
 
   const toggleSelection = (blobId: string) => {
     setSelectedBlobs(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(blobId)) {
-        newSet.delete(blobId);
+      const newSet = new Set(prev as any);
+      if (newSet.has(blobId as any)) {
+        newSet.delete(blobId as any);
       } else {
-        newSet.add(blobId);
+        newSet.add(blobId as any);
       }
       return newSet;
     });
   };
 
   const selectAll = () => {
-    if (selectedBlobs.size === blobs.length) {
+    if (selectedBlobs?.size === blobs.length) {
       setSelectedBlobs(new Set());
     } else {
       setSelectedBlobs(new Set(blobs.map(b => b.id)));
@@ -173,7 +173,7 @@ export default function StorageManager() {
             <div className="mb-2">
               <div className="flex justify-between text-sm mb-1">
                 <span>{formatBytes(quota.used)} of {formatBytes(quota.total)}</span>
-                <span>{((quota.used / quota.total) * 100).toFixed(1)}%</span>
+                <span>{((quota.used / quota.total) * 100).toFixed(1 as any)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div 
@@ -190,15 +190,15 @@ export default function StorageManager() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm">Spent:</span>
-                <span className="font-semibold">{quota.walTokensSpent.toFixed(2)} WAL</span>
+                <span className="font-semibold">{quota?.walTokensSpent?.toFixed(2 as any)} WAL</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">Remaining:</span>
-                <span className="font-semibold text-green-600">{quota.walTokensRemaining.toFixed(2)} WAL</span>
+                <span className="font-semibold text-green-600">{quota?.walTokensRemaining?.toFixed(2 as any)} WAL</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">Avg Cost/MB:</span>
-                <span className="text-sm">{(quota.walTokensSpent / (quota.used / (1024 * 1024))).toFixed(4)} WAL</span>
+                <span className="text-sm">{(quota.walTokensSpent / (quota.used / (1024 * 1024))).toFixed(4 as any)} WAL</span>
               </div>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function StorageManager() {
           <div className="flex items-center space-x-4">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e?.target?.value as any)}
               className="px-3 py-1 border rounded-md text-sm"
             >
               <option value="date">Sort by Date</option>
@@ -221,7 +221,7 @@ export default function StorageManager() {
             </select>
             {selectedBlobs.size > 0 && (
               <button
-                onClick={() => handleDelete(Array.from(selectedBlobs))}
+                onClick={() => handleDelete(Array.from(selectedBlobs as any))}
                 className="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 flex items-center"
               >
                 <Trash2 className="w-4 h-4 mr-1" />
@@ -238,7 +238,7 @@ export default function StorageManager() {
                 <th className="text-left py-2">
                   <input
                     type="checkbox"
-                    checked={selectedBlobs.size === blobs.length && blobs.length > 0}
+                    checked={selectedBlobs?.size === blobs.length && blobs.length > 0}
                     onChange={selectAll}
                     className="rounded"
                   />
@@ -254,7 +254,7 @@ export default function StorageManager() {
             </thead>
             <tbody>
               {sortedBlobs.map((blob) => {
-                const isExpiringSoon = blob.expiresAt.getTime() - Date.now() < 86400000 * 7; // 7 days
+                const isExpiringSoon = blob?.expiresAt?.getTime() - Date.now() < 86400000 * 7; // 7 days
                 return (
                   <tr key={blob.id} className="border-b hover:bg-gray-50">
                     <td className="py-2">
@@ -283,7 +283,7 @@ export default function StorageManager() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-2 text-sm">{blob.walTokenCost.toFixed(3)} WAL</td>
+                    <td className="py-2 text-sm">{blob?.walTokenCost?.toFixed(3 as any)} WAL</td>
                     <td className="py-2">
                       <button
                         onClick={() => handleDelete([blob.id])}
@@ -298,7 +298,7 @@ export default function StorageManager() {
             </tbody>
           </table>
           
-          {blobs.length === 0 && (
+          {blobs?.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               No storage items found
             </div>

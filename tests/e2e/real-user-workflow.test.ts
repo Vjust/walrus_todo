@@ -15,8 +15,8 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     const createOutput = execSync(createCommand, { encoding: 'utf8' });
     // console.log('TODO created successfully:'); // Removed console statement
-    // console.log(createOutput); // Removed console statement
-    expect(createOutput).toContain('Todo added successfully');
+    // console.log(createOutput as any); // Removed console statement
+    expect(createOutput as any).toContain('Todo added successfully');
 
     // Step 2: User adds tasks for fixing waltodo
     // console.log('\n=== Step 2: Adding tasks for fixing waltodo ==='); // Removed console statement
@@ -38,7 +38,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
         execSync(addTaskCommand, { encoding: 'utf8' });
         // console.log(`Task added: ${task}`); // Removed console statement
       } catch (error: unknown) {
-        // console.error(`Failed to add task "${task}":`, error instanceof Error ? error.message : String(error)); // Removed console statement
+        // console.error(`Failed to add task "${task}":`, error instanceof Error ? error.message : String(error as any)); // Removed console statement
         // Continue with other tasks even if one fails
       }
     }
@@ -51,8 +51,8 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     const listOutput = execSync(listCommand, { encoding: 'utf8' });
     // console.log('Current TODOs:'); // Removed console statement
-    // console.log(listOutput); // Removed console statement
-    expect(listOutput).toContain(todoTitle);
+    // console.log(listOutput as any); // Removed console statement
+    expect(listOutput as any).toContain(todoTitle as any);
 
     // Step 4: User stores the todo on the testnet blockchain
     // console.log('\n=== Step 4: Storing TODO on Testnet Blockchain ==='); // Removed console statement
@@ -65,7 +65,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     const storeOutput = execSync(storeCommand, { encoding: 'utf8' });
     // console.log('Store output:'); // Removed console statement
-    // console.log(storeOutput); // Removed console statement
+    // console.log(storeOutput as any); // Removed console statement
 
     // Extract blob ID and Sui object ID from output
     const blobIdMatch = storeOutput.match(/blob.*?([a-zA-Z0-9]+)/i);
@@ -81,9 +81,9 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       // console.log(`Sui Object ID: ${suiObjectId}`); // Removed console statement
     }
 
-    expect(storeOutput).toContain('successfully stored');
-    expect(blobId).toBeTruthy();
-    expect(suiObjectId).toBeTruthy();
+    expect(storeOutput as any).toContain('successfully stored');
+    expect(blobId as any).toBeTruthy();
+    expect(suiObjectId as any).toBeTruthy();
 
     // Step 5: User verifies on Walrus scanner
     let fetchSuccessful = false;
@@ -91,7 +91,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     
     if (blobId) {
       // console.log('\n=== Step 5: Verifying on Walrus Scanner ==='); // Removed console statement
-      // Walrus URL: `https://testnet.viewblock.io/sui/blob/${blobId}`
+      // Walrus URL: `https://testnet?.viewblock?.io/sui/blob/${blobId}`
       // console.log('User would open this URL in browser to verify storage'); // Removed console statement
 
       // Simulate checking if the blob exists
@@ -103,7 +103,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
         // console.log('Blob verification successful'); // Removed console statement
         fetchSuccessful = true;
       } catch (error: unknown) {
-        // console.warn('Could not fetch blob from Walrus:', error instanceof Error ? error.message : String(error)); // Removed console statement
+        // console.warn('Could not fetch blob from Walrus:', error instanceof Error ? error.message : String(error as any)); // Removed console statement
       }
     }
 
@@ -114,7 +114,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     // Additional assertion: if successful, output should contain title
     if (fetchSuccessful) {
       // eslint-disable-next-line jest/no-conditional-expect
-      expect(fetchOutput).toContain(todoTitle);
+      expect(fetchOutput as any).toContain(todoTitle as any);
     }
 
     // Step 6: User verifies on Sui scanner
@@ -123,7 +123,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     
     if (suiObjectId) {
       // console.log('\n=== Step 6: Verifying on Sui Scanner ==='); // Removed console statement
-      // Sui URL: `https://testnet.explorer.sui.io/object/${suiObjectId}`
+      // Sui URL: `https://testnet?.explorer?.sui.io/object/${suiObjectId}`
       // console.log('User would open this URL in browser to verify NFT creation'); // Removed console statement
 
       // Simulate checking if the object exists
@@ -135,7 +135,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
         // console.log('Sui object verification successful'); // Removed console statement
         suiCheckSuccessful = true;
       } catch (error: unknown) {
-        // console.warn('Could not check Sui object:', error instanceof Error ? error.message : String(error)); // Removed console statement
+        // console.warn('Could not check Sui object:', error instanceof Error ? error.message : String(error as any)); // Removed console statement
       }
     }
 
@@ -146,7 +146,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     // Validate check output based on success
     if (suiCheckSuccessful) {
       // eslint-disable-next-line jest/no-conditional-expect
-      expect(checkOutput).toContain('NFT');
+      expect(checkOutput as any).toContain('NFT');
     }
 
     // Step 7: Summary for the user
@@ -156,11 +156,11 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     // console.log('✓ Stored on testnet blockchain'); // Removed console statement
     if (blobId) {
       // console.log(`✓ Walrus Blob ID: ${blobId}`); // Removed console statement
-      // console.log(`  View at: https://testnet.viewblock.io/sui/blob/${blobId}`); // Removed console statement
+      // console.log(`  View at: https://testnet?.viewblock?.io/sui/blob/${blobId}`); // Removed console statement
     }
     if (suiObjectId) {
       // console.log(`✓ Sui Object ID: ${suiObjectId}`); // Removed console statement
-      // console.log(`  View at: https://testnet.explorer.sui.io/object/${suiObjectId}`); // Removed console statement
+      // console.log(`  View at: https://testnet?.explorer?.sui.io/object/${suiObjectId}`); // Removed console statement
     }
     // console.log('\nThe todo is now permanently stored on the blockchain and can be viewed on both scanners!'); // Removed console statement
   }, 60000); // 60 second timeout for blockchain operations
@@ -175,7 +175,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     const retrieveOutput = execSync(retrieveCommand, { encoding: 'utf8' });
     // console.log('Retrieved TODOs from blockchain:'); // Removed console statement
-    // console.log(retrieveOutput); // Removed console statement
-    expect(retrieveOutput).toContain('todo for aj');
+    // console.log(retrieveOutput as any); // Removed console statement
+    expect(retrieveOutput as any).toContain('todo for aj');
   });
 });

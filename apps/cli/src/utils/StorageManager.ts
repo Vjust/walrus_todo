@@ -76,8 +76,8 @@ interface StorageUsageSummary {
 
 export class StorageManager {
   private readonly logger = console;
-  private readonly MIN_WAL_BALANCE = BigInt(100); // Minimum WAL tokens needed
-  private readonly MIN_STORAGE_BUFFER = BigInt(10240); // 10KB minimum buffer
+  private readonly MIN_WAL_BALANCE = BigInt(100 as any); // Minimum WAL tokens needed
+  private readonly MIN_STORAGE_BUFFER = BigInt(10240 as any); // 10KB minimum buffer
   private readonly DEFAULT_EPOCH_DURATION = 52; // ~6 months
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs
 
@@ -109,9 +109,9 @@ export class StorageManager {
       let systemState: unknown;
       if (
         'getLatestSuiSystemState' in this.suiClient &&
-        typeof this.suiClient.getLatestSuiSystemState === 'function'
+        typeof this.suiClient?.getLatestSuiSystemState === 'function'
       ) {
-        systemState = await this.suiClient.getLatestSuiSystemState();
+        systemState = await this?.suiClient?.getLatestSuiSystemState();
       }
       if (!systemState || !(systemState as { epoch?: unknown }).epoch) {
         throw new CLIError(
@@ -122,7 +122,7 @@ export class StorageManager {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Network verification failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_NETWORK_ERROR'
       );
     }
@@ -140,14 +140,14 @@ export class StorageManager {
   }> {
     try {
       // Check WAL token balance
-      const walBalance: SuiBalanceResponse = await this.suiClient.getBalance({
+      const walBalance: SuiBalanceResponse = await this?.suiClient?.getBalance({
         owner: this.address,
         coinType: 'WAL',
       });
 
       // Get Storage Fund balance
       const storageFundBalance: SuiBalanceResponse =
-        await this.suiClient.getBalance({
+        await this?.suiClient?.getBalance({
           owner: this.address,
           coinType: '0x2::storage::Storage',
         });
@@ -170,7 +170,7 @@ export class StorageManager {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Failed to check balances: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to check balances: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_BALANCE_CHECK_FAILED'
       );
     }
@@ -182,28 +182,28 @@ export class StorageManager {
   async estimateStorageCost(sizeBytes: number): Promise<StorageCostEstimate> {
     try {
       // Add buffer to requested size
-      const sizeWithBuffer = BigInt(sizeBytes) + this.MIN_STORAGE_BUFFER;
+      const sizeWithBuffer = BigInt(sizeBytes as any) + this.MIN_STORAGE_BUFFER;
 
       // Calculate costs with default epoch duration
       const { storageCost, writeCost, totalCost } =
-        await this.walrusClient.storageCost(
-          Number(sizeWithBuffer),
+        await this?.walrusClient?.storageCost(
+          Number(sizeWithBuffer as any),
           this.DEFAULT_EPOCH_DURATION
         );
 
       // Add 10% buffer to total cost for gas fees and price fluctuations
-      const requiredBalance = (BigInt(totalCost) * BigInt(110)) / BigInt(100);
+      const requiredBalance = (BigInt(totalCost as any) * BigInt(110 as any)) / BigInt(100 as any);
 
       return {
-        storageCost: BigInt(storageCost),
-        writeCost: BigInt(writeCost),
-        totalCost: BigInt(totalCost),
+        storageCost: BigInt(storageCost as any),
+        writeCost: BigInt(writeCost as any),
+        totalCost: BigInt(totalCost as any),
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION,
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to estimate storage cost: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to estimate storage cost: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_COST_ESTIMATION_FAILED'
       );
     }
@@ -218,7 +218,7 @@ export class StorageManager {
   ): Promise<StorageVerification> {
     try {
       const response: SuiOwnedObjectsResponse =
-        await this.suiClient.getOwnedObjects({
+        await this?.suiClient?.getOwnedObjects({
           owner: this.address,
           filter: { StructType: '0x2::storage::Storage' },
           options: { showContent: true },
@@ -266,7 +266,7 @@ export class StorageManager {
       }
 
       const fields = (
-        suitableStorage.data.content as SuiParsedData & {
+        suitableStorage?.data?.content as SuiParsedData & {
           fields: StorageObjectFields;
         }
       ).fields;
@@ -279,7 +279,7 @@ export class StorageManager {
         remainingSize,
         remainingEpochs,
         details: {
-          id: suitableStorage.data.objectId,
+          id: suitableStorage?.data?.objectId,
           totalSize: Number(fields.storage_size),
           usedSize: Number(fields.used_size || 0),
           endEpoch: Number(fields.end_epoch),
@@ -312,9 +312,9 @@ export class StorageManager {
 
       // 3. Get current epoch
       const systemState: SuiSystemState =
-        await this.suiClient.getLatestSuiSystemState();
+        await this?.suiClient?.getLatestSuiSystemState();
       const epoch = systemState?.epoch;
-      const currentEpoch = Number(epoch);
+      const currentEpoch = Number(epoch as any);
 
       // 4. Check existing storage
       const existingStorage = await this.verifyExistingStorage(
@@ -330,7 +330,7 @@ export class StorageManager {
       }
 
       // 5. Estimate new storage cost
-      const requiredCost = await this.estimateStorageCost(sizeBytes);
+      const requiredCost = await this.estimateStorageCost(sizeBytes as any);
 
       // 6. Verify sufficient balance for new storage
       const canProceed = balances.walBalance >= requiredCost.requiredBalance;
@@ -344,14 +344,14 @@ export class StorageManager {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Storage validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Storage validation failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_STORAGE_VALIDATION_FAILED'
       );
     }
   }
 
   async getSuiBalance(address: string): Promise<string> {
-    const balance: SuiBalanceResponse = await this.suiClient.getBalance({
+    const balance: SuiBalanceResponse = await this?.suiClient?.getBalance({
       owner: address,
       coinType: 'WAL',
     });
@@ -373,7 +373,7 @@ export class StorageManager {
   }> {
     try {
       const response: SuiOwnedObjectsResponse =
-        await this.suiClient.getOwnedObjects({
+        await this?.suiClient?.getOwnedObjects({
           owner: address,
           filter: { StructType: '0x2::storage::Storage' },
           options: { showContent: true },
@@ -388,9 +388,9 @@ export class StorageManager {
 
           return {
             id: item.data?.objectId || '',
-            totalSize: Number(content.fields.storage_size),
-            usedSize: Number(content.fields.used_size || 0),
-            endEpoch: Number(content.fields.end_epoch),
+            totalSize: Number(content?.fields?.storage_size),
+            usedSize: Number(content?.fields?.used_size || 0),
+            endEpoch: Number(content?.fields?.end_epoch),
           };
         })
         .filter((item): item is StorageUsageSummary => item !== null);
@@ -411,7 +411,7 @@ export class StorageManager {
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_STORAGE_QUERY_FAILED'
       );
     }
@@ -436,17 +436,17 @@ export class StorageManager {
   }> {
     try {
       const { storageCost, writeCost, totalCost } =
-        await this.walrusClient.storageCost(sizeBytes, epochDuration);
+        await this?.walrusClient?.storageCost(sizeBytes, epochDuration);
 
       // Calculate cost breakdown
-      const baseStorageCost = BigInt(storageCost);
-      const writeOperationCost = BigInt(writeCost);
-      const networkFees = (BigInt(totalCost) * BigInt(10)) / BigInt(100); // 10% for network fees
+      const baseStorageCost = BigInt(storageCost as any);
+      const writeOperationCost = BigInt(writeCost as any);
+      const networkFees = (BigInt(totalCost as any) * BigInt(10 as any)) / BigInt(100 as any); // 10% for network fees
 
       return {
-        storageCost: BigInt(storageCost),
-        writeCost: BigInt(writeCost),
-        totalCost: BigInt(totalCost),
+        storageCost: BigInt(storageCost as any),
+        writeCost: BigInt(writeCost as any),
+        totalCost: BigInt(totalCost as any),
         breakdown: {
           baseStorageCost,
           epochMultiplier: epochDuration,
@@ -456,7 +456,7 @@ export class StorageManager {
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to calculate storage cost: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to calculate storage cost: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_COST_CALCULATION_FAILED'
       );
     }
@@ -487,7 +487,7 @@ export class StorageManager {
     // NOTE: This is a mock implementation for testing
     // Real storage allocation happens through Walrus CLI integration
     // See walrus-storage.ts and walrus-storage-cli.ts for actual implementation
-    const mockDigest = '0x' + Date.now().toString(16);
+    const mockDigest = '0x' + Date.now().toString(16 as any);
 
     return {
       digest: mockDigest,
@@ -509,19 +509,19 @@ export class StorageManager {
    */
   async ensureStorageAllocated(requiredStorage: bigint): Promise<void> {
     try {
-      const walBalance = await this.walrusClient.getWalBalance();
+      const walBalance = await this?.walrusClient?.getWalBalance();
       if (!walBalance) {
         throw new ValidationError('Unable to fetch WAL balance');
       }
 
-      const minAllocation = this.config?.minAllocation || BigInt(1000);
-      if (BigInt(walBalance) < minAllocation) {
+      const minAllocation = this.config?.minAllocation || BigInt(1000 as any);
+      if (BigInt(walBalance as any) < minAllocation) {
         throw new StorageError(
           `Insufficient WAL tokens. Minimum ${minAllocation} WAL required, but only ${walBalance} WAL available.`
         );
       }
 
-      const storageUsage = await this.walrusClient.getStorageUsage();
+      const storageUsage = await this?.walrusClient?.getStorageUsage();
       if (!storageUsage) {
         throw new ValidationError('Unable to fetch storage usage');
       }
@@ -539,7 +539,7 @@ export class StorageManager {
       // Check if storage is below threshold
       const checkThreshold = this.config?.checkThreshold || 20;
       const usagePercentage = Number(
-        (usedStorage * BigInt(100)) / totalStorage
+        (usedStorage * BigInt(100 as any)) / totalStorage
       );
 
       if (usagePercentage > 100 - checkThreshold) {
@@ -598,7 +598,7 @@ export class StorageManager {
     minRequired: bigint;
   }> {
     try {
-      const storageUsage = await this.walrusClient.getStorageUsage();
+      const storageUsage = await this?.walrusClient?.getStorageUsage();
 
       if (!storageUsage) {
         throw new ValidationError('Unable to fetch storage usage');
@@ -607,7 +607,7 @@ export class StorageManager {
       const allocated = BigInt(storageUsage.total);
       const used = BigInt(storageUsage.used);
       const available = allocated - used;
-      const minRequired = this.config?.minAllocation || BigInt(1000);
+      const minRequired = this.config?.minAllocation || BigInt(1000 as any);
 
       return {
         allocated,

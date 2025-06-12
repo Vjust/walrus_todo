@@ -73,9 +73,9 @@ export class SchemaValidator {
     }
 
     // Check if additional properties are allowed
-    if (schema.additionalProperties === false) {
-      for (const key of Object.keys(dataObj)) {
-        if (!schema.properties[key]) {
+    if (schema?.additionalProperties === false) {
+      for (const key of Object.keys(dataObj as any)) {
+        if (!schema?.properties?.[key]) {
           throw new CLIError(
             `Unknown property: ${key}`,
             'SCHEMA_VALIDATION_ERROR'
@@ -124,12 +124,12 @@ export class SchemaValidator {
     // String validations
     if (
       value !== null &&
-      (schema.type === 'string' ||
-        (Array.isArray(schema.type) && schema.type.includes('string')))
+      (schema?.type === 'string' ||
+        (Array.isArray(schema.type) && schema?.type?.includes('string')))
     ) {
       if (typeof value === 'string') {
         // Check pattern
-        if (schema.pattern && !schema.pattern.test(value)) {
+        if (schema.pattern && !schema?.pattern?.test(value as any)) {
           throw new CLIError(
             schema.errorMessage || `Invalid format for ${path}`,
             schema.errorCode || 'SCHEMA_PATTERN_ERROR'
@@ -167,8 +167,8 @@ export class SchemaValidator {
 
     // Number validations
     if (
-      schema.type === 'number' ||
-      (Array.isArray(schema.type) && schema.type.includes('number'))
+      schema?.type === 'number' ||
+      (Array.isArray(schema.type) && schema?.type?.includes('number'))
     ) {
       if (typeof value === 'number') {
         // Check range
@@ -189,20 +189,20 @@ export class SchemaValidator {
     }
 
     // Enum validation
-    if (schema.enum && !schema.enum.includes(value)) {
+    if (schema.enum && !schema?.enum?.includes(value as any)) {
       throw new CLIError(
         schema.errorMessage ||
-          `Invalid value for ${path}: must be one of ${schema.enum.join(', ')}`,
+          `Invalid value for ${path}: must be one of ${schema?.enum?.join(', ')}`,
         schema.errorCode || 'SCHEMA_ENUM_ERROR'
       );
     }
 
     // Array validation
     if (
-      schema.type === 'array' ||
-      (Array.isArray(schema.type) && schema.type.includes('array'))
+      schema?.type === 'array' ||
+      (Array.isArray(schema.type) && schema?.type?.includes('array'))
     ) {
-      if (Array.isArray(value)) {
+      if (Array.isArray(value as any)) {
         // Check items
         if (schema.items) {
           for (let i = 0; i < value.length; i++) {
@@ -224,13 +224,13 @@ export class SchemaValidator {
 
     // Object validation
     if (
-      schema.type === 'object' ||
-      (Array.isArray(schema.type) && schema.type.includes('object'))
+      schema?.type === 'object' ||
+      (Array.isArray(schema.type) && schema?.type?.includes('object'))
     ) {
       if (
         typeof value === 'object' &&
         value !== null &&
-        !Array.isArray(value)
+        !Array.isArray(value as any)
       ) {
         // Check properties
         if (schema.properties) {
@@ -254,10 +254,10 @@ export class SchemaValidator {
         }
 
         // Check additional properties
-        if (schema.additionalProperties === false) {
+        if (schema?.additionalProperties === false) {
           const objValue = value as Record<string, unknown>;
-          for (const key of Object.keys(objValue)) {
-            if (!schema.properties || !schema.properties[key]) {
+          for (const key of Object.keys(objValue as any)) {
+            if (!schema.properties || !schema?.properties?.[key]) {
               throw new CLIError(
                 `Unknown property: ${path}.${key}`,
                 'SCHEMA_ADDITIONAL_PROPERTIES_ERROR'
@@ -269,7 +269,7 @@ export class SchemaValidator {
     }
 
     // Custom validation
-    if (schema.validate && !schema.validate(value)) {
+    if (schema.validate && !schema.validate(value as any)) {
       throw new CLIError(
         schema.errorMessage || `Invalid value for ${path}`,
         schema.errorCode || 'SCHEMA_VALIDATION_ERROR'
@@ -302,12 +302,12 @@ export class SchemaValidator {
           if (
             typeof value === 'object' &&
             value !== null &&
-            !Array.isArray(value)
+            !Array.isArray(value as any)
           )
             return true;
           break;
         case 'array':
-          if (Array.isArray(value)) return true;
+          if (Array.isArray(value as any)) return true;
           break;
         case 'null':
           if (value === null) return true;
@@ -328,42 +328,42 @@ export class SchemaValidator {
   private static checkFormat(value: string, format: string): boolean {
     switch (format) {
       case 'date':
-        return /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(Date.parse(value));
+        return /^\d{4}-\d{2}-\d{2}$/.test(value as any) && !isNaN(Date.parse(value as any));
       case 'date-time':
-        return !isNaN(Date.parse(value));
+        return !isNaN(Date.parse(value as any));
       case 'email':
-        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value as any);
       case 'uri':
         try {
-          new URL(value);
+          new URL(value as any);
           return true;
         } catch (error: unknown) {
           return false;
         }
       case 'wallet-address':
-        return /^0x[a-fA-F0-9]{40,}$/.test(value);
+        return /^0x[a-fA-F0-9]{40,}$/.test(value as any);
       case 'uuid':
         return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
           value
         );
       case 'filename':
-        return /^[a-zA-Z0-9_.-]+$/.test(value);
+        return /^[a-zA-Z0-9_.-]+$/.test(value as any);
       case 'filepath':
         // Basic path validation that rejects traversal sequences
-        return !/(\.\.|\/\/)/.test(value);
+        return !/(\.\.|\/\/)/.test(value as any);
       case 'alpha':
-        return /^[a-zA-Z]+$/.test(value);
+        return /^[a-zA-Z]+$/.test(value as any);
       case 'alphanumeric':
-        return /^[a-zA-Z0-9]+$/.test(value);
+        return /^[a-zA-Z0-9]+$/.test(value as any);
       case 'alphanumeric-extended':
-        return /^[a-zA-Z0-9_-]+$/.test(value);
+        return /^[a-zA-Z0-9_-]+$/.test(value as any);
       case 'hex':
-        return /^[0-9a-fA-F]+$/.test(value);
+        return /^[0-9a-fA-F]+$/.test(value as any);
       case 'color-hex':
-        return /^#[0-9a-fA-F]{3,8}$/.test(value);
+        return /^#[0-9a-fA-F]{3,8}$/.test(value as any);
       case 'ip-address':
         // Simple IPv4 validation
-        return /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(value);
+        return /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(value as any);
       case 'domain':
         return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(
           value

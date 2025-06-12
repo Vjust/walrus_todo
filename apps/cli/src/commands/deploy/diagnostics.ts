@@ -76,30 +76,30 @@ export default class DeployDiagnostics extends BaseCommand {
   private logger!: Logger;
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(DeployDiagnostics);
+    const { flags } = await this.parse(DeployDiagnostics as any);
 
-    this.logger = new Logger('DeployDiagnostics');
-    this.diagnostics = new DeploymentDiagnostics();
-    this.recovery = new DeploymentRecovery();
+    this?.logger = new Logger('DeployDiagnostics');
+    this?.diagnostics = new DeploymentDiagnostics();
+    this?.recovery = new DeploymentRecovery();
 
     // Build configuration from flags
     const config: DeploymentConfig = {
       network: flags.network as 'testnet' | 'mainnet',
-      buildDir: flags['build-dir'],
-      siteName: flags['site-name'],
-      siteConfigFile: flags['config-file'],
-      walletPath: flags['wallet-path'],
-      configDir: join(process.env.HOME || '~', '.walrus'),
+      buildDir: flags?.["build-dir"],
+      siteName: flags?.["site-name"],
+      siteConfigFile: flags?.["config-file"],
+      walletPath: flags?.["wallet-path"],
+      configDir: join(process?.env?.HOME || '~', '.walrus'),
     };
 
-    this.log(chalk.blue.bold('🔍 Walrus Sites Deployment Diagnostics'));
+    this.log(chalk?.blue?.bold('🔍 Walrus Sites Deployment Diagnostics'));
     this.log(chalk.gray('================================================'));
     this.log();
 
     try {
       // Handle specific error analysis
-      if (flags['analyze-error']) {
-        await this.analyzeSpecificError(flags['analyze-error'], config, flags.verbose);
+      if (flags?.["analyze-error"]) {
+        await this.analyzeSpecificError(flags?.["analyze-error"], config, flags.verbose);
         return;
       }
 
@@ -107,31 +107,31 @@ export default class DeployDiagnostics extends BaseCommand {
       this.log(chalk.cyan('Running comprehensive deployment diagnostics...'));
       this.log();
 
-      const results = await this.diagnostics.runDiagnostics(config);
+      const results = await this?.diagnostics?.runDiagnostics(config as any);
 
       // Display results
       await this.displayResults(results, flags.verbose);
 
       // Generate and save report
-      const report = this.diagnostics.generateReport(results, config);
+      const report = this?.diagnostics?.generateReport(results, config);
       
-      if (flags['save-report']) {
-        const reportPath = await this.diagnostics.saveReport(report, flags['save-report']);
+      if (flags?.["save-report"]) {
+        const reportPath = await this?.diagnostics?.saveReport(report, flags?.["save-report"]);
         this.log();
         this.log(chalk.green(`📄 Report saved to: ${reportPath}`));
       }
 
       // Attempt automatic recovery if requested
-      if (flags.fix || flags['auto-recovery']) {
-        await this.attemptRecovery(results, config, flags['auto-recovery']);
+      if (flags.fix || flags?.["auto-recovery"]) {
+        await this.attemptRecovery(results, config, flags?.["auto-recovery"]);
       }
 
       // Provide summary and next steps
-      this.provideSummaryAndNextSteps(results);
+      this.provideSummaryAndNextSteps(results as any);
 
     } catch (error) {
-      this.logger.error('Diagnostics failed:', error);
-      this.error(`Diagnostics failed: ${error instanceof Error ? error.message : String(error)}`);
+      this?.logger?.error('Diagnostics failed:', error);
+      this.error(`Diagnostics failed: ${error instanceof Error ? error.message : String(error as any)}`);
     }
   }
 
@@ -139,15 +139,15 @@ export default class DeployDiagnostics extends BaseCommand {
     this.log(chalk.cyan('🔬 Analyzing specific error...'));
     this.log();
 
-    const results = this.diagnostics.analyzeDeploymentError(errorOutput, config);
+    const results = this?.diagnostics?.analyzeDeploymentError(errorOutput, config);
 
-    if (results.length === 0) {
+    if (results?.length === 0) {
       this.log(chalk.yellow('⚠️  No specific error patterns identified.'));
       this.log(chalk.gray('The error may be uncommon or require manual analysis.'));
       return;
     }
 
-    this.log(chalk.green(`✅ Identified ${results.length} potential issue(s):`));
+    this.log(chalk.green(`✅ Identified ${results.length} potential issue(s as any):`));
     this.log();
 
     for (const result of results) {
@@ -156,9 +156,9 @@ export default class DeployDiagnostics extends BaseCommand {
   }
 
   private async displayResults(results: any[], verbose: boolean): Promise<void> {
-    const critical = results.filter(r => r.severity === 'critical');
-    const warnings = results.filter(r => r.severity === 'warning');
-    const info = results.filter(r => r.severity === 'info');
+    const critical = results.filter(r => r?.severity === 'critical');
+    const warnings = results.filter(r => r?.severity === 'warning');
+    const info = results.filter(r => r?.severity === 'info');
 
     // Summary
     this.log(chalk.bold('📊 Diagnostic Summary'));
@@ -170,7 +170,7 @@ export default class DeployDiagnostics extends BaseCommand {
 
     // Display critical issues first
     if (critical.length > 0) {
-      this.log(chalk.red.bold('🚨 Critical Issues (Must Fix)'));
+      this.log(chalk?.red?.bold('🚨 Critical Issues (Must Fix)'));
       this.log(chalk.red('================================'));
       for (const result of critical) {
         this.displaySingleResult(result, verbose);
@@ -179,7 +179,7 @@ export default class DeployDiagnostics extends BaseCommand {
 
     // Display warnings
     if (warnings.length > 0) {
-      this.log(chalk.yellow.bold('⚠️  Warnings (Should Fix)'));
+      this.log(chalk?.yellow?.bold('⚠️  Warnings (Should Fix)'));
       this.log(chalk.yellow('========================'));
       for (const result of warnings) {
         this.displaySingleResult(result, verbose);
@@ -188,7 +188,7 @@ export default class DeployDiagnostics extends BaseCommand {
 
     // Display info (only in verbose mode)
     if (info.length > 0 && verbose) {
-      this.log(chalk.blue.bold('ℹ️  Information'));
+      this.log(chalk?.blue?.bold('ℹ️  Information'));
       this.log(chalk.blue('==============='));
       for (const result of info) {
         this.displaySingleResult(result, verbose);
@@ -225,7 +225,7 @@ export default class DeployDiagnostics extends BaseCommand {
       this.log(chalk.cyan(`   💡 Suggestion: ${result.suggestion}`));
     }
     
-    if (result.recoverySteps && result.recoverySteps.length > 0) {
+    if (result.recoverySteps && result?.recoverySteps?.length > 0) {
       this.log(chalk.green('   🔧 Recovery Steps:'));
       for (const step of result.recoverySteps) {
         this.log(chalk.green(`      • ${step}`));
@@ -236,14 +236,14 @@ export default class DeployDiagnostics extends BaseCommand {
   }
 
   private async attemptRecovery(results: any[], config: DeploymentConfig, autoRecovery: boolean): Promise<void> {
-    const criticalIssues = results.filter(r => r.severity === 'critical');
+    const criticalIssues = results.filter(r => r?.severity === 'critical');
     
-    if (criticalIssues.length === 0) {
+    if (criticalIssues?.length === 0) {
       this.log(chalk.green('✅ No critical issues require recovery'));
       return;
     }
 
-    this.log(chalk.cyan.bold('🔧 Attempting Recovery'));
+    this.log(chalk?.cyan?.bold('🔧 Attempting Recovery'));
     this.log(chalk.cyan('====================='));
 
     if (!autoRecovery) {
@@ -251,7 +251,7 @@ export default class DeployDiagnostics extends BaseCommand {
       return;
     }
 
-    const success = await this.recovery.attemptRecovery(results, config);
+    const success = await this?.recovery?.attemptRecovery(results, config);
     
     if (success) {
       this.log(chalk.green('✅ Automatic recovery completed successfully!'));
@@ -263,14 +263,14 @@ export default class DeployDiagnostics extends BaseCommand {
   }
 
   private provideSummaryAndNextSteps(results: any[]): void {
-    const critical = results.filter(r => r.severity === 'critical');
-    const warnings = results.filter(r => r.severity === 'warning');
+    const critical = results.filter(r => r?.severity === 'critical');
+    const warnings = results.filter(r => r?.severity === 'warning');
 
     this.log();
-    this.log(chalk.bold.underline('📋 Next Steps'));
+    this.log(chalk?.bold?.underline('📋 Next Steps'));
 
-    if (critical.length === 0 && warnings.length === 0) {
-      this.log(chalk.green.bold('🎉 All checks passed! Your deployment should succeed.'));
+    if (critical?.length === 0 && warnings?.length === 0) {
+      this.log(chalk?.green?.bold('🎉 All checks passed! Your deployment should succeed.'));
       this.log();
       this.log(chalk.cyan('Recommended deployment command:'));
       this.log(chalk.gray('  ./scripts/deploy-walrus-site.sh'));
@@ -280,7 +280,7 @@ export default class DeployDiagnostics extends BaseCommand {
     if (critical.length > 0) {
       this.log(chalk.red('🚨 Fix critical issues before deploying:'));
       const criticalSteps = critical
-        .filter(r => r.recoverySteps && r.recoverySteps.length > 0)
+        .filter(r => r.recoverySteps && r?.recoverySteps?.length > 0)
         .flatMap(r => r.recoverySteps)
         .slice(0, 5); // Top 5 steps
 
@@ -293,7 +293,7 @@ export default class DeployDiagnostics extends BaseCommand {
     if (warnings.length > 0) {
       this.log(chalk.yellow('⚠️  Consider fixing warnings for optimal deployment:'));
       const warningSteps = warnings
-        .filter(r => r.recoverySteps && r.recoverySteps.length > 0)
+        .filter(r => r.recoverySteps && r?.recoverySteps?.length > 0)
         .flatMap(r => r.recoverySteps)
         .slice(0, 3); // Top 3 steps
 
@@ -312,8 +312,8 @@ export default class DeployDiagnostics extends BaseCommand {
 
     // Contact information
     this.log(chalk.blue('📞 Need Help?'));
-    this.log(chalk.gray('   • Check Walrus documentation: https://docs.walrus.site'));
-    this.log(chalk.gray('   • Sui network status: https://status.sui.io'));
+    this.log(chalk.gray('   • Check Walrus documentation: https://docs?.walrus?.site'));
+    this.log(chalk.gray('   • Sui network status: https://status?.sui?.io'));
     this.log(chalk.gray('   • WalTodo issues: https://github.com/your-repo/issues'));
   }
 }

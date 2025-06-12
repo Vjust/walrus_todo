@@ -85,7 +85,7 @@ const DEFAULT_CONFIG: AnalyticsConfig = {
   maxStorageSize: 5 * 1024 * 1024, // 5MB
   retentionDays: 30,
   samplingRate: 1.0,
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env?.NODE_ENV === 'development',
 };
 
 class Analytics {
@@ -96,9 +96,9 @@ class Analytics {
   private flushTimer?: NodeJS.Timeout;
 
   constructor() {
-    this.config = DEFAULT_CONFIG;
-    this.sessionId = this.generateSessionId();
-    this.data = this.loadData();
+    this?.config = DEFAULT_CONFIG;
+    this?.sessionId = this.generateSessionId();
+    this?.data = this.loadData();
   }
 
   /**
@@ -107,14 +107,14 @@ class Analytics {
   initialize(config?: Partial<AnalyticsConfig>) {
     if (this.initialized) {return;}
 
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.initialized = true;
+    this?.config = { ...DEFAULT_CONFIG, ...config };
+    this?.initialized = true;
 
     // Clean old data
     this.cleanOldData();
 
     // Set up auto-flush
-    this.flushTimer = setInterval(() => this.flush(), 30000); // Every 30 seconds
+    this?.flushTimer = setInterval(() => this.flush(), 30000); // Every 30 seconds
 
     // Track page performance
     this.trackPagePerformance();
@@ -125,7 +125,7 @@ class Analytics {
     // Track visibility changes
     this.trackVisibilityChanges();
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] Initialized with config:', this.config);
     }
   }
@@ -133,7 +133,7 @@ class Analytics {
   /**
    * Track performance metric
    */
-  trackPerformance(name: string, value: number, unit: PerformanceMetric['unit'] = 'ms', metadata?: Record<string, any>) {
+  trackPerformance(name: string, value: number, unit: PerformanceMetric?.["unit"] = 'ms', metadata?: Record<string, any>) {
     if (!this.shouldTrack()) {return;}
 
     const metric: PerformanceMetric = {
@@ -144,10 +144,10 @@ class Analytics {
       metadata,
     };
 
-    this.data.performance.push(metric);
+    this?.data?.performance.push(metric as any);
     this.trimMetrics('performance', 1000);
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] Performance:', metric);
     }
   }
@@ -159,11 +159,11 @@ class Analytics {
     if (!this.shouldTrack()) {return;}
 
     const errorKey = typeof error === 'string' ? error : error.message;
-    const existingError = this.data.errors.find(e => e.message === errorKey);
+    const existingError = this?.data?.errors.find(e => e?.message === errorKey);
 
     if (existingError) {
       existingError.count++;
-      existingError.timestamp = Date.now();
+      existingError?.timestamp = Date.now();
     } else {
       const metric: ErrorMetric = {
         type: typeof error === 'string' ? 'custom' : error.name || 'Error',
@@ -174,11 +174,11 @@ class Analytics {
         count: 1,
       };
 
-      this.data.errors.push(metric);
+      this?.data?.errors.push(metric as any);
       this.trimMetrics('errors', 100);
     }
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.error('[Analytics] Error tracked:', error);
     }
   }
@@ -197,10 +197,10 @@ class Analytics {
       metadata,
     };
 
-    this.data.user.push(metric);
+    this?.data?.user.push(metric as any);
     this.trimMetrics('user', 500);
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] User action:', metric);
     }
   }
@@ -216,10 +216,10 @@ class Analytics {
       timestamp: Date.now(),
     };
 
-    this.data.wallet.push(fullMetric);
+    this?.data?.wallet.push(fullMetric as any);
     this.trimMetrics('wallet', 200);
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] Wallet:', fullMetric);
     }
   }
@@ -235,10 +235,10 @@ class Analytics {
       timestamp: Date.now(),
     };
 
-    this.data.transactions.push(fullMetric);
+    this?.data?.transactions.push(fullMetric as any);
     this.trimMetrics('transactions', 200);
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] Transaction:', fullMetric);
     }
   }
@@ -254,10 +254,10 @@ class Analytics {
       timestamp: Date.now(),
     };
 
-    this.data.storage.push(fullMetric);
+    this?.data?.storage.push(fullMetric as any);
     this.trimMetrics('storage', 200);
 
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] Storage:', fullMetric);
     }
   }
@@ -279,36 +279,36 @@ class Analytics {
    */
   getSummary() {
     const now = Date.now();
-    const sessionDuration = now - this.data.session.startTime;
+    const sessionDuration = now - this?.data?.session.startTime;
 
     return {
       session: {
-        id: this.data.session.id,
+        id: this?.data?.session.id,
         duration: sessionDuration,
-        startTime: this.data.session.startTime,
-        lastActive: this.data.session.lastActive,
+        startTime: this?.data?.session.startTime,
+        lastActive: this?.data?.session.lastActive,
       },
       performance: {
-        count: this.data.performance.length,
+        count: this?.data?.performance.length,
         averageLoadTime: this.getAverageMetric('performance', 'page-load'),
         averageApiTime: this.getAverageMetric('performance', 'api-call'),
       },
       errors: {
-        total: this.data.errors.reduce((sum, e) => sum + e.count, 0),
-        unique: this.data.errors.length,
-        recent: this.data.errors.slice(-10),
+        total: this?.data?.errors.reduce((sum, e) => sum + e.count, 0),
+        unique: this?.data?.errors.length,
+        recent: this?.data?.errors.slice(-10),
       },
       user: {
-        actions: this.data.user.length,
-        categories: this.groupByCategory(this.data.user),
+        actions: this?.data?.user.length,
+        categories: this.groupByCategory(this?.data?.user),
       },
       wallet: {
         connections: this.countWalletActions('connect'),
-        transactions: this.data.transactions.length,
+        transactions: this?.data?.transactions.length,
         successRate: this.getSuccessRate('transactions'),
       },
       storage: {
-        operations: this.data.storage.length,
+        operations: this?.data?.storage.length,
         successRate: this.getSuccessRate('storage'),
         totalUploaded: this.getTotalStorageSize('upload'),
         totalDownloaded: this.getTotalStorageSize('download'),
@@ -320,10 +320,10 @@ class Analytics {
    * Clear all analytics data
    */
   clear() {
-    this.data = this.createEmptyData();
+    this?.data = this.createEmptyData();
     this.flush();
     
-    if (this.config.debug) {
+    if (this?.config?.debug) {
       console.log('[Analytics] Data cleared');
     }
   }
@@ -343,13 +343,13 @@ class Analytics {
       clearInterval(this.flushTimer);
     }
     this.flush();
-    this.initialized = false;
+    this?.initialized = false;
   }
 
   // Private methods
 
   private generateSessionId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`;
   }
 
   private createEmptyData(): AnalyticsData {
@@ -375,12 +375,12 @@ class Analytics {
     }
 
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(STORAGE_KEY as any);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored as any);
         // Update session info
-        parsed.session.id = this.sessionId;
-        parsed.session.lastActive = Date.now();
+        parsed.session?.id = this.sessionId;
+        parsed.session?.lastActive = Date.now();
         return parsed;
       }
     } catch (error) {
@@ -399,16 +399,16 @@ class Analytics {
       const dataSize = JSON.stringify(this.data).length;
       
       // Check size limit
-      if (dataSize > this.config.maxStorageSize) {
+      if (dataSize > this?.config?.maxStorageSize) {
         this.trimAllMetrics();
       }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-      this.data.session.lastActive = Date.now();
+      this?.data?.session?.lastActive = Date.now();
     } catch (error) {
       console.error('[Analytics] Failed to save data:', error);
       // If storage is full, clear old data
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      if (error instanceof DOMException && error?.name === 'QuotaExceededError') {
         this.trimAllMetrics(0.5); // Keep only 50% of data
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
@@ -421,21 +421,21 @@ class Analytics {
   }
 
   private shouldTrack(): boolean {
-    if (!this.initialized || !this.config.enabled) {return false;}
+    if (!this.initialized || !this?.config?.enabled) {return false;}
     
     // Sampling
-    if (this.config.samplingRate < 1) {
-      return Math.random() < this.config.samplingRate;
+    if (this?.config?.samplingRate < 1) {
+      return Math.random() < this?.config?.samplingRate;
     }
     
     return true;
   }
 
   private cleanOldData() {
-    const cutoffTime = Date.now() - (this.config.retentionDays * 24 * 60 * 60 * 1000);
+    const cutoffTime = Date.now() - (this?.config?.retentionDays * 24 * 60 * 60 * 1000);
     
     Object.keys(this.data).forEach(key => {
-      if (Array.isArray(this.data[key as keyof AnalyticsData])) {
+      if (Array.isArray(this?.data?.[key as keyof AnalyticsData])) {
         (this.data as any)[key] = (this.data as any)[key].filter(
           (item: any) => item.timestamp > cutoffTime
         );
@@ -444,8 +444,8 @@ class Analytics {
   }
 
   private trimMetrics(key: keyof AnalyticsData, maxCount: number) {
-    const data = this.data[key];
-    if (Array.isArray(data) && data.length > maxCount) {
+    const data = this?.data?.[key];
+    if (Array.isArray(data as any) && data.length > maxCount) {
       (this.data as any)[key] = data.slice(-maxCount);
     }
   }
@@ -460,7 +460,7 @@ class Analytics {
       storage: 200,
     };
 
-    Object.entries(limits).forEach(([key, limit]) => {
+    Object.entries(limits as any).forEach(([key, limit]) => {
       const targetSize = Math.floor(limit * keepRatio);
       this.trimMetrics(key as keyof AnalyticsData, targetSize);
     });
@@ -548,10 +548,10 @@ class Analytics {
   }
 
   private getAverageMetric(category: keyof AnalyticsData, name: string): number {
-    const metrics = (this.data[category] as PerformanceMetric[])
-      .filter(m => m.name === name);
+    const metrics = (this?.data?.[category] as PerformanceMetric[])
+      .filter(m => m?.name === name);
     
-    if (metrics.length === 0) {return 0;}
+    if (metrics?.length === 0) {return 0;}
     
     const sum = metrics.reduce((acc, m) => acc + m.value, 0);
     return sum / metrics.length;
@@ -564,21 +564,21 @@ class Analytics {
     }, {} as Record<string, number>);
   }
 
-  private countWalletActions(action: WalletMetric['action']): number {
-    return this.data.wallet.filter(w => w.action === action).length;
+  private countWalletActions(action: WalletMetric?.["action"]): number {
+    return this?.data?.wallet.filter(w => w?.action === action).length;
   }
 
   private getSuccessRate(category: 'transactions' | 'storage'): number {
-    const items = this.data[category];
-    if (items.length === 0) {return 0;}
+    const items = this?.data?.[category];
+    if (items?.length === 0) {return 0;}
     
     const successful = items.filter(item => item.success).length;
     return (successful / items.length) * 100;
   }
 
   private getTotalStorageSize(action: 'upload' | 'download'): number {
-    return this.data.storage
-      .filter(s => s.action === action && s.size)
+    return this?.data?.storage
+      .filter(s => s?.action === action && s.size)
       .reduce((sum, s) => sum + (s.size || 0), 0);
   }
 }
@@ -605,7 +605,7 @@ export function useAnalytics() {
   const analyticsInstance = getAnalytics();
   
   return {
-    trackPerformance: (name: string, value: number, unit?: PerformanceMetric['unit'], metadata?: Record<string, any>) => {
+    trackPerformance: (name: string, value: number, unit?: PerformanceMetric?.["unit"], metadata?: Record<string, any>) => {
       analyticsInstance?.trackPerformance(name, value, unit, metadata);
     },
     trackError: (error: Error | string, context?: Record<string, any>) => {
@@ -615,16 +615,16 @@ export function useAnalytics() {
       analyticsInstance?.trackUser(action, category, value, metadata);
     },
     trackWallet: (metric: Omit<WalletMetric, 'timestamp'>) => {
-      analyticsInstance?.trackWallet(metric);
+      analyticsInstance?.trackWallet(metric as any);
     },
     trackTransaction: (metric: Omit<TransactionMetric, 'timestamp'>) => {
-      analyticsInstance?.trackTransaction(metric);
+      analyticsInstance?.trackTransaction(metric as any);
     },
     trackStorage: (metric: Omit<StorageMetric, 'timestamp'>) => {
-      analyticsInstance?.trackStorage(metric);
+      analyticsInstance?.trackStorage(metric as any);
     },
     startTiming: (name: string) => {
-      return analyticsInstance?.startTiming(name) || (() => {});
+      return analyticsInstance?.startTiming(name as any) || (() => {});
     },
     getSummary: () => {
       return analyticsInstance?.getSummary() || {
@@ -653,11 +653,11 @@ export function withTiming<T extends (...args: any[]) => any>(
 ): T {
   return ((...args: any[]) => {
     const analyticsInstance = getAnalytics();
-    const endTiming = analyticsInstance?.startTiming(name) || (() => {});
+    const endTiming = analyticsInstance?.startTiming(name as any) || (() => {});
     try {
       const result = fn(...args);
       if (result instanceof Promise) {
-        return result.finally(endTiming);
+        return result.finally(endTiming as any);
       }
       endTiming();
       return result;

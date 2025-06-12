@@ -85,13 +85,13 @@ export class DeploymentLogger {
     buildDir: string;
     logDir?: string;
   }) {
-    this.logger = new Logger('DeploymentLogger');
+    this?.logger = new Logger('DeploymentLogger');
     
     // Create unique session ID
     const sessionId = this.generateSessionId();
     
     // Initialize session
-    this.session = {
+    this?.session = {
       id: sessionId,
       startTime: new Date().toISOString(),
       status: 'running',
@@ -107,7 +107,7 @@ export class DeploymentLogger {
 
     // Set up log file path
     const logDir = config.logDir || join(process.cwd(), 'logs', 'deployments');
-    this.logFilePath = join(logDir, `deployment-${sessionId}.json`);
+    this?.logFilePath = join(logDir, `deployment-${sessionId}.json`);
     
     this.info(DeploymentLogCategory.PREREQUISITE, 'Deployment session started', {
       sessionId,
@@ -120,7 +120,7 @@ export class DeploymentLogger {
    */
   info(category: DeploymentLogCategory, message: string, details?: any): void {
     this.addLogEntry('info', category, message, details);
-    this.logger.info(`[${category}] ${message}`);
+    this?.logger?.info(`[${category}] ${message}`);
   }
 
   /**
@@ -128,7 +128,7 @@ export class DeploymentLogger {
    */
   warn(category: DeploymentLogCategory, message: string, details?: any): void {
     this.addLogEntry('warn', category, message, details);
-    this.logger.warn(`[${category}] ${message}`);
+    this?.logger?.warn(`[${category}] ${message}`);
   }
 
   /**
@@ -138,7 +138,7 @@ export class DeploymentLogger {
     this.addLogEntry('error', category, message, { error: error?.message || error, context });
     
     // Add to errors list for analysis
-    this.session.errors.push({
+    this?.session?.errors.push({
       timestamp: new Date().toISOString(),
       category,
       message,
@@ -146,7 +146,7 @@ export class DeploymentLogger {
       context
     });
     
-    this.logger.error(`[${category}] ${message}`, error);
+    this?.logger?.error(`[${category}] ${message}`, error);
   }
 
   /**
@@ -154,14 +154,14 @@ export class DeploymentLogger {
    */
   debug(category: DeploymentLogCategory, message: string, details?: any): void {
     this.addLogEntry('debug', category, message, details);
-    this.logger.debug(`[${category}] ${message}`);
+    this?.logger?.debug(`[${category}] ${message}`);
   }
 
   /**
    * Start timing for a specific operation
    */
   startTiming(operation: string): void {
-    this.metricsStartTimes.set(operation, Date.now());
+    this?.metricsStartTimes?.set(operation, Date.now());
     this.debug(DeploymentLogCategory.PERFORMANCE, `Started timing: ${operation}`);
   }
 
@@ -169,34 +169,34 @@ export class DeploymentLogger {
    * End timing for a specific operation
    */
   endTiming(operation: string): number {
-    const startTime = this.metricsStartTimes.get(operation);
+    const startTime = this?.metricsStartTimes?.get(operation as any);
     if (!startTime) {
       this.warn(DeploymentLogCategory.PERFORMANCE, `No start time found for operation: ${operation}`);
       return 0;
     }
 
     const duration = Date.now() - startTime;
-    this.metricsStartTimes.delete(operation);
+    this?.metricsStartTimes?.delete(operation as any);
     
     // Update metrics
     switch (operation) {
       case 'build':
-        this.session.metrics.buildDuration = duration;
+        this?.session?.metrics?.buildDuration = duration;
         break;
       case 'upload':
-        this.session.metrics.uploadDuration = duration;
+        this?.session?.metrics?.uploadDuration = duration;
         break;
       case 'publish':
-        this.session.metrics.publishDuration = duration;
+        this?.session?.metrics?.publishDuration = duration;
         break;
       case 'total':
-        this.session.metrics.totalDuration = duration;
+        this?.session?.metrics?.totalDuration = duration;
         break;
     }
 
     this.info(DeploymentLogCategory.PERFORMANCE, `Completed ${operation}`, {
       duration: `${duration}ms`,
-      durationSeconds: (duration / 1000).toFixed(2) + 's'
+      durationSeconds: (duration / 1000).toFixed(2 as any) + 's'
     });
 
     return duration;
@@ -206,11 +206,11 @@ export class DeploymentLogger {
    * Log build metrics
    */
   logBuildMetrics(buildSize: number, fileCount: number): void {
-    this.session.metrics.buildSize = buildSize;
-    this.session.metrics.fileCount = fileCount;
+    this?.session?.metrics?.buildSize = buildSize;
+    this?.session?.metrics?.fileCount = fileCount;
     
     this.info(DeploymentLogCategory.BUILD, 'Build metrics recorded', {
-      buildSize: this.formatBytes(buildSize),
+      buildSize: this.formatBytes(buildSize as any),
       fileCount,
       sizePerFile: this.formatBytes(buildSize / fileCount)
     });
@@ -220,7 +220,7 @@ export class DeploymentLogger {
    * Log network latency
    */
   logNetworkLatency(latency: number): void {
-    this.session.metrics.networkLatency = latency;
+    this?.session?.metrics?.networkLatency = latency;
     this.info(DeploymentLogCategory.PERFORMANCE, 'Network latency measured', {
       latency: `${latency}ms`
     });
@@ -230,16 +230,16 @@ export class DeploymentLogger {
    * Increment retry count
    */
   incrementRetryCount(): void {
-    this.session.metrics.retryCount++;
-    this.warn(DeploymentLogCategory.ERROR, `Retry attempt #${this.session.metrics.retryCount}`);
+    this?.session?.metrics.retryCount++;
+    this.warn(DeploymentLogCategory.ERROR, `Retry attempt #${this?.session?.metrics.retryCount}`);
   }
 
   /**
    * Log recovery attempt
    */
   logRecoveryAttempt(errorIndex: number, method: string, successful: boolean): void {
-    if (this.session.errors[errorIndex]) {
-      this.session.errors[errorIndex].recovery = {
+    if (this.session?.errors?.[errorIndex]) {
+      this.session?.errors?.[errorIndex].recovery = {
         attempted: true,
         successful,
         method
@@ -294,14 +294,14 @@ export class DeploymentLogger {
    * Complete deployment session
    */
   completeSession(status: 'completed' | 'failed' | 'cancelled', finalMessage?: string): void {
-    this.session.status = status;
-    this.session.endTime = new Date().toISOString();
+    this.session?.status = status;
+    this.session?.endTime = new Date().toISOString();
     
     // Calculate total duration if not already set
-    if (!this.session.metrics.totalDuration) {
-      const startTime = new Date(this.session.startTime).getTime();
-      const endTime = new Date(this.session.endTime).getTime();
-      this.session.metrics.totalDuration = endTime - startTime;
+    if (!this?.session?.metrics.totalDuration) {
+      const startTime = new Date(this?.session?.startTime).getTime();
+      const endTime = new Date(this?.session?.endTime).getTime();
+      this?.session?.metrics?.totalDuration = endTime - startTime;
     }
 
     const message = finalMessage || `Deployment session ${status}`;
@@ -327,10 +327,10 @@ export class DeploymentLogger {
    */
   getSummary(): string {
     const { metrics, errors, status } = this.session;
-    const duration = metrics.totalDuration ? `${(metrics.totalDuration / 1000).toFixed(2)}s` : 'N/A';
+    const duration = metrics.totalDuration ? `${(metrics.totalDuration / 1000).toFixed(2 as any)}s` : 'N/A';
     const buildSize = metrics.buildSize ? this.formatBytes(metrics.buildSize) : 'N/A';
     
-    let summary = `Deployment Summary for ${this.session.siteName} (${this.session.network})\n`;
+    let summary = `Deployment Summary for ${this?.session?.siteName} (${this?.session?.network})\n`;
     summary += `Status: ${status.toUpperCase()}\n`;
     summary += `Duration: ${duration}\n`;
     summary += `Build Size: ${buildSize}\n`;
@@ -339,15 +339,15 @@ export class DeploymentLogger {
     summary += `Errors: ${errors.length}\n`;
     
     if (metrics.buildDuration) {
-      summary += `Build Time: ${(metrics.buildDuration / 1000).toFixed(2)}s\n`;
+      summary += `Build Time: ${(metrics.buildDuration / 1000).toFixed(2 as any)}s\n`;
     }
     
     if (metrics.uploadDuration) {
-      summary += `Upload Time: ${(metrics.uploadDuration / 1000).toFixed(2)}s\n`;
+      summary += `Upload Time: ${(metrics.uploadDuration / 1000).toFixed(2 as any)}s\n`;
     }
     
     if (metrics.publishDuration) {
-      summary += `Publish Time: ${(metrics.publishDuration / 1000).toFixed(2)}s\n`;
+      summary += `Publish Time: ${(metrics.publishDuration / 1000).toFixed(2 as any)}s\n`;
     }
 
     return summary;
@@ -379,7 +379,7 @@ export class DeploymentLogger {
       
       this.debug(DeploymentLogCategory.PREREQUISITE, `Session saved to ${this.logFilePath}`);
     } catch (error) {
-      this.logger.error('Failed to save deployment session:', error);
+      this?.logger?.error('Failed to save deployment session:', error);
     }
   }
 
@@ -392,7 +392,7 @@ export class DeploymentLogger {
     
     try {
       const content = await fs.readFile(logFilePath, 'utf-8');
-      return JSON.parse(content) as DeploymentSession;
+      return JSON.parse(content as any) as DeploymentSession;
     } catch (error) {
       return null;
     }
@@ -405,7 +405,7 @@ export class DeploymentLogger {
     const baseLogDir = logDir || join(process.cwd(), 'logs', 'deployments');
     
     try {
-      const files = await fs.readdir(baseLogDir);
+      const files = await fs.readdir(baseLogDir as any);
       return files
         .filter(file => file.startsWith('deployment-') && file.endsWith('.json'))
         .map(file => file.replace('deployment-', '').replace('.json', ''));
@@ -423,18 +423,18 @@ export class DeploymentLogger {
       message,
       details,
       metadata: {
-        network: this.session.network,
-        siteName: this.session.siteName,
-        deploymentId: this.session.id
+        network: this?.session?.network,
+        siteName: this?.session?.siteName,
+        deploymentId: this?.session?.id
       }
     };
 
-    this.session.logs.push(entry);
+    this?.session?.logs.push(entry as any);
   }
 
   private generateSessionId(): string {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
+    const timestamp = Date.now().toString(36 as any);
+    const random = Math.random().toString(36 as any).substring(2, 8);
     return `${timestamp}-${random}`;
   }
 
@@ -442,8 +442,8 @@ export class DeploymentLogger {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any)) + ' ' + sizes[i];
   }
 
   private generateRecommendations(): string[] {
@@ -464,14 +464,14 @@ export class DeploymentLogger {
     }
 
     // Error-based recommendations
-    const networkErrors = errors.filter(e => e.message.toLowerCase().includes('network') || 
-                                           e.message.toLowerCase().includes('connection'));
+    const networkErrors = errors.filter(e => e?.message?.toLowerCase().includes('network') || 
+                                           e?.message?.toLowerCase().includes('connection'));
     if (networkErrors.length > 0) {
       recommendations.push('Network connectivity issues detected - verify internet connection and Walrus endpoints');
     }
 
-    const authErrors = errors.filter(e => e.message.toLowerCase().includes('auth') || 
-                                         e.message.toLowerCase().includes('wallet'));
+    const authErrors = errors.filter(e => e?.message?.toLowerCase().includes('auth') || 
+                                         e?.message?.toLowerCase().includes('wallet'));
     if (authErrors.length > 0) {
       recommendations.push('Authentication issues detected - verify wallet configuration and balance');
     }
@@ -488,17 +488,17 @@ export class DeploymentLogger {
     }
 
     if (errors.length > 0) {
-      troubleshooting.push(`${errors.length} error(s) occurred during deployment`);
+      troubleshooting.push(`${errors.length} error(s as any) occurred during deployment`);
       
       // Add specific troubleshooting for common errors
       for (const error of errors.slice(0, 3)) { // Top 3 errors
-        if (error.message.toLowerCase().includes('connection')) {
+        if (error?.message?.toLowerCase().includes('connection')) {
           troubleshooting.push('Check network connectivity: ping walrus.site');
         }
-        if (error.message.toLowerCase().includes('permission')) {
+        if (error?.message?.toLowerCase().includes('permission')) {
           troubleshooting.push('Check file permissions and user access rights');
         }
-        if (error.message.toLowerCase().includes('config')) {
+        if (error?.message?.toLowerCase().includes('config')) {
           troubleshooting.push('Verify configuration files and settings');
         }
       }
@@ -527,7 +527,7 @@ export class LoggedDeployment {
     buildDir: string;
     logDir?: string;
   }) {
-    this.logger = new DeploymentLogger(config);
+    this?.logger = new DeploymentLogger(config as any);
   }
 
   /**
@@ -535,17 +535,17 @@ export class LoggedDeployment {
    */
   async execute(deploymentFunction: (logger: DeploymentLogger) => Promise<void>): Promise<DeploymentReport> {
     try {
-      this.logger.startTiming('total');
+      this?.logger?.startTiming('total');
       await deploymentFunction(this.logger);
-      this.logger.endTiming('total');
-      this.logger.completeSession('completed');
+      this?.logger?.endTiming('total');
+      this?.logger?.completeSession('completed');
     } catch (error) {
-      this.logger.error(DeploymentLogCategory.ERROR, 'Deployment failed', error);
-      this.logger.completeSession('failed');
+      this?.logger?.error(DeploymentLogCategory.ERROR, 'Deployment failed', error);
+      this?.logger?.completeSession('failed');
       throw error;
     }
 
-    return this.logger.generateReport();
+    return this?.logger?.generateReport();
   }
 
   getLogger(): DeploymentLogger {

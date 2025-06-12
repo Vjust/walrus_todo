@@ -30,7 +30,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
     // Cleanup test jobs and operations
     for (const jobId of testJobIds) {
       try {
-        jobManager.cancelJob(jobId);
+        jobManager.cancelJob(jobId as any);
       } catch (error) {
         // Ignore cleanup errors
       }
@@ -38,7 +38,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
     for (const operationId of testOperationIds) {
       try {
-        await backgroundDataRetriever.cancelRetrieval(operationId);
+        await backgroundDataRetriever.cancelRetrieval(operationId as any);
       } catch (error) {
         // Ignore cleanup errors
       }
@@ -56,7 +56,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain(
         '🚀 Starting background retrieval operation'
@@ -64,10 +64,10 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       expect(output.stdout).toContain('Job ID:');
       expect(output.stdout).toContain('✓ Background retrieval started');
       expect(output.stdout).toContain('💡 Track progress: waltodo jobs');
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -92,7 +92,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain(
         '🚀 Starting background retrieval operation'
@@ -100,10 +100,10 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       expect(output.stdout).toContain('⏳ Waiting for retrieval to complete');
       // Should contain progress indicators
       expect(output.stdout).toMatch(/\[.*\]/); // Progress bar
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -129,12 +129,12 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain(`Job ID: ${customJobId}`);
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
 
-      testJobIds.push(customJobId);
+      testJobIds.push(customJobId as any);
     }, 15000);
   });
 
@@ -149,15 +149,15 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain('🚀 Starting background fetch operation');
       expect(output.stdout).toContain('Target ID: QmTestFetch123');
       expect(output.stdout).toContain('✓ Background fetch started');
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -184,15 +184,15 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain('🚀 Starting background fetch operation');
       expect(output.stdout).toContain('Target ID: 0xTestNFT456');
       expect(output.stdout).toMatch(/\[.*\]/); // Should show progress
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -211,7 +211,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      await captureCommandOutput(retrieveCommand);
+      await captureCommandOutput(retrieveCommand as any);
 
       // Small delay to ensure job is registered
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -222,10 +222,10 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         timeout: 10000,
       });
 
-      const output = await captureCommandOutput(jobsCommand);
+      const output = await captureCommandOutput(jobsCommand as any);
 
       expect(output.stdout).toContain('Background Jobs');
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
     }, 20000);
 
     test('status command should show job details', async () => {
@@ -247,7 +247,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      await captureCommandOutput(retrieveCommand);
+      await captureCommandOutput(retrieveCommand as any);
       testJobIds.push('test-status-job');
 
       // Small delay
@@ -263,12 +263,12 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(statusCommand);
+      const output = await captureCommandOutput(statusCommand as any);
 
       expect(output.stdout).toContain('Job Status: test-status-job');
       expect(output.stdout).toContain('Command: retrieve');
       expect(output.stdout).toMatch(/Progress.*%/);
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
     }, 20000);
 
     test('cancel command should stop background operation', async () => {
@@ -292,7 +292,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      await captureCommandOutput(retrieveCommand);
+      await captureCommandOutput(retrieveCommand as any);
       testJobIds.push('test-cancel-job');
 
       // Small delay to let job start
@@ -308,11 +308,11 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(cancelCommand);
+      const output = await captureCommandOutput(cancelCommand as any);
 
       expect(output.stdout).toContain('🛑 Cancelling job: test-cancel-job');
       expect(output.stdout).toContain('✅ Job cancelled');
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
     }, 25000);
   });
 
@@ -336,16 +336,16 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain(
         '🚀 Starting background retrieval operation'
       );
       // Should handle error gracefully and show failure
-      expect(output.exitCode).not.toBe(0);
+      expect(output.exitCode).not.toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -370,14 +370,14 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain('🚀 Starting background fetch operation');
       // Should handle timeout gracefully
-      expect(output.exitCode).not.toBe(0);
+      expect(output.exitCode).not.toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -405,7 +405,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       let progressUpdates = 0;
       let lastProgress = -1;
 
-      command.stdout.on('data', data => {
+      command?.stdout?.on('data', data => {
         const output = data.toString();
         const progressMatch = output.match(/(\d+)%/);
 
@@ -418,14 +418,14 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       });
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       // Should have multiple progress updates
-      expect(progressUpdates).toBeGreaterThan(0);
-      expect(output.exitCode).toBe(0);
+      expect(progressUpdates as any).toBeGreaterThan(0 as any);
+      expect(output.exitCode).toBe(0 as any);
 
       // Extract job ID for cleanup
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
       if (jobIdMatch) {
         testJobIds.push(jobIdMatch[1]);
       }
@@ -442,17 +442,17 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      testOperationIds.push(operationId);
+      testOperationIds.push(operationId as any);
 
-      expect(operationId).toBeDefined();
+      expect(operationId as any).toBeDefined();
       expect(typeof operationId).toBe('string');
 
       // Wait a moment for operation to start
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const status =
-        await backgroundDataRetriever.getRetrievalStatus(operationId);
-      expect(status).toBeDefined();
+        await backgroundDataRetriever.getRetrievalStatus(operationId as any);
+      expect(status as any).toBeDefined();
       expect(status?.phase).toBeDefined();
     }, 15000);
 
@@ -469,17 +469,17 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         chunkSize: 2,
       });
 
-      testOperationIds.push(operationId);
+      testOperationIds.push(operationId as any);
 
-      expect(operationId).toBeDefined();
+      expect(operationId as any).toBeDefined();
 
       // Wait for operation to progress
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const status =
-        await backgroundDataRetriever.getRetrievalStatus(operationId);
-      expect(status).toBeDefined();
-      expect(status?.totalItems).toBe(3);
+        await backgroundDataRetriever.getRetrievalStatus(operationId as any);
+      expect(status as any).toBeDefined();
+      expect(status?.totalItems).toBe(3 as any);
     }, 20000);
 
     test('should handle cancellation of retrieval operation', async () => {
@@ -491,17 +491,17 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      testOperationIds.push(operationId);
+      testOperationIds.push(operationId as any);
 
       // Wait for operation to start
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const cancelled =
-        await backgroundDataRetriever.cancelRetrieval(operationId);
-      expect(cancelled).toBe(true);
+        await backgroundDataRetriever.cancelRetrieval(operationId as any);
+      expect(cancelled as any).toBe(true as any);
 
       const status =
-        await backgroundDataRetriever.getRetrievalStatus(operationId);
+        await backgroundDataRetriever.getRetrievalStatus(operationId as any);
       expect(status?.phase).toBe('complete');
     }, 15000);
   });
@@ -524,20 +524,20 @@ describe('Background Retrieval Workflow E2E Tests', () => {
         }
       );
 
-      const output = await captureCommandOutput(command);
+      const output = await captureCommandOutput(command as any);
 
       expect(output.stdout).toContain('📊 Retrieval Summary');
-      expect(output.exitCode).toBe(0);
+      expect(output.exitCode).toBe(0 as any);
 
       // Extract job ID
-      const jobIdMatch = output.stdout.match(/Job ID: (job_\w+)/);
-      expect(jobIdMatch).toBeTruthy();
+      const jobIdMatch = output?.stdout?.match(/Job ID: (job_\w+)/);
+      expect(jobIdMatch as any).toBeTruthy();
       
       const jobId = jobIdMatch![1];
-      testJobIds.push(jobId);
+      testJobIds.push(jobId as any);
 
       // Check that job completed and was marked as such
-      const job = jobManager.getJob(jobId);
+      const job = jobManager.getJob(jobId as any);
       expect(job?.status).toBe('completed');
     }, 30000);
 
@@ -561,18 +561,18 @@ describe('Background Retrieval Workflow E2E Tests', () => {
           }
         );
 
-        operations.push(captureCommandOutput(command));
+        operations.push(captureCommandOutput(command as any));
       }
 
-      const results = await Promise.all(operations);
+      const results = await Promise.all(operations as any);
 
       // All should succeed
       results.forEach((result, index) => {
-        expect(result.exitCode).toBe(0);
+        expect(result.exitCode).toBe(0 as any);
         expect(result.stdout).toContain('✓ Background retrieval started');
 
         // Extract job IDs for cleanup
-        const jobIdMatch = result.stdout.match(/Job ID: (job_\w+)/);
+        const jobIdMatch = result?.stdout?.match(/Job ID: (job_\w+)/);
         if (jobIdMatch) {
           testJobIds.push(jobIdMatch[1]);
         }
@@ -610,7 +610,7 @@ async function captureCommandOutput(command: ChildProcess): Promise<{
     });
 
     command.on('error', error => {
-      reject(error);
+      reject(error as any);
     });
   });
 }

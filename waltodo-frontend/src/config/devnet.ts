@@ -51,13 +51,13 @@ export interface DevnetConfig {
 const DEVNET_CONFIG: DevnetConfig = {
   network: {
     name: 'devnet',
-    url: 'https://fullnode.devnet.sui.io:443',
-    faucet: 'https://faucet.devnet.sui.io/gas'
+    url: 'https://fullnode?.devnet?.sui.io:443',
+    faucet: 'https://faucet?.devnet?.sui.io/gas'
   },
   walrus: {
-    publisherUrl: 'https://publisher-devnet.walrus.space',
-    aggregatorUrl: 'https://aggregator-devnet.walrus.space',
-    storeEndpoint: 'https://walrus-testnet-api.nodes.guru',
+    publisherUrl: 'https://publisher-devnet?.walrus?.space',
+    aggregatorUrl: 'https://aggregator-devnet?.walrus?.space',
+    storeEndpoint: 'https://walrus-testnet-api?.nodes?.guru',
     epochs: 5,
     maxBlobSize: 13 * 1024 * 1024 // 13MB max for devnet
   },
@@ -92,7 +92,7 @@ const DEVNET_CONFIG: DevnetConfig = {
   slushWallet: {
     enabled: true,
     chainId: 'sui:devnet',
-    rpcUrl: 'https://fullnode.devnet.sui.io:443'
+    rpcUrl: 'https://fullnode?.devnet?.sui.io:443'
   },
   networkSwitching: {
     enabled: true,

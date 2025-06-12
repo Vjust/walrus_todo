@@ -39,16 +39,16 @@ export default function TodoNFTModal({
   
   // State
   const [activeTab, setActiveTab] = useState<'details' | 'history' | 'transfer'>('details')
-  const [isImageZoomed, setIsImageZoomed] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isImageZoomed, setIsImageZoomed] = useState(false as any)
+  const [isEditing, setIsEditing] = useState(false as any)
   const [transferAddress, setTransferAddress] = useState('')
-  const [isTransferring, setIsTransferring] = useState(false)
+  const [isTransferring, setIsTransferring] = useState(false as any)
   const [editedMetadata, setEditedMetadata] = useState<Partial<TodoNFT>>({})
-  const [isSaving, setIsSaving] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [imageZoomLevel, setImageZoomLevel] = useState(1)
+  const [isSaving, setIsSaving] = useState(false as any)
+  const [copied, setCopied] = useState(false as any)
+  const [imageZoomLevel, setImageZoomLevel] = useState(1 as any)
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
+  const [isDragging, setIsDragging] = useState(false as any)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
   // Mock transaction history (in real app, fetch from blockchain)
@@ -66,11 +66,11 @@ export default function TodoNFTModal({
   useEffect(() => {
     if (!isOpen) {
       setActiveTab('details')
-      setIsImageZoomed(false)
-      setIsEditing(false)
+      setIsImageZoomed(false as any)
+      setIsEditing(false as any)
       setTransferAddress('')
       setEditedMetadata({})
-      setImageZoomLevel(1)
+      setImageZoomLevel(1 as any)
       setImagePosition({ x: 0, y: 0 })
     }
   }, [isOpen])
@@ -83,7 +83,7 @@ export default function TodoNFTModal({
       switch (e.key) {
         case 'Escape':
           if (isImageZoomed) {
-            setIsImageZoomed(false)
+            setIsImageZoomed(false as any)
           } else {
             onClose()
           }
@@ -120,13 +120,13 @@ export default function TodoNFTModal({
     e.preventDefault()
     const delta = e.deltaY * -0.01
     const newZoom = Math.min(Math.max(1, imageZoomLevel + delta), 3)
-    setImageZoomLevel(newZoom)
+    setImageZoomLevel(newZoom as any)
   }, [isImageZoomed, imageZoomLevel])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isImageZoomed || imageZoomLevel <= 1) {return}
     
-    setIsDragging(true)
+    setIsDragging(true as any)
     setDragStart({
       x: e.clientX - imagePosition.x,
       y: e.clientY - imagePosition.y
@@ -143,14 +143,14 @@ export default function TodoNFTModal({
   }, [isDragging, dragStart])
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
+    setIsDragging(false as any)
   }, [])
 
   // Transfer functionality
   const handleTransfer = async () => {
     if (!nft || !onTransfer) {return}
 
-    if (!isValidSuiAddress(transferAddress)) {
+    if (!isValidSuiAddress(transferAddress as any)) {
       toast.error('Please enter a valid Sui address')
       return
     }
@@ -160,7 +160,7 @@ export default function TodoNFTModal({
       return
     }
 
-    setIsTransferring(true)
+    setIsTransferring(true as any)
     try {
       await onTransfer(nft.id, transferAddress)
       toast.success('NFT transferred successfully!')
@@ -169,35 +169,35 @@ export default function TodoNFTModal({
       toast.error('Failed to transfer NFT')
       console.error('Transfer error:', error)
     } finally {
-      setIsTransferring(false)
+      setIsTransferring(false as any)
     }
   }
 
   // Save metadata
   const handleSaveMetadata = async () => {
-    if (!nft || !onUpdateMetadata || Object.keys(editedMetadata).length === 0) {return}
+    if (!nft || !onUpdateMetadata || Object.keys(editedMetadata as any).length === 0) {return}
 
-    setIsSaving(true)
+    setIsSaving(true as any)
     try {
       await onUpdateMetadata(nft.id, editedMetadata)
       toast.success('Metadata updated successfully!')
-      setIsEditing(false)
+      setIsEditing(false as any)
       setEditedMetadata({})
     } catch (error) {
       toast.error('Failed to update metadata')
       console.error('Update error:', error)
     } finally {
-      setIsSaving(false)
+      setIsSaving(false as any)
     }
   }
 
   // Copy link
   const copyLink = () => {
-    const link = `${window.location.origin}/nft/${nft?.id}`
-    navigator.clipboard.writeText(link)
-    setCopied(true)
+    const link = `${window?.location?.origin}/nft/${nft?.id}`
+    navigator?.clipboard?.writeText(link as any)
+    setCopied(true as any)
     toast.success('Link copied to clipboard!')
-    setTimeout(() => setCopied(false), 2000)
+    setTimeout(() => setCopied(false as any), 2000)
   }
 
   // Download image
@@ -209,13 +209,13 @@ export default function TodoNFTModal({
   // Share to social media
   const shareToTwitter = () => {
     const text = `Check out my Todo NFT: ${nft?.title}`
-    const url = `${window.location.origin}/nft/${nft?.id}`
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank')
+    const url = `${window?.location?.origin}/nft/${nft?.id}`
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text as any)}&url=${encodeURIComponent(url as any)}`, '_blank')
   }
 
   const shareToFacebook = () => {
-    const url = `${window.location.origin}/nft/${nft?.id}`
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
+    const url = `${window?.location?.origin}/nft/${nft?.id}`
+    window.open(`https://www?.facebook?.com/sharer/sharer.php?u=${encodeURIComponent(url as any)}`, '_blank')
   }
 
   if (!isOpen || !nft) {return null}
@@ -267,7 +267,7 @@ export default function TodoNFTModal({
                     transform: `scale(${imageZoomLevel}) translate(${imagePosition.x / imageZoomLevel}px, ${imagePosition.y / imageZoomLevel}px)`,
                     transformOrigin: 'center'
                   } : {}}
-                  onClick={() => !isImageZoomed && setIsImageZoomed(true)}
+                  onClick={() => !isImageZoomed && setIsImageZoomed(true as any)}
                   onWheel={handleImageZoom}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
@@ -390,7 +390,7 @@ export default function TodoNFTModal({
                           <input
                             type="text"
                             value={editedMetadata.title ?? nft.title}
-                            onChange={(e) => setEditedMetadata({ ...editedMetadata, title: e.target.value })}
+                            onChange={(e) => setEditedMetadata({ ...editedMetadata, title: e?.target?.value })}
                             className="mt-1 w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
                           />
                         ) : (
@@ -404,7 +404,7 @@ export default function TodoNFTModal({
                         {isEditing ? (
                           <textarea
                             value={editedMetadata.content ?? nft.content}
-                            onChange={(e) => setEditedMetadata({ ...editedMetadata, content: e.target.value })}
+                            onChange={(e) => setEditedMetadata({ ...editedMetadata, content: e?.target?.value })}
                             className="mt-1 w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
                             rows={3}
                           />
@@ -464,11 +464,11 @@ export default function TodoNFTModal({
                       </div>
 
                       {/* Tags */}
-                      {nft.tags && nft.tags.length > 0 && (
+                      {nft.tags && nft?.tags?.length > 0 && (
                         <div>
                           <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Tags</label>
                           <div className="mt-2 flex flex-wrap gap-2">
-                            {nft.tags.map((tag, index) => (
+                            {nft?.tags?.map((tag, index) => (
                               <span key={index} className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs">
                                 {tag}
                               </span>
@@ -483,14 +483,14 @@ export default function TodoNFTModal({
                       <div className="flex gap-2 mt-6">
                         <button
                           onClick={handleSaveMetadata}
-                          disabled={isSaving || Object.keys(editedMetadata).length === 0}
+                          disabled={isSaving || Object.keys(editedMetadata as any).length === 0}
                           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           {isSaving ? 'Saving...' : 'Save Changes'}
                         </button>
                         <button
                           onClick={() => {
-                            setIsEditing(false)
+                            setIsEditing(false as any)
                             setEditedMetadata({})
                           }}
                           className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -510,9 +510,9 @@ export default function TodoNFTModal({
                         <div key={tx.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {tx.type === 'mint' && 'Minted'}
-                              {tx.type === 'transfer' && 'Transferred'}
-                              {tx.type === 'metadata_update' && 'Metadata Updated'}
+                              {tx?.type === 'mint' && 'Minted'}
+                              {tx?.type === 'transfer' && 'Transferred'}
+                              {tx?.type === 'metadata_update' && 'Metadata Updated'}
                             </span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {new Date(tx.timestamp).toLocaleDateString()}
@@ -520,11 +520,11 @@ export default function TodoNFTModal({
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              From: <span className="font-mono">{tx.from.slice(0, 6)}...{tx.from.slice(-4)}</span>
+                              From: <span className="font-mono">{tx?.from?.slice(0, 6)}...{tx?.from?.slice(-4)}</span>
                             </p>
                             {tx.to && (
                               <p className="text-xs text-gray-600 dark:text-gray-400">
-                                To: <span className="font-mono">{tx.to.slice(0, 6)}...{tx.to.slice(-4)}</span>
+                                To: <span className="font-mono">{tx?.to?.slice(0, 6)}...{tx?.to?.slice(-4)}</span>
                               </p>
                             )}
                             <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -563,11 +563,11 @@ export default function TodoNFTModal({
                           <input
                             type="text"
                             value={transferAddress}
-                            onChange={(e) => setTransferAddress(e.target.value)}
+                            onChange={(e) => setTransferAddress(e?.target?.value)}
                             placeholder="0x..."
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
-                          {transferAddress && !isValidSuiAddress(transferAddress) && (
+                          {transferAddress && !isValidSuiAddress(transferAddress as any) && (
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                               Please enter a valid Sui address
                             </p>
@@ -576,7 +576,7 @@ export default function TodoNFTModal({
 
                         <button
                           onClick={handleTransfer}
-                          disabled={!transferAddress || !isValidSuiAddress(transferAddress) || isTransferring}
+                          disabled={!transferAddress || !isValidSuiAddress(transferAddress as any) || isTransferring}
                           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           <Send className="w-4 h-4" />

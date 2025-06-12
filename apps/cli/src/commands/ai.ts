@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { aiService, secureCredentialService } from '../services/ai';
 import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
@@ -163,7 +163,7 @@ export default class AI extends BaseCommand {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = await this.parse(AI);
+    const { args, flags } = await this.parse(AI as any);
     // Type assertion for flags to fix property access
     const typedFlags = flags as AICommandFlags;
 
@@ -173,13 +173,13 @@ export default class AI extends BaseCommand {
     }
 
     // Always set AI features flag for AI command
-    AIProviderFactory.setAIFeatureRequested(true);
+    AIProviderFactory.setAIFeatureRequested(true as any);
 
     // First ensure environment variables are loaded from .env files
     const { loadEnvironment } = await import('../utils/env-loader');
 
     // Load environment with verbose logging only in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       logger.debug('Loading environment variables before setting flags...');
     }
 
@@ -190,29 +190,29 @@ export default class AI extends BaseCommand {
     });
 
     // Only log API key info in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       logger.debug('Environment XAI_API_KEY after loading', {
-        apiKeyPresent: !!process.env.XAI_API_KEY,
-        keyLength: process.env.XAI_API_KEY?.length || 0,
+        apiKeyPresent: !!process?.env?.XAI_API_KEY,
+        keyLength: process?.env?.XAI_API_KEY?.length || 0,
       });
     }
 
     // Set environment variables from flags
     setEnvFromFlags(typedFlags as Record<string, unknown>, {
-      apiKey: `${typeof typedFlags.provider === 'string' ? typedFlags.provider.toUpperCase() : 'XAI'}_API_KEY`,
+      apiKey: `${typeof typedFlags?.provider === 'string' ? typedFlags?.provider?.toUpperCase() : 'XAI'}_API_KEY`,
       provider: 'AI_DEFAULT_PROVIDER',
       model: 'AI_DEFAULT_MODEL',
       temperature: 'AI_TEMPERATURE',
     });
 
     // Handle special status operation
-    if (args.operation === 'status') {
-      return this.showStatus(typedFlags);
+    if (args?.operation === 'status') {
+      return this.showStatus(typedFlags as any);
     }
 
     // Handle help operation
-    if (args.operation === 'help') {
-      return this.showHelp(typedFlags);
+    if (args?.operation === 'help') {
+      return this.showHelp(typedFlags as any);
     }
 
     // Configure AI provider from environment
@@ -229,30 +229,30 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to set AI provider: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to set AI provider: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
 
     // Use environment-based verification setting
-    typedFlags.verify =
+    typedFlags?.verify =
       typedFlags.verify || getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
 
     // Perform the requested operation
     switch (args.operation) {
       case 'summarize':
-        return this.summarizeTodos(typedFlags);
+        return this.summarizeTodos(typedFlags as any);
 
       case 'categorize':
-        return this.categorizeTodos(typedFlags);
+        return this.categorizeTodos(typedFlags as any);
 
       case 'prioritize':
-        return this.prioritizeTodos(typedFlags);
+        return this.prioritizeTodos(typedFlags as any);
 
       case 'suggest':
-        return this.suggestTodos(typedFlags);
+        return this.suggestTodos(typedFlags as any);
 
       case 'analyze':
-        return this.analyzeTodos(typedFlags);
+        return this.analyzeTodos(typedFlags as any);
 
       default:
         this.error(`Unknown AI operation: ${args.operation}`);
@@ -303,7 +303,7 @@ export default class AI extends BaseCommand {
         ? chalk.green('✓ available')
         : chalk.gray('not configured');
 
-      this.log(`${chalk.cyan(provider.padEnd(10))} | ${status}`);
+      this.log(`${chalk.cyan(provider.padEnd(10 as any))} | ${status}`);
     }
 
     // Display credential status
@@ -318,7 +318,7 @@ export default class AI extends BaseCommand {
           : chalk.gray('not verified');
 
         this.log(
-          `${chalk.cyan(cred.provider.padEnd(10))} | ${verified.padEnd(15)} | ${chalk.blue(expiry)}`
+          `${chalk.cyan(cred?.provider?.padEnd(10 as any))} | ${verified.padEnd(15 as any)} | ${chalk.blue(expiry as any)}`
         );
 
         if (cred.rotationDue) {
@@ -485,7 +485,7 @@ export default class AI extends BaseCommand {
     // Use the imported singleton todoService instance
     const todos = await todoService.listTodos();
 
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       this.error(
         'No todos found. Add some todos first with "walrus_todo add"',
         { exit: 1 }
@@ -514,10 +514,10 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Generating AI summary...'));
 
     try {
-      const summaryResponse = await aiService.summarize(todos);
+      const summaryResponse = await aiService.summarize(todos as any);
 
       // Debug information only in development environment
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.debug('Summary response type', { type: typeof summaryResponse });
         logger.debug('Summary response', { response: summaryResponse });
       }
@@ -535,15 +535,15 @@ export default class AI extends BaseCommand {
           // Check for content in kwargs (LangChain format)
           if (
             responseObj.kwargs &&
-            typeof responseObj.kwargs === 'object' &&
-            responseObj.kwargs.content &&
-            typeof responseObj.kwargs.content === 'string'
+            typeof responseObj?.kwargs === 'object' &&
+            responseObj?.kwargs?.content &&
+            typeof responseObj.kwargs?.content === 'string'
           ) {
-            return responseObj.kwargs.content;
+            return responseObj?.kwargs?.content;
           }
 
           // Check for content directly on the object (some AI models)
-          if (typeof responseObj.content === 'string') {
+          if (typeof responseObj?.content === 'string') {
             return responseObj.content;
           }
 
@@ -568,7 +568,7 @@ export default class AI extends BaseCommand {
             typeof response === 'object' &&
             response !== null &&
             'toString' in response &&
-            typeof response.toString === 'function'
+            typeof response?.toString === 'function'
           ) {
             const stringRep = response.toString();
             if (stringRep && !stringRep.includes('[object Object]')) {
@@ -582,25 +582,25 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the actual summary text
-      const summary = extractSummaryText(summaryResponse);
+      const summary = extractSummaryText(summaryResponse as any);
 
       if (flags.json) {
         this.log(JSON.stringify({ summary }, null, 2));
       } else {
         this.log('');
         this.log(chalk.cyan('📝 Summary of your todos:'));
-        this.log(chalk.yellow(summary));
+        this.log(chalk.yellow(summary as any));
       }
     } catch (error) {
       // Only log detailed error in development mode
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in summarizeTodos:', error as Error);
       }
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `AI summarization failed: ${error instanceof Error ? error.message : String(error)}`
+        `AI summarization failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -624,10 +624,10 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Categorizing todos...'));
 
     try {
-      const categoriesResponse = await aiService.categorize(todos);
+      const categoriesResponse = await aiService.categorize(todos as any);
 
       // Debug information only in development environment
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.debug('Categories response type', {
           type: typeof categoriesResponse,
         });
@@ -642,8 +642,8 @@ export default class AI extends BaseCommand {
         if (
           response &&
           typeof response === 'object' &&
-          !Array.isArray(response) &&
-          Object.values(response).every(val => Array.isArray(val))
+          !Array.isArray(response as any) &&
+          Object.values(response as any).every(val => Array.isArray(val as any))
         ) {
           return response as Record<string, string[]>;
         }
@@ -652,16 +652,16 @@ export default class AI extends BaseCommand {
         if (response && typeof response === 'object') {
           const responseObj = response as AIObjectResponse;
           // Check for content in kwargs (LangChain format)
-          if (responseObj.kwargs && responseObj.kwargs.content) {
+          if (responseObj.kwargs && responseObj?.kwargs?.content) {
             try {
               // Try to parse the content as JSON
-              const content = responseObj.kwargs.content;
+              const content = responseObj?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content) as unknown;
+                  const parsed = JSON.parse(content as any) as unknown;
                   if (
                     typeof parsed === 'object' &&
-                    !Array.isArray(parsed) &&
+                    !Array.isArray(parsed as any) &&
                     parsed !== null
                   ) {
                     return parsed as Record<string, string[]>;
@@ -678,7 +678,7 @@ export default class AI extends BaseCommand {
           // Check for result property
           if (
             responseObj.result &&
-            typeof responseObj.result === 'object' &&
+            typeof responseObj?.result === 'object' &&
             !Array.isArray(responseObj.result)
           ) {
             return responseObj.result as Record<string, string[]>;
@@ -690,24 +690,24 @@ export default class AI extends BaseCommand {
           work: todos
             .filter(
               t =>
-                t.title.toLowerCase().includes('financial') ||
-                t.title.toLowerCase().includes('budget') ||
-                t.title.toLowerCase().includes('report')
+                t?.title?.toLowerCase().includes('financial') ||
+                t?.title?.toLowerCase().includes('budget') ||
+                t?.title?.toLowerCase().includes('report')
             )
             .map(t => t.id),
           personal: todos
             .filter(
               t =>
-                !t.title.toLowerCase().includes('financial') &&
-                !t.title.toLowerCase().includes('budget') &&
-                !t.title.toLowerCase().includes('report')
+                !t?.title?.toLowerCase().includes('financial') &&
+                !t?.title?.toLowerCase().includes('budget') &&
+                !t?.title?.toLowerCase().includes('report')
             )
             .map(t => t.id),
         };
       };
 
       // Extract the categories
-      const categories = extractCategoriesData(categoriesResponse);
+      const categories = extractCategoriesData(categoriesResponse as any);
 
       if (flags.json) {
         this.log(JSON.stringify({ categories }, null, 2));
@@ -717,11 +717,11 @@ export default class AI extends BaseCommand {
       this.log('');
       this.log(chalk.cyan('📂 Todo Categories:'));
 
-      for (const [category, todoIds] of Object.entries(categories)) {
+      for (const [category, todoIds] of Object.entries(categories as any)) {
         this.log(chalk.yellow(`\n${category}:`));
 
         for (const todoId of todoIds) {
-          const todo = todos.find(t => t.id === todoId);
+          const todo = todos.find(t => t?.id === todoId);
           if (todo) {
             this.log(`  - ${todo.title}`);
           }
@@ -729,14 +729,14 @@ export default class AI extends BaseCommand {
       }
     } catch (error) {
       // Only log detailed error in development mode
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in categorizeTodos:', error as Error);
       }
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `AI categorization failed: ${error instanceof Error ? error.message : String(error)}`
+        `AI categorization failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -760,10 +760,10 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Prioritizing todos...'));
 
     try {
-      const prioritiesResponse = await aiService.prioritize(todos);
+      const prioritiesResponse = await aiService.prioritize(todos as any);
 
       // Debug information only in development environment
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.debug('Priorities response type', {
           type: typeof prioritiesResponse,
         });
@@ -778,8 +778,8 @@ export default class AI extends BaseCommand {
         if (
           response &&
           typeof response === 'object' &&
-          !Array.isArray(response) &&
-          Object.values(response).every(val => typeof val === 'number')
+          !Array.isArray(response as any) &&
+          Object.values(response as any).every(val => typeof val === 'number')
         ) {
           return response as Record<string, number>;
         }
@@ -788,16 +788,16 @@ export default class AI extends BaseCommand {
         if (response && typeof response === 'object') {
           const responseObj = response as AIObjectResponse;
           // Check for content in kwargs (LangChain format)
-          if (responseObj.kwargs && responseObj.kwargs.content) {
+          if (responseObj.kwargs && responseObj?.kwargs?.content) {
             try {
               // Try to parse the content as JSON
-              const content = responseObj.kwargs.content;
+              const content = responseObj?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content) as unknown;
+                  const parsed = JSON.parse(content as any) as unknown;
                   if (
                     typeof parsed === 'object' &&
-                    !Array.isArray(parsed) &&
+                    !Array.isArray(parsed as any) &&
                     parsed !== null
                   ) {
                     return parsed as Record<string, number>;
@@ -814,7 +814,7 @@ export default class AI extends BaseCommand {
           // Check for result property
           if (
             responseObj.result &&
-            typeof responseObj.result === 'object' &&
+            typeof responseObj?.result === 'object' &&
             !Array.isArray(responseObj.result)
           ) {
             return responseObj.result as Record<string, number>;
@@ -829,19 +829,19 @@ export default class AI extends BaseCommand {
 
           // Boost priority for urgent/important sounding tasks
           if (
-            todo.title.toLowerCase().includes('urgent') ||
-            todo.title.toLowerCase().includes('important') ||
-            todo.title.toLowerCase().includes('critical') ||
-            todo.title.toLowerCase().includes('deadline')
+            todo?.title?.toLowerCase().includes('urgent') ||
+            todo?.title?.toLowerCase().includes('important') ||
+            todo?.title?.toLowerCase().includes('critical') ||
+            todo?.title?.toLowerCase().includes('deadline')
           ) {
             priority += 3;
           }
 
           // Boost for financial tasks
           if (
-            todo.title.toLowerCase().includes('financial') ||
-            todo.title.toLowerCase().includes('budget') ||
-            todo.title.toLowerCase().includes('report')
+            todo?.title?.toLowerCase().includes('financial') ||
+            todo?.title?.toLowerCase().includes('budget') ||
+            todo?.title?.toLowerCase().includes('report')
           ) {
             priority += 2;
           }
@@ -854,7 +854,7 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the priorities
-      const priorities = extractPrioritiesData(prioritiesResponse);
+      const priorities = extractPrioritiesData(prioritiesResponse as any);
 
       if (flags.json) {
         this.log(JSON.stringify({ priorities }, null, 2));
@@ -882,14 +882,14 @@ export default class AI extends BaseCommand {
       }
     } catch (error) {
       // Only log detailed error in development mode
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in prioritizeTodos:', error as Error);
       }
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `AI prioritization failed: ${error instanceof Error ? error.message : String(error)}`
+        `AI prioritization failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -913,10 +913,10 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Generating todo suggestions...'));
 
     try {
-      const suggestions = await aiService.suggest(todos);
+      const suggestions = await aiService.suggest(todos as any);
 
       // Debug information only in development environment
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.debug('Suggestions type', { type: typeof suggestions });
         logger.debug('Suggestions value', { suggestions });
       }
@@ -940,7 +940,7 @@ export default class AI extends BaseCommand {
       // Extract suggestions from complex LangChain response format
       const extractSuggestionsFromResponse = (obj: unknown): string[] => {
         // If it's already an array of strings, just return it
-        if (Array.isArray(obj) && obj.every(item => typeof item === 'string')) {
+        if (Array.isArray(obj as any) && obj.every(item => typeof item === 'string')) {
           return obj;
         }
 
@@ -950,16 +950,16 @@ export default class AI extends BaseCommand {
           // Check for direct content in kwargs.content (LangChain format)
           if (
             objAny.kwargs &&
-            typeof objAny.kwargs === 'object' &&
-            objAny.kwargs.content
+            typeof objAny?.kwargs === 'object' &&
+            objAny?.kwargs?.content
           ) {
             try {
               // Try to parse the content as JSON
-              const content = objAny.kwargs.content;
+              const content = objAny?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content);
-                  if (Array.isArray(parsed)) {
+                  const parsed = JSON.parse(content as any);
+                  if (Array.isArray(parsed as any)) {
                     return parsed;
                   }
                 } catch (e) {
@@ -971,7 +971,7 @@ export default class AI extends BaseCommand {
                     return match[0]
                       .replace(/[[\]"\s]/g, '')
                       .split(',')
-                      .filter(Boolean);
+                      .filter(Boolean as any);
                   }
                 }
 
@@ -993,14 +993,14 @@ export default class AI extends BaseCommand {
 
           // Check all other properties recursively
           const objRecord = obj as Record<string, unknown>;
-          for (const key of Object.keys(objRecord)) {
+          for (const key of Object.keys(objRecord as any)) {
             if (key === 'lc' || key === 'type' || key === 'id') continue; // Skip LangChain metadata fields
 
             const value = objRecord[key];
             if (value) {
               // If value is an array of strings, return it
               if (
-                Array.isArray(value) &&
+                Array.isArray(value as any) &&
                 value.every(item => typeof item === 'string')
               ) {
                 return value;
@@ -1008,7 +1008,7 @@ export default class AI extends BaseCommand {
 
               // If value is an object, recurse
               if (typeof value === 'object') {
-                const extracted = extractSuggestionsFromResponse(value);
+                const extracted = extractSuggestionsFromResponse(value as any);
                 if (extracted.length > 0) {
                   return extracted;
                 }
@@ -1021,8 +1021,8 @@ export default class AI extends BaseCommand {
                 value.trim().endsWith(']')
               ) {
                 try {
-                  const parsed = JSON.parse(value);
-                  if (Array.isArray(parsed)) {
+                  const parsed = JSON.parse(value as any);
+                  if (Array.isArray(parsed as any)) {
                     return parsed;
                   }
                 } catch (e) {
@@ -1036,8 +1036,8 @@ export default class AI extends BaseCommand {
         // If it's a string, try to parse it as JSON
         if (typeof obj === 'string') {
           try {
-            const parsed = JSON.parse(obj);
-            if (Array.isArray(parsed)) {
+            const parsed = JSON.parse(obj as any);
+            if (Array.isArray(parsed as any)) {
               return parsed;
             }
           } catch (e) {
@@ -1053,7 +1053,7 @@ export default class AI extends BaseCommand {
       let displaySuggestions = defaultSuggestions;
 
       // Try to extract suggestions from the response
-      const extractedSuggestions = extractSuggestionsFromResponse(suggestions);
+      const extractedSuggestions = extractSuggestionsFromResponse(suggestions as any);
       if (extractedSuggestions.length > 0) {
         displaySuggestions = extractedSuggestions;
       }
@@ -1069,14 +1069,14 @@ export default class AI extends BaseCommand {
       );
     } catch (error) {
       // Only log detailed error in development mode
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in suggestTodos:', error as Error);
       }
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `AI suggestion failed: ${error instanceof Error ? error.message : String(error)}`
+        `AI suggestion failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -1101,10 +1101,10 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Analyzing todos...'));
 
     try {
-      const analysisResponse = await aiService.analyze(todos);
+      const analysisResponse = await aiService.analyze(todos as any);
 
       // Debug information only in development environment
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.debug('Analysis response type', {
           type: typeof analysisResponse,
         });
@@ -1119,7 +1119,7 @@ export default class AI extends BaseCommand {
         if (
           response &&
           typeof response === 'object' &&
-          !Array.isArray(response)
+          !Array.isArray(response as any)
         ) {
           const responseObj = response as AIObjectResponse;
           // Skip if it's a LangChain response object
@@ -1132,16 +1132,16 @@ export default class AI extends BaseCommand {
         if (response && typeof response === 'object') {
           const responseObj = response as AIObjectResponse;
           // Check for content in kwargs (LangChain format)
-          if (responseObj.kwargs && responseObj.kwargs.content) {
+          if (responseObj.kwargs && responseObj?.kwargs?.content) {
             try {
               // Try to parse the content as JSON
-              const content = responseObj.kwargs.content;
+              const content = responseObj?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content) as unknown;
+                  const parsed = JSON.parse(content as any) as unknown;
                   if (
                     typeof parsed === 'object' &&
-                    !Array.isArray(parsed) &&
+                    !Array.isArray(parsed as any) &&
                     parsed !== null
                   ) {
                     return parsed as Record<string, unknown>;
@@ -1162,7 +1162,7 @@ export default class AI extends BaseCommand {
           // Check for result property
           if (
             responseObj.result &&
-            typeof responseObj.result === 'object' &&
+            typeof responseObj?.result === 'object' &&
             !Array.isArray(responseObj.result)
           ) {
             return responseObj.result as Record<string, unknown>;
@@ -1189,7 +1189,7 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the analysis
-      const analysis = extractAnalysisData(analysisResponse);
+      const analysis = extractAnalysisData(analysisResponse as any);
 
       if (flags.json) {
         this.log(JSON.stringify({ analysis }, null, 2));
@@ -1199,15 +1199,15 @@ export default class AI extends BaseCommand {
       this.log('');
       this.log(chalk.cyan('🔍 Todo Analysis:'));
 
-      for (const [category, details] of Object.entries(analysis)) {
+      for (const [category, details] of Object.entries(analysis as any)) {
         this.log(chalk.yellow(`\n${category}:`));
 
-        if (Array.isArray(details)) {
+        if (Array.isArray(details as any)) {
           details.forEach(item => {
             this.log(`  - ${item}`);
           });
         } else if (typeof details === 'object' && details !== null) {
-          for (const [key, value] of Object.entries(details)) {
+          for (const [key, value] of Object.entries(details as any)) {
             this.log(`  ${key}: ${value}`);
           }
         } else {
@@ -1216,14 +1216,14 @@ export default class AI extends BaseCommand {
       }
     } catch (error) {
       // Only log detailed error in development mode
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in analyzeTodos:', error as Error);
       }
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `AI analysis failed: ${error instanceof Error ? error.message : String(error)}`
+        `AI analysis failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -1234,7 +1234,7 @@ export default class AI extends BaseCommand {
   private async handleJobStatus(jobId: string, flags: AICommandFlags) {
     try {
       const backgroundOps = await createBackgroundAIOperationsManager();
-      const status = await backgroundOps.getOperationStatus(jobId);
+      const status = await backgroundOps.getOperationStatus(jobId as any);
 
       if (!status) {
         this.error(`Job ${jobId} not found`);
@@ -1253,12 +1253,12 @@ export default class AI extends BaseCommand {
       this.log(`Stage: ${chalk.blue(status.stage)}`);
 
       if (status.startedAt) {
-        this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
+        this.log(`Started: ${chalk.dim(status?.startedAt?.toLocaleString())}`);
       }
 
       if (status.completedAt) {
         this.log(
-          `Completed: ${chalk.dim(status.completedAt.toLocaleString())}`
+          `Completed: ${chalk.dim(status?.completedAt?.toLocaleString())}`
         );
       }
 
@@ -1267,8 +1267,8 @@ export default class AI extends BaseCommand {
       }
 
       // If completed, show results
-      if (status.status === 'completed' && !flags.json) {
-        const result = await backgroundOps.getOperationResult(jobId);
+      if (status?.status === 'completed' && !flags.json) {
+        const result = await backgroundOps.getOperationResult(jobId as any);
         if (result) {
           this.log(chalk.bold('\nResults:'));
           await this.displayAIResult(status.type as any, result.result, flags);
@@ -1278,20 +1278,20 @@ export default class AI extends BaseCommand {
       // If waiting and operation is still running, wait for completion
       if (
         flags.wait &&
-        (status.status === 'queued' || status.status === 'running')
+        (status?.status === 'queued' || status?.status === 'running')
       ) {
         this.log(chalk.yellow('\nWaiting for operation to complete...'));
 
         const result = await backgroundOps.waitForOperationWithProgress(
           jobId,
           (progress, stage) => {
-            process.stdout.write(
+            process?.stdout?.write(
               `\r${chalk.blue('Progress:')} ${progress}% (${stage})`
             );
           }
         );
 
-        process.stdout.write('\n');
+        process?.stdout?.write('\n');
         this.log(chalk.green('Operation completed!'));
 
         if (!flags.json) {
@@ -1305,7 +1305,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to get job status: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get job status: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -1372,7 +1372,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -1425,15 +1425,15 @@ export default class AI extends BaseCommand {
         // Check for content in kwargs (LangChain format)
         if (
           responseObj.kwargs &&
-          typeof responseObj.kwargs === 'object' &&
-          responseObj.kwargs.content &&
-          typeof responseObj.kwargs.content === 'string'
+          typeof responseObj?.kwargs === 'object' &&
+          responseObj?.kwargs?.content &&
+          typeof responseObj.kwargs?.content === 'string'
         ) {
-          return responseObj.kwargs.content;
+          return responseObj?.kwargs?.content;
         }
 
         // Check for content directly on the object (some AI models)
-        if (typeof responseObj.content === 'string') {
+        if (typeof responseObj?.content === 'string') {
           return responseObj.content;
         }
 
@@ -1452,7 +1452,7 @@ export default class AI extends BaseCommand {
           typeof response === 'object' &&
           response !== null &&
           'toString' in response &&
-          typeof response.toString === 'function'
+          typeof response?.toString === 'function'
         ) {
           const stringRep = response.toString();
           if (stringRep && !stringRep.includes('[object Object]')) {
@@ -1466,14 +1466,14 @@ export default class AI extends BaseCommand {
     };
 
     // Extract the actual summary text
-    const summary = extractSummaryText(summaryResponse);
+    const summary = extractSummaryText(summaryResponse as any);
 
     if (flags.json) {
       this.log(JSON.stringify({ summary }, null, 2));
     } else {
       this.log('');
       this.log(chalk.cyan('📝 Summary of your todos:'));
-      this.log(chalk.yellow(summary));
+      this.log(chalk.yellow(summary as any));
     }
   }
 
@@ -1524,7 +1524,7 @@ export default class AI extends BaseCommand {
       this.log(JSON.stringify({ suggestions }, null, 2));
     } else {
       this.log(chalk.cyan('💡 Suggested Todos:'));
-      if (Array.isArray(suggestions)) {
+      if (Array.isArray(suggestions as any)) {
         suggestions.forEach((suggestion, i) => {
           this.log(`${i + 1}. ${suggestion}`);
         });
@@ -1570,7 +1570,7 @@ export default class AI extends BaseCommand {
     };
 
     return (
-      statusColors[status as keyof typeof statusColors] || chalk.white(status)
+      statusColors[status as keyof typeof statusColors] || chalk.white(status as any)
     );
   }
 }

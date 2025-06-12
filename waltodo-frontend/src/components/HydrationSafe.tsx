@@ -25,10 +25,10 @@ export function HydrationSafe({
   fallback = null, 
   maintainStructure = true 
 }: HydrationSafeProps) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true as any);
   }, []);
 
   if (maintainStructure) {

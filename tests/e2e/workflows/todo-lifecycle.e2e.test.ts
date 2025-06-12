@@ -28,14 +28,14 @@ describe('Todo Lifecycle E2E Workflow', () => {
       };
       return {
         output: execError.stdout || '',
-        error: execError.stderr || execError.message || String(error),
+        error: execError.stderr || execError.message || String(error as any),
       };
     }
   };
 
   beforeAll(() => {
     // Create temp directory and clean config
-    if (!fs.existsSync(TEMP_DIR)) {
+    if (!fs.existsSync(TEMP_DIR as any)) {
       fs.mkdirSync(TEMP_DIR, { recursive: true });
     }
 
@@ -46,9 +46,9 @@ describe('Todo Lifecycle E2E Workflow', () => {
       contexts: {
         testnet: {
           name: 'testnet',
-          rpcUrl: 'https://fullnode.testnet.sui.io:443',
-          walrusUrl: 'https://walrus-testnet.walrus.space',
-          walrusPublisher: 'https://walrus-testnet-publisher.walrus.space',
+          rpcUrl: 'https://fullnode?.testnet?.sui.io:443',
+          walrusUrl: 'https://walrus-testnet?.walrus?.space',
+          walrusPublisher: 'https://walrus-testnet-publisher?.walrus?.space',
         },
       },
     };
@@ -58,7 +58,7 @@ describe('Todo Lifecycle E2E Workflow', () => {
 
   afterAll(() => {
     // Clean up temp directory
-    if (fs.existsSync(TEMP_DIR)) {
+    if (fs.existsSync(TEMP_DIR as any)) {
       fs.rmSync(TEMP_DIR, { recursive: true, force: true });
     }
   });
@@ -71,34 +71,34 @@ describe('Todo Lifecycle E2E Workflow', () => {
         'add "Complete E2E testing" --priority high'
       );
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo added successfully');
-      expect(output).toContain('Complete E2E testing');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo added successfully');
+      expect(output as any).toContain('Complete E2E testing');
 
       // Extract todo ID from output
       const match = output.match(/ID: ([a-f0-9-]+)/);
-      expect(match).toBeTruthy();
+      expect(match as any).toBeTruthy();
       todoId = match![1];
     });
 
     test('should list todos including the new one', () => {
       const { output, error } = runCommand('list');
 
-      expect(error).toBe('');
-      expect(output).toContain('Complete E2E testing');
-      expect(output).toContain('pending');
-      expect(output).toContain('high');
-      expect(output).toContain(todoId);
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Complete E2E testing');
+      expect(output as any).toContain('pending');
+      expect(output as any).toContain('high');
+      expect(output as any).toContain(todoId as any);
     });
 
     test('should show full details of a specific todo', () => {
       const { output, error } = runCommand(`list ${todoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain(todoId);
-      expect(output).toContain('Complete E2E testing');
-      expect(output).toContain('Status: pending');
-      expect(output).toContain('Priority: high');
+      expect(error as any).toBe('');
+      expect(output as any).toContain(todoId as any);
+      expect(output as any).toContain('Complete E2E testing');
+      expect(output as any).toContain('Status: pending');
+      expect(output as any).toContain('Priority: high');
     });
 
     test('should update todo status to in-progress', () => {
@@ -106,15 +106,15 @@ describe('Todo Lifecycle E2E Workflow', () => {
         `update ${todoId} --status in-progress`
       );
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo updated successfully');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo updated successfully');
     });
 
     test('should verify todo status was updated', () => {
       const { output, error } = runCommand(`list ${todoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain('Status: in-progress');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Status: in-progress');
     });
 
     test('should update todo content', () => {
@@ -122,51 +122,51 @@ describe('Todo Lifecycle E2E Workflow', () => {
         `update ${todoId} --content "Complete E2E testing with comprehensive coverage"`
       );
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo updated successfully');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo updated successfully');
     });
 
     test('should complete the todo', () => {
       const { output, error } = runCommand(`complete ${todoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo completed');
-      expect(output).toContain(todoId);
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo completed');
+      expect(output as any).toContain(todoId as any);
     });
 
     test('should verify todo is completed', () => {
       const { output, error } = runCommand(`list ${todoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain('Status: completed');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Status: completed');
     });
 
     test('should not list completed todos by default', () => {
       const { output, error } = runCommand('list');
 
-      expect(error).toBe('');
-      expect(output).not.toContain('Complete E2E testing');
+      expect(error as any).toBe('');
+      expect(output as any).not.toContain('Complete E2E testing');
     });
 
     test('should list completed todos with --all flag', () => {
       const { output, error } = runCommand('list --all');
 
-      expect(error).toBe('');
-      expect(output).toContain('Complete E2E testing');
-      expect(output).toContain('completed');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Complete E2E testing');
+      expect(output as any).toContain('completed');
     });
 
     test('should delete the todo', () => {
       const { output, error } = runCommand(`delete ${todoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo deleted');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo deleted');
     });
 
     test('should not find deleted todo', () => {
       const { error } = runCommand(`list ${todoId}`);
 
-      expect(error).toContain('Todo not found');
+      expect(error as any).toContain('Todo not found');
     });
   });
 
@@ -183,22 +183,22 @@ describe('Todo Lifecycle E2E Workflow', () => {
       todos.forEach(todo => {
         const { output, error } = runCommand(`add "${todo}"`);
 
-        expect(error).toBe('');
+        expect(error as any).toBe('');
         const match = output.match(/ID: ([a-f0-9-]+)/);
-        expect(match).toBeTruthy();
+        expect(match as any).toBeTruthy();
         todoIds.push(match![1]);
       });
 
-      expect(todoIds).toHaveLength(3);
+      expect(todoIds as any).toHaveLength(3 as any);
     });
 
     test('should list all created todos', () => {
       const { output, error } = runCommand('list');
 
-      expect(error).toBe('');
-      expect(output).toContain('First batch todo');
-      expect(output).toContain('Second batch todo');
-      expect(output).toContain('Third batch todo');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('First batch todo');
+      expect(output as any).toContain('Second batch todo');
+      expect(output as any).toContain('Third batch todo');
     });
 
     test('should filter todos by priority', () => {
@@ -207,24 +207,24 @@ describe('Todo Lifecycle E2E Workflow', () => {
 
       const { output, error } = runCommand('list --priority high');
 
-      expect(error).toBe('');
-      expect(output).toContain('First batch todo');
-      expect(output).not.toContain('Second batch todo');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('First batch todo');
+      expect(output as any).not.toContain('Second batch todo');
     });
 
     test('should complete multiple todos', () => {
       todoIds.forEach(id => {
         const { output, error } = runCommand(`complete ${id}`);
-        expect(error).toBe('');
-        expect(output).toContain('Todo completed');
+        expect(error as any).toBe('');
+        expect(output as any).toContain('Todo completed');
       });
     });
 
     test('should show completed count', () => {
       const { output, error } = runCommand('list --all');
 
-      expect(error).toBe('');
-      expect(output).toMatch(/3 completed/i);
+      expect(error as any).toBe('');
+      expect(output as any).toMatch(/3 completed/i);
     });
   });
 
@@ -236,17 +236,17 @@ describe('Todo Lifecycle E2E Workflow', () => {
         'add "Tagged todo" --tags testing,e2e,workflow'
       );
 
-      expect(error).toBe('');
+      expect(error as any).toBe('');
       const match = output.match(/ID: ([a-f0-9-]+)/);
-      expect(match).toBeTruthy();
+      expect(match as any).toBeTruthy();
       todoId = match![1];
     });
 
     test('should filter by tags', () => {
       const { output, error } = runCommand('list --tag e2e');
 
-      expect(error).toBe('');
-      expect(output).toContain('Tagged todo');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Tagged todo');
     });
 
     test('should update multiple properties at once', () => {
@@ -254,17 +254,17 @@ describe('Todo Lifecycle E2E Workflow', () => {
         `update ${todoId} --priority high --status in-progress --content "Updated tagged todo"`
       );
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo updated successfully');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo updated successfully');
     });
 
     test('should verify all updates', () => {
       const { output, error } = runCommand(`list ${todoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain('Updated tagged todo');
-      expect(output).toContain('Priority: high');
-      expect(output).toContain('Status: in-progress');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Updated tagged todo');
+      expect(output as any).toContain('Priority: high');
+      expect(output as any).toContain('Status: in-progress');
     });
   });
 
@@ -275,21 +275,21 @@ describe('Todo Lifecycle E2E Workflow', () => {
     test('should create local todo', () => {
       const { output, error } = runCommand('add "Local todo item"');
 
-      expect(error).toBe('');
+      expect(error as any).toBe('');
       const match = output.match(/ID: ([a-f0-9-]+)/);
-      expect(match).toBeTruthy();
+      expect(match as any).toBeTruthy();
       localTodoId = match![1];
     });
 
     test('should store todo to Walrus', () => {
       const { output, error } = runCommand(`store ${localTodoId} --mock`);
 
-      expect(error).toBe('');
-      expect(output).toContain('stored to Walrus');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('stored to Walrus');
 
       // Extract stored blob ID (in mock mode it'll be a generated ID)
       const blobMatch = output.match(/Blob ID: ([a-zA-Z0-9]+)/);
-      expect(blobMatch).toBeTruthy();
+      expect(blobMatch as any).toBeTruthy();
     });
 
     test('should create and store in one command', () => {
@@ -297,19 +297,19 @@ describe('Todo Lifecycle E2E Workflow', () => {
         'add "Direct store todo" --store --mock'
       );
 
-      expect(error).toBe('');
-      expect(output).toContain('Todo added and stored');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Todo added and stored');
 
       const match = output.match(/ID: ([a-f0-9-]+)/);
-      expect(match).toBeTruthy();
+      expect(match as any).toBeTruthy();
       storedTodoId = match![1];
     });
 
     test('should retrieve stored todo', () => {
       const { output, error } = runCommand(`fetch ${storedTodoId}`);
 
-      expect(error).toBe('');
-      expect(output).toContain('Direct store todo');
+      expect(error as any).toBe('');
+      expect(output as any).toContain('Direct store todo');
     });
   });
 
@@ -317,19 +317,19 @@ describe('Todo Lifecycle E2E Workflow', () => {
     test('should handle invalid todo ID', () => {
       const { error } = runCommand('complete invalid-id');
 
-      expect(error).toContain('Todo not found');
+      expect(error as any).toContain('Todo not found');
     });
 
     test('should handle missing required parameters', () => {
       const { error } = runCommand('add');
 
-      expect(error).toContain('required');
+      expect(error as any).toContain('required');
     });
 
     test('should handle invalid priority', () => {
       const { error } = runCommand('add "Test" --priority invalid');
 
-      expect(error).toContain('Invalid priority');
+      expect(error as any).toContain('Invalid priority');
     });
 
     test('should handle conflicting status updates', () => {
@@ -343,7 +343,7 @@ describe('Todo Lifecycle E2E Workflow', () => {
       // Try to update completed todo
       const { error } = runCommand(`update ${id} --status in-progress`);
 
-      expect(error).toContain('Cannot update completed todo');
+      expect(error as any).toContain('Cannot update completed todo');
     });
   });
 
@@ -363,17 +363,17 @@ describe('Todo Lifecycle E2E Workflow', () => {
 
       // Store
       const { output: storeOutput } = runCommand(`store ${todoId} --mock`);
-      expect(storeOutput).toContain('stored to Walrus');
+      expect(storeOutput as any).toContain('stored to Walrus');
 
       // Complete
       const { output: completeOutput } = runCommand(`complete ${todoId}`);
-      expect(completeOutput).toContain('Todo completed');
+      expect(completeOutput as any).toContain('Todo completed');
 
       // Verify final state
       const { output: listOutput } = runCommand(`list ${todoId} --all`);
-      expect(listOutput).toContain('Status: completed');
-      expect(listOutput).toContain('Priority: high');
-      expect(listOutput).toContain('Full lifecycle todo - updated');
+      expect(listOutput as any).toContain('Status: completed');
+      expect(listOutput as any).toContain('Priority: high');
+      expect(listOutput as any).toContain('Full lifecycle todo - updated');
     });
 
     test('should handle concurrent operations gracefully', async () => {
@@ -388,7 +388,7 @@ describe('Todo Lifecycle E2E Workflow', () => {
         );
       }
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
       // Verify all todos were created successfully
       results.forEach(
@@ -401,7 +401,7 @@ describe('Todo Lifecycle E2E Workflow', () => {
       // List all todos
       const { output: listOutput } = runCommand('list');
       for (let i = 0; i < 5; i++) {
-        expect(listOutput).toContain(`Concurrent todo ${i}`);
+        expect(listOutput as any).toContain(`Concurrent todo ${i}`);
       }
     });
   });

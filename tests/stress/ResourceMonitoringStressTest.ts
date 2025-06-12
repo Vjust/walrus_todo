@@ -73,12 +73,12 @@ class ResourceMonitoringStressTest {
   private isRunning: boolean = false;
 
   constructor() {
-    this.testDir = path.join(
+    this?.testDir = path.join(
       os.tmpdir(),
       'waltodo-stress-test',
       Date.now().toString()
     );
-    this.logger = new Logger('ResourceStressTest');
+    this?.logger = new Logger('ResourceStressTest');
     this.setupTestEnvironment();
   }
 
@@ -89,11 +89,11 @@ class ResourceMonitoringStressTest {
     }
 
     // Initialize components
-    this.orchestrator = new BackgroundCommandOrchestrator(this.testDir);
-    this.performanceMonitor = new PerformanceMonitor(
+    this?.orchestrator = new BackgroundCommandOrchestrator(this.testDir);
+    this?.performanceMonitor = new PerformanceMonitor(
       path.join(this.testDir, 'performance')
     );
-    this.resourceManager = ResourceManager.getInstance({ autoDispose: false });
+    this?.resourceManager = ResourceManager.getInstance({ autoDispose: false });
 
     // Setup monitoring
     this.setupMonitoring();
@@ -101,20 +101,20 @@ class ResourceMonitoringStressTest {
 
   private setupMonitoring(): void {
     // Resource update monitoring
-    this.orchestrator.on('resourceUpdate', (usage: ResourceUsage) => {
+    this?.orchestrator?.on('resourceUpdate', (usage: ResourceUsage) => {
       if (this.isRunning) {
-        this.takeSnapshot(usage);
+        this.takeSnapshot(usage as any);
       }
     });
 
     // Error monitoring
-    this.orchestrator.on('jobFailed', (job, error) => {
-      this.errors.push(`Job ${job.id} failed: ${error.message}`);
+    this?.orchestrator?.on('jobFailed', (job, error) => {
+      this?.errors?.push(`Job ${job.id} failed: ${error.message}`);
     });
 
     // Process monitoring
     process.on('warning', warning => {
-      this.errors.push(`Process warning: ${warning.message}`);
+      this?.errors?.push(`Process warning: ${warning.message}`);
     });
   }
 
@@ -124,14 +124,14 @@ class ResourceMonitoringStressTest {
       const freeMem = os.freemem();
       const usedMem = totalMem - freeMem;
 
-      const jobs = this.orchestrator.getJobStatus();
+      const jobs = this?.orchestrator?.getJobStatus();
       const activeJobs = jobs.filter(
-        j => j.status === 'running' || j.status === 'pending'
+        j => j?.status === 'running' || j?.status === 'pending'
       );
-      const completedJobs = jobs.filter(j => j.status === 'completed');
-      const failedJobs = jobs.filter(j => j.status === 'failed');
+      const completedJobs = jobs.filter(j => j?.status === 'completed');
+      const failedJobs = jobs.filter(j => j?.status === 'failed');
 
-      const report = this.performanceMonitor.generateReport();
+      const report = this?.performanceMonitor?.generateReport();
 
       const snapshot: ResourceSnapshot = {
         timestamp: Date.now(),
@@ -156,21 +156,21 @@ class ResourceMonitoringStressTest {
         },
       };
 
-      this.snapshots.push(snapshot);
+      this?.snapshots?.push(snapshot as any);
 
       // Log every 5 minutes
-      if (this.snapshots.length % 60 === 0) {
+      if (this?.snapshots?.length % 60 === 0) {
         // Assuming 5-second intervals
-        this.logger.info(
+        this?.logger?.info(
           `Stress test progress: ${Math.floor((Date.now() - this.startTime) / 60000)}min, ` +
-            `Memory: ${(snapshot.systemMemory.percentage * 100).toFixed(1)}%, ` +
-            `Active jobs: ${snapshot.jobCount.active}, ` +
-            `Total jobs: ${snapshot.jobCount.total}`
+            `Memory: ${(snapshot?.systemMemory?.percentage * 100).toFixed(1 as any)}%, ` +
+            `Active jobs: ${snapshot?.jobCount?.active}, ` +
+            `Total jobs: ${snapshot?.jobCount?.total}`
         );
       }
     } catch (error) {
-      this.errors.push(
-        `Failed to take snapshot: ${error instanceof Error ? error.message : String(error)}`
+      this?.errors?.push(
+        `Failed to take snapshot: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -181,14 +181,14 @@ class ResourceMonitoringStressTest {
   async runContinuousOperationTest(
     durationMinutes: number = 30
   ): Promise<StressTestResults> {
-    this.logger.info(
+    this?.logger?.info(
       `Starting continuous operation stress test for ${durationMinutes} minutes`
     );
 
-    this.startTime = Date.now();
-    this.isRunning = true;
-    this.snapshots = [];
-    this.errors = [];
+    this?.startTime = Date.now();
+    this?.isRunning = true;
+    this?.snapshots = [];
+    this?.errors = [];
 
     const endTime = this.startTime + durationMinutes * 60 * 1000;
 
@@ -196,7 +196,7 @@ class ResourceMonitoringStressTest {
       // Start background job creation
       const jobCreationInterval = setInterval(async () => {
         if (Date.now() >= endTime) {
-          clearInterval(jobCreationInterval);
+          clearInterval(jobCreationInterval as any);
           return;
         }
 
@@ -206,7 +206,7 @@ class ResourceMonitoringStressTest {
           const randomType =
             jobTypes[Math.floor(Math.random() * jobTypes.length)];
 
-          await this.orchestrator.executeInBackground(
+          await this?.orchestrator?.executeInBackground(
             randomType,
             [`test-file-${Date.now()}.txt`],
             {}
@@ -214,7 +214,7 @@ class ResourceMonitoringStressTest {
         } catch (error) {
           // Expected for concurrency limits
           if (!(error as Error).message.includes('concurrency limit')) {
-            this.errors.push(
+            this?.errors?.push(
               `Job creation failed: ${(error as Error).message}`
             );
           }
@@ -231,12 +231,12 @@ class ResourceMonitoringStressTest {
         }
       }
 
-      this.isRunning = false;
-      clearInterval(jobCreationInterval);
+      this?.isRunning = false;
+      clearInterval(jobCreationInterval as any);
 
       // Wait for remaining jobs to complete
-      this.logger.info('Waiting for remaining jobs to complete...');
-      await this.waitForJobCompletion(30000); // 30 second timeout
+      this?.logger?.info('Waiting for remaining jobs to complete...');
+      await this.waitForJobCompletion(30000 as any); // 30 second timeout
     } finally {
       await this.cleanup();
     }
@@ -248,28 +248,28 @@ class ResourceMonitoringStressTest {
    * Run high load stress test
    */
   async runHighLoadTest(): Promise<StressTestResults> {
-    this.logger.info('Starting high load stress test');
+    this?.logger?.info('Starting high load stress test');
 
-    this.startTime = Date.now();
-    this.isRunning = true;
-    this.snapshots = [];
-    this.errors = [];
+    this?.startTime = Date.now();
+    this?.isRunning = true;
+    this?.snapshots = [];
+    this?.errors = [];
 
     try {
       // Phase 1: Rapid job creation
-      this.logger.info('Phase 1: Rapid job creation');
+      this?.logger?.info('Phase 1: Rapid job creation');
       const rapidJobs = [];
       for (let i = 0; i < 100; i++) {
         try {
-          const jobId = await this.orchestrator.executeInBackground(
+          const jobId = await this?.orchestrator?.executeInBackground(
             'store',
             [`rapid-${i}.txt`],
             {}
           );
-          rapidJobs.push(jobId);
+          rapidJobs.push(jobId as any);
         } catch (error) {
           if (!(error as Error).message.includes('concurrency limit')) {
-            this.errors.push(
+            this?.errors?.push(
               `Rapid job creation failed: ${(error as Error).message}`
             );
           }
@@ -282,19 +282,19 @@ class ResourceMonitoringStressTest {
       }
 
       // Phase 2: Monitor for 10 minutes under load
-      this.logger.info('Phase 2: Monitoring under load');
+      this?.logger?.info('Phase 2: Monitoring under load');
       const loadEndTime = Date.now() + 10 * 60 * 1000;
 
       const loadInterval = setInterval(async () => {
         if (Date.now() >= loadEndTime) {
-          clearInterval(loadInterval);
+          clearInterval(loadInterval as any);
           return;
         }
 
         // Create continuous load
         for (let i = 0; i < 5; i++) {
           try {
-            await this.orchestrator.executeInBackground('sync', [], {});
+            await this?.orchestrator?.executeInBackground('sync', [], {});
           } catch (error) {
             // Expected for concurrency limits
           }
@@ -305,13 +305,13 @@ class ResourceMonitoringStressTest {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      clearInterval(loadInterval);
+      clearInterval(loadInterval as any);
 
       // Phase 3: Cleanup and monitoring
-      this.logger.info('Phase 3: Cleanup phase');
-      await this.waitForJobCompletion(60000); // 1 minute timeout
+      this?.logger?.info('Phase 3: Cleanup phase');
+      await this.waitForJobCompletion(60000 as any); // 1 minute timeout
     } finally {
-      this.isRunning = false;
+      this?.isRunning = false;
       await this.cleanup();
     }
 
@@ -322,28 +322,28 @@ class ResourceMonitoringStressTest {
    * Run memory leak detection test
    */
   async runMemoryLeakTest(): Promise<StressTestResults> {
-    this.logger.info('Starting memory leak detection test');
+    this?.logger?.info('Starting memory leak detection test');
 
-    this.startTime = Date.now();
-    this.isRunning = true;
-    this.snapshots = [];
-    this.errors = [];
+    this?.startTime = Date.now();
+    this?.isRunning = true;
+    this?.snapshots = [];
+    this?.errors = [];
 
     try {
       // Run multiple cycles of job creation and completion
       for (let cycle = 0; cycle < 20; cycle++) {
-        this.logger.info(`Memory leak test cycle ${cycle + 1}/20`);
+        this?.logger?.info(`Memory leak test cycle ${cycle + 1}/20`);
 
         // Create batch of jobs
         const batchJobs = [];
         for (let i = 0; i < 20; i++) {
           try {
-            const jobId = await this.orchestrator.executeInBackground(
+            const jobId = await this?.orchestrator?.executeInBackground(
               'store',
               [`leak-test-${cycle}-${i}.txt`],
               {}
             );
-            batchJobs.push(jobId);
+            batchJobs.push(jobId as any);
           } catch (error) {
             // Expected for concurrency limits
           }
@@ -352,7 +352,7 @@ class ResourceMonitoringStressTest {
         // Wait for batch completion
         await Promise.all(
           batchJobs.map(jobId =>
-            this.orchestrator.waitForJob(jobId, 10000).catch(() => {})
+            this?.orchestrator?.waitForJob(jobId, 10000).catch(() => {})
           )
         );
 
@@ -365,7 +365,7 @@ class ResourceMonitoringStressTest {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } finally {
-      this.isRunning = false;
+      this?.isRunning = false;
       await this.cleanup();
     }
 
@@ -378,9 +378,9 @@ class ResourceMonitoringStressTest {
     while (Date.now() - startTime < timeoutMs) {
       const activeJobs = this.orchestrator
         .getJobStatus()
-        .filter(j => j.status === 'running' || j.status === 'pending');
+        .filter(j => j?.status === 'running' || j?.status === 'pending');
 
-      if (activeJobs.length === 0) {
+      if (activeJobs?.length === 0) {
         break;
       }
 
@@ -390,11 +390,11 @@ class ResourceMonitoringStressTest {
 
   private async cleanup(): Promise<void> {
     try {
-      await this.orchestrator.shutdown();
-      await this.resourceManager.disposeAll({ continueOnError: true });
+      await this?.orchestrator?.shutdown();
+      await this?.resourceManager?.disposeAll({ continueOnError: true });
     } catch (error) {
-      this.errors.push(
-        `Cleanup failed: ${error instanceof Error ? error.message : String(error)}`
+      this?.errors?.push(
+        `Cleanup failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -403,7 +403,7 @@ class ResourceMonitoringStressTest {
     const duration = Date.now() - this.startTime;
 
     // Analyze memory usage
-    const memoryUsages = this.snapshots.map(s => s.systemMemory.percentage);
+    const memoryUsages = this?.snapshots?.map(s => s?.systemMemory?.percentage);
     const maxMemoryUsage = Math.max(...memoryUsages);
     const avgMemoryUsage =
       memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length;
@@ -412,12 +412,12 @@ class ResourceMonitoringStressTest {
     const memoryLeakDetected = this.detectMemoryLeak();
 
     // Calculate job statistics
-    const lastSnapshot = this.snapshots[this.snapshots.length - 1];
+    const lastSnapshot = this?.snapshots?.[this?.snapshots?.length - 1];
     const totalJobs = lastSnapshot?.jobCount.total || 0;
     const successfulJobs = lastSnapshot?.jobCount.completed || 0;
     const failedJobs = lastSnapshot?.jobCount.failed || 0;
     const peakConcurrency = Math.max(
-      ...this.snapshots.map(s => s.jobCount.active)
+      ...this?.snapshots?.map(s => s?.jobCount?.active)
     );
 
     // Determine resource stability
@@ -430,7 +430,7 @@ class ResourceMonitoringStressTest {
       maxMemoryUsage,
       avgMemoryUsage,
       resourceCleanupSuccess:
-        this.errors.filter(e => e.includes('Cleanup failed')).length === 0,
+        this?.errors?.filter(e => e.includes('Cleanup failed')).length === 0,
       errors: this.errors,
       summary: {
         totalJobs,
@@ -443,17 +443,17 @@ class ResourceMonitoringStressTest {
   }
 
   private detectMemoryLeak(): boolean {
-    if (this.snapshots.length < 10) return false;
+    if (this?.snapshots?.length < 10) return false;
 
     // Take samples from beginning and end
-    const earlySnapshots = this.snapshots.slice(0, 5);
-    const lateSnapshots = this.snapshots.slice(-5);
+    const earlySnapshots = this?.snapshots?.slice(0, 5);
+    const lateSnapshots = this?.snapshots?.slice(-5);
 
     const earlyAvg =
-      earlySnapshots.reduce((sum, s) => sum + s.processMemory.heapUsed, 0) /
+      earlySnapshots.reduce((sum, s) => sum + s?.processMemory?.heapUsed, 0) /
       earlySnapshots.length;
     const lateAvg =
-      lateSnapshots.reduce((sum, s) => sum + s.processMemory.heapUsed, 0) /
+      lateSnapshots.reduce((sum, s) => sum + s?.processMemory?.heapUsed, 0) /
       lateSnapshots.length;
 
     // Consider it a leak if memory increased by more than 50% and > 50MB
@@ -464,11 +464,11 @@ class ResourceMonitoringStressTest {
   }
 
   private assessResourceStability(): 'STABLE' | 'UNSTABLE' | 'CRITICAL' {
-    if (this.snapshots.length === 0) return 'CRITICAL';
+    if (this.snapshots?.length === 0) return 'CRITICAL';
 
-    const memoryUsages = this.snapshots.map(s => s.systemMemory.percentage);
+    const memoryUsages = this?.snapshots?.map(s => s?.systemMemory?.percentage);
     const maxMemory = Math.max(...memoryUsages);
-    const variance = this.calculateVariance(memoryUsages);
+    const variance = this.calculateVariance(memoryUsages as any);
 
     if (maxMemory > 0.9 || variance > 0.1) return 'CRITICAL';
     if (maxMemory > 0.8 || variance > 0.05) return 'UNSTABLE';
@@ -487,9 +487,9 @@ class ResourceMonitoringStressTest {
   generateReport(results: StressTestResults): string {
     const report = [];
 
-    report.push('='.repeat(60));
+    report.push('='.repeat(60 as any));
     report.push('RESOURCE MONITORING STRESS TEST REPORT');
-    report.push('='.repeat(60));
+    report.push('='.repeat(60 as any));
     report.push('');
 
     // Summary
@@ -497,11 +497,11 @@ class ResourceMonitoringStressTest {
     report.push(
       `  Duration: ${Math.floor(results.duration / 60000)}m ${Math.floor((results.duration % 60000) / 1000)}s`
     );
-    report.push(`  Total Jobs: ${results.summary.totalJobs}`);
-    report.push(`  Successful Jobs: ${results.summary.successfulJobs}`);
-    report.push(`  Failed Jobs: ${results.summary.failedJobs}`);
-    report.push(`  Peak Concurrency: ${results.summary.peakConcurrency}`);
-    report.push(`  Resource Stability: ${results.summary.resourceStability}`);
+    report.push(`  Total Jobs: ${results?.summary?.totalJobs}`);
+    report.push(`  Successful Jobs: ${results?.summary?.successfulJobs}`);
+    report.push(`  Failed Jobs: ${results?.summary?.failedJobs}`);
+    report.push(`  Peak Concurrency: ${results?.summary?.peakConcurrency}`);
+    report.push(`  Resource Stability: ${results?.summary?.resourceStability}`);
     report.push('');
 
     // Memory Analysis
@@ -510,10 +510,10 @@ class ResourceMonitoringStressTest {
       `  Memory Leak Detected: ${results.memoryLeakDetected ? 'YES' : 'NO'}`
     );
     report.push(
-      `  Max Memory Usage: ${(results.maxMemoryUsage * 100).toFixed(1)}%`
+      `  Max Memory Usage: ${(results.maxMemoryUsage * 100).toFixed(1 as any)}%`
     );
     report.push(
-      `  Avg Memory Usage: ${(results.avgMemoryUsage * 100).toFixed(1)}%`
+      `  Avg Memory Usage: ${(results.avgMemoryUsage * 100).toFixed(1 as any)}%`
     );
     report.push(
       `  Resource Cleanup Success: ${results.resourceCleanupSuccess ? 'YES' : 'NO'}`
@@ -521,28 +521,28 @@ class ResourceMonitoringStressTest {
     report.push('');
 
     // Errors
-    if (results.errors.length > 0) {
+    if (results?.errors?.length > 0) {
       report.push('ERRORS:');
-      results.errors.slice(0, 10).forEach(error => {
+      results?.errors?.slice(0, 10).forEach(error => {
         report.push(`  ${error}`);
       });
-      if (results.errors.length > 10) {
-        report.push(`  ... and ${results.errors.length - 10} more errors`);
+      if (results?.errors?.length > 10) {
+        report.push(`  ... and ${results?.errors?.length - 10} more errors`);
       }
       report.push('');
     }
 
     // Performance Timeline
-    if (results.snapshots.length > 0) {
+    if (results?.snapshots?.length > 0) {
       report.push('PERFORMANCE TIMELINE (last 10 snapshots):');
-      const lastSnapshots = results.snapshots.slice(-10);
+      const lastSnapshots = results?.snapshots?.slice(-10);
       report.push('  Time     | Memory | Active | Total | Errors');
       report.push('  ---------|--------|--------|-------|-------');
       lastSnapshots.forEach(snapshot => {
         const time = new Date(snapshot.timestamp).toLocaleTimeString();
-        const memory = (snapshot.systemMemory.percentage * 100).toFixed(1);
+        const memory = (snapshot?.systemMemory?.percentage * 100).toFixed(1 as any);
         report.push(
-          `  ${time} | ${memory.padStart(5)}% | ${snapshot.jobCount.active.toString().padStart(6)} | ${snapshot.jobCount.total.toString().padStart(5)} | ${results.errors.length.toString().padStart(5)}`
+          `  ${time} | ${memory.padStart(5 as any)}% | ${snapshot?.jobCount?.active.toString().padStart(6 as any)} | ${snapshot?.jobCount?.total.toString().padStart(5 as any)} | ${results?.errors?.length.toString().padStart(5 as any)}`
         );
       });
     }
@@ -562,10 +562,10 @@ class ResourceMonitoringStressTest {
     fs.writeFileSync(reportFile, JSON.stringify(results, null, 2));
 
     // Save text report
-    fs.writeFileSync(reportText, this.generateReport(results));
+    fs.writeFileSync(reportText, this.generateReport(results as any));
 
-    this.logger.info(`Results saved to: ${reportFile}`);
-    this.logger.info(`Report saved to: ${reportText}`);
+    this?.logger?.info(`Results saved to: ${reportFile}`);
+    this?.logger?.info(`Report saved to: ${reportText}`);
 
     return reportFile;
   }
@@ -573,7 +573,7 @@ class ResourceMonitoringStressTest {
 
 // CLI interface
 async function main() {
-  const args = process.argv.slice(2);
+  const args = process?.argv?.slice(2 as any);
   const testType = args[0] || 'continuous';
   const duration = parseInt(args[1]) || 30;
 
@@ -583,7 +583,7 @@ async function main() {
   try {
     switch (testType) {
       case 'continuous':
-        results = await tester.runContinuousOperationTest(duration);
+        results = await tester.runContinuousOperationTest(duration as any);
         break;
       case 'load':
         results = await tester.runHighLoadTest();
@@ -593,22 +593,22 @@ async function main() {
         break;
       default:
         console.error('Unknown test type. Use: continuous, load, or memory');
-        process.exit(1);
+        process.exit(1 as any);
     }
 
-    console.log(tester.generateReport(results));
-    const resultsFile = tester.saveResults(results);
+    console.log(tester.generateReport(results as any));
+    const resultsFile = tester.saveResults(results as any);
 
     // Exit with error code if critical issues found
     if (
-      results.summary.resourceStability === 'CRITICAL' ||
+      results.summary?.resourceStability === 'CRITICAL' ||
       results.memoryLeakDetected
     ) {
-      process.exit(1);
+      process.exit(1 as any);
     }
   } catch (error) {
     console.error('Stress test failed:', error);
-    process.exit(1);
+    process.exit(1 as any);
   }
 }
 
@@ -617,6 +617,6 @@ export { ResourceMonitoringStressTest };
 export type { StressTestResults, ResourceSnapshot };
 
 // Run if called directly
-if (require.main === module) {
+if (require?.main === module) {
   main().catch(console.error);
 }

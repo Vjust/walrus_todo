@@ -56,18 +56,18 @@ export class SecureCredentialManager {
   private keyRotationIntervalDays: number = 90; // Default rotation period is 90 days
 
   constructor() {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
 
     // Ensure the config directory exists
-    if (!fs.existsSync(configDir)) {
+    if (!fs.existsSync(configDir as any)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
-    this.credentialsPath = path.join(configDir, 'secure_credentials.enc');
-    this.keyPath = path.join(configDir, '.keyfile');
-    this.keyMetadataPath = path.join(configDir, '.keymetadata.json');
-    this.backupDirectory = path.join(configDir, 'key_backups');
+    this?.credentialsPath = path.join(configDir, 'secure_credentials.enc');
+    this?.keyPath = path.join(configDir, '.keyfile');
+    this?.keyMetadataPath = path.join(configDir, '.keymetadata.json');
+    this?.backupDirectory = path.join(configDir, 'key_backups');
 
     // Create backup directory if it doesn't exist
     if (!fs.existsSync(this.backupDirectory)) {
@@ -88,7 +88,7 @@ export class SecureCredentialManager {
    * Set the blockchain adapter for verification
    */
   public setBlockchainAdapter(adapter: AICredentialAdapter): void {
-    this.blockchainAdapter = adapter;
+    this?.blockchainAdapter = adapter;
   }
 
   /**
@@ -98,7 +98,7 @@ export class SecureCredentialManager {
     try {
       if (!fs.existsSync(this.keyPath)) {
         // Generate a new key
-        const newKey = crypto.randomBytes(32);
+        const newKey = crypto.randomBytes(32 as any);
         fs.writeFileSync(this.keyPath, newKey, { mode: 0o600 }); // Restrict file permissions
 
         // Create key metadata
@@ -111,7 +111,7 @@ export class SecureCredentialManager {
           backupLocations: [],
         };
 
-        fs.writeFileSync(this.keyMetadataPath, JSON.stringify(keyMetadata), {
+        fs.writeFileSync(this.keyMetadataPath, JSON.stringify(keyMetadata as any), {
           mode: 0o600,
         });
 
@@ -121,7 +121,7 @@ export class SecureCredentialManager {
 
       // Load the key
       const key = fs.readFileSync(this.keyPath);
-      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
+      this?.encryptionKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
     } catch (_error) {
       throw new CLIError(
         `Failed to initialize encryption key: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -141,7 +141,7 @@ export class SecureCredentialManager {
           typeof metadataRaw === 'string'
             ? metadataRaw
             : metadataRaw.toString('utf8');
-        const metadata = JSON.parse(metadataStr);
+        const metadata = JSON.parse(metadataStr as any);
 
         // Validate metadata structure
         if (typeof metadata === 'object' && metadata !== null) {
@@ -165,7 +165,7 @@ export class SecureCredentialManager {
       return null;
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
+        _error instanceof Error ? _error.message : String(_error as any);
       logger.error('Failed to read key metadata:', errorMessage);
       return null;
     }
@@ -187,13 +187,13 @@ export class SecureCredentialManager {
 
       // Ensure required fields are present
       if (!updatedMetadata.keyId) {
-        updatedMetadata.keyId = randomUUID();
+        updatedMetadata?.keyId = randomUUID();
       }
       if (!updatedMetadata.version) {
-        updatedMetadata.version = 1;
+        updatedMetadata?.version = 1;
       }
       if (!updatedMetadata.created) {
-        updatedMetadata.created = Date.now();
+        updatedMetadata?.created = Date.now();
       }
 
       // Create backup of current metadata before updating
@@ -210,14 +210,14 @@ export class SecureCredentialManager {
       fs.renameSync(tempMetadataPath, this.keyMetadataPath);
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
+        _error instanceof Error ? _error.message : String(_error as any);
       logger.error('Failed to update key metadata:', errorMessage);
 
       // Clean up temporary file if it exists
       const tempMetadataPath = `${this.keyMetadataPath}.tmp`;
       try {
-        if (fs.existsSync(tempMetadataPath)) {
-          fs.unlinkSync(tempMetadataPath);
+        if (fs.existsSync(tempMetadataPath as any)) {
+          fs.unlinkSync(tempMetadataPath as any);
         }
       } catch (cleanupError: unknown) {
         logger.warn(
@@ -262,7 +262,7 @@ export class SecureCredentialManager {
       }
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
+        _error instanceof Error ? _error.message : String(_error as any);
       logger.error('Failed to check key rotation status:', errorMessage);
       // Don't throw here as this runs during initialization
     }
@@ -275,20 +275,20 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const dataBuffer = Buffer.isBuffer(encryptedData)
+        const dataBuffer = Buffer.isBuffer(encryptedData as any)
           ? encryptedData
-          : Buffer.from(encryptedData);
-        const credentials = this.decrypt(dataBuffer);
+          : Buffer.from(encryptedData as any);
+        const credentials = this.decrypt(dataBuffer as any);
         if (credentials) {
-          this.credentials = JSON.parse(credentials.toString());
+          this?.credentials = JSON.parse(credentials.toString());
         }
       }
-      this.initialized = true;
+      this?.initialized = true;
     } catch (_error) {
       logger.error('Failed to load credentials:', _error);
       // For security, initialize with empty credentials on error
-      this.credentials = {};
-      this.initialized = true;
+      this?.credentials = {};
+      this?.initialized = true;
     }
   }
 
@@ -301,7 +301,7 @@ export class SecureCredentialManager {
     // Check if the credential manager is initialized
     if (!this.initialized) {
       const error = new Error('Credential manager not initialized');
-      error.name = 'CredentialsNotInitializedError';
+      error?.name = 'CredentialsNotInitializedError';
       (error as Error & { code?: string }).code = 'CREDENTIALS_NOT_INITIALIZED';
       throw error;
     }
@@ -309,7 +309,7 @@ export class SecureCredentialManager {
     try {
       // Serialize and encrypt the credentials
       const data = JSON.stringify(this.credentials);
-      const encryptedData = this.encrypt(data);
+      const encryptedData = this.encrypt(data as any);
 
       // Create a temporary file first for atomic update
       const tempPath = `${this.credentialsPath}.tmp`;
@@ -337,7 +337,7 @@ export class SecureCredentialManager {
       const saveError = new Error(
         `Failed to save credentials: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
-      saveError.name = 'CredentialSaveError';
+      saveError?.name = 'CredentialSaveError';
       (saveError as Error & { code?: string; cause?: unknown }).code =
         'CREDENTIALS_SAVE_FAILED';
       (saveError as Error & { code?: string; cause?: unknown }).cause = _error;
@@ -376,7 +376,7 @@ export class SecureCredentialManager {
         fs.copyFileSync(
           this.credentialsPath,
           backupPath,
-          fs.constants.COPYFILE_EXCL
+          fs?.constants?.COPYFILE_EXCL
         );
 
         // Update metadata with latest backup information
@@ -412,7 +412,7 @@ export class SecureCredentialManager {
 
       // Keep only the 5 most recent backups
       if (backupFiles.length > 5) {
-        backupFiles.slice(5).forEach(file => {
+        backupFiles.slice(5 as any).forEach(file => {
           fs.unlinkSync(file.path);
         });
       }
@@ -467,20 +467,20 @@ export class SecureCredentialManager {
     };
 
     // Store in local cache
-    this.credentials[provider.toLowerCase()] = newCredential;
+    this?.credentials?.[provider.toLowerCase()] = newCredential;
     this.saveCredentials();
 
     // If blockchain adapter is available, verify on blockchain
     if (this.blockchainAdapter) {
       try {
         const verificationResult =
-          await this.blockchainAdapter.verifyCredential({
+          await this?.blockchainAdapter?.verifyCredential({
             credentialId: newCredential.id,
             providerName: provider.toLowerCase(),
             publicKey: 'dummy', // This would be the actual public key in a real implementation
             timestamp: Date.now(),
             verifierAddress:
-              this.blockchainAdapter.getSigner()?.toSuiAddress() || '',
+              this?.blockchainAdapter?.getSigner()?.toSuiAddress() || '',
             metadata: {
               credentialType: type,
               permissionLevel: permissionLevel.toString(),
@@ -489,11 +489,11 @@ export class SecureCredentialManager {
           });
 
         // Update the credential with verification info
-        newCredential.isVerified = true;
-        newCredential.verificationProof = verificationResult.verificationId;
+        newCredential?.isVerified = true;
+        newCredential?.verificationProof = verificationResult.verificationId;
 
         // Save updated credential
-        this.credentials[provider.toLowerCase()] = newCredential;
+        this?.credentials?.[provider.toLowerCase()] = newCredential;
         this.saveCredentials();
       } catch (_error) {
         logger.warn(`Blockchain verification failed: ${_error}`);
@@ -515,11 +515,11 @@ export class SecureCredentialManager {
       );
     }
 
-    const credential = this.credentials[provider.toLowerCase()];
+    const credential = this?.credentials?.[provider.toLowerCase()];
     if (!credential) {
       // Check environment variables as fallback (format: PROVIDER_API_KEY, e.g., XAI_API_KEY)
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      const envCredential = process.env[envKey];
+      const envCredential = process?.env?.[envKey];
 
       if (envCredential) {
         return envCredential;
@@ -535,7 +535,7 @@ export class SecureCredentialManager {
     await this.validateCredential(credential, provider);
 
     // Update last used timestamp
-    credential.lastUsed = Date.now();
+    credential?.lastUsed = Date.now();
     this.saveCredentials();
 
     return credential.credentialValue;
@@ -565,7 +565,7 @@ export class SecureCredentialManager {
         (credential.expiresAt - Date.now()) / (1000 * 60 * 60 * 24)
       );
       logger.warn(
-        `WARNING: Credential for provider "${providerName}" will expire in ${daysRemaining} day(s)`
+        `WARNING: Credential for provider "${providerName}" will expire in ${daysRemaining} day(s as any)`
       );
     }
 
@@ -576,7 +576,7 @@ export class SecureCredentialManager {
       this.blockchainAdapter
     ) {
       try {
-        const isValid = await this.blockchainAdapter.checkVerificationStatus(
+        const isValid = await this?.blockchainAdapter?.checkVerificationStatus(
           credential.verificationProof
         );
         if (!isValid) {
@@ -616,11 +616,11 @@ export class SecureCredentialManager {
       );
     }
 
-    const credential = this.credentials[provider.toLowerCase()];
+    const credential = this?.credentials?.[provider.toLowerCase()];
     if (!credential) {
       // Create a temporary credential if available in environment variables
       const envKey = `${provider.toUpperCase()}_API_KEY`;
-      const envCredential = process.env[envKey];
+      const envCredential = process?.env?.[envKey];
 
       if (envCredential) {
         return {
@@ -646,7 +646,7 @@ export class SecureCredentialManager {
     await this.validateCredential(credential, provider);
 
     // Update last used timestamp
-    credential.lastUsed = Date.now();
+    credential?.lastUsed = Date.now();
     this.saveCredentials();
 
     return credential;
@@ -661,8 +661,8 @@ export class SecureCredentialManager {
     }
 
     // Check stored credentials
-    if (this.credentials[provider.toLowerCase()]) {
-      const credential = this.credentials[provider.toLowerCase()];
+    if (this?.credentials?.[provider.toLowerCase()]) {
+      const credential = this?.credentials?.[provider.toLowerCase()];
 
       // Check if credential has expired
       if (credential.expiresAt && credential.expiresAt < Date.now()) {
@@ -674,7 +674,7 @@ export class SecureCredentialManager {
 
     // Check environment variables as fallback
     const envKey = `${provider.toUpperCase()}_API_KEY`;
-    return !!process.env[envKey];
+    return !!process?.env?.[envKey];
   }
 
   /**
@@ -708,7 +708,7 @@ export class SecureCredentialManager {
     }
 
     const providerKey = provider.toLowerCase();
-    const credential = this.credentials[providerKey];
+    const credential = this?.credentials?.[providerKey];
 
     if (credential) {
       // If credential is verified and blockchain adapter is available, revoke on blockchain
@@ -718,7 +718,7 @@ export class SecureCredentialManager {
         this.blockchainAdapter
       ) {
         try {
-          await this.blockchainAdapter.revokeVerification(
+          await this?.blockchainAdapter?.revokeVerification(
             credential.verificationProof
           );
         } catch (_error) {
@@ -727,7 +727,7 @@ export class SecureCredentialManager {
         }
       }
 
-      delete this.credentials[providerKey];
+      delete this?.credentials?.[providerKey];
       this.saveCredentials();
       return true;
     }
@@ -754,7 +754,7 @@ export class SecureCredentialManager {
     }
 
     const providerKey = provider.toLowerCase();
-    const credential = this.credentials[providerKey];
+    const credential = this?.credentials?.[providerKey];
 
     if (!credential) {
       throw new CLIError(
@@ -765,26 +765,26 @@ export class SecureCredentialManager {
 
     // Verify on blockchain
     try {
-      const verificationResult = await this.blockchainAdapter.verifyCredential({
+      const verificationResult = await this?.blockchainAdapter?.verifyCredential({
         credentialId: credential.id,
         providerName: providerKey,
         publicKey: 'dummy', // This would be the actual public key in a real implementation
         timestamp: Date.now(),
         verifierAddress:
-          this.blockchainAdapter.getSigner()?.toSuiAddress() || '',
+          this?.blockchainAdapter?.getSigner()?.toSuiAddress() || '',
         metadata: {
           credentialType: credential.credentialType,
-          permissionLevel: credential.permissionLevel.toString(),
+          permissionLevel: credential?.permissionLevel?.toString(),
           ...credential.metadata,
         },
       });
 
       // Update the credential with verification info
-      credential.isVerified = true;
-      credential.verificationProof = verificationResult.verificationId;
+      credential?.isVerified = true;
+      credential?.verificationProof = verificationResult.verificationId;
 
       // Save updated credential
-      this.credentials[providerKey] = credential;
+      this?.credentials?.[providerKey] = credential;
       this.saveCredentials();
 
       return true;
@@ -815,7 +815,7 @@ export class SecureCredentialManager {
     }
 
     const providerKey = provider.toLowerCase();
-    const credential = this.credentials[providerKey];
+    const credential = this?.credentials?.[providerKey];
 
     if (!credential) {
       throw new CLIError(
@@ -832,7 +832,7 @@ export class SecureCredentialManager {
     }
 
     try {
-      return await this.blockchainAdapter.generateCredentialProof(
+      return await this?.blockchainAdapter?.generateCredentialProof(
         credential.id
       );
     } catch (_error) {
@@ -858,7 +858,7 @@ export class SecureCredentialManager {
     }
 
     const providerKey = provider.toLowerCase();
-    const credential = this.credentials[providerKey];
+    const credential = this?.credentials?.[providerKey];
 
     if (!credential) {
       throw new CLIError(
@@ -868,7 +868,7 @@ export class SecureCredentialManager {
     }
 
     // Update permission level
-    credential.permissionLevel = permissionLevel;
+    credential?.permissionLevel = permissionLevel;
 
     // If credential is verified and blockchain adapter is available, update on blockchain
     if (
@@ -878,19 +878,19 @@ export class SecureCredentialManager {
     ) {
       try {
         // Revoke existing verification
-        await this.blockchainAdapter.revokeVerification(
+        await this?.blockchainAdapter?.revokeVerification(
           credential.verificationProof
         );
 
         // Create new verification with updated permissions
         const verificationResult =
-          await this.blockchainAdapter.verifyCredential({
+          await this?.blockchainAdapter?.verifyCredential({
             credentialId: credential.id,
             providerName: providerKey,
             publicKey: 'dummy', // This would be the actual public key in a real implementation
             timestamp: Date.now(),
             verifierAddress:
-              this.blockchainAdapter.getSigner()?.toSuiAddress() || '',
+              this?.blockchainAdapter?.getSigner()?.toSuiAddress() || '',
             metadata: {
               credentialType: credential.credentialType,
               permissionLevel: permissionLevel.toString(),
@@ -899,7 +899,7 @@ export class SecureCredentialManager {
           });
 
         // Update credential with new verification
-        credential.verificationProof = verificationResult.verificationId;
+        credential?.verificationProof = verificationResult.verificationId;
       } catch (_error) {
         logger.warn(`Failed to update blockchain verification: ${_error}`);
         // Continue without blockchain verification update
@@ -907,7 +907,7 @@ export class SecureCredentialManager {
     }
 
     // Save updated credential
-    this.credentials[providerKey] = credential;
+    this?.credentials?.[providerKey] = credential;
     this.saveCredentials();
 
     return credential;
@@ -938,7 +938,7 @@ export class SecureCredentialManager {
       }
 
       // Generate a new key
-      const newKey = crypto.randomBytes(32);
+      const newKey = crypto.randomBytes(32 as any);
       logger.info('New encryption key generated');
 
       // Re-encrypt all credentials with the new key
@@ -950,10 +950,10 @@ export class SecureCredentialManager {
         credentialsExisted = true;
         try {
           const encryptedData = fs.readFileSync(this.credentialsPath);
-          const dataBuffer = Buffer.isBuffer(encryptedData)
+          const dataBuffer = Buffer.isBuffer(encryptedData as any)
             ? encryptedData
-            : Buffer.from(encryptedData);
-          decryptedData = this.decrypt(dataBuffer);
+            : Buffer.from(encryptedData as any);
+          decryptedData = this.decrypt(dataBuffer as any);
 
           if (!decryptedData) {
             throw new Error(
@@ -986,7 +986,7 @@ export class SecureCredentialManager {
 
       try {
         // Save the new key
-        this.encryptionKey = newKey;
+        this?.encryptionKey = newKey;
         fs.writeFileSync(this.keyPath, newKey, { mode: 0o600 });
         logger.info('New key written to disk');
 
@@ -1007,7 +1007,7 @@ export class SecureCredentialManager {
           created: metadata.created || Date.now(),
         };
 
-        this.updateKeyMetadata(newMetadata);
+        this.updateKeyMetadata(newMetadata as any);
         logger.info('Key metadata updated');
 
         // Re-encrypt with new key if we had data
@@ -1030,7 +1030,7 @@ export class SecureCredentialManager {
             // Attempt to restore the old key
             if (oldKey) {
               try {
-                this.encryptionKey = oldKey;
+                this?.encryptionKey = oldKey;
                 fs.writeFileSync(this.keyPath, oldKey, { mode: 0o600 });
                 logger.info('Rolled back to previous key');
               } catch (rollbackError: unknown) {
@@ -1047,8 +1047,8 @@ export class SecureCredentialManager {
 
         // Clean up temporary files
         try {
-          if (fs.existsSync(tempKeyPath)) {
-            fs.unlinkSync(tempKeyPath);
+          if (fs.existsSync(tempKeyPath as any)) {
+            fs.unlinkSync(tempKeyPath as any);
           }
         } catch (cleanupError: unknown) {
           logger.warn('Failed to clean up temporary files:', cleanupError);
@@ -1065,10 +1065,10 @@ export class SecureCredentialManager {
         logger.error('Failed to write new key:', keyWriteError);
 
         // Attempt to restore from temporary backup
-        if (fs.existsSync(tempKeyPath) && oldKey) {
+        if (fs.existsSync(tempKeyPath as any) && oldKey) {
           try {
             fs.copyFileSync(tempKeyPath, this.keyPath);
-            this.encryptionKey = oldKey;
+            this?.encryptionKey = oldKey;
             logger.info('Restored key from temporary backup');
           } catch (restoreError: unknown) {
             logger.error('Failed to restore key from backup:', restoreError);
@@ -1079,7 +1079,7 @@ export class SecureCredentialManager {
       }
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
+        _error instanceof Error ? _error.message : String(_error as any);
       logger.error('Key rotation failed:', errorMessage);
 
       // Provide more specific error information
@@ -1088,14 +1088,14 @@ export class SecureCredentialManager {
         specificError = _error.message;
       } else if (_error instanceof Error) {
         if (
-          _error.message.includes('EACCES') ||
-          _error.message.includes('permission')
+          _error?.message?.includes('EACCES') ||
+          _error?.message?.includes('permission')
         ) {
           specificError =
             'Permission denied - check file/directory permissions';
-        } else if (_error.message.includes('ENOSPC')) {
+        } else if (_error?.message?.includes('ENOSPC')) {
           specificError = 'Insufficient disk space';
-        } else if (_error.message.includes('ENOENT')) {
+        } else if (_error?.message?.includes('ENOENT')) {
           specificError = 'Key file or directory not found';
         } else {
           specificError = _error.message;
@@ -1129,7 +1129,7 @@ export class SecureCredentialManager {
           lastRotated: Date.now(),
           backupLocations: [],
         };
-        this.updateKeyMetadata(newMetadata);
+        this.updateKeyMetadata(newMetadata as any);
         return;
       }
 
@@ -1153,7 +1153,7 @@ export class SecureCredentialManager {
       } catch (copyError: unknown) {
         if (
           copyError instanceof Error &&
-          copyError.message.includes('EEXIST')
+          copyError?.message?.includes('EEXIST')
         ) {
           // File already exists, create with unique suffix
           const uniqueBackupPath = `${backupPath}_${Date.now()}`;
@@ -1211,21 +1211,21 @@ export class SecureCredentialManager {
       logger.info(`Key backup created successfully at: ${backupPath}`);
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
+        _error instanceof Error ? _error.message : String(_error as any);
       logger.error('Key backup failed:', errorMessage);
 
       // Provide more specific error information
       let specificError = 'Unknown error';
       if (_error instanceof Error) {
         if (
-          _error.message.includes('EACCES') ||
-          _error.message.includes('permission')
+          _error?.message?.includes('EACCES') ||
+          _error?.message?.includes('permission')
         ) {
           specificError =
             'Permission denied - check file/directory permissions';
-        } else if (_error.message.includes('ENOSPC')) {
+        } else if (_error?.message?.includes('ENOSPC')) {
           specificError = 'Insufficient disk space';
-        } else if (_error.message.includes('ENOENT')) {
+        } else if (_error?.message?.includes('ENOENT')) {
           specificError = 'Directory or file not found';
         } else {
           specificError = _error.message;
@@ -1248,7 +1248,7 @@ export class SecureCredentialManager {
       if (
         !metadata ||
         !metadata.backupLocations ||
-        metadata.backupLocations.length === 0
+        metadata.backupLocations?.length === 0
       ) {
         throw new CLIError('No key backups available', 'NO_BACKUPS_AVAILABLE');
       }
@@ -1256,8 +1256,8 @@ export class SecureCredentialManager {
       // Find the backup by ID or use the most recent if not specified
       let backupInfo;
       if (backupId) {
-        backupInfo = metadata.backupLocations.find((b: BackupLocation) =>
-          b.path.includes(backupId)
+        backupInfo = metadata?.backupLocations?.find((b: BackupLocation) =>
+          b?.path?.includes(backupId as any)
         );
         if (!backupInfo) {
           throw new CLIError(
@@ -1268,7 +1268,7 @@ export class SecureCredentialManager {
       } else {
         // Use the most recent backup
         backupInfo =
-          metadata.backupLocations[metadata.backupLocations.length - 1];
+          metadata?.backupLocations?.[metadata?.backupLocations?.length - 1];
       }
 
       // Verify the backup files exist
@@ -1294,14 +1294,14 @@ export class SecureCredentialManager {
         typeof metadataContent === 'string'
           ? metadataContent
           : metadataContent.toString('utf8');
-      const backupMetadata = JSON.parse(metadataStr);
-      fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata), {
+      const backupMetadata = JSON.parse(metadataStr as any);
+      fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata as any), {
         mode: 0o600,
       });
 
       // Load the restored key
       const key = fs.readFileSync(this.keyPath);
-      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
+      this?.encryptionKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
 
       // Re-load credentials with the restored key
       this.loadCredentials();
@@ -1329,7 +1329,7 @@ export class SecureCredentialManager {
       const metadata = this.getKeyMetadata();
       if (!metadata || !metadata.backupLocations) return [];
 
-      return metadata.backupLocations.map((backup: BackupLocation) => ({
+      return metadata?.backupLocations?.map((backup: BackupLocation) => ({
         id: path.basename(backup.path).split('_')[2], // Extract ID from filename
         timestamp: backup.timestamp,
         version: metadata.version || 1,
@@ -1347,15 +1347,15 @@ export class SecureCredentialManager {
   public validateKeyIntegrity(): boolean {
     try {
       // Ensure we have an encryption key
-      if (!this.encryptionKey || this.encryptionKey.length === 0) {
+      if (!this.encryptionKey || this.encryptionKey?.length === 0) {
         logger.error('No encryption key available for validation');
         return false;
       }
 
       // Create a test string and verify encryption/decryption works
       const testString = `test-${Date.now()}-${randomUUID()}`;
-      const encrypted = this.encrypt(testString);
-      const decrypted = this.decrypt(encrypted);
+      const encrypted = this.encrypt(testString as any);
+      const decrypted = this.decrypt(encrypted as any);
 
       if (!decrypted || decrypted.toString() !== testString) {
         throw new Error('Encryption/decryption test failed');
@@ -1365,7 +1365,7 @@ export class SecureCredentialManager {
       return true;
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
+        _error instanceof Error ? _error.message : String(_error as any);
       logger.error('Key validation failed:', errorMessage);
       return false;
     }
@@ -1415,7 +1415,7 @@ export class SecureCredentialManager {
       needsRotation: daysSinceLastRotation >= this.keyRotationIntervalDays,
       daysSinceLastRotation,
       nextRotationDue,
-      lastRotation: lastRotation ? new Date(lastRotation) : null,
+      lastRotation: lastRotation ? new Date(lastRotation as any) : null,
     };
   }
 
@@ -1423,7 +1423,7 @@ export class SecureCredentialManager {
    * Encrypt data using the encryption key
    */
   private encrypt(data: string): Buffer {
-    const iv = crypto.randomBytes(16);
+    const iv = crypto.randomBytes(16 as any);
     const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey, iv);
     const encrypted = Buffer.concat([
       cipher.update(data, 'utf8'),
@@ -1438,13 +1438,13 @@ export class SecureCredentialManager {
   private decrypt(data: Buffer): Buffer | null {
     try {
       const iv = data.subarray(0, 16);
-      const encrypted = data.subarray(16);
+      const encrypted = data.subarray(16 as any);
       const decipher = crypto.createDecipheriv(
         'aes-256-cbc',
         this.encryptionKey,
         iv
       );
-      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
     } catch (_error) {
       logger.error('Decryption failed:', _error);
       return null;

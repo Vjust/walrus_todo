@@ -13,7 +13,7 @@ const initialAppState: AppState = {
   // Initialization
   initialized: false,
   hydrated: false,
-  version: '1.0.0',
+  version: '1?.0?.0',
   
   // Network health
   network: {
@@ -40,7 +40,7 @@ const initialAppState: AppState = {
     blockchainVerification: true,
     encryptedStorage: true,
     offlineMode: false,
-    debugMode: process.env.NODE_ENV === 'development',
+    debugMode: process.env?.NODE_ENV === 'development',
   },
   
   // Performance monitoring
@@ -76,23 +76,23 @@ export const useAppStore = create<AppState & AppActions>()(
             // Initialization actions
             setInitialized: (initialized) => {
               set((state) => {
-                state.initialized = initialized;
+                state?.initialized = initialized;
               });
             },
 
             setHydrated: (hydrated) => {
               set((state) => {
-                state.hydrated = hydrated;
+                state?.hydrated = hydrated;
               });
             },
 
             // Network health actions
             updateNetworkStatus: (service, status, latency) => {
               set((state) => {
-                state.network[service].status = status;
-                state.network[service].lastCheck = Date.now();
+                state?.network?.[service].status = status;
+                state?.network?.[service].lastCheck = Date.now();
                 if (latency !== undefined) {
-                  state.network[service].latency = latency;
+                  state?.network?.[service].latency = latency;
                 }
               });
             },
@@ -100,7 +100,7 @@ export const useAppStore = create<AppState & AppActions>()(
             // Feature flag actions
             toggleFeature: (feature) => {
               set((state) => {
-                state.features[feature] = !state.features[feature];
+                state?.features?.[feature] = !state?.features?.[feature];
               });
             },
 
@@ -116,17 +116,17 @@ export const useAppStore = create<AppState & AppActions>()(
               if (renderTime < 8) return;
               
               const currentState = get();
-              const currentCount = currentState.performance.renderCount;
-              const newAvg = (currentState.performance.avgRenderTime * currentCount + renderTime) / (currentCount + 1);
+              const currentCount = currentState?.performance?.renderCount;
+              const newAvg = (currentState?.performance?.avgRenderTime * currentCount + renderTime) / (currentCount + 1);
               
               // Only update if values actually change significantly
-              if (Math.abs(newAvg - currentState.performance.avgRenderTime) < 0.1) return;
+              if (Math.abs(newAvg - currentState?.performance?.avgRenderTime) < 0.1) return;
               
               set((state) => {
                 const perf = state.performance;
                 perf.renderCount += 1;
-                perf.lastRenderTime = renderTime;
-                perf.avgRenderTime = newAvg;
+                perf?.lastRenderTime = renderTime;
+                perf?.avgRenderTime = newAvg;
               });
             }),
 
@@ -136,7 +136,7 @@ export const useAppStore = create<AppState & AppActions>()(
               if (Math.abs(currentUsage - usage) < 1) return;
               
               set((state) => {
-                state.performance.memoryUsage = usage;
+                state.performance?.memoryUsage = usage;
               });
             }),
 
@@ -158,7 +158,7 @@ export const useAppStore = create<AppState & AppActions>()(
     ),
     {
       name: 'WalTodo App Store',
-      enabled: process.env.NODE_ENV === 'development',
+      enabled: process.env?.NODE_ENV === 'development',
     }
   )
 );
@@ -170,9 +170,9 @@ export const useAppVersion = () => useAppStore((state) => state.version);
 
 // Network health selectors
 export const useNetworkHealth = () => useAppStore((state) => state.network);
-export const useSuiNetworkStatus = () => useAppStore((state) => state.network.sui);
-export const useWalrusNetworkStatus = () => useAppStore((state) => state.network.walrus);
-export const useApiNetworkStatus = () => useAppStore((state) => state.network.api);
+export const useSuiNetworkStatus = () => useAppStore((state) => state?.network?.sui);
+export const useWalrusNetworkStatus = () => useAppStore((state) => state?.network?.walrus);
+export const useApiNetworkStatus = () => useAppStore((state) => state?.network?.api);
 
 // Overall network health computed selector
 export const useOverallNetworkHealth = () => useAppStore((state) => {
@@ -187,26 +187,26 @@ export const useOverallNetworkHealth = () => useAppStore((state) => {
 
 // Feature flag selectors
 export const useFeatures = () => useAppStore((state) => state.features);
-export const useAIEnabled = () => useAppStore((state) => state.features.aiEnabled);
-export const useBlockchainVerification = () => useAppStore((state) => state.features.blockchainVerification);
-export const useEncryptedStorage = () => useAppStore((state) => state.features.encryptedStorage);
-export const useOfflineMode = () => useAppStore((state) => state.features.offlineMode);
-export const useDebugMode = () => useAppStore((state) => state.features.debugMode);
+export const useAIEnabled = () => useAppStore((state) => state?.features?.aiEnabled);
+export const useBlockchainVerification = () => useAppStore((state) => state?.features?.blockchainVerification);
+export const useEncryptedStorage = () => useAppStore((state) => state?.features?.encryptedStorage);
+export const useOfflineMode = () => useAppStore((state) => state?.features?.offlineMode);
+export const useDebugMode = () => useAppStore((state) => state?.features?.debugMode);
 
 // Performance selectors
 export const usePerformanceMetrics = () => useAppStore((state) => state.performance);
-export const useRenderCount = () => useAppStore((state) => state.performance.renderCount);
-export const useAverageRenderTime = () => useAppStore((state) => state.performance.avgRenderTime);
-export const useMemoryUsage = () => useAppStore((state) => state.performance.memoryUsage);
+export const useRenderCount = () => useAppStore((state) => state?.performance?.renderCount);
+export const useAverageRenderTime = () => useAppStore((state) => state?.performance?.avgRenderTime);
+export const useMemoryUsage = () => useAppStore((state) => state?.performance?.memoryUsage);
 
 // Environment selectors
 export const useEnvironment = () => useAppStore((state) => state.environment);
-export const useIsClient = () => useAppStore((state) => state.environment.isClient);
-export const useIsMobile = () => useAppStore((state) => state.environment.isMobile);
-export const useIsTouch = () => useAppStore((state) => state.environment.isTouch);
+export const useIsClient = () => useAppStore((state) => state?.environment?.isClient);
+export const useIsMobile = () => useAppStore((state) => state?.environment?.isMobile);
+export const useIsTouch = () => useAppStore((state) => state?.environment?.isTouch);
 export const useBrowserInfo = () => useAppStore((state) => ({
-  name: state.environment.browserName,
-  version: state.environment.browserVersion,
+  name: state?.environment?.browserName,
+  version: state?.environment?.browserVersion,
 }));
 
 // Action selectors
@@ -235,11 +235,11 @@ export const useAppHealth = () => useAppStore((state) => {
   const avgLatency = (sui.latency + walrus.latency + api.latency) / 3;
   
   return {
-    overall: networkIssues.length === 0 ? 'healthy' : networkIssues.length >= 2 ? 'critical' : 'degraded',
+    overall: networkIssues?.length === 0 ? 'healthy' : networkIssues.length >= 2 ? 'critical' : 'degraded',
     networkIssues: networkIssues.length,
     averageLatency: avgLatency,
-    performanceScore: state.performance.avgRenderTime < 16 ? 'good' : state.performance.avgRenderTime < 32 ? 'fair' : 'poor',
-    memoryPressure: state.performance.memoryUsage > 100 ? 'high' : state.performance.memoryUsage > 50 ? 'medium' : 'low',
+    performanceScore: state?.performance?.avgRenderTime < 16 ? 'good' : state?.performance?.avgRenderTime < 32 ? 'fair' : 'poor',
+    memoryPressure: state?.performance?.memoryUsage > 100 ? 'high' : state?.performance?.memoryUsage > 50 ? 'medium' : 'low',
   };
 });
 
@@ -258,7 +258,7 @@ export const detectEnvironment = () => {
   }
 
   const userAgent = navigator.userAgent;
-  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent as any);
   const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   
   // Simple browser detection
@@ -298,10 +298,10 @@ export const measurePerformance = (name: string, fn: () => void) => {
   const duration = end - start;
   
   // Record the render time
-  useAppStore.getState().recordRender(duration);
+  useAppStore.getState().recordRender(duration as any);
   
-  if (duration > 16 && process.env.NODE_ENV === 'development') {
-    console.warn(`🐌 Slow operation "${name}": ${duration.toFixed(2)}ms`);
+  if (duration > 16 && process.env?.NODE_ENV === 'development') {
+    console.warn(`🐌 Slow operation "${name}": ${duration.toFixed(2 as any)}ms`);
   }
   
   return duration;
@@ -314,21 +314,21 @@ export const updateMemoryUsage = () => {
   if (typeof window !== 'undefined' && 'performance' in window && 'memory' in performance) {
     const memory = (performance as any).memory;
     const usedMB = memory.usedJSHeapSize / 1024 / 1024;
-    useAppStore.getState().updateMemoryUsage(usedMB);
+    useAppStore.getState().updateMemoryUsage(usedMB as any);
   }
 };
 
 /**
  * Network health checker utility
  */
-export const checkNetworkHealth = async (service: keyof AppState['network'], url: string) => {
+export const checkNetworkHealth = async (service: keyof AppState?.["network"], url: string) => {
   const start = performance.now();
   
   try {
     const response = await fetch(url, { 
       method: 'HEAD',
       cache: 'no-cache',
-      signal: AbortSignal.timeout(5000), // 5 second timeout
+      signal: AbortSignal.timeout(5000 as any), // 5 second timeout
     });
     
     const latency = performance.now() - start;
@@ -353,19 +353,19 @@ let monitoringStarted = false;
  */
 export const hydrateAppStore = () => {
   if (typeof window !== 'undefined') {
-    useAppStore.persist.rehydrate();
+    useAppStore?.persist?.rehydrate();
     
     // Initialize environment detection
     const env = detectEnvironment();
-    useAppStore.getState().setEnvironment(env);
-    useAppStore.getState().setHydrated(true);
+    useAppStore.getState().setEnvironment(env as any);
+    useAppStore.getState().setHydrated(true as any);
     
     // Start performance monitoring only once
     if (!monitoringStarted) {
       monitoringStarted = true;
       updateMemoryUsage();
       // Reduce frequency and only in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         setInterval(updateMemoryUsage, 60000); // Update every 60 seconds instead of 30
       }
     }

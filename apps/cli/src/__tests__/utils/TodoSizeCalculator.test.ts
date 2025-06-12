@@ -28,16 +28,16 @@ describe('TodoSizeCalculator', () => {
 
   describe('calculateTodoSize', () => {
     it('should calculate the correct size of a todo', () => {
-      const size = TodoSizeCalculator.calculateTodoSize(sampleTodo);
+      const size = TodoSizeCalculator.calculateTodoSize(sampleTodo as any);
 
       // Serialized size should be > 0 and reasonable for this small todo
-      expect(size).toBeGreaterThan(0);
+      expect(size as any).toBeGreaterThan(0 as any);
 
       // Calculate actual size without buffer for comparison
       const unbufferedSize = TodoSizeCalculator.calculateTodoSize(sampleTodo, {
         includeBuffer: false,
       });
-      expect(unbufferedSize).toBeLessThan(size);
+      expect(unbufferedSize as any).toBeLessThan(size as any);
     });
 
     it('should add the correct buffer amount', () => {
@@ -51,7 +51,7 @@ describe('TodoSizeCalculator', () => {
 
       // The buffer should be at least 20% of the exact size plus metadata
       const minExpectedSize = exactSize * 1.2 + 500;
-      expect(bufferedSize).toBeGreaterThanOrEqual(minExpectedSize);
+      expect(bufferedSize as any).toBeGreaterThanOrEqual(minExpectedSize as any);
     });
   });
 
@@ -62,22 +62,22 @@ describe('TodoSizeCalculator', () => {
         description: 'Description field only',
       };
 
-      const estimatedSize = TodoSizeCalculator.estimateTodoSize(partialTodo);
-      expect(estimatedSize).toBeGreaterThan(0);
+      const estimatedSize = TodoSizeCalculator.estimateTodoSize(partialTodo as any);
+      expect(estimatedSize as any).toBeGreaterThan(0 as any);
 
       // Full todo should be larger than partial todo
-      const fullEstimate = TodoSizeCalculator.estimateTodoSize(sampleTodo);
-      expect(fullEstimate).toBeGreaterThan(estimatedSize);
+      const fullEstimate = TodoSizeCalculator.estimateTodoSize(sampleTodo as any);
+      expect(fullEstimate as any).toBeGreaterThan(estimatedSize as any);
     });
   });
 
   describe('calculateTodoListSize', () => {
     it('should calculate the correct size of a todo list', () => {
-      const size = TodoSizeCalculator.calculateTodoListSize(sampleTodoList);
+      const size = TodoSizeCalculator.calculateTodoListSize(sampleTodoList as any);
 
       // Size should be greater than the size of a single todo
-      const todoSize = TodoSizeCalculator.calculateTodoSize(sampleTodo);
-      expect(size).toBeGreaterThan(todoSize);
+      const todoSize = TodoSizeCalculator.calculateTodoSize(sampleTodo as any);
+      expect(size as any).toBeGreaterThan(todoSize as any);
     });
   });
 
@@ -89,7 +89,7 @@ describe('TodoSizeCalculator', () => {
         { ...sampleTodo, id: '3', title: 'Third Todo' },
       ];
 
-      const optimalSize = TodoSizeCalculator.calculateOptimalStorageSize(todos);
+      const optimalSize = TodoSizeCalculator.calculateOptimalStorageSize(todos as any);
 
       // Should be larger than sum of individual todos due to buffers
       const individualSizes = todos
@@ -98,7 +98,7 @@ describe('TodoSizeCalculator', () => {
         )
         .reduce((sum, size) => sum + size, 0);
 
-      expect(optimalSize).toBeGreaterThan(individualSizes);
+      expect(optimalSize as any).toBeGreaterThan(individualSizes as any);
     });
 
     it('should respect minimum size parameter', () => {
@@ -108,7 +108,7 @@ describe('TodoSizeCalculator', () => {
         { minSize }
       );
 
-      expect(optimalSize).toBeGreaterThanOrEqual(minSize);
+      expect(optimalSize as any).toBeGreaterThanOrEqual(minSize as any);
     });
   });
 
@@ -122,7 +122,7 @@ describe('TodoSizeCalculator', () => {
         availableBytes
       );
 
-      expect(analysis.isStorageSufficient).toBe(true);
+      expect(analysis.isStorageSufficient).toBe(true as any);
       expect(analysis.recommendation).toBe('use-existing');
       expect(analysis.remainingBytes).toBe(availableBytes - requiredBytes);
     });
@@ -137,7 +137,7 @@ describe('TodoSizeCalculator', () => {
         { minimumBuffer: 200 * 1024 } // 200KB buffer
       );
 
-      expect(analysis.isStorageSufficient).toBe(false);
+      expect(analysis.isStorageSufficient).toBe(false as any);
       expect(analysis.recommendation).toBe('expand');
     });
 
@@ -150,9 +150,9 @@ describe('TodoSizeCalculator', () => {
         availableBytes
       );
 
-      expect(analysis.isStorageSufficient).toBe(false);
+      expect(analysis.isStorageSufficient).toBe(false as any);
       expect(analysis.recommendation).toBe('create-new');
-      expect(analysis.remainingBytes).toBeLessThan(0);
+      expect(analysis.remainingBytes).toBeLessThan(0 as any);
     });
   });
 });

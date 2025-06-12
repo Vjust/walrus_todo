@@ -47,50 +47,50 @@ describe('Verification Operations Promise Returns', () => {
           'Test summary'
         )
       );
-      expect(createVerificationResult).toBeInstanceOf(Promise);
+      expect(createVerificationResult as any).toBeInstanceOf(Promise as any);
 
       // Test verifyRecord returns a promise
       const mockRecord = createMockVerificationRecord();
       const verifyRecordResult = assertReturnsPromise(() =>
         service.verifyRecord(mockRecord, 'request', 'response')
       );
-      expect(verifyRecordResult).toBeInstanceOf(Promise);
+      expect(verifyRecordResult as any).toBeInstanceOf(Promise as any);
 
       // Test verifyExistingOperation returns a promise
       const verifyExistingResult = assertReturnsPromise(() =>
         service.verifyExistingOperation('test-verification-id')
       );
-      expect(verifyExistingResult).toBeInstanceOf(Promise);
+      expect(verifyExistingResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedSummary returns a promise
       const summaryResult = assertReturnsPromise(() =>
         service.createVerifiedSummary(sampleTodos, 'Test summary')
       );
-      expect(summaryResult).toBeInstanceOf(Promise);
+      expect(summaryResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedCategorization returns a promise
       const categorizationResult = assertReturnsPromise(() =>
         service.createVerifiedCategorization(sampleTodos, { work: ['todo-1'] })
       );
-      expect(categorizationResult).toBeInstanceOf(Promise);
+      expect(categorizationResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedPrioritization returns a promise
       const prioritizationResult = assertReturnsPromise(() =>
         service.createVerifiedPrioritization(sampleTodos, { 'todo-1': 1 })
       );
-      expect(prioritizationResult).toBeInstanceOf(Promise);
+      expect(prioritizationResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedSuggestion returns a promise
       const suggestionResult = assertReturnsPromise(() =>
         service.createVerifiedSuggestion(sampleTodos, ['suggestion 1'])
       );
-      expect(suggestionResult).toBeInstanceOf(Promise);
+      expect(suggestionResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedAnalysis returns a promise
       const analysisResult = assertReturnsPromise(() =>
         service.createVerifiedAnalysis(sampleTodos, { analysis: 'result' })
       );
-      expect(analysisResult).toBeInstanceOf(Promise);
+      expect(analysisResult as any).toBeInstanceOf(Promise as any);
     });
 
     it('should successfully complete verification operations', async () => {
@@ -112,12 +112,12 @@ describe('Verification Operations Promise Returns', () => {
       const verifyResult = await assertVerificationSuccess(
         service.verifyRecord(
           mockRecord,
-          JSON.stringify(sampleTodos),
+          JSON.stringify(sampleTodos as any),
           'Test summary'
         ),
         'boolean'
       );
-      expect(verifyResult).toBe(true);
+      expect(verifyResult as any).toBe(true as any);
 
       // Test verifyExistingOperation
       const existsResult = await assertVerificationSuccess(
@@ -148,59 +148,59 @@ describe('Verification Operations Promise Returns', () => {
           'Test summary'
         )
       );
-      expect(blockchainVerificationResult).toBeInstanceOf(Promise);
+      expect(blockchainVerificationResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedSummary returns a promise
       const summaryResult = assertReturnsPromise(() =>
         service.createVerifiedSummary(sampleTodos, 'Test summary')
       );
-      expect(summaryResult).toBeInstanceOf(Promise);
+      expect(summaryResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedCategorization returns a promise
       const categorizationResult = assertReturnsPromise(() =>
         service.createVerifiedCategorization(sampleTodos, { work: ['todo-1'] })
       );
-      expect(categorizationResult).toBeInstanceOf(Promise);
+      expect(categorizationResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedPrioritization returns a promise
       const prioritizationResult = assertReturnsPromise(() =>
         service.createVerifiedPrioritization(sampleTodos, { 'todo-1': 1 })
       );
-      expect(prioritizationResult).toBeInstanceOf(Promise);
+      expect(prioritizationResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedSuggestion returns a promise
       const suggestionResult = assertReturnsPromise(() =>
         service.createVerifiedSuggestion(sampleTodos, ['suggestion 1'])
       );
-      expect(suggestionResult).toBeInstanceOf(Promise);
+      expect(suggestionResult as any).toBeInstanceOf(Promise as any);
 
       // Test createVerifiedAnalysis returns a promise
       const analysisResult = assertReturnsPromise(() =>
         service.createVerifiedAnalysis(sampleTodos, { analysis: 'result' })
       );
-      expect(analysisResult).toBeInstanceOf(Promise);
+      expect(analysisResult as any).toBeInstanceOf(Promise as any);
 
       // Test getVerification returns a promise
       const getVerificationResult = assertReturnsPromise(() =>
         service.getVerification('test-verification-id')
       );
-      expect(getVerificationResult).toBeInstanceOf(Promise);
+      expect(getVerificationResult as any).toBeInstanceOf(Promise as any);
 
       // Test listVerifications returns a promise
       const listVerificationsResult = assertReturnsPromise(() => 
         service.listVerifications()
       );
-      expect(listVerificationsResult).toBeInstanceOf(Promise);
+      expect(listVerificationsResult as any).toBeInstanceOf(Promise as any);
 
       // Test generateProof returns a promise
       const generateProofResult = assertReturnsPromise(() =>
         service.generateProof(
           AIActionType.SUMMARIZE,
-          JSON.stringify(sampleTodos),
+          JSON.stringify(sampleTodos as any),
           'Test summary'
         )
       );
-      expect(generateProofResult).toBeInstanceOf(Promise);
+      expect(generateProofResult as any).toBeInstanceOf(Promise as any);
 
       // Test verifyExternalProof returns a promise
       const verifyExternalProofResult = assertReturnsPromise(() =>
@@ -209,13 +209,13 @@ describe('Verification Operations Promise Returns', () => {
           response: 'test-response',
         })
       );
-      expect(verifyExternalProofResult).toBeInstanceOf(Promise);
+      expect(verifyExternalProofResult as any).toBeInstanceOf(Promise as any);
 
       // Test verifyProof returns a promise
       const verifyProofResult = assertReturnsPromise(() =>
         service.verifyProof('test-proof-id', 'test-signature', { test: 'data' })
       );
-      expect(verifyProofResult).toBeInstanceOf(Promise);
+      expect(verifyProofResult as any).toBeInstanceOf(Promise as any);
     });
 
     it('should successfully complete blockchain verification operations', async () => {
@@ -233,7 +233,7 @@ describe('Verification Operations Promise Returns', () => {
       expect(blockchainVerification.result).toBe('Test summary');
       expect(blockchainVerification.verification).toBeDefined();
       expect(blockchainVerification.provider).toBeDefined();
-      expect(blockchainVerification.verificationDate).toBeInstanceOf(Date);
+      expect(blockchainVerification.verificationDate).toBeInstanceOf(Date as any);
 
       // Test createVerifiedSummary
       const summaryResult = await assertVerificationSuccess(
@@ -255,13 +255,13 @@ describe('Verification Operations Promise Returns', () => {
         service.listVerifications(),
         'object'
       );
-      expect(Array.isArray(listResult)).toBe(true);
+      expect(Array.isArray(listResult as any)).toBe(true as any);
 
       // Test generateProof
       const proofResult = await assertVerificationSuccess(
         service.generateProof(
           AIActionType.SUMMARIZE,
-          JSON.stringify(sampleTodos),
+          JSON.stringify(sampleTodos as any),
           'Test summary'
         ),
         'object'

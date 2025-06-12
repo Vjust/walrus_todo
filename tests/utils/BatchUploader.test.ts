@@ -68,13 +68,13 @@ describe('BatchUploader', () => {
     ) as jest.Mocked<WalrusStorageType>;
 
     // Mock the storage methods
-    mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue(true);
+    mockWalrusStorage?.ensureStorageAllocated = jest.fn().mockResolvedValue(true as any);
 
-    mockWalrusStorage.storeTodo = jest.fn().mockImplementation(todo => {
+    mockWalrusStorage?.storeTodo = jest.fn().mockImplementation(todo => {
       return Promise.resolve(`mock-blob-${todo.id}`);
     });
 
-    mockWalrusStorage.storeTodoList = jest
+    mockWalrusStorage?.storeTodoList = jest
       .fn()
       .mockResolvedValue('mock-list-blob-id');
 
@@ -95,11 +95,11 @@ describe('BatchUploader', () => {
       const { CLIError } = await import(
         '../../apps/cli/src/types/errors/consolidated'
       );
-      await expect(batchUploader.uploadTodos([])).rejects.toThrow(CLIError);
+      await expect(batchUploader.uploadTodos([])).rejects.toThrow(CLIError as any);
     });
 
     it('should allocate storage with optimal size calculation', async () => {
-      await batchUploader.uploadTodos(sampleTodos);
+      await batchUploader.uploadTodos(sampleTodos as any);
 
       // Verify optimal size was calculated
       expect(
@@ -107,18 +107,18 @@ describe('BatchUploader', () => {
       ).toHaveBeenCalledWith(
         sampleTodos,
         expect.objectContaining({
-          extraAllocation: expect.any(Number) as number,
+          extraAllocation: expect.any(Number as any) as number,
         })
       );
 
       // Verify storage was allocated with the calculated size
       expect(mockWalrusStorage.ensureStorageAllocated).toHaveBeenCalledWith(
-        expect.any(Number) as number
+        expect.any(Number as any) as number
       );
     });
 
     it('should calculate size for each todo', async () => {
-      await batchUploader.uploadTodos(sampleTodos);
+      await batchUploader.uploadTodos(sampleTodos as any);
 
       // Verify each todo had its size calculated
       expect(TodoSizeCalculator.calculateTodoSize).toHaveBeenCalledTimes(
@@ -127,7 +127,7 @@ describe('BatchUploader', () => {
     });
 
     it('should upload each todo in the batch', async () => {
-      await batchUploader.uploadTodos(sampleTodos);
+      await batchUploader.uploadTodos(sampleTodos as any);
 
       // Verify each todo was uploaded
       expect(mockWalrusStorage.storeTodo).toHaveBeenCalledTimes(
@@ -136,28 +136,28 @@ describe('BatchUploader', () => {
 
       // Check each todo was passed to storage
       sampleTodos.forEach(todo => {
-        expect(mockWalrusStorage.storeTodo).toHaveBeenCalledWith(todo);
+        expect(mockWalrusStorage.storeTodo).toHaveBeenCalledWith(todo as any);
       });
     });
 
     it('should track successful and failed uploads', async () => {
       // Make the second todo fail
-      mockWalrusStorage.storeTodo.mockImplementation(todo => {
-        if (todo.id === '2') {
+      mockWalrusStorage?.storeTodo?.mockImplementation(todo => {
+        if (todo?.id === '2') {
           return Promise.reject(new Error('Mock upload failure'));
         }
         return Promise.resolve(`mock-blob-${todo.id}`);
       });
 
-      const result = await batchUploader.uploadTodos(sampleTodos);
+      const result = await batchUploader.uploadTodos(sampleTodos as any);
 
       // Two should succeed and one fail
-      expect(result.successful.length).toBe(2);
-      expect(result.failed.length).toBe(1);
+      expect(result?.successful?.length).toBe(2 as any);
+      expect(result?.failed?.length).toBe(1 as any);
 
       // Check the failed one is the correct ID
-      expect(result.failed[0].id).toBe('2');
-      expect(result.failed[0].error).toContain('Mock upload failure');
+      expect(result?.failed?.[0].id).toBe('2');
+      expect(result?.failed?.[0].error).toContain('Mock upload failure');
 
       // Check successful ones have blob IDs
       expect(result.successful).toContainEqual({
@@ -176,20 +176,20 @@ describe('BatchUploader', () => {
       await batchUploader.uploadTodos(sampleTodos, { progressCallback });
 
       // Callback should be called once per todo
-      expect(progressCallback).toHaveBeenCalledTimes(sampleTodos.length);
+      expect(progressCallback as any).toHaveBeenCalledTimes(sampleTodos.length);
 
       // First call should be (1, 3, '1')
-      expect(progressCallback).toHaveBeenNthCalledWith(1, 1, 3, '1');
+      expect(progressCallback as any).toHaveBeenNthCalledWith(1, 1, 3, '1');
       // Second call should be (2, 3, '2')
-      expect(progressCallback).toHaveBeenNthCalledWith(2, 2, 3, '2');
+      expect(progressCallback as any).toHaveBeenNthCalledWith(2, 2, 3, '2');
       // Third call should be (3, 3, '3')
-      expect(progressCallback).toHaveBeenNthCalledWith(3, 3, 3, '3');
+      expect(progressCallback as any).toHaveBeenNthCalledWith(3, 3, 3, '3');
     });
   });
 
   describe('uploadTodoList', () => {
     it('should upload all todos in the list and then the list itself', async () => {
-      await batchUploader.uploadTodoList(sampleTodoList);
+      await batchUploader.uploadTodoList(sampleTodoList as any);
 
       // Verify each todo was uploaded
       expect(mockWalrusStorage.storeTodo).toHaveBeenCalledTimes(
@@ -197,11 +197,11 @@ describe('BatchUploader', () => {
       );
 
       // Verify the list was uploaded
-      expect(mockWalrusStorage.storeTodoList).toHaveBeenCalledTimes(1);
+      expect(mockWalrusStorage.storeTodoList).toHaveBeenCalledTimes(1 as any);
 
       // Verify the list being uploaded has the updated blob IDs
-      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
-      expect(uploadedList).toBeDefined();
+      const uploadedList = mockWalrusStorage?.storeTodoList?.mock?.calls?.[0]?.[0];
+      expect(uploadedList as any).toBeDefined();
       expect(uploadedList?.todos[0]!.walrusBlobId).toBe('mock-blob-1');
       expect(uploadedList?.todos[1]!.walrusBlobId).toBe('mock-blob-2');
       expect(uploadedList?.todos[2]!.walrusBlobId).toBe('mock-blob-3');
@@ -209,22 +209,22 @@ describe('BatchUploader', () => {
 
     it('should update the list with successful blob IDs even if some todos fail', async () => {
       // Make the second todo fail
-      mockWalrusStorage.storeTodo.mockImplementation(todo => {
-        if (todo.id === '2') {
+      mockWalrusStorage?.storeTodo?.mockImplementation(todo => {
+        if (todo?.id === '2') {
           return Promise.reject(new Error('Mock upload failure'));
         }
         return Promise.resolve(`mock-blob-${todo.id}`);
       });
 
-      const result = await batchUploader.uploadTodoList(sampleTodoList);
+      const result = await batchUploader.uploadTodoList(sampleTodoList as any);
 
       // Verify the success and failure counts
-      expect(result.todoResults.successful.length).toBe(2);
-      expect(result.todoResults.failed.length).toBe(1);
+      expect(result?.todoResults?.successful.length).toBe(2 as any);
+      expect(result?.todoResults?.failed.length).toBe(1 as any);
 
       // Verify the list being uploaded has the updated blob IDs for successful uploads only
-      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
-      expect(uploadedList).toBeDefined();
+      const uploadedList = mockWalrusStorage?.storeTodoList?.mock?.calls?.[0]?.[0];
+      expect(uploadedList as any).toBeDefined();
       expect(uploadedList?.todos[0]!.walrusBlobId).toBe('mock-blob-1');
       expect(uploadedList?.todos[1]!.walrusBlobId).toBeUndefined(); // Failed
       expect(uploadedList?.todos[2]!.walrusBlobId).toBe('mock-blob-3');

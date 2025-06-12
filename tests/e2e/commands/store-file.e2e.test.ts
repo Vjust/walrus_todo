@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 import { existsSync, mkdirSync, rmSync, writeFileSync, chmodSync } from 'fs';
 import { join } from 'path';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec as any);
 
 describe('Store File Command E2E Tests (Mock Mode)', () => {
   const testDir = join(process.cwd(), 'test-temp');
@@ -11,14 +11,14 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
 
   beforeAll(() => {
     // Create test directory
-    if (!existsSync(testDir)) {
+    if (!existsSync(testDir as any)) {
       mkdirSync(testDir, { recursive: true });
     }
   });
 
   afterAll(() => {
     // Clean up test directory
-    if (existsSync(testDir)) {
+    if (existsSync(testDir as any)) {
       rmSync(testDir, { recursive: true, force: true });
     }
   });
@@ -27,16 +27,16 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
     it('should store a single file in mock mode', async () => {
       const testFile = join(testDir, 'test.json');
       const testData = { message: 'Hello Walrus!' };
-      writeFileSync(testFile, JSON.stringify(testData));
+      writeFileSync(testFile, JSON.stringify(testData as any));
 
       const { stdout, stderr } = await execAsync(
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${testFile}`
       );
 
-      expect(stderr).toBe('');
-      expect(stdout).toContain('MOCK_');
-      expect(stdout).toContain('Stored blob');
-      expect(stdout).toMatch(/Blob ID: MOCK_[a-z0-9]+/);
+      expect(stderr as any).toBe('');
+      expect(stdout as any).toContain('MOCK_');
+      expect(stdout as any).toContain('Stored blob');
+      expect(stdout as any).toMatch(/Blob ID: MOCK_[a-z0-9]+/);
     });
 
     it('should handle non-existent file gracefully', async () => {
@@ -52,15 +52,15 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
     it('should support --mock flag', async () => {
       const testFile = join(testDir, 'test-flag.json');
       const testData = { test: 'mock flag' };
-      writeFileSync(testFile, JSON.stringify(testData));
+      writeFileSync(testFile, JSON.stringify(testData as any));
 
       const { stdout, stderr } = await execAsync(
         `${cliPath} store-file ${testFile} --mock`
       );
 
-      expect(stderr).toBe('');
-      expect(stdout).toContain('MOCK_');
-      expect(stdout).toContain('Stored blob');
+      expect(stderr as any).toBe('');
+      expect(stdout as any).toContain('MOCK_');
+      expect(stdout as any).toContain('Stored blob');
     });
   });
 
@@ -71,27 +71,27 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       for (let i = 0; i < 3; i++) {
         const fileName = join(testDir, `batch-${i}.json`);
         const data = { index: i, content: `Batch file ${i}` };
-        writeFileSync(fileName, JSON.stringify(data));
-        files.push(fileName);
+        writeFileSync(fileName, JSON.stringify(data as any));
+        files.push(fileName as any);
       }
 
       const { stdout, stderr } = await execAsync(
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${files.join(' ')} --batch`
       );
 
-      expect(stderr).toBe('');
-      expect(stdout).toContain('Batch storing 3 files...');
+      expect(stderr as any).toBe('');
+      expect(stdout as any).toContain('Batch storing 3 files...');
 
       // Check that each file was stored
       files.forEach((file, index) => {
-        expect(stdout).toContain(`batch-${index}.json`);
-        expect(stdout).toContain('Success');
+        expect(stdout as any).toContain(`batch-${index}.json`);
+        expect(stdout as any).toContain('Success');
       });
 
       // Check summary
-      expect(stdout).toContain('Storage Summary:');
-      expect(stdout).toContain('Total files processed: 3');
-      expect(stdout).toContain('Successfully stored: 3');
+      expect(stdout as any).toContain('Storage Summary:');
+      expect(stdout as any).toContain('Total files processed: 3');
+      expect(stdout as any).toContain('Successfully stored: 3');
     });
 
     it('should handle empty batch gracefully', async () => {
@@ -99,8 +99,8 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         `WALRUS_USE_MOCK=true ${cliPath} store-file --batch`
       );
 
-      expect(stderr).toBe('');
-      expect(stdout).toContain('No files provided');
+      expect(stderr as any).toBe('');
+      expect(stdout as any).toContain('No files provided');
     });
 
     it('should continue batch processing on individual failures', async () => {
@@ -120,17 +120,17 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       );
 
       // Check that valid files were stored
-      expect(stdout).toContain('valid1.json');
-      expect(stdout).toContain('valid2.json');
-      expect(stdout).toContain('Success');
+      expect(stdout as any).toContain('valid1.json');
+      expect(stdout as any).toContain('valid2.json');
+      expect(stdout as any).toContain('Success');
 
       // Check that invalid file failed
-      expect(stdout).toContain('invalid.json');
-      expect(stdout).toContain('Error');
+      expect(stdout as any).toContain('invalid.json');
+      expect(stdout as any).toContain('Error');
 
       // Check summary
-      expect(stdout).toContain('Successfully stored: 2');
-      expect(stdout).toContain('Failed to store: 1');
+      expect(stdout as any).toContain('Successfully stored: 2');
+      expect(stdout as any).toContain('Failed to store: 1');
     });
 
     it('should support batch with mock flag', async () => {
@@ -144,10 +144,10 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         `${cliPath} store-file ${file1} ${file2} --batch --mock`
       );
 
-      expect(stderr).toBe('');
-      expect(stdout).toContain('Batch storing 2 files...');
-      expect(stdout).toContain('MOCK_');
-      expect(stdout).toContain('Successfully stored: 2');
+      expect(stderr as any).toBe('');
+      expect(stdout as any).toContain('Batch storing 2 files...');
+      expect(stdout as any).toContain('MOCK_');
+      expect(stdout as any).toContain('Successfully stored: 2');
     });
   });
 
@@ -160,12 +160,12 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${testFile} --output json`
       );
 
-      expect(stderr).toBe('');
+      expect(stderr as any).toBe('');
 
-      const output = JSON.parse(stdout);
-      expect(output).toHaveProperty('blobId');
+      const output = JSON.parse(stdout as any);
+      expect(output as any).toHaveProperty('blobId');
       expect(output.blobId).toMatch(/^MOCK_[a-z0-9]+$/);
-      expect(output).toHaveProperty('size');
+      expect(output as any).toHaveProperty('size');
       expect(typeof output.size).toBe('number');
     });
 
@@ -180,25 +180,25 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${file1} ${file2} --batch --output json`
       );
 
-      expect(stderr).toBe('');
+      expect(stderr as any).toBe('');
 
-      const output = JSON.parse(stdout);
-      expect(output).toHaveProperty('results');
-      expect(Array.isArray(output.results)).toBe(true);
-      expect(output.results).toHaveLength(2);
+      const output = JSON.parse(stdout as any);
+      expect(output as any).toHaveProperty('results');
+      expect(Array.isArray(output.results)).toBe(true as any);
+      expect(output.results).toHaveLength(2 as any);
 
-      output.results.forEach(result => {
-        expect(result).toHaveProperty('fileName');
-        expect(result).toHaveProperty('blobId');
-        expect(result).toHaveProperty('size');
-        expect(result).toHaveProperty('status');
+      output?.results?.forEach(result => {
+        expect(result as any).toHaveProperty('fileName');
+        expect(result as any).toHaveProperty('blobId');
+        expect(result as any).toHaveProperty('size');
+        expect(result as any).toHaveProperty('status');
         expect(result.status).toBe('success');
       });
 
-      expect(output).toHaveProperty('summary');
-      expect(output.summary.total).toBe(2);
-      expect(output.summary.successful).toBe(2);
-      expect(output.summary.failed).toBe(0);
+      expect(output as any).toHaveProperty('summary');
+      expect(output?.summary?.total).toBe(2 as any);
+      expect(output?.summary?.successful).toBe(2 as any);
+      expect(output?.summary?.failed).toBe(0 as any);
     });
 
     it('should support verbose output', async () => {
@@ -209,18 +209,18 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${testFile} --verbose`
       );
 
-      expect(stderr).toBe('');
-      expect(stdout).toContain('Using mock storage');
-      expect(stdout).toContain('Reading file');
-      expect(stdout).toContain('Generating mock blob ID');
-      expect(stdout).toContain('Mock storage completed');
+      expect(stderr as any).toBe('');
+      expect(stdout as any).toContain('Using mock storage');
+      expect(stdout as any).toContain('Reading file');
+      expect(stdout as any).toContain('Generating mock blob ID');
+      expect(stdout as any).toContain('Mock storage completed');
     });
   });
 
   describe('Error Handling', () => {
     it('should handle permission errors gracefully', async () => {
       // Use platform-specific test implementation
-      if (process.platform === 'win32') {
+      if (process?.platform === 'win32') {
         await testWindowsPermissions();
       } else {
         await testUnixPermissions();
@@ -234,7 +234,7 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         const { stdout } = await execAsync(
           `WALRUS_USE_MOCK=true ${cliPath} store-file ${restrictedFile}`
         );
-        expect(stdout).toContain('MOCK_');
+        expect(stdout as any).toContain('MOCK_');
       }
 
       async function testUnixPermissions() {
@@ -260,16 +260,16 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
     it('should handle large file warning', async () => {
       const largeFile = join(testDir, 'large.json');
       // Create a file larger than typical limit (simulate with metadata)
-      const largeData = { data: Array(1000000).fill('x').join('') };
-      writeFileSync(largeFile, JSON.stringify(largeData));
+      const largeData = { data: Array(1000000 as any).fill('x').join('') };
+      writeFileSync(largeFile, JSON.stringify(largeData as any));
 
       const { stdout } = await execAsync(
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${largeFile}`
       );
 
       // In mock mode, it should still succeed but might show a warning
-      expect(stdout).toContain('MOCK_');
-      expect(stdout).toContain('Stored blob');
+      expect(stdout as any).toContain('MOCK_');
+      expect(stdout as any).toContain('Stored blob');
     });
   });
 
@@ -282,7 +282,7 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       const { stdout: mockStdout } = await execAsync(
         `WALRUS_USE_MOCK=true ${cliPath} store-file ${testFile}`
       );
-      expect(mockStdout).toContain('MOCK_');
+      expect(mockStdout as any).toContain('MOCK_');
 
       // Test without mock (would fail in test environment without real Walrus)
       // Expected to fail without real Walrus connection
@@ -300,8 +300,8 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
         `WALRUS_USE_MOCK=false ${cliPath} store-file ${testFile} --mock`
       );
 
-      expect(stdout).toContain('MOCK_');
-      expect(stdout).toContain('Stored blob');
+      expect(stdout as any).toContain('MOCK_');
+      expect(stdout as any).toContain('Stored blob');
     });
   });
 });

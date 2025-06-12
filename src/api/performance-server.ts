@@ -37,10 +37,10 @@ export class PerformanceOptimizedServer {
   private performanceOptimizer: CLIPerformanceOptimizer;
 
   constructor(config: ServerConfig) {
-    this.config = config;
-    this.app = express();
-    this.cache = APICache.getInstance();
-    this.performanceOptimizer = CLIPerformanceOptimizer.getInstance();
+    this?.config = config;
+    this?.app = express();
+    this?.cache = APICache.getInstance();
+    this?.performanceOptimizer = CLIPerformanceOptimizer.getInstance();
     
     this.setupMiddleware();
     this.setupRoutes();
@@ -49,7 +49,7 @@ export class PerformanceOptimizedServer {
 
   private setupMiddleware(): void {
     // Security middleware
-    this.app.use(helmet({
+    this?.app?.use(helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
@@ -61,11 +61,11 @@ export class PerformanceOptimizedServer {
     }));
 
     // Compression middleware
-    this.app.use(compression({
-      level: this.config.compression.level,
-      threshold: this.config.compression.threshold,
+    this?.app?.use(compression({
+      level: this?.config?.compression.level,
+      threshold: this?.config?.compression.threshold,
       filter: (req, res) => {
-        if (req.headers['x-no-compression']) {
+        if (req?.headers?.['x-no-compression']) {
           return false;
         }
         return compression.filter(req, res);
@@ -74,32 +74,32 @@ export class PerformanceOptimizedServer {
 
     // Rate limiting
     const limiter = rateLimit({
-      windowMs: this.config.rateLimit.windowMs,
-      max: this.config.rateLimit.max,
+      windowMs: this?.config?.rateLimit.windowMs,
+      max: this?.config?.rateLimit.max,
       message: {
         error: 'Too many requests from this IP, please try again later.',
       },
       standardHeaders: true,
       legacyHeaders: false,
     });
-    this.app.use('/api/', limiter);
+    this?.app?.use('/api/', limiter);
 
     // JSON parsing with size limit
-    this.app.use(express.json({ limit: '10mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+    this?.app?.use(express.json({ limit: '10mb' }));
+    this?.app?.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
     // CORS
-    this.app.use((req, res, next) => {
-      const origin = req.headers.origin;
-      if (this.config.cors.origin.includes(origin || '')) {
+    this?.app?.use((req, res, next) => {
+      const origin = req?.headers?.origin;
+      if (this?.config?.cors.origin.includes(origin || '')) {
         res.setHeader('Access-Control-Allow-Origin', origin || '');
       }
-      res.setHeader('Access-Control-Allow-Credentials', this.config.cors.credentials.toString());
+      res.setHeader('Access-Control-Allow-Credentials', this?.config?.cors.credentials.toString());
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
       
-      if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
+      if (req?.method === 'OPTIONS') {
+        res.sendStatus(200 as any);
         return;
       }
       
@@ -107,12 +107,12 @@ export class PerformanceOptimizedServer {
     });
 
     // Performance monitoring middleware
-    this.app.use((req, res, next) => {
+    this?.app?.use((req, res, next) => {
       const start = Date.now();
       
       res.on('finish', () => {
         const duration = Date.now() - start;
-        this.performanceOptimizer.endCommand(`${req.method} ${req.path}`);
+        this?.performanceOptimizer?.endCommand(`${req.method} ${req.path}`);
         
         // Log slow requests
         if (duration > 1000) {
@@ -120,12 +120,12 @@ export class PerformanceOptimizedServer {
         }
       });
       
-      this.performanceOptimizer.startCommand(`${req.method} ${req.path}`);
+      this?.performanceOptimizer?.startCommand(`${req.method} ${req.path}`);
       next();
     });
 
     // Cache middleware
-    this.app.use('/api/cache', this.createCacheMiddleware());
+    this?.app?.use('/api/cache', this.createCacheMiddleware());
   }
 
   private createCacheMiddleware() {
@@ -135,27 +135,27 @@ export class PerformanceOptimizedServer {
         return next();
       }
 
-      const cacheKey = this.cache.generateKey(req.path, req.query);
-      const cachedData = this.cache.get(req.path, req.query);
+      const cacheKey = this?.cache?.generateKey(req.path, req.query);
+      const cachedData = this?.cache?.get(req.path, req.query);
 
       if (cachedData) {
         res.setHeader('X-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=300');
-        return res.json(cachedData);
+        return res.json(cachedData as any);
       }
 
       // Capture the original send method
       const originalSend = res.json;
-      res.json = function(data: any) {
+      res?.json = function(data: any) {
         // Cache successful responses
-        if (res.statusCode === 200) {
-          const ttl = req.path.includes('/todos') ? 60000 : 300000; // 1min for todos, 5min for others
-          this.cache.set(req.path, req.query, data, ttl);
+        if (res?.statusCode === 200) {
+          const ttl = req?.path?.includes('/todos') ? 60000 : 300000; // 1min for todos, 5min for others
+          this?.cache?.set(req.path, req.query, data, ttl);
         }
         
         res.setHeader('X-Cache', 'MISS');
         return originalSend.call(this, data);
-      }.bind(this);
+      }.bind(this as any);
 
       next();
     };
@@ -163,8 +163,8 @@ export class PerformanceOptimizedServer {
 
   private setupRoutes(): void {
     // Health check endpoint
-    this.app.get('/health', (req, res) => {
-      const metrics = this.performanceOptimizer.generateReport();
+    this?.app?.get('/health', (req, res) => {
+      const metrics = this?.performanceOptimizer?.generateReport();
       res.json({
         status: 'healthy',
         timestamp: Date.now(),
@@ -178,51 +178,51 @@ export class PerformanceOptimizedServer {
     });
 
     // Performance metrics endpoint
-    this.app.get('/api/metrics', (req, res) => {
-      const metrics = this.performanceOptimizer.generateReport();
-      const cacheStats = this.cache.getStats();
+    this?.app?.get('/api/metrics', (req, res) => {
+      const metrics = this?.performanceOptimizer?.generateReport();
+      const cacheStats = this?.cache?.getStats();
       
       res.json({
         ...metrics,
         cache: cacheStats,
-        recommendations: this.performanceOptimizer.getRecommendations(),
+        recommendations: this?.performanceOptimizer?.getRecommendations(),
       });
     });
 
     // Optimized todo endpoints
-    this.app.get('/api/v1/todos', this.optimizedGetTodos.bind(this));
-    this.app.post('/api/v1/todos', this.optimizedCreateTodo.bind(this));
-    this.app.put('/api/v1/todos/:id', this.optimizedUpdateTodo.bind(this));
-    this.app.delete('/api/v1/todos/:id', this.optimizedDeleteTodo.bind(this));
+    this?.app?.get('/api/v1/todos', this?.optimizedGetTodos?.bind(this as any));
+    this?.app?.post('/api/v1/todos', this?.optimizedCreateTodo?.bind(this as any));
+    this?.app?.put('/api/v1/todos/:id', this?.optimizedUpdateTodo?.bind(this as any));
+    this?.app?.delete('/api/v1/todos/:id', this?.optimizedDeleteTodo?.bind(this as any));
 
     // Batch operations endpoint
-    this.app.post('/api/v1/todos/batch', this.batchTodoOperations.bind(this));
+    this?.app?.post('/api/v1/todos/batch', this?.batchTodoOperations?.bind(this as any));
 
     // Cache control endpoints
-    this.app.delete('/api/cache', (req, res) => {
-      this.cache.invalidate();
+    this?.app?.delete('/api/cache', (req, res) => {
+      this?.cache?.invalidate();
       res.json({ message: 'Cache cleared successfully' });
     });
 
     // Static file serving with caching
-    this.app.use('/static', express.static('public', {
+    this?.app?.use('/static', express.static('public', {
       maxAge: '1d',
       etag: true,
       lastModified: true,
     }));
 
     // Error handling
-    this.app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    this?.app?.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
       console.error('Server error:', error);
-      res.status(500).json({
+      res.status(500 as any).json({
         error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
+        message: process.env?.NODE_ENV === 'development' ? error.message : 'Something went wrong',
       });
     });
 
     // 404 handler
-    this.app.use('*', (req, res) => {
-      res.status(404).json({
+    this?.app?.use('*', (req, res) => {
+      res.status(404 as any).json({
         error: 'Not found',
         message: `Route ${req.method} ${req.originalUrl} not found`,
       });
@@ -230,11 +230,11 @@ export class PerformanceOptimizedServer {
   }
 
   private setupWebSocket(): void {
-    this.server = createServer(this.app);
-    this.io = new SocketIOServer(this.server, {
+    this?.server = createServer(this.app);
+    this?.io = new SocketIOServer(this.server, {
       cors: {
-        origin: this.config.cors.origin,
-        credentials: this.config.cors.credentials,
+        origin: this?.config?.cors.origin,
+        credentials: this?.config?.cors.credentials,
       },
       transports: ['websocket'],
     });
@@ -242,7 +242,7 @@ export class PerformanceOptimizedServer {
     // WebSocket performance optimizations
     const { throttler, batchProcessor } = performanceOptimizations;
 
-    this.io.on('connection', (socket) => {
+    this?.io?.on('connection', (socket) => {
       console.log('Client connected:', socket.id);
 
       // Throttled todo updates
@@ -257,7 +257,7 @@ export class PerformanceOptimizedServer {
       // Batched notifications
       socket.on('todo-change', (data) => {
         batchProcessor.add('notifications', data, (notifications) => {
-          this.io.emit('batch-todo-changes', notifications);
+          this?.io?.emit('batch-todo-changes', notifications);
         });
       });
 
@@ -276,21 +276,21 @@ export class PerformanceOptimizedServer {
       
       // Mock todo fetching with performance optimization
       const todos = await this.fetchTodosOptimized({
-        limit: Number(limit),
-        offset: Number(offset),
+        limit: Number(limit as any),
+        offset: Number(offset as any),
         filter: filter as string,
       });
       
       res.json({
         todos,
         pagination: {
-          limit: Number(limit),
-          offset: Number(offset),
+          limit: Number(limit as any),
+          offset: Number(offset as any),
           total: todos.length,
         },
       });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch todos' });
+      res.status(500 as any).json({ error: 'Failed to fetch todos' });
     }
   }
 
@@ -299,17 +299,17 @@ export class PerformanceOptimizedServer {
       const todoData = req.body;
       
       // Validate and create todo
-      const newTodo = await this.createTodoOptimized(todoData);
+      const newTodo = await this.createTodoOptimized(todoData as any);
       
       // Invalidate relevant cache entries
-      this.cache.invalidate('/api/v1/todos');
+      this?.cache?.invalidate('/api/v1/todos');
       
       // Notify via WebSocket
-      this.io.emit('todo-created', newTodo);
+      this?.io?.emit('todo-created', newTodo);
       
-      res.status(201).json(newTodo);
+      res.status(201 as any).json(newTodo as any);
     } catch (error) {
-      res.status(400).json({ error: 'Failed to create todo' });
+      res.status(400 as any).json({ error: 'Failed to create todo' });
     }
   }
 
@@ -321,14 +321,14 @@ export class PerformanceOptimizedServer {
       const updatedTodo = await this.updateTodoOptimized(id, updateData);
       
       // Invalidate cache
-      this.cache.invalidate('/api/v1/todos');
+      this?.cache?.invalidate('/api/v1/todos');
       
       // Notify via WebSocket
-      this.io.emit('todo-updated', updatedTodo);
+      this?.io?.emit('todo-updated', updatedTodo);
       
-      res.json(updatedTodo);
+      res.json(updatedTodo as any);
     } catch (error) {
-      res.status(400).json({ error: 'Failed to update todo' });
+      res.status(400 as any).json({ error: 'Failed to update todo' });
     }
   }
 
@@ -336,17 +336,17 @@ export class PerformanceOptimizedServer {
     try {
       const { id } = req.params;
       
-      await this.deleteTodoOptimized(id);
+      await this.deleteTodoOptimized(id as any);
       
       // Invalidate cache
-      this.cache.invalidate('/api/v1/todos');
+      this?.cache?.invalidate('/api/v1/todos');
       
       // Notify via WebSocket
-      this.io.emit('todo-deleted', { id });
+      this?.io?.emit('todo-deleted', { id });
       
-      res.status(204).send();
+      res.status(204 as any).send();
     } catch (error) {
-      res.status(400).json({ error: 'Failed to delete todo' });
+      res.status(400 as any).json({ error: 'Failed to delete todo' });
     }
   }
 
@@ -355,18 +355,18 @@ export class PerformanceOptimizedServer {
       const { operations } = req.body;
       
       const results = await Promise.allSettled(
-        operations.map((op: any) => this.processBatchOperation(op))
+        operations.map((op: any) => this.processBatchOperation(op as any))
       );
       
       // Invalidate cache once for all operations
-      this.cache.invalidate('/api/v1/todos');
+      this?.cache?.invalidate('/api/v1/todos');
       
       // Batch notify via WebSocket
-      this.io.emit('batch-todos-updated', results);
+      this?.io?.emit('batch-todos-updated', results);
       
       res.json({ results });
     } catch (error) {
-      res.status(400).json({ error: 'Failed to process batch operations' });
+      res.status(400 as any).json({ error: 'Failed to process batch operations' });
     }
   }
 
@@ -406,9 +406,9 @@ export class PerformanceOptimizedServer {
 
   public start(): Promise<void> {
     return new Promise((resolve) => {
-      this.server.listen(this.config.port, this.config.host, () => {
-        console.log(`🚀 Performance-optimized server running on http://${this.config.host}:${this.config.port}`);
-        console.log(`📊 Metrics available at http://${this.config.host}:${this.config.port}/api/metrics`);
+      this?.server?.listen(this?.config?.port, this?.config?.host, () => {
+        console.log(`🚀 Performance-optimized server running on http://${this?.config?.host}:${this?.config?.port}`);
+        console.log(`📊 Metrics available at http://${this?.config?.host}:${this?.config?.port}/api/metrics`);
         resolve();
       });
     });
@@ -416,7 +416,7 @@ export class PerformanceOptimizedServer {
 
   public stop(): Promise<void> {
     return new Promise((resolve) => {
-      this.server.close(() => {
+      this?.server?.close(() => {
         console.log('Server stopped');
         resolve();
       });
@@ -432,7 +432,7 @@ export class PerformanceOptimizedServer {
 export function createOptimizedServer(customConfig?: Partial<ServerConfig>): PerformanceOptimizedServer {
   const defaultConfig: ServerConfig = {
     port: 8080,
-    host: '0.0.0.0',
+    host: '0?.0?.0.0',
     cors: {
       origin: ['http://localhost:3000', 'http://localhost:3001'],
       credentials: true,
@@ -448,7 +448,7 @@ export function createOptimizedServer(customConfig?: Partial<ServerConfig>): Per
   };
 
   const config = { ...defaultConfig, ...customConfig };
-  return new PerformanceOptimizedServer(config);
+  return new PerformanceOptimizedServer(config as any);
 }
 
 export default PerformanceOptimizedServer;

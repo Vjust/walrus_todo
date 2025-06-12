@@ -47,12 +47,12 @@ describe('Add Command with AI', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    process.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
+    process?.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   test('should add a todo without AI', async () => {
@@ -64,12 +64,12 @@ describe('Add Command with AI', () => {
     );
 
     expect(aiService.suggestTags).not.toHaveBeenCalled();
-    expect(TodoService).toHaveBeenCalled();
+    expect(TodoService as any).toHaveBeenCalled();
     expect(
-      (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]
+      (TodoService as jest.MockedClass<typeof TodoService>).mock?.results?.[0]
         ?.value.addTodo
     ).toHaveBeenCalled();
-    expect(output.length).toBeGreaterThan(0);
+    expect(output.length).toBeGreaterThan(0 as any);
   });
 
   test('should add a todo with AI suggestions', async () => {
@@ -83,7 +83,7 @@ describe('Add Command with AI', () => {
     expect(aiService.suggestTags).toHaveBeenCalled();
     expect(aiService.suggestPriority).toHaveBeenCalled();
     expect(
-      (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]
+      (TodoService as jest.MockedClass<typeof TodoService>).mock?.results?.[0]
         ?.value.addTodo
     ).toHaveBeenCalled();
 
@@ -107,7 +107,7 @@ describe('Add Command with AI', () => {
 
     // Should continue with regular todo creation
     expect(
-      (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]
+      (TodoService as jest.MockedClass<typeof TodoService>).mock?.results?.[0]
         ?.value.addTodo
     ).toHaveBeenCalled();
     expect(output.join(' ')).toContain('AI enhancement failed');

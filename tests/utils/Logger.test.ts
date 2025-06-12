@@ -30,7 +30,7 @@ describe('Logger', () => {
 
     // Create mock handler
     mockHandler = jest.fn();
-    logger.addHandler(mockHandler);
+    logger.addHandler(mockHandler as any);
   });
 
   afterEach(() => {
@@ -47,10 +47,10 @@ describe('Logger', () => {
       logger.warn(testMessage, testContext);
       logger.error(testMessage, new Error('Test error'), testContext);
 
-      expect(mockHandler).toHaveBeenCalledTimes(4);
+      expect(mockHandler as any).toHaveBeenCalledTimes(4 as any);
 
       // Verify log level and message content
-      const calls = mockHandler.mock.calls;
+      const calls = mockHandler?.mock?.calls;
       expect(calls[0]?.[0]?.level).toBe(LogLevel.DEBUG);
       expect(calls[1]?.[0]?.level).toBe(LogLevel.INFO);
       expect(calls[2]?.[0]?.level).toBe(LogLevel.WARN);
@@ -58,14 +58,14 @@ describe('Logger', () => {
 
       // Verify context is included
       calls.forEach(call => {
-        expect(call[0]?.context).toEqual(testContext);
+        expect(call[0]?.context).toEqual(testContext as any);
       });
     });
 
     it('should handle undefined context', () => {
       logger.info('Test message');
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           level: LogLevel.INFO,
           message: 'Test message',
@@ -84,7 +84,7 @@ describe('Logger', () => {
 
       logger.error('Error occurred', error);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           level: LogLevel.ERROR,
           error: expect.objectContaining({
@@ -107,7 +107,7 @@ describe('Logger', () => {
 
       logger.error('Error occurred', error);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
             cause: 'Cause error',
@@ -119,7 +119,7 @@ describe('Logger', () => {
     it('should handle non-Error objects', () => {
       logger.error('Error occurred', 'string error' as unknown);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
             name: 'Error',
@@ -149,7 +149,7 @@ describe('Logger', () => {
 
       logger.info('Test message', sensitiveContext);
 
-      const call = mockHandler.mock.calls[0]?.[0];
+      const call = mockHandler.mock?.calls?.[0]?.[0];
       expect(call?.context).toEqual({
         password: '[REDACTED]',
         apiKey: '[REDACTED]',
@@ -177,7 +177,7 @@ describe('Logger', () => {
 
       logger.info('Test message', nestedContext);
 
-      expect(mockHandler.mock.calls[0]?.[0]?.context).toEqual({
+      expect(mockHandler.mock?.calls?.[0]?.[0]?.context).toEqual({
         data: {
           user: {
             password: '[REDACTED]',
@@ -197,7 +197,7 @@ describe('Logger', () => {
 
       logger.error('Storage error', error);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'STORAGE_UPLOAD_ERROR',
@@ -215,7 +215,7 @@ describe('Logger', () => {
 
       logger.error('Blockchain error', error);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'BLOCKCHAIN_EXECUTE_ERROR',
@@ -233,7 +233,7 @@ describe('Logger', () => {
 
       logger.error('Validation error', error);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'VALIDATION_ERROR',
@@ -252,7 +252,7 @@ describe('Logger', () => {
 
       logger.error('Network error', error);
 
-      expect(mockHandler).toHaveBeenCalledWith(
+      expect(mockHandler as any).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'NETWORK_REQUEST_ERROR',
@@ -274,16 +274,16 @@ describe('Logger', () => {
 
       const publicError = error.toPublicError();
 
-      expect(publicError).toEqual({
+      expect(publicError as any).toEqual({
         code: 'STORAGE_READ_ERROR',
         message: 'A storage operation failed',
-        timestamp: expect.any(String),
+        timestamp: expect.any(String as any),
         shouldRetry: true,
       });
 
       // Ensure sensitive details are not included
-      expect(publicError).not.toHaveProperty('blobId');
-      expect(publicError).not.toHaveProperty('stack');
+      expect(publicError as any).not.toHaveProperty('blobId');
+      expect(publicError as any).not.toHaveProperty('stack');
     });
 
     it('should create detailed log entries', () => {
@@ -297,14 +297,14 @@ describe('Logger', () => {
 
       const logEntry = error.toLogEntry();
 
-      expect(logEntry).toEqual({
+      expect(logEntry as any).toEqual({
         name: 'NetworkError',
         code: 'NETWORK_CONNECT_ERROR',
         message: 'Failed to connect',
         publicMessage: 'A network operation failed',
-        timestamp: expect.any(String),
+        timestamp: expect.any(String as any),
         shouldRetry: true,
-        stack: expect.any(String),
+        stack: expect.any(String as any),
         cause: 'Network timeout',
       });
     });

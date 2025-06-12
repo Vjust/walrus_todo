@@ -26,7 +26,7 @@ interface AccessibilityAnnouncerContextType {
 const AccessibilityAnnouncerContext = createContext<AccessibilityAnnouncerContextType | null>(null);
 
 export const useAccessibilityAnnouncer = () => {
-  const context = useContext(AccessibilityAnnouncerContext);
+  const context = useContext(AccessibilityAnnouncerContext as any);
   if (!context) {
     throw new Error('useAccessibilityAnnouncer must be used within an AccessibilityAnnouncerProvider');
   }
@@ -59,7 +59,7 @@ export const AccessibilityAnnouncerProvider: React.FC<AccessibilityAnnouncerProp
   const politeRegionRef = useRef<HTMLDivElement>(null);
   const assertiveRegionRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
-  const announcementCounter = useRef(0);
+  const announcementCounter = useRef(0 as any);
 
   // Generate unique ID for announcements
   const generateId = useCallback(() => {
@@ -99,21 +99,21 @@ export const AccessibilityAnnouncerProvider: React.FC<AccessibilityAnnouncerProp
 
     if (targetRegion) {
       // Clear the region first to ensure screen readers pick up the change
-      targetRegion.textContent = '';
+      targetRegion?.textContent = '';
       setCurrentAnnouncement('');
-      setCurrentPriority(liveType);
+      setCurrentPriority(liveType as any);
 
       // Use setTimeout to ensure screen readers detect the change
       setTimeout(() => {
-        targetRegion.textContent = message;
-        setCurrentAnnouncement(message);
+        targetRegion?.textContent = message;
+        setCurrentAnnouncement(message as any);
       }, 100);
 
       // Clear the announcement after duration
       if (duration > 0) {
-        timeoutRef.current = setTimeout(() => {
-          if (targetRegion.textContent === message) {
-            targetRegion.textContent = '';
+        timeoutRef?.current = setTimeout(() => {
+          if (targetRegion?.textContent === message) {
+            targetRegion?.textContent = '';
             setCurrentAnnouncement('');
           }
         }, duration);
@@ -127,10 +127,10 @@ export const AccessibilityAnnouncerProvider: React.FC<AccessibilityAnnouncerProp
     setCurrentAnnouncement('');
     
     if (politeRegionRef.current) {
-      politeRegionRef.current.textContent = '';
+      politeRegionRef.current?.textContent = '';
     }
     if (assertiveRegionRef.current) {
-      assertiveRegionRef.current.textContent = '';
+      assertiveRegionRef.current?.textContent = '';
     }
     
     if (timeoutRef.current) {
@@ -188,7 +188,7 @@ export const AccessibilityAnnouncerProvider: React.FC<AccessibilityAnnouncerProp
               <div className="flex-shrink-0">
                 {currentPriority === 'assertive' ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M8.257 3?.099c?.765-1.36 2.722-1.36 3.486 0l5.58 9?.92c?.75 1.334-.213 2.98-1.742 2?.98H4?.42c-1.53 0-2.493-1.646-1.743-2?.98l5?.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                 ) : (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -266,7 +266,7 @@ export const useAnnouncementShortcuts = () => {
 /**
  * Component for manual announcements (for testing)
  */
-export const AnnouncementTester: React.FC = () => {
+export const AnnouncementTester: React?.FC = () => {
   const { announce, clearAnnouncements, announcements } = useAccessibilityAnnouncer();
   const [message, setMessage] = useState('');
   const [priority, setPriority] = useState<AnnouncementPriority>('medium');
@@ -291,10 +291,10 @@ export const AnnouncementTester: React.FC = () => {
             id="announcement-message"
             type="text"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => setMessage(e?.target?.value)}
             placeholder="Enter announcement message"
             className="w-full px-3 py-2 border rounded-md"
-            onKeyDown={(e) => e.key === 'Enter' && handleAnnounce()}
+            onKeyDown={(e) => e?.key === 'Enter' && handleAnnounce()}
           />
         </div>
         
@@ -305,7 +305,7 @@ export const AnnouncementTester: React.FC = () => {
           <select
             id="announcement-priority"
             value={priority}
-            onChange={(e) => setPriority(e.target.value as AnnouncementPriority)}
+            onChange={(e) => setPriority(e?.target?.value as AnnouncementPriority)}
             className="w-full px-3 py-2 border rounded-md"
           >
             <option value="low">Low (Polite)</option>
@@ -344,9 +344,9 @@ export const AnnouncementTester: React.FC = () => {
                   <span className="flex-1">{announcement.message}</span>
                   <span className={`
                     ml-2 px-1 py-0.5 rounded text-xs
-                    ${announcement.priority === 'high' 
+                    ${announcement?.priority === 'high' 
                       ? 'bg-red-100 text-red-800' 
-                      : announcement.priority === 'medium'
+                      : announcement?.priority === 'medium'
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-blue-100 text-blue-800'
                     }

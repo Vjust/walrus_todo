@@ -26,11 +26,11 @@ export function WalletSafeWrapper({
   requireConnection = false,
   showConnectionPrompt = true,
 }: WalletSafeWrapperProps) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
   const walletContext = useWalletContext();
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true as any);
   }, []);
 
   // Show loading state during SSR/hydration
@@ -109,7 +109,7 @@ export function withWalletSafety<P extends object>(
     </WalletSafeWrapper>
   );
 
-  WrappedComponent.displayName = `withWalletSafety(${Component.displayName || Component.name})`;
+  WrappedComponent?.displayName = `withWalletSafety(${Component.displayName || Component.name})`;
   
   return WrappedComponent;
 }
@@ -118,11 +118,11 @@ export function withWalletSafety<P extends object>(
  * Hook for wallet-safe component state management
  */
 export function useWalletSafeState() {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
   const walletContext = useWalletContext();
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true as any);
   }, []);
 
   return {

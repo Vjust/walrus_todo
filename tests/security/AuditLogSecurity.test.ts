@@ -45,7 +45,7 @@ jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {
         if (provider === 'non-existent') {
           throw new Error('Provider not found');
         }
-        return Promise.resolve(true);
+        return Promise.resolve(true as any);
       }),
       auditLogger: null,
     })),
@@ -60,7 +60,7 @@ jest.mock('../../apps/cli/src/utils/Logger', () => {
       if (error) {
         console.error(message, error);
       } else {
-        console.error(message);
+        console.error(message as any);
       }
     }),
     info: jest.fn(),
@@ -69,7 +69,7 @@ jest.mock('../../apps/cli/src/utils/Logger', () => {
   };
 
   const LoggerClass = jest.fn().mockImplementation(() => mockLoggerInstance);
-  LoggerClass.getInstance = jest.fn(() => mockLoggerInstance);
+  LoggerClass?.getInstance = jest.fn(() => mockLoggerInstance);
 
   return {
     Logger: LoggerClass,
@@ -79,7 +79,7 @@ jest.mock('fs', () => {
   const crypto = require('crypto');
   const originalModule = jest.requireActual('fs');
   const mockFileContent = new Map<string, Buffer>();
-  const mockKey = crypto.randomBytes(32); // Consistent encryption key
+  const mockKey = crypto.randomBytes(32 as any); // Consistent encryption key
 
   return {
     ...originalModule,
@@ -94,13 +94,13 @@ jest.mock('fs', () => {
       if (path.includes('secure_credentials')) {
         return false; // Don't claim encrypted credentials exist to avoid decryption
       }
-      return mockFileContent.has(path);
+      return mockFileContent.has(path as any);
     }),
     writeFileSync: jest
       .fn()
       .mockImplementation(
         (path: string, data: Buffer | string, options?: unknown) => {
-          const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+          const dataBuffer = Buffer.isBuffer(data as any) ? data : Buffer.from(data as any);
           mockFileContent.set(path, dataBuffer);
         }
       ),
@@ -120,8 +120,8 @@ jest.mock('fs', () => {
             backupLocations: [],
           };
           return encoding === 'utf8'
-            ? JSON.stringify(metadata)
-            : Buffer.from(JSON.stringify(metadata));
+            ? JSON.stringify(metadata as any)
+            : Buffer.from(JSON.stringify(metadata as any));
         }
         if (path.includes('secure_credentials')) {
           return Buffer.from('{}'); // Empty encrypted credentials
@@ -129,23 +129,23 @@ jest.mock('fs', () => {
         if (path.includes('audit')) {
           return encoding === 'utf8' ? '' : Buffer.from(''); // Empty audit log
         }
-        const content = mockFileContent.get(path) || Buffer.from('');
+        const content = mockFileContent.get(path as any) || Buffer.from('');
         return encoding === 'utf8' ? content.toString('utf8') : content;
       }),
     appendFileSync: jest
       .fn()
       .mockImplementation(
         (path: string, data: string, options?: { mode?: number }) => {
-          const existingData = mockFileContent.get(path) || Buffer.from('');
+          const existingData = mockFileContent.get(path as any) || Buffer.from('');
           mockFileContent.set(
             path,
-            Buffer.concat([existingData, Buffer.from(data)])
+            Buffer.concat([existingData, Buffer.from(data as any)])
           );
           // Store the options for verification
           if (options) {
             mockFileContent.set(
               path + '_options',
-              Buffer.from(JSON.stringify(options))
+              Buffer.from(JSON.stringify(options as any))
             );
           }
         }
@@ -186,9 +186,9 @@ const getAuditLogger = () => {
     private enabled: boolean = true;
 
     constructor() {
-      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
       const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
-      this.logFilePath = path.join(configDir, 'audit.log');
+      this?.logFilePath = path.join(configDir, 'audit.log');
     }
 
     public log(eventType: string, details: unknown): void {
@@ -197,11 +197,11 @@ const getAuditLogger = () => {
       const entry = {
         eventType,
         timestamp: Date.now(),
-        ...this.sanitize(details),
+        ...this.sanitize(details as any),
       };
 
-      this.logEntries.push(entry);
-      this.writeToFile(entry);
+      this?.logEntries?.push(entry as any);
+      this.writeToFile(entry as any);
     }
 
     public getEntries(): unknown[] {
@@ -210,7 +210,7 @@ const getAuditLogger = () => {
 
     private writeToFile(entry: unknown): void {
       try {
-        const line = JSON.stringify(entry) + '\n';
+        const line = JSON.stringify(entry as any) + '\n';
         fs.appendFileSync(this.logFilePath, line);
       } catch (_error) {
         // console.error('Failed to write audit log:', error); // Removed console statement
@@ -237,18 +237,18 @@ const getAuditLogger = () => {
       const sanitizeObject = (obj: unknown): unknown => {
         if (typeof obj !== 'object' || obj === null) return obj;
 
-        const result: Record<string, unknown> = Array.isArray(obj) ? [] : {};
+        const result: Record<string, unknown> = Array.isArray(obj as any) ? [] : {};
 
-        for (const [key, value] of Object.entries(obj)) {
+        for (const [key, value] of Object.entries(obj as any)) {
           // Check if the key is sensitive
           if (
-            sensitiveFields.some(field => key.toLowerCase().includes(field))
+            sensitiveFields.some(field => key.toLowerCase().includes(field as any))
           ) {
             result[key] = typeof value === 'string' ? '[REDACTED]' : null;
           }
           // Recurse for objects and arrays
           else if (typeof value === 'object' && value !== null) {
-            result[key] = sanitizeObject(value);
+            result[key] = sanitizeObject(value as any);
           }
           // Pass through non-sensitive primitives
           else {
@@ -259,15 +259,15 @@ const getAuditLogger = () => {
         return result;
       };
 
-      return sanitizeObject(sanitized);
+      return sanitizeObject(sanitized as any);
     }
 
     public enable(): void {
-      this.enabled = true;
+      this?.enabled = true;
     }
 
     public disable(): void {
-      this.enabled = false;
+      this?.enabled = false;
     }
   }
 
@@ -368,22 +368,22 @@ describe('Audit Log Security', () => {
       }
 
       // Verify security events were logged
-      expect(auditLogSpy).toHaveBeenCalledTimes(4);
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledTimes(4 as any);
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'credential_created',
-        expect.any(Object)
+        expect.any(Object as any)
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'credential_accessed',
-        expect.any(Object)
+        expect.any(Object as any)
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'permission_updated',
-        expect.any(Object)
+        expect.any(Object as any)
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'access_denied',
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
 
@@ -410,10 +410,10 @@ describe('Audit Log Security', () => {
 
       // Check that sensitive information was redacted
       const redactEntries = auditLogger.getEntries();
-      expect(redactEntries.length).toBe(2);
+      expect(redactEntries.length).toBe(2 as any);
 
       // Convert entries to strings for easier checking
-      const logStrings = redactEntries.map(entry => JSON.stringify(entry));
+      const logStrings = redactEntries.map(entry => JSON.stringify(entry as any));
 
       // Verify sensitive data was redacted
       expect(logStrings[0]).not.toContain('super-secret-api-key-12345');
@@ -468,8 +468,8 @@ describe('Audit Log Security', () => {
       });
 
       // Perform AI operations
-      await aiService.summarize(sampleTodos);
-      await aiService.categorize(sampleTodos);
+      await aiService.summarize(sampleTodos as any);
+      await aiService.categorize(sampleTodos as any);
 
       // Create todo with PII
       const todosWithPII: Todo[] = [
@@ -483,25 +483,25 @@ describe('Audit Log Security', () => {
         },
       ];
 
-      await aiService.analyze(todosWithPII);
+      await aiService.analyze(todosWithPII as any);
 
       // Verify AI operations were logged
-      expect(auditLogSpy).toHaveBeenCalledTimes(3);
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledTimes(3 as any);
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'ai_operation_summarize',
-        expect.any(Object)
+        expect.any(Object as any)
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'ai_operation_categorize',
-        expect.any(Object)
+        expect.any(Object as any)
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'ai_operation_analyze',
-        expect.any(Object)
+        expect.any(Object as any)
       );
 
       // Verify PII was not logged in the audit calls
-      const auditCalls = auditLogSpy.mock.calls;
+      const auditCalls = auditLogSpy?.mock?.calls;
       const allAuditData = auditCalls.map(call => JSON.stringify(call[1]));
 
       // Should not contain PII from todos
@@ -527,15 +527,15 @@ describe('Audit Log Security', () => {
 
       // Get the logged entries
       const integrityEntries = auditLogger.getEntries();
-      expect(integrityEntries.length).toBe(1);
+      expect(integrityEntries.length).toBe(1 as any);
 
       // Attempt to modify the entry (should not affect stored entries)
       const originalEntry = integrityEntries[0];
-      originalEntry.success = false;
+      originalEntry?.success = false;
 
       // Verify file write was called with the correct data
       expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.any(String as any),
         expect.stringContaining('"success":true')
       );
 
@@ -559,11 +559,11 @@ describe('Audit Log Security', () => {
 
       // The error should be handled gracefully - in-memory entries should still be updated
       const auditEntries = auditLogger.getEntries();
-      expect(auditEntries.length).toBe(1);
+      expect(auditEntries.length).toBe(1 as any);
       expect(auditEntries[0].eventType).toBe('important_event');
 
       // Verify fs.appendFileSync was called and failed
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(1);
+      expect(fs.appendFileSync).toHaveBeenCalledTimes(1 as any);
     });
   });
 
@@ -583,7 +583,7 @@ describe('Audit Log Security', () => {
             metadata: params.metadata || {},
           };
         }),
-        verifyRecord: jest.fn().mockReturnValue(true),
+        verifyRecord: jest.fn().mockReturnValue(true as any),
       };
 
       // Create an audit logger
@@ -628,7 +628,7 @@ describe('Audit Log Security', () => {
       );
 
       // Verify blockchain events were logged
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'blockchain_verification_created',
         expect.objectContaining({
           verificationId: 'ver-123',
@@ -638,10 +638,10 @@ describe('Audit Log Security', () => {
       );
 
       // Verify no sensitive data is included in audit calls
-      const auditCalls = auditLogSpy.mock.calls;
-      const auditDataString = JSON.stringify(auditCalls);
-      expect(auditDataString).not.toContain(JSON.stringify(sampleTodos));
-      expect(auditDataString).not.toContain('Test summary');
+      const auditCalls = auditLogSpy?.mock?.calls;
+      const auditDataString = JSON.stringify(auditCalls as any);
+      expect(auditDataString as any).not.toContain(JSON.stringify(sampleTodos as any));
+      expect(auditDataString as any).not.toContain('Test summary');
     });
   });
 
@@ -674,7 +674,7 @@ describe('Audit Log Security', () => {
       );
 
       // Verify permission change was logged
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'permission_updated',
         expect.objectContaining({
           provider: 'test-provider',
@@ -684,9 +684,9 @@ describe('Audit Log Security', () => {
       );
 
       // Should not contain credential values in audit calls
-      const auditCalls = auditLogSpy.mock.calls;
-      const auditDataString = JSON.stringify(auditCalls);
-      expect(auditDataString).not.toContain('test-api-key');
+      const auditCalls = auditLogSpy?.mock?.calls;
+      const auditDataString = JSON.stringify(auditCalls as any);
+      expect(auditDataString as any).not.toContain('test-api-key');
     });
   });
 
@@ -754,30 +754,30 @@ describe('Audit Log Security', () => {
       }
 
       try {
-        await aiService.summarize(sampleTodos);
+        await aiService.summarize(sampleTodos as any);
       } catch (_error) {
         // Expected error
       }
 
       // Verify all failures were logged
-      expect(auditLogSpy).toHaveBeenCalledTimes(3);
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledTimes(3 as any);
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'credential_access_failed',
         expect.objectContaining({ success: false })
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'permission_update_failed',
         expect.objectContaining({ success: false })
       );
-      expect(auditLogSpy).toHaveBeenCalledWith(
+      expect(auditLogSpy as any).toHaveBeenCalledWith(
         'ai_operation_failed',
         expect.objectContaining({ success: false })
       );
 
       // Verify error messages don't contain sensitive information
-      const auditCalls = auditLogSpy.mock.calls;
-      const auditDataString = JSON.stringify(auditCalls);
-      expect(auditDataString).not.toContain('test-api-key');
+      const auditCalls = auditLogSpy?.mock?.calls;
+      const auditDataString = JSON.stringify(auditCalls as any);
+      expect(auditDataString as any).not.toContain('test-api-key');
     });
   });
 
@@ -792,7 +792,7 @@ describe('Audit Log Security', () => {
 
       // Verify the call was made to the audit log file
       const calls = (fs.appendFileSync as jest.Mock).mock.calls;
-      expect(calls.length).toBeGreaterThan(0);
+      expect(calls.length).toBeGreaterThan(0 as any);
       expect(calls[0][0]).toContain('audit.log');
 
       // Mock file access checks
@@ -805,16 +805,16 @@ describe('Audit Log Security', () => {
         });
 
       // Verify audit log file permissions
-      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
       const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
       const logFilePath = path.join(configDir, 'audit.log');
 
       // In a real implementation, we would test that audit logs have restricted permissions
       // Here we simulate the permission check
-      const fileStats = mockCheckFilePermissions(logFilePath);
+      const fileStats = mockCheckFilePermissions(logFilePath as any);
 
       // Owner should have read/write permissions, but no one else
-      expect(fileStats.mode).toBe(0o600);
+      expect(fileStats.mode).toBe(0o600 as any);
     });
   });
 });

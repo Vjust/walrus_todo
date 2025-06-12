@@ -119,7 +119,7 @@ describe('AI Security Audit', () => {
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     // Restore environment variables before each test
-    process.env.XAI_API_KEY = 'test-api-key';
+    process.env?.XAI_API_KEY = 'test-api-key';
   });
 
   afterEach(() => {
@@ -135,9 +135,9 @@ describe('AI Security Audit', () => {
       const mockAIService = new AIService('test-api-key');
 
       // Ensure modelAdapter is available before spying
-      if (!mockAIService['modelAdapter']) {
+      if (!mockAIService?.["modelAdapter"]) {
         // Create a mock adapter if it doesn't exist
-        mockAIService['modelAdapter'] = {
+        mockAIService?.["modelAdapter"] = {
           getProviderName: () => 'openai',
           getModelName: () => 'test-model',
           complete: jest.fn(),
@@ -149,23 +149,23 @@ describe('AI Security Audit', () => {
 
       // Mock a failed API call that might expose the key
       jest
-        .spyOn(mockAIService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(mockAIService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockImplementation(() => {
           throw new Error('Invalid API key: test-ap...');
         });
 
       // Test that error doesn't contain the actual API key
-      await expect(mockAIService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(mockAIService.summarize(sampleTodos as any)).rejects.toThrow(
         'Invalid API key'
       );
 
-      expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+      expect(consoleErrorSpy as any).not.toHaveBeenCalledWith(
         expect.stringContaining('test-api-key')
       );
     });
 
     it('should safely handle missing API keys', () => {
-      delete process.env.XAI_API_KEY;
+      delete process?.env?.XAI_API_KEY;
 
       expect(() => new AIService()).not.toThrow();
 
@@ -176,22 +176,22 @@ describe('AI Security Audit', () => {
     it('should redact API keys in logs', async () => {
       const originalLog = console.log;
       const mockLog = jest.fn();
-      console.log = mockLog;
+      console?.log = mockLog;
 
       try {
         // Create service with API key
         new AIService('test-api-key-12345');
 
         // Check if any logs contain the API key
-        const logs = mockLog.mock.calls.flat();
+        const logs = mockLog?.mock?.calls.flat();
         const stringLogs = logs.filter(log => typeof log === 'string');
         // Check each log for API key
         const containsApiKey = stringLogs.some(log =>
           log.includes('test-api-key-12345')
         );
-        expect(containsApiKey).toBe(false);
+        expect(containsApiKey as any).toBe(false as any);
       } finally {
-        console.log = originalLog;
+        console?.log = originalLog;
       }
     });
 
@@ -200,8 +200,8 @@ describe('AI Security Audit', () => {
       const mockAIService = new AIService('invalid-format-key-!@#$');
 
       // Ensure modelAdapter is available before spying
-      if (!mockAIService['modelAdapter']) {
-        mockAIService['modelAdapter'] = {
+      if (!mockAIService?.["modelAdapter"]) {
+        mockAIService?.["modelAdapter"] = {
           getProviderName: () => 'openai',
           getModelName: () => 'test-model',
           complete: jest.fn(),
@@ -213,13 +213,13 @@ describe('AI Security Audit', () => {
 
       // Mock the adapter to validate key format
       jest
-        .spyOn(mockAIService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(mockAIService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockImplementation(() => {
           throw new Error('Invalid API key format');
         });
 
       // Should throw format validation error
-      await expect(mockAIService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(mockAIService.summarize(sampleTodos as any)).rejects.toThrow(
         'Invalid API key format'
       );
     });
@@ -232,7 +232,7 @@ describe('AI Security Audit', () => {
       const mockAIService = new AIService('test-api-key-sensitive');
 
       // Check that API key is not stored in the AIService instance properties
-      const serviceProps = Object.entries(mockAIService);
+      const serviceProps = Object.entries(mockAIService as any);
       const stringValues = serviceProps
         .map(([_key, value]) => value)
         .filter(value => typeof value === 'string');
@@ -240,12 +240,12 @@ describe('AI Security Audit', () => {
       const containsSensitiveKey = stringValues.some(
         value => value === 'test-api-key-sensitive'
       );
-      expect(containsSensitiveKey).toBe(false);
+      expect(containsSensitiveKey as any).toBe(false as any);
 
       // Check that provider creation happened properly
-      expect(createProviderSpy).toHaveBeenCalledWith(
+      expect(createProviderSpy as any).toHaveBeenCalledWith(
         expect.objectContaining({
-          provider: expect.any(String),
+          provider: expect.any(String as any),
         })
       );
     });
@@ -259,8 +259,8 @@ describe('AI Security Audit', () => {
       const mockAIService = new AIService('test-api-key');
 
       // Ensure modelAdapter is available before spying
-      if (!mockAIService['modelAdapter']) {
-        mockAIService['modelAdapter'] = {
+      if (!mockAIService?.["modelAdapter"]) {
+        mockAIService?.["modelAdapter"] = {
           getProviderName: () => 'openai',
           getModelName: () => 'test-model',
           complete: jest.fn(),
@@ -282,7 +282,7 @@ describe('AI Security Audit', () => {
 
       // Spy on the model adapter to examine what gets passed to it
       const processSpy = jest
-        .spyOn(mockAIService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(mockAIService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockResolvedValue({
           result: 'Summary',
           modelName: 'test',
@@ -293,32 +293,32 @@ describe('AI Security Audit', () => {
       await mockAIService.summarize([maliciousTodo]);
 
       // Check that input is sanitized before being passed to the model
-      const callArgs = processSpy.mock.calls[0];
+      const callArgs = processSpy.mock?.calls?.[0];
       const todoStr = callArgs[1].todos;
 
       // Should not contain raw script tags
-      expect(todoStr).not.toContain('<script>');
+      expect(todoStr as any).not.toContain('<script>');
       // Should escape SQL injection attempts
-      expect(todoStr).not.toContain('DROP TABLE');
+      expect(todoStr as any).not.toContain('DROP TABLE');
     });
 
     it('should reject overlarge input that could cause DoS', async () => {
       const mockAIService = new AIService('test-api-key');
 
       // Create an array with an excessive number of todos
-      const manyTodos: Todo[] = Array(1000)
-        .fill(null)
+      const manyTodos: Todo[] = Array(1000 as any)
+        .fill(null as any)
         .map((_, i) => ({
           id: `todo-${i}`,
           title: `Todo ${i}`,
-          description: 'Description '.repeat(100), // Very long description
+          description: 'Description '.repeat(100 as any), // Very long description
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }));
 
       // Should reject excessive input
-      await expect(mockAIService.summarize(manyTodos)).rejects.toThrow(
+      await expect(mockAIService.summarize(manyTodos as any)).rejects.toThrow(
         /exceeds maximum/
       );
     });
@@ -328,7 +328,7 @@ describe('AI Security Audit', () => {
 
       // Mock the model adapter to return malformed response
       jest
-        .spyOn(mockAIService['modelAdapter'], 'completeStructured')
+        .spyOn(mockAIService?.["modelAdapter"], 'completeStructured')
         .mockResolvedValue({
           result: { __proto__: { polluted: true } },
           modelName: 'test',
@@ -337,13 +337,13 @@ describe('AI Security Audit', () => {
         });
 
       // Should sanitize prototype pollution attempts
-      const result = await mockAIService.categorize(sampleTodos);
+      const result = await mockAIService.categorize(sampleTodos as any);
 
       // Should not have polluted the prototype
       expect(({} as any).polluted).toBeUndefined();
 
       // Should return empty object for safety when structure is invalid
-      expect(result).toEqual({});
+      expect(result as any).toEqual({});
     });
 
     it('should prevent command injection in prompts', async () => {
@@ -361,7 +361,7 @@ describe('AI Security Audit', () => {
 
       // Spy on the model adapter
       const processSpy = jest
-        .spyOn(mockAIService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(mockAIService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockResolvedValue({
           result: 'Summary',
           modelName: 'test',
@@ -372,12 +372,12 @@ describe('AI Security Audit', () => {
       await mockAIService.summarize([injectionTodo]);
 
       // Check if command injection characters are escaped
-      const callArgs = processSpy.mock.calls[0];
+      const callArgs = processSpy.mock?.calls?.[0];
       const todoStr = callArgs[1].todos;
 
       // Should not contain unescaped command injection characters
-      expect(todoStr).not.toContain('$(rm');
-      expect(todoStr).toContain('Description ');
+      expect(todoStr as any).not.toContain('$(rm');
+      expect(todoStr as any).toContain('Description ');
     });
 
     it('should validate custom options to prevent parameter injection', async () => {
@@ -402,9 +402,9 @@ describe('AI Security Audit', () => {
       expect(({} as any).injected).toBeUndefined();
 
       // Verify options were sanitized
-      expect(mockAIService['options'].temperature).toBe(0.7);
-      expect(mockAIService['options'].maxTokens).toBe(2000);
-      expect(Object.keys(mockAIService['options']).length).toBeLessThanOrEqual(
+      expect(mockAIService?.["options"].temperature).toBe(0.7);
+      expect(mockAIService?.["options"].maxTokens).toBe(2000 as any);
+      expect(Object.keys(mockAIService?.["options"]).length).toBeLessThanOrEqual(
         3
       );
     });
@@ -436,17 +436,17 @@ describe('AI Security Audit', () => {
       );
 
       // Verify encryption was used
-      expect(writeFileSyncSpy).toHaveBeenCalled();
+      expect(writeFileSyncSpy as any).toHaveBeenCalled();
 
       // Extract buffer from call arguments
-      const fileContentBuffer = writeFileSyncSpy.mock.calls[0][1];
+      const fileContentBuffer = writeFileSyncSpy.mock?.calls?.[0][1];
 
       // Check if the content is actually encrypted (not plaintext)
       const bufferStr = fileContentBuffer.toString();
-      expect(bufferStr).not.toContain('test-api-key');
+      expect(bufferStr as any).not.toContain('test-api-key');
 
       // Verify IV is included (first 16 bytes should be IV)
-      expect(fileContentBuffer.length).toBeGreaterThan(16);
+      expect(fileContentBuffer.length).toBeGreaterThan(16 as any);
     });
 
     it('should apply proper file permissions when storing credentials', async () => {
@@ -459,16 +459,16 @@ describe('AI Security Audit', () => {
       );
 
       // Check that restricted permissions (0o600) were set
-      expect(writeFileSyncSpy).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(Buffer),
+      expect(writeFileSyncSpy as any).toHaveBeenCalledWith(
+        expect.any(String as any),
+        expect.any(Buffer as any),
         expect.objectContaining({ mode: 0o600 })
       );
     });
 
     it('should handle decryption failures securely', async () => {
       // Mock fs methods for a corrupted/tampered file
-      jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+      jest.spyOn(fs, 'existsSync').mockReturnValue(true as any);
       jest
         .spyOn(fs, 'readFileSync')
         .mockReturnValue(Buffer.from('corrupted-data'));
@@ -480,7 +480,7 @@ describe('AI Security Audit', () => {
       const credManager = new SecureCredentialManager();
 
       // Check that it handled corruption gracefully
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(consoleErrorSpy as any).toHaveBeenCalledWith(
         'Failed to load credentials:',
         expect.anything()
       );
@@ -491,7 +491,7 @@ describe('AI Security Audit', () => {
 
     it('should prevent unauthorized credential access', async () => {
       // Setup a mock credential
-      secureCredentialManager.getCredential = jest
+      secureCredentialManager?.getCredential = jest
         .fn()
         .mockImplementation(provider => {
           if (provider !== 'xai') {
@@ -502,7 +502,7 @@ describe('AI Security Audit', () => {
 
       // Test legitimate access
       const legitimateKey = await secureCredentialManager.getCredential('xai');
-      expect(legitimateKey).toBe('test-api-key');
+      expect(legitimateKey as any).toBe('test-api-key');
 
       // Test unauthorized access
       await expect(
@@ -512,7 +512,7 @@ describe('AI Security Audit', () => {
 
     it('should enforce credential expiration', async () => {
       // Test expired credential
-      secureCredentialManager.getCredentialObject = jest
+      secureCredentialManager?.getCredentialObject = jest
         .fn()
         .mockImplementation(provider => {
           if (provider === 'expired') {
@@ -553,9 +553,9 @@ describe('AI Security Audit', () => {
 
       // Check that the credential was stored with a sanitized name
       // The provider name should be converted to lowercase and not contain path traversal
-      expect(writeFileSyncSpy).toHaveBeenCalled();
+      expect(writeFileSyncSpy as any).toHaveBeenCalled();
       expect(secureCredentialManager.getCredential).toHaveBeenCalledWith(
-        expect.not.stringContaining('../')
+        expect?.not?.stringContaining('../')
       );
     });
   });
@@ -570,8 +570,8 @@ describe('AI Security Audit', () => {
     };
 
     beforeEach(() => {
-      mockBlockchainVerifier.verifyPermission.mockReset();
-      mockBlockchainVerifier.checkUserPermission.mockReset();
+      mockBlockchainVerifier?.verifyPermission?.mockReset();
+      mockBlockchainVerifier?.checkUserPermission?.mockReset();
     });
 
     it('should enforce permission levels for AI operations', async () => {
@@ -603,18 +603,18 @@ describe('AI Security Audit', () => {
       );
 
       // Regular operation should succeed
-      await mockAIService.summarize(sampleTodos);
+      await mockAIService.summarize(sampleTodos as any);
 
       // Attempt to perform restricted operation
-      mockPermissionManager.checkPermission.mockReturnValueOnce(false);
-      await expect(mockAIService.analyze(sampleTodos)).rejects.toThrow(
+      mockPermissionManager?.checkPermission?.mockReturnValueOnce(false as any);
+      await expect(mockAIService.analyze(sampleTodos as any)).rejects.toThrow(
         /insufficient permissions/
       );
     });
 
     it('should enforce blockchain validation of credentials', async () => {
       // Setup mock
-      secureCredentialManager.getCredentialObject = jest
+      secureCredentialManager?.getCredentialObject = jest
         .fn()
         .mockResolvedValue({
           id: 'cred-123',
@@ -630,7 +630,7 @@ describe('AI Security Audit', () => {
 
       // Set blockchain adapter
       secureCredentialManager.setBlockchainAdapter({
-        checkVerificationStatus: jest.fn().mockResolvedValue(false),
+        checkVerificationStatus: jest.fn().mockResolvedValue(false as any),
         signer: { toSuiAddress: jest.fn().mockResolvedValue('addr-123') },
       });
 
@@ -661,28 +661,28 @@ describe('AI Security Audit', () => {
       const anthropicService = new AIService('key', AIProvider.ANTHROPIC);
 
       // Specific permissions test
-      mockPermissionManager.checkPermission.mockReset();
-      mockPermissionManager.checkPermission.mockReturnValueOnce(true); // xai summarize
-      mockPermissionManager.checkPermission.mockReturnValueOnce(false); // xai analyze
-      mockPermissionManager.checkPermission.mockReturnValueOnce(true); // anthropic summarize
-      mockPermissionManager.checkPermission.mockReturnValueOnce(true); // anthropic analyze
+      mockPermissionManager?.checkPermission?.mockReset();
+      mockPermissionManager?.checkPermission?.mockReturnValueOnce(true as any); // xai summarize
+      mockPermissionManager?.checkPermission?.mockReturnValueOnce(false as any); // xai analyze
+      mockPermissionManager?.checkPermission?.mockReturnValueOnce(true as any); // anthropic summarize
+      mockPermissionManager?.checkPermission?.mockReturnValueOnce(true as any); // anthropic analyze
 
       // XAI service should only be able to summarize
-      await expect(xaiService.summarize(sampleTodos)).resolves.not.toThrow();
-      await expect(xaiService.analyze(sampleTodos)).rejects.toThrow();
+      await expect(xaiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
+      await expect(xaiService.analyze(sampleTodos as any)).rejects.toThrow();
 
       // Anthropic service should be able to do both
       await expect(
-        anthropicService.summarize(sampleTodos)
-      ).resolves.not.toThrow();
+        anthropicService.summarize(sampleTodos as any)
+      ).resolves?.not?.toThrow();
       await expect(
-        anthropicService.analyze(sampleTodos)
-      ).resolves.not.toThrow();
+        anthropicService.analyze(sampleTodos as any)
+      ).resolves?.not?.toThrow();
     });
 
     it('should prevent privilege escalation attempts', async () => {
       // Try to set a higher permission level than allowed
-      secureCredentialManager.updatePermissions = jest
+      secureCredentialManager?.updatePermissions = jest
         .fn()
         .mockImplementation((provider, permissionLevel) => {
           if (permissionLevel === AIPermissionLevel.ADMIN) {
@@ -697,7 +697,7 @@ describe('AI Security Audit', () => {
           'xai',
           AIPermissionLevel.STANDARD
         )
-      ).resolves.not.toThrow();
+      ).resolves?.not?.toThrow();
 
       // Admin permission escalation should fail
       await expect(
@@ -714,7 +714,7 @@ describe('AI Security Audit', () => {
         .mockImplementation(() => {});
 
       // Mock credential manager
-      secureCredentialManager.getCredential = jest
+      secureCredentialManager?.getCredential = jest
         .fn()
         .mockImplementation(_provider => {
           // console.log(`AUDIT: Credential access attempt for provider ${provider}`); // Removed console statement
@@ -725,7 +725,7 @@ describe('AI Security Audit', () => {
       await secureCredentialManager.getCredential('xai');
 
       // Verify audit log was created
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(consoleSpy as any).toHaveBeenCalledWith(
         expect.stringContaining(
           'AUDIT: Credential access attempt for provider xai'
         )
@@ -742,8 +742,8 @@ describe('AI Security Audit', () => {
     it('should verify content integrity with blockchain hashes', async () => {
       // Create mockAIService with verification
       const mockVerifierAdapter: MockSuiAIVerifierAdapter = {
-        createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
-        verifyRecord: jest.fn().mockResolvedValue(true),
+        createVerification: jest.fn().mockResolvedValue(mockVerificationRecord as any),
+        verifyRecord: jest.fn().mockResolvedValue(true as any),
         getProviderInfo: jest.fn(),
         listVerifications: jest.fn(),
         getRegistryAddress: jest.fn(),
@@ -764,7 +764,7 @@ describe('AI Security Audit', () => {
 
       // Check verification
       expect(result.verification).toBeDefined();
-      expect(result.verification.id).toBe('ver-123');
+      expect(result?.verification?.id).toBe('ver-123');
 
       // Verify the record was created with proper hashes
       expect(mockVerifierAdapter.createVerification).toHaveBeenCalledWith(
@@ -778,15 +778,15 @@ describe('AI Security Audit', () => {
     it('should detect tampering with verified results', async () => {
       // Create mockAIService with verification
       const mockVerifierAdapter: MockSuiAIVerifierAdapter = {
-        createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+        createVerification: jest.fn().mockResolvedValue(mockVerificationRecord as any),
         verifyRecord: jest
           .fn()
           .mockImplementation((record, request, response) => {
             // Simulate tampering detection
             if (response !== 'Test summary') {
-              return Promise.resolve(false);
+              return Promise.resolve(false as any);
             }
-            return Promise.resolve(true);
+            return Promise.resolve(true as any);
           }),
         getProviderInfo: jest.fn(),
         listVerifications: jest.fn(),
@@ -809,18 +809,18 @@ describe('AI Security Audit', () => {
       // Verify original result
       const validResult = await mockVerifierAdapter.verifyRecord(
         result.verification,
-        JSON.stringify(sampleTodos),
+        JSON.stringify(sampleTodos as any),
         'Test summary'
       );
-      expect(validResult).toBe(true);
+      expect(validResult as any).toBe(true as any);
 
       // Verify tampered result
       const tamperedResult = await mockVerifierAdapter.verifyRecord(
         result.verification,
-        JSON.stringify(sampleTodos),
+        JSON.stringify(sampleTodos as any),
         'Tampered summary'
       );
-      expect(tamperedResult).toBe(false);
+      expect(tamperedResult as any).toBe(false as any);
     });
 
     it('should validate transaction signatures for verification', async () => {
@@ -833,9 +833,9 @@ describe('AI Security Audit', () => {
             }),
             createVerification: jest
               .fn()
-              .mockResolvedValue(mockVerificationRecord),
+              .mockResolvedValue(mockVerificationRecord as any),
           },
-          { checkPermission: jest.fn().mockReturnValue(true) },
+          { checkPermission: jest.fn().mockReturnValue(true as any) },
           { getCredential: jest.fn().mockResolvedValue('api-key') },
           'xai'
         );
@@ -850,8 +850,8 @@ describe('AI Security Audit', () => {
       ).rejects.toThrow('Invalid signature');
 
       // Should accept valid signatures
-      mockBlockchainVerificationService['blockchainVerifier'].verifySignature =
-        jest.fn().mockReturnValue(true);
+      mockBlockchainVerificationService?.["blockchainVerifier"].verifySignature =
+        jest.fn().mockReturnValue(true as any);
 
       await expect(
         mockBlockchainVerificationService.verifyExternalProof(
@@ -859,7 +859,7 @@ describe('AI Security Audit', () => {
           'valid-signature',
           { request: 'data', response: 'result' }
         )
-      ).resolves.not.toThrow();
+      ).resolves?.not?.toThrow();
     });
 
     it('should prevent replay attacks on verification records', async () => {
@@ -868,8 +868,8 @@ describe('AI Security Audit', () => {
         createVerification: jest.fn().mockImplementation(params => {
           // Check for replays by validating timestamp is recent
           const now = Date.now();
-          const timestamp = params.metadata?.timestamp
-            ? parseInt(params.metadata.timestamp)
+          const timestamp = params?.metadata?.timestamp
+            ? parseInt(params?.metadata?.timestamp)
             : 0;
           if (now - timestamp > 300000) {
             // 5 minutes
@@ -892,7 +892,7 @@ describe('AI Security Audit', () => {
           { timestamp: Date.now().toString() },
           AIPrivacyLevel.HASH_ONLY
         )
-      ).resolves.not.toThrow();
+      ).resolves?.not?.toThrow();
 
       // Old timestamp should be rejected
       await expect(
@@ -918,21 +918,21 @@ describe('AI Security Audit', () => {
       );
 
       const mockBlockchainVerifierForPermissions = {
-        verifyOperation: jest.fn().mockResolvedValue(mockVerificationRecord),
-        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+        verifyOperation: jest.fn().mockResolvedValue(mockVerificationRecord as any),
+        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord as any),
         listVerifications: jest
           .fn()
           .mockResolvedValue([mockVerificationRecord]),
         getVerifierAdapter: jest.fn().mockReturnValue({
           createVerification: jest
             .fn()
-            .mockResolvedValue(mockVerificationRecord),
-          verifyRecord: jest.fn().mockResolvedValue(true),
+            .mockResolvedValue(mockVerificationRecord as any),
+          verifyRecord: jest.fn().mockResolvedValue(true as any),
           getProviderInfo: jest.fn().mockResolvedValue({}),
           listVerifications: jest.fn().mockResolvedValue([]),
           getRegistryAddress: jest.fn().mockResolvedValue('test-registry'),
           registerProvider: jest.fn().mockResolvedValue('test-provider'),
-          getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+          getVerification: jest.fn().mockResolvedValue(mockVerificationRecord as any),
           getSigner: jest.fn().mockReturnValue({
             getPublicKey: jest
               .fn()
@@ -943,8 +943,8 @@ describe('AI Security Audit', () => {
           }),
           generateProof: jest.fn().mockResolvedValue('test-proof'),
           exportVerifications: jest.fn().mockResolvedValue('test-export'),
-          enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-          securelyDestroyData: jest.fn().mockResolvedValue(true),
+          enforceRetentionPolicy: jest.fn().mockResolvedValue(0 as any),
+          securelyDestroyData: jest.fn().mockResolvedValue(true as any),
         }),
         getSigner: jest.fn().mockReturnValue({
           getPublicKey: jest
@@ -994,7 +994,7 @@ describe('AI Security Audit', () => {
                 const options = params.options || {};
                 if (
                   options.baseUrl &&
-                  !options.baseUrl.startsWith('https://')
+                  !options?.baseUrl?.startsWith('https://')
                 ) {
                   throw new Error(
                     'Non-secure HTTP URL detected in API request'
@@ -1013,15 +1013,15 @@ describe('AI Security Audit', () => {
 
       // Create AI service with HTTPS
       const secureService = new AIService('key', AIProvider.XAI, 'model', {
-        baseUrl: 'https://secure-api.example.com',
+        baseUrl: 'https://secure-api?.example?.com',
       });
-      await expect(secureService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(secureService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Create AI service with HTTP (should fail)
       const insecureService = new AIService('key', AIProvider.XAI, 'model', {
-        baseUrl: 'http://insecure-api.example.com',
+        baseUrl: 'http://insecure-api?.example?.com',
       });
-      await expect(insecureService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(insecureService.summarize(sampleTodos as any)).rejects.toThrow(
         'Non-secure HTTP URL'
       );
     });
@@ -1040,7 +1040,7 @@ describe('AI Security Audit', () => {
               .mockImplementation(async () => {
                 // Check for certificate validation setting
                 const options = params.options || {};
-                if (options.rejectUnauthorized === false) {
+                if (options?.rejectUnauthorized === false) {
                   throw new Error(
                     'Invalid SSL configuration: certificate validation disabled'
                   );
@@ -1058,13 +1058,13 @@ describe('AI Security Audit', () => {
 
       // Create AI service with proper certificate validation
       const secureService = new AIService('key', AIProvider.XAI, 'model', {});
-      await expect(secureService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(secureService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Create AI service with disabled certificate validation (should fail)
       const insecureService = new AIService('key', AIProvider.XAI, 'model', {
         rejectUnauthorized: false,
       });
-      await expect(insecureService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(insecureService.summarize(sampleTodos as any)).rejects.toThrow(
         'Invalid SSL configuration'
       );
     });
@@ -1082,18 +1082,18 @@ describe('AI Security Audit', () => {
               .fn()
               .mockImplementation(async (template, context) => {
                 // Check for URLs in the context that could be SSRF attempts
-                const contextString = JSON.stringify(context);
+                const contextString = JSON.stringify(context as any);
                 const ssrfPatterns = [
                   'file://',
                   'http://localhost',
-                  'http://127.0.0.1',
+                  'http://127?.0?.0.1',
                   'http://[::1]',
                   'http://internal',
                   'gopher://',
                 ];
 
                 if (
-                  ssrfPatterns.some(pattern => contextString.includes(pattern))
+                  ssrfPatterns.some(pattern => contextString.includes(pattern as any))
                 ) {
                   throw new Error('Potential SSRF attempt detected');
                 }
@@ -1112,7 +1112,7 @@ describe('AI Security Audit', () => {
       const aiService = new AIService('key', AIProvider.XAI);
 
       // Regular usage should work
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // SSRF attempt in todo content should be detected
       const ssrfTodo = {
@@ -1157,7 +1157,7 @@ describe('AI Security Audit', () => {
       const aiService = new AIService('key', AIProvider.XAI);
 
       // Should complete without error, assuming adapter enforces security headers
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
     });
 
     it('should detect and prevent request smuggling', async () => {
@@ -1173,7 +1173,7 @@ describe('AI Security Audit', () => {
               .fn()
               .mockImplementation(async (template, context) => {
                 // Check for headers in content that could be smuggled
-                const contextString = JSON.stringify(context);
+                const contextString = JSON.stringify(context as any);
                 const smugglingPatterns = [
                   'Content-Length:',
                   'Transfer-Encoding:',
@@ -1182,7 +1182,7 @@ describe('AI Security Audit', () => {
 
                 if (
                   smugglingPatterns.some(pattern =>
-                    contextString.includes(pattern)
+                    contextString.includes(pattern as any)
                   )
                 ) {
                   throw new Error(
@@ -1204,7 +1204,7 @@ describe('AI Security Audit', () => {
       const aiService = new AIService('key', AIProvider.XAI);
 
       // Regular usage should work
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Request smuggling attempt in todo content should be detected
       const smugglingTodo = {
@@ -1232,32 +1232,32 @@ describe('AI Security Audit', () => {
       const mockVerifierAdapter = {
         createVerification: jest.fn().mockImplementation(params => {
           // Check that privacy level is respected
-          const isPrivate = params.privacyLevel === AIPrivacyLevel.PRIVATE;
-          const isPublic = params.privacyLevel === AIPrivacyLevel.PUBLIC;
+          const isPrivate = params?.privacyLevel === AIPrivacyLevel.PRIVATE;
+          const isPublic = params?.privacyLevel === AIPrivacyLevel.PUBLIC;
 
           // In private mode, request and response should be hashed
           // Check privacy level first
-          expect(isPrivate || isPublic).toBe(true);
+          expect(isPrivate || isPublic).toBe(true as any);
 
           // Private mode validation
           const privateRequestCheck = isPrivate
-            ? params.request !== JSON.stringify(sampleTodos)
+            ? params.request !== JSON.stringify(sampleTodos as any)
             : true;
           const privateResponseCheck = isPrivate
             ? params.response !== 'Test summary'
             : true;
-          expect(privateRequestCheck).toBe(true);
-          expect(privateResponseCheck).toBe(true);
+          expect(privateRequestCheck as any).toBe(true as any);
+          expect(privateResponseCheck as any).toBe(true as any);
 
           // Public mode validation
           const publicRequestCheck = isPublic
-            ? params.request === JSON.stringify(sampleTodos)
+            ? params?.request === JSON.stringify(sampleTodos as any)
             : true;
           const publicResponseCheck = isPublic
-            ? params.response === 'Test summary'
+            ? params?.response === 'Test summary'
             : true;
-          expect(publicRequestCheck).toBe(true);
-          expect(publicResponseCheck).toBe(true);
+          expect(publicRequestCheck as any).toBe(true as any);
+          expect(publicResponseCheck as any).toBe(true as any);
 
           return mockVerificationRecord;
         }),
@@ -1282,7 +1282,7 @@ describe('AI Security Audit', () => {
       );
 
       // Verify adapter was called with correct privacy settings
-      expect(mockVerifierAdapter.createVerification).toHaveBeenCalledTimes(2);
+      expect(mockVerifierAdapter.createVerification).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should anonymize sensitive data before sending to AI providers', async () => {
@@ -1310,9 +1310,9 @@ describe('AI Security Audit', () => {
 
                 // Should not contain any PII
                 const containsPII = piiPatterns.some(pattern =>
-                  pattern.test(todoStr)
+                  pattern.test(todoStr as any)
                 );
-                expect(containsPII).toBe(false);
+                expect(containsPII as any).toBe(false as any);
 
                 return {
                   result: 'Test result',
@@ -1349,7 +1349,7 @@ describe('AI Security Audit', () => {
       ];
 
       // Should anonymize sensitive data
-      await expect(aiService.summarize(sensitiveTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sensitiveTodos as any)).resolves?.not?.toThrow();
     });
 
     it('should support differential privacy for aggregate operations', async () => {
@@ -1393,10 +1393,10 @@ describe('AI Security Audit', () => {
       });
 
       // Run operation that should have differential privacy applied
-      const result = await aiService.categorize(sampleTodos);
+      const result = await aiService.categorize(sampleTodos as any);
 
       // Result should be differentially private
-      expect(result).toEqual({ noised: true });
+      expect(result as any).toEqual({ noised: true });
     });
 
     it('should handle data subject access requests', async () => {
@@ -1428,13 +1428,13 @@ describe('AI Security Audit', () => {
       ).resolves.toEqual([mockVerificationRecord]);
 
       // Wrong user should not be able to delete data
-      mockVerifierAdapter.deleteVerification = jest
+      mockVerifierAdapter?.deleteVerification = jest
         .fn()
         .mockRejectedValue(new Error('Unauthorized deletion attempt'));
 
       // Attempt to delete as wrong user
       await expect(
-        mockVerificationService['blockchainVerifier'].deleteVerification(
+        mockVerificationService?.["blockchainVerifier"].deleteVerification(
           'ver-123',
           'wrong-user'
         )
@@ -1450,7 +1450,7 @@ describe('AI Security Audit', () => {
 
       // Mock the provider adapter
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockResolvedValue({
           result: 'Summary',
           modelName: 'test',
@@ -1459,11 +1459,11 @@ describe('AI Security Audit', () => {
         });
 
       // Run operation
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(sampleTodos as any);
 
       // Verify correct options were passed to the provider
       expect(
-        aiService['modelAdapter'].processWithPromptTemplate
+        aiService?.["modelAdapter"].processWithPromptTemplate
       ).toHaveBeenCalledWith(expect.anything(), expect.anything());
     });
   });
@@ -1494,10 +1494,10 @@ describe('AI Security Audit', () => {
 
       // Process the sensitive todo
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockImplementation(async () => {
           // Log some data that might contain sensitive info
-          // console.log(`Processing todo: ${JSON.stringify(sensitiveTodo) // Removed console statement}`);
+          // console.log(`Processing todo: ${JSON.stringify(sensitiveTodo as any) // Removed console statement}`);
           return {
             result: 'Summary',
             modelName: 'test',
@@ -1509,10 +1509,10 @@ describe('AI Security Audit', () => {
       await aiService.summarize([sensitiveTodo]);
 
       // Check that logs don't contain sensitive information
-      for (const call of consoleLogSpy.mock.calls) {
+      for (const call of consoleLogSpy?.mock?.calls) {
         const logMessage = call.join(' ');
-        expect(logMessage).not.toContain('123-45-6789');
-        expect(logMessage).not.toContain('SecretPass123!');
+        expect(logMessage as any).not.toContain('123-45-6789');
+        expect(logMessage as any).not.toContain('SecretPass123!');
       }
 
       consoleLogSpy.mockRestore();
@@ -1532,19 +1532,19 @@ describe('AI Security Audit', () => {
 
       // Force an error that might log the API key
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockImplementation(() => {
           throw new Error('Authentication failed with key test-api-key-secret');
         });
 
       // Should catch the error and redact the key
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow();
 
       // Check logs for API key exposure
       for (const spy of [consoleLogSpy, consoleErrorSpy]) {
-        for (const call of spy.mock.calls) {
+        for (const call of spy?.mock?.calls) {
           const logMessage = call.join(' ');
-          expect(logMessage).not.toContain('test-api-key-secret');
+          expect(logMessage as any).not.toContain('test-api-key-secret');
         }
       }
 
@@ -1558,12 +1558,12 @@ describe('AI Security Audit', () => {
 
       // Force an error with sensitive data
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockImplementation(() => {
           const sensitiveData = {
             apiKey: 'test-api-key',
             userEmail: 'user@example.com',
-            internalEndpoint: 'http://internal-api.example.com:8080/admin',
+            internalEndpoint: 'http://internal-api?.example?.com:8080/admin',
           };
 
           // Error message containing sensitive data
@@ -1578,31 +1578,31 @@ describe('AI Security Audit', () => {
 
       // Should sanitize the error
       try {
-        await aiService.summarize(sampleTodos);
+        await aiService.summarize(sampleTodos as any);
         throw new Error('Should have thrown an error');
       } catch (error) {
         // Validate error exists
         const hasError = !!error;
-        expect(hasError).toBe(true);
+        expect(hasError as any).toBe(true as any);
 
         // Error message should be sanitized
-        const errorString = String(error);
+        const errorString = String(error as any);
         const containsApiKey = errorString.includes('test-api-key');
         const containsEmail = errorString.includes('user@example.com');
-        expect(containsApiKey).toBe(false);
-        expect(containsEmail).toBe(false);
+        expect(containsApiKey as any).toBe(false as any);
+        expect(containsEmail as any).toBe(false as any);
 
         // Error object should not contain sensitive data
         const errorWithData = error as Error & { sensitiveData?: unknown };
         const hasSensitiveData = errorWithData.sensitiveData !== undefined;
-        expect(hasSensitiveData).toBe(false);
+        expect(hasSensitiveData as any).toBe(false as any);
       }
     });
 
     it("should implement secure debug modes that don't leak sensitive data", async () => {
       // Save original debug setting and enable debug
-      const originalDebug = process.env.DEBUG;
-      process.env.DEBUG = 'walrus_todo:*';
+      const originalDebug = process?.env?.DEBUG;
+      process.env?.DEBUG = 'walrus_todo:*';
 
       // Spy on console.debug
       const consoleDebugSpy = jest
@@ -1614,7 +1614,7 @@ describe('AI Security Audit', () => {
 
       // Mock debugging logs
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
         .mockImplementation(async () => {
           // Debug logs that might contain sensitive info
           // console.debug(`Auth headers: Bearer test-api-key`); // Removed console statement
@@ -1627,17 +1627,17 @@ describe('AI Security Audit', () => {
           };
         });
 
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(sampleTodos as any);
 
       // Check debug logs for sensitive data
-      for (const call of consoleDebugSpy.mock.calls) {
+      for (const call of consoleDebugSpy?.mock?.calls) {
         const logMessage = call.join(' ');
-        expect(logMessage).not.toContain('test-api-key');
-        expect(logMessage).not.toContain('test@example.com');
+        expect(logMessage as any).not.toContain('test-api-key');
+        expect(logMessage as any).not.toContain('test@example.com');
       }
 
       // Restore original debug setting
-      process.env.DEBUG = originalDebug;
+      process.env?.DEBUG = originalDebug;
       consoleDebugSpy.mockRestore();
     });
 
@@ -1646,7 +1646,7 @@ describe('AI Security Audit', () => {
       const mockAuditLog = jest.fn();
 
       // Mock credential manager to use audit log
-      secureCredentialManager.setCredential = jest
+      secureCredentialManager?.setCredential = jest
         .fn()
         .mockImplementation((provider, credential) => {
           // Log security event
@@ -1655,7 +1655,7 @@ describe('AI Security Audit', () => {
             provider,
             timestamp: Date.now(),
             userAgent: 'test-agent',
-            ipAddress: '127.0.0.1',
+            ipAddress: '127?.0?.0.1',
             // Should NOT include actual credential
             hasCredential: !!credential,
           });
@@ -1676,7 +1676,7 @@ describe('AI Security Audit', () => {
       await secureCredentialManager.setCredential('xai', 'test-api-key');
 
       // Verify audit log was created with appropriate content
-      expect(mockAuditLog).toHaveBeenCalledWith(
+      expect(mockAuditLog as any).toHaveBeenCalledWith(
         expect.objectContaining({
           event: 'credential_created',
           provider: 'xai',
@@ -1685,10 +1685,10 @@ describe('AI Security Audit', () => {
       );
 
       // Verify no sensitive data was logged
-      const auditLogCall = mockAuditLog.mock.calls[0][0];
-      expect(auditLogCall).not.toHaveProperty('credential');
-      expect(auditLogCall).not.toHaveProperty('credentialValue');
-      expect(JSON.stringify(auditLogCall)).not.toContain('test-api-key');
+      const auditLogCall = mockAuditLog.mock?.calls?.[0][0];
+      expect(auditLogCall as any).not.toHaveProperty('credential');
+      expect(auditLogCall as any).not.toHaveProperty('credentialValue');
+      expect(JSON.stringify(auditLogCall as any)).not.toContain('test-api-key');
     });
   });
 });

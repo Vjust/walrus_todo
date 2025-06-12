@@ -35,7 +35,7 @@ export interface RetryOptions {
  * Classify error type based on error message and properties
  */
 export function classifyError(error: Error): ErrorType {
-  const message = error.message.toLowerCase();
+  const message = error?.message?.toLowerCase();
   
   if (message.includes('network') || message.includes('fetch') || message.includes('timeout')) {
     return ErrorType.NETWORK;
@@ -75,7 +75,7 @@ export async function retryWithRecovery<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error instanceof Error ? error : new Error(String(error as any));
       
       if (attempt === maxRetries) {
         break;
@@ -103,14 +103,14 @@ export const errorPersistence = {
       if (typeof window === 'undefined') {return;}
       
       const key = `error_log_${entry.id}`;
-      localStorage.setItem(key, JSON.stringify(entry));
+      localStorage.setItem(key, JSON.stringify(entry as any));
       
       // Clean up old entries (keep last 50)
-      const allKeys = Object.keys(localStorage).filter(k => k.startsWith('error_log_'));
+      const allKeys = Object.keys(localStorage as any).filter(k => k.startsWith('error_log_'));
       if (allKeys.length > 50) {
         const sortedKeys = allKeys.sort();
         const toRemove = sortedKeys.slice(0, allKeys.length - 50);
-        toRemove.forEach(key => localStorage.removeItem(key));
+        toRemove.forEach(key => localStorage.removeItem(key as any));
       }
     } catch (error) {
       // Ignore persistence errors
@@ -123,15 +123,15 @@ export const errorPersistence = {
       if (typeof window === 'undefined') {return [];}
       
       const errors: ErrorPersistenceEntry[] = [];
-      const allKeys = Object.keys(localStorage).filter(k => k.startsWith('error_log_'));
+      const allKeys = Object.keys(localStorage as any).filter(k => k.startsWith('error_log_'));
       
       for (const key of allKeys) {
         try {
-          const entry = JSON.parse(localStorage.getItem(key) || '{}');
-          errors.push(entry);
+          const entry = JSON.parse(localStorage.getItem(key as any) || '{}');
+          errors.push(entry as any);
         } catch (parseError) {
           // Remove invalid entries
-          localStorage.removeItem(key);
+          localStorage.removeItem(key as any);
         }
       }
       
@@ -146,8 +146,8 @@ export const errorPersistence = {
     try {
       if (typeof window === 'undefined') {return;}
       
-      const allKeys = Object.keys(localStorage).filter(k => k.startsWith('error_log_'));
-      allKeys.forEach(key => localStorage.removeItem(key));
+      const allKeys = Object.keys(localStorage as any).filter(k => k.startsWith('error_log_'));
+      allKeys.forEach(key => localStorage.removeItem(key as any));
     } catch (error) {
       console.warn('Failed to clear errors:', error);
     }

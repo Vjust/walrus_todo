@@ -48,8 +48,8 @@ export interface UserConfirmationData {
 }
 
 const DEFAULT_CONFIG: TransactionSafetyConfig = {
-  maxGasPrice: BigInt(1000), // 1000 MIST per gas unit
-  maxGasBudget: BigInt(100000000), // 0.1 SUI
+  maxGasPrice: BigInt(1000 as any), // 1000 MIST per gas unit
+  maxGasBudget: BigInt(100000000 as any), // 0.1 SUI
   simulationRetries: 3,
   confirmationRequired: true,
   dryRunFirst: true,
@@ -60,8 +60,8 @@ export class TransactionSafetyManager {
   private suiClient: SuiClient;
 
   constructor(suiClient: SuiClient, config: Partial<TransactionSafetyConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.suiClient = suiClient;
+    this?.config = { ...DEFAULT_CONFIG, ...config };
+    this?.suiClient = suiClient;
   }
 
   /**
@@ -73,51 +73,51 @@ export class TransactionSafetyManager {
   ): Promise<GasEstimation> {
     try {
       // Get current gas price
-      const gasPrice = await this.suiClient.getReferenceGasPrice();
-      const gasPriceBigInt = BigInt(gasPrice);
+      const gasPrice = await this?.suiClient?.getReferenceGasPrice();
+      const gasPriceBigInt = BigInt(gasPrice as any);
 
       // Build transaction
       const txBytes = await tx.build({ client: this.suiClient });
 
       // Dry run to get gas estimation
-      const dryRunResult = await this.suiClient.dryRunTransactionBlock({
+      const dryRunResult = await this?.suiClient?.dryRunTransactionBlock({
         transactionBlock: txBytes,
       });
 
-      const computationCost = BigInt(dryRunResult.effects.gasUsed.computationCost);
-      const storageCost = BigInt(dryRunResult.effects.gasUsed.storageCost);
-      const storageRebate = BigInt(dryRunResult.effects.gasUsed.storageRebate);
+      const computationCost = BigInt(dryRunResult?.effects?.gasUsed.computationCost);
+      const storageCost = BigInt(dryRunResult?.effects?.gasUsed.storageCost);
+      const storageRebate = BigInt(dryRunResult?.effects?.gasUsed.storageRebate);
 
       // Calculate total cost
       const totalGasUnits = computationCost + storageCost - storageRebate;
       const totalCost = totalGasUnits * gasPriceBigInt;
 
       // Calculate recommended gas budget (with 20% buffer)
-      const recommendedBudget = (totalCost * BigInt(120)) / BigInt(100);
+      const recommendedBudget = (totalCost * BigInt(120 as any)) / BigInt(100 as any);
 
       // Check safety
       const warnings: string[] = [];
       let isSafe = true;
 
-      if (gasPriceBigInt > this.config.maxGasPrice!) {
-        warnings.push(`Gas price (${gasPriceBigInt} MIST) exceeds maximum (${this.config.maxGasPrice} MIST)`);
+      if (gasPriceBigInt > this?.config?.maxGasPrice!) {
+        warnings.push(`Gas price (${gasPriceBigInt} MIST) exceeds maximum (${this?.config?.maxGasPrice} MIST)`);
         isSafe = false;
       }
 
-      if (recommendedBudget > this.config.maxGasBudget!) {
+      if (recommendedBudget > this?.config?.maxGasBudget!) {
         warnings.push(`Recommended gas budget exceeds maximum allowed`);
         isSafe = false;
       }
 
       // Check if sender has enough balance
-      const balance = await this.suiClient.getBalance({
+      const balance = await this?.suiClient?.getBalance({
         owner: sender,
         coinType: '0x2::sui::SUI',
       });
 
       const totalBalance = BigInt(balance.totalBalance);
       if (totalBalance < recommendedBudget) {
-        warnings.push(`Insufficient balance. Need ${this.formatSui(recommendedBudget)} SUI, have ${this.formatSui(totalBalance)} SUI`);
+        warnings.push(`Insufficient balance. Need ${this.formatSui(recommendedBudget as any)} SUI, have ${this.formatSui(totalBalance as any)} SUI`);
         isSafe = false;
       }
 
@@ -147,38 +147,38 @@ export class TransactionSafetyManager {
     const warnings: string[] = [];
     let lastError: Error | null = null;
 
-    for (let attempt = 0; attempt < (this.config.simulationRetries || 3); attempt++) {
+    for (let attempt = 0; attempt < (this?.config?.simulationRetries || 3); attempt++) {
       try {
         // Build transaction
         const txBytes = await tx.build({ client: this.suiClient });
 
         // Dry run the transaction
-        const result = await this.suiClient.dryRunTransactionBlock({
+        const result = await this?.suiClient?.dryRunTransactionBlock({
           transactionBlock: txBytes,
         });
 
         // Check if simulation was successful
-        if (result.effects.status.status === 'failure') {
-          const error = result.effects.status.error || 'Transaction would fail';
+        if (result?.effects?.status?.status === 'failure') {
+          const error = result?.effects?.status.error || 'Transaction would fail';
           warnings.push(`Simulation failed: ${error}`);
           
           return {
             success: false,
             error,
             effects: result.effects,
-            gasUsed: result.effects.gasUsed.computationCost,
+            gasUsed: result?.effects?.gasUsed.computationCost,
             warnings,
           };
         }
 
         // Check for any warnings in effects
-        if (result.effects.dependencies && result.effects.dependencies.length > 10) {
+        if (result?.effects?.dependencies && result?.effects?.dependencies.length > 10) {
           warnings.push('Transaction has many dependencies, may take longer to execute');
         }
 
-        const gasUsed = BigInt(result.effects.gasUsed.computationCost) + 
-                       BigInt(result.effects.gasUsed.storageCost) - 
-                       BigInt(result.effects.gasUsed.storageRebate);
+        const gasUsed = BigInt(result?.effects?.gasUsed.computationCost) + 
+                       BigInt(result?.effects?.gasUsed.storageCost) - 
+                       BigInt(result?.effects?.gasUsed.storageRebate);
 
         return {
           success: true,
@@ -191,7 +191,7 @@ export class TransactionSafetyManager {
         warnings.push(`Simulation attempt ${attempt + 1} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         
         // Wait before retry
-        if (attempt < (this.config.simulationRetries || 3) - 1) {
+        if (attempt < (this?.config?.simulationRetries || 3) - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         }
       }
@@ -208,7 +208,7 @@ export class TransactionSafetyManager {
    * Show user confirmation dialog
    */
   async requestUserConfirmation(data: UserConfirmationData): Promise<boolean> {
-    if (!this.config.confirmationRequired) {
+    if (!this?.config?.confirmationRequired) {
       return true;
     }
 
@@ -231,15 +231,15 @@ export class TransactionSafetyManager {
                 {/* Gas estimation details */}
                 <div className="mt-3 bg-gray-50 rounded p-2 text-xs">
                   <p className="font-semibold text-gray-700 mb-1">Gas Estimation:</p>
-                  <p>Total Cost: {this.formatSui(BigInt(data.estimatedGas.totalCost))} SUI</p>
-                  <p>Gas Budget: {this.formatSui(BigInt(data.estimatedGas.gasBudget))} SUI</p>
+                  <p>Total Cost: {this.formatSui(BigInt(data?.estimatedGas?.totalCost))} SUI</p>
+                  <p>Gas Budget: {this.formatSui(BigInt(data?.estimatedGas?.gasBudget))} SUI</p>
                 </div>
 
                 {/* Warnings */}
-                {data.warnings.length > 0 && (
+                {data?.warnings?.length > 0 && (
                   <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-2">
                     <p className="text-xs font-semibold text-yellow-800 mb-1">Warnings:</p>
-                    {data.warnings.map((warning, i) => (
+                    {data?.warnings?.map((warning, i) => (
                       <p key={i} className="text-xs text-yellow-700">• {warning}</p>
                     ))}
                   </div>
@@ -250,7 +250,7 @@ export class TransactionSafetyManager {
                   <button
                     onClick={() => {
                       toast.dismiss(t.id);
-                      resolve(true);
+                      resolve(true as any);
                     }}
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-ocean-deep hover:bg-ocean-deep/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ocean-deep"
                   >
@@ -259,7 +259,7 @@ export class TransactionSafetyManager {
                   <button
                     onClick={() => {
                       toast.dismiss(t.id);
-                      resolve(false);
+                      resolve(false as any);
                     }}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ocean-deep"
                   >
@@ -312,7 +312,7 @@ export class TransactionSafetyManager {
       }
 
       // Step 2: Simulate transaction (unless skipped)
-      if (!options.skipSimulation && this.config.dryRunFirst) {
+      if (!options.skipSimulation && this?.config?.dryRunFirst) {
         const simulation = await this.simulateTransaction(tx, sender);
         
         if (!simulation.success) {
@@ -327,7 +327,7 @@ export class TransactionSafetyManager {
         }
 
         // If simulation has warnings, ask for confirmation
-        if (simulation.warnings.length > 0) {
+        if (simulation?.warnings?.length > 0) {
           const shouldProceed = await this.requestUserConfirmation({
             operation: options.operation,
             estimatedGas: gasEstimation,
@@ -405,8 +405,8 @@ export class TransactionSafetyManager {
    * Format SUI amount for display
    */
   private formatSui(mist: bigint): string {
-    const sui = Number(mist) / 1_000_000_000;
-    return sui.toFixed(6).replace(/\.?0+$/, '');
+    const sui = Number(mist as any) / 1_000_000_000;
+    return sui.toFixed(6 as any).replace(/\.?0+$/, '');
   }
 
   /**
@@ -417,7 +417,7 @@ export class TransactionSafetyManager {
     suggestion: string;
     action?: () => Promise<void>;
   }> {
-    const errorMessage = error.message.toLowerCase();
+    const errorMessage = error?.message?.toLowerCase();
 
     // Insufficient gas
     if (errorMessage.includes('insufficient gas') || errorMessage.includes('gas budget')) {
@@ -473,7 +473,7 @@ export async function estimateGas(
   tx: Transaction,
   sender: string
 ): Promise<GasEstimation> {
-  const manager = new TransactionSafetyManager(suiClient);
+  const manager = new TransactionSafetyManager(suiClient as any);
   return manager.estimateGas(tx, sender);
 }
 
@@ -482,7 +482,7 @@ export async function simulateTransaction(
   tx: Transaction,
   sender: string
 ): Promise<TransactionSimulationResult> {
-  const manager = new TransactionSafetyManager(suiClient);
+  const manager = new TransactionSafetyManager(suiClient as any);
   return manager.simulateTransaction(tx, sender);
 }
 
@@ -498,6 +498,6 @@ export async function executeTransactionSafely(
     skipConfirmation?: boolean;
   }
 ): Promise<{ success: boolean; result?: any; error?: string }> {
-  const manager = new TransactionSafetyManager(suiClient);
+  const manager = new TransactionSafetyManager(suiClient as any);
   return manager.executeTransactionSafely(tx, sender, signAndExecuteTransaction, options);
 }

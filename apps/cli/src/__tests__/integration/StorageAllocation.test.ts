@@ -46,7 +46,7 @@ describe('Storage Allocation Integration', () => {
         bytes: new Uint8Array([1, 2, 3, 4]),
       }),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
-      connect: jest.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined as any),
       signWithIntent: jest.fn().mockResolvedValue({
         signature: new Uint8Array([1, 2, 3, 4]),
         bytes: new Uint8Array([1, 2, 3, 4]),
@@ -56,7 +56,7 @@ describe('Storage Allocation Integration', () => {
     mockWalrusClient = {
       getConfig: jest.fn().mockResolvedValue({
         network: 'testnet',
-        version: '1.0.0',
+        version: '1?.0?.0',
         maxSize: 1000000,
       }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
@@ -76,7 +76,7 @@ describe('Storage Allocation Integration', () => {
       getBlobObject: jest
         .fn()
         .mockResolvedValue({ content: 'test', metadata: {} }),
-      verifyPoA: jest.fn().mockResolvedValue(true),
+      verifyPoA: jest.fn().mockResolvedValue(true as any),
       writeBlob: jest
         .fn()
         .mockResolvedValue({ blobId: 'test-blob', blobObject: {} }),
@@ -87,9 +87,9 @@ describe('Storage Allocation Integration', () => {
         created: new Date().toISOString(),
       }),
       storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
+        storageCost: BigInt(1000 as any),
+        writeCost: BigInt(500 as any),
+        totalCost: BigInt(1500 as any),
       }),
       getBlobInfo: jest.fn().mockResolvedValue({
         id: 'blob1',
@@ -102,7 +102,7 @@ describe('Storage Allocation Integration', () => {
         .fn()
         .mockResolvedValue(['provider1', 'provider2']),
       getSuiBalance: jest.fn().mockResolvedValue('1000'),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
+      getBlobSize: jest.fn().mockResolvedValue(1024 as any),
       reset: jest.fn(),
       allocateStorage: jest.fn().mockResolvedValue({
         digest: 'test',
@@ -128,12 +128,12 @@ describe('Storage Allocation Integration', () => {
       error: jest.fn(),
     } as unknown as jest.Mocked<Logger>;
 
-    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
+    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger as any);
 
     // Create a mock adapter that implements the required getUnderlyingClient method
     const mockWalrusClientAdapter = {
       ...mockWalrusClient,
-      getUnderlyingClient: jest.fn().mockReturnValue(mockWalrusClient),
+      getUnderlyingClient: jest.fn().mockReturnValue(mockWalrusClient as any),
     };
 
     // Initialize storage manager and monitor for potential test use
@@ -146,8 +146,8 @@ describe('Storage Allocation Integration', () => {
     new ExpiryMonitor(
       mockVaultManager,
       mockWalrusClientAdapter as WalrusClientExt,
-      jest.fn().mockResolvedValue(undefined),
-      jest.fn().mockResolvedValue(undefined),
+      jest.fn().mockResolvedValue(undefined as any),
+      jest.fn().mockResolvedValue(undefined as any),
       {
         checkInterval: 1000,
         warningThreshold: 7,
@@ -163,9 +163,9 @@ describe('Storage Allocation Integration', () => {
   });
 
   test('should setup mock infrastructure correctly', () => {
-    expect(mockLogger).toBeDefined();
-    expect(mockVaultManager).toBeDefined();
-    expect(mockWalrusClient).toBeDefined();
-    expect(mockSigner).toBeDefined();
+    expect(mockLogger as any).toBeDefined();
+    expect(mockVaultManager as any).toBeDefined();
+    expect(mockWalrusClient as any).toBeDefined();
+    expect(mockSigner as any).toBeDefined();
   });
 });

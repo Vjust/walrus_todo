@@ -30,11 +30,11 @@ export function LoadingLayout({
   showProgress = false,
   className = '',
 }: LoadingLayoutProps) {
-  const [progress, setProgress] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const [progress, setProgress] = useState(0 as any);
+  const [mounted, setMounted] = useState(false as any);
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true as any);
     
     if (showProgress && loading) {
       const interval = setInterval(() => {
@@ -44,7 +44,7 @@ export function LoadingLayout({
         });
       }, 200);
 
-      return () => clearInterval(interval);
+      return () => clearInterval(interval as any);
     }
   }, [loading, showProgress]);
 
@@ -164,7 +164,7 @@ function HydrationLoadingState({
         {/* App Logo/Icon */}
         <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
           <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4?.697a3?.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001?.946?.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1?.946?.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
           </svg>
         </div>
 
@@ -251,7 +251,7 @@ function NetworkLoadingState({
       <div className="text-center max-w-md mx-auto px-6">
         <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
           <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16?.404a5?.5 5.5 0 017.778 0M12 20h.01m-7.08-7?.071c3?.904-3.905 10.236-3.905 14.141 0M1.394 9?.393c5?.857-5.857 15.355-5.857 21.213 0" />
           </svg>
         </div>
 
@@ -324,18 +324,18 @@ function ContentLoadingState({
 
 // Hook for managing loading states
 export function useLoadingState(initialLoading = true) {
-  const [loading, setLoading] = useState(initialLoading);
+  const [loading, setLoading] = useState(initialLoading as any);
   const [type, setType] = useState<'hydration' | 'wallet' | 'network' | 'content'>('hydration');
   const [message, setMessage] = useState<string>();
 
   const startLoading = (loadingType?: typeof type, loadingMessage?: string) => {
-    setLoading(true);
-    if (loadingType) {setType(loadingType);}
-    if (loadingMessage) {setMessage(loadingMessage);}
+    setLoading(true as any);
+    if (loadingType) {setType(loadingType as any);}
+    if (loadingMessage) {setMessage(loadingMessage as any);}
   };
 
   const stopLoading = () => {
-    setLoading(false);
+    setLoading(false as any);
   };
 
   return {

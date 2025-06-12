@@ -14,8 +14,8 @@ export class SecureStorage {
   private encryptionKey: Buffer | null = null;
 
   constructor() {
-    this.storageDir = path.join(os.homedir(), '.walrus', 'secure');
-    this.keyFile = path.join(this.storageDir, '.key');
+    this?.storageDir = path.join(os.homedir(), '.walrus', 'secure');
+    this?.keyFile = path.join(this.storageDir, '.key');
     this.initializeStorage();
   }
 
@@ -25,7 +25,7 @@ export class SecureStorage {
     }
 
     if (!fs.existsSync(this.keyFile)) {
-      const key = crypto.randomBytes(32);
+      const key = crypto.randomBytes(32 as any);
       fs.writeFileSync(this.keyFile, key, { mode: 0o600 });
     }
 
@@ -37,7 +37,7 @@ export class SecureStorage {
   private getEncryptionKey(): Buffer {
     if (!this.encryptionKey) {
       const key = fs.readFileSync(this.keyFile);
-      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
+      this?.encryptionKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
     }
     return this.encryptionKey as Buffer;
   }
@@ -48,7 +48,7 @@ export class SecureStorage {
 
   async setSecureItem(key: string, value: string): Promise<void> {
     try {
-      const iv = crypto.randomBytes(16);
+      const iv = crypto.randomBytes(16 as any);
       const cipher = crypto.createCipheriv(
         'aes-256-gcm',
         this.getEncryptionKey(),
@@ -65,18 +65,18 @@ export class SecureStorage {
         authTag: authTag.toString('hex'),
       });
 
-      fs.writeFileSync(this.getStorageFile(key), data, { mode: 0o600 });
+      fs.writeFileSync(this.getStorageFile(key as any), data, { mode: 0o600 });
     } catch (_error) {
       throw new CLIError(
-        `Failed to store secure item: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to store secure item: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'SECURE_STORAGE_ERROR'
       );
     }
   }
 
   async getSecureItem(key: string): Promise<string | null> {
-    const filePath = this.getStorageFile(key);
-    if (!fs.existsSync(filePath)) {
+    const filePath = this.getStorageFile(key as any);
+    if (!fs.existsSync(filePath as any)) {
       return null;
     }
 
@@ -86,7 +86,7 @@ export class SecureStorage {
         typeof fileContent === 'string'
           ? fileContent
           : fileContent.toString('utf8');
-      const data = JSON.parse(contentStr);
+      const data = JSON.parse(contentStr as any);
       const decipher = crypto.createDecipheriv(
         'aes-256-gcm',
         this.getEncryptionKey(),
@@ -100,16 +100,16 @@ export class SecureStorage {
       return decrypted;
     } catch (_error) {
       throw new CLIError(
-        `Failed to read secure item: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to read secure item: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'SECURE_STORAGE_ERROR'
       );
     }
   }
 
   async removeSecureItem(key: string): Promise<void> {
-    const filePath = this.getStorageFile(key);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const filePath = this.getStorageFile(key as any);
+    if (fs.existsSync(filePath as any)) {
+      fs.unlinkSync(filePath as any);
     }
   }
 }

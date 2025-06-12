@@ -61,7 +61,7 @@ describe('suggest command (Sinon conflict test)', () => {
 
   beforeEach(() => {
     // Set up environment variable
-    process.env.XAI_API_KEY = 'test-api-key';
+    process.env?.XAI_API_KEY = 'test-api-key';
 
     // Jest mocks - no Sinon conflicts here
     jest.clearAllMocks();
@@ -69,7 +69,7 @@ describe('suggest command (Sinon conflict test)', () => {
 
   afterEach(() => {
     // Clean up environment variables
-    delete process.env.XAI_API_KEY;
+    delete process?.env?.XAI_API_KEY;
 
     // Restore all mocks - uses Jest, not Sinon
     jest.restoreAllMocks();
@@ -79,7 +79,7 @@ describe('suggest command (Sinon conflict test)', () => {
     // Mock the TaskSuggestionService methods using Jest
     const mockSuggestTasks = jest
       .spyOn(TaskSuggestionService.prototype, 'suggestTasks')
-      .mockResolvedValue(sampleSuggestions);
+      .mockResolvedValue(sampleSuggestions as any);
 
     const mockSuggestTasksWithVerification = jest
       .spyOn(TaskSuggestionService.prototype, 'suggestTasksWithVerification')
@@ -102,15 +102,15 @@ describe('suggest command (Sinon conflict test)', () => {
       .mockReturnValue({} as any);
 
     // Verify mocks are set up
-    expect(mockSuggestTasks).toBeDefined();
-    expect(mockSuggestTasksWithVerification).toBeDefined();
-    expect(mockGetProvider).toBeDefined();
+    expect(mockSuggestTasks as any).toBeDefined();
+    expect(mockSuggestTasksWithVerification as any).toBeDefined();
+    expect(mockGetProvider as any).toBeDefined();
 
     // Test that we can call the mocked methods
     const service = new TaskSuggestionService({} as any, {} as any);
 
-    await expect(service.suggestTasks()).resolves.toBe(sampleSuggestions);
-    expect(mockSuggestTasks).toHaveBeenCalled();
+    await expect(service.suggestTasks()).resolves.toBe(sampleSuggestions as any);
+    expect(mockSuggestTasks as any).toHaveBeenCalled();
   });
 
   it('handles repeated mocking without conflicts', () => {
@@ -119,9 +119,9 @@ describe('suggest command (Sinon conflict test)', () => {
 
     const mock1 = jest
       .spyOn(TaskSuggestionService.prototype, 'suggestTasks')
-      .mockResolvedValue(sampleSuggestions);
+      .mockResolvedValue(sampleSuggestions as any);
 
-    expect(mock1).toBeDefined();
+    expect(mock1 as any).toBeDefined();
 
     // Clean up
     mock1.mockRestore();
@@ -129,14 +129,14 @@ describe('suggest command (Sinon conflict test)', () => {
     // Mock again - should not conflict
     const mock2 = jest
       .spyOn(TaskSuggestionService.prototype, 'suggestTasks')
-      .mockResolvedValue(sampleSuggestions);
+      .mockResolvedValue(sampleSuggestions as any);
 
-    expect(mock2).toBeDefined();
-    expect(mock2).not.toBe(mock1);
+    expect(mock2 as any).toBeDefined();
+    expect(mock2 as any).not.toBe(mock1 as any);
   });
 
   it('uses global sinon helpers without conflicts', () => {
-    // Test the global helpers we added to jest.setup.js
+    // Test the global helpers we added to jest?.setup?.js
     expect(global.createSafeStub).toBeDefined();
     expect(global.createSinonSandbox).toBeDefined();
     expect(global.restoreAllSinon).toBeDefined();
@@ -158,8 +158,8 @@ describe('suggest command (Sinon conflict test)', () => {
       'getProvider'
     );
 
-    expect(mockSuggestTasks).toBeDefined();
-    expect(mockGetProvider).toBeDefined();
+    expect(mockSuggestTasks as any).toBeDefined();
+    expect(mockGetProvider as any).toBeDefined();
 
     // After test cleanup (handled by Jest automatically), these should be restored
     // This test just verifies the setup works without errors

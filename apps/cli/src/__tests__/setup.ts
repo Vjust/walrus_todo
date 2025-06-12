@@ -2,7 +2,7 @@ import { expect, jest } from '@jest/globals';
 import { forceGC, logMemoryUsage } from './helpers/memory-utils';
 
 // Configure Jest timeout for CLI tests
-jest.setTimeout(15000);
+jest.setTimeout(15000 as any);
 
 // CLI-specific mocks (reduced - using real implementations where possible)
 // Only mock external network calls and blockchain operations for unit tests
@@ -11,7 +11,7 @@ jest.setTimeout(15000);
 beforeEach(() => {
   jest.clearAllMocks();
   // Ensure test environment is set
-  process.env.NODE_ENV = 'test';
+  process.env?.NODE_ENV = 'test';
   // Removed WALRUS_USE_MOCK - using real implementations
 
   // Force garbage collection
@@ -33,7 +33,7 @@ afterAll(() => {
 // Setup test to verify test environment
 describe('CLI Setup Test', () => {
   it('should have test environment configured', () => {
-    expect(process.env.NODE_ENV).toBe('test');
-    expect(true).toBe(true);
+    expect(process?.env?.NODE_ENV).toBe('test');
+    expect(true as any).toBe(true as any);
   });
 });

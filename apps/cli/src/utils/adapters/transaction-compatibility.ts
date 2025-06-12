@@ -23,13 +23,13 @@ export function createCompatibleSigner(signer: Record<string, unknown>) {
     // Provide both old and new method names for transaction signing
     async signTransaction(transaction: unknown) {
       // Try new method first
-      if (typeof signer.signTransaction === 'function') {
-        return await signer.signTransaction(transaction);
+      if (typeof signer?.signTransaction === 'function') {
+        return await signer.signTransaction(transaction as any);
       }
 
       // Fallback to old method
-      if (typeof signer.signTransactionBlock === 'function') {
-        return await signer.signTransactionBlock(transaction);
+      if (typeof signer?.signTransactionBlock === 'function') {
+        return await signer.signTransactionBlock(transaction as any);
       }
 
       throw new Error('No compatible signing method found on signer');
@@ -37,13 +37,13 @@ export function createCompatibleSigner(signer: Record<string, unknown>) {
 
     async signTransactionBlock(transaction: unknown) {
       // Try old method first for backward compatibility
-      if (typeof signer.signTransactionBlock === 'function') {
-        return await signer.signTransactionBlock(transaction);
+      if (typeof signer?.signTransactionBlock === 'function') {
+        return await signer.signTransactionBlock(transaction as any);
       }
 
       // Fallback to new method
-      if (typeof signer.signTransaction === 'function') {
-        return await signer.signTransaction(transaction);
+      if (typeof signer?.signTransaction === 'function') {
+        return await signer.signTransaction(transaction as any);
       }
 
       throw new Error('No compatible signing method found on signer');
@@ -67,27 +67,27 @@ export async function signTransactionCompatible(
   signer: Record<string, unknown>,
   transaction: unknown
 ) {
-  const compatibleSigner = createCompatibleSigner(signer);
+  const compatibleSigner = createCompatibleSigner(signer as any);
 
   try {
     // Try the new method first
-    return await compatibleSigner.signTransaction(transaction);
+    return await compatibleSigner.signTransaction(transaction as any);
   } catch (error) {
     logger.warn('signTransaction failed, trying signTransactionBlock:', error);
 
     try {
       // Fallback to old method
-      return await compatibleSigner.signTransactionBlock(transaction);
+      return await compatibleSigner.signTransactionBlock(transaction as any);
     } catch (fallbackError) {
       logger.error('Both signing methods failed:', {
-        primaryError: error instanceof Error ? error.message : String(error),
+        primaryError: error instanceof Error ? error.message : String(error as any),
         fallbackError:
           fallbackError instanceof Error
             ? fallbackError.message
-            : String(fallbackError),
+            : String(fallbackError as any),
       });
       throw new Error(
-        `Transaction signing failed: ${error instanceof Error ? error.message : String(error)}`
+        `Transaction signing failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -130,11 +130,11 @@ export async function executeTransactionCompatible(
   };
 
   try {
-    return await client.executeTransactionBlock(executeOptions);
+    return await client.executeTransactionBlock(executeOptions as any);
   } catch (error) {
     logger.error('Transaction execution failed:', error);
     throw new Error(
-      `Transaction execution failed: ${error instanceof Error ? error.message : String(error)}`
+      `Transaction execution failed: ${error instanceof Error ? error.message : String(error as any)}`
     );
   }
 }

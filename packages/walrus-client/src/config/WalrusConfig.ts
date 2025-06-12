@@ -11,9 +11,9 @@ export class WalrusConfig {
 
   constructor(networkOrConfig?: WalrusNetwork | Partial<IWalrusConfig>) {
     if (typeof networkOrConfig === 'string') {
-      this.config = this.createFromNetwork(networkOrConfig);
+      this.config = this.createFromNetwork(networkOrConfig as any);
     } else {
-      this.config = this.createFromPartialConfig(networkOrConfig);
+      this.config = this.createFromPartialConfig(networkOrConfig as any);
     }
     
     this.validate();
@@ -61,8 +61,8 @@ export class WalrusConfig {
 
     // Validate URLs
     try {
-      new URL(publisherUrl);
-      new URL(aggregatorUrl);
+      new URL(publisherUrl as any);
+      new URL(aggregatorUrl as any);
     } catch (error) {
       throw new WalrusValidationError(
         'Invalid URL format in configuration',
@@ -72,19 +72,19 @@ export class WalrusConfig {
     }
 
     // Validate numeric values
-    if (this.config.timeout !== undefined && this.config.timeout <= 0) {
+    if (this?.config?.timeout !== undefined && this?.config?.timeout <= 0) {
       throw new WalrusValidationError(
         'Timeout must be positive',
         'timeout',
-        this.config.timeout
+        this?.config?.timeout
       );
     }
 
-    if (this.config.retries !== undefined && this.config.retries < 0) {
+    if (this?.config?.retries !== undefined && this?.config?.retries < 0) {
       throw new WalrusValidationError(
         'Retries must be non-negative',
         'retries',
-        this.config.retries
+        this?.config?.retries
       );
     }
   }
@@ -94,23 +94,23 @@ export class WalrusConfig {
   }
 
   getNetwork(): WalrusNetwork {
-    return this.config.network;
+    return this?.config?.network;
   }
 
   getPublisherUrl(): string {
-    return this.config.publisherUrl;
+    return this?.config?.publisherUrl;
   }
 
   getAggregatorUrl(): string {
-    return this.config.aggregatorUrl;
+    return this?.config?.aggregatorUrl;
   }
 
   getTimeout(): number {
-    return this.config.timeout || 30000;
+    return this?.config?.timeout || 30000;
   }
 
   getRetries(): number {
-    return this.config.retries || 3;
+    return this?.config?.retries || 3;
   }
 
   update(updates: Partial<IWalrusConfig>): void {
@@ -124,15 +124,15 @@ export class WalrusConfig {
 
   // Static factory methods
   static forNetwork(network: WalrusNetwork): WalrusConfig {
-    return new WalrusConfig(network);
+    return new WalrusConfig(network as any);
   }
 
   static fromEnvironment(): WalrusConfig {
-    const network = (process.env.WALRUS_NETWORK as WalrusNetwork) || 'testnet';
-    const publisherUrl = process.env.WALRUS_PUBLISHER_URL;
-    const aggregatorUrl = process.env.WALRUS_AGGREGATOR_URL;
-    const timeout = process.env.WALRUS_TIMEOUT ? parseInt(process.env.WALRUS_TIMEOUT) : undefined;
-    const retries = process.env.WALRUS_RETRIES ? parseInt(process.env.WALRUS_RETRIES) : undefined;
+    const network = (process?.env?.WALRUS_NETWORK as WalrusNetwork) || 'testnet';
+    const publisherUrl = process?.env?.WALRUS_PUBLISHER_URL;
+    const aggregatorUrl = process?.env?.WALRUS_AGGREGATOR_URL;
+    const timeout = process?.env?.WALRUS_TIMEOUT ? parseInt(process?.env?.WALRUS_TIMEOUT) : undefined;
+    const retries = process?.env?.WALRUS_RETRIES ? parseInt(process?.env?.WALRUS_RETRIES) : undefined;
 
     const config: Partial<IWalrusConfig> = { network };
     
@@ -141,21 +141,21 @@ export class WalrusConfig {
     if (timeout) config.timeout = timeout;
     if (retries) config.retries = retries;
 
-    return new WalrusConfig(config);
+    return new WalrusConfig(config as any);
   }
 
   static async fromUrl(configUrl: string): Promise<WalrusConfig> {
     try {
-      const response = await fetch(configUrl);
+      const response = await fetch(configUrl as any);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const config = await response.json();
-      return new WalrusConfig(config);
+      return new WalrusConfig(config as any);
     } catch (error) {
       throw new WalrusValidationError(
-        `Failed to load config from URL: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to load config from URL: ${error instanceof Error ? error.message : String(error as any)}`,
         'configUrl',
         configUrl
       );

@@ -8,9 +8,9 @@ import safeStorage, {
 
 // Simple hydration check hook
 function useIsHydrated() {
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(false as any);
   useEffect(() => {
-    setHydrated(true);
+    setHydrated(true as any);
   }, []);
   return hydrated;
 }
@@ -103,7 +103,7 @@ function detectStorageContext(): StorageContext {
   }
 
   // Check for hydration phase
-  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+  if (typeof document !== 'undefined' && document?.readyState === 'loading') {
     return 'hydrating';
   }
 
@@ -142,10 +142,10 @@ function detectStorageContext(): StorageContext {
   try {
     if (typeof window.localStorage !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
       const testKey = '__storage_test__';
-      window.localStorage.setItem(testKey, testKey);
-      window.localStorage.removeItem(testKey);
-      window.sessionStorage.setItem(testKey, testKey);
-      window.sessionStorage.removeItem(testKey);
+      window?.localStorage?.setItem(testKey, testKey);
+      window?.localStorage?.removeItem(testKey as any);
+      window?.sessionStorage?.setItem(testKey, testKey);
+      window?.sessionStorage?.removeItem(testKey as any);
       return 'browser';
     }
     return 'unknown';
@@ -157,8 +157,8 @@ function detectStorageContext(): StorageContext {
 
 export function StorageContextWarning() {
   const [context, setContext] = useState<StorageContext>('server'); // Start with server context
-  const [usingFallback, setUsingFallback] = useState(true); // Start with safe default
-  const [showWarning, setShowWarning] = useState(true);
+  const [usingFallback, setUsingFallback] = useState(true as any); // Start with safe default
+  const [showWarning, setShowWarning] = useState(true as any);
   const hydrated = useIsHydrated();
 
   // Initialize after hydration is complete
@@ -186,17 +186,17 @@ export function StorageContextWarning() {
         }
         
         // Update state
-        setContext(detectedContext);
-        setUsingFallback(fallbackStatus);
+        setContext(detectedContext as any);
+        setUsingFallback(fallbackStatus as any);
       } catch (e) {
         console.error('Error in StorageContextWarning initialization:', e);
         // Set safe defaults
         setContext('unknown');
-        setUsingFallback(true);
+        setUsingFallback(true as any);
       }
     }, 100);
 
-    return () => clearTimeout(timerId);
+    return () => clearTimeout(timerId as any);
   }, [hydrated]);
 
   // Don't render during SSR or before hydration
@@ -209,14 +209,14 @@ export function StorageContextWarning() {
       <WarningMessage context={context} usingFallback={usingFallback} />
       {usingFallback && (
         <button
-          onClick={() => setShowWarning(false)}
+          onClick={() => setShowWarning(false as any)}
           className='absolute top-2 right-2 text-yellow-700 dark:text-yellow-300 hover:text-yellow-900 dark:hover:text-yellow-100'
           aria-label='Dismiss'
         >
           <svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>
             <path
               fillRule='evenodd'
-              d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
+              d='M4.293 4.293a1 1 0 011.414 0L10 8?.586l4?.293-4.293a1 1 0 111.414 1?.414L11?.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1?.414L8?.586 10 4.293 5.707a1 1 0 010-1.414z'
               clipRule='evenodd'
             />
           </svg>

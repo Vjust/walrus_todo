@@ -22,10 +22,10 @@ export class TodoService {
   constructor() {
     // Initialize fs.promises once for consistent usage
     // Handle case where fs.promises might be undefined in test environments
-    this.fs = fs || ({} as typeof fs);
+    this?.fs = fs || ({} as typeof fs);
 
     // Get storage path from config service using the proper getter method
-    this.todosPath = configService.getTodosDirectory();
+    this?.todosPath = configService.getTodosDirectory();
 
     // Validate that todosPath is properly set
     if (!this.todosPath) {
@@ -37,10 +37,10 @@ export class TodoService {
 
     // Verify the todos directory exists and is accessible
     // Initialize a property to track initialization status
-    this.initialized = false;
-    this.initializationPromise = this.verifyStorageDirectory()
+    this?.initialized = false;
+    this?.initializationPromise = this.verifyStorageDirectory()
       .then(() => {
-        this.initialized = true;
+        this?.initialized = true;
       })
       .catch(_error => {
         // Fail fast by logging and throwing error
@@ -64,7 +64,7 @@ export class TodoService {
   private async verifyStorageDirectory(): Promise<void> {
     try {
       // Handle test environments where fs methods might not be available
-      if (!this.fs || typeof this.fs.access !== 'function') {
+      if (!this.fs || typeof this?.fs?.access !== 'function') {
         // In test environment, assume directory operations succeed
         logger.debug(
           'Filesystem operations not available, assuming success in test environment'
@@ -74,20 +74,20 @@ export class TodoService {
 
       // Check if directory exists, create it if it doesn't
       try {
-        await this.fs.access(this.todosPath);
+        await this?.fs?.access(this.todosPath);
       } catch (_error) {
         // Directory doesn't exist or is not accessible, create it
-        if (!this.fs.mkdir || typeof this.fs.mkdir !== 'function') {
+        if (!this?.fs?.mkdir || typeof this?.fs?.mkdir !== 'function') {
           throw new CLIError(
             'Filesystem mkdir operation not available',
             'FILESYSTEM_NOT_AVAILABLE'
           );
         }
-        await this.fs.mkdir(this.todosPath, { recursive: true });
+        await this?.fs?.mkdir(this.todosPath, { recursive: true });
       }
 
       // Double-check that the directory is now accessible
-      await this.fs.access(this.todosPath);
+      await this?.fs?.access(this.todosPath);
     } catch (_error) {
       if (_error instanceof CLIError) {
         throw _error;
@@ -153,13 +153,13 @@ export class TodoService {
   async getList(name: string): Promise<TodoList | null> {
     // Ensure service is properly initialized
     await this.ensureInitialized();
-    return configService.getLocalTodos(name);
+    return configService.getLocalTodos(name as any);
   }
 
   async addTodo(listName: string, todo: Partial<Todo>): Promise<Todo> {
     // Ensure service is properly initialized
     await this.ensureInitialized();
-    const list = await this.getList(listName);
+    const list = await this.getList(listName as any);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
@@ -176,8 +176,8 @@ export class TodoService {
       private: true,
     };
 
-    list.todos.push(newTodo);
-    list.updatedAt = new Date().toISOString();
+    list?.todos?.push(newTodo as any);
+    list?.updatedAt = new Date().toISOString();
     await configService.saveListData(listName, list);
     return newTodo;
   }
@@ -189,12 +189,12 @@ export class TodoService {
   ): Promise<void> {
     // Ensure service is properly initialized
     await this.ensureInitialized();
-    const list = await this.getList(listName);
+    const list = await this.getList(listName as any);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
 
-    const todo = list.todos.find(t => t.id === todoId);
+    const todo = list?.todos?.find(t => t?.id === todoId);
     if (!todo) {
       throw new CLIError(
         `Todo "${todoId}" not found in list "${listName}"`,
@@ -202,10 +202,10 @@ export class TodoService {
       );
     }
 
-    todo.completed = completed;
-    todo.updatedAt = new Date().toISOString();
+    todo?.completed = completed;
+    todo?.updatedAt = new Date().toISOString();
     if (completed) {
-      todo.completedAt = new Date().toISOString();
+      todo?.completedAt = new Date().toISOString();
     } else {
       delete todo.completedAt;
     }
@@ -227,7 +227,7 @@ export class TodoService {
     const allTodos: Todo[] = [];
 
     for (const listName of lists) {
-      const list = await this.getList(listName);
+      const list = await this.getList(listName as any);
       if (list && list.todos && Array.isArray(list.todos)) {
         allTodos.push(...list.todos);
       }
@@ -248,7 +248,7 @@ export class TodoService {
     // Use configService to get available lists if possible
     try {
       // Try to use configService method first
-      if (configService && typeof configService.getAllLists === 'function') {
+      if (configService && typeof configService?.getAllLists === 'function') {
         return await configService.getAllLists();
       }
     } catch (error) {
@@ -277,12 +277,12 @@ export class TodoService {
     // Ensure service is properly initialized
     await this.ensureInitialized();
     
-    const list = await this.getList(listName);
+    const list = await this.getList(listName as any);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
 
-    const todoIndex = list.todos.findIndex(t => t.id === todoId);
+    const todoIndex = list?.todos?.findIndex(t => t?.id === todoId);
     if (todoIndex === -1) {
       throw new CLIError(
         `Todo "${todoId}" not found in list "${listName}"`,
@@ -291,7 +291,7 @@ export class TodoService {
     }
 
     // Create updated todo by merging existing data with updates
-    const todo = list.todos[todoIndex];
+    const todo = list?.todos?.[todoIndex];
     const updatedTodo: Todo = {
       ...todo,
       ...updates,
@@ -299,8 +299,8 @@ export class TodoService {
     };
 
     // Update in list and persist changes
-    list.todos[todoIndex] = updatedTodo;
-    list.updatedAt = new Date().toISOString();
+    list?.todos?.[todoIndex] = updatedTodo;
+    list?.updatedAt = new Date().toISOString();
     await configService.saveListData(listName, list);
     return updatedTodo;
   }
@@ -319,9 +319,9 @@ export class TodoService {
     // Ensure service is properly initialized
     await this.ensureInitialized();
     
-    const list = await this.getList(listName);
+    const list = await this.getList(listName as any);
     if (!list) return null;
-    return list.todos.find(t => t.id === todoId) || null;
+    return list?.todos?.find(t => t?.id === todoId) || null;
   }
 
   /**
@@ -336,12 +336,12 @@ export class TodoService {
     // Ensure service is properly initialized
     await this.ensureInitialized();
     
-    const list = await this.getList(listName);
+    const list = await this.getList(listName as any);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
 
-    const todoIndex = list.todos.findIndex(t => t.id === todoId);
+    const todoIndex = list?.todos?.findIndex(t => t?.id === todoId);
     if (todoIndex === -1) {
       throw new CLIError(
         `Todo "${todoId}" not found in list "${listName}"`,
@@ -350,8 +350,8 @@ export class TodoService {
     }
 
     // Remove todo from list and persist changes
-    list.todos.splice(todoIndex, 1);
-    list.updatedAt = new Date().toISOString();
+    list?.todos?.splice(todoIndex, 1);
+    list?.updatedAt = new Date().toISOString();
     await configService.saveListData(listName, list);
   }
 
@@ -392,13 +392,13 @@ export class TodoService {
     const listNames = await this.getAllLists();
 
     for (const listName of listNames) {
-      const list = await this.getList(listName);
+      const list = await this.getList(listName as any);
       if (!list) continue;
       
       // Try to find by ID first, then by title
       const todo =
-        list.todos.find(t => t.id === idOrTitle) ||
-        list.todos.find(t => t.title.toLowerCase() === idOrTitle.toLowerCase());
+        list?.todos?.find(t => t?.id === idOrTitle) ||
+        list?.todos?.find(t => t?.title?.toLowerCase() === idOrTitle.toLowerCase());
 
       if (todo) {
         return { listName, todo };
@@ -420,7 +420,7 @@ export class TodoService {
     await this.ensureInitialized();
     
     // Find the todo across all lists
-    const foundTodo = await this.findTodoByIdOrTitleAcrossLists(todoId);
+    const foundTodo = await this.findTodoByIdOrTitleAcrossLists(todoId as any);
     if (!foundTodo) {
       throw new CLIError(
         `Todo with ID "${todoId}" not found`,

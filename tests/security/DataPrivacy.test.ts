@@ -94,12 +94,12 @@ describe('Data Privacy and PII Security Tests', () => {
 
     // Default permission manager
     (initializePermissionManager as jest.Mock).mockReturnValue({
-      checkPermission: jest.fn().mockReturnValue(true),
+      checkPermission: jest.fn().mockReturnValue(true as any),
       verifyOperationPermission: jest.fn(),
     });
 
     // Restore environment variables before each test
-    process.env.XAI_API_KEY = 'test-api-key';
+    process.env?.XAI_API_KEY = 'test-api-key';
   });
 
   describe('PII Detection and Anonymization', () => {
@@ -130,15 +130,15 @@ describe('Data Privacy and PII Security Tests', () => {
 
                 // Check for each pattern
                 piiPatterns.forEach(pattern => {
-                  expect(todoStr).not.toMatch(pattern);
+                  expect(todoStr as any).not.toMatch(pattern as any);
                 });
 
                 // Ensure specific PII items are not present
-                expect(todoStr).not.toContain('john.doe@example.com');
-                expect(todoStr).not.toContain('555-123-4567');
-                expect(todoStr).not.toContain('123-45-6789');
-                expect(todoStr).not.toContain('4111-1111-1111-1111');
-                expect(todoStr).not.toContain('John Doe');
+                expect(todoStr as any).not.toContain('john.doe@example.com');
+                expect(todoStr as any).not.toContain('555-123-4567');
+                expect(todoStr as any).not.toContain('123-45-6789');
+                expect(todoStr as any).not.toContain('4111-1111-1111-1111');
+                expect(todoStr as any).not.toContain('John Doe');
 
                 return {
                   result: 'Test result',
@@ -177,7 +177,7 @@ describe('Data Privacy and PII Security Tests', () => {
       ];
 
       // Process the todos - should anonymize PII
-      await aiService.summarize(todosWithPII);
+      await aiService.summarize(todosWithPII as any);
     });
 
     it('should implement different privacy levels for blockchain verification', async () => {
@@ -194,26 +194,26 @@ describe('Data Privacy and PII Security Tests', () => {
           switch (privacyLevel) {
             case AIPrivacyLevel.PUBLIC: {
               // Public: store raw data
-              recordToReturn.requestData = request;
-              recordToReturn.responseData = response;
+              recordToReturn?.requestData = request;
+              recordToReturn?.responseData = response;
               break;
             }
             case AIPrivacyLevel.HASH_ONLY: {
               // Hash-only: store only hashes
-              recordToReturn.requestHash = crypto
+              recordToReturn?.requestHash = crypto
                 .createHash('sha256')
-                .update(request)
+                .update(request as any)
                 .digest('hex');
-              recordToReturn.responseHash = crypto
+              recordToReturn?.responseHash = crypto
                 .createHash('sha256')
-                .update(response)
+                .update(response as any)
                 .digest('hex');
               break;
             }
             case AIPrivacyLevel.PRIVATE: {
               // Private: encrypt data
-              const key = crypto.randomBytes(32);
-              const iv = crypto.randomBytes(16);
+              const key = crypto.randomBytes(32 as any);
+              const iv = crypto.randomBytes(16 as any);
 
               const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
               const encryptedRequest = Buffer.concat([
@@ -225,15 +225,15 @@ describe('Data Privacy and PII Security Tests', () => {
                 cipher.final(),
               ]);
 
-              recordToReturn.encryptedRequest =
+              recordToReturn?.encryptedRequest =
                 iv.toString('hex') + ':' + encryptedRequest.toString('hex');
-              recordToReturn.encryptedResponse =
+              recordToReturn?.encryptedResponse =
                 iv.toString('hex') + ':' + encryptedResponse.toString('hex');
               break;
             }
           }
 
-          return Promise.resolve(recordToReturn);
+          return Promise.resolve(recordToReturn as any);
         }),
         verifyRecord: jest.fn(),
       };
@@ -293,7 +293,7 @@ describe('Data Privacy and PII Security Tests', () => {
           privacyLevel: AIPrivacyLevel.HASH_ONLY,
         })
       );
-      expect(_hashResult.verification.requestHash).toBeDefined();
+      expect(_hashResult?.verification?.requestHash).toBeDefined();
       expect(
         (
           _hashResult.verification as VerificationRecord & {
@@ -351,7 +351,7 @@ describe('Data Privacy and PII Security Tests', () => {
 
               // In a real implementation, noise would be added to results
               // For this test, we just check it was requested
-              const dpEnabled = options.differentialPrivacy === true;
+              const dpEnabled = options?.differentialPrivacy === true;
 
               // Return results based on differential privacy setting
               return {
@@ -383,13 +383,13 @@ describe('Data Privacy and PII Security Tests', () => {
       const regularService = new AIService('test-api-key');
 
       // Run categorization with differential privacy
-      const dpResult = await dpService.categorize(sampleTodos);
-      expect(dpResult.differentialPrivacyEnabled).toBe(true);
-      expect(dpResult.noisedCounts).toBe(true);
+      const dpResult = await dpService.categorize(sampleTodos as any);
+      expect(dpResult.differentialPrivacyEnabled).toBe(true as any);
+      expect(dpResult.noisedCounts).toBe(true as any);
 
       // Run categorization without differential privacy
-      const regularResult = await regularService.categorize(sampleTodos);
-      expect(regularResult.differentialPrivacyEnabled).toBe(false);
+      const regularResult = await regularService.categorize(sampleTodos as any);
+      expect(regularResult.differentialPrivacyEnabled).toBe(false as any);
     });
   });
 
@@ -420,7 +420,7 @@ describe('Data Privacy and PII Security Tests', () => {
               'Unauthorized: only the owner can delete their data'
             );
           }
-          return Promise.resolve(true);
+          return Promise.resolve(true as any);
         }),
       };
 
@@ -431,27 +431,27 @@ describe('Data Privacy and PII Security Tests', () => {
       // User should be able to list their own data
       const _userVerifications =
         await verificationService.listVerifications('user-123');
-      expect(_userVerifications).toHaveLength(2);
+      expect(_userVerifications as any).toHaveLength(2 as any);
 
       // User should be able to delete their own data
-      mockVerifierAdapter.deleteVerification = jest
+      mockVerifierAdapter?.deleteVerification = jest
         .fn()
-        .mockResolvedValueOnce(true);
+        .mockResolvedValueOnce(true as any);
       await expect(
-        verificationService['blockchainVerifier'].deleteVerification(
+        verificationService?.["blockchainVerifier"].deleteVerification(
           'ver-1',
           'user-123'
         )
-      ).resolves.toBe(true);
+      ).resolves.toBe(true as any);
 
       // Other users should not be able to delete someone else's data
-      mockVerifierAdapter.deleteVerification = jest
+      mockVerifierAdapter?.deleteVerification = jest
         .fn()
         .mockRejectedValueOnce(
           new Error('Unauthorized: only the owner can delete their data')
         );
       await expect(
-        verificationService['blockchainVerifier'].deleteVerification(
+        verificationService?.["blockchainVerifier"].deleteVerification(
           'ver-1',
           'unauthorized-user'
         )
@@ -464,7 +464,7 @@ describe('Data Privacy and PII Security Tests', () => {
         .fn()
         .mockImplementation((verifications, format) => {
           if (format === 'json') {
-            return JSON.stringify(verifications);
+            return JSON.stringify(verifications as any);
           } else if (format === 'csv') {
             // Simple CSV mock
             return 'id,provider,timestamp\nver-1,xai,123456789\nver-2,xai,123456790';
@@ -498,7 +498,7 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Test different export formats
       const _mockVerifierAdapter = mockVerifierAdapter;
-      _mockVerifierAdapter.exportVerifications = jest
+      _mockVerifierAdapter?.exportVerifications = jest
         .fn()
         .mockImplementation((userAddress, format) => {
           return mockExporter(
@@ -512,7 +512,7 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Export as JSON
       await expect(
-        verificationService['blockchainVerifier'].exportVerifications(
+        verificationService?.["blockchainVerifier"].exportVerifications(
           'user-123',
           'json'
         )
@@ -520,7 +520,7 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Export as CSV
       await expect(
-        verificationService['blockchainVerifier'].exportVerifications(
+        verificationService?.["blockchainVerifier"].exportVerifications(
           'user-123',
           'csv'
         )
@@ -528,7 +528,7 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Invalid format
       await expect(
-        verificationService['blockchainVerifier'].exportVerifications(
+        verificationService?.["blockchainVerifier"].exportVerifications(
           'user-123',
           'invalid'
         )
@@ -559,7 +559,7 @@ describe('Data Privacy and PII Security Tests', () => {
               .mockImplementation(async (_template, _context) => {
                 // Log some sensitive data (bad practice, for testing)
                 // console.log(`Processing request with API key: ${params.apiKey}`); // Removed console statement
-                // console.log(`User data: ${JSON.stringify(context) // Removed console statement}`);
+                // console.log(`User data: ${JSON.stringify(context as any) // Removed console statement}`);
 
                 // Log an error with sensitive data
                 // console.error(`Failed to authenticate with key ${params.apiKey}`); // Removed console statement
@@ -593,17 +593,17 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Check log calls to ensure sensitive data was removed/redacted
       for (const call of [
-        ...consoleLogSpy.mock.calls,
-        ...consoleErrorSpy.mock.calls,
+        ...consoleLogSpy?.mock?.calls,
+        ...consoleErrorSpy?.mock?.calls,
       ]) {
         const logMessage = call.join(' ');
 
         // API key should be redacted
-        expect(logMessage).not.toContain('super-secret-api-key-12345');
+        expect(logMessage as any).not.toContain('super-secret-api-key-12345');
 
         // PII should be redacted
-        expect(logMessage).not.toContain('123-45-6789');
-        expect(logMessage).not.toContain('555-123-4567');
+        expect(logMessage as any).not.toContain('123-45-6789');
+        expect(logMessage as any).not.toContain('555-123-4567');
       }
 
       consoleLogSpy.mockRestore();
@@ -659,14 +659,14 @@ describe('Data Privacy and PII Security Tests', () => {
         .mockImplementation(() => {});
 
       // Process a request that will throw
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow();
 
       // Create a test error to verify error sanitization behavior
       const testError = new Error('AI service error');
 
       // Error message should not contain sensitive data
-      expect(String(testError)).not.toContain('super-secret-api-key-12345');
-      expect(String(testError)).not.toContain('123-45-6789');
+      expect(String(testError as any)).not.toContain('super-secret-api-key-12345');
+      expect(String(testError as any)).not.toContain('123-45-6789');
 
       // Error object should not have sensitive fields
       expect(
@@ -674,12 +674,12 @@ describe('Data Privacy and PII Security Tests', () => {
       ).toBeUndefined();
 
       // Log messages should not contain sensitive data
-      const allLogMessages = consoleErrorSpy.mock.calls.map(call =>
+      const allLogMessages = consoleErrorSpy?.mock?.calls.map(call =>
         call.join(' ')
       );
       allLogMessages.forEach(logMessage => {
-        expect(logMessage).not.toContain('super-secret-api-key-12345');
-        expect(logMessage).not.toContain('123-45-6789');
+        expect(logMessage as any).not.toContain('super-secret-api-key-12345');
+        expect(logMessage as any).not.toContain('123-45-6789');
       });
 
       consoleErrorSpy.mockRestore();
@@ -712,13 +712,13 @@ describe('Data Privacy and PII Security Tests', () => {
                 ];
 
                 for (const field of unnecessaryFields) {
-                  expect(todoStr).not.toContain(`"${field}":`);
+                  expect(todoStr as any).not.toContain(`"${field}":`);
                 }
 
                 // Essential fields should be included
-                expect(todoStr).toContain('"id"');
-                expect(todoStr).toContain('"title"');
-                expect(todoStr).toContain('"description"');
+                expect(todoStr as any).toContain('"id"');
+                expect(todoStr as any).toContain('"title"');
+                expect(todoStr as any).toContain('"description"');
 
                 return {
                   result: 'Test result',
@@ -756,12 +756,12 @@ describe('Data Privacy and PII Security Tests', () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           // Additional sensitive fields
-          userSessionInfo: { ip: '192.168.1.1' },
+          userSessionInfo: { ip: '192?.168?.1.1' },
         },
       ];
 
       // Process todos - should apply data minimization
-      await aiService.summarize(todosWithExtraData);
+      await aiService.summarize(todosWithExtraData as any);
     });
 
     it('should implement user consent management for AI operations', async () => {
@@ -827,19 +827,19 @@ describe('Data Privacy and PII Security Tests', () => {
       (
         aiService as AIService & { setOperationType: (type: string) => void }
       ).setOperationType('summarize');
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Change to categorize (allowed)
       (
         aiService as AIService & { setOperationType: (type: string) => void }
       ).setOperationType('categorize');
-      await expect(aiService.categorize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.categorize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Change to operation that doesn't have consent
       (
         aiService as AIService & { setOperationType: (type: string) => void }
       ).setOperationType('analyze');
-      await expect(aiService.analyze(sampleTodos)).rejects.toThrow(
+      await expect(aiService.analyze(sampleTodos as any)).rejects.toThrow(
         'has not provided consent for operation analyze'
       );
     });
@@ -872,7 +872,7 @@ describe('Data Privacy and PII Security Tests', () => {
           .mockResolvedValue([_oldRecord, _recentRecord]),
         deleteVerification: jest
           .fn()
-          .mockImplementation(_id => Promise.resolve(true)),
+          .mockImplementation(_id => Promise.resolve(true as any)),
         enforceRetentionPolicy: jest.fn().mockImplementation(() => {
           // Find records older than retention period
           const expiredRecords = [_oldRecord, _recentRecord].filter(
@@ -899,7 +899,7 @@ describe('Data Privacy and PII Security Tests', () => {
         ].enforceRetentionPolicy();
 
       // Should have deleted only the old record
-      expect(_deletedCount).toBe(1);
+      expect(_deletedCount as any).toBe(1 as any);
       expect(mockVerifierAdapter.deleteVerification).toHaveBeenCalledWith(
         'ver-old'
       );
@@ -911,12 +911,12 @@ describe('Data Privacy and PII Security Tests', () => {
     it('should support secure data destruction', async () => {
       // Mock verification adapter
       const mockVerifierAdapter = {
-        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
-        deleteVerification: jest.fn().mockResolvedValue(true),
+        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord as any),
+        deleteVerification: jest.fn().mockResolvedValue(true as any),
         securelyDestroyData: jest.fn().mockImplementation(_id => {
           // In a real implementation, would perform secure destruction
           // For this test, we just check it was called correctly
-          return Promise.resolve(true);
+          return Promise.resolve(true as any);
         }),
       };
 
@@ -926,12 +926,12 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Request secure destruction
       const _result =
-        await verificationService['blockchainVerifier'].securelyDestroyData(
+        await verificationService?.["blockchainVerifier"].securelyDestroyData(
           'ver-123'
         );
 
       // Should have called secure destruction
-      expect(_result).toBe(true);
+      expect(_result as any).toBe(true as any);
       expect(mockVerifierAdapter.securelyDestroyData).toHaveBeenCalledWith(
         'ver-123'
       );
@@ -990,8 +990,8 @@ describe('Data Privacy and PII Security Tests', () => {
       );
 
       await expect(
-        _matchingRegionService.summarize(sampleTodos)
-      ).resolves.not.toThrow();
+        _matchingRegionService.summarize(sampleTodos as any)
+      ).resolves?.not?.toThrow();
 
       // Create AI service with mismatched regions (should fail)
       const _mismatchedRegionService = new AIService(
@@ -1006,7 +1006,7 @@ describe('Data Privacy and PII Security Tests', () => {
       );
 
       await expect(
-        _mismatchedRegionService.summarize(sampleTodos)
+        _mismatchedRegionService.summarize(sampleTodos as any)
       ).rejects.toThrow('Data localization violation');
     });
   });

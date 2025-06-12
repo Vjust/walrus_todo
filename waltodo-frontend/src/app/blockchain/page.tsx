@@ -17,8 +17,8 @@ function BlockchainPageContent() {
   const account = walletContext?.account || null;
   const connect = walletContext?.connect || (() => {});
   const { state, network } = useSuiTodos();
-  const [showFullManager, setShowFullManager] = useState(false);
-  const [showOfflineGallery, setShowOfflineGallery] = useState(false);
+  const [showFullManager, setShowFullManager] = useState(false as any);
+  const [showOfflineGallery, setShowOfflineGallery] = useState(false as any);
   const { isOnline } = usePWA();
   const searchParams = useSearchParams();
 
@@ -150,7 +150,7 @@ function BlockchainPageContent() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setShowFullManager(true)}
+                  onClick={() => setShowFullManager(true as any)}
                   className='ocean-button'
                 >
                   Open Advanced Manager

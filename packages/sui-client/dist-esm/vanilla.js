@@ -28,10 +28,10 @@ export class VanillaSuiClient {
             checkVersionCompatibility();
             // Load configuration
             this.config = await loadAppConfig(networkOverride);
-            this.currentNetwork = this.config.network.name;
+            this.currentNetwork = this.config?.network.name;
             // Create SuiClient instance with compatibility wrapper
             const baseOptions = {
-                url: this.config.network.url,
+                url: this.config?.network.url,
                 ...this.options
             };
             const compatOptions = createCompatibleSuiClientOptions(baseOptions);
@@ -138,8 +138,8 @@ export class VanillaSuiClient {
      */
     createTodoNFTTransaction(params, senderAddress) {
         const config = this.getConfig();
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(senderAddress);
         tx.moveCall({
@@ -159,8 +159,8 @@ export class VanillaSuiClient {
      */
     updateTodoNFTTransaction(params, senderAddress) {
         const config = this.getConfig();
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(senderAddress);
         tx.moveCall({
@@ -180,8 +180,8 @@ export class VanillaSuiClient {
      */
     completeTodoNFTTransaction(objectId, senderAddress) {
         const config = this.getConfig();
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(senderAddress);
         tx.moveCall({
@@ -195,8 +195,8 @@ export class VanillaSuiClient {
      */
     deleteTodoNFTTransaction(objectId, senderAddress) {
         const config = this.getConfig();
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(senderAddress);
         tx.moveCall({
@@ -215,7 +215,7 @@ export class VanillaSuiClient {
             const rawResponse = await client.getOwnedObjects({
                 owner: ownerAddress,
                 filter: {
-                    StructType: `${config.contracts.todoNft.packageId}::${config.contracts.todoNft.moduleName}::${config.contracts.todoNft.structName}`,
+                    StructType: `${config?.contracts?.todoNft.packageId}::${config?.contracts?.todoNft.moduleName}::${config?.contracts?.todoNft.structName}`,
                 },
                 options: {
                     showContent: true,
@@ -291,21 +291,21 @@ export class VanillaSuiClient {
      */
     transformSuiObjectToTodo(suiObject) {
         if (!suiObject.data?.content ||
-            suiObject.data.content.dataType !== 'moveObject') {
+            suiObject?.data?.content.dataType !== 'moveObject') {
             return null;
         }
-        const moveObject = suiObject.data.content;
+        const moveObject = suiObject?.data?.content;
         const fields = moveObject.fields;
         if (!fields) {
             return null;
         }
         try {
             return {
-                id: suiObject.data.objectId,
-                objectId: suiObject.data.objectId,
+                id: suiObject?.data?.objectId,
+                objectId: suiObject?.data?.objectId,
                 title: fields.title || 'Untitled',
                 description: fields.description || '',
-                completed: fields.completed === true,
+                completed: fields?.completed === true,
                 priority: 'medium', // Default priority
                 tags: [],
                 blockchainStored: true,
@@ -314,7 +314,7 @@ export class VanillaSuiClient {
                 completedAt: fields.completed_at ? parseInt(fields.completed_at) : undefined,
                 owner: fields.owner,
                 metadata: fields.metadata || '',
-                isPrivate: fields.is_private === true,
+                isPrivate: fields?.is_private === true,
             };
         }
         catch (error) {

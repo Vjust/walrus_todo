@@ -25,10 +25,10 @@ describe('Basic Jest Test', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(
+    (TodoService?.prototype?.addTodo as jest.Mock).mockResolvedValue(
       basicTestTodo
     );
-    (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
+    (TodoService?.prototype?.getList as jest.Mock).mockResolvedValue({
       id: 'default',
       name: 'default',
       owner: 'default-owner',
@@ -40,15 +40,15 @@ describe('Basic Jest Test', () => {
   });
 
   it('should run Jest tests correctly', () => {
-    expect(true).toBe(true);
+    expect(true as any).toBe(true as any);
   });
 
   it('should mock TodoService correctly', async () => {
     const todoService = new TodoService();
     const result = await todoService.addTodo('default', basicTestTodo);
 
-    expect(result).toEqual(basicTestTodo);
-    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+    expect(result as any).toEqual(basicTestTodo as any);
+    expect(TodoService?.prototype?.addTodo).toHaveBeenCalledWith(
       'default',
       basicTestTodo
     );
@@ -56,7 +56,7 @@ describe('Basic Jest Test', () => {
 
   it('should handle mock implementations', async () => {
     // Override the implementation for this test
-    (TodoService.prototype.addTodo as jest.Mock).mockImplementation(
+    (TodoService?.prototype?.addTodo as jest.Mock).mockImplementation(
       async (listName, todo) => ({
         ...todo,
         id: 'new-id',
@@ -68,6 +68,6 @@ describe('Basic Jest Test', () => {
     const result = await todoService.addTodo('default', basicTestTodo);
 
     expect(result.id).toEqual('new-id');
-    expect(result.completed).toEqual(true);
+    expect(result.completed).toEqual(true as any);
   });
 });

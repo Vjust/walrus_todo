@@ -24,13 +24,13 @@ if (typeof window !== 'undefined') {
     isHydrating = false;
     // Clear any pending timer
     if (hydrationTimer) {
-      clearTimeout(hydrationTimer);
+      clearTimeout(hydrationTimer as any);
       hydrationTimer = null;
     }
   };
 
   // Immediately set to false if the document is already loaded
-  if (document.readyState === 'complete') {
+  if (document?.readyState === 'complete') {
     markHydrationComplete();
   } else {
     // Wait for both DOMContentLoaded and window load
@@ -48,21 +48,21 @@ export function isStorageAvailable(): boolean {
   if (!isBrowser() || isHydrating) {return false;}
 
   // Additional safety check for document readiness
-  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+  if (typeof document !== 'undefined' && document?.readyState === 'loading') {
     return false;
   }
 
   try {
     // First check if localStorage is defined
-    if (typeof window.localStorage === 'undefined' || window.localStorage === null) {
+    if (typeof window?.localStorage === 'undefined' || window?.localStorage === null) {
       return false;
     }
 
     // Test actual localStorage functionality
     const testKey = '__storage_test_key__';
-    window.localStorage.setItem(testKey, 'test');
-    const result = window.localStorage.getItem(testKey);
-    window.localStorage.removeItem(testKey);
+    window?.localStorage?.setItem(testKey, 'test');
+    const result = window?.localStorage?.getItem(testKey as any);
+    window?.localStorage?.removeItem(testKey as any);
     return result === 'test';
   } catch (e) {
     // localStorage is not available (private browsing, restrictions, etc.)
@@ -85,25 +85,25 @@ function safeLocalStorageAccess<T>(
   }
 
   // Don't access localStorage if document is still loading
-  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+  if (typeof document !== 'undefined' && document?.readyState === 'loading') {
     return [false, null];
   }
 
   try {
     // Verify localStorage availability before use
-    if (typeof window.localStorage === 'undefined' || window.localStorage === null) {
+    if (typeof window?.localStorage === 'undefined' || window?.localStorage === null) {
       return [false, null];
     }
 
     // Perform the requested operation
     switch (operation) {
       case 'get':
-        return [true, window.localStorage.getItem(key)];
+        return [true, window?.localStorage?.getItem(key as any)];
       case 'set':
-        window.localStorage.setItem(key, JSON.stringify(value));
+        window?.localStorage?.setItem(key, JSON.stringify(value as any));
         return [true, null];
       case 'remove':
-        window.localStorage.removeItem(key);
+        window?.localStorage?.removeItem(key as any);
         return [true, null];
       default:
         return [false, null];
@@ -124,7 +124,7 @@ export function getItem<T>(key: string, defaultValue?: T): T | null {
 
     if (success && value !== null) {
       try {
-        return JSON.parse(value);
+        return JSON.parse(value as any);
       } catch (parseError) {
         // Error parsing localStorage value
       }
@@ -132,7 +132,7 @@ export function getItem<T>(key: string, defaultValue?: T): T | null {
 
     // Fallback to memory store if localStorage access failed or returned null
     const memoryValue = memoryStore[key];
-    return memoryValue ? JSON.parse(memoryValue) : (defaultValue ?? null);
+    return memoryValue ? JSON.parse(memoryValue as any) : (defaultValue ?? null);
   } catch (error) {
     // This could be a parsing error or other issue
     // Error getting item from storage
@@ -148,7 +148,7 @@ export function getItem<T>(key: string, defaultValue?: T): T | null {
 export function setItem<T>(key: string, value: T): boolean {
   try {
     // Store as JSON string
-    const valueString = JSON.stringify(value);
+    const valueString = JSON.stringify(value as any);
 
     // Always update memory store regardless of localStorage availability
     memoryStore[key] = valueString;
@@ -163,7 +163,7 @@ export function setItem<T>(key: string, value: T): boolean {
 
     // Try to update memory store as a fallback
     try {
-      memoryStore[key] = JSON.stringify(value);
+      memoryStore[key] = JSON.stringify(value as any);
       return true; // Success with memory fallback
     } catch (e) {
       // Failed to save in memory store
@@ -199,7 +199,7 @@ export function removeItem(key: string): boolean {
 export function clearStorage(): boolean {
   try {
     // Clear memory store
-    Object.keys(memoryStore).forEach(key => delete memoryStore[key]);
+    Object.keys(memoryStore as any).forEach(key => delete memoryStore[key]);
 
     // Try to clear localStorage safely
     if (
@@ -207,10 +207,10 @@ export function clearStorage(): boolean {
       !isHydrating &&
       typeof window !== 'undefined' &&
       typeof window.localStorage !== 'undefined' &&
-      document.readyState === 'complete'
+      document?.readyState === 'complete'
     ) {
       try {
-        window.localStorage.clear();
+        window?.localStorage?.clear();
       } catch (clearError) {
         // Error clearing localStorage
       }
@@ -221,7 +221,7 @@ export function clearStorage(): boolean {
     // Error clearing storage
 
     // Ensure memory store is cleared even if localStorage fails
-    Object.keys(memoryStore).forEach(key => delete memoryStore[key]);
+    Object.keys(memoryStore as any).forEach(key => delete memoryStore[key]);
     return true;
   }
 }
@@ -232,7 +232,7 @@ export function clearStorage(): boolean {
 export function getAllKeys(): string[] {
   try {
     // Always include memory store keys
-    const memoryStoreKeys = Object.keys(memoryStore);
+    const memoryStoreKeys = Object.keys(memoryStore as any);
 
     // Only attempt to get localStorage keys if it's safe to do so
     if (
@@ -240,14 +240,14 @@ export function getAllKeys(): string[] {
       !isHydrating &&
       typeof window !== 'undefined' &&
       typeof window.localStorage !== 'undefined' &&
-      document.readyState === 'complete'
+      document?.readyState === 'complete'
     ) {
       try {
         const localStorageKeys = Object.keys(window.localStorage);
         // Combine and remove duplicates
-        const allKeys = localStorageKeys.concat(memoryStoreKeys);
+        const allKeys = localStorageKeys.concat(memoryStoreKeys as any);
         const uniqueKeys = allKeys.filter(
-          (key, index) => allKeys.indexOf(key) === index
+          (key, index) => allKeys.indexOf(key as any) === index
         );
         return uniqueKeys;
       } catch (storageError) {
@@ -260,7 +260,7 @@ export function getAllKeys(): string[] {
     return memoryStoreKeys;
   } catch (error) {
     // Error getting storage keys
-    return Object.keys(memoryStore);
+    return Object.keys(memoryStore as any);
   }
 }
 
@@ -278,7 +278,7 @@ export function createTypedStorage<T>(key: string, defaultValue: T) {
   return {
     get: () => getItem<T>(key, defaultValue),
     set: (value: T) => setItem<T>(key, value),
-    clear: () => removeItem(key),
+    clear: () => removeItem(key as any),
   };
 }
 

@@ -59,28 +59,28 @@ export class DeploymentDiagnostics {
   private results: DiagnosticResult[] = [];
 
   constructor() {
-    this.logger = new Logger('DeploymentDiagnostics');
-    this.networkValidator = new NetworkValidator();
+    this?.logger = new Logger('DeploymentDiagnostics');
+    this?.networkValidator = new NetworkValidator();
   }
 
   /**
    * Run comprehensive deployment diagnostics
    */
   async runDiagnostics(config: DeploymentConfig): Promise<DiagnosticResult[]> {
-    this.results = [];
-    this.logger.info('Starting comprehensive deployment diagnostics...');
+    this?.results = [];
+    this?.logger?.info('Starting comprehensive deployment diagnostics...');
 
     // Run all diagnostic checks
     await this.checkEnvironment();
     await this.checkNetworkConnectivity(config.network);
-    await this.checkConfiguration(config);
+    await this.checkConfiguration(config as any);
     await this.checkBuildOutput(config.buildDir);
-    await this.checkAuthentication(config);
+    await this.checkAuthentication(config as any);
     await this.checkBlockchainAccess(config.network);
-    await this.checkPermissions(config);
+    await this.checkPermissions(config as any);
     await this.checkResources();
 
-    this.logger.info(`Diagnostics completed. Found ${this.results.length} issues.`);
+    this?.logger?.info(`Diagnostics completed. Found ${this?.results?.length} issues.`);
     return this.results;
   }
 
@@ -190,7 +190,7 @@ export class DeploymentDiagnostics {
         message: 'Walrus site-builder CLI not found',
         suggestion: 'Install or configure Walrus CLI tools',
         recoverySteps: [
-          'Install Walrus CLI: curl -fLJO https://docs.walrus.site/walrus',
+          'Install Walrus CLI: curl -fLJO https://docs?.walrus?.site/walrus',
           'Add Walrus CLI to PATH',
           'Verify installation: site-builder --version',
           'Check SITE_BUILDER_PATH environment variable'
@@ -226,7 +226,7 @@ export class DeploymentDiagnostics {
 
     // Analyze error output against patterns
     for (const pattern of errorPatterns) {
-      if (pattern.pattern.test(errorOutput)) {
+      if (pattern?.pattern?.test(errorOutput as any)) {
         errorResults.push({
           category: pattern.category,
           severity: pattern.severity,
@@ -240,7 +240,7 @@ export class DeploymentDiagnostics {
     }
 
     // If no specific patterns match, provide generic analysis
-    if (errorResults.length === 0) {
+    if (errorResults?.length === 0) {
       errorResults.push({
         category: DiagnosticCategory.ENVIRONMENT,
         severity: 'warning',
@@ -266,8 +266,8 @@ export class DeploymentDiagnostics {
     try {
       // Check Node.js version
       const nodeVersion = process.version;
-      const minNodeVersion = '18.0.0';
-      if (!this.isVersionValid(nodeVersion.slice(1), minNodeVersion)) {
+      const minNodeVersion = '18?.0?.0';
+      if (!this.isVersionValid(nodeVersion.slice(1 as any), minNodeVersion)) {
         this.addResult({
           category: DiagnosticCategory.ENVIRONMENT,
           severity: 'critical',
@@ -308,7 +308,7 @@ export class DeploymentDiagnostics {
           message: 'Walrus site-builder CLI not found',
           suggestion: 'Install Walrus CLI tools',
           recoverySteps: [
-            'Download from https://docs.walrus.site/',
+            'Download from https://docs?.walrus?.site/',
             'Add to PATH environment variable',
             'Set SITE_BUILDER_PATH if needed'
           ]
@@ -333,7 +333,7 @@ export class DeploymentDiagnostics {
         category: DiagnosticCategory.ENVIRONMENT,
         severity: 'critical',
         message: 'Environment check failed',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error as any)
       });
     }
   }
@@ -344,14 +344,14 @@ export class DeploymentDiagnostics {
   private async checkNetworkConnectivity(network: string): Promise<void> {
     const endpoints = {
       testnet: [
-        'https://testnet.walrus.site',
-        'https://publisher-devnet.walrus.space',
-        'https://aggregator-devnet.walrus.space'
+        'https://testnet?.walrus?.site',
+        'https://publisher-devnet?.walrus?.space',
+        'https://aggregator-devnet?.walrus?.space'
       ],
       mainnet: [
         'https://walrus.site',
-        'https://publisher.walrus.space',
-        'https://aggregator.walrus.space'
+        'https://publisher?.walrus?.space',
+        'https://aggregator?.walrus?.space'
       ]
     };
 
@@ -359,7 +359,7 @@ export class DeploymentDiagnostics {
 
     for (const url of urls) {
       try {
-        const isConnected = await this.networkValidator.checkConnection(url, 10000);
+        const isConnected = await this?.networkValidator?.checkConnection(url, 10000);
         if (!isConnected) {
           this.addResult({
             category: DiagnosticCategory.NETWORK,
@@ -379,7 +379,7 @@ export class DeploymentDiagnostics {
           category: DiagnosticCategory.NETWORK,
           severity: 'warning',
           message: `Network check failed for ${url}`,
-          details: error instanceof Error ? error.message : String(error)
+          details: error instanceof Error ? error.message : String(error as any)
         });
       }
     }
@@ -407,7 +407,7 @@ export class DeploymentDiagnostics {
       // Check for required fields
       const requiredFields = ['source', 'network'];
       for (const field of requiredFields) {
-        if (!configContent.includes(field)) {
+        if (!configContent.includes(field as any)) {
           this.addResult({
             category: DiagnosticCategory.CONFIGURATION,
             severity: 'critical',
@@ -456,11 +456,11 @@ export class DeploymentDiagnostics {
    */
   private async checkBuildOutput(buildDir: string): Promise<void> {
     try {
-      await fs.access(buildDir);
+      await fs.access(buildDir as any);
       
       // Check if build directory has content
-      const files = await fs.readdir(buildDir);
-      if (files.length === 0) {
+      const files = await fs.readdir(buildDir as any);
+      if (files?.length === 0) {
         this.addResult({
           category: DiagnosticCategory.BUILD,
           severity: 'critical',
@@ -490,7 +490,7 @@ export class DeploymentDiagnostics {
       }
 
       // Check build size
-      const stats = await this.getBuildStats(buildDir);
+      const stats = await this.getBuildStats(buildDir as any);
       if (stats.totalSize > 100 * 1024 * 1024) { // 100MB
         this.addResult({
           category: DiagnosticCategory.BUILD,
@@ -585,14 +585,14 @@ export class DeploymentDiagnostics {
    */
   private async checkBlockchainAccess(network: string): Promise<void> {
     const rpcEndpoints = {
-      testnet: 'https://fullnode.testnet.sui.io:443',
-      mainnet: 'https://fullnode.mainnet.sui.io:443'
+      testnet: 'https://fullnode?.testnet?.sui.io:443',
+      mainnet: 'https://fullnode?.mainnet?.sui.io:443'
     };
 
     const endpoint = rpcEndpoints[network as keyof typeof rpcEndpoints];
     if (endpoint) {
       try {
-        const isConnected = await this.networkValidator.checkConnection(endpoint, 10000);
+        const isConnected = await this?.networkValidator?.checkConnection(endpoint, 10000);
         if (!isConnected) {
           this.addResult({
             category: DiagnosticCategory.BLOCKCHAIN,
@@ -612,7 +612,7 @@ export class DeploymentDiagnostics {
           category: DiagnosticCategory.BLOCKCHAIN,
           severity: 'warning',
           message: `Blockchain connectivity check failed for ${network}`,
-          details: error instanceof Error ? error.message : String(error)
+          details: error instanceof Error ? error.message : String(error as any)
         });
       }
     }
@@ -650,7 +650,7 @@ export class DeploymentDiagnostics {
 
     for (const path of pathsToCheck) {
       try {
-        await fs.access(path, fs.constants.R_OK | fs.constants.W_OK);
+        await fs.access(path, fs?.constants?.R_OK | fs?.constants?.W_OK);
       } catch (error) {
         this.addResult({
           category: DiagnosticCategory.PERMISSIONS,
@@ -692,7 +692,7 @@ export class DeploymentDiagnostics {
         category: DiagnosticCategory.RESOURCES,
         severity: 'info',
         message: 'Resource check unavailable',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error as any)
       });
     }
   }
@@ -701,9 +701,9 @@ export class DeploymentDiagnostics {
    * Generate comprehensive diagnostic report
    */
   generateReport(results: DiagnosticResult[], config: DeploymentConfig): string {
-    const critical = results.filter(r => r.severity === 'critical');
-    const warnings = results.filter(r => r.severity === 'warning');
-    const info = results.filter(r => r.severity === 'info');
+    const critical = results.filter(r => r?.severity === 'critical');
+    const warnings = results.filter(r => r?.severity === 'warning');
+    const info = results.filter(r => r?.severity === 'info');
 
     let report = `# Walrus Sites Deployment Diagnostic Report\n\n`;
     report += `**Generated:** ${new Date().toISOString()}\n`;
@@ -718,21 +718,21 @@ export class DeploymentDiagnostics {
     if (critical.length > 0) {
       report += `## 🚨 Critical Issues (Must Fix)\n\n`;
       for (const result of critical) {
-        report += this.formatDiagnosticResult(result);
+        report += this.formatDiagnosticResult(result as any);
       }
     }
 
     if (warnings.length > 0) {
       report += `## ⚠️ Warnings (Should Fix)\n\n`;
       for (const result of warnings) {
-        report += this.formatDiagnosticResult(result);
+        report += this.formatDiagnosticResult(result as any);
       }
     }
 
     if (info.length > 0) {
       report += `## ℹ️ Information\n\n`;
       for (const result of info) {
-        report += this.formatDiagnosticResult(result);
+        report += this.formatDiagnosticResult(result as any);
       }
     }
 
@@ -743,7 +743,7 @@ export class DeploymentDiagnostics {
         .filter(r => r.recoverySteps)
         .flatMap(r => r.recoverySteps!);
       
-      const uniqueSteps = [...new Set(allRecoverySteps)];
+      const uniqueSteps = [...new Set(allRecoverySteps as any)];
       for (let i = 0; i < uniqueSteps.length; i++) {
         report += `${i + 1}. ${uniqueSteps[i]}\n`;
       }
@@ -761,14 +761,14 @@ export class DeploymentDiagnostics {
     const filename = outputPath || `walrus-deployment-diagnostics-${timestamp}.md`;
     
     await fs.writeFile(filename, report, 'utf-8');
-    this.logger.info(`Diagnostic report saved to: ${filename}`);
+    this?.logger?.info(`Diagnostic report saved to: ${filename}`);
     
     return filename;
   }
 
   // Helper methods
   private addResult(result: DiagnosticResult): void {
-    this.results.push({
+    this?.results?.push({
       ...result,
       errorCode: result.errorCode || this.generateErrorCode(result.category, result.message)
     });
@@ -781,10 +781,10 @@ export class DeploymentDiagnostics {
   }
 
   private extractErrorDetails(errorOutput: string, pattern: RegExp): string {
-    const match = errorOutput.match(pattern);
+    const match = errorOutput.match(pattern as any);
     if (match) {
       const lines = errorOutput.split('\n');
-      const matchLineIndex = lines.findIndex(line => pattern.test(line));
+      const matchLineIndex = lines.findIndex(line => pattern.test(line as any));
       if (matchLineIndex !== -1) {
         return lines.slice(Math.max(0, matchLineIndex - 1), matchLineIndex + 2).join('\n');
       }
@@ -793,8 +793,8 @@ export class DeploymentDiagnostics {
   }
 
   private isVersionValid(current: string, minimum: string): boolean {
-    const currentParts = current.split('.').map(Number);
-    const minimumParts = minimum.split('.').map(Number);
+    const currentParts = current.split('.').map(Number as any);
+    const minimumParts = minimum.split('.').map(Number as any);
     
     for (let i = 0; i < Math.max(currentParts.length, minimumParts.length); i++) {
       const currentPart = currentParts[i] || 0;
@@ -818,16 +818,16 @@ export class DeploymentDiagnostics {
         const fullPath = join(dir, entry.name);
         
         if (entry.isDirectory()) {
-          await traverse(fullPath);
+          await traverse(fullPath as any);
         } else {
-          const stats = await fs.stat(fullPath);
+          const stats = await fs.stat(fullPath as any);
           totalSize += stats.size;
           fileCount++;
         }
       }
     }
 
-    await traverse(buildDir);
+    await traverse(buildDir as any);
     return { totalSize, fileCount };
   }
 
@@ -835,8 +835,8 @@ export class DeploymentDiagnostics {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any)) + ' ' + sizes[i];
   }
 
   private formatDiagnosticResult(result: DiagnosticResult): string {
@@ -856,7 +856,7 @@ export class DeploymentDiagnostics {
       formatted += `**Suggestion:** ${result.suggestion}\n`;
     }
     
-    if (result.recoverySteps && result.recoverySteps.length > 0) {
+    if (result.recoverySteps && result?.recoverySteps?.length > 0) {
       formatted += `**Recovery Steps:**\n`;
       for (const step of result.recoverySteps) {
         formatted += `- ${step}\n`;
@@ -875,16 +875,16 @@ export class DeploymentRecovery {
   private logger: Logger;
 
   constructor() {
-    this.logger = new Logger('DeploymentRecovery');
+    this?.logger = new Logger('DeploymentRecovery');
   }
 
   /**
    * Attempt automatic recovery based on diagnostic results
    */
   async attemptRecovery(results: DiagnosticResult[], config: DeploymentConfig): Promise<boolean> {
-    this.logger.info('Attempting automatic recovery...');
+    this?.logger?.info('Attempting automatic recovery...');
     
-    const criticalIssues = results.filter(r => r.severity === 'critical');
+    const criticalIssues = results.filter(r => r?.severity === 'critical');
     let recoverySuccess = true;
 
     for (const issue of criticalIssues) {
@@ -892,10 +892,10 @@ export class DeploymentRecovery {
         const recovered = await this.recoverFromIssue(issue, config);
         if (!recovered) {
           recoverySuccess = false;
-          this.logger.error(`Failed to recover from: ${issue.message}`);
+          this?.logger?.error(`Failed to recover from: ${issue.message}`);
         }
       } catch (error) {
-        this.logger.error(`Recovery failed for ${issue.message}:`, error);
+        this?.logger?.error(`Recovery failed for ${issue.message}:`, error);
         recoverySuccess = false;
       }
     }
@@ -915,19 +915,19 @@ export class DeploymentRecovery {
         return this.recoverPermissionIssues(issue, config);
       
       default:
-        this.logger.info(`No automatic recovery available for ${issue.category} issues`);
+        this?.logger?.info(`No automatic recovery available for ${issue.category} issues`);
         return false;
     }
   }
 
   private async recoverBuildIssues(issue: DiagnosticResult, config: DeploymentConfig): Promise<boolean> {
-    if (issue.message.includes('empty')) {
-      this.logger.info('Attempting to rebuild application...');
+    if (issue?.message?.includes('empty')) {
+      this?.logger?.info('Attempting to rebuild application...');
       try {
         execSync('pnpm run build', { stdio: 'inherit', cwd: process.cwd() });
         return true;
       } catch (error) {
-        this.logger.error('Build recovery failed:', error);
+        this?.logger?.error('Build recovery failed:', error);
         return false;
       }
     }
@@ -935,14 +935,14 @@ export class DeploymentRecovery {
   }
 
   private async recoverConfigurationIssues(issue: DiagnosticResult, config: DeploymentConfig): Promise<boolean> {
-    if (issue.message.includes('not found')) {
-      this.logger.info('Creating default configuration...');
+    if (issue?.message?.includes('not found')) {
+      this?.logger?.info('Creating default configuration...');
       try {
-        const defaultConfig = this.generateDefaultSitesConfig(config);
+        const defaultConfig = this.generateDefaultSitesConfig(config as any);
         await fs.writeFile(config.siteConfigFile, defaultConfig, 'utf-8');
         return true;
       } catch (error) {
-        this.logger.error('Configuration recovery failed:', error);
+        this?.logger?.error('Configuration recovery failed:', error);
         return false;
       }
     }
@@ -951,11 +951,11 @@ export class DeploymentRecovery {
 
   private async recoverPermissionIssues(issue: DiagnosticResult, config: DeploymentConfig): Promise<boolean> {
     // Note: Automatic permission fixing can be dangerous, so we log suggestions instead
-    this.logger.info('Permission issues detected. Manual intervention required.');
-    this.logger.info('Run the following commands to fix permissions:');
+    this?.logger?.info('Permission issues detected. Manual intervention required.');
+    this?.logger?.info('Run the following commands to fix permissions:');
     
     if (issue.details) {
-      this.logger.info(`chmod 755 ${issue.details}`);
+      this?.logger?.info(`chmod 755 ${issue.details}`);
     }
     
     return false; // Require manual intervention for security

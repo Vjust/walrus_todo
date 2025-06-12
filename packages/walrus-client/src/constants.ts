@@ -7,18 +7,18 @@ import type { WalrusNetwork, WalrusConfig } from './types';
 export const WALRUS_NETWORKS: Record<WalrusNetwork, Partial<WalrusConfig>> = {
   mainnet: {
     network: 'mainnet',
-    publisherUrl: 'https://publisher.walrus.space',
-    aggregatorUrl: 'https://aggregator.walrus.space',
+    publisherUrl: 'https://publisher?.walrus?.space',
+    aggregatorUrl: 'https://aggregator?.walrus?.space',
   },
   testnet: {
     network: 'testnet',
-    publisherUrl: 'https://publisher-testnet.walrus.space',
-    aggregatorUrl: 'https://aggregator-testnet.walrus.space',
+    publisherUrl: 'https://publisher-testnet?.walrus?.space',
+    aggregatorUrl: 'https://aggregator-testnet?.walrus?.space',
   },
   devnet: {
     network: 'devnet',
-    publisherUrl: 'https://publisher-devnet.walrus.space',
-    aggregatorUrl: 'https://aggregator-devnet.walrus.space',
+    publisherUrl: 'https://publisher-devnet?.walrus?.space',
+    aggregatorUrl: 'https://aggregator-devnet?.walrus?.space',
   },
   localnet: {
     network: 'localnet',

@@ -50,7 +50,7 @@ export async function safeWalletOperation<T>(
       data: result,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
 
     // Categorize errors as expected or unexpected
     const isExpectedError =
@@ -90,7 +90,7 @@ export function isWalletAvailable(
   walletName: string,
   availableWallets: any[]
 ): boolean {
-  if (!Array.isArray(availableWallets)) {
+  if (!Array.isArray(availableWallets as any)) {
     console.warn(
       '[SafeWallet] Available wallets list is not an array:',
       availableWallets
@@ -104,7 +104,7 @@ export function isWalletAvailable(
     }
 
     // Check both name and label properties as different wallet kits use different property names
-    return wallet.name === walletName || wallet.label === walletName;
+    return wallet?.name === walletName || wallet?.label === walletName;
   });
 }
 
@@ -118,23 +118,23 @@ export function safeGetWallets(walletKit: any): any[] {
     }
 
     // Try different methods that different wallet kits might use
-    if (typeof walletKit.getWallets === 'function') {
+    if (typeof walletKit?.getWallets === 'function') {
       const result = walletKit.getWallets();
-      return Array.isArray(result) ? result : [];
+      return Array.isArray(result as any) ? result : [];
     }
 
     if (Array.isArray(walletKit.wallets)) {
       return walletKit.wallets;
     }
 
-    if (typeof walletKit.configuredWallets === 'function') {
+    if (typeof walletKit?.configuredWallets === 'function') {
       const result = walletKit.configuredWallets();
-      return Array.isArray(result) ? result : [];
+      return Array.isArray(result as any) ? result : [];
     }
 
     // Check for Suiet wallet kit specific properties
-    if (walletKit.store && typeof walletKit.store.getState === 'function') {
-      const state = walletKit.store.getState();
+    if (walletKit.store && typeof walletKit.store?.getState === 'function') {
+      const state = walletKit?.store?.getState();
       if (Array.isArray(state.wallets)) {
         return state.wallets;
       }
@@ -164,20 +164,20 @@ export function safeClearWalletStorage(walletName?: string): void {
     // Clear any other wallet-related storage
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+      const key = localStorage.key(i as any);
       if (
         key &&
         (key.includes('wallet') ||
           key.includes('sui') ||
           key.includes('phantom'))
       ) {
-        keysToRemove.push(key);
+        keysToRemove.push(key as any);
       }
     }
 
     keysToRemove.forEach(key => {
       try {
-        localStorage.removeItem(key);
+        localStorage.removeItem(key as any);
       } catch (e) {
         console.warn(`[SafeWallet] Failed to remove storage key ${key}:`, e);
       }
@@ -201,7 +201,7 @@ export async function safeWalletSelect(
   return safeWalletOperation(
     async () => {
       // First check if wallet is available
-      const availableWallets = safeGetWallets(walletKit);
+      const availableWallets = safeGetWallets(walletKit as any);
 
       if (!isWalletAvailable(walletName, availableWallets)) {
         const availableNames = availableWallets.map(w => w.name || w.label).join(', ');
@@ -221,8 +221,8 @@ export async function safeWalletSelect(
       }
 
       // Attempt to select the wallet
-      if (typeof walletKit.select === 'function') {
-        await walletKit.select(walletName);
+      if (typeof walletKit?.select === 'function') {
+        await walletKit.select(walletName as any);
       } else {
         throw new Error('Wallet kit does not support select operation');
       }
@@ -253,16 +253,16 @@ export async function safeWalletConnect(
 
       // Check if already connected
       if (walletKit.currentAccount?.address) {
-        return walletKit.currentAccount.address;
+        return walletKit?.currentAccount?.address;
       }
 
       // Attempt to connect
-      if (typeof walletKit.connect === 'function') {
+      if (typeof walletKit?.connect === 'function') {
         const result = await walletKit.connect();
         if (result?.address) {
           return result.address;
         } else if (walletKit.currentAccount?.address) {
-          return walletKit.currentAccount.address;
+          return walletKit?.currentAccount?.address;
         } else {
           throw new Error('Failed to get wallet address after connect');
         }
@@ -291,7 +291,7 @@ export async function safeWalletDisconnect(
         return; // Nothing to disconnect
       }
 
-      if (typeof walletKit.disconnect === 'function') {
+      if (typeof walletKit?.disconnect === 'function') {
         await walletKit.disconnect();
       }
 

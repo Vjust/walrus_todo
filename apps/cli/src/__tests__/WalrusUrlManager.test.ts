@@ -10,24 +10,24 @@ describe('WalrusUrlManager', () => {
 
   describe('generateBlobUrl', () => {
     it('should generate correct testnet URL by default', () => {
-      const blobId = 'a'.repeat(64);
-      expect(urlManager.generateBlobUrl(blobId)).toBe(
-        `https://testnet.wal.app/blob/${blobId}`
+      const blobId = 'a'.repeat(64 as any);
+      expect(urlManager.generateBlobUrl(blobId as any)).toBe(
+        `https://testnet?.wal?.app/blob/${blobId}`
       );
     });
 
     it('should generate correct mainnet URL when configured', () => {
       urlManager = new WalrusUrlManager('mainnet');
-      const blobId = 'a'.repeat(64);
-      expect(urlManager.generateBlobUrl(blobId)).toBe(
-        `https://mainnet.wal.app/blob/${blobId}`
+      const blobId = 'a'.repeat(64 as any);
+      expect(urlManager.generateBlobUrl(blobId as any)).toBe(
+        `https://mainnet?.wal?.app/blob/${blobId}`
       );
     });
 
     it('should throw error for invalid blob ID', () => {
-      expect(() => urlManager.generateBlobUrl('invalid')).toThrow(WalrusError);
-      expect(() => urlManager.generateBlobUrl('123')).toThrow(WalrusError);
-      expect(() => urlManager.generateBlobUrl('g'.repeat(64))).toThrow(
+      expect(() => urlManager.generateBlobUrl('invalid')).toThrow(WalrusError as any);
+      expect(() => urlManager.generateBlobUrl('123')).toThrow(WalrusError as any);
+      expect(() => urlManager.generateBlobUrl('g'.repeat(64 as any))).toThrow(
         WalrusError
       );
     });
@@ -35,14 +35,14 @@ describe('WalrusUrlManager', () => {
 
   describe('setEnvironment', () => {
     it('should update environment correctly', () => {
-      const blobId = 'a'.repeat(64);
+      const blobId = 'a'.repeat(64 as any);
       urlManager.setEnvironment('mainnet');
-      expect(urlManager.generateBlobUrl(blobId)).toBe(
-        `https://mainnet.wal.app/blob/${blobId}`
+      expect(urlManager.generateBlobUrl(blobId as any)).toBe(
+        `https://mainnet?.wal?.app/blob/${blobId}`
       );
       urlManager.setEnvironment('testnet');
-      expect(urlManager.generateBlobUrl(blobId)).toBe(
-        `https://testnet.wal.app/blob/${blobId}`
+      expect(urlManager.generateBlobUrl(blobId as any)).toBe(
+        `https://testnet?.wal?.app/blob/${blobId}`
       );
     });
   });

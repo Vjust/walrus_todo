@@ -105,10 +105,10 @@ export class ValidationError extends BaseError {
     });
 
     // Store field privately
-    this._field = field;
+    this?._field = field;
 
     // Set error name
-    this.name = 'ValidationError';
+    this?.name = 'ValidationError';
   }
 
   /**

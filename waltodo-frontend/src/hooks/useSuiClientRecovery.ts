@@ -7,15 +7,15 @@ import { resetSuiClientInitialization, withSuiClient } from '@/lib/sui-client';
  * Hook for handling Sui client recovery and error handling
  */
 export function useSuiClientRecovery() {
-  const [isRecovering, setIsRecovering] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false as any);
   const [lastError, setLastError] = useState<string | null>(null);
 
   const executeWithRecovery = useCallback(async <T>(
     operation: () => Promise<T>,
     operationName: string = 'Sui operation'
   ): Promise<T | null> => {
-    setIsRecovering(true);
-    setLastError(null);
+    setIsRecovering(true as any);
+    setLastError(null as any);
 
     try {
       const result = await operation();
@@ -24,7 +24,7 @@ export function useSuiClientRecovery() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`❌ ${operationName} failed:`, errorMessage);
-      setLastError(errorMessage);
+      setLastError(errorMessage as any);
 
       // If it's an initialization error, try to recover once
       if (errorMessage.includes('not initialized') || errorMessage.includes('initialization failed')) {
@@ -35,7 +35,7 @@ export function useSuiClientRecovery() {
           await new Promise(resolve => setTimeout(resolve, 1000)); // Wait a bit
           const recoveryResult = await operation();
           console.log(`✅ ${operationName} recovered successfully`);
-          setLastError(null);
+          setLastError(null as any);
           return recoveryResult;
         } catch (recoveryError) {
           const recoveryErrorMessage = recoveryError instanceof Error ? recoveryError.message : 'Unknown recovery error';
@@ -46,7 +46,7 @@ export function useSuiClientRecovery() {
 
       return null;
     } finally {
-      setIsRecovering(false);
+      setIsRecovering(false as any);
     }
   }, []);
 
@@ -55,13 +55,13 @@ export function useSuiClientRecovery() {
     operationName: string = 'Sui operation'
   ): Promise<T | null> => {
     return executeWithRecovery(
-      () => withSuiClient(operation),
+      () => withSuiClient(operation as any),
       operationName
     );
   }, [executeWithRecovery]);
 
   const clearError = useCallback(() => {
-    setLastError(null);
+    setLastError(null as any);
   }, []);
 
   return {

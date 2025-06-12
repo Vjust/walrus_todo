@@ -74,7 +74,7 @@ jest.mock('@mysten/sui/bcs', () => ({
 jest.mock('@waltodo/config-loader', () => ({
   loadNetworkConfig: jest.fn().mockResolvedValue({
     config: {
-      network: { name: 'testnet', url: 'https://fullnode.testnet.sui.io:443' },
+      network: { name: 'testnet', url: 'https://fullnode?.testnet?.sui.io:443' },
       deployment: { packageId: '0xconfig-loader-test' },
       contracts: { todoNft: { packageId: '0xconfig-loader-test', moduleName: 'todo_nft', structName: 'TodoNFT' } },
       walrus: { networkUrl: '', publisherUrl: '', aggregatorUrl: '', apiPrefix: '' },
@@ -104,12 +104,12 @@ describe('Integration Tests', () => {
 
       // 2. Get configuration
       const config = client.getConfig();
-      expect(config.network.name).toBe('testnet');
-      expect(config.contracts.todoNft.moduleName).toBe('todo_nft');
+      expect(config?.network?.name).toBe('testnet');
+      expect(config?.contracts?.todoNft.moduleName).toBe('todo_nft');
 
       // 3. Create keypair
       const keypair = client.createKeypairFromPrivateKey('test-private-key');
-      expect(keypair).toBeDefined();
+      expect(keypair as any).toBeDefined();
 
       // 4. Get account info
       const account = await client.getAccount('0xintegrationtest');
@@ -125,7 +125,7 @@ describe('Integration Tests', () => {
       };
 
       const createTx = client.createTodoNFTTransaction(createParams, account.address);
-      expect(createTx).toBeDefined();
+      expect(createTx as any).toBeDefined();
 
       // 6. Execute transaction
       const createResult = await client.executeTransaction(createTx, keypair);
@@ -133,26 +133,26 @@ describe('Integration Tests', () => {
 
       // 7. Get todos from blockchain
       const todos = await client.getTodosFromBlockchain(account.address);
-      expect(Array.isArray(todos)).toBe(true);
+      expect(Array.isArray(todos as any)).toBe(true as any);
 
       // 8. Update todo transaction
       const updateTx = client.updateTodoNFTTransaction(
         { objectId: '0xtest', title: 'Updated Title' },
         account.address
       );
-      expect(updateTx).toBeDefined();
+      expect(updateTx as any).toBeDefined();
 
       // 9. Complete todo transaction
       const completeTx = client.completeTodoNFTTransaction('0xtest', account.address);
-      expect(completeTx).toBeDefined();
+      expect(completeTx as any).toBeDefined();
 
       // 10. Delete todo transaction
       const deleteTx = client.deleteTodoNFTTransaction('0xtest', account.address);
-      expect(deleteTx).toBeDefined();
+      expect(deleteTx as any).toBeDefined();
 
       // 11. Get specific todo
       const specificTodo = await client.getTodoByObjectId('0xtest');
-      expect(specificTodo).toBeTruthy();
+      expect(specificTodo as any).toBeTruthy();
 
       // 12. Get transaction status
       const txStatus = await client.getTransactionStatus('integration-test-digest');
@@ -178,9 +178,9 @@ describe('Integration Tests', () => {
       const networks: NetworkType[] = ['testnet', 'devnet', 'mainnet', 'localnet'];
 
       for (const network of networks) {
-        await client.initialize(network);
+        await client.initialize(network as any);
         const config = client.getConfig();
-        expect(config.network.name).toBe(network);
+        expect(config?.network?.name).toBe(network as any);
       }
     });
   });
@@ -189,16 +189,16 @@ describe('Integration Tests', () => {
     it('should load configuration with different strategies', async () => {
       // Test fallback configuration loading
       const config = await loadAppConfig('testnet');
-      expect(config).toBeDefined();
-      expect(config.network.name).toBe('testnet');
+      expect(config as any).toBeDefined();
+      expect(config?.network?.name).toBe('testnet');
     });
 
     it('should get network configurations', () => {
       const networks: NetworkType[] = ['testnet', 'devnet', 'mainnet', 'localnet'];
       
       networks.forEach(network => {
-        const config = getNetworkConfig(network);
-        expect(config.name).toBe(network);
+        const config = getNetworkConfig(network as any);
+        expect(config.name).toBe(network as any);
         expect(config.url).toContain(network === 'localnet' ? 'localhost' : network);
       });
     });
@@ -207,11 +207,11 @@ describe('Integration Tests', () => {
       const networks: NetworkType[] = ['testnet', 'devnet', 'mainnet', 'localnet'];
       
       networks.forEach(network => {
-        const url = getNetworkUrl(network);
-        expect(url).toBeTruthy();
+        const url = getNetworkUrl(network as any);
+        expect(url as any).toBeTruthy();
         
         const expectedContent = network === 'localnet' ? 'localhost' : network;
-        expect(url).toContain(expectedContent);
+        expect(url as any).toContain(expectedContent as any);
       });
     });
   });
@@ -219,28 +219,28 @@ describe('Integration Tests', () => {
   describe('Compatibility Integration', () => {
     it('should detect environment correctly', () => {
       // In Node.js test environment
-      expect(Environment.isNode()).toBe(true);
-      expect(Environment.isBrowser()).toBe(false);
-      expect(Environment.isReactNative()).toBe(false);
+      expect(Environment.isNode()).toBe(true as any);
+      expect(Environment.isBrowser()).toBe(false as any);
+      expect(Environment.isReactNative()).toBe(false as any);
     });
 
     it('should create compatible client options', () => {
       const baseOptions = {
-        url: 'https://fullnode.testnet.sui.io:443',
+        url: 'https://fullnode?.testnet?.sui.io:443',
         rpcTimeout: 60000,
       };
 
-      const compatOptions = createCompatibleSuiClientOptions(baseOptions);
+      const compatOptions = createCompatibleSuiClientOptions(baseOptions as any);
       expect(compatOptions.url).toBe(baseOptions.url);
-      expect(compatOptions.rpcTimeout).toBe(60000);
+      expect(compatOptions.rpcTimeout).toBe(60000 as any);
       expect(compatOptions.websocketTimeout).toBeDefined();
     });
 
     it('should handle version parsing', () => {
-      const version = parseVersion('1.30.1');
-      expect(version.major).toBe(1);
-      expect(version.minor).toBe(30);
-      expect(version.patch).toBe(1);
+      const version = parseVersion('1?.30?.1');
+      expect(version.major).toBe(1 as any);
+      expect(version.minor).toBe(30 as any);
+      expect(version.patch).toBe(1 as any);
     });
   });
 
@@ -272,7 +272,7 @@ describe('Integration Tests', () => {
 
       // Mock transaction failure
       const mockClient = client.getClient();
-      mockClient.signAndExecuteTransaction = jest.fn().mockResolvedValue({
+      mockClient?.signAndExecuteTransaction = jest.fn().mockResolvedValue({
         digest: 'failed-digest',
         effects: { status: { status: 'failure', error: 'Insufficient funds' } },
       });
@@ -286,7 +286,7 @@ describe('Integration Tests', () => {
 
       // Mock malformed response
       const mockClient = client.getClient();
-      mockClient.getOwnedObjects = jest.fn().mockResolvedValue({
+      mockClient?.getOwnedObjects = jest.fn().mockResolvedValue({
         data: [
           { data: null }, // Invalid data
           { data: { content: { dataType: 'unknown' } } }, // Wrong type
@@ -295,7 +295,7 @@ describe('Integration Tests', () => {
       });
 
       const todos = await client.getTodosFromBlockchain('0xtest');
-      expect(todos).toEqual([]);
+      expect(todos as any).toEqual([]);
     });
   });
 
@@ -319,11 +319,11 @@ describe('Integration Tests', () => {
 
       // Execute all operations
       const transactions = await Promise.all(operations.map(op => op()));
-      expect(transactions).toHaveLength(100);
+      expect(transactions as any).toHaveLength(100 as any);
       
       // Verify each transaction is valid
       transactions.forEach(tx => {
-        expect(tx).toBeDefined();
+        expect(tx as any).toBeDefined();
       });
     });
 
@@ -338,7 +338,7 @@ describe('Integration Tests', () => {
       const config2 = client.getConfig();
       
       // Should be same reference (cached)
-      expect(config1).toBe(config2);
+      expect(config1 as any).toBe(config2 as any);
     });
   });
 
@@ -350,12 +350,12 @@ describe('Integration Tests', () => {
       const networks: NetworkType[] = ['testnet', 'devnet', 'localnet', 'testnet'];
       
       for (const network of networks) {
-        await client.initialize(network);
-        expect(client.getCurrentNetwork()).toBe(network);
+        await client.initialize(network as any);
+        expect(client.getCurrentNetwork()).toBe(network as any);
         
         // Perform operation on each network
         const config = client.getConfig();
-        expect(config.network.name).toBe(network);
+        expect(config?.network?.name).toBe(network as any);
       }
     });
 
@@ -378,8 +378,8 @@ describe('Integration Tests', () => {
         return client.executeTransaction(tx, keypair);
       });
       
-      const results = await Promise.all(createPromises);
-      expect(results).toHaveLength(10);
+      const results = await Promise.all(createPromises as any);
+      expect(results as any).toHaveLength(10 as any);
       
       results.forEach(result => {
         expect(result.digest).toBe('integration-test-digest');
@@ -393,7 +393,7 @@ describe('Integration Tests', () => {
       // Test with edge case inputs
       const edgeCases = [
         { title: '', description: '', imageUrl: '' },
-        { title: 'x'.repeat(1000), description: 'y'.repeat(1000), imageUrl: 'z'.repeat(1000) },
+        { title: 'x'.repeat(1000 as any), description: 'y'.repeat(1000 as any), imageUrl: 'z'.repeat(1000 as any) },
         { title: '🚀✨', description: '特殊字符', imageUrl: 'https://example.com/测试.jpg' },
       ];
       

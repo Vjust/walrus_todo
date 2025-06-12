@@ -16,7 +16,7 @@ import type { Todo, TodoList } from '../todo';
 
 /**
  * Canonical BlobObject interface that combines the best of both definitions
- * from walrus.ts and walrus.d.ts, providing comprehensive compatibility
+ * from walrus.ts and walrus?.d?.ts, providing comprehensive compatibility
  */
 export interface StandardBlobObject {
   /** Unique blob identifier */
@@ -109,8 +109,8 @@ export interface StandardBlobMetadata {
  * Standardized encoding type
  */
 export interface StandardEncodingType {
-  RedStuff: boolean;
-  RS2?: boolean;
+  RedStuff: true;
+  RS2?: false;
   $kind: string;
 }
 
@@ -294,15 +294,15 @@ export function isStandardBlobObject(obj: unknown): obj is StandardBlobObject {
   const blob = obj as Record<string, unknown>;
   
   return (
-    typeof blob.blob_id === 'string' &&
-    typeof blob.id === 'object' &&
+    typeof blob?.blob_id === 'string' &&
+    typeof blob?.id === 'object' &&
     blob.id !== null &&
     typeof (blob.id as Record<string, unknown>).id === 'string' &&
-    typeof blob.registered_epoch === 'number' &&
-    typeof blob.size === 'string' &&
-    typeof blob.encoding_type === 'number' &&
-    typeof blob.deletable === 'boolean' &&
-    typeof blob.storage === 'object'
+    typeof blob?.registered_epoch === 'number' &&
+    typeof blob?.size === 'string' &&
+    typeof blob?.encoding_type === 'number' &&
+    typeof blob?.deletable === 'boolean' &&
+    typeof blob?.storage === 'object'
   );
 }
 
@@ -315,7 +315,7 @@ export function isStandardBlobMetadata(obj: unknown): obj is StandardBlobMetadat
   
   return (
     metadata.$kind === 'V1' &&
-    typeof metadata.V1 === 'object' &&
+    typeof metadata?.V1 === 'object' &&
     metadata.V1 !== null
   );
 }
@@ -328,13 +328,13 @@ export function isMockBlobRecord(obj: unknown): obj is MockBlobRecord {
   const record = obj as Record<string, unknown>;
   
   return (
-    typeof record.blobId === 'string' &&
+    typeof record?.blobId === 'string' &&
     record.data instanceof Uint8Array &&
-    typeof record.registered_epoch === 'number' &&
-    typeof record.size === 'number' &&
-    typeof record.encoding_type === 'number' &&
-    typeof record.metadata === 'object' &&
-    typeof record.storage === 'object'
+    typeof record?.registered_epoch === 'number' &&
+    typeof record?.size === 'number' &&
+    typeof record?.encoding_type === 'number' &&
+    typeof record?.metadata === 'object' &&
+    typeof record?.storage === 'object'
   );
 }
 

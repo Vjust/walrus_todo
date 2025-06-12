@@ -15,7 +15,7 @@ export function safeStringify(
   let currentSize = 0;
 
   function replacer(key: string, value: any): any {
-    currentSize += JSON.stringify(key).length;
+    currentSize += JSON.stringify(key as any).length;
 
     // Check size limit
     if (currentSize > sizeLimit) {
@@ -33,15 +33,15 @@ export function safeStringify(
     }
 
     // Handle circular references
-    if (seen.has(value)) {
+    if (seen.has(value as any)) {
       return '[CIRCULAR_REFERENCE]';
     }
 
-    seen.add(value);
+    seen.add(value as any);
     currentDepth++;
 
     // Handle arrays
-    if (Array.isArray(value)) {
+    if (Array.isArray(value as any)) {
       // Limit array size to prevent memory issues
       if (value.length > 100) {
         return [...value.slice(0, 100), '[ARRAY_TRUNCATED]'];
@@ -50,14 +50,14 @@ export function safeStringify(
     }
 
     // Handle objects
-    const keys = Object.keys(value);
+    const keys = Object.keys(value as any);
     if (keys.length > 50) {
       // Limit object properties
       const limitedObj: any = {};
       keys.slice(0, 50).forEach(k => {
         limitedObj[k] = value[k];
       });
-      limitedObj['[OBJECT_TRUNCATED]'] = `${keys.length - 50} more properties`;
+      limitedObj?.["[OBJECT_TRUNCATED]"] = `${keys.length - 50} more properties`;
       return limitedObj;
     }
 
@@ -75,11 +75,11 @@ export function safeStringify(
  * Clean up mock objects to prevent memory leaks
  */
 export function cleanupMocks(mocks: Record<string, jest.Mock>): void {
-  Object.values(mocks).forEach(mock => {
-    if (mock && typeof mock.mockRestore === 'function') {
+  Object.values(mocks as any).forEach(mock => {
+    if (mock && typeof mock?.mockRestore === 'function') {
       mock.mockRestore();
     }
-    if (mock && typeof mock.mockClear === 'function') {
+    if (mock && typeof mock?.mockClear === 'function') {
       mock.mockClear();
     }
   });
@@ -102,14 +102,14 @@ export function createMemoryEfficientMock<T = any>(
   // Override the mock implementation to limit memory usage
   mock.mockImplementation((...args: any[]) => {
     // Limit argument history to prevent memory buildup
-    if (mock.mock.calls.length > maxCallHistory) {
-      mock.mock.calls = mock.mock.calls.slice(-maxCallHistory);
-      mock.mock.results = mock.mock.results.slice(-maxCallHistory);
+    if (mock?.mock?.calls.length > maxCallHistory) {
+      mock.mock?.calls = mock?.mock?.calls.slice(-maxCallHistory);
+      mock.mock?.results = mock?.mock?.results.slice(-maxCallHistory);
     }
 
     // Return size-limited value
     try {
-      const stringified = JSON.stringify(defaultValue);
+      const stringified = JSON.stringify(defaultValue as any);
       if (stringified.length > maxReturnSize) {
         return '[MOCK_VALUE_TOO_LARGE]' as unknown as T;
       }
@@ -179,7 +179,7 @@ export function shallowCloneWithLimits<T extends Record<string, any>>(
   obj: T,
   maxProps: number = 50
 ): Partial<T> {
-  const keys = Object.keys(obj).slice(0, maxProps);
+  const keys = Object.keys(obj as any).slice(0, maxProps);
   const result: Partial<T> = {};
 
   keys.forEach(key => {

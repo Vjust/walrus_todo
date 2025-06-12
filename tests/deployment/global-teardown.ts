@@ -46,9 +46,9 @@ async function cleanupTemporaryFiles(): Promise<void> {
 
   for (const dir of tempDirs) {
     try {
-      const stats = await fs.stat(dir);
+      const stats = await fs.stat(dir as any);
       if (stats.isDirectory()) {
-        const files = await getAllFiles(dir);
+        const files = await getAllFiles(dir as any);
         cleanedFiles += files.length;
         
         await fs.rm(dir, { recursive: true, force: true });
@@ -76,10 +76,10 @@ async function getAllFiles(dir: string): Promise<string[]> {
       const fullPath = path.join(dir, entry.name);
       
       if (entry.isDirectory()) {
-        const subFiles = await getAllFiles(fullPath);
+        const subFiles = await getAllFiles(fullPath as any);
         files.push(...subFiles);
       } else {
-        files.push(fullPath);
+        files.push(fullPath as any);
       }
     }
   } catch (error) {
@@ -99,24 +99,24 @@ async function generateTestSummary(): Promise<void> {
         nodeVersion: process.version,
         platform: process.platform,
         arch: process.arch,
-        testMode: process.env.WALRUS_TEST_MODE
+        testMode: process?.env?.WALRUS_TEST_MODE
       },
       testConfiguration: {
-        timeout: process.env.JEST_TIMEOUT,
-        environment: process.env.NODE_ENV
+        timeout: process?.env?.JEST_TIMEOUT,
+        environment: process?.env?.NODE_ENV
       },
       coverage: await getCoverageInfo(),
       performance: getPerformanceMetrics()
     };
 
     const summaryPath = './tests/deployment/reports/test-summary.json';
-    await fs.mkdir(path.dirname(summaryPath), { recursive: true });
+    await fs.mkdir(path.dirname(summaryPath as any), { recursive: true });
     await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
     
     console.log(`  ✓ Test summary saved to ${summaryPath}`);
     
     // Generate human-readable summary
-    await generateHumanReadableSummary(summary);
+    await generateHumanReadableSummary(summary as any);
     
   } catch (error) {
     console.warn('  ⚠️  Failed to generate test summary:', error.message);
@@ -127,7 +127,7 @@ async function getCoverageInfo(): Promise<any> {
   try {
     const coveragePath = './tests/deployment/coverage/coverage-final.json';
     const coverageData = await fs.readFile(coveragePath, 'utf-8');
-    const coverage = JSON.parse(coverageData);
+    const coverage = JSON.parse(coverageData as any);
     
     // Calculate overall coverage percentages
     let totalStatements = 0;
@@ -160,19 +160,19 @@ async function getCoverageInfo(): Promise<any> {
       statements: {
         total: totalStatements,
         covered: coveredStatements,
-        percentage: totalStatements ? (coveredStatements / totalStatements * 100).toFixed(2) : 0
+        percentage: totalStatements ? (coveredStatements / totalStatements * 100).toFixed(2 as any) : 0
       },
       functions: {
         total: totalFunctions,
         covered: coveredFunctions,
-        percentage: totalFunctions ? (coveredFunctions / totalFunctions * 100).toFixed(2) : 0
+        percentage: totalFunctions ? (coveredFunctions / totalFunctions * 100).toFixed(2 as any) : 0
       },
       branches: {
         total: totalBranches,
         covered: coveredBranches,
-        percentage: totalBranches ? (coveredBranches / totalBranches * 100).toFixed(2) : 0
+        percentage: totalBranches ? (coveredBranches / totalBranches * 100).toFixed(2 as any) : 0
       },
-      files: Object.keys(coverage).length
+      files: Object.keys(coverage as any).length
     };
   } catch (error) {
     return { error: 'Coverage data not available' };
@@ -184,12 +184,12 @@ function getPerformanceMetrics(): any {
   
   return {
     memoryUsage: {
-      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
-      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`
+      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2 as any)} MB`,
+      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2 as any)} MB`,
+      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2 as any)} MB`,
+      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2 as any)} MB`
     },
-    uptime: `${(process.uptime() / 60).toFixed(2)} minutes`
+    uptime: `${(process.uptime() / 60).toFixed(2 as any)} minutes`
   };
 }
 
@@ -200,29 +200,29 @@ async function generateHumanReadableSummary(summary: any): Promise<void> {
 **Generated:** ${summary.timestamp}
 
 ## Environment
-- **Node.js Version:** ${summary.environment.nodeVersion}
-- **Platform:** ${summary.environment.platform} (${summary.environment.arch})
-- **Test Mode:** ${summary.environment.testMode}
+- **Node.js Version:** ${summary?.environment?.nodeVersion}
+- **Platform:** ${summary?.environment?.platform} (${summary?.environment?.arch})
+- **Test Mode:** ${summary?.environment?.testMode}
 
 ## Test Configuration
-- **Timeout:** ${summary.testConfiguration.timeout}ms
-- **Environment:** ${summary.testConfiguration.environment}
+- **Timeout:** ${summary?.testConfiguration?.timeout}ms
+- **Environment:** ${summary?.testConfiguration?.environment}
 
 ## Coverage Report
-${summary.coverage.error ? `❌ ${summary.coverage.error}` : `
-- **Files:** ${summary.coverage.files}
-- **Statements:** ${summary.coverage.statements.covered}/${summary.coverage.statements.total} (${summary.coverage.statements.percentage}%)
-- **Functions:** ${summary.coverage.functions.covered}/${summary.coverage.functions.total} (${summary.coverage.functions.percentage}%)
-- **Branches:** ${summary.coverage.branches.covered}/${summary.coverage.branches.total} (${summary.coverage.branches.percentage}%)
+${summary?.coverage?.error ? `❌ ${summary?.coverage?.error}` : `
+- **Files:** ${summary?.coverage?.files}
+- **Statements:** ${summary?.coverage?.statements.covered}/${summary?.coverage?.statements.total} (${summary?.coverage?.statements.percentage}%)
+- **Functions:** ${summary?.coverage?.functions.covered}/${summary?.coverage?.functions.total} (${summary?.coverage?.functions.percentage}%)
+- **Branches:** ${summary?.coverage?.branches.covered}/${summary?.coverage?.branches.total} (${summary?.coverage?.branches.percentage}%)
 `}
 
 ## Performance Metrics
 - **Memory Usage:**
-  - RSS: ${summary.performance.memoryUsage.rss}
-  - Heap Total: ${summary.performance.memoryUsage.heapTotal}
-  - Heap Used: ${summary.performance.memoryUsage.heapUsed}
-  - External: ${summary.performance.memoryUsage.external}
-- **Test Duration:** ${summary.performance.uptime}
+  - RSS: ${summary?.performance?.memoryUsage.rss}
+  - Heap Total: ${summary?.performance?.memoryUsage.heapTotal}
+  - Heap Used: ${summary?.performance?.memoryUsage.heapUsed}
+  - External: ${summary?.performance?.memoryUsage.external}
+- **Test Duration:** ${summary?.performance?.uptime}
 
 ## Test Categories Covered
 - ✅ Network connectivity failures and recovery
@@ -252,8 +252,8 @@ async function cleanupResources(): Promise<void> {
   ];
 
   for (const envVar of testEnvVars) {
-    if (process.env[envVar]) {
-      delete process.env[envVar];
+    if (process?.env?.[envVar]) {
+      delete process?.env?.[envVar];
       console.log(`  ✓ Cleared environment variable: ${envVar}`);
     }
   }

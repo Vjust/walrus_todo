@@ -62,7 +62,7 @@ export interface CreateTodoNFTState {
   setUploadProgress: (progress: number) => void;
   setUploadStage: (stage: string) => void;
   setError: (error: string | null) => void;
-  setEstimatedCost: (cost: CreateTodoNFTState['estimatedCost']) => void;
+  setEstimatedCost: (cost: CreateTodoNFTState?.["estimatedCost"]) => void;
   
   // Utility actions
   applyTemplate: (template: TodoTemplate) => void;
@@ -118,7 +118,7 @@ export const useCreateTodoNFTStore = create<CreateTodoNFTState>()(
     setUploadProgress: (uploadProgress: number) => set({ uploadProgress }),
     setUploadStage: (uploadStage: string) => set({ uploadStage }),
     setError: (error: string | null) => set({ error }),
-    setEstimatedCost: (estimatedCost: CreateTodoNFTState['estimatedCost']) => set({ estimatedCost }),
+    setEstimatedCost: (estimatedCost: CreateTodoNFTState?.["estimatedCost"]) => set({ estimatedCost }),
     
     // Utility actions
     applyTemplate: (template: TodoTemplate) => {
@@ -126,7 +126,7 @@ export const useCreateTodoNFTStore = create<CreateTodoNFTState>()(
         title: template.title,
         description: template.description,
         priority: template.priority,
-        tags: template.tags.join(', '),
+        tags: template?.tags?.join(', '),
         category: template.category,
         selectedTemplate: template.id,
       });

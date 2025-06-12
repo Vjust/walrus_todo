@@ -41,13 +41,13 @@ const addCommand = {
         });
       } catch (error) {
         throw new CLIError(
-          `Failed to store todo on blockchain: ${error instanceof Error ? error.message : error ? String(error) : 'Unknown error'}`,
+          `Failed to store todo on blockchain: ${error instanceof Error ? error.message : error ? String(error as any) : 'Unknown error'}`,
           'STORAGE_FAILED'
         );
       }
     }
 
-    return mockTodoService.prototype.addTodo('default', newTodo);
+    return mockTodoService?.prototype?.addTodo('default', newTodo);
   },
 };
 
@@ -56,7 +56,7 @@ describe('add', () => {
     jest.clearAllMocks();
 
     // Setup default mocks
-    mockTodoService.prototype.getList.mockResolvedValue({
+    mockTodoService?.prototype?.getList.mockResolvedValue({
       id: 'default',
       name: 'default',
       owner: 'default-owner',
@@ -66,7 +66,7 @@ describe('add', () => {
       updatedAt: new Date().toISOString(),
     });
 
-    mockTodoService.prototype.addTodo.mockImplementation(
+    mockTodoService?.prototype?.addTodo.mockImplementation(
       async (_listName, todo) =>
         ({
           ...todo,
@@ -87,9 +87,9 @@ describe('add', () => {
       options: { storage: 'local' },
     };
 
-    await addCommand.run(args);
+    await addCommand.run(args as any);
 
-    expect(mockTodoService.prototype.addTodo).toHaveBeenCalledWith(
+    expect(mockTodoService?.prototype?.addTodo).toHaveBeenCalledWith(
       'default',
       expect.objectContaining({
         title: 'Test Todo',
@@ -104,7 +104,7 @@ describe('add', () => {
       options: { storage: 'blockchain' },
     };
 
-    await expect(addCommand.run(args)).rejects.toThrow(
+    await expect(addCommand.run(args as any)).rejects.toThrow(
       'Failed to store todo on blockchain: Storage failed'
     );
   });

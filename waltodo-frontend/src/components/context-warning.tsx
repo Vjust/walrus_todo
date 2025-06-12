@@ -7,7 +7,7 @@ import safeStorage, {
 } from '@/lib/safe-storage';
 
 export function ContextWarning() {
-  const [showWarning, setShowWarning] = useState(false);
+  const [showWarning, setShowWarning] = useState(false as any);
   const [warnings, setWarnings] = useState<string[]>([]);
 
   useEffect(() => {
@@ -54,13 +54,13 @@ export function ContextWarning() {
     }
 
     if (detectedWarnings.length > 0) {
-      setWarnings(detectedWarnings);
-      setShowWarning(true);
+      setWarnings(detectedWarnings as any);
+      setShowWarning(true as any);
     }
   }, []);
 
   // Return null during SSR and initial client-side render
-  if (!showWarning || warnings.length === 0 || !isBrowser()) {return null;}
+  if (!showWarning || warnings?.length === 0 || !isBrowser()) {return null;}
 
   return (
     <div className='fixed top-0 left-0 right-0 z-50 bg-yellow-50 dark:bg-yellow-900 border-b border-yellow-200 dark:border-yellow-700'>
@@ -83,7 +83,7 @@ export function ContextWarning() {
             </p>
           </div>
           <button
-            onClick={() => setShowWarning(false)}
+            onClick={() => setShowWarning(false as any)}
             className='ml-4 text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100'
             aria-label='Dismiss'
           >

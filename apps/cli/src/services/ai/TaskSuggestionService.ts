@@ -148,9 +148,9 @@ export class TaskSuggestionService {
       );
     }
 
-    this.aiService = aiService;
-    this.verificationService = verificationService;
-    this.logger = logger || new Logger('TaskSuggestionService');
+    this?.aiService = aiService;
+    this?.verificationService = verificationService;
+    this?.logger = logger || new Logger('TaskSuggestionService');
   }
 
   /**
@@ -168,7 +168,7 @@ export class TaskSuggestionService {
    * @example
    * ```typescript
    * // Basic usage
-   * const suggestions = await taskSuggestionService.suggestTasks(myTodos);
+   * const suggestions = await taskSuggestionService.suggestTasks(myTodos as any);
    *
    * // With filtering context
    * const suggestions = await taskSuggestionService.suggestTasks(myTodos, {
@@ -183,7 +183,7 @@ export class TaskSuggestionService {
     context: SuggestionContext = {}
   ): Promise<TaskSuggestionResult> {
     // Add type guards for parameters
-    if (!Array.isArray(todos)) {
+    if (!Array.isArray(todos as any)) {
       throw new Error('Todos parameter must be an array');
     }
 
@@ -191,10 +191,10 @@ export class TaskSuggestionService {
       throw new Error('Context parameter must be an object');
     }
 
-    this.logger.debug(`Generating task suggestions for ${todos.length} todos`);
+    this?.logger?.debug(`Generating task suggestions for ${todos.length} todos`);
 
     // Handle empty todo list
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       return {
         suggestions: [],
         contextInfo: {
@@ -218,7 +218,7 @@ export class TaskSuggestionService {
 
     try {
       // Get contextual information from existing todos
-      const contextInfo = await this.analyzeContext(todos);
+      const contextInfo = await this.analyzeContext(todos as any);
 
       // Generate different types of suggestions in parallel
       const [relatedTasks, nextStepTasks, dependencyTasks] = await Promise.all([
@@ -246,7 +246,7 @@ export class TaskSuggestionService {
       }
 
       // Calculate metrics
-      const metrics = this.calculateMetrics(allSuggestions);
+      const metrics = this.calculateMetrics(allSuggestions as any);
 
       return {
         suggestions: allSuggestions,
@@ -254,7 +254,7 @@ export class TaskSuggestionService {
         metrics,
       };
     } catch (error) {
-      this.logger.error(`Error generating task suggestions: ${error}`);
+      this?.logger?.error(`Error generating task suggestions: ${error}`);
       throw new Error(
         `Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -290,15 +290,15 @@ export class TaskSuggestionService {
 
     // Prepare metadata for verification
     const metadata = {
-      todoCount: todos.length.toString(),
-      suggestionCount: suggestions.suggestions.length.toString(),
-      averageScore: suggestions.metrics.averageScore.toFixed(2),
+      todoCount: todos?.length?.toString(),
+      suggestionCount: suggestions?.suggestions?.length.toString(),
+      averageScore: suggestions?.metrics?.averageScore.toFixed(2 as any),
       timestamp: Date.now().toString(),
-      contextFilters: JSON.stringify(context),
+      contextFilters: JSON.stringify(context as any),
     };
 
     // Create blockchain verification
-    const verification = await this.verificationService.createVerification(
+    const verification = await this?.verificationService?.createVerification(
       AIActionType.SUGGEST, // Using the closest matching action type
       { todos, context },
       suggestions,
@@ -334,7 +334,7 @@ export class TaskSuggestionService {
       ? todos.filter(todo => context.relatedToTodoIds?.includes(todo.id))
       : todos;
 
-    if (targetTodos.length === 0) {
+    if (targetTodos?.length === 0) {
       return [];
     }
 
@@ -347,7 +347,7 @@ export class TaskSuggestionService {
         Return result as JSON array of objects with: title, description, priority, score, reasoning, tags
 
         Todos:
-        ${targetTodos.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
+        ${targetTodos.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t?.tags?.join(', ')}]`).join('\n')}`;
 
       const result = await this.aiService
         .getProvider()
@@ -365,7 +365,7 @@ export class TaskSuggestionService {
 
       return suggestions;
     } catch (error) {
-      this.logger.error(`Error generating related tasks: ${error}`);
+      this?.logger?.error(`Error generating related tasks: ${error}`);
       throw error;
     }
   }
@@ -395,12 +395,12 @@ export class TaskSuggestionService {
   ): Promise<SuggestedTask[]> {
     try {
       // First, get dependency information to understand the workflow
-      const dependencies = await this.aiService.detectDependencies(todos);
+      const dependencies = await this?.aiService?.detectDependencies(todos as any);
 
       // Find completed todos and their potential next steps
       const completedTodos = todos.filter(todo => todo.completed);
 
-      if (completedTodos.length === 0) {
+      if (completedTodos?.length === 0) {
         // If no todos are completed, suggest initial tasks
         const prompt = `Based on these todos, suggest NEXT STEP tasks that would logically come next in a workflow.
           Each suggestion should include a title, description, priority (high/medium/low),
@@ -409,7 +409,7 @@ export class TaskSuggestionService {
           Return result as JSON array of objects with: title, description, priority, score, reasoning, tags
 
           Todos:
-          ${todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
+          ${todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t?.tags?.join(', ')}]`).join('\n')}`;
 
         const result = await this.aiService
           .getProvider()
@@ -436,7 +436,7 @@ export class TaskSuggestionService {
       });
 
       // Get todos that could be started next based on completed dependencies
-      const todoIdsToFocus = [...new Set(potentialNextSteps)];
+      const todoIdsToFocus = [...new Set(potentialNextSteps as any)];
       const todosToFocus = todos.filter(todo =>
         todoIdsToFocus.includes(todo.id)
       );
@@ -449,7 +449,7 @@ export class TaskSuggestionService {
         Return result as JSON array of objects with: title, description, priority, score, reasoning, tags
 
         Todos:
-        ${todosToFocus.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
+        ${todosToFocus.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t?.tags?.join(', ')}]`).join('\n')}`;
 
       const result = await this.aiService
         .getProvider()
@@ -464,7 +464,7 @@ export class TaskSuggestionService {
         relatedTodoIds: todosToFocus.map(t => t.id),
       }));
     } catch (error) {
-      this.logger.error(`Error generating next step tasks: ${error}`);
+      this?.logger?.error(`Error generating next step tasks: ${error}`);
       throw error;
     }
   }
@@ -496,16 +496,16 @@ export class TaskSuggestionService {
       const incompleteTodos = todos.filter(todo => !todo.completed);
 
       // Get dependency information to identify missing prerequisites
-      const dependencies = await this.aiService.detectDependencies(todos);
+      const dependencies = await this?.aiService?.detectDependencies(todos as any);
 
       // Find todos that might need prerequisites
       const todosWithoutDependencies = incompleteTodos.filter(
         todo =>
-          !dependencies.dependencies[todo.id] ||
-          dependencies.dependencies[todo.id].length === 0
+          !dependencies?.dependencies?.[todo.id] ||
+          dependencies?.dependencies?.[todo.id].length === 0
       );
 
-      if (todosWithoutDependencies.length === 0) {
+      if (todosWithoutDependencies?.length === 0) {
         return [];
       }
 
@@ -517,7 +517,7 @@ export class TaskSuggestionService {
         Return result as JSON array of objects with: title, description, priority, score, reasoning, tags
 
         Todos:
-        ${todosWithoutDependencies.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
+        ${todosWithoutDependencies.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t?.tags?.join(', ')}]`).join('\n')}`;
 
       const result = await this.aiService
         .getProvider()
@@ -532,7 +532,7 @@ export class TaskSuggestionService {
         relatedTodoIds: todosWithoutDependencies.map(t => t.id),
       }));
     } catch (error) {
-      this.logger.error(`Error generating dependency tasks: ${error}`);
+      this?.logger?.error(`Error generating dependency tasks: ${error}`);
       throw error;
     }
   }
@@ -569,19 +569,19 @@ export class TaskSuggestionService {
       // Get top tags by counting occurrences
       const tagCounts: Record<string, number> = {};
       todos.forEach(todo => {
-        todo.tags.forEach(tag => {
+        todo?.tags?.forEach(tag => {
           tagCounts[tag] = (tagCounts[tag] || 0) + 1;
         });
       });
 
       // Sort tags by frequency and take top 5
-      const topContextualTags = Object.entries(tagCounts)
+      const topContextualTags = Object.entries(tagCounts as any)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([tag]) => tag);
 
       // Get themes through AI analysis
-      const analysis = await this.aiService.analyze(todos);
+      const analysis = await this?.aiService?.analyze(todos as any);
       const detectedThemes =
         analysis.keyThemes || analysis.themes || analysis.categories || [];
 
@@ -589,10 +589,10 @@ export class TaskSuggestionService {
         analyzedTodoCount: todos.length,
         topContextualTags,
         completionPercentage,
-        detectedThemes: Array.isArray(detectedThemes) ? detectedThemes : [],
+        detectedThemes: Array.isArray(detectedThemes as any) ? detectedThemes : [],
       };
     } catch (error) {
-      this.logger.error(`Error analyzing context: ${error}`);
+      this?.logger?.error(`Error analyzing context: ${error}`);
       return {
         analyzedTodoCount: todos.length,
         topContextualTags: [],
@@ -624,14 +624,14 @@ export class TaskSuggestionService {
     let filteredSuggestions = [...suggestions];
 
     // Filter by suggestion type (include)
-    if (context.includeTypes && context.includeTypes.length > 0) {
+    if (context.includeTypes && context?.includeTypes?.length > 0) {
       filteredSuggestions = filteredSuggestions.filter(suggestion =>
         context.includeTypes?.includes(suggestion.type)
       );
     }
 
     // Filter by suggestion type (exclude)
-    if (context.excludeTypes && context.excludeTypes.length > 0) {
+    if (context.excludeTypes && context?.excludeTypes?.length > 0) {
       filteredSuggestions = filteredSuggestions.filter(
         suggestion => !context.excludeTypes?.includes(suggestion.type)
       );
@@ -645,7 +645,7 @@ export class TaskSuggestionService {
     }
 
     // Filter by priority
-    if (context.priorityFilter && context.priorityFilter.length > 0) {
+    if (context.priorityFilter && context?.priorityFilter?.length > 0) {
       filteredSuggestions = filteredSuggestions.filter(
         suggestion =>
           suggestion.priority &&
@@ -654,11 +654,11 @@ export class TaskSuggestionService {
     }
 
     // Filter by tags
-    if (context.tags && context.tags.length > 0) {
+    if (context.tags && context?.tags?.length > 0) {
       filteredSuggestions = filteredSuggestions.filter(
         suggestion =>
           suggestion.tags &&
-          suggestion.tags.some(tag => context.tags?.includes(tag))
+          suggestion?.tags?.some(tag => context.tags?.includes(tag as any))
       );
     }
 

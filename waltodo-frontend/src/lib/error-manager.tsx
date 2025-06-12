@@ -88,14 +88,14 @@ export class ErrorManager {
   private retryMap = new Map<string, number>();
 
   constructor(config: Partial<ErrorHandlingConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this?.config = { ...DEFAULT_CONFIG, ...config };
   }
 
   /**
    * Classify an error based on its characteristics
    */
   classify(error: Error, context?: Record<string, any>): ClassifiedError {
-    const type = this.determineErrorType(error);
+    const type = this.determineErrorType(error as any);
     const severity = this.determineSeverity(error, type);
     const userMessage = this.generateUserMessage(error, type);
     const recoveryStrategy = this.determineRecoveryStrategy(error, type);
@@ -111,15 +111,15 @@ export class ErrorManager {
       userMessage,
       recoveryStrategy,
       retryable: this.isRetryable(error, type),
-      maxRetries: this.config.maxRetries,
+      maxRetries: this?.config?.maxRetries,
       retryCount: 0
     };
 
-    if (this.config.enableLogging) {
-      this.logError(classified);
+    if (this?.config?.enableLogging) {
+      this.logError(classified as any);
     }
 
-    this.errorLog.push(classified);
+    this?.errorLog?.push(classified as any);
     return classified;
   }
 
@@ -132,19 +132,19 @@ export class ErrorManager {
     recoveryOptions?: Partial<ErrorRecoveryOptions>
   ): Promise<ClassifiedError> {
     const classified = this.classify(error, context);
-    const errorId = this.generateErrorId(classified);
+    const errorId = this.generateErrorId(classified as any);
 
     // Check if we've already retried this error too many times
-    const currentRetries = this.retryMap.get(errorId) || 0;
-    classified.retryCount = currentRetries;
+    const currentRetries = this?.retryMap?.get(errorId as any) || 0;
+    classified?.retryCount = currentRetries;
 
     // Show user notification if enabled
-    if (this.config.showToasts) {
+    if (this?.config?.showToasts) {
       this.showErrorNotification(classified, recoveryOptions);
     }
 
     // Attempt automatic recovery if configured and possible
-    if (this.config.autoRetry && classified.retryable && currentRetries < (classified.maxRetries || 0)) {
+    if (this?.config?.autoRetry && classified.retryable && currentRetries < (classified.maxRetries || 0)) {
       await this.attemptRecovery(classified, recoveryOptions);
     }
 
@@ -159,23 +159,23 @@ export class ErrorManager {
     options?: Partial<ErrorRecoveryOptions>
   ): Promise<boolean> {
     const strategy = options?.strategy || error.recoveryStrategy;
-    const errorId = this.generateErrorId(error);
-    const retryCount = this.retryMap.get(errorId) || 0;
+    const errorId = this.generateErrorId(error as any);
+    const retryCount = this?.retryMap?.get(errorId as any) || 0;
 
     try {
       switch (strategy) {
         case RecoveryStrategy.RETRY:
           if (options?.onRetry) {
-            await this.delay(options.retryDelay || this.config.retryDelay);
+            await this.delay(options.retryDelay || this?.config?.retryDelay);
             await options.onRetry();
-            this.retryMap.set(errorId, retryCount + 1);
+            this?.retryMap?.set(errorId, retryCount + 1);
             return true;
           }
           break;
 
         case RecoveryStrategy.REFRESH:
           if (typeof window !== 'undefined') {
-            window.location.reload();
+            window?.location?.reload();
           }
           break;
 
@@ -222,7 +222,7 @@ export class ErrorManager {
             <div className="text-xs text-gray-500">Code: {error.code}</div>
           )}
           
-          {error.severity === ErrorSeverity.CRITICAL && (
+          {error?.severity === ErrorSeverity.CRITICAL && (
             <div className="text-xs text-red-600 font-medium">
               Critical Error - Please contact support
             </div>
@@ -255,11 +255,11 @@ export class ErrorManager {
         </div>
       ),
       {
-        duration: error.severity === ErrorSeverity.CRITICAL ? 10000 : 6000,
+        duration: error?.severity === ErrorSeverity.CRITICAL ? 10000 : 6000,
         style: {
-          background: error.severity === ErrorSeverity.CRITICAL ? '#FEF2F2' : '#F9FAFB',
-          color: error.severity === ErrorSeverity.CRITICAL ? '#991B1B' : '#374151',
-          border: `1px solid ${error.severity === ErrorSeverity.CRITICAL ? '#FCA5A5' : '#E5E7EB'}`,
+          background: error?.severity === ErrorSeverity.CRITICAL ? '#FEF2F2' : '#F9FAFB',
+          color: error?.severity === ErrorSeverity.CRITICAL ? '#991B1B' : '#374151',
+          border: `1px solid ${error?.severity === ErrorSeverity.CRITICAL ? '#FCA5A5' : '#E5E7EB'}`,
         },
       }
     );
@@ -269,7 +269,7 @@ export class ErrorManager {
    * Determine error type from error characteristics
    */
   private determineErrorType(error: Error): ErrorType {
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
     const stack = error.stack?.toLowerCase() || '';
 
     // Network errors
@@ -361,7 +361,7 @@ export class ErrorManager {
    * Determine error severity
    */
   private determineSeverity(error: Error, type: ErrorType): ErrorSeverity {
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
 
     // Critical errors
     if (
@@ -399,7 +399,7 @@ export class ErrorManager {
    * Generate user-friendly error message
    */
   private generateUserMessage(error: Error, type: ErrorType): string {
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
 
     switch (type) {
       case ErrorType.NETWORK:
@@ -452,7 +452,7 @@ export class ErrorManager {
         return RecoveryStrategy.RETRY;
         
       case ErrorType.BLOCKCHAIN:
-        if (error.message.toLowerCase().includes('insufficient funds')) {
+        if (error?.message?.toLowerCase().includes('insufficient funds')) {
           return RecoveryStrategy.MANUAL;
         }
         return RecoveryStrategy.RETRY;
@@ -482,9 +482,9 @@ export class ErrorManager {
    */
   private isRetryable(error: Error, type: ErrorType): boolean {
     const nonRetryableTypes = [ErrorType.VALIDATION, ErrorType.PERMISSION];
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
 
-    if (nonRetryableTypes.includes(type)) {
+    if (nonRetryableTypes.includes(type as any)) {
       return false;
     }
 
@@ -519,8 +519,8 @@ export class ErrorManager {
       message: error.message,
       code: error.code,
       context: error.context,
-      timestamp: error.timestamp.toISOString(),
-      stack: error.originalError.stack
+      timestamp: error?.timestamp?.toISOString(),
+      stack: error?.originalError?.stack
     };
 
     switch (error.severity) {
@@ -534,7 +534,7 @@ export class ErrorManager {
         console.warn('MEDIUM SEVERITY ERROR:', logData);
         break;
       case ErrorSeverity.LOW:
-        if (this.config.logLevel === 'debug') {
+        if (this.config?.logLevel === 'debug') {
           console.info('LOW SEVERITY ERROR:', logData);
         }
         break;
@@ -557,22 +557,22 @@ export class ErrorManager {
     bySeverity: Record<ErrorSeverity, number>;
     recent: ClassifiedError[];
   } {
-    const byType = Object.values(ErrorType).reduce((acc, type) => {
-      acc[type] = this.errorLog.filter(e => e.type === type).length;
+    const byType = Object.values(ErrorType as any).reduce((acc, type) => {
+      acc[type] = this?.errorLog?.filter(e => e?.type === type).length;
       return acc;
     }, {} as Record<ErrorType, number>);
 
-    const bySeverity = Object.values(ErrorSeverity).reduce((acc, severity) => {
-      acc[severity] = this.errorLog.filter(e => e.severity === severity).length;
+    const bySeverity = Object.values(ErrorSeverity as any).reduce((acc, severity) => {
+      acc[severity] = this?.errorLog?.filter(e => e?.severity === severity).length;
       return acc;
     }, {} as Record<ErrorSeverity, number>);
 
     const recent = this.errorLog
       .slice(-10)
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      .sort((a, b) => b?.timestamp?.getTime() - a?.timestamp?.getTime());
 
     return {
-      total: this.errorLog.length,
+      total: this?.errorLog?.length,
       byType,
       bySeverity,
       recent
@@ -583,15 +583,15 @@ export class ErrorManager {
    * Clear error log
    */
   clearErrorLog(): void {
-    this.errorLog = [];
-    this.retryMap.clear();
+    this?.errorLog = [];
+    this?.retryMap?.clear();
   }
 
   /**
    * Update configuration
    */
   updateConfig(config: Partial<ErrorHandlingConfig>): void {
-    this.config = { ...this.config, ...config };
+    this?.config = { ...this.config, ...config };
   }
 }
 

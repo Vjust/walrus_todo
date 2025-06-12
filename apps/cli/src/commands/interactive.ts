@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { InteractiveMode } from '../utils/interactive-mode';
 import { CLIError } from '../types/errors/consolidated';
 
@@ -34,7 +34,7 @@ export default class InteractiveCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(InteractiveCommand);
+    const { flags } = await this.parse(InteractiveCommand as any);
 
     // Don't show the usual command output in interactive mode
     const originalLog = this.log;
@@ -45,24 +45,24 @@ export default class InteractiveCommand extends BaseCommand {
       const interactive = new InteractiveMode();
 
       // Set initial list if provided
-      if (flags['start-list']) {
-        await this.validateList(flags['start-list']);
-        interactive.setCurrentList(flags['start-list']);
+      if (flags?.["start-list"]) {
+        await this.validateList(flags?.["start-list"]);
+        interactive.setCurrentList(flags?.["start-list"]);
       }
 
       // Start the interactive session
       await interactive.start();
     } catch (error) {
       // Restore original logging for error handling
-      this.log = originalLog;
-      this.error = originalError;
+      this?.log = originalLog;
+      this?.error = originalError;
 
       if (error instanceof CLIError) {
         throw error;
       }
       this.errorWithHelp(
         'Failed to start interactive mode',
-        error instanceof Error ? error.message : String(error),
+        error instanceof Error ? error.message : String(error as any),
         'Please try running the command again'
       );
     }
@@ -72,7 +72,7 @@ export default class InteractiveCommand extends BaseCommand {
     const todoService = new (
       await import('../services/todoService')
     ).TodoService();
-    const list = await todoService.getList(listName);
+    const list = await todoService.getList(listName as any);
 
     if (!list) {
       throw new Error(`List "${listName}" not found`);

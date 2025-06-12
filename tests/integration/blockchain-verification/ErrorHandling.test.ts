@@ -34,7 +34,7 @@ jest.mock('../../../apps/cli/src/utils/retry-manager', () => {
             _operationName: string
           ) => {
             // Call the callback with the mock node and return its result
-            return await callback(mockNode);
+            return await callback(mockNode as any);
           }
         ),
       retry: jest
@@ -45,7 +45,7 @@ jest.mock('../../../apps/cli/src/utils/retry-manager', () => {
             _operationName: string
           ) => {
             // Call the callback with the mock node and return its result
-            return await callback(mockNode);
+            return await callback(mockNode as any);
           }
         ),
       getNodesHealth: jest.fn().mockReturnValue([mockNode]),
@@ -74,34 +74,34 @@ const mockSuiClient = {
 // Create a mock transaction signer
 const mockSigner = {
   connect: () => Promise.resolve(),
-  getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
-  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  getPublicKey: () => ({ toBytes: () => new Uint8Array(32 as any) }),
+  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64 as any),
   signPersonalMessage: async (
     _data: Uint8Array
   ): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    bytes: Buffer.from(new Uint8Array(32 as any)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signWithIntent: async (
     _data: Uint8Array,
     _intent: IntentScope
   ): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    bytes: Buffer.from(new Uint8Array(32 as any)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signTransactionBlock: async (
     _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
-    new Uint8Array(64),
+    new Uint8Array(64 as any),
   signTransaction: async (
     _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+    signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
   }),
   toSuiAddress: () => 'mock-address',
   getKeyScheme: () => 'ED25519' as const,
@@ -109,7 +109,7 @@ const mockSigner = {
 
 // Test helper
 const createErrorWithCode = (message: string, code?: string) => {
-  const error = new Error(message);
+  const error = new Error(message as any);
   if (code) {
     (error as any).code = code;
   }
@@ -144,21 +144,21 @@ describe('Blockchain Verification Error Handling', () => {
     mockWalrusClient = getMockWalrusClient();
 
     // Override specific methods for this test
-    mockWalrusClient.getConfig.mockResolvedValue({
+    mockWalrusClient?.getConfig?.mockResolvedValue({
       network: 'testnet',
-      version: '1.0.0',
+      version: '1?.0?.0',
       maxSize: 1000000,
     });
-    mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({
+    mockWalrusClient?.getWalBalance?.mockResolvedValue('2000');
+    mockWalrusClient?.getStorageUsage?.mockResolvedValue({
       used: '500',
       total: '2000',
     });
-    mockWalrusClient.getBlobSize.mockResolvedValue(1024);
-    mockWalrusClient.storageCost.mockResolvedValue({
-      storageCost: BigInt(1000),
-      writeCost: BigInt(500),
-      totalCost: BigInt(1500),
+    mockWalrusClient?.getBlobSize?.mockResolvedValue(1024 as any);
+    mockWalrusClient?.storageCost?.mockResolvedValue({
+      storageCost: BigInt(1000 as any),
+      writeCost: BigInt(500 as any),
+      totalCost: BigInt(1500 as any),
     });
 
     verificationManager = new BlobVerificationManager(
@@ -179,7 +179,7 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Set up successful responses for getBlobInfo and metadata
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -190,8 +190,8 @@ describe('Blockchain Verification Error Handling', () => {
             unencoded_length: String(testData.length),
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -200,14 +200,14 @@ describe('Blockchain Verification Error Handling', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           // Include the expected attributes for verification
@@ -219,24 +219,24 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
       ]);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
       // Mock readBlob to fail first, then succeed
       let callCount = 0;
-      mockWalrusClient.readBlob.mockImplementation(() => {
+      mockWalrusClient?.readBlob?.mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
           throw createErrorWithCode('Network error', 'ECONNRESET');
         }
-        return Promise.resolve(new Uint8Array(testData));
+        return Promise.resolve(new Uint8Array(testData as any));
       });
 
       // Ensure the SuiClient mock is working
-      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
+      mockSuiClient?.getLatestSuiSystemState?.mockResolvedValue({ epoch: '42' });
 
       // Execute the verification with faster retry settings
       const result = await verificationManager.verifyBlob(
@@ -247,12 +247,12 @@ describe('Blockchain Verification Error Handling', () => {
       );
 
       // Verify successful result after retry
-      expect(result.success).toBe(true);
-      expect(result.details.size).toBe(testData.length);
-      expect(result.details.certified).toBe(true);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.size).toBe(testData.length);
+      expect(result?.details?.certified).toBe(true as any);
 
       // Verify the readBlob was called twice (once for failure, once for success)
-      expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(2);
+      expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should handle RPC endpoint failures', async () => {
@@ -261,11 +261,11 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Setup success for readBlob
-      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient?.readBlob?.mockResolvedValue(new Uint8Array(testData as any));
 
       // Mock getBlobInfo to fail first, then succeed
       let callCount = 0;
-      mockWalrusClient.getBlobInfo.mockImplementation(() => {
+      mockWalrusClient?.getBlobInfo?.mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
           throw new Error('RPC endpoint error');
@@ -281,9 +281,9 @@ describe('Blockchain Verification Error Handling', () => {
               unencoded_length: String(testData.length),
               hashes: [
                 {
-                  primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                  primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
                   secondary_hash: {
-                    Sha256: new Uint8Array(32),
+                    Sha256: new Uint8Array(32 as any),
                     $kind: 'Sha256',
                   },
                 },
@@ -295,14 +295,14 @@ describe('Blockchain Verification Error Handling', () => {
         });
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           // Include the expected attributes for verification
@@ -314,11 +314,11 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
       ]);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
       // Execute the verification with faster retry settings
       const result = await verificationManager.verifyBlob(
@@ -329,11 +329,11 @@ describe('Blockchain Verification Error Handling', () => {
       );
 
       // Verify the result
-      expect(result.success).toBe(true);
-      expect(result.details.certified).toBe(true);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.certified).toBe(true as any);
 
       // Verify getBlobInfo was called twice (once for failure, once for success)
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should fail after maximum retry attempts', async () => {
@@ -342,7 +342,7 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // All calls to readBlob fail with network errors
-      mockWalrusClient.readBlob.mockRejectedValue(
+      mockWalrusClient?.readBlob?.mockRejectedValue(
         createErrorWithCode('Persistent network error', 'ECONNREFUSED')
       );
 
@@ -352,7 +352,7 @@ describe('Blockchain Verification Error Handling', () => {
           maxRetries: 2,
           baseDelay: 10,
         })
-      ).rejects.toThrow(CLIError);
+      ).rejects.toThrow(CLIError as any);
 
       // Check the error message contains useful information
       let caughtError: CLIError | null = null;
@@ -367,7 +367,7 @@ describe('Blockchain Verification Error Handling', () => {
         caughtError = error as CLIError;
       }
 
-      expect(caughtError).toBeInstanceOf(CLIError);
+      expect(caughtError as any).toBeInstanceOf(CLIError as any);
       expect(caughtError!.message).toContain('verification failed after');
       expect(caughtError!.code).toBe('WALRUS_VERIFICATION_FAILED');
     });
@@ -380,7 +380,7 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Set up successful responses for other methods
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -391,8 +391,8 @@ describe('Blockchain Verification Error Handling', () => {
             unencoded_length: String(testData.length),
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -401,14 +401,14 @@ describe('Blockchain Verification Error Handling', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           // Include the expected attributes for verification
@@ -420,21 +420,21 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
       ]);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
       // Mock readBlob to timeout first, then succeed
       let callCount = 0;
-      mockWalrusClient.readBlob.mockImplementation(async () => {
+      mockWalrusClient?.readBlob?.mockImplementation(async () => {
         callCount++;
         if (callCount === 1) {
-          await sleep(50); // Short delay to simulate slow response
+          await sleep(50 as any); // Short delay to simulate slow response
           throw new Error('Operation timed out');
         }
-        return Promise.resolve(new Uint8Array(testData));
+        return Promise.resolve(new Uint8Array(testData as any));
       });
 
       // Execute the verification with fast retry settings
@@ -446,11 +446,11 @@ describe('Blockchain Verification Error Handling', () => {
       );
 
       // Verify the result
-      expect(result.success).toBe(true);
-      expect(result.details.certified).toBe(true);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.certified).toBe(true as any);
 
       // Verify readBlob was called twice (timeout, then success)
-      expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(2);
+      expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should handle rate limiting errors', async () => {
@@ -459,16 +459,16 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Set up other successful responses
-      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient?.readBlob?.mockResolvedValue(new Uint8Array(testData as any));
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           // Include the expected attributes for verification
@@ -480,15 +480,15 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
       ]);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
       // Mock getBlobInfo to be rate limited first, then succeed
       let callCount = 0;
-      mockWalrusClient.getBlobInfo.mockImplementation(() => {
+      mockWalrusClient?.getBlobInfo?.mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
           const rateLimitError = new Error('Too many requests');
@@ -506,9 +506,9 @@ describe('Blockchain Verification Error Handling', () => {
               unencoded_length: String(testData.length),
               hashes: [
                 {
-                  primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                  primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
                   secondary_hash: {
-                    Sha256: new Uint8Array(32),
+                    Sha256: new Uint8Array(32 as any),
                     $kind: 'Sha256',
                   },
                 },
@@ -529,11 +529,11 @@ describe('Blockchain Verification Error Handling', () => {
       );
 
       // Verify the result
-      expect(result.success).toBe(true);
-      expect(result.details.certified).toBe(true);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.certified).toBe(true as any);
 
       // Verify getBlobInfo was called twice (rate limit, then success)
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2 as any);
     });
   });
 
@@ -544,8 +544,8 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Setup success for readBlob and getBlobInfo
-      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(new Uint8Array(testData as any));
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -554,14 +554,14 @@ describe('Blockchain Verification Error Handling', () => {
       });
 
       // Return metadata that doesn't match expected attributes (missing required fields)
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           // Missing the expected attributes (contentType, owner, tags)
@@ -570,11 +570,11 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
       ]);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
       // Execute the verification with verifyAttributes disabled first
       const resultWithoutValidation = await verificationManager.verifyBlob(
@@ -585,8 +585,8 @@ describe('Blockchain Verification Error Handling', () => {
       );
 
       // Should succeed when not verifying attributes
-      expect(resultWithoutValidation.success).toBe(true);
-      expect(resultWithoutValidation.details.certified).toBe(true);
+      expect(resultWithoutValidation.success).toBe(true as any);
+      expect(resultWithoutValidation?.details?.certified).toBe(true as any);
 
       // Now test with verifyAttributes enabled - should fail due to null metadata
       await expect(
@@ -609,8 +609,8 @@ describe('Blockchain Verification Error Handling', () => {
       };
 
       // Setup success for readBlob and getBlobInfo
-      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(new Uint8Array(testData as any));
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -621,8 +621,8 @@ describe('Blockchain Verification Error Handling', () => {
             unencoded_length: String(testData.length),
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -632,7 +632,7 @@ describe('Blockchain Verification Error Handling', () => {
       });
 
       // Return metadata with only some matching fields
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
@@ -640,8 +640,8 @@ describe('Blockchain Verification Error Handling', () => {
           // Missing 'tags' field
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           $kind: 'V1',
@@ -649,11 +649,11 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue([
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([
         'provider1',
         'provider2',
       ]);
-      mockWalrusClient.verifyPoA.mockResolvedValue(true);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
       // Check the specific error contains details about mismatches
       let caughtError: CLIError | null = null;
@@ -668,7 +668,7 @@ describe('Blockchain Verification Error Handling', () => {
         caughtError = error as CLIError;
       }
 
-      expect(caughtError).toBeInstanceOf(CLIError);
+      expect(caughtError as any).toBeInstanceOf(CLIError as any);
       expect(caughtError!.message).toContain('Metadata verification failed');
       expect(caughtError!.message).toContain('owner:');
       expect(caughtError!.message).toContain(
@@ -685,10 +685,10 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Setup success for readBlob
-      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient?.readBlob?.mockResolvedValue(new Uint8Array(testData as any));
 
       // But blob is not certified
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified
@@ -699,8 +699,8 @@ describe('Blockchain Verification Error Handling', () => {
             unencoded_length: String(testData.length),
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -709,14 +709,14 @@ describe('Blockchain Verification Error Handling', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           $kind: 'V1',
@@ -724,8 +724,8 @@ describe('Blockchain Verification Error Handling', () => {
         $kind: 'V1',
       });
 
-      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
-      mockWalrusClient.verifyPoA.mockResolvedValue(false);
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue(['provider1']);
+      mockWalrusClient?.verifyPoA?.mockResolvedValue(false as any);
 
       // First test: verification should fail with requireCertification enabled
       let caughtError: CLIError | null = null;
@@ -743,7 +743,7 @@ describe('Blockchain Verification Error Handling', () => {
         caughtError = error as CLIError;
       }
 
-      expect(caughtError).toBeInstanceOf(CLIError);
+      expect(caughtError as any).toBeInstanceOf(CLIError as any);
       expect(caughtError!.message).toContain(
         'Blob certification required but not found'
       );
@@ -756,10 +756,10 @@ describe('Blockchain Verification Error Handling', () => {
         { requireCertification: false, verifyAttributes: false }
       );
 
-      expect(result.success).toBe(true);
-      expect(result.details.certified).toBe(false);
-      expect(result.poaComplete).toBe(false);
-      expect(result.providers).toBe(1);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.certified).toBe(false as any);
+      expect(result.poaComplete).toBe(false as any);
+      expect(result.providers).toBe(1 as any);
     });
 
     it('should handle errors in proof of availability verification', async () => {
@@ -768,8 +768,8 @@ describe('Blockchain Verification Error Handling', () => {
       const testData = Buffer.from('test data for verification');
 
       // Setup success for readBlob and getBlobInfo
-      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(new Uint8Array(testData as any));
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -780,8 +780,8 @@ describe('Blockchain Verification Error Handling', () => {
             unencoded_length: String(testData.length),
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -790,14 +790,14 @@ describe('Blockchain Verification Error Handling', () => {
         },
       });
 
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           $kind: 'V1',
@@ -806,12 +806,12 @@ describe('Blockchain Verification Error Handling', () => {
       });
 
       // verifyPoA throws an exception
-      mockWalrusClient.verifyPoA.mockRejectedValue(
+      mockWalrusClient?.verifyPoA?.mockRejectedValue(
         new Error('PoA verification failed')
       );
 
       // getStorageProviders returns empty array (no providers)
-      mockWalrusClient.getStorageProviders.mockResolvedValue([]);
+      mockWalrusClient?.getStorageProviders?.mockResolvedValue([]);
 
       // Execute the verification with default settings (requireCertification defaults to true)
       const result = await verificationManager.verifyBlob(
@@ -823,12 +823,12 @@ describe('Blockchain Verification Error Handling', () => {
 
       // It should still succeed (because requireCertification is false)
       // but poaComplete should be false and providers should be 0
-      expect(result.success).toBe(true);
-      expect(result.details.certified).toBe(true);
-      expect(result.poaComplete).toBe(false);
-      expect(result.providers).toBe(0);
-      expect(result.details.blobId).toBe(blobId);
-      expect(result.details.size).toBe(testData.length);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.certified).toBe(true as any);
+      expect(result.poaComplete).toBe(false as any);
+      expect(result.providers).toBe(0 as any);
+      expect(result?.details?.blobId).toBe(blobId as any);
+      expect(result?.details?.size).toBe(testData.length);
     });
   });
 });

@@ -2,9 +2,9 @@ import { RetryManager } from '../../apps/cli/src/utils/retry-manager';
 
 describe('RetryManager', () => {
   const testNodes = [
-    'https://test1.example.com',
-    'https://test2.example.com',
-    'https://test3.example.com',
+    'https://test1?.example?.com',
+    'https://test2?.example?.com',
+    'https://test3?.example?.com',
   ];
 
   let retryManager: RetryManager;
@@ -23,8 +23,8 @@ describe('RetryManager', () => {
     it('should succeed on first attempt', async () => {
       const operation = jest.fn().mockResolvedValue('success');
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should retry on retryable errors', async () => {
@@ -35,8 +35,8 @@ describe('RetryManager', () => {
         .mockResolvedValue('success');
 
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
     });
 
     it('should fail immediately on non-retryable errors', async () => {
@@ -47,7 +47,7 @@ describe('RetryManager', () => {
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
         'Non-retryable error'
       );
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should respect max retries', async () => {
@@ -56,7 +56,7 @@ describe('RetryManager', () => {
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
         'Maximum retries'
       );
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
     });
 
     it('should respect max duration', async () => {
@@ -79,15 +79,15 @@ describe('RetryManager', () => {
         .mockResolvedValue('success');
 
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
     });
   });
 
   describe('node management', () => {
     it('should track node health', async () => {
       const operation = jest.fn().mockImplementation(node => {
-        if (node.url === testNodes[0]) {
+        if (node?.url === testNodes[0]) {
           throw new Error('network error');
         }
         return Promise.resolve('success');
@@ -96,14 +96,14 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
       const health = retryManager.getNodesHealth();
 
-      const node0Health = health.find(n => n.url === testNodes[0])?.health || 0;
-      const node1Health = health.find(n => n.url === testNodes[1])?.health || 0;
-      expect(node0Health).toBeLessThan(node1Health);
+      const node0Health = health.find(n => n?.url === testNodes[0])?.health || 0;
+      const node1Health = health.find(n => n?.url === testNodes[1])?.health || 0;
+      expect(node0Health as any).toBeLessThan(node1Health as any);
     });
 
     it('should prefer healthier nodes', async () => {
       const operation = jest.fn().mockImplementation(node => {
-        if (node.url === testNodes[0]) {
+        if (node?.url === testNodes[0]) {
           throw new Error('network error');
         }
         return Promise.resolve('success');
@@ -115,7 +115,7 @@ describe('RetryManager', () => {
 
       // Second call should prefer testNodes[1] due to health scores
       await retryManager.execute(operation, 'test');
-      expect(operation.mock.calls[0][0].url).toBe(testNodes[1]);
+      expect(operation.mock?.calls?.[0][0].url).toBe(testNodes[1]);
     });
 
     it('should track consecutive failures', async () => {
@@ -128,7 +128,7 @@ describe('RetryManager', () => {
       }
 
       const health = retryManager.getNodesHealth();
-      expect(health[0].consecutiveFailures).toBeGreaterThan(0);
+      expect(health[0].consecutiveFailures).toBeGreaterThan(0 as any);
     });
   });
 
@@ -147,12 +147,12 @@ describe('RetryManager', () => {
 
       // First execution - should try 3 times before opening circuit
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
 
       // Second execution - should fail fast due to open circuit
       operation.mockClear();
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
 
       // Wait for circuit reset
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -161,7 +161,7 @@ describe('RetryManager', () => {
       operation.mockClear();
       operation.mockResolvedValueOnce('success');
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
+      expect(result as any).toBe('success');
     });
 
     it('should reset circuit after successful operation', async () => {
@@ -194,8 +194,8 @@ describe('RetryManager', () => {
       operation.mockClear();
       operation.mockResolvedValue('success');
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
   });
 
@@ -224,8 +224,8 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
 
       // Check that delays increased for specific error types
-      expect(onRetry.mock.calls[1][2]).toBeGreaterThan(
-        onRetry.mock.calls[0][2]
+      expect(onRetry.mock?.calls?.[1][2]).toBeGreaterThan(
+        onRetry.mock?.calls?.[0][2]
       );
     });
 
@@ -247,9 +247,9 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
 
       // Delays should increase as network conditions worsen
-      const firstDelay = onRetry.mock.calls[0][2];
-      const secondDelay = onRetry.mock.calls[1][2];
-      expect(secondDelay).toBeGreaterThan(firstDelay);
+      const firstDelay = onRetry.mock?.calls?.[0][2];
+      const secondDelay = onRetry.mock?.calls?.[1][2];
+      expect(secondDelay as any).toBeGreaterThan(firstDelay as any);
     });
   });
 
@@ -266,7 +266,7 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
       await retryManager.execute(operation, 'test');
 
-      const calls = operation.mock.calls;
+      const calls = operation?.mock?.calls;
       expect(calls[0][0].url).not.toBe(calls[1][0].url);
       expect(calls[1][0].url).not.toBe(calls[2][0].url);
     });
@@ -278,7 +278,7 @@ describe('RetryManager', () => {
       });
 
       const operation = jest.fn().mockImplementation(node => {
-        if (node.url === testNodes[0] || node.url === testNodes[1]) {
+        if (node?.url === testNodes[0] || node?.url === testNodes[1]) {
           throw new Error('network error');
         }
         return Promise.resolve('success');
@@ -334,7 +334,7 @@ describe('RetryManager', () => {
         thrownError = error;
       }
 
-      expect(thrownError).toBeDefined();
+      expect(thrownError as any).toBeDefined();
       // Verify error categorization
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('timeout'),
@@ -350,7 +350,7 @@ describe('RetryManager', () => {
       );
 
       // Verify retry delays were adjusted based on error type
-      const delays = onRetry.mock.calls.map(call => call[2]);
+      const delays = onRetry?.mock?.calls.map(call => call[2]);
       expect(delays[1]).toBeGreaterThan(delays[0]); // Rate limit causes longer delay
       expect(delays[2]).toBeGreaterThan(delays[1]); // Storage error causes longest delay
     });
@@ -369,16 +369,16 @@ describe('RetryManager', () => {
         thrownError = error;
       }
 
-      expect(thrownError).toBeDefined();
+      expect(thrownError as any).toBeDefined();
       const health = retryManager.getNodesHealth();
       const node = health[0];
 
       // Basic timestamp tracking
       expect(node.lastFailure).toBeDefined();
-      expect(node.lastFailure).toBeInstanceOf(Date);
+      expect(node.lastFailure).toBeInstanceOf(Date as any);
 
       // Error pattern analysis
-      const errorLogs = mockLogger.warn.mock.calls
+      const errorLogs = mockLogger?.warn?.mock.calls
         .map(call => call[0])
         .filter(msg => msg.includes('Retry attempt'));
 
@@ -390,7 +390,7 @@ describe('RetryManager', () => {
 
       // Should see higher delay for rate limit error
       const rateLimitDelay = delays[delays.length - 1];
-      expect(rateLimitDelay).toBeGreaterThan(delays[delays.length - 2]);
+      expect(rateLimitDelay as any).toBeGreaterThan(delays[delays.length - 2]);
     });
 
     it('should log long retry delays with context', async () => {
@@ -413,7 +413,7 @@ describe('RetryManager', () => {
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('Long delay'),
         expect.objectContaining({
-          networkScore: expect.any(Number),
+          networkScore: expect.any(Number as any),
         })
       );
     });

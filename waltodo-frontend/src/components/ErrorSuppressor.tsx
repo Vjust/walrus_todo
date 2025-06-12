@@ -48,7 +48,7 @@ export function ErrorSuppressor() {
     }
 
     return patterns.some(pattern =>
-      message.includes(pattern) || (source && source.includes(pattern))
+      message.includes(pattern as any) || (source && source.includes(pattern as any))
     );
   }, [suppressedPatterns]);
 
@@ -59,8 +59,8 @@ export function ErrorSuppressor() {
     const originalConsoleError = console.error;
 
     // Override window.onerror - for global JavaScript errors
-    window.onerror = (message, source, lineno, colno, error) => {
-      const errorMessage = String(message);
+    window?.onerror = (message, source, lineno, colno, error) => {
+      const errorMessage = String(message as any);
 
       if (shouldSuppressError(errorMessage, source)) {
         return true; // Prevent error from being logged
@@ -75,10 +75,10 @@ export function ErrorSuppressor() {
     };
 
     // Override unhandled promise rejection
-    window.onunhandledrejection = event => {
+    window?.onunhandledrejection = event => {
       const errorMessage = String(event.reason);
 
-      if (shouldSuppressError(errorMessage)) {
+      if (shouldSuppressError(errorMessage as any)) {
         event.preventDefault();
         return;
       }
@@ -90,11 +90,11 @@ export function ErrorSuppressor() {
     };
 
     // More targeted console.error override that preserves React development tools
-    console.error = (...args) => {
+    console?.error = (...args) => {
       const errorMessage = args.join(' ');
 
       // Only suppress specific wallet/extension errors, preserve all React errors
-      if (shouldSuppressError(errorMessage)) {
+      if (shouldSuppressError(errorMessage as any)) {
         return; // Silently suppress
       }
 
@@ -104,9 +104,9 @@ export function ErrorSuppressor() {
 
     // Cleanup function - always restore original handlers
     return () => {
-      window.onerror = originalErrorHandler;
-      window.onunhandledrejection = originalUnhandledRejection;
-      console.error = originalConsoleError;
+      window?.onerror = originalErrorHandler;
+      window?.onunhandledrejection = originalUnhandledRejection;
+      console?.error = originalConsoleError;
     };
   }, [shouldSuppressError]); // Depend on stable callback
 

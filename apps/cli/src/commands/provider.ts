@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { AIVerifierAdapter } from '../types/adapters/AIVerifierAdapter';
 import chalk = require('chalk');
 import { configService } from '../services/config-service';
@@ -48,17 +48,17 @@ export default class Provider extends BaseCommand {
     await super.init();
 
     // Initialize the verifier adapter
-    // const _config = await this.configService.getConfig();
+    // const _config = await this?.configService?.getConfig();
     // packageId and registryId would be used in real implementation
     // const packageId = config.packageId || '';
     // const registryId = config.registryId || '';
 
     // This would be properly initialized in a real implementation
-    this.verifierAdapter = {} as AIVerifierAdapter;
+    this?.verifierAdapter = {} as AIVerifierAdapter;
   }
 
   async run() {
-    const { args, flags } = await this.parse(Provider);
+    const { args, flags } = await this.parse(Provider as any);
 
     switch (args.action) {
       case 'list':
@@ -115,18 +115,18 @@ export default class Provider extends BaseCommand {
 
       const tableData = providers.map(p => ({
         name: p.name,
-        address: p.address.slice(0, 8) + '...',
-        verifications: p.verificationCount.toString(),
+        address: p?.address?.slice(0, 8) + '...',
+        verifications: p?.verificationCount?.toString(),
         status: p.isActive ? chalk.green('active') : chalk.red('inactive'),
       }));
 
-      this.log(this.formatTable(tableData));
+      this.log(this.formatTable(tableData as any));
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to list providers: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to list providers: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -177,7 +177,7 @@ export default class Provider extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to fetch provider information: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to fetch provider information: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -213,7 +213,7 @@ export default class Provider extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to register provider: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to register provider: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -223,7 +223,7 @@ export default class Provider extends BaseCommand {
   private formatTable(
     data: Record<string, string | number | boolean>[]
   ): string {
-    if (data.length === 0) return 'No data';
+    if (data?.length === 0) return 'No data';
 
     // Extract column names
     const columns = Object.keys(data[0]);
@@ -239,14 +239,14 @@ export default class Provider extends BaseCommand {
     }
 
     // Build header
-    let table = columns.map(col => col.padEnd(widths[col])).join(' | ');
-    table += '\n' + columns.map(col => '-'.repeat(widths[col])).join('-+-');
+    let table = columns.map(col => col.padEnd(widths[col] || 0)).join(' | ');
+    table += '\n' + columns.map(col => '-'.repeat(widths[col] || 0)).join('-+-');
 
     // Build rows
     for (const row of data) {
       table +=
         '\n' +
-        columns.map(col => String(row[col]).padEnd(widths[col])).join(' | ');
+        columns.map(col => String(row[col]).padEnd(widths[col] || 0)).join(' | ');
     }
 
     return table;

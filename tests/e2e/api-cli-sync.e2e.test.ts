@@ -14,14 +14,14 @@ describe('API-CLI Synchronization E2E Tests', () => {
 
   beforeAll(async () => {
     // Start API server
-    process.env.NODE_ENV = 'test';
-    process.env.API_KEY = apiKey;
-    process.env.ENABLE_AUTH = 'false';
-    process.env.ENABLE_WEBSOCKET = 'true';
-    process.env.PORT = String(serverPort);
+    process.env?.NODE_ENV = 'test';
+    process.env?.API_KEY = apiKey;
+    process.env?.ENABLE_AUTH = 'false';
+    process.env?.ENABLE_WEBSOCKET = 'true';
+    process.env?.PORT = String(serverPort as any);
 
     apiServer = new ApiServer();
-    await apiServer.start(serverPort);
+    await apiServer.start(serverPort as any);
 
     // Set up API client
     apiClient = axios.create({
@@ -46,7 +46,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
   });
 
   afterAll(async () => {
-    if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    if (wsClient && wsClient?.readyState === WebSocket.OPEN) {
       wsClient.close();
     }
     if (apiServer) {
@@ -64,12 +64,12 @@ describe('API-CLI Synchronization E2E Tests', () => {
         { encoding: 'utf8' }
       );
       
-      const cliTodo = JSON.parse(output);
+      const cliTodo = JSON.parse(output as any);
       
       // Immediately check via API
       const response = await apiClient.get(`/todos/${cliTodo.id}`);
       
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
       expect(response.data).toMatchObject({
         id: cliTodo.id,
         title: todoTitle,
@@ -95,11 +95,11 @@ describe('API-CLI Synchronization E2E Tests', () => {
         { encoding: 'utf8' }
       );
       
-      const cliTodos = JSON.parse(output);
-      const foundTodo = cliTodos.find((t: any) => t.id === apiTodo.id);
+      const cliTodos = JSON.parse(output as any);
+      const foundTodo = cliTodos.find((t: any) => t?.id === apiTodo.id);
       
-      expect(foundTodo).toBeDefined();
-      expect(foundTodo).toMatchObject({
+      expect(foundTodo as any).toBeDefined();
+      expect(foundTodo as any).toMatchObject({
         id: apiTodo.id,
         title: todoTitle,
         priority: 'medium',
@@ -122,9 +122,9 @@ describe('API-CLI Synchronization E2E Tests', () => {
               `node ${cliPath} add "Concurrent CLI ${i}" --json`,
               { encoding: 'utf8' }
             );
-            const todo = JSON.parse(output);
+            const todo = JSON.parse(output as any);
             todoIds.add(todo.id);
-            resolve(todo);
+            resolve(todo as any);
           })
         );
         
@@ -133,23 +133,23 @@ describe('API-CLI Synchronization E2E Tests', () => {
           apiClient.post('/todos', {
             title: `Concurrent API ${i}`,
           }).then(response => {
-            todoIds.add(response.data.id);
+            todoIds.add(response?.data?.id);
             return response.data;
           })
         );
       }
       
-      await Promise.all(promises);
+      await Promise.all(promises as any);
       
       // Verify all todos exist
       const listResponse = await apiClient.get('/todos', {
         params: { limit: 20 },
       });
       
-      const allTodos = listResponse.data.todos;
+      const allTodos = listResponse?.data?.todos;
       const createdTodos = allTodos.filter((t: any) => todoIds.has(t.id));
       
-      expect(createdTodos).toHaveLength(10);
+      expect(createdTodos as any).toHaveLength(10 as any);
     });
 
     test('Conflicting updates are handled gracefully', async () => {
@@ -159,7 +159,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
         priority: 'low',
       });
       
-      const todoId = createResponse.data.id;
+      const todoId = createResponse?.data?.id;
       
       // Simultaneously update via CLI and API
       const cliUpdatePromise = new Promise((resolve) => {
@@ -168,7 +168,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
             `node ${cliPath} update ${todoId} --priority high`,
             { encoding: 'utf8' }
           );
-          resolve(output);
+          resolve(output as any);
         }, 0);
       });
       
@@ -184,7 +184,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
       
       // One of the updates should have won
       expect(finalResponse.data).toBeDefined();
-      expect(['high', 'medium']).toContain(finalResponse.data.priority);
+      expect(['high', 'medium']).toContain(finalResponse?.data?.priority);
     });
   });
 
@@ -199,12 +199,12 @@ describe('API-CLI Synchronization E2E Tests', () => {
         }, 5000);
         
         wsClient.once('message', (data) => {
-          clearTimeout(timeout);
+          clearTimeout(timeout as any);
           try {
             const event = JSON.parse(data.toString());
-            resolve(event);
+            resolve(event as any);
           } catch (error) {
-            reject(error);
+            reject(error as any);
           }
         });
       });
@@ -214,7 +214,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
       
       // Wait for and verify the event
       const event = await eventPromise;
-      expect(event).toMatchObject({
+      expect(event as any).toMatchObject({
         type: 'todo-created',
         data: {
           title: todoTitle,
@@ -229,8 +229,8 @@ describe('API-CLI Synchronization E2E Tests', () => {
       // Set up event collector
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
-        if (event.type === 'todo-created' && event.data.title.startsWith('Batch Sync')) {
-          receivedEvents.push(event);
+        if (event?.type === 'todo-created' && event?.data?.title.startsWith('Batch Sync')) {
+          receivedEvents.push(event as any);
         }
       });
       
@@ -244,13 +244,13 @@ describe('API-CLI Synchronization E2E Tests', () => {
         ],
       });
       
-      expect(batchResponse.status).toBe(200);
+      expect(batchResponse.status).toBe(200 as any);
       
       // Wait for events
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Should receive event for each created todo
-      expect(receivedEvents).toHaveLength(3);
+      expect(receivedEvents as any).toHaveLength(3 as any);
       
       // Clean up event listener
       wsClient.removeAllListeners('message');
@@ -273,7 +273,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
         );
       }
       
-      await Promise.all(createPromises);
+      await Promise.all(createPromises as any);
     });
 
     test('CLI and API return same results for paginated queries', async () => {
@@ -293,15 +293,15 @@ describe('API-CLI Synchronization E2E Tests', () => {
         { encoding: 'utf8' }
       );
       
-      const cliTodos = JSON.parse(cliOutput);
-      const apiTodos = apiResponse.data.todos;
+      const cliTodos = JSON.parse(cliOutput as any);
+      const apiTodos = apiResponse?.data?.todos;
       
       // Should have same number of results
       expect(cliTodos.length).toBe(apiTodos.length);
       
       // First few should match (allowing for timing differences)
-      expect(cliTodos.length).toBeGreaterThan(0);
-      expect(apiTodos.length).toBeGreaterThan(0);
+      expect(cliTodos.length).toBeGreaterThan(0 as any);
+      expect(apiTodos.length).toBeGreaterThan(0 as any);
       expect(cliTodos[0].title).toBe(apiTodos[0].title);
     });
 
@@ -320,8 +320,8 @@ describe('API-CLI Synchronization E2E Tests', () => {
         { encoding: 'utf8' }
       );
       
-      const cliTodos = JSON.parse(cliOutput);
-      const apiTodos = apiResponse.data.todos;
+      const cliTodos = JSON.parse(cliOutput as any);
+      const apiTodos = apiResponse?.data?.todos;
       
       // Should return same filtered results
       expect(cliTodos.length).toBe(apiTodos.length);
@@ -341,15 +341,15 @@ describe('API-CLI Synchronization E2E Tests', () => {
         title: 'This should fail',
       });
       
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(404 as any);
       
       // CLI list should still work
       const output = execSync(`node ${cliPath} list --json`, {
         encoding: 'utf8',
       });
       
-      const todos = JSON.parse(output);
-      expect(Array.isArray(todos)).toBe(true);
+      const todos = JSON.parse(output as any);
+      expect(Array.isArray(todos as any)).toBe(true as any);
     });
 
     test('Failed CLI operations do not affect API state', () => {
@@ -364,11 +364,11 @@ describe('API-CLI Synchronization E2E Tests', () => {
         error = e as Error;
       }
       
-      expect(error).toBeTruthy();
+      expect(error as any).toBeTruthy();
       
       // API should still be responsive
       apiClient.get('/health').then(response => {
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(200 as any);
       });
     });
   });
@@ -387,7 +387,7 @@ describe('API-CLI Synchronization E2E Tests', () => {
                 `node ${cliPath} add "Rapid Sync ${i}" --json`,
                 { encoding: 'utf8' }
               );
-              resolve(JSON.parse(output));
+              resolve(JSON.parse(output as any));
             })
           );
         } else {
@@ -400,21 +400,21 @@ describe('API-CLI Synchronization E2E Tests', () => {
         }
       }
       
-      const results = await Promise.all(operations);
+      const results = await Promise.all(operations as any);
       
       // All operations should succeed
-      expect(results).toHaveLength(operationCount);
+      expect(results as any).toHaveLength(operationCount as any);
       
       // Final count should match
       const listResponse = await apiClient.get('/todos', {
         params: { limit: 50 },
       });
       
-      const rapidSyncTodos = listResponse.data.todos.filter((t: any) =>
-        t.title.startsWith('Rapid Sync')
+      const rapidSyncTodos = listResponse?.data?.todos.filter((t: any) =>
+        t?.title?.startsWith('Rapid Sync')
       );
       
-      expect(rapidSyncTodos.length).toBeGreaterThanOrEqual(operationCount);
+      expect(rapidSyncTodos.length).toBeGreaterThanOrEqual(operationCount as any);
     });
   });
 });

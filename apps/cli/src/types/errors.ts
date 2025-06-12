@@ -25,7 +25,7 @@ export class WalrusError extends Error {
       cause,
     } = options;
 
-    super(message);
+    super(message as any);
     if (cause) {
       Object.defineProperty(this, 'cause', {
         value: cause,
@@ -33,11 +33,11 @@ export class WalrusError extends Error {
       });
     }
 
-    this.name = this.constructor.name;
-    this.code = code;
-    this.publicMessage = publicMessage;
-    this.timestamp = new Date().toISOString();
-    this.shouldRetry = shouldRetry;
+    this?.name = this?.constructor?.name;
+    this?.code = code;
+    this?.publicMessage = publicMessage;
+    this?.timestamp = new Date().toISOString();
+    this?.shouldRetry = shouldRetry;
 
     // Ensure proper stack trace
     Error.captureStackTrace(this, this.constructor);
@@ -68,7 +68,7 @@ export class WalrusError extends Error {
       shouldRetry: this.shouldRetry,
       stack: this.stack,
       cause:
-        this.cause instanceof Error ? this.cause.message : String(this.cause),
+        this.cause instanceof Error ? this?.cause?.message : String(this.cause),
     };
   }
 }
@@ -179,7 +179,7 @@ export class ValidationError extends WalrusError {
       ...rest,
     });
 
-    this.recoverable = recoverable;
+    this?.recoverable = recoverable;
 
     // Hide validation details from stack trace
     Object.defineProperties(this, {
@@ -307,10 +307,10 @@ export class TransactionError extends WalrusError {
       ...rest,
     });
 
-    this.recoverable = recoverable;
+    this?.recoverable = recoverable;
 
     if (transactionId) {
-      this.transactionId = transactionId;
+      this?.transactionId = transactionId;
     }
   }
 }
@@ -344,8 +344,8 @@ export class CLIError extends WalrusError {
       ...rest,
     });
 
-    this.recoverable = recoverable;
-    this.command = command;
+    this?.recoverable = recoverable;
+    this?.command = command;
   }
 }
 
@@ -365,7 +365,7 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return String(error);
+  return String(error as any);
 }
 
 /**
@@ -375,5 +375,5 @@ export function toErrorWithMessage(error: unknown): { message: string } {
   if (error instanceof Error) {
     return error;
   }
-  return { message: String(error) };
+  return { message: String(error as any) };
 }

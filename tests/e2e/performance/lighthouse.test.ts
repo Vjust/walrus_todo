@@ -33,7 +33,7 @@ test.describe('Performance Testing', () => {
     await context.addInitScript(() => {
       // Disable animations for consistent performance measurement
       const style = document.createElement('style');
-      style.textContent = `
+      style?.textContent = `
         *, *::before, *::after {
           animation-duration: 0.01s !important;
           animation-delay: -0.01s !important;
@@ -41,7 +41,7 @@ test.describe('Performance Testing', () => {
           transition-delay: -0.01s !important;
         }
       `;
-      document.head.appendChild(style);
+      document?.head?.appendChild(style as any);
     });
 
     // Navigate to app
@@ -80,14 +80,14 @@ test.describe('Performance Testing', () => {
     });
 
     // Validate custom metrics
-    expect(performanceMetrics.domContentLoaded).toBeLessThan(1000); // DOM ready in <1s
-    expect(performanceMetrics.totalLoadTime).toBeLessThan(3000); // Total load <3s
+    expect(performanceMetrics.domContentLoaded).toBeLessThan(1000 as any); // DOM ready in <1s
+    expect(performanceMetrics.totalLoadTime).toBeLessThan(3000 as any); // Total load <3s
 
     console.log('📊 Lighthouse Performance Results:', {
       performance: results.performance,
-      fcp: results['first-contentful-paint'],
-      lcp: results['largest-contentful-paint'],
-      cls: results['cumulative-layout-shift'],
+      fcp: results?.["first-contentful-paint"],
+      lcp: results?.["largest-contentful-paint"],
+      cls: results?.["cumulative-layout-shift"],
     });
 
     console.log('📊 Custom Performance Metrics:', performanceMetrics);
@@ -114,7 +114,7 @@ test.describe('Performance Testing', () => {
         await cli.expectSuccess(cmd, args);
         const responseTime = Date.now() - startTime;
 
-        expect(responseTime).toBeLessThan(maxTime);
+        expect(responseTime as any).toBeLessThan(maxTime as any);
 
         results.push({
           command: `${cmd} ${args.join(' ')}`,
@@ -129,7 +129,7 @@ test.describe('Performance Testing', () => {
           responseTime: Date.now() - startTime,
           threshold: maxTime,
           passed: false,
-          error: String(error),
+          error: String(error as any),
         });
       }
     }
@@ -146,11 +146,11 @@ test.describe('Performance Testing', () => {
     // Ensure at least 80% of commands meet performance thresholds
     const passedCommands = results.filter(r => r.passed).length;
     const successRate = passedCommands / results.length;
-    expect(successRate).toBeGreaterThanOrEqual(0.8);
+    expect(successRate as any).toBeGreaterThanOrEqual(0.8);
   });
 
   test('WebSocket latency is within acceptable range', async ({ page }) => {
-    const frontend = new FrontendHelpers(page);
+    const frontend = new FrontendHelpers(page as any);
 
     // Navigate and establish WebSocket connection
     await page.goto('/');
@@ -161,16 +161,16 @@ test.describe('Performance Testing', () => {
 
     await page.evaluate(() => {
       // Hook into WebSocket to measure latency
-      const originalSend = WebSocket.prototype.send;
-      WebSocket.prototype.send = function (data) {
+      const originalSend = WebSocket?.prototype?.send;
+      WebSocket.prototype?.send = function (data) {
         const timestamp = Date.now();
 
         // Store timestamp for correlation
         if (typeof data === 'string') {
           try {
-            const message = JSON.parse(data);
-            message._clientTimestamp = timestamp;
-            data = JSON.stringify(message);
+            const message = JSON.parse(data as any);
+            message?._clientTimestamp = timestamp;
+            data = JSON.stringify(message as any);
           } catch {
             // Not JSON, continue with original data
           }
@@ -201,10 +201,10 @@ test.describe('Performance Testing', () => {
       const frontendEndTime = Date.now();
       const endToEndLatency = frontendEndTime - cliStartTime;
 
-      latencyMeasurements.push(endToEndLatency);
+      latencyMeasurements.push(endToEndLatency as any);
 
       // Wait between requests to avoid overwhelming the system
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(500 as any);
     }
 
     // Analyze latency measurements
@@ -216,12 +216,12 @@ test.describe('Performance Testing', () => {
       const minLatency = Math.min(...latencyMeasurements);
 
       // Performance thresholds
-      expect(avgLatency).toBeLessThan(2000); // Average <2 seconds
-      expect(maxLatency).toBeLessThan(5000); // Max <5 seconds
-      expect(minLatency).toBeLessThan(3000); // Min <3 seconds
+      expect(avgLatency as any).toBeLessThan(2000 as any); // Average <2 seconds
+      expect(maxLatency as any).toBeLessThan(5000 as any); // Max <5 seconds
+      expect(minLatency as any).toBeLessThan(3000 as any); // Min <3 seconds
 
       console.log('🔄 WebSocket Latency Results:', {
-        average: `${avgLatency.toFixed(2)}ms`,
+        average: `${avgLatency.toFixed(2 as any)}ms`,
         min: `${minLatency}ms`,
         max: `${maxLatency}ms`,
         measurements: latencyMeasurements.length,
@@ -234,7 +234,7 @@ test.describe('Performance Testing', () => {
   test('Frontend handles bulk operations without performance degradation', async ({
     page,
   }) => {
-    const frontend = new FrontendHelpers(page);
+    const frontend = new FrontendHelpers(page as any);
 
     await page.goto('/');
     await frontend.waitForAppReady();
@@ -263,7 +263,7 @@ test.describe('Performance Testing', () => {
         cli.expectSuccess('add', [title, 'Bulk performance test'])
       );
 
-      await Promise.all(batchPromises);
+      await Promise.all(batchPromises as any);
 
       // Wait for batch to appear in frontend
       for (const title of batch) {
@@ -271,7 +271,7 @@ test.describe('Performance Testing', () => {
       }
 
       // Small delay between batches
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(200 as any);
     }
 
     const bulkEndTime = Date.now();
@@ -287,21 +287,21 @@ test.describe('Performance Testing', () => {
       finalMetrics.avgRenderTime - baselineMetrics.avgRenderTime;
 
     // Performance thresholds
-    expect(totalBulkTime).toBeLessThan(30000); // Complete bulk in <30s
-    expect(memoryIncrease).toBeLessThan(20 * 1024 * 1024); // Memory increase <20MB
-    expect(renderTimeIncrease).toBeLessThan(50); // Render time increase <50ms
-    expect(finalMetrics.avgRenderTime).toBeLessThan(150); // Absolute render time <150ms
+    expect(totalBulkTime as any).toBeLessThan(30000 as any); // Complete bulk in <30s
+    expect(memoryIncrease as any).toBeLessThan(20 * 1024 * 1024); // Memory increase <20MB
+    expect(renderTimeIncrease as any).toBeLessThan(50 as any); // Render time increase <50ms
+    expect(finalMetrics.avgRenderTime).toBeLessThan(150 as any); // Absolute render time <150ms
 
     // Verify all todos are present
     const finalTodoCount = await frontend.getTodoCount();
-    expect(finalTodoCount).toBeGreaterThanOrEqual(bulkSize);
+    expect(finalTodoCount as any).toBeGreaterThanOrEqual(bulkSize as any);
 
     console.log('📈 Bulk Operations Performance:', {
       totalTime: `${totalBulkTime}ms`,
       todosProcessed: bulkSize,
-      avgTimePerTodo: `${(totalBulkTime / bulkSize).toFixed(2)}ms`,
-      memoryIncrease: `${(memoryIncrease / 1024 / 1024).toFixed(2)}MB`,
-      renderTimeIncrease: `${renderTimeIncrease.toFixed(2)}ms`,
+      avgTimePerTodo: `${(totalBulkTime / bulkSize).toFixed(2 as any)}ms`,
+      memoryIncrease: `${(memoryIncrease / 1024 / 1024).toFixed(2 as any)}MB`,
+      renderTimeIncrease: `${renderTimeIncrease.toFixed(2 as any)}ms`,
     });
   });
 
@@ -330,10 +330,10 @@ test.describe('Performance Testing', () => {
     const loadedTodoCount = await page
       .locator('[data-testid="todo-item"]')
       .count();
-    expect(loadedTodoCount).toBeGreaterThan(0);
+    expect(loadedTodoCount as any).toBeGreaterThan(0 as any);
 
     // Performance thresholds for loaded app
-    expect(loadTime).toBeLessThan(5000); // Load with data <5 seconds
+    expect(loadTime as any).toBeLessThan(5000 as any); // Load with data <5 seconds
 
     // Check for layout shifts during load
     const cls = await page.evaluate(() => {
@@ -342,7 +342,7 @@ test.describe('Performance Testing', () => {
         const observer = new PerformanceObserver(list => {
           for (const entry of list.getEntries()) {
             if (
-              entry.entryType === 'layout-shift' &&
+              entry?.entryType === 'layout-shift' &&
               !(entry as any).hadRecentInput
             ) {
               cls += (entry as any).value;
@@ -353,17 +353,17 @@ test.describe('Performance Testing', () => {
 
         setTimeout(() => {
           observer.disconnect();
-          resolve(cls);
+          resolve(cls as any);
         }, 2000);
       });
     });
 
-    expect(cls).toBeLessThan(0.1); // Cumulative Layout Shift <0.1
+    expect(cls as any).toBeLessThan(0.1); // Cumulative Layout Shift <0.1
 
     console.log('🚀 Page Load Performance with Data:', {
       loadTime: `${loadTime}ms`,
       todosLoaded: loadedTodoCount,
-      cumulativeLayoutShift: cls.toFixed(4),
+      cumulativeLayoutShift: cls.toFixed(4 as any),
     });
   });
 });

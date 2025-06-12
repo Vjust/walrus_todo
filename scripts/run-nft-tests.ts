@@ -32,20 +32,20 @@ class NFTTestRunner {
   private testSuites: TestSuite[] = [
     {
       name: 'Core NFT Logic Tests',
-      file: 'tests/comprehensive-nft-workflow.test.ts',
+      file: 'tests/comprehensive-nft-workflow?.test?.ts',
       type: 'unit',
       timeout: 30000
     },
     {
       name: 'UI Automation Tests',
-      file: 'tests/puppeteer-nft-ui.test.ts',
+      file: 'tests/puppeteer-nft-ui?.test?.ts',
       type: 'e2e',
       timeout: 60000,
       env: { HEADLESS: 'true' }
     },
     {
       name: 'Blockchain Integration Tests',
-      file: 'tests/playwright-blockchain-interactions.test.ts',
+      file: 'tests/playwright-blockchain-interactions?.test?.ts',
       type: 'integration',
       timeout: 90000,
       env: { NETWORK: 'testnet' }
@@ -56,7 +56,7 @@ class NFTTestRunner {
   private startTime: number = 0;
 
   constructor() {
-    this.startTime = Date.now();
+    this?.startTime = Date.now();
   }
 
   async run(): Promise<void> {
@@ -67,7 +67,7 @@ class NFTTestRunner {
 
     // Run tests sequentially to avoid conflicts
     for (const suite of this.testSuites) {
-      await this.runTestSuite(suite);
+      await this.runTestSuite(suite as any);
     }
 
     // Generate report
@@ -81,11 +81,11 @@ class NFTTestRunner {
     for (const suite of this.testSuites) {
       const filePath = path.join(process.cwd(), suite.file);
       try {
-        await fs.access(filePath);
+        await fs.access(filePath as any);
         console.log(`✅ Found test file: ${suite.file}`);
       } catch {
         console.error(`❌ Missing test file: ${suite.file}`);
-        process.exit(1);
+        process.exit(1 as any);
       }
     }
 
@@ -93,7 +93,7 @@ class NFTTestRunner {
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     try {
       const packageJsonContent = await fs.readFile(packageJsonPath, { encoding: 'utf-8' });
-      const packageJson = JSON.parse(packageJsonContent) as { devDependencies?: Record<string, string>; dependencies?: Record<string, string> };
+      const packageJson = JSON.parse(packageJsonContent as any) as { devDependencies?: Record<string, string>; dependencies?: Record<string, string> };
       const requiredDeps = ['jest', '@playwright/test', 'puppeteer'];
       
       for (const dep of requiredDeps) {
@@ -105,7 +105,7 @@ class NFTTestRunner {
       }
     } catch (error) {
       console.error('❌ Could not read package.json');
-      process.exit(1);
+      process.exit(1 as any);
     }
 
     // Check build status
@@ -125,7 +125,7 @@ class NFTTestRunner {
     const startTime = Date.now();
 
     try {
-      const output = await this.runJestTest(suite);
+      const output = await this.runJestTest(suite as any);
       const duration = Date.now() - startTime;
 
       // Parse Jest output for results
@@ -134,12 +134,12 @@ class NFTTestRunner {
         status: output.includes('FAIL') ? 'failed' : 'passed',
         duration,
         output,
-        coverage: this.extractCoverage(output)
+        coverage: this.extractCoverage(output as any)
       };
 
-      this.results.push(result);
+      this?.results?.push(result as any);
 
-      if (result.status === 'passed') {
+      if (result?.status === 'passed') {
         console.log(`✅ ${suite.name} passed (${duration}ms)`);
       } else {
         console.log(`❌ ${suite.name} failed (${duration}ms)`);
@@ -151,10 +151,10 @@ class NFTTestRunner {
         name: suite.name,
         status: 'failed',
         duration,
-        output: error instanceof Error ? error.message : String(error)
+        output: error instanceof Error ? error.message : String(error as any)
       };
 
-      this.results.push(result);
+      this?.results?.push(result as any);
       console.log(`❌ ${suite.name} failed with error (${duration}ms)`);
     }
 
@@ -170,7 +170,7 @@ class NFTTestRunner {
     ];
 
     // Add coverage for unit tests
-    if (suite.type === 'unit') {
+    if (suite?.type === 'unit') {
       args.push('--coverage');
     }
 
@@ -198,31 +198,31 @@ class NFTTestRunner {
       });
 
       if (child.stdout) {
-        child.stdout.on('data', (data) => {
+        child?.stdout?.on('data', (data) => {
           const text = data.toString();
           output += text;
-          process.stdout.write(text); // Real-time output
+          process?.stdout?.write(text as any); // Real-time output
         });
       }
 
       if (child.stderr) {
-        child.stderr.on('data', (data) => {
+        child?.stderr?.on('data', (data) => {
           const text = data.toString();
           output += text;
-          process.stderr.write(text);
+          process?.stderr?.write(text as any);
         });
       }
 
       child.on('close', (code) => {
         if (code === 0) {
-          resolve(output);
+          resolve(output as any);
         } else {
           reject(new Error(`Command failed with exit code ${code}\nOutput: ${output}`));
         }
       });
 
       child.on('error', (error) => {
-        reject(error);
+        reject(error as any);
       });
     });
   }
@@ -234,30 +234,30 @@ class NFTTestRunner {
 
   private async generateReport(): Promise<void> {
     const totalDuration = Date.now() - this.startTime;
-    const passedTests = this.results.filter(r => r.status === 'passed').length;
-    const failedTests = this.results.filter(r => r.status === 'failed').length;
-    const totalTests = this.results.length;
+    const passedTests = this?.results?.filter(r => r?.status === 'passed').length;
+    const failedTests = this?.results?.filter(r => r?.status === 'failed').length;
+    const totalTests = this?.results?.length;
 
-    console.log('\n' + '='.repeat(60));
+    console.log('\n' + '='.repeat(60 as any));
     console.log('📊 NFT Workflow Test Report');
-    console.log('='.repeat(60));
-    console.log(`Total Duration: ${(totalDuration / 1000).toFixed(2)}s`);
+    console.log('='.repeat(60 as any));
+    console.log(`Total Duration: ${(totalDuration / 1000).toFixed(2 as any)}s`);
     console.log(`Tests Run: ${totalTests}`);
     console.log(`Passed: ${passedTests}`);
     console.log(`Failed: ${failedTests}`);
-    console.log(`Success Rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+    console.log(`Success Rate: ${((passedTests / totalTests) * 100).toFixed(1 as any)}%`);
 
-    if (this.results.some(r => r.coverage)) {
+    if (this?.results?.some(r => r.coverage)) {
       const avgCoverage = this.results
         .filter(r => r.coverage)
         .reduce((sum, r) => sum + (r.coverage || 0), 0) / 
-        this.results.filter(r => r.coverage).length;
-      console.log(`Average Coverage: ${avgCoverage.toFixed(1)}%`);
+        this?.results?.filter(r => r.coverage).length;
+      console.log(`Average Coverage: ${avgCoverage.toFixed(1 as any)}%`);
     }
 
     console.log('\n📝 Detailed Results:');
     for (const result of this.results) {
-      const status = result.status === 'passed' ? '✅' : '❌';
+      const status = result?.status === 'passed' ? '✅' : '❌';
       const duration = `${result.duration}ms`;
       const coverage = result.coverage ? ` (${result.coverage}% coverage)` : '';
       console.log(`${status} ${result.name} - ${duration}${coverage}`);
@@ -277,24 +277,24 @@ class NFTTestRunner {
     };
 
     const reportPath = path.join(process.cwd(), 'test-reports', 'nft-workflow-report.json');
-    await fs.mkdir(path.dirname(reportPath), { recursive: true });
+    await fs.mkdir(path.dirname(reportPath as any), { recursive: true });
     await fs.writeFile(reportPath, JSON.stringify(reportData, null, 2));
     console.log(`\n📄 Detailed report saved to: ${reportPath}`);
 
     // Exit with appropriate code
     if (failedTests > 0) {
       console.log('\n❌ Some tests failed. Please check the logs above for details.');
-      process.exit(1);
+      process.exit(1 as any);
     } else {
       console.log('\n✅ All tests passed successfully!');
-      process.exit(0);
+      process.exit(0 as any);
     }
   }
 }
 
 // CLI Interface
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+  const args = process?.argv?.slice(2 as any);
   
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
@@ -318,7 +318,7 @@ Examples:
   npm run test:nft-workflow --suite core
   npm run test:nft-workflow --coverage
 `);
-    process.exit(0);
+    process.exit(0 as any);
   }
 
   const runner = new NFTTestRunner();
@@ -328,9 +328,9 @@ Examples:
   if (suiteIndex !== -1 && args[suiteIndex + 1]) {
     const suiteName = args[suiteIndex + 1];
     const suiteMap: Record<string, string> = {
-      'core': 'comprehensive-nft-workflow.test.ts',
-      'ui': 'puppeteer-nft-ui.test.ts',
-      'blockchain': 'playwright-blockchain-interactions.test.ts'
+      'core': 'comprehensive-nft-workflow?.test?.ts',
+      'ui': 'puppeteer-nft-ui?.test?.ts',
+      'blockchain': 'playwright-blockchain-interactions?.test?.ts'
     };
 
     const suiteFile = suiteMap[suiteName as keyof typeof suiteMap];
@@ -338,12 +338,12 @@ Examples:
       console.log(`Running specific suite: ${suiteName}\n`);
       // Filter test suites to only the requested one
       (runner as any).testSuites = (runner as any).testSuites.filter(
-        (suite: TestSuite) => suite.file.includes(suiteFile)
+        (suite: TestSuite) => suite?.file?.includes(suiteFile as any)
       );
     } else {
       console.error(`Unknown test suite: ${suiteName}`);
       console.error('Available suites: core, ui, blockchain');
-      process.exit(1);
+      process.exit(1 as any);
     }
   }
 
@@ -351,23 +351,23 @@ Examples:
     await runner.run();
   } catch (error) {
     console.error('❌ Test runner failed:', error);
-    process.exit(1);
+    process.exit(1 as any);
   }
 }
 
 // Handle process signals
 process.on('SIGINT', () => {
   console.log('\n⚠️  Test execution interrupted by user');
-  process.exit(1);
+  process.exit(1 as any);
 });
 
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught exception:', error);
-  process.exit(1);
+  process.exit(1 as any);
 });
 
 // Run if called directly
-if (require.main === module) {
+if (require?.main === module) {
   main().catch(console.error);
 }
 

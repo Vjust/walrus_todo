@@ -35,8 +35,8 @@ export function WalrusHealthCheck() {
     error: null,
     consecutiveFailures: 0,
   });
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false as any);
+  const [isChecking, setIsChecking] = useState(false as any);
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
   const checkIntervalRef = useRef<NodeJS.Timeout>();
   const testBlobIdRef = useRef<string | null>(null);
@@ -46,7 +46,7 @@ export function WalrusHealthCheck() {
   }, []);
 
   const performHealthCheck = useCallback(async () => {
-    setIsChecking(true);
+    setIsChecking(true as any);
     const startTime = Date.now();
     const newMetrics: HealthMetrics = {
       ...metrics,
@@ -57,7 +57,7 @@ export function WalrusHealthCheck() {
       // Test 1: Basic connection test with latency measurement
       const connectionResult = await testConnection();
       const latency = Date.now() - startTime;
-      newMetrics.latency = latency;
+      newMetrics?.latency = latency;
 
       if (!connectionResult.success) {
         throw new Error(connectionResult.error || 'Connection test failed');
@@ -70,37 +70,37 @@ export function WalrusHealthCheck() {
       });
 
       if (uploadResult.success && uploadResult.blobId) {
-        newMetrics.uploadTestPassed = true;
-        testBlobIdRef.current = uploadResult.blobId;
+        newMetrics?.uploadTestPassed = true;
+        testBlobIdRef?.current = uploadResult.blobId;
 
         // Test 3: Retrieval test
         const retrieveResult = await retrieveBlob(uploadResult.blobId);
-        newMetrics.retrievalTestPassed = retrieveResult.success;
+        newMetrics?.retrievalTestPassed = retrieveResult.success;
 
         if (!retrieveResult.success) {
           throw new Error('Retrieval test failed');
         }
       } else {
-        newMetrics.uploadTestPassed = false;
+        newMetrics?.uploadTestPassed = false;
         throw new Error('Upload test failed');
       }
 
       // Test 4: Check storage availability (mock check - in real implementation, check quota)
-      newMetrics.storageAvailable = true;
+      newMetrics?.storageAvailable = true;
 
       // Determine overall health status
       if (latency < 500 && newMetrics.uploadTestPassed && newMetrics.retrievalTestPassed) {
-        newMetrics.status = 'healthy';
-        newMetrics.consecutiveFailures = 0;
+        newMetrics?.status = 'healthy';
+        newMetrics?.consecutiveFailures = 0;
       } else if (latency < 1000 || (newMetrics.uploadTestPassed && newMetrics.retrievalTestPassed)) {
-        newMetrics.status = 'degraded';
-        newMetrics.consecutiveFailures = 0;
+        newMetrics?.status = 'degraded';
+        newMetrics?.consecutiveFailures = 0;
       } else {
-        newMetrics.status = 'unhealthy';
-        newMetrics.consecutiveFailures = metrics.consecutiveFailures + 1;
+        newMetrics?.status = 'unhealthy';
+        newMetrics?.consecutiveFailures = metrics.consecutiveFailures + 1;
       }
 
-      newMetrics.error = null;
+      newMetrics?.error = null;
 
       // Log the health check
       logHealthMetric({
@@ -111,9 +111,9 @@ export function WalrusHealthCheck() {
       });
 
     } catch (error) {
-      newMetrics.status = 'unhealthy';
-      newMetrics.error = error instanceof Error ? error.message : 'Unknown error';
-      newMetrics.consecutiveFailures = metrics.consecutiveFailures + 1;
+      newMetrics?.status = 'unhealthy';
+      newMetrics?.error = error instanceof Error ? error.message : 'Unknown error';
+      newMetrics?.consecutiveFailures = metrics.consecutiveFailures + 1;
 
       // Log the failed health check
       logHealthMetric({
@@ -124,7 +124,7 @@ export function WalrusHealthCheck() {
       });
 
       // Alert on service degradation
-      if (newMetrics.consecutiveFailures === 3) {
+      if (newMetrics?.consecutiveFailures === 3) {
         toast.error('Walrus service is experiencing issues. Some features may be unavailable.', {
           duration: 5000,
           icon: '⚠️',
@@ -132,11 +132,11 @@ export function WalrusHealthCheck() {
       }
     }
 
-    setMetrics(newMetrics);
-    setIsChecking(false);
+    setMetrics(newMetrics as any);
+    setIsChecking(false as any);
 
     // Implement fallback strategy notification
-    if (newMetrics.status === 'unhealthy' && newMetrics.consecutiveFailures >= 5) {
+    if (newMetrics?.status === 'unhealthy' && newMetrics.consecutiveFailures >= 5) {
       toast.error('Switching to local storage fallback. Your data will sync when connection is restored.', {
         duration: 7000,
         icon: '💾',
@@ -155,7 +155,7 @@ export function WalrusHealthCheck() {
     performHealthCheck();
 
     // Check every 30 seconds
-    checkIntervalRef.current = setInterval(() => {
+    checkIntervalRef?.current = setInterval(() => {
       performHealthCheck();
     }, 30000);
 
@@ -180,7 +180,7 @@ export function WalrusHealthCheck() {
   };
 
   const getConnectionIcon = () => {
-    return metrics.status === 'healthy' || metrics.status === 'degraded' 
+    return metrics?.status === 'healthy' || metrics?.status === 'degraded' 
       ? <Wifi className="w-4 h-4 text-green-500" />
       : <WifiOff className="w-4 h-4 text-red-500" />;
   };
@@ -196,11 +196,11 @@ export function WalrusHealthCheck() {
   };
 
   // Minimal UI when healthy
-  if (metrics.status === 'healthy' && !isExpanded) {
+  if (metrics?.status === 'healthy' && !isExpanded) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
         <button
-          onClick={() => setIsExpanded(true)}
+          onClick={() => setIsExpanded(true as any)}
           className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm hover:bg-green-200 transition-colors"
           title="Walrus service is healthy"
         >
@@ -237,8 +237,8 @@ export function WalrusHealthCheck() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Status:</span>
               <span className={`text-sm font-medium capitalize ${
-                metrics.status === 'healthy' ? 'text-green-600' :
-                metrics.status === 'degraded' ? 'text-yellow-600' :
+                metrics?.status === 'healthy' ? 'text-green-600' :
+                metrics?.status === 'degraded' ? 'text-yellow-600' :
                 'text-red-600'
               }`}>
                 {metrics.status}
@@ -253,7 +253,7 @@ export function WalrusHealthCheck() {
                   Connection:
                 </span>
                 <span className="text-sm">
-                  {metrics.status === 'unhealthy' ? 'Disconnected' : 'Connected'}
+                  {metrics?.status === 'unhealthy' ? 'Disconnected' : 'Connected'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -316,11 +316,11 @@ export function WalrusHealthCheck() {
                 <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
                 Retry
               </button>
-              {metrics.status === 'unhealthy' && (
+              {metrics?.status === 'unhealthy' && (
                 <button
                   onClick={() => {
                     toast.success('Using local storage fallback');
-                    setIsExpanded(false);
+                    setIsExpanded(false as any);
                   }}
                   className="flex-1 px-3 py-1.5 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
                 >
@@ -338,11 +338,11 @@ export function WalrusHealthCheck() {
                 <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
                   {healthLogs.slice(-10).reverse().map((log, index) => (
                     <div key={index} className="text-xs text-gray-500">
-                      <span className="font-mono">{log.timestamp.toLocaleTimeString()}</span>
+                      <span className="font-mono">{log?.timestamp?.toLocaleTimeString()}</span>
                       {' - '}
                       <span className={
-                        log.status === 'healthy' ? 'text-green-600' :
-                        log.status === 'degraded' ? 'text-yellow-600' :
+                        log?.status === 'healthy' ? 'text-green-600' :
+                        log?.status === 'degraded' ? 'text-yellow-600' :
                         'text-red-600'
                       }>
                         {log.status}

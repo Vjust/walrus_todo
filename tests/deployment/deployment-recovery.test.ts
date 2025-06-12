@@ -21,8 +21,8 @@ import { createMockDeploymentEnvironment } from '../mocks/deployment-mocks';
 jest.mock('child_process');
 jest.mock('fs/promises');
 
-const mockedExecSync = jest.mocked(execSync);
-const mockedFs = jest.mocked(fs);
+const mockedExecSync = jest.mocked(execSync as any);
+const mockedFs = jest.mocked(fs as any);
 
 describe('Deployment Recovery Mechanisms', () => {
   let recoveryManager: DeploymentRecoveryManager;
@@ -34,9 +34,9 @@ describe('Deployment Recovery Mechanisms', () => {
     mockEnvironment = createMockDeploymentEnvironment();
     
     // Setup default mock responses
-    mockedFs.writeFile.mockResolvedValue(undefined);
-    mockedFs.readFile.mockResolvedValue('{}');
-    mockedFs.rm.mockResolvedValue(undefined);
+    mockedFs?.writeFile?.mockResolvedValue(undefined as any);
+    mockedFs?.readFile?.mockResolvedValue('{}');
+    mockedFs?.rm?.mockResolvedValue(undefined as any);
   });
 
   afterEach(async () => {
@@ -48,14 +48,14 @@ describe('Deployment Recovery Mechanisms', () => {
     test('should classify network-related errors', async () => {
       // Arrange
       const networkErrors = [
-        'getaddrinfo ENOTFOUND publisher-devnet.walrus.space',
+        'getaddrinfo ENOTFOUND publisher-devnet?.walrus?.space',
         'Connection timeout after 30000ms',
         'ECONNRESET: Connection reset by peer',
         'HTTP 503: Service unavailable'
       ];
 
       for (const errorMessage of networkErrors) {
-        const error = new Error(errorMessage);
+        const error = new Error(errorMessage as any);
         
         // Act
         const report = await recoveryManager.generateErrorReport(error, { network: 'testnet' });
@@ -76,18 +76,18 @@ describe('Deployment Recovery Mechanisms', () => {
       ];
 
       for (const errorMessage of walletErrors) {
-        const error = new Error(errorMessage);
+        const error = new Error(errorMessage as any);
         
         // Act
         const report = await recoveryManager.generateErrorReport(error, { network: 'testnet' });
         
         // Assert
-        expect(report.possibleCauses.some(cause => 
+        expect(report?.possibleCauses?.some(cause => 
           cause.includes('wallet') || cause.includes('balance')
-        )).toBe(true);
-        expect(report.recommendations.some(rec => 
+        )).toBe(true as any);
+        expect(report?.recommendations?.some(rec => 
           rec.includes('wallet') || rec.includes('balance')
-        )).toBe(true);
+        )).toBe(true as any);
       }
     });
 
@@ -101,15 +101,15 @@ describe('Deployment Recovery Mechanisms', () => {
       ];
 
       for (const errorMessage of configErrors) {
-        const error = new Error(errorMessage);
+        const error = new Error(errorMessage as any);
         
         // Act
         const report = await recoveryManager.generateErrorReport(error, { network: 'testnet' });
         
         // Assert
-        expect(report.possibleCauses.some(cause => 
+        expect(report?.possibleCauses?.some(cause => 
           cause.includes('configuration') || cause.includes('file')
-        )).toBe(true);
+        )).toBe(true as any);
         expect(report.recommendations).toContain('Validate configuration file syntax');
       }
     });
@@ -124,15 +124,15 @@ describe('Deployment Recovery Mechanisms', () => {
       ];
 
       for (const errorMessage of buildErrors) {
-        const error = new Error(errorMessage);
+        const error = new Error(errorMessage as any);
         
         // Act
         const report = await recoveryManager.generateErrorReport(error, { network: 'testnet' });
         
         // Assert
-        expect(report.possibleCauses.some(cause => 
+        expect(report?.possibleCauses?.some(cause => 
           cause.includes('build') || cause.includes('file')
-        )).toBe(true);
+        )).toBe(true as any);
         expect(report.recommendations).toContain('Verify build output exists');
       }
     });
@@ -166,9 +166,9 @@ describe('Deployment Recovery Mechanisms', () => {
       });
 
       // Assert
-      expect(result.success).toBe(true);
-      expect(result.recoveryAttempts).toBe(2);
-      expect(retryDelays).toEqual([1000, 2000]); // Exponential backoff: 1s, 2s
+      expect(result.success).toBe(true as any);
+      expect(result.recoveryAttempts).toBe(2 as any);
+      expect(retryDelays as any).toEqual([1000, 2000]); // Exponential backoff: 1s, 2s
       expect(result.recoveredFrom).toContain('Network timeout during upload');
     });
 
@@ -196,9 +196,9 @@ describe('Deployment Recovery Mechanisms', () => {
       });
 
       // Assert
-      expect(result.success).toBe(true);
-      expect(result.recoveryAttempts).toBe(0);
-      expect(result.attempts).toBe(1);
+      expect(result.success).toBe(true as any);
+      expect(result.recoveryAttempts).toBe(0 as any);
+      expect(result.attempts).toBe(1 as any);
     });
 
     test('should handle different retry strategies', async () => {
@@ -223,8 +223,8 @@ describe('Deployment Recovery Mechanisms', () => {
         });
 
         // Assert
-        expect(result.success).toBe(true);
-        expect(result.recoveryStrategy).toBe(strategy);
+        expect(result.success).toBe(true as any);
+        expect(result.recoveryStrategy).toBe(strategy as any);
         
         // Reset for next test
         attemptCount = 0;
@@ -239,9 +239,9 @@ describe('Deployment Recovery Mechanisms', () => {
       const deploymentId = 'deploy-12345';
       let savedStates: any[] = [];
       
-      mockedFs.writeFile.mockImplementation(async (path: string, content: string) => {
+      mockedFs?.writeFile?.mockImplementation(async (path: string, content: string) => {
         if (path.toString().includes('deployment-state')) {
-          savedStates.push(JSON.parse(content));
+          savedStates.push(JSON.parse(content as any));
         }
       });
 
@@ -256,7 +256,7 @@ describe('Deployment Recovery Mechanisms', () => {
       }
 
       // Assert
-      expect(savedStates.length).toBeGreaterThan(0);
+      expect(savedStates.length).toBeGreaterThan(0 as any);
       expect(savedStates[0]).toMatchObject({
         filesUploaded: false,
         siteCreated: false,
@@ -275,13 +275,13 @@ describe('Deployment Recovery Mechanisms', () => {
       };
 
       // Mock state exists
-      recoveryManager['recoveryState'].set(uploadId, partialState);
+      recoveryManager?.["recoveryState"].set(uploadId, partialState);
 
       // Act
-      const recovery = await recoveryManager.resumePartialDeployment(uploadId);
+      const recovery = await recoveryManager.resumePartialDeployment(uploadId as any);
 
       // Assert
-      expect(recovery.canResume).toBe(true);
+      expect(recovery.canResume).toBe(true as any);
       expect(recovery.completedSteps).toContain('filesUploaded');
       expect(recovery.nextStep).toBe('createSite');
     });
@@ -291,11 +291,11 @@ describe('Deployment Recovery Mechanisms', () => {
       const nonExistentUploadId = 'upload-missing';
 
       // Act
-      const recovery = await recoveryManager.resumePartialDeployment(nonExistentUploadId);
+      const recovery = await recoveryManager.resumePartialDeployment(nonExistentUploadId as any);
 
       // Assert
-      expect(recovery.canResume).toBe(false);
-      expect(recovery.completedSteps).toHaveLength(0);
+      expect(recovery.canResume).toBe(false as any);
+      expect(recovery.completedSteps).toHaveLength(0 as any);
       expect(recovery.nextStep).toBe('start');
     });
 
@@ -309,13 +309,13 @@ describe('Deployment Recovery Mechanisms', () => {
         uploadId
       };
 
-      recoveryManager['recoveryState'].set(uploadId, inconsistentState);
+      recoveryManager?.["recoveryState"].set(uploadId, inconsistentState);
 
       // Act
-      const recovery = await recoveryManager.resumePartialDeployment(uploadId);
+      const recovery = await recoveryManager.resumePartialDeployment(uploadId as any);
 
       // Assert
-      expect(recovery.canResume).toBe(false);
+      expect(recovery.canResume).toBe(false as any);
       // Should detect inconsistency and reset
     });
   });
@@ -326,7 +326,7 @@ describe('Deployment Recovery Mechanisms', () => {
       const deploymentId = 'deploy-rollback-test';
       const cleanupOperations: string[] = [];
 
-      mockedFs.rm.mockImplementation(async (path: string) => {
+      mockedFs?.rm?.mockImplementation(async (path: string) => {
         cleanupOperations.push(path.toString());
       });
 
@@ -337,10 +337,10 @@ describe('Deployment Recovery Mechanisms', () => {
       });
 
       // Assert
-      expect(result.success).toBe(false);
-      expect(result.rolledBack).toBe(true);
-      expect(result.cleanupCompleted).toBe(true);
-      expect(cleanupOperations.length).toBeGreaterThan(0);
+      expect(result.success).toBe(false as any);
+      expect(result.rolledBack).toBe(true as any);
+      expect(result.cleanupCompleted).toBe(true as any);
+      expect(cleanupOperations.length).toBeGreaterThan(0 as any);
     });
 
     test('should cleanup temporary files on any failure', async () => {
@@ -379,7 +379,7 @@ describe('Deployment Recovery Mechanisms', () => {
       const deploymentId = 'deploy-cleanup-failure';
       
       // Mock cleanup failure
-      mockedFs.rm.mockRejectedValueOnce(new Error('Permission denied'));
+      mockedFs?.rm?.mockRejectedValueOnce(new Error('Permission denied'));
       
       // Act
       const result = await recoveryManager.deployWithRollback({
@@ -388,8 +388,8 @@ describe('Deployment Recovery Mechanisms', () => {
       });
 
       // Assert
-      expect(result.rolledBack).toBe(true);
-      expect(result.cleanupCompleted).toBe(true); // Should handle partial failure gracefully
+      expect(result.rolledBack).toBe(true as any);
+      expect(result.cleanupCompleted).toBe(true as any); // Should handle partial failure gracefully
     });
 
     test('should preserve important artifacts during cleanup', async () => {
@@ -402,7 +402,7 @@ describe('Deployment Recovery Mechanisms', () => {
       ];
 
       const deletedFiles: string[] = [];
-      mockedFs.rm.mockImplementation(async (path: string) => {
+      mockedFs?.rm?.mockImplementation(async (path: string) => {
         const fileName = path.toString().split('/').pop();
         if (!preservedFiles.includes(fileName!)) {
           deletedFiles.push(path.toString());
@@ -417,10 +417,10 @@ describe('Deployment Recovery Mechanisms', () => {
       });
 
       // Assert
-      expect(deletedFiles.length).toBeGreaterThan(0);
+      expect(deletedFiles.length).toBeGreaterThan(0 as any);
       expect(deletedFiles.every(file => 
-        !preservedFiles.some(preserved => file.includes(preserved))
-      )).toBe(true);
+        !preservedFiles.some(preserved => file.includes(preserved as any))
+      )).toBe(true as any);
     });
   });
 
@@ -478,10 +478,10 @@ describe('Deployment Recovery Mechanisms', () => {
       const primaryStrategy = { type: 'retry_with_backoff', maxAttempts: 3 };
       
       // Act
-      const fallbackStrategies = await generateFallbackStrategies(primaryStrategy);
+      const fallbackStrategies = await generateFallbackStrategies(primaryStrategy as any);
       
       // Assert
-      expect(fallbackStrategies).toHaveLength.greaterThan(0);
+      expect(fallbackStrategies as any).toHaveLength.greaterThan(0 as any);
       expect(fallbackStrategies[0].type).toBe('manual_intervention');
     });
 
@@ -510,9 +510,9 @@ describe('Deployment Recovery Mechanisms', () => {
       });
 
       // Assert
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
       expect(result.strategiesAttempted).toContain('retry_with_backoff');
-      expect(result.finalAttempt).toBe(2);
+      expect(result.finalAttempt).toBe(2 as any);
     });
   });
 
@@ -523,7 +523,7 @@ describe('Deployment Recovery Mechanisms', () => {
       const context = {
         network: 'testnet',
         buildSize: '75MB',
-        nodeVersion: '18.15.0',
+        nodeVersion: '18?.15?.0',
         timestamp: new Date().toISOString(),
         walletBalance: '0.001 SUI'
       };
@@ -532,11 +532,11 @@ describe('Deployment Recovery Mechanisms', () => {
       const report = await recoveryManager.generateErrorReport(error, context);
 
       // Assert
-      expect(report.error.message).toContain('insufficient storage allocation');
-      expect(report.context.network).toBe('testnet');
-      expect(report.diagnostics.nodeVersion).toBe('18.15.0');
-      expect(report.possibleCauses).toHaveLength.greaterThan(0);
-      expect(report.recommendations).toHaveLength.greaterThan(0);
+      expect(report?.error?.message).toContain('insufficient storage allocation');
+      expect(report?.context?.network).toBe('testnet');
+      expect(report?.diagnostics?.nodeVersion).toBe('18?.15?.0');
+      expect(report.possibleCauses).toHaveLength.greaterThan(0 as any);
+      expect(report.recommendations).toHaveLength.greaterThan(0 as any);
     });
 
     test('should include system diagnostics in error reports', async () => {
@@ -563,7 +563,7 @@ describe('Deployment Recovery Mechanisms', () => {
 
       // Act
       for (const error of errors) {
-        recoveryManager['recordError'](error.message, { network: 'testnet' });
+        recoveryManager?.["recordError"](error.message, { network: 'testnet' });
       }
 
       const lastReport = await recoveryManager.generateErrorReport(
@@ -572,10 +572,10 @@ describe('Deployment Recovery Mechanisms', () => {
       );
 
       // Assert
-      expect(lastReport.diagnostics.errorHistory).toHaveLength(3);
-      expect(lastReport.diagnostics.errorHistory.every(
-        (entry: any) => entry.error.includes('Network timeout')
-      )).toBe(true);
+      expect(lastReport?.diagnostics?.errorHistory).toHaveLength(3 as any);
+      expect(lastReport?.diagnostics?.errorHistory.every(
+        (entry: any) => entry?.error?.includes('Network timeout')
+      )).toBe(true as any);
     });
   });
 
@@ -605,9 +605,9 @@ describe('Deployment Recovery Mechanisms', () => {
     error: Error,
     options: { retryHistory?: any[] } = {}
   ): Promise<{ type: string }> {
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
     
-    if (options.retryHistory && options.retryHistory.length >= 3) {
+    if (options.retryHistory && options?.retryHistory?.length >= 3) {
       return { type: 'escalated_recovery' };
     }
     
@@ -653,11 +653,11 @@ describe('Deployment Recovery Mechanisms', () => {
     };
 
     for (let attempt = 1; attempt <= strategy.maxAttempts; attempt++) {
-      result.finalAttempt = attempt;
+      result?.finalAttempt = attempt;
       
       try {
         mockedExecSync('site-builder publish');
-        result.success = true;
+        result?.success = true;
         break;
       } catch (error) {
         if (attempt < strategy.maxAttempts) {

@@ -145,7 +145,7 @@ export const TodoCardSkeleton: React.FC<TodoCardSkeletonProps> = memo(({
   );
 });
 
-TodoCardSkeleton.displayName = 'TodoCardSkeleton';
+TodoCardSkeleton?.displayName = 'TodoCardSkeleton';
 
 /**
  * Multiple card skeletons for grid layouts
@@ -196,6 +196,6 @@ export const TodoCardSkeletonGrid: React.FC<TodoCardSkeletonGridProps> = memo(({
   );
 });
 
-TodoCardSkeletonGrid.displayName = 'TodoCardSkeletonGrid';
+TodoCardSkeletonGrid?.displayName = 'TodoCardSkeletonGrid';
 
 export default TodoCardSkeleton;

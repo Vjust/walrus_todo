@@ -50,16 +50,16 @@ describe('useAsyncError', () => {
   describe('Basic Functionality', () => {
     it('should initialize with idle state', () => {
       const asyncFn = jest.fn().mockResolvedValue('success');
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
-      expect(result.current.isIdle).toBe(true);
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.isError).toBe(false);
-      expect(result.current.isSuccess).toBe(false);
-      expect(result.current.data).toBeNull();
-      expect(result.current.error).toBeNull();
-      expect(result.current.retryCount).toBe(0);
-      expect(result.current.canRetry).toBe(false);
+      expect(result?.current?.isIdle).toBe(true as any);
+      expect(result?.current?.isLoading).toBe(false as any);
+      expect(result?.current?.isError).toBe(false as any);
+      expect(result?.current?.isSuccess).toBe(false as any);
+      expect(result?.current?.data).toBeNull();
+      expect(result?.current?.error).toBeNull();
+      expect(result?.current?.retryCount).toBe(0 as any);
+      expect(result?.current?.canRetry).toBe(false as any);
     });
     
     it('should handle successful async operation', async () => {
@@ -68,25 +68,25 @@ describe('useAsyncError', () => {
       const { result } = renderHook(() => useAsyncError(asyncFn, { onSuccess }));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
-      expect(result.current.isLoading).toBe(true);
+      expect(result?.current?.isLoading).toBe(true as any);
       
       await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
+        expect(result?.current?.isSuccess).toBe(true as any);
       });
       
-      expect(result.current.data).toBe('success data');
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toBeNull();
-      expect(onSuccess).toHaveBeenCalledWith('success data');
+      expect(result?.current?.data).toBe('success data');
+      expect(result?.current?.isLoading).toBe(false as any);
+      expect(result?.current?.error).toBeNull();
+      expect(onSuccess as any).toHaveBeenCalledWith('success data');
       expect(mockToastService.success).toHaveBeenCalledWith('Operation completed successfully');
     });
     
     it('should handle async operation failure', async () => {
       const error = new Error('Operation failed');
-      const asyncFn = jest.fn().mockRejectedValue(error);
+      const asyncFn = jest.fn().mockRejectedValue(error as any);
       const onError = jest.fn();
       
       const classifiedError = {
@@ -97,22 +97,22 @@ describe('useAsyncError', () => {
         maxRetries: 3,
       };
       
-      mockErrorManager.classify.mockReturnValue(classifiedError as any);
+      mockErrorManager?.classify?.mockReturnValue(classifiedError as any);
       
       const { result } = renderHook(() => useAsyncError(asyncFn, { onError }));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
-      expect(result.current.error).toEqual(classifiedError);
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.canRetry).toBe(true);
-      expect(onError).toHaveBeenCalledWith(classifiedError);
+      expect(result?.current?.error).toEqual(classifiedError as any);
+      expect(result?.current?.isLoading).toBe(false as any);
+      expect(result?.current?.canRetry).toBe(true as any);
+      expect(onError as any).toHaveBeenCalledWith(classifiedError as any);
       expect(mockToastService.error).toHaveBeenCalled();
     });
   });
@@ -120,9 +120,9 @@ describe('useAsyncError', () => {
   describe('Configuration Options', () => {
     it('should respect silent errors configuration', async () => {
       const error = new Error('Silent error');
-      const asyncFn = jest.fn().mockRejectedValue(error);
+      const asyncFn = jest.fn().mockRejectedValue(error as any);
       
-      mockErrorManager.classify.mockReturnValue({
+      mockErrorManager?.classify?.mockReturnValue({
         type: ErrorType.VALIDATION,
         userMessage: 'Validation error',
         retryable: false,
@@ -133,11 +133,11 @@ describe('useAsyncError', () => {
       );
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
       expect(mockToastService.success).not.toHaveBeenCalled();
@@ -152,11 +152,11 @@ describe('useAsyncError', () => {
       );
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
+        expect(result?.current?.isSuccess).toBe(true as any);
       });
       
       expect(mockToastService.success).not.toHaveBeenCalled();
@@ -165,8 +165,8 @@ describe('useAsyncError', () => {
     it('should handle custom retry configuration', async () => {
       const error = new Error('Retryable error');
       const asyncFn = jest.fn()
-        .mockRejectedValueOnce(error)
-        .mockRejectedValueOnce(error)
+        .mockRejectedValueOnce(error as any)
+        .mockRejectedValueOnce(error as any)
         .mockResolvedValue('success');
       
       const classifiedError = {
@@ -176,7 +176,7 @@ describe('useAsyncError', () => {
         maxRetries: 2,
       };
       
-      mockErrorManager.classify.mockReturnValue(classifiedError as any);
+      mockErrorManager?.classify?.mockReturnValue(classifiedError as any);
       
       const onRetryAttempt = jest.fn();
       const { result } = renderHook(() => 
@@ -189,23 +189,23 @@ describe('useAsyncError', () => {
       );
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
-      expect(result.current.retryCount).toBe(0);
-      expect(onRetryAttempt).toHaveBeenCalledWith(1, classifiedError);
+      expect(result?.current?.retryCount).toBe(0 as any);
+      expect(onRetryAttempt as any).toHaveBeenCalledWith(1, classifiedError);
       
       // Fast-forward retry delay
       act(() => {
-        jest.advanceTimersByTime(100);
+        jest.advanceTimersByTime(100 as any);
       });
       
       await waitFor(() => {
-        expect(asyncFn).toHaveBeenCalledTimes(2);
+        expect(asyncFn as any).toHaveBeenCalledTimes(2 as any);
       });
     });
   });
@@ -214,7 +214,7 @@ describe('useAsyncError', () => {
     it('should allow manual retry', async () => {
       const error = new Error('Retry test');
       const asyncFn = jest.fn()
-        .mockRejectedValueOnce(error)
+        .mockRejectedValueOnce(error as any)
         .mockResolvedValue('success after retry');
       
       const classifiedError = {
@@ -224,37 +224,37 @@ describe('useAsyncError', () => {
         maxRetries: 3,
       };
       
-      mockErrorManager.classify.mockReturnValue(classifiedError as any);
+      mockErrorManager?.classify?.mockReturnValue(classifiedError as any);
       
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
       // Initial execution
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
-      expect(result.current.canRetry).toBe(true);
+      expect(result?.current?.canRetry).toBe(true as any);
       
       // Manual retry
       act(() => {
-        result.current.retry();
+        result?.current?.retry();
       });
       
       await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
+        expect(result?.current?.isSuccess).toBe(true as any);
       });
       
-      expect(result.current.data).toBe('success after retry');
-      expect(result.current.retryCount).toBe(1);
+      expect(result?.current?.data).toBe('success after retry');
+      expect(result?.current?.retryCount).toBe(1 as any);
     });
     
     it('should prevent retry when not retryable', async () => {
       const error = new Error('Non-retryable error');
-      const asyncFn = jest.fn().mockRejectedValue(error);
+      const asyncFn = jest.fn().mockRejectedValue(error as any);
       
       const classifiedError = {
         type: ErrorType.VALIDATION,
@@ -263,27 +263,27 @@ describe('useAsyncError', () => {
         maxRetries: 3,
       };
       
-      mockErrorManager.classify.mockReturnValue(classifiedError as any);
+      mockErrorManager?.classify?.mockReturnValue(classifiedError as any);
       
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
-      expect(result.current.canRetry).toBe(false);
+      expect(result?.current?.canRetry).toBe(false as any);
       
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
       
       act(() => {
-        result.current.retry();
+        result?.current?.retry();
       });
       
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(consoleSpy as any).toHaveBeenCalledWith(
         'Cannot retry: operation is not retryable or max retries reached'
       );
       
@@ -292,7 +292,7 @@ describe('useAsyncError', () => {
     
     it('should respect max retry limit', async () => {
       const error = new Error('Max retry test');
-      const asyncFn = jest.fn().mockRejectedValue(error);
+      const asyncFn = jest.fn().mockRejectedValue(error as any);
       
       const classifiedError = {
         type: ErrorType.NETWORK,
@@ -301,7 +301,7 @@ describe('useAsyncError', () => {
         maxRetries: 2,
       };
       
-      mockErrorManager.classify.mockReturnValue(classifiedError as any);
+      mockErrorManager?.classify?.mockReturnValue(classifiedError as any);
       
       const onGiveUp = jest.fn();
       const { result } = renderHook(() => 
@@ -310,58 +310,58 @@ describe('useAsyncError', () => {
       
       // Initial attempt + 2 retries = 3 total attempts
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
       // First retry
       act(() => {
-        result.current.retry();
+        result?.current?.retry();
       });
       
       await waitFor(() => {
-        expect(result.current.retryCount).toBe(1);
+        expect(result?.current?.retryCount).toBe(1 as any);
       });
       
       // Second retry (max reached)
       act(() => {
-        result.current.retry();
+        result?.current?.retry();
       });
       
       await waitFor(() => {
-        expect(result.current.retryCount).toBe(2);
+        expect(result?.current?.retryCount).toBe(2 as any);
       });
       
-      expect(result.current.canRetry).toBe(false);
-      expect(onGiveUp).toHaveBeenCalledWith(classifiedError);
+      expect(result?.current?.canRetry).toBe(false as any);
+      expect(onGiveUp as any).toHaveBeenCalledWith(classifiedError as any);
     });
   });
   
   describe('State Management', () => {
     it('should reset state correctly', async () => {
       const asyncFn = jest.fn().mockResolvedValue('data');
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
+        expect(result?.current?.isSuccess).toBe(true as any);
       });
       
       act(() => {
-        result.current.reset();
+        result?.current?.reset();
       });
       
-      expect(result.current.isIdle).toBe(true);
-      expect(result.current.data).toBeNull();
-      expect(result.current.error).toBeNull();
-      expect(result.current.retryCount).toBe(0);
-      expect(result.current.canRetry).toBe(false);
+      expect(result?.current?.isIdle).toBe(true as any);
+      expect(result?.current?.data).toBeNull();
+      expect(result?.current?.error).toBeNull();
+      expect(result?.current?.retryCount).toBe(0 as any);
+      expect(result?.current?.canRetry).toBe(false as any);
     });
     
     it('should cancel ongoing operations', async () => {
@@ -370,20 +370,20 @@ describe('useAsyncError', () => {
         resolvePromise = resolve;
       });
       
-      const asyncFn = jest.fn().mockReturnValue(promise);
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const asyncFn = jest.fn().mockReturnValue(promise as any);
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
-      expect(result.current.isLoading).toBe(true);
+      expect(result?.current?.isLoading).toBe(true as any);
       
       act(() => {
-        result.current.cancel();
+        result?.current?.cancel();
       });
       
-      expect(result.current.isLoading).toBe(false);
+      expect(result?.current?.isLoading).toBe(false as any);
       
       // Resolve the promise after cancellation
       act(() => {
@@ -392,7 +392,7 @@ describe('useAsyncError', () => {
       
       // Should not update state after cancellation
       await waitFor(() => {
-        expect(result.current.data).toBeNull();
+        expect(result?.current?.data).toBeNull();
       });
     });
   });
@@ -404,14 +404,14 @@ describe('useAsyncError', () => {
         resolvePromise = resolve;
       });
       
-      const asyncFn = jest.fn().mockReturnValue(promise);
-      const { result, unmount } = renderHook(() => useAsyncError(asyncFn));
+      const asyncFn = jest.fn().mockReturnValue(promise as any);
+      const { result, unmount } = renderHook(() => useAsyncError(asyncFn as any));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
-      expect(result.current.isLoading).toBe(true);
+      expect(result?.current?.isLoading).toBe(true as any);
       
       unmount();
       
@@ -427,55 +427,55 @@ describe('useAsyncError', () => {
   describe('Error Edge Cases', () => {
     it('should handle non-Error objects', async () => {
       const nonErrorObject = { message: 'Not an Error instance' };
-      const asyncFn = jest.fn().mockRejectedValue(nonErrorObject);
+      const asyncFn = jest.fn().mockRejectedValue(nonErrorObject as any);
       
-      mockErrorManager.classify.mockReturnValue({
+      mockErrorManager?.classify?.mockReturnValue({
         type: ErrorType.UNKNOWN,
         userMessage: 'Unknown error',
         retryable: true,
       } as any);
       
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
       expect(mockErrorManager.classify).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.any(Object)
+        expect.any(Error as any),
+        expect.any(Object as any)
       );
     });
     
     it('should handle string errors', async () => {
       const stringError = 'String error message';
-      const asyncFn = jest.fn().mockRejectedValue(stringError);
+      const asyncFn = jest.fn().mockRejectedValue(stringError as any);
       
-      mockErrorManager.classify.mockReturnValue({
+      mockErrorManager?.classify?.mockReturnValue({
         type: ErrorType.UNKNOWN,
         userMessage: 'Unknown error',
         retryable: false,
       } as any);
       
-      const { result } = renderHook(() => useAsyncError(asyncFn));
+      const { result } = renderHook(() => useAsyncError(asyncFn as any));
       
       act(() => {
-        result.current.execute();
+        result?.current?.execute();
       });
       
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result?.current?.isError).toBe(true as any);
       });
       
       expect(mockErrorManager.classify).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'String error message',
         }),
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
   });
@@ -491,17 +491,17 @@ describe('useAsyncOperation', () => {
     
     const [executeAsync, state] = result.current;
     
-    expect(state.isIdle).toBe(true);
+    expect(state.isIdle).toBe(true as any);
     
     const asyncFn1 = jest.fn().mockResolvedValue('result1');
     
     let returnedData: any;
     await act(async () => {
-      returnedData = await executeAsync(asyncFn1);
+      returnedData = await executeAsync(asyncFn1 as any);
     });
     
-    expect(returnedData).toBe('result1');
-    expect(state.isSuccess).toBe(true);
+    expect(returnedData as any).toBe('result1');
+    expect(state.isSuccess).toBe(true as any);
   });
 });
 
@@ -517,23 +517,23 @@ describe('useMultipleAsyncErrors', () => {
       fetchComments: jest.fn().mockResolvedValue('comments'),
     };
     
-    const { result } = renderHook(() => useMultipleAsyncErrors(operations));
+    const { result } = renderHook(() => useMultipleAsyncErrors(operations as any));
     
-    expect(result.current.isAnyLoading).toBe(false);
-    expect(result.current.hasAnyError).toBe(false);
-    expect(result.current.allSuccessful).toBe(false);
+    expect(result?.current?.isAnyLoading).toBe(false as any);
+    expect(result?.current?.hasAnyError).toBe(false as any);
+    expect(result?.current?.allSuccessful).toBe(false as any);
     
     act(() => {
-      result.current.executeAll();
+      result?.current?.executeAll();
     });
     
     await waitFor(() => {
-      expect(result.current.allSuccessful).toBe(true);
+      expect(result?.current?.allSuccessful).toBe(true as any);
     });
     
-    expect(result.current.fetchUsers.data).toBe('users');
-    expect(result.current.fetchPosts.data).toBe('posts');
-    expect(result.current.fetchComments.data).toBe('comments');
+    expect(result?.current?.fetchUsers.data).toBe('users');
+    expect(result?.current?.fetchPosts.data).toBe('posts');
+    expect(result?.current?.fetchComments.data).toBe('comments');
   });
   
   it('should handle mixed success and failure', async () => {
@@ -542,28 +542,28 @@ describe('useMultipleAsyncErrors', () => {
       failure: jest.fn().mockRejectedValue(new Error('failure')),
     };
     
-    mockErrorManager.classify.mockReturnValue({
+    mockErrorManager?.classify?.mockReturnValue({
       type: ErrorType.UNKNOWN,
       userMessage: 'Error occurred',
       retryable: true,
     } as any);
     
-    const { result } = renderHook(() => useMultipleAsyncErrors(operations));
+    const { result } = renderHook(() => useMultipleAsyncErrors(operations as any));
     
     act(() => {
-      result.current.executeAll();
+      result?.current?.executeAll();
     });
     
     await waitFor(() => {
-      expect(result.current.success.isSuccess).toBe(true);
+      expect(result?.current?.success.isSuccess).toBe(true as any);
     });
     
     await waitFor(() => {
-      expect(result.current.failure.isError).toBe(true);
+      expect(result?.current?.failure.isError).toBe(true as any);
     });
     
-    expect(result.current.hasAnyError).toBe(true);
-    expect(result.current.allSuccessful).toBe(false);
+    expect(result?.current?.hasAnyError).toBe(true as any);
+    expect(result?.current?.allSuccessful).toBe(false as any);
   });
   
   it('should reset all operations', async () => {
@@ -572,23 +572,23 @@ describe('useMultipleAsyncErrors', () => {
       op2: jest.fn().mockResolvedValue('data2'),
     };
     
-    const { result } = renderHook(() => useMultipleAsyncErrors(operations));
+    const { result } = renderHook(() => useMultipleAsyncErrors(operations as any));
     
     act(() => {
-      result.current.executeAll();
+      result?.current?.executeAll();
     });
     
     await waitFor(() => {
-      expect(result.current.allSuccessful).toBe(true);
+      expect(result?.current?.allSuccessful).toBe(true as any);
     });
     
     act(() => {
-      result.current.resetAll();
+      result?.current?.resetAll();
     });
     
-    expect(result.current.op1.isIdle).toBe(true);
-    expect(result.current.op2.isIdle).toBe(true);
-    expect(result.current.allSuccessful).toBe(false);
+    expect(result?.current?.op1.isIdle).toBe(true as any);
+    expect(result?.current?.op2.isIdle).toBe(true as any);
+    expect(result?.current?.allSuccessful).toBe(false as any);
   });
 });
 
@@ -607,17 +607,17 @@ describe('useAsyncErrorWithDeps', () => {
     );
     
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result?.current?.isSuccess).toBe(true as any);
     });
     
-    expect(asyncFn).toHaveBeenCalledTimes(1);
+    expect(asyncFn as any).toHaveBeenCalledTimes(1 as any);
     
     // Change dependencies
     deps = ['dep2'];
     rerender({ dependencies: deps });
     
     await waitFor(() => {
-      expect(asyncFn).toHaveBeenCalledTimes(2);
+      expect(asyncFn as any).toHaveBeenCalledTimes(2 as any);
     });
   });
   
@@ -631,15 +631,15 @@ describe('useAsyncErrorWithDeps', () => {
     );
     
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result?.current?.isSuccess).toBe(true as any);
     });
     
-    expect(asyncFn).toHaveBeenCalledTimes(1);
+    expect(asyncFn as any).toHaveBeenCalledTimes(1 as any);
     
     // Rerender with same dependencies
     rerender({ dependencies: deps });
     
     // Should not execute again
-    expect(asyncFn).toHaveBeenCalledTimes(1);
+    expect(asyncFn as any).toHaveBeenCalledTimes(1 as any);
   });
 });

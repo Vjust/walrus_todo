@@ -45,7 +45,7 @@ class PerformanceMonitor {
   private observeNavigationTiming() {
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     if (navigation) {
-      this.metrics.ttfb = navigation.responseStart - navigation.requestStart;
+      this.metrics?.ttfb = navigation.responseStart - navigation.requestStart;
     }
   }
 
@@ -53,13 +53,13 @@ class PerformanceMonitor {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.name === 'first-contentful-paint') {
-            this.metrics.fcp = entry.startTime;
+          if (entry?.name === 'first-contentful-paint') {
+            this.metrics?.fcp = entry.startTime;
           }
         }
       });
       observer.observe({ entryTypes: ['paint'] });
-      this.observers.set('paint', observer);
+      this?.observers?.set('paint', observer);
     } catch (e) {
       console.warn('Paint timing observation not supported');
     }
@@ -74,10 +74,10 @@ class PerformanceMonitor {
             clsValue += (entry as any).value;
           }
         }
-        this.metrics.cls = clsValue;
+        this.metrics?.cls = clsValue;
       });
       observer.observe({ entryTypes: ['layout-shift'] });
-      this.observers.set('layout-shift', observer);
+      this?.observers?.set('layout-shift', observer);
     } catch (e) {
       console.warn('Layout shift observation not supported');
     }
@@ -88,11 +88,11 @@ class PerformanceMonitor {
       const observer = new PerformanceObserver((list) => {
         const firstInput = list.getEntries()[0];
         if (firstInput) {
-          this.metrics.fid = (firstInput as any).processingStart - firstInput.startTime;
+          this.metrics?.fid = (firstInput as any).processingStart - firstInput.startTime;
         }
       });
       observer.observe({ entryTypes: ['first-input'] });
-      this.observers.set('first-input', observer);
+      this?.observers?.set('first-input', observer);
     } catch (e) {
       console.warn('First input observation not supported');
     }
@@ -104,11 +104,11 @@ class PerformanceMonitor {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
         if (lastEntry) {
-          this.metrics.lcp = lastEntry.startTime;
+          this.metrics?.lcp = lastEntry.startTime;
         }
       });
       observer.observe({ entryTypes: ['largest-contentful-paint'] });
-      this.observers.set('lcp', observer);
+      this?.observers?.set('lcp', observer);
     } catch (e) {
       console.warn('LCP observation not supported');
     }
@@ -120,7 +120,7 @@ class PerformanceMonitor {
 
   public reportMetrics(callback: (metrics: Partial<PerformanceMetrics>) => void) {
     // Report metrics after page load
-    if (document.readyState === 'complete') {
+    if (document?.readyState === 'complete') {
       setTimeout(() => callback(this.getMetrics()), 0);
     } else {
       window.addEventListener('load', () => {
@@ -130,8 +130,8 @@ class PerformanceMonitor {
   }
 
   public disconnect() {
-    this.observers.forEach(observer => observer.disconnect());
-    this.observers.clear();
+    this?.observers?.forEach(observer => observer.disconnect());
+    this?.observers?.clear();
   }
 }
 
@@ -190,34 +190,34 @@ class ErrorMonitor {
   }
 
   private startFlushInterval() {
-    this.flushInterval = setInterval(() => {
+    this?.flushInterval = setInterval(() => {
       this.flushErrors();
     }, this.flushDelay);
   }
 
   public captureError(error: Error, context: ErrorContext = {}) {
     // Add to queue
-    this.errorQueue.push({
+    this?.errorQueue?.push({
       error,
       context,
       timestamp: Date.now(),
     });
 
     // Flush if queue is full
-    if (this.errorQueue.length >= this.maxQueueSize) {
+    if (this?.errorQueue?.length >= this.maxQueueSize) {
       this.flushErrors();
     }
   }
 
   private async flushErrors() {
-    if (this.errorQueue.length === 0) {return;}
+    if (this.errorQueue?.length === 0) {return;}
 
     const errors = [...this.errorQueue];
-    this.errorQueue = [];
+    this?.errorQueue = [];
 
     try {
       // Send to monitoring service
-      if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+      if (process?.env?.NEXT_PUBLIC_SENTRY_DSN) {
         // Sentry integration would go here
         console.error('Error batch:', errors);
       }
@@ -228,8 +228,8 @@ class ErrorMonitor {
       if (typeof window !== 'undefined') {
         try {
           const errorLogKey = 'waltodo_error_batch';
-          const existingLog = localStorage.getItem(errorLogKey);
-          const errorLog = existingLog ? JSON.parse(existingLog) : [];
+          const existingLog = localStorage.getItem(errorLogKey as any);
+          const errorLog = existingLog ? JSON.parse(existingLog as any) : [];
           
           const newErrors = errors.map(({ error, context, timestamp }) => ({
             message: error.message,
@@ -240,7 +240,7 @@ class ErrorMonitor {
           
           // Keep only last 100 errors
           const updatedLog = [...errorLog, ...newErrors].slice(-100);
-          localStorage.setItem(errorLogKey, JSON.stringify(updatedLog));
+          localStorage.setItem(errorLogKey, JSON.stringify(updatedLog as any));
         } catch (e) {
           console.error('Failed to store error batch locally:', e);
         }
@@ -265,7 +265,7 @@ export function usePerformanceMonitoring() {
     
     monitor.reportMetrics((metrics) => {
       // Send metrics to analytics
-      if (window.gtag && process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true') {
+      if (window.gtag && process.env?.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true') {
         window.gtag('event', 'web_vitals', {
           event_category: 'Performance',
           event_label: 'Core Web Vitals',
@@ -278,7 +278,7 @@ export function usePerformanceMonitoring() {
       }
 
       // Log to console in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         console.log('Performance Metrics:', metrics);
       }
     });
@@ -329,7 +329,7 @@ export function captureException(error: Error, context?: ErrorContext) {
 
 // Web Vitals reporting
 export function reportWebVitals(metric: any) {
-  if (process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'true') {return;}
+  if (process?.env?.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'true') {return;}
 
   const vitals = {
     FCP: 'first_contentful_paint',
@@ -346,13 +346,13 @@ export function reportWebVitals(metric: any) {
       window.gtag('event', vitals[metric.name as keyof typeof vitals], {
         event_category: 'Web Vitals',
         event_label: metric.id,
-        value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+        value: Math.round(metric?.name === 'CLS' ? metric.value * 1000 : metric.value),
         non_interaction: true,
       });
     }
 
     // Log in development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       console.log(`${metric.name}:`, metric.value);
     }
   }

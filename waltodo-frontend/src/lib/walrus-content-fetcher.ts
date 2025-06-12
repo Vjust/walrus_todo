@@ -50,7 +50,7 @@ export async function fetchWalrusContent(
   // Check persistent cache first
   if (cache) {
     try {
-      const cached = await cacheManager.get(blobIdOrUrl);
+      const cached = await cacheManager.get(blobIdOrUrl as any);
       if (cached) {
         return {
           data: cached.data,
@@ -67,7 +67,7 @@ export async function fetchWalrusContent(
   let url: string;
   try {
     if (blobIdOrUrl.startsWith('walrus://')) {
-      url = transformWalrusBlobToUrl(blobIdOrUrl);
+      url = transformWalrusBlobToUrl(blobIdOrUrl as any);
     } else {
       url = transformWalrusBlobToUrl(`walrus://${blobIdOrUrl}`);
     }
@@ -91,14 +91,14 @@ export async function fetchWalrusContent(
         },
       });
 
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId as any);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const contentType = response.headers.get('content-type');
-      const contentLength = response.headers.get('content-length');
+      const contentType = response?.headers?.get('content-type');
+      const contentLength = response?.headers?.get('content-length');
       
       let data: string;
       
@@ -108,14 +108,14 @@ export async function fetchWalrusContent(
         const blob = await response.blob();
         data = await new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+          reader?.onloadend = () => resolve(reader.result as string);
+          reader?.onerror = reject;
+          reader.readAsDataURL(blob as any);
         });
       } else if (contentType?.includes('json')) {
         // For JSON, stringify the response
         const json = await response.json();
-        data = JSON.stringify(json);
+        data = JSON.stringify(json as any);
       } else {
         // For text content
         data = await response.text();
@@ -152,7 +152,7 @@ export async function fetchWalrusContent(
       lastError = error as Error;
       
       // Don't retry on abort
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error?.name === 'AbortError') {
         throw new Error('Request timeout');
       }
       
@@ -174,23 +174,23 @@ export function useWalrusContent(
   options?: WalrusContentOptions
 ): WalrusContentResult {
   const [data, setData] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false as any);
   const [error, setError] = useState<Error | null>(null);
   const [contentType, setContentType] = useState<string | undefined>();
   const [contentLength, setContentLength] = useState<number | undefined>();
   
   const abortControllerRef = useRef<AbortController | null>(null);
-  const isMountedRef = useRef(true);
+  const isMountedRef = useRef(true as any);
 
   const fetchContent = useCallback(async () => {
     if (!blobIdOrUrl) {
-      setData(null);
-      setError(null);
+      setData(null as any);
+      setError(null as any);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    setLoading(true as any);
+    setError(null as any);
 
     try {
       const result = await fetchWalrusContent(blobIdOrUrl, options);
@@ -203,11 +203,11 @@ export function useWalrusContent(
     } catch (err) {
       if (isMountedRef.current) {
         setError(err as Error);
-        setData(null);
+        setData(null as any);
       }
     } finally {
       if (isMountedRef.current) {
-        setLoading(false);
+        setLoading(false as any);
       }
     }
   }, [blobIdOrUrl, options]);
@@ -222,9 +222,9 @@ export function useWalrusContent(
     const abortController = abortControllerRef;
     
     return () => {
-      isMounted.current = false;
+      isMounted?.current = false;
       if (abortController.current) {
-        abortController.current.abort();
+        abortController?.current?.abort();
       }
     };
   }, []);
@@ -244,7 +244,7 @@ export function useWalrusContent(
  */
 export async function clearWalrusCache(blobId?: string): Promise<void> {
   if (blobId) {
-    await cacheManager.delete(blobId);
+    await cacheManager.delete(blobId as any);
   } else {
     await cacheManager.clear();
   }
@@ -295,7 +295,7 @@ export async function cleanupWalrusCache(): Promise<{
  * Check if content is cached
  */
 export async function isWalrusContentCached(blobId: string): Promise<boolean> {
-  const cached = await cacheManager.get(blobId);
+  const cached = await cacheManager.get(blobId as any);
   return cached !== null;
 }
 
@@ -310,5 +310,5 @@ export async function exportWalrusCache() {
  * Import cache from backup
  */
 export async function importWalrusCache(data: any) {
-  return cacheManager.import(data);
+  return cacheManager.import(data as any);
 }

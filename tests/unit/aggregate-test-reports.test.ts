@@ -14,8 +14,8 @@ describe('TestReportAggregator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     aggregator = new TestReportAggregator('test-output');
-    mockFs.existsSync.mockReturnValue(false);
-    mockFs.mkdirSync.mockImplementation(() => {});
+    mockFs?.existsSync?.mockReturnValue(false as any);
+    mockFs?.mkdirSync?.mockImplementation(() => {});
   });
 
   describe('TestStats interface', () => {
@@ -29,11 +29,11 @@ describe('TestReportAggregator', () => {
       };
 
       // Test that TypeScript recognizes these properties
-      expect(testStats.successfulRequests).toBe(100);
-      expect(testStats.failedRequests).toBe(10);
-      expect(testStats.totalDuration).toBe(5000);
-      expect(testStats.successRate).toBe(90);
-      expect(testStats.avgResponseTime).toBe(50);
+      expect(testStats.successfulRequests).toBe(100 as any);
+      expect(testStats.failedRequests).toBe(10 as any);
+      expect(testStats.totalDuration).toBe(5000 as any);
+      expect(testStats.successRate).toBe(90 as any);
+      expect(testStats.avgResponseTime).toBe(50 as any);
     });
 
     it('should handle stress test results with TestStats interface', () => {
@@ -59,12 +59,12 @@ describe('TestReportAggregator', () => {
 
       // Verify the structure matches our TestStats interface
       Object.entries(mockStressData.metrics).forEach(([op, stats]) => {
-        expect(stats).toHaveProperty('successfulRequests');
-        expect(stats).toHaveProperty('failedRequests');
-        expect(stats).toHaveProperty('totalDuration');
-        expect(stats).toHaveProperty('successRate');
-        expect(stats).toHaveProperty('avgResponseTime');
-        expect(op).toBeDefined();
+        expect(stats as any).toHaveProperty('successfulRequests');
+        expect(stats as any).toHaveProperty('failedRequests');
+        expect(stats as any).toHaveProperty('totalDuration');
+        expect(stats as any).toHaveProperty('successRate');
+        expect(stats as any).toHaveProperty('avgResponseTime');
+        expect(op as any).toBeDefined();
       });
     });
   });
@@ -84,15 +84,15 @@ describe('TestReportAggregator', () => {
         },
       };
 
-      mockFs.existsSync.mockReturnValue(true);
-      mockFs.readdirSync.mockReturnValue(['test.json']);
-      mockFs.readFileSync.mockReturnValue(JSON.stringify(stressTestData));
+      mockFs?.existsSync?.mockReturnValue(true as any);
+      mockFs?.readdirSync?.mockReturnValue(['test.json']);
+      mockFs?.readFileSync?.mockReturnValue(JSON.stringify(stressTestData as any));
 
       // Test the private method indirectly by calling loadExistingResults
       const results = await aggregator.loadExistingResults();
 
       // The results should include stress test data properly typed
-      expect(results).toBeDefined();
+      expect(results as any).toBeDefined();
     });
   });
 
@@ -113,7 +113,7 @@ describe('TestReportAggregator', () => {
       };
 
       expect(mockResults.title).toBe('Test Report');
-      expect(mockResults.totalTests).toBe(100);
+      expect(mockResults.totalTests).toBe(100 as any);
     });
   });
 });

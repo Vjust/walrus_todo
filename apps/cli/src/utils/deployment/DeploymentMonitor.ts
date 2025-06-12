@@ -77,11 +77,11 @@ export class DeploymentMonitor extends EventEmitter {
   ) {
     super();
     
-    this.logger = new Logger('DeploymentMonitor');
-    this.deploymentService = deploymentService;
-    this.recoveryManager = recoveryManager;
+    this?.logger = new Logger('DeploymentMonitor');
+    this?.deploymentService = deploymentService;
+    this?.recoveryManager = recoveryManager;
     
-    this.options = {
+    this?.options = {
       pollInterval: 2000, // 2 seconds
       enableNotifications: true,
       enableLogging: true,
@@ -95,17 +95,17 @@ export class DeploymentMonitor extends EventEmitter {
    */
   startMonitoring(): void {
     if (this.monitoringInterval) {
-      this.logger.warn('Monitoring already started');
+      this?.logger?.warn('Monitoring already started');
       return;
     }
 
-    this.logger.info('Starting deployment monitoring', {
-      pollInterval: this.options.pollInterval,
+    this?.logger?.info('Starting deployment monitoring', {
+      pollInterval: this?.options?.pollInterval,
     });
 
-    this.monitoringInterval = setInterval(() => {
+    this?.monitoringInterval = setInterval(() => {
       this.pollDeployments();
-    }, this.options.pollInterval);
+    }, this?.options?.pollInterval);
 
     // Initial poll
     this.pollDeployments();
@@ -117,8 +117,8 @@ export class DeploymentMonitor extends EventEmitter {
   stopMonitoring(): void {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
-      this.monitoringInterval = undefined;
-      this.logger.info('Deployment monitoring stopped');
+      this?.monitoringInterval = undefined;
+      this?.logger?.info('Deployment monitoring stopped');
     }
   }
 
@@ -126,12 +126,12 @@ export class DeploymentMonitor extends EventEmitter {
    * Get summary of a specific deployment
    */
   getDeploymentSummary(deploymentId: string): DeploymentSummary | null {
-    const state = this.recoveryManager.getDeploymentState(deploymentId);
-    const progress = this.deploymentService.getDeploymentProgress(deploymentId);
+    const state = this?.recoveryManager?.getDeploymentState(deploymentId as any);
+    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
     
     if (!state) return null;
 
-    const metrics = this.deploymentMetrics.get(deploymentId);
+    const metrics = this?.deploymentMetrics?.get(deploymentId as any);
     const startTime = metrics?.startTime || new Date(state.startTime).getTime();
     const currentTime = Date.now();
     const duration = currentTime - startTime;
@@ -140,10 +140,10 @@ export class DeploymentMonitor extends EventEmitter {
     if (progress && progress.progress > 0 && progress.progress < 100) {
       const estimatedTotalTime = (duration / progress.progress) * 100;
       const estimatedEndTime = startTime + estimatedTotalTime;
-      estimatedCompletion = new Date(estimatedEndTime).toISOString();
+      estimatedCompletion = new Date(estimatedEndTime as any).toISOString();
     }
 
-    const resourceUsage = this.calculateResourceUsage(state);
+    const resourceUsage = this.calculateResourceUsage(state as any);
 
     return {
       deploymentId,
@@ -153,8 +153,8 @@ export class DeploymentMonitor extends EventEmitter {
       progress: progress?.progress || 0,
       startTime: state.startTime,
       duration: ['completed', 'failed'].includes(state.status) ? duration : undefined,
-      errors: state.errors.map(e => e.message),
-      warnings: this.extractWarnings(state),
+      errors: state?.errors?.map(e => e.message),
+      warnings: this.extractWarnings(state as any),
       estimatedCompletion,
       resourceUsage,
     };
@@ -164,7 +164,7 @@ export class DeploymentMonitor extends EventEmitter {
    * Get summaries of all active deployments
    */
   getAllDeploymentSummaries(): DeploymentSummary[] {
-    const activeDeployments = this.recoveryManager.getActiveDeployments();
+    const activeDeployments = this?.recoveryManager?.getActiveDeployments();
     return activeDeployments
       .map(deployment => this.getDeploymentSummary(deployment.id))
       .filter((summary): summary is DeploymentSummary => summary !== null);
@@ -174,11 +174,11 @@ export class DeploymentMonitor extends EventEmitter {
    * Get system health metrics
    */
   getSystemHealth(): SystemHealth {
-    const activeDeployments = this.recoveryManager.getActiveDeployments();
+    const activeDeployments = this?.recoveryManager?.getActiveDeployments();
     const totalDeployments = activeDeployments.length;
-    const failedDeployments = activeDeployments.filter(d => d.status === 'failed').length;
+    const failedDeployments = activeDeployments.filter(d => d?.status === 'failed').length;
     
-    const completedDeployments = activeDeployments.filter(d => d.status === 'completed');
+    const completedDeployments = activeDeployments.filter(d => d?.status === 'completed');
     const averageDeploymentTime = completedDeployments.length > 0
       ? completedDeployments.reduce((sum, deployment) => {
           const duration = new Date(deployment.lastUpdate).getTime() - new Date(deployment.startTime).getTime();
@@ -186,7 +186,7 @@ export class DeploymentMonitor extends EventEmitter {
         }, 0) / completedDeployments.length
       : 0;
 
-    const totalErrors = activeDeployments.reduce((sum, deployment) => sum + deployment.errors.length, 0);
+    const totalErrors = activeDeployments.reduce((sum, deployment) => sum + deployment?.errors?.length, 0);
     const errorRate = totalDeployments > 0 ? totalErrors / totalDeployments : 0;
 
     // Mock resource utilization (in a real implementation, this would come from system monitoring)
@@ -211,7 +211,7 @@ export class DeploymentMonitor extends EventEmitter {
    */
   getEventHistory(deploymentId?: string): DeploymentEvent[] {
     if (deploymentId) {
-      return this.eventHistory.filter(event => event.deploymentId === deploymentId);
+      return this?.eventHistory?.filter(event => event?.deploymentId === deploymentId);
     }
     return [...this.eventHistory];
   }
@@ -225,18 +225,18 @@ export class DeploymentMonitor extends EventEmitter {
     retryCount: number;
     averageFileUploadTime: number;
   } | null {
-    const state = this.recoveryManager.getDeploymentState(deploymentId);
+    const state = this?.recoveryManager?.getDeploymentState(deploymentId as any);
     if (!state) return null;
 
-    const metrics = this.deploymentMetrics.get(deploymentId);
+    const metrics = this?.deploymentMetrics?.get(deploymentId as any);
     const events = metrics?.events || [];
     
-    const uploadEvents = events.filter(e => e.type === 'progress');
-    const errorEvents = events.filter(e => e.type === 'error');
+    const uploadEvents = events.filter(e => e?.type === 'progress');
+    const errorEvents = events.filter(e => e?.type === 'error');
     const duration = metrics ? Date.now() - metrics.startTime : 0;
     
-    const throughput = duration > 0 ? (state.progress.uploadedFiles / (duration / 1000)) : 0;
-    const retryCount = state.walrusOperations.uploads.reduce((sum, upload) => sum + upload.retryCount, 0);
+    const throughput = duration > 0 ? (state?.progress?.uploadedFiles / (duration / 1000)) : 0;
+    const retryCount = state?.walrusOperations?.uploads.reduce((sum, upload) => sum + upload.retryCount, 0);
     
     const averageFileUploadTime = uploadEvents.length > 0 
       ? uploadEvents.reduce((sum, event) => sum + (event.data?.duration || 0), 0) / uploadEvents.length
@@ -263,7 +263,7 @@ export class DeploymentMonitor extends EventEmitter {
       if (config.onDeploymentFailed) {
         const summary = this.getDeploymentSummary(event.deploymentId);
         if (summary) {
-          config.onDeploymentFailed(summary);
+          config.onDeploymentFailed(summary as any);
         }
       }
     });
@@ -272,7 +272,7 @@ export class DeploymentMonitor extends EventEmitter {
       if (config.onDeploymentStuck) {
         const summary = this.getDeploymentSummary(event.deploymentId);
         if (summary) {
-          config.onDeploymentStuck(summary);
+          config.onDeploymentStuck(summary as any);
         }
       }
     });
@@ -333,21 +333,21 @@ export class DeploymentMonitor extends EventEmitter {
     }
 
     const totalDeployments = filteredSummaries.length;
-    const successfulDeployments = filteredSummaries.filter(s => s.status === 'completed').length;
-    const failedDeployments = filteredSummaries.filter(s => s.status === 'failed').length;
+    const successfulDeployments = filteredSummaries.filter(s => s?.status === 'completed').length;
+    const failedDeployments = filteredSummaries.filter(s => s?.status === 'failed').length;
     
     const completedDeployments = filteredSummaries.filter(s => s.duration !== undefined);
     const averageDeploymentTime = completedDeployments.length > 0
       ? completedDeployments.reduce((sum, s) => sum + (s.duration || 0), 0) / completedDeployments.length
       : 0;
 
-    const totalFilesDeployed = filteredSummaries.reduce((sum, s) => sum + s.resourceUsage.totalFiles, 0);
-    const totalDataTransferred = filteredSummaries.reduce((sum, s) => sum + s.resourceUsage.totalBytes, 0);
+    const totalFilesDeployed = filteredSummaries.reduce((sum, s) => sum + s?.resourceUsage?.totalFiles, 0);
+    const totalDataTransferred = filteredSummaries.reduce((sum, s) => sum + s?.resourceUsage?.totalBytes, 0);
 
     // Generate trends
-    const deploymentsByHour = this.generateHourlyTrends(filteredSummaries);
-    const errorsByType = this.generateErrorTrends(filteredSummaries);
-    const averageUploadSpeed = this.calculateAverageUploadSpeed(filteredSummaries);
+    const deploymentsByHour = this.generateHourlyTrends(filteredSummaries as any);
+    const errorsByType = this.generateErrorTrends(filteredSummaries as any);
+    const averageUploadSpeed = this.calculateAverageUploadSpeed(filteredSummaries as any);
 
     return {
       summary: {
@@ -371,34 +371,34 @@ export class DeploymentMonitor extends EventEmitter {
 
   private async pollDeployments(): Promise<void> {
     try {
-      const activeDeployments = this.recoveryManager.getActiveDeployments();
+      const activeDeployments = this?.recoveryManager?.getActiveDeployments();
       
       for (const deployment of activeDeployments) {
-        await this.checkDeploymentStatus(deployment);
+        await this.checkDeploymentStatus(deployment as any);
       }
     } catch (error) {
-      this.logger.error('Error during deployment polling', { error });
+      this?.logger?.error('Error during deployment polling', { error });
     }
   }
 
   private async checkDeploymentStatus(deployment: DeploymentState): Promise<void> {
     const deploymentId = deployment.id;
-    const progress = this.deploymentService.getDeploymentProgress(deploymentId);
+    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
     
     // Initialize metrics if not exists
-    if (!this.deploymentMetrics.has(deploymentId)) {
-      this.deploymentMetrics.set(deploymentId, {
+    if (!this?.deploymentMetrics?.has(deploymentId as any)) {
+      this?.deploymentMetrics?.set(deploymentId, {
         startTime: new Date(deployment.startTime).getTime(),
         lastUpdate: Date.now(),
         events: [],
       });
     }
 
-    const metrics = this.deploymentMetrics.get(deploymentId)!;
+    const metrics = this?.deploymentMetrics?.get(deploymentId as any)!;
     const currentTime = Date.now();
     
     // Check for status changes
-    const lastEvent = metrics.events[metrics.events.length - 1];
+    const lastEvent = metrics?.events?.[metrics?.events?.length - 1];
     if (!lastEvent || lastEvent.data?.status !== deployment.status) {
       this.recordEvent(deploymentId, 'phase_change', {
         status: deployment.status,
@@ -431,8 +431,8 @@ export class DeploymentMonitor extends EventEmitter {
 
     // Check for new errors
     const lastErrorCount = lastEvent?.data?.errorCount || 0;
-    if (deployment.errors.length > lastErrorCount) {
-      const newErrors = deployment.errors.slice(lastErrorCount);
+    if (deployment?.errors?.length > lastErrorCount) {
+      const newErrors = deployment?.errors?.slice(lastErrorCount as any);
       for (const error of newErrors) {
         this.recordEvent(deploymentId, 'error', {
           errorType: error.type,
@@ -443,29 +443,29 @@ export class DeploymentMonitor extends EventEmitter {
     }
 
     // Check for completion
-    if (deployment.status === 'completed' && !metrics.events.some(e => e.type === 'completed')) {
+    if (deployment?.status === 'completed' && !metrics?.events?.some(e => e?.type === 'completed')) {
       this.recordEvent(deploymentId, 'completed', {
         duration: currentTime - metrics.startTime,
-        siteId: deployment.metadata.siteId,
-        totalFiles: deployment.progress.totalFiles,
+        siteId: deployment?.metadata?.siteId,
+        totalFiles: deployment?.progress?.totalFiles,
       });
     }
 
     // Check for failure
-    if (deployment.status === 'failed' && !metrics.events.some(e => e.type === 'failed')) {
+    if (deployment?.status === 'failed' && !metrics?.events?.some(e => e?.type === 'failed')) {
       this.recordEvent(deploymentId, 'failed', {
         duration: currentTime - metrics.startTime,
         errors: deployment.errors,
-        canResume: deployment.recovery.canResume,
+        canResume: deployment?.recovery?.canResume,
       });
       
       this.emit('deployment_failed', { deploymentId, timestamp: new Date().toISOString(), type: 'failed' });
     }
 
-    metrics.lastUpdate = currentTime;
+    metrics?.lastUpdate = currentTime;
   }
 
-  private recordEvent(deploymentId: string, type: DeploymentEvent['type'], data?: any): void {
+  private recordEvent(deploymentId: string, type: DeploymentEvent?.["type"], data?: any): void {
     const event: DeploymentEvent = {
       deploymentId,
       timestamp: new Date().toISOString(),
@@ -474,15 +474,15 @@ export class DeploymentMonitor extends EventEmitter {
     };
 
     // Add to global history
-    this.eventHistory.push(event);
-    if (this.eventHistory.length > this.options.maxHistorySize) {
-      this.eventHistory.shift();
+    this?.eventHistory?.push(event as any);
+    if (this?.eventHistory?.length > this?.options?.maxHistorySize) {
+      this?.eventHistory?.shift();
     }
 
     // Add to deployment metrics
-    const metrics = this.deploymentMetrics.get(deploymentId);
+    const metrics = this?.deploymentMetrics?.get(deploymentId as any);
     if (metrics) {
-      metrics.events.push(event);
+      metrics?.events?.push(event as any);
     }
 
     // Emit event
@@ -490,8 +490,8 @@ export class DeploymentMonitor extends EventEmitter {
     this.emit('event', event);
 
     // Log if enabled
-    if (this.options.enableLogging) {
-      this.logger.info('Deployment event', {
+    if (this?.options?.enableLogging) {
+      this?.logger?.info('Deployment event', {
         deploymentId,
         type,
         data,
@@ -499,15 +499,15 @@ export class DeploymentMonitor extends EventEmitter {
     }
   }
 
-  private calculateResourceUsage(state: DeploymentState): DeploymentSummary['resourceUsage'] {
-    const uploadedFiles = state.progress.uploadedFiles;
-    const totalFiles = state.progress.totalFiles;
+  private calculateResourceUsage(state: DeploymentState): DeploymentSummary?.["resourceUsage"] {
+    const uploadedFiles = state?.progress?.uploadedFiles;
+    const totalFiles = state?.progress?.totalFiles;
     
-    const completedUploads = state.walrusOperations.uploads.filter(u => u.status === 'completed');
+    const completedUploads = state?.walrusOperations?.uploads.filter(u => u?.status === 'completed');
     const bytesUploaded = completedUploads.reduce((sum, upload) => sum + upload.size, 0);
-    const totalBytes = state.walrusOperations.uploads.reduce((sum, upload) => sum + upload.size, 0);
+    const totalBytes = state?.walrusOperations?.uploads.reduce((sum, upload) => sum + upload.size, 0);
     
-    const cost = state.metadata.estimatedCost || 0;
+    const cost = state?.metadata?.estimatedCost || 0;
 
     return {
       filesUploaded: uploadedFiles,
@@ -522,12 +522,12 @@ export class DeploymentMonitor extends EventEmitter {
     const warnings: string[] = [];
     
     // Check for large deployment
-    if (state.metadata.totalSize > 100 * 1024 * 1024) { // 100MB
+    if (state?.metadata?.totalSize > 100 * 1024 * 1024) { // 100MB
       warnings.push('Large deployment size may impact performance');
     }
 
     // Check for many retries
-    const totalRetries = state.walrusOperations.uploads.reduce((sum, upload) => sum + upload.retryCount, 0);
+    const totalRetries = state?.walrusOperations?.uploads.reduce((sum, upload) => sum + upload.retryCount, 0);
     if (totalRetries > 5) {
       warnings.push('High number of upload retries detected');
     }
@@ -546,12 +546,12 @@ export class DeploymentMonitor extends EventEmitter {
     
     for (const summary of summaries) {
       const hour = new Date(summary.startTime).toISOString().slice(0, 13) + ':00:00';
-      hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
+      hourCounts.set(hour, (hourCounts.get(hour as any) || 0) + 1);
     }
 
     return Array.from(hourCounts.entries())
       .map(([hour, count]) => ({ hour, count }))
-      .sort((a, b) => a.hour.localeCompare(b.hour));
+      .sort((a, b) => a?.hour?.localeCompare(b.hour));
   }
 
   private generateErrorTrends(summaries: DeploymentSummary[]): Array<{ type: string; count: number }> {
@@ -565,7 +565,7 @@ export class DeploymentMonitor extends EventEmitter {
                     error.includes('validation') ? 'validation' :
                     error.includes('blockchain') ? 'blockchain' : 'other';
         
-        errorCounts.set(type, (errorCounts.get(type) || 0) + 1);
+        errorCounts.set(type, (errorCounts.get(type as any) || 0) + 1);
       }
     }
 
@@ -577,10 +577,10 @@ export class DeploymentMonitor extends EventEmitter {
   private calculateAverageUploadSpeed(summaries: DeploymentSummary[]): number {
     const completedDeployments = summaries.filter(s => s.duration !== undefined && s.duration > 0);
     
-    if (completedDeployments.length === 0) return 0;
+    if (completedDeployments?.length === 0) return 0;
     
     const totalSpeed = completedDeployments.reduce((sum, summary) => {
-      const speedBytesPerMs = summary.resourceUsage.totalBytes / summary.duration!;
+      const speedBytesPerMs = summary?.resourceUsage?.totalBytes / summary.duration!;
       return sum + speedBytesPerMs;
     }, 0);
 

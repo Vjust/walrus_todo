@@ -92,15 +92,15 @@ export class StorageTransaction {
   public async createStorageAllocationTransaction(
     size: number,
     epochs: number
-  ): Promise<TransactionBlock> {
+  ): Promise<Transaction> {
     try {
       const tx = new Transaction();
 
       tx.moveCall({
         target: '0x2::storage::create_storage',
         arguments: [
-          tx.pure(size),
-          tx.pure(epochs),
+          tx.pure(size as any),
+          tx.pure(epochs as any),
           tx.object('0x6'), // Use explicit gas object reference
         ],
       });
@@ -108,7 +108,7 @@ export class StorageTransaction {
       return tx;
     } catch (error) {
       throw new BlockchainError(
-        `Failed to create storage allocation transaction: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create storage allocation transaction: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'create storage transaction',
           recoverable: false,
@@ -131,23 +131,23 @@ export class StorageTransaction {
     storageId: string,
     additionalSize: number,
     additionalEpochs: number
-  ): Promise<TransactionBlock> {
+  ): Promise<Transaction> {
     try {
       const tx = new Transaction();
 
       tx.moveCall({
         target: '0x2::storage::extend_storage',
         arguments: [
-          tx.object(storageId),
-          tx.pure(additionalSize),
-          tx.pure(additionalEpochs),
+          tx.object(storageId as any),
+          tx.pure(additionalSize as any),
+          tx.pure(additionalEpochs as any),
         ],
       });
 
       return tx;
     } catch (error) {
       throw new BlockchainError(
-        `Failed to create storage extension transaction: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create storage extension transaction: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'extend storage transaction',
           recoverable: false,
@@ -167,7 +167,7 @@ export class StorageTransaction {
    * @throws {TransactionError} if transaction execution fails
    */
   public async executeTransaction(
-    transaction: TransactionBlock,
+    transaction: Transaction,
     operationType: TransactionOperation,
     options: TransactionOptions = {}
   ): Promise<TransactionResult> {
@@ -184,7 +184,7 @@ export class StorageTransaction {
         async () => {
           try {
             // Use adapter for transaction compatibility
-            const txAdapter = createTransactionBlockAdapter(transaction);
+            const txAdapter = createTransactionBlockAdapter(transaction as any);
 
             // Build and serialize transaction for execution
             const serializedTx = await txAdapter.build({
@@ -192,7 +192,7 @@ export class StorageTransaction {
             });
 
             // Sign the transaction
-            const signature = await this.signer.signTransaction(serializedTx);
+            const signature = await this?.signer?.signTransaction(serializedTx as any);
 
             // Get transaction bytes for execution
             const txBytes = await txAdapter.serialize();
@@ -220,7 +220,7 @@ export class StorageTransaction {
             };
 
             if (gasBudget) {
-              transactionBlockParams.options.showInput = true;
+              transactionBlockParams.options?.showInput = true;
               // Apply gas budget if API version supports it
               if (
                 'gasConfig' in txAdapter &&
@@ -239,14 +239,14 @@ export class StorageTransaction {
             }
 
             // Execute the transaction
-            const response = await this.suiClient.executeTransactionBlock(
+            const response = await this?.suiClient?.executeTransactionBlock(
               transactionBlockParams
             );
 
             // Check for successful execution
             if (
               !response.effects?.status?.status ||
-              response.effects.status.status !== 'success'
+              response?.effects?.status.status !== 'success'
             ) {
               return {
                 digest: response.digest,
@@ -258,12 +258,12 @@ export class StorageTransaction {
 
             // Extract created objects if any
             const createdObjects =
-              response.effects.created?.map(obj => obj.reference?.objectId) ||
+              response?.effects?.created?.map(obj => obj.reference?.objectId) ||
               [];
 
             // Extract updated objects if any
             const updatedObjects =
-              response.effects.mutated?.map(obj => obj.reference?.objectId) ||
+              response?.effects?.mutated?.map(obj => obj.reference?.objectId) ||
               [];
 
             return {
@@ -275,10 +275,10 @@ export class StorageTransaction {
             };
           } catch (error) {
             throw new TransactionError(
-              `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error)}`,
+              `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error as any)}`,
               {
                 operation: `execute ${operationType}`,
-                recoverable: this.isTransientError(error),
+                recoverable: this.isTransientError(error as any),
                 cause: error instanceof Error ? error : undefined,
               }
             );
@@ -302,7 +302,7 @@ export class StorageTransaction {
       }
 
       throw new TransactionError(
-        `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: `execute ${operationType}`,
           recoverable: false,
@@ -319,7 +319,7 @@ export class StorageTransaction {
    * @returns Whether the error is likely transient
    */
   private isTransientError(error: unknown): boolean {
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorMsg = error instanceof Error ? error.message : String(error as any);
 
     // Common transient errors to retry
     const transientPatterns = [

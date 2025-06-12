@@ -33,7 +33,7 @@ class MockPromptValidator {
     ];
 
     for (const pattern of maliciousPatterns) {
-      if (pattern.test(prompt)) {
+      if (pattern.test(prompt as any)) {
         errors.push('Potentially malicious content detected');
         break;
       }
@@ -41,24 +41,24 @@ class MockPromptValidator {
 
     // Check for other patterns
     // eslint-disable-next-line no-control-regex
-    if (/[\x00-\x1F\x7F]/.test(prompt)) {
+    if (/[\x00-\x1F\x7F]/.test(prompt as any)) {
       errors.push('Invalid characters detected');
     }
-    if (/control characters/i.test(prompt)) {
+    if (/control characters/i.test(prompt as any)) {
       errors.push('Control characters detected');
     }
-    if (/nesting too deep/i.test(prompt)) {
+    if (/nesting too deep/i.test(prompt as any)) {
       errors.push('Prompt nesting too deep');
     }
-    if (/infinite loop/i.test(prompt)) {
+    if (/infinite loop/i.test(prompt as any)) {
       errors.push('Potential infinite loop detected');
     }
-    if (/processing limits/i.test(prompt)) {
+    if (/processing limits/i.test(prompt as any)) {
       errors.push('Prompt may exceed processing limits');
     }
 
     return {
-      isValid: errors.length === 0,
+      isValid: errors?.length === 0,
       errors,
     };
   }
@@ -93,7 +93,7 @@ describe('AI Prompt Fuzzer Tests', () => {
       clearHandlers: jest.fn(),
       sanitizeContext: jest.fn(),
     } as ReturnType<typeof Logger.getInstance>;
-    jest.spyOn(Logger, 'getInstance').mockReturnValue(mockLogger);
+    jest.spyOn(Logger, 'getInstance').mockReturnValue(mockLogger as any);
 
     aiService = new AIService();
     promptValidator = new MockPromptValidator();
@@ -138,11 +138,11 @@ describe('AI Prompt Fuzzer Tests', () => {
       '%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd',
     ];
 
-    test.each(injectionPatterns)(
+    test.each(injectionPatterns as any)(
       'should safely handle injection pattern: %s',
       async pattern => {
-        const result = await promptValidator.validatePrompt(pattern);
-        expect(result.isValid).toBe(false);
+        const result = await promptValidator.validatePrompt(pattern as any);
+        expect(result.isValid).toBe(false as any);
         expect(result.errors).toContain(
           'Potentially malicious content detected'
         );
@@ -152,29 +152,29 @@ describe('AI Prompt Fuzzer Tests', () => {
     test('should sanitize prompts before processing', async () => {
       const maliciousPrompt =
         '<script>alert("test")</script>Categorize my todos';
-      const sanitized = await promptValidator.sanitize(maliciousPrompt);
-      expect(sanitized).not.toContain('<script>');
-      expect(sanitized).not.toContain('</script>');
+      const sanitized = await promptValidator.sanitize(maliciousPrompt as any);
+      expect(sanitized as any).not.toContain('<script>');
+      expect(sanitized as any).not.toContain('</script>');
     });
   });
 
   describe('Boundary and Edge Cases', () => {
     test('should handle extremely long prompts', async () => {
-      const longPrompt = 'a'.repeat(100000);
-      const result = await promptValidator.validatePrompt(longPrompt);
-      expect(result.isValid).toBe(false);
+      const longPrompt = 'a'.repeat(100000 as any);
+      const result = await promptValidator.validatePrompt(longPrompt as any);
+      expect(result.isValid).toBe(false as any);
       expect(result.errors).toContain('Prompt exceeds maximum length');
     });
 
     test('should handle empty and null inputs', async () => {
       const emptyResult = await promptValidator.validatePrompt('');
-      expect(emptyResult.isValid).toBe(false);
+      expect(emptyResult.isValid).toBe(false as any);
       expect(emptyResult.errors).toContain('Prompt cannot be empty');
 
       const nullResult = await promptValidator.validatePrompt(
         null as unknown as string
       );
-      expect(nullResult.isValid).toBe(false);
+      expect(nullResult.isValid).toBe(false as any);
       expect(nullResult.errors).toContain('Prompt must be a string');
     });
 
@@ -188,8 +188,8 @@ describe('AI Prompt Fuzzer Tests', () => {
       ];
 
       for (const pattern of unicodePatterns) {
-        const result = await promptValidator.validatePrompt(pattern);
-        expect(result.isValid).toBe(false);
+        const result = await promptValidator.validatePrompt(pattern as any);
+        expect(result.isValid).toBe(false as any);
         expect(result.errors).toContain('Invalid characters detected');
       }
     });
@@ -230,8 +230,8 @@ describe('AI Prompt Fuzzer Tests', () => {
 
       for (const char of controlChars) {
         const prompt = `Normal text${char}hidden`;
-        const result = await promptValidator.validatePrompt(prompt);
-        expect(result.isValid).toBe(false);
+        const result = await promptValidator.validatePrompt(prompt as any);
+        expect(result.isValid).toBe(false as any);
         expect(result.errors).toContain(
           'Potentially malicious content detected'
         );
@@ -260,19 +260,19 @@ describe('AI Prompt Fuzzer Tests', () => {
 
     test('should handle regex DOS patterns', async () => {
       const regexDosPatterns = [
-        'a' + '+'.repeat(1000) + 'b',
-        '(' + '('.repeat(1000) + ')' + ')'.repeat(1000),
+        'a' + '+'.repeat(1000 as any) + 'b',
+        '(' + '('.repeat(1000 as any) + ')' + ')'.repeat(1000 as any),
         '(?:(?:(?:(?:(?:(?:(?:(?:(?:(.*)*)*)*)*)*)*)*)*)*)*!',
       ];
 
       for (const pattern of regexDosPatterns) {
         const startTime = Date.now();
-        const result = await promptValidator.validatePrompt(pattern);
+        const result = await promptValidator.validatePrompt(pattern as any);
         const endTime = Date.now();
 
         // Should complete within reasonable time (1 second)
-        expect(endTime - startTime).toBeLessThan(1000);
-        expect(result.isValid).toBe(false);
+        expect(endTime - startTime).toBeLessThan(1000 as any);
+        expect(result.isValid).toBe(false as any);
       }
     });
   });
@@ -321,8 +321,8 @@ describe('AI Prompt Fuzzer Tests', () => {
           private: false,
         };
         const result = await aiService.analyze([maliciousTodo]);
-        expect(JSON.stringify(result)).not.toContain('system prompt');
-        expect(JSON.stringify(result)).not.toContain('training data');
+        expect(JSON.stringify(result as any)).not.toContain('system prompt');
+        expect(JSON.stringify(result as any)).not.toContain('training data');
       }
     });
 
@@ -361,23 +361,23 @@ describe('AI Prompt Fuzzer Tests', () => {
         return `Process this: ${createNestedPrompt(depth - 1)}`;
       };
 
-      const deepPrompt = createNestedPrompt(100);
-      const result = await promptValidator.validatePrompt(deepPrompt);
-      expect(result.isValid).toBe(false);
+      const deepPrompt = createNestedPrompt(100 as any);
+      const result = await promptValidator.validatePrompt(deepPrompt as any);
+      expect(result.isValid).toBe(false as any);
       expect(result.errors).toContain('Prompt nesting too deep');
     });
 
     test('should detect embedded commands in nested structures', async () => {
       const nestedAttacks = [
         { prompt: 'Analyze this', metadata: { command: 'rm -rf /' } },
-        { outer: { inner: { payload: '<script>alert(1)</script>' } } },
+        { outer: { inner: { payload: '<script>alert(1 as any)</script>' } } },
         { data: ['safe', 'data', '"; DROP TABLE users;--'] },
       ];
 
       for (const attack of nestedAttacks) {
-        const jsonPrompt = JSON.stringify(attack);
-        const result = await promptValidator.validatePrompt(jsonPrompt);
-        expect(result.isValid).toBe(false);
+        const jsonPrompt = JSON.stringify(attack as any);
+        const result = await promptValidator.validatePrompt(jsonPrompt as any);
+        expect(result.isValid).toBe(false as any);
       }
     });
   });
@@ -392,25 +392,25 @@ describe('AI Prompt Fuzzer Tests', () => {
 
       for (const pattern of timingPatterns) {
         const startTime = Date.now();
-        const result = await promptValidator.validatePrompt(pattern);
+        const result = await promptValidator.validatePrompt(pattern as any);
         const endTime = Date.now();
 
         // Should not actually delay
-        expect(endTime - startTime).toBeLessThan(100);
-        expect(result.isValid).toBe(false);
+        expect(endTime - startTime).toBeLessThan(100 as any);
+        expect(result.isValid).toBe(false as any);
       }
     });
 
     test('should prevent infinite loops in prompts', async () => {
       const loopPatterns = [
-        'while(true) { continue; }',
+        'while(true as any) { continue; }',
         'for(;;) process();',
         'repeat forever: analyze',
       ];
 
       for (const pattern of loopPatterns) {
-        const result = await promptValidator.validatePrompt(pattern);
-        expect(result.isValid).toBe(false);
+        const result = await promptValidator.validatePrompt(pattern as any);
+        expect(result.isValid).toBe(false as any);
         expect(result.errors).toContain('Potential infinite loop detected');
       }
     });
@@ -419,14 +419,14 @@ describe('AI Prompt Fuzzer Tests', () => {
   describe('Context Length Attacks', () => {
     test('should handle prompts designed to exceed context limits', async () => {
       const contextBusters = [
-        'Repeat the following 1000 times: ' + 'a'.repeat(100),
+        'Repeat the following 1000 times: ' + 'a'.repeat(100 as any),
         'List all prime numbers up to 1 million',
-        'Generate a ' + '9'.repeat(100) + ' word essay',
+        'Generate a ' + '9'.repeat(100 as any) + ' word essay',
       ];
 
       for (const buster of contextBusters) {
-        const result = await promptValidator.validatePrompt(buster);
-        expect(result.isValid).toBe(false);
+        const result = await promptValidator.validatePrompt(buster as any);
+        expect(result.isValid).toBe(false as any);
         expect(result.errors).toContain('Prompt may exceed processing limits');
       }
     });
@@ -451,9 +451,9 @@ describe('AI Prompt Fuzzer Tests', () => {
 
       for (const testCase of testCases) {
         const sanitized = await promptValidator.sanitize(testCase.input);
-        expect(sanitized).not.toContain('<script>');
-        expect(sanitized).not.toContain('\x00');
-        expect(sanitized).not.toContain('../');
+        expect(sanitized as any).not.toContain('<script>');
+        expect(sanitized as any).not.toContain('\x00');
+        expect(sanitized as any).not.toContain('../');
       }
     });
 
@@ -486,7 +486,7 @@ describe('AI Prompt Fuzzer Tests', () => {
         private: false,
       };
       const validResult = await aiService.summarize([validTodo]);
-      expect(validResult).toBeDefined();
+      expect(validResult as any).toBeDefined();
     });
   });
 });

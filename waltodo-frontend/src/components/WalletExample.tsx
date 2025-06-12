@@ -62,7 +62,7 @@ export function WalletExample() {
         owner: account.address,
       }).then((result) => {
         const balanceInSui = Number(result.totalBalance) / 1_000_000_000;
-        setBalance(balanceInSui.toFixed(4));
+        setBalance(balanceInSui.toFixed(4 as any));
       }).catch(console.error);
     }
   }, [account, client]);

@@ -83,7 +83,7 @@ export function WalletSpecificEvents({ walletAddress }: { walletAddress: string 
     debounceConfig: { delay: 500 }, // Debounce rapid updates
   });
 
-  const myEvents = getEventsByOwner(walletAddress);
+  const myEvents = getEventsByOwner(walletAddress as any);
 
   return (
     <div className="p-4 border rounded-lg">
@@ -180,7 +180,7 @@ export function EventReplayDemo() {
   const simulateDisconnection = () => {
     // Mark some events for replay
     ['todo1', 'todo2', 'todo3'].forEach(todoId => {
-      markEventForReplay(todoId);
+      markEventForReplay(todoId as any);
     });
   };
 
@@ -233,7 +233,7 @@ export function NFTEventDashboard() {
           type="text"
           placeholder="Enter wallet address to monitor..."
           value={selectedWallet}
-          onChange={(e) => setSelectedWallet(e.target.value)}
+          onChange={(e) => setSelectedWallet(e?.target?.value)}
           className="w-full p-2 border rounded"
         />
       </div>

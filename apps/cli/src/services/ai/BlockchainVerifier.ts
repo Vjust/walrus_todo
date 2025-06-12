@@ -33,23 +33,23 @@ export class BlockchainVerifier {
     credentialAdapter?: AICredentialAdapter,
     walrusAdapter?: WalrusClientAdapter
   ) {
-    this.verifierAdapter = verifierAdapter;
-    this.credentialAdapter = credentialAdapter;
-    this.walrusAdapter = walrusAdapter;
+    this?.verifierAdapter = verifierAdapter;
+    this?.credentialAdapter = credentialAdapter;
+    this?.walrusAdapter = walrusAdapter;
   }
 
   /**
    * Set the credential adapter
    */
   public setCredentialAdapter(adapter: AICredentialAdapter): void {
-    this.credentialAdapter = adapter;
+    this?.credentialAdapter = adapter;
   }
 
   /**
    * Set the Walrus adapter for off-chain storage
    */
   public setWalrusAdapter(adapter: WalrusClientAdapter): void {
-    this.walrusAdapter = adapter;
+    this?.walrusAdapter = adapter;
   }
 
   /**
@@ -71,21 +71,21 @@ export class BlockchainVerifier {
         const responseBlob = new TextEncoder().encode(params.response);
 
         // Get signer from verifier adapter
-        const signer = this.verifierAdapter.getSigner();
+        const signer = this?.verifierAdapter?.getSigner();
 
         // Store request and response blobs
-        const requestBlobResult = await this.walrusAdapter.writeBlob({
+        const requestBlobResult = await this?.walrusAdapter?.writeBlob({
           blob: requestBlob,
           signer: signer,
         });
 
-        const responseBlobResult = await this.walrusAdapter.writeBlob({
+        const responseBlobResult = await this?.walrusAdapter?.writeBlob({
           blob: responseBlob,
           signer: signer,
         });
 
         // Add blob IDs to metadata
-        params.metadata = {
+        params?.metadata = {
           ...params.metadata,
           requestBlobId: requestBlobResult.blobId,
           responseBlobId: responseBlobResult.blobId,
@@ -98,7 +98,7 @@ export class BlockchainVerifier {
     }
 
     // Create verification on the blockchain
-    return this.verifierAdapter.createVerification(params);
+    return this?.verifierAdapter?.createVerification(params as any);
   }
 
   /**
@@ -112,7 +112,7 @@ export class BlockchainVerifier {
     }
 
     // Verify credential on blockchain
-    return this.credentialAdapter.verifyCredential(params);
+    return this?.credentialAdapter?.verifyCredential(params as any);
   }
 
   /**
@@ -134,12 +134,12 @@ export class BlockchainVerifier {
       throw new Error('Request and response must be strings');
     }
 
-    const result = await this.verifierAdapter.verifyRecord(
+    const result = await this?.verifierAdapter?.verifyRecord(
       record,
       request,
       response
     );
-    return Boolean(result);
+    return Boolean(result as any);
   }
 
   /**
@@ -155,7 +155,7 @@ export class BlockchainVerifier {
     }
 
     const verification =
-      await this.verifierAdapter.getVerification(verificationId);
+      await this?.verifierAdapter?.getVerification(verificationId as any);
     if (!verification) {
       throw new Error(`Verification not found: ${verificationId}`);
     }
@@ -173,8 +173,8 @@ export class BlockchainVerifier {
     }
 
     const verifications =
-      await this.verifierAdapter.listVerifications(userAddress);
-    return Array.isArray(verifications) ? verifications : [];
+      await this?.verifierAdapter?.listVerifications(userAddress as any);
+    return Array.isArray(verifications as any) ? verifications : [];
   }
 
   /**
@@ -185,8 +185,8 @@ export class BlockchainVerifier {
   ): Promise<{ request: string; response: string }> {
     if (
       !record.metadata ||
-      !record.metadata.requestBlobId ||
-      !record.metadata.responseBlobId
+      !record?.metadata?.requestBlobId ||
+      !record?.metadata?.responseBlobId
     ) {
       throw new Error(
         'Verification does not contain blob IDs for full data retrieval'
@@ -199,19 +199,19 @@ export class BlockchainVerifier {
 
     try {
       // Retrieve request and response blobs
-      const requestBlobId = record.metadata.requestBlobId;
-      const responseBlobId = record.metadata.responseBlobId;
+      const requestBlobId = record?.metadata?.requestBlobId;
+      const responseBlobId = record?.metadata?.responseBlobId;
 
-      const requestBlob = await this.walrusAdapter.readBlob({
+      const requestBlob = await this?.walrusAdapter?.readBlob({
         blobId: requestBlobId,
       });
-      const responseBlob = await this.walrusAdapter.readBlob({
+      const responseBlob = await this?.walrusAdapter?.readBlob({
         blobId: responseBlobId,
       });
 
       // Convert Uint8Array to strings
-      const request = new TextDecoder().decode(requestBlob);
-      const response = new TextDecoder().decode(responseBlob);
+      const request = new TextDecoder().decode(requestBlob as any);
+      const response = new TextDecoder().decode(responseBlob as any);
 
       return { request, response };
     } catch (_error) {
@@ -224,12 +224,12 @@ export class BlockchainVerifier {
    */
   async generateVerificationProof(verificationId: string): Promise<string> {
     // Get the verification record
-    const record = await this.verifierAdapter.getVerification(verificationId);
+    const record = await this?.verifierAdapter?.getVerification(verificationId as any);
 
     // Create a JSON proof object with verification details
     const proof = {
       verificationId: record.id,
-      verifierAddress: this.verifierAdapter.getRegistryAddress(),
+      verifierAddress: this?.verifierAdapter?.getRegistryAddress(),
       timestamp: record.timestamp,
       requestHash: record.requestHash,
       responseHash: record.responseHash,
@@ -238,13 +238,13 @@ export class BlockchainVerifier {
       chainInfo: {
         network: 'sui',
         objectId: verificationId,
-        registryId: await this.verifierAdapter.getRegistryAddress(),
+        registryId: await this?.verifierAdapter?.getRegistryAddress(),
       },
-      verificationUrl: `https://explorer.sui.io/objects/${verificationId}`,
+      verificationUrl: `https://explorer?.sui?.io/objects/${verificationId}`,
     };
 
     // Convert the proof to a shareable string
-    return Buffer.from(JSON.stringify(proof)).toString('base64');
+    return Buffer.from(JSON.stringify(proof as any)).toString('base64');
   }
 
   /**
@@ -256,7 +256,7 @@ export class BlockchainVerifier {
     try {
       // Parse the proof
       const proofJson = Buffer.from(proofString, 'base64').toString('utf8');
-      const proof = JSON.parse(proofJson) as {
+      const proof = JSON.parse(proofJson as any) as {
         verificationId: string;
         requestHash: string;
         responseHash: string;
@@ -264,7 +264,7 @@ export class BlockchainVerifier {
       };
 
       // Get the verification record from the blockchain
-      const record = await this.verifierAdapter.getVerification(
+      const record = await this?.verifierAdapter?.getVerification(
         proof.verificationId
       );
 
@@ -275,10 +275,10 @@ export class BlockchainVerifier {
 
       // Validate the proof by comparing hashes and metadata
       const isValid =
-        record.id === proof.verificationId &&
-        record.requestHash === proof.requestHash &&
-        record.responseHash === proof.responseHash &&
-        record.timestamp === proof.timestamp;
+        record?.id === proof.verificationId &&
+        record?.requestHash === proof.requestHash &&
+        record?.responseHash === proof.responseHash &&
+        record?.timestamp === proof.timestamp;
 
       return {
         isValid,
@@ -294,7 +294,7 @@ export class BlockchainVerifier {
    * Generate a hash of data for blockchain storage
    */
   private hashData(data: string): string {
-    return createHash('sha256').update(data).digest('hex');
+    return createHash('sha256').update(data as any).digest('hex');
   }
 
   /**
@@ -315,7 +315,7 @@ export class BlockchainVerifier {
    * Get the signer used by the verifier adapter
    */
   getSigner(): SignerAdapter {
-    return this.verifierAdapter.getSigner();
+    return this?.verifierAdapter?.getSigner();
   }
 
   /**
@@ -330,7 +330,7 @@ export class BlockchainVerifier {
       throw new Error('Verification ID must be a non-empty string');
     }
 
-    const proof = await this.verifierAdapter.generateProof(verificationId);
+    const proof = await this?.verifierAdapter?.generateProof(verificationId as any);
     if (!proof || typeof proof !== 'string') {
       throw new Error('Failed to generate proof: invalid result');
     }
@@ -345,21 +345,21 @@ export class BlockchainVerifier {
     userAddress: string,
     format: 'json' | 'csv' = 'json'
   ): Promise<string> {
-    return this.verifierAdapter.exportVerifications(userAddress, format);
+    return this?.verifierAdapter?.exportVerifications(userAddress, format);
   }
 
   /**
    * Enforce data retention policy
    */
   async enforceRetentionPolicy(retentionDays?: number): Promise<number> {
-    return this.verifierAdapter.enforceRetentionPolicy(retentionDays);
+    return this?.verifierAdapter?.enforceRetentionPolicy(retentionDays as any);
   }
 
   /**
    * Securely destroy verification data
    */
   async securelyDestroyData(verificationId: string): Promise<boolean> {
-    return this.verifierAdapter.securelyDestroyData(verificationId);
+    return this?.verifierAdapter?.securelyDestroyData(verificationId as any);
   }
 
   /**
@@ -370,7 +370,7 @@ export class BlockchainVerifier {
     userAddress: string
   ): Promise<boolean> {
     // Get verification to check ownership
-    const verification = await this.getVerification(verificationId);
+    const verification = await this.getVerification(verificationId as any);
 
     // Verify ownership
     if (verification.user !== userAddress) {
@@ -378,7 +378,7 @@ export class BlockchainVerifier {
     }
 
     // Use secure destruction method for actual deletion
-    return this.securelyDestroyData(verificationId);
+    return this.securelyDestroyData(verificationId as any);
   }
 
   /**
@@ -396,7 +396,7 @@ export class BlockchainVerifier {
       }
 
       // In a real implementation, would verify the signature cryptographically
-      // const dataBuffer = new TextEncoder().encode(data);
+      // const dataBuffer = new TextEncoder().encode(data as any);
       // const signatureBuffer = Buffer.from(signature, 'base64');
       // const publicKeyBuffer = Buffer.from(publicKey, 'base64');
 

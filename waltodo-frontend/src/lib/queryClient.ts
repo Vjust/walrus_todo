@@ -30,20 +30,20 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   todos: {
     all: ['todos'] as const,
-    lists: () => [...queryKeys.todos.all, 'list'] as const,
-    list: (listName: string) => [...queryKeys.todos.lists(), listName] as const,
-    detail: (id: string) => [...queryKeys.todos.all, 'detail', id] as const,
-    sync: (id: string) => [...queryKeys.todos.all, 'sync', id] as const,
+    lists: () => [...queryKeys?.todos?.all, 'list'] as const,
+    list: (listName: string) => [...queryKeys?.todos?.lists(), listName] as const,
+    detail: (id: string) => [...queryKeys?.todos?.all, 'detail', id] as const,
+    sync: (id: string) => [...queryKeys?.todos?.all, 'sync', id] as const,
   },
   ai: {
     all: ['ai'] as const,
-    suggestions: (context: string) => [...queryKeys.ai.all, 'suggestions', context] as const,
-    summary: (todoIds: string[]) => [...queryKeys.ai.all, 'summary', todoIds.join('-')] as const,
+    suggestions: (context: string) => [...queryKeys?.ai?.all, 'suggestions', context] as const,
+    summary: (todoIds: string[]) => [...queryKeys?.ai?.all, 'summary', todoIds.join('-')] as const,
   },
   wallet: {
     all: ['wallet'] as const,
-    address: () => [...queryKeys.wallet.all, 'address'] as const,
-    balance: () => [...queryKeys.wallet.all, 'balance'] as const,
+    address: () => [...queryKeys?.wallet?.all, 'address'] as const,
+    balance: () => [...queryKeys?.wallet?.all, 'balance'] as const,
   },
 } as const;
 
@@ -51,15 +51,15 @@ export const queryKeys = {
 export const invalidateQueries = {
   todos: (listName?: string) => {
     if (listName) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.list(listName) });
+      queryClient.invalidateQueries({ queryKey: queryKeys?.todos?.list(listName as any) });
     } else {
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys?.todos?.all });
     }
   },
   allTodos: () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys?.todos?.all });
   },
   todoDetail: (id: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.todos.detail(id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys?.todos?.detail(id as any) });
   },
 };

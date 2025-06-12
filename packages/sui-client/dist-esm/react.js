@@ -66,7 +66,7 @@ function WalTodoWalletContextProvider({ children }) {
         try {
             const appConfig = await loadAppConfig();
             setConfig(appConfig);
-            setCurrentNetwork(appConfig.network.name);
+            setCurrentNetwork(appConfig?.network?.name);
         }
         catch (error) {
             console.error('[WalTodoWallet] Failed to load configuration:', error);
@@ -138,8 +138,8 @@ function WalTodoWalletContextProvider({ children }) {
         if (!config || !account) {
             throw new WalletNotConnectedError();
         }
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(account.address);
         tx.moveCall({
@@ -158,8 +158,8 @@ function WalTodoWalletContextProvider({ children }) {
         if (!config || !account) {
             throw new WalletNotConnectedError();
         }
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(account.address);
         tx.moveCall({
@@ -178,8 +178,8 @@ function WalTodoWalletContextProvider({ children }) {
         if (!config || !account) {
             throw new WalletNotConnectedError();
         }
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(account.address);
         tx.moveCall({
@@ -192,8 +192,8 @@ function WalTodoWalletContextProvider({ children }) {
         if (!config || !account) {
             throw new WalletNotConnectedError();
         }
-        const packageId = config.contracts.todoNft.packageId;
-        const moduleName = config.contracts.todoNft.moduleName;
+        const packageId = config?.contracts?.todoNft.packageId;
+        const moduleName = config?.contracts?.todoNft.moduleName;
         const tx = new Transaction();
         tx.setSender(account.address);
         tx.moveCall({
@@ -210,7 +210,7 @@ function WalTodoWalletContextProvider({ children }) {
             const rawResponse = await suiClient.getOwnedObjects({
                 owner: account.address,
                 filter: {
-                    StructType: `${config.contracts.todoNft.packageId}::${config.contracts.todoNft.moduleName}::${config.contracts.todoNft.structName}`,
+                    StructType: `${config?.contracts?.todoNft.packageId}::${config?.contracts?.todoNft.moduleName}::${config?.contracts?.todoNft.structName}`,
                 },
                 options: {
                     showContent: true,
@@ -286,7 +286,7 @@ function WalTodoWalletContextProvider({ children }) {
                     setIsModalOpen(open);
                     if (!open && connected && account) {
                         // Save connected wallet to localStorage
-                        const connectedWallet = wallets.find((w) => w.accounts?.some((acc) => acc.address === account.address));
+                        const connectedWallet = wallets.find((w) => w.accounts?.some((acc) => acc?.address === account.address));
                         if (connectedWallet) {
                             try {
                                 localStorage.setItem('sui-wallet-last-connected', connectedWallet.name);
@@ -309,7 +309,7 @@ export function WalTodoWalletProvider({ children, queryClient = defaultQueryClie
         testnet: { url: getFullnodeUrl('testnet') },
         devnet: { url: getFullnodeUrl('devnet') },
         mainnet: { url: getFullnodeUrl('mainnet') },
-        localnet: { url: 'http://127.0.0.1:9000' },
+        localnet: { url: 'http://127?.0?.0.1:9000' },
     });
     return (_jsx(QueryClientProvider, { client: queryClient, children: _jsx(SuiClientProvider, { networks: networkConfig, defaultNetwork: defaultNetwork, children: _jsx(WalletProvider, { autoConnect: autoConnect, children: _jsx(WalTodoWalletContextProvider, { children: children }) }) }) }));
 }
@@ -419,21 +419,21 @@ export function useAppConfig() {
  * Utility function to transform Sui object to Todo
  */
 function transformSuiObjectToTodo(suiObject) {
-    if (!suiObject.data?.content || suiObject.data.content.dataType !== 'moveObject') {
+    if (!suiObject.data?.content || suiObject?.data?.content.dataType !== 'moveObject') {
         return null;
     }
-    const moveObject = suiObject.data.content;
+    const moveObject = suiObject?.data?.content;
     const fields = moveObject.fields;
     if (!fields) {
         return null;
     }
     try {
         return {
-            id: suiObject.data.objectId,
-            objectId: suiObject.data.objectId,
+            id: suiObject?.data?.objectId,
+            objectId: suiObject?.data?.objectId,
             title: fields.title || 'Untitled',
             description: fields.description || '',
-            completed: fields.completed === true,
+            completed: fields?.completed === true,
             priority: 'medium',
             tags: [],
             blockchainStored: true,
@@ -442,7 +442,7 @@ function transformSuiObjectToTodo(suiObject) {
             completedAt: fields.completed_at ? parseInt(fields.completed_at) : undefined,
             owner: fields.owner,
             metadata: fields.metadata || '',
-            isPrivate: fields.is_private === true,
+            isPrivate: fields?.is_private === true,
         };
     }
     catch (error) {

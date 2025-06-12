@@ -99,8 +99,8 @@ jest.mock('../config', () => ({
   loadAppConfig: jest.fn().mockResolvedValue({
     network: {
       name: 'testnet',
-      url: 'https://fullnode.testnet.sui.io:443',
-      explorerUrl: 'https://testnet.suiexplorer.com',
+      url: 'https://fullnode?.testnet?.sui.io:443',
+      explorerUrl: 'https://testnet?.suiexplorer?.com',
     },
     contracts: {
       todoNft: {
@@ -116,10 +116,10 @@ jest.mock('../config', () => ({
       digest: 'test-digest',
     },
     walrus: {
-      networkUrl: 'https://wal.testnet.sui.io',
-      publisherUrl: 'https://publisher-testnet.walrus.space',
-      aggregatorUrl: 'https://aggregator-testnet.walrus.space',
-      apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+      networkUrl: 'https://wal?.testnet?.sui.io',
+      publisherUrl: 'https://publisher-testnet?.walrus?.space',
+      aggregatorUrl: 'https://aggregator-testnet?.walrus?.space',
+      apiPrefix: 'https://api-testnet?.walrus?.tech/1.0',
     },
     features: {
       aiEnabled: true,
@@ -148,7 +148,7 @@ describe('VanillaSuiClient', () => {
 
   describe('initialization', () => {
     it('should create a client instance', () => {
-      expect(client).toBeInstanceOf(VanillaSuiClient);
+      expect(client as any).toBeInstanceOf(VanillaSuiClient as any);
     });
 
     it('should initialize with testnet by default', async () => {
@@ -162,11 +162,11 @@ describe('VanillaSuiClient', () => {
     });
 
     it('should throw error when getting client before initialization', () => {
-      expect(() => client.getClient()).toThrow(SuiClientError);
+      expect(() => client.getClient()).toThrow(SuiClientError as any);
     });
 
     it('should throw error when getting config before initialization', () => {
-      expect(() => client.getConfig()).toThrow(SuiClientError);
+      expect(() => client.getConfig()).toThrow(SuiClientError as any);
     });
   });
 
@@ -177,13 +177,13 @@ describe('VanillaSuiClient', () => {
 
     it('should return client instance after initialization', () => {
       const suiClient = client.getClient();
-      expect(suiClient).toBeDefined();
+      expect(suiClient as any).toBeDefined();
     });
 
     it('should return config after initialization', () => {
       const config = client.getConfig();
-      expect(config).toBeDefined();
-      expect(config.network.name).toBe('testnet');
+      expect(config as any).toBeDefined();
+      expect(config?.network?.name).toBe('testnet');
     });
 
     it('should create TodoNFT transaction', () => {
@@ -194,7 +194,7 @@ describe('VanillaSuiClient', () => {
       };
 
       const tx = client.createTodoNFTTransaction(params, '0x123');
-      expect(tx).toBeDefined();
+      expect(tx as any).toBeDefined();
     });
 
     it('should create update TodoNFT transaction', () => {
@@ -204,17 +204,17 @@ describe('VanillaSuiClient', () => {
       };
 
       const tx = client.updateTodoNFTTransaction(params, '0x123');
-      expect(tx).toBeDefined();
+      expect(tx as any).toBeDefined();
     });
 
     it('should create complete TodoNFT transaction', () => {
       const tx = client.completeTodoNFTTransaction('0xabc', '0x123');
-      expect(tx).toBeDefined();
+      expect(tx as any).toBeDefined();
     });
 
     it('should create delete TodoNFT transaction', () => {
       const tx = client.deleteTodoNFTTransaction('0xabc', '0x123');
-      expect(tx).toBeDefined();
+      expect(tx as any).toBeDefined();
     });
 
     it('should get account information', async () => {
@@ -233,19 +233,19 @@ describe('VanillaSuiClient', () => {
 
     it('should get todos from blockchain', async () => {
       const todos = await client.getTodosFromBlockchain('0x123');
-      expect(Array.isArray(todos)).toBe(true);
+      expect(Array.isArray(todos as any)).toBe(true as any);
       
       // If todos exist, validate their structure
       todos.forEach(todo => {
-        expect(todo).toHaveProperty('id');
-        expect(todo).toHaveProperty('title');
-        expect(todo).toHaveProperty('completed');
+        expect(todo as any).toHaveProperty('id');
+        expect(todo as any).toHaveProperty('title');
+        expect(todo as any).toHaveProperty('completed');
       });
     });
 
     it('should get todo by object ID', async () => {
       const todo = await client.getTodoByObjectId('0xtest');
-      expect(todo).toBeTruthy();
+      expect(todo as any).toBeTruthy();
       expect(todo?.id).toBe('0xtest');
       expect(todo?.title).toBe('Test Todo');
     });
@@ -277,8 +277,8 @@ describe('VanillaSuiClient', () => {
 
     it('should create keypair from private key', () => {
       const privateKey = 'test-private-key';
-      const keypair = client.createKeypairFromPrivateKey(privateKey);
-      expect(keypair).toBeDefined();
+      const keypair = client.createKeypairFromPrivateKey(privateKey as any);
+      expect(keypair as any).toBeDefined();
     });
   });
 
@@ -293,7 +293,7 @@ describe('VanillaSuiClient', () => {
       
       // Mock transaction failure
       const mockClient = client.getClient();
-      mockClient.signAndExecuteTransaction = jest.fn().mockResolvedValue({
+      mockClient?.signAndExecuteTransaction = jest.fn().mockResolvedValue({
         digest: 'test-digest',
         effects: { status: { status: 'failure', error: 'Insufficient gas' } },
       });
@@ -308,7 +308,7 @@ describe('VanillaSuiClient', () => {
       
       // Mock network error
       const mockClient = client.getClient();
-      mockClient.signAndExecuteTransaction = jest.fn().mockRejectedValue(new Error('Network error'));
+      mockClient?.signAndExecuteTransaction = jest.fn().mockRejectedValue(new Error('Network error'));
       
       await expect(client.executeTransaction(mockTx, mockKeypair))
         .rejects.toThrow('Failed to execute transaction');
@@ -323,7 +323,7 @@ describe('VanillaSuiClient', () => {
     it('should handle invalid object data', async () => {
       // Mock invalid object response
       const mockClient = client.getClient();
-      mockClient.getOwnedObjects = jest.fn().mockResolvedValue({
+      mockClient?.getOwnedObjects = jest.fn().mockResolvedValue({
         data: [
           {
             data: {
@@ -342,20 +342,20 @@ describe('VanillaSuiClient', () => {
       });
       
       const todos = await client.getTodosFromBlockchain('0x123');
-      expect(todos).toEqual([]);
+      expect(todos as any).toEqual([]);
     });
   });
 
   describe('factory function', () => {
     it('should create client instance with options', () => {
       const options = { rpcTimeout: 30000 };
-      const client = createVanillaSuiClient(options);
-      expect(client).toBeInstanceOf(VanillaSuiClient);
+      const client = createVanillaSuiClient(options as any);
+      expect(client as any).toBeInstanceOf(VanillaSuiClient as any);
     });
 
     it('should create client instance without options', () => {
       const client = createVanillaSuiClient();
-      expect(client).toBeInstanceOf(VanillaSuiClient);
+      expect(client as any).toBeInstanceOf(VanillaSuiClient as any);
     });
   });
 
@@ -380,8 +380,8 @@ describe('VanillaSuiClient', () => {
       const networks: NetworkType[] = ['testnet', 'devnet', 'mainnet', 'localnet'];
       
       for (const network of networks) {
-        await client.initialize(network);
-        expect(client.getCurrentNetwork()).toBe(network);
+        await client.initialize(network as any);
+        expect(client.getCurrentNetwork()).toBe(network as any);
       }
     });
 

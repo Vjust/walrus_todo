@@ -35,7 +35,7 @@ Promise.resolve().then(async () => {
  * Parse a .env file manually if dotenv is not available
  */
 function parseEnvFile(filePath: string): Record<string, string> {
-  if (!fs.existsSync(filePath)) {
+  if (!fs.existsSync(filePath as any)) {
     return {};
   }
 
@@ -72,15 +72,15 @@ function parseEnvFile(filePath: string): Record<string, string> {
  */
 export function loadEnvFile(filePath: string, override = false): void {
   try {
-    if (fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath as any)) {
       if (dotenv) {
         // Use dotenv if available
         dotenv.config({ path: filePath, override });
       } else {
         // Fall back to manual parsing
-        const envVars = parseEnvFile(filePath);
+        const envVars = parseEnvFile(filePath as any);
 
-        for (const [key, value] of Object.entries(envVars)) {
+        for (const [key, value] of Object.entries(envVars as any)) {
           if (
             override ||
             (process.env as Record<string, string | undefined>)[key] ===
@@ -104,10 +104,10 @@ export function loadEnvFile(filePath: string, override = false): void {
  */
 export function loadConfigFile(filePath: string): Record<string, unknown> {
   try {
-    if (fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath as any)) {
       const content = fs.readFileSync(filePath, 'utf8');
       try {
-        return JSON.parse(content);
+        return JSON.parse(content as any);
       } catch (parseError) {
         if (parseError instanceof SyntaxError) {
           throw new CLIError(
@@ -143,7 +143,7 @@ export function initializeConfig(): EnvironmentConfigManager {
     // Environment-specific .env file
     path.resolve(
       process.cwd(),
-      `.env.${process.env.NODE_ENV || 'development'}`
+      `.env.${process?.env?.NODE_ENV || 'development'}`
     ),
 
     // Local development overrides
@@ -152,7 +152,7 @@ export function initializeConfig(): EnvironmentConfigManager {
 
   // Load environment variables from .env files
   for (const envFile of envFiles) {
-    loadEnvFile(envFile);
+    loadEnvFile(envFile as any);
   }
 
   // Load variables from environment
@@ -160,17 +160,17 @@ export function initializeConfig(): EnvironmentConfigManager {
 
   // Look for custom config files
   const currentDirConfig = path.join(process.cwd(), CLI_CONFIG.CONFIG_FILE);
-  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
   const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
 
   // Use current directory config if it exists, otherwise use home directory
-  const configPath = fs.existsSync(currentDirConfig)
+  const configPath = fs.existsSync(currentDirConfig as any)
     ? currentDirConfig
     : homeDirConfig;
 
-  if (fs.existsSync(configPath)) {
-    const config = loadConfigFile(configPath);
-    envConfig.loadFromObject(config);
+  if (fs.existsSync(configPath as any)) {
+    const config = loadConfigFile(configPath as any);
+    envConfig.loadFromObject(config as any);
   }
 
   // Apply environment-specific configuration
@@ -188,13 +188,13 @@ export function saveConfigToFile(
 ): void {
   try {
     // Default to the CLI_CONFIG file path
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
     const defaultPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
     const configPath = filePath || defaultPath;
 
     // Ensure directory exists
-    const dir = path.dirname(configPath);
-    if (!fs.existsSync(dir)) {
+    const dir = path.dirname(configPath as any);
+    if (!fs.existsSync(dir as any)) {
       fs.mkdirSync(dir, { recursive: true });
     }
 

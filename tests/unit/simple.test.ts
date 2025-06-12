@@ -16,12 +16,12 @@ describe('simple list command', () => {
   });
 
   test('lists all todos in the list', () => {
-    expect(mockOutput).toContain('Test Todo 1');
-    expect(mockOutput).toContain('Test Todo 2');
+    expect(mockOutput as any).toContain('Test Todo 1');
+    expect(mockOutput as any).toContain('Test Todo 2');
   });
 
   test('sorts todos by priority', () => {
-    expect(mockOutput).toMatch(/⚠️.*Test Todo 1.*○.*Test Todo 2/s);
+    expect(mockOutput as any).toMatch(/⚠️.*Test Todo 1.*○.*Test Todo 2/s);
   });
 
   test('filters completed todos', () => {
@@ -30,8 +30,8 @@ describe('simple list command', () => {
    Tags: [tag2]
    Status: Complete
 `;
-    expect(filteredOutput).toContain('Test Todo 2');
-    expect(filteredOutput).not.toContain('Test Todo 1');
+    expect(filteredOutput as any).toContain('Test Todo 2');
+    expect(filteredOutput as any).not.toContain('Test Todo 1');
   });
 
   test('filters incomplete todos', () => {
@@ -40,7 +40,7 @@ describe('simple list command', () => {
    Tags: [tag1]
    Status: Incomplete
 `;
-    expect(filteredOutput).toContain('Test Todo 1');
-    expect(filteredOutput).not.toContain('Test Todo 2');
+    expect(filteredOutput as any).toContain('Test Todo 1');
+    expect(filteredOutput as any).not.toContain('Test Todo 2');
   });
 });

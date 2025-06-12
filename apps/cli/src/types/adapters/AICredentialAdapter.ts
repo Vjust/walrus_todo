@@ -196,11 +196,11 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     registryId: string,
     walrusAdapter?: WalrusClientAdapter
   ) {
-    this.client = client;
-    this.signer = signer;
-    this.packageId = packageId;
-    this.registryId = registryId;
-    this.walrusAdapter = walrusAdapter;
+    this?.client = client;
+    this?.signer = signer;
+    this?.packageId = packageId;
+    this?.registryId = registryId;
+    this?.walrusAdapter = walrusAdapter;
   }
 
   async storeCredential(_credential: AIProviderCredential): Promise<string> {

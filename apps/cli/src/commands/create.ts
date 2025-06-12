@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import * as fs from 'fs';
@@ -56,7 +56,7 @@ export default class CreateCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(CreateCommand);
+    const { flags } = await this.parse(CreateCommand as any);
     const { title, description, image, private: isPrivate } = flags;
 
     try {
@@ -71,13 +71,13 @@ export default class CreateCommand extends BaseCommand {
 
       // Initialize Sui client
       const networkUrl =
-        config.network === 'testnet'
-          ? 'https://fullnode.testnet.sui.io:443'
-          : 'https://fullnode.devnet.sui.io:443';
+        config?.network === 'testnet'
+          ? 'https://fullnode?.testnet?.sui.io:443'
+          : 'https://fullnode?.devnet?.sui.io:443';
       const suiClient = new SuiClient({ url: networkUrl });
 
       // Initialize Walrus image storage
-      const walrusStorage = new WalrusImageStorage(suiClient); // Add instantiation here
+      const walrusStorage = new WalrusImageStorage(suiClient as any); // Add instantiation here
       await walrusStorage.connect(); // Ensure connection is established
 
       // Upload image to Walrus with retry and error handling
@@ -85,19 +85,19 @@ export default class CreateCommand extends BaseCommand {
       try {
         if (image) {
           // Upload custom image
-          if (!fs.existsSync(image)) {
+          if (!fs.existsSync(image as any)) {
             throw new CLIError(
               `Image file not found: ${image}`,
               'IMAGE_NOT_FOUND'
             );
           }
-          imageUrl = await walrusStorage.uploadImage(image);
+          imageUrl = await walrusStorage.uploadImage(image as any);
         } else {
           // Use default image with retry and error handling
           imageUrl = await walrusStorage
             .uploadDefaultImage()
             .catch((err: Error) => {
-              if (err.message.includes('blob has not been registered')) {
+              if (err?.message?.includes('blob has not been registered')) {
                 throw new CLIError(
                   'Walrus blob not registered. Ensure Walrus is configured and blobs are registered.',
                   'WALRUS_BLOB_ERROR'
@@ -112,7 +112,7 @@ export default class CreateCommand extends BaseCommand {
         }
       } catch (error) {
         throw new CLIError(
-          `Failed to upload image to Walrus: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to upload image to Walrus: ${error instanceof Error ? error.message : String(error as any)}`,
           'IMAGE_UPLOAD_FAILED'
         );
       }
@@ -130,21 +130,21 @@ export default class CreateCommand extends BaseCommand {
       const txb = new Transaction();
       const args = [
         txb.pure(isPrivate ? 'Untitled' : title),
-        txb.pure(description),
-        txb.pure(blobId),
+        txb.pure(description as any),
+        txb.pure(blobId as any),
       ];
       txb.moveCall({
-        target: `${config.lastDeployment.packageId}::todo_nft::create_todo`,
+        target: `${config?.lastDeployment?.packageId}::todo_nft::create_todo`,
         arguments: args,
       });
-      const signer = new KeystoreSigner(suiClient);
-      const tx = await signer.signAndExecuteTransaction(txb) as any;
+      const signer = new KeystoreSigner(suiClient as any);
+      const tx = await signer.signAndExecuteTransaction(txb as any) as any;
       if ((tx as any).effects?.status.status !== 'success') {
         // Add optional chaining for null check
         throw new CLIError('Transaction failed', 'TX_FAILED');
       }
       const createdObjects = (tx as any).effects.created;
-      if (!createdObjects || createdObjects.length === 0) {
+      if (!createdObjects || createdObjects?.length === 0) {
         throw new CLIError(
           'No objects created in transaction',
           'TX_PARSE_ERROR'
@@ -162,7 +162,7 @@ export default class CreateCommand extends BaseCommand {
       this.log('\nView your NFT on Sui Explorer:');
       this.log(
         chalk.cyan(
-          `  https://explorer.sui.io/object/${nftId}?network=${config.network}`
+          `  https://explorer?.sui?.io/object/${nftId}?network=${config.network}`
         )
       );
 
@@ -172,7 +172,7 @@ export default class CreateCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Transaction or creation failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Transaction or creation failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'CREATE_FAILED'
       );
     }

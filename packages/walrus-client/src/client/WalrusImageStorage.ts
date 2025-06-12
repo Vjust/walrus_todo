@@ -22,7 +22,7 @@ export class WalrusImageStorage extends WalrusClient {
     maxSize?: number;
     supportedFormats?: string[];
   }) {
-    super(config);
+    super(config as any);
     this.maxSize = options?.maxSize || IMAGE_VALIDATION.MAX_SIZE;
     this.supportedFormats = options?.supportedFormats || IMAGE_VALIDATION.SUPPORTED_FORMATS;
   }
@@ -41,11 +41,11 @@ export class WalrusImageStorage extends WalrusClient {
     if (typeof imageSource === 'string') {
       // File path (Node.js only)
       assertNode('File path uploads');
-      imageBuffer = await this.loadImageFromPath(imageSource);
+      imageBuffer = await this.loadImageFromPath(imageSource as any);
     } else if (imageSource instanceof File) {
       // Browser File object
       imageBuffer = Buffer.from(await imageSource.arrayBuffer());
-    } else if (Buffer.isBuffer(imageSource)) {
+    } else if (Buffer.isBuffer(imageSource as any)) {
       // Direct Buffer
       imageBuffer = imageSource;
     } else {
@@ -54,9 +54,9 @@ export class WalrusImageStorage extends WalrusClient {
 
     // Validate and extract metadata
     if (options.validateImage !== false) {
-      metadata = await this.validateAndAnalyzeImage(imageBuffer);
+      metadata = await this.validateAndAnalyzeImage(imageBuffer as any);
     } else {
-      metadata = await this.extractBasicMetadata(imageBuffer);
+      metadata = await this.extractBasicMetadata(imageBuffer as any);
     }
 
     // Prepare upload options with image-specific attributes
@@ -66,17 +66,17 @@ export class WalrusImageStorage extends WalrusClient {
       attributes: {
         ...options.attributes,
         type: 'image',
-        width: metadata.width.toString(),
-        height: metadata.height.toString(),
+        width: metadata?.width?.toString(),
+        height: metadata?.height?.toString(),
         mimeType: metadata.mimeType,
-        size: metadata.size.toString(),
+        size: metadata?.size?.toString(),
         checksum: metadata.checksum,
         checksumAlgo: 'sha256',
         uploadedAt: new Date().toISOString(),
       },
     };
 
-    return this.upload(new Uint8Array(imageBuffer), uploadOptions);
+    return this.upload(new Uint8Array(imageBuffer as any), uploadOptions);
   }
 
   /**
@@ -93,7 +93,7 @@ export class WalrusImageStorage extends WalrusClient {
       attributes: {
         ...options.attributes,
         todoTitle: title,
-        todoCompleted: String(completed),
+        todoCompleted: String(completed as any),
         todoImageType: 'nft-image',
       },
     });
@@ -138,18 +138,18 @@ export class WalrusImageStorage extends WalrusClient {
     }
 
     // MIME type detection
-    const mimeType = this.detectMimeType(buffer);
+    const mimeType = this.detectMimeType(buffer as any);
     
-    if (!this.supportedFormats.includes(mimeType)) {
+    if (!this?.supportedFormats?.includes(mimeType as any)) {
       throw new WalrusValidationError(
-        `Unsupported image format: ${mimeType}. Supported formats: ${this.supportedFormats.join(', ')}`,
+        `Unsupported image format: ${mimeType}. Supported formats: ${this?.supportedFormats?.join(', ')}`,
         'mimeType',
         mimeType
       );
     }
 
     // Dimensions extraction
-    const dimensions = await this.extractDimensions(buffer);
+    const dimensions = await this.extractDimensions(buffer as any);
     
     if (dimensions.width > IMAGE_VALIDATION.MAX_DIMENSIONS || 
         dimensions.height > IMAGE_VALIDATION.MAX_DIMENSIONS) {
@@ -161,7 +161,7 @@ export class WalrusImageStorage extends WalrusClient {
     }
 
     // Checksum calculation
-    const checksum = await this.calculateChecksum(buffer);
+    const checksum = await this.calculateChecksum(buffer as any);
 
     return {
       width: dimensions.width,
@@ -176,9 +176,9 @@ export class WalrusImageStorage extends WalrusClient {
    * Extract basic metadata without full validation
    */
   private async extractBasicMetadata(buffer: Buffer): Promise<WalrusImageMetadata> {
-    const mimeType = this.detectMimeType(buffer);
-    const dimensions = await this.extractDimensions(buffer);
-    const checksum = await this.calculateChecksum(buffer);
+    const mimeType = this.detectMimeType(buffer as any);
+    const dimensions = await this.extractDimensions(buffer as any);
+    const checksum = await this.calculateChecksum(buffer as any);
 
     return {
       width: dimensions.width,
@@ -199,9 +199,9 @@ export class WalrusImageStorage extends WalrusClient {
 
     const header = buffer.toString('hex', 0, 4).toLowerCase();
     
-    for (const [signature, mimeType] of Object.entries(MIME_TYPE_SIGNATURES)) {
-      if (header.startsWith(signature)) {
-        return mimeType;
+    for (const [signature, mimeType] of Object.entries(MIME_TYPE_SIGNATURES as any)) {
+      if (header.startsWith(signature as any)) {
+        return mimeType as string;
       }
     }
 
@@ -225,7 +225,7 @@ export class WalrusImageStorage extends WalrusClient {
       if (RUNTIME.isNode) {
         try {
           const sizeOf = await import('image-size');
-          const dimensions = sizeOf.default(buffer);
+          const dimensions = sizeOf.default(buffer as any);
           if (dimensions.width && dimensions.height) {
             return { width: dimensions.width, height: dimensions.height };
           }
@@ -235,7 +235,7 @@ export class WalrusImageStorage extends WalrusClient {
       }
 
       // Manual dimension extraction for common formats
-      return this.extractDimensionsManually(buffer);
+      return this.extractDimensionsManually(buffer as any);
     } catch (error) {
       throw new WalrusValidationError(
         `Failed to extract image dimensions: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -252,21 +252,21 @@ export class WalrusImageStorage extends WalrusClient {
     // PNG format
     if (header.startsWith('89504e47')) {
       if (buffer.length < 24) throw new Error('Invalid PNG header');
-      const width = buffer.readUInt32BE(16);
-      const height = buffer.readUInt32BE(20);
+      const width = buffer.readUInt32BE(16 as any);
+      const height = buffer.readUInt32BE(20 as any);
       return { width, height };
     }
 
     // JPEG format
     if (header.startsWith('ffd8')) {
-      return this.extractJpegDimensions(buffer);
+      return this.extractJpegDimensions(buffer as any);
     }
 
     // GIF format
     if (header.startsWith('47494638')) {
       if (buffer.length < 10) throw new Error('Invalid GIF header');
-      const width = buffer.readUInt16LE(6);
-      const height = buffer.readUInt16LE(8);
+      const width = buffer.readUInt16LE(6 as any);
+      const height = buffer.readUInt16LE(8 as any);
       return { width, height };
     }
 
@@ -308,12 +308,12 @@ export class WalrusImageStorage extends WalrusClient {
   private async calculateChecksum(buffer: Buffer): Promise<string> {
     if (RUNTIME.isNode) {
       const crypto = await import('crypto');
-      return crypto.createHash('sha256').update(buffer).digest('hex');
+      return crypto.createHash('sha256').update(buffer as any).digest('hex');
     } else {
       // Browser implementation using Web Crypto API
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0'))
+      const hashBuffer = await crypto?.subtle?.digest('SHA-256', buffer);
+      return Array.from(new Uint8Array(hashBuffer as any))
+        .map(b => b.toString(16 as any).padStart(2, '0'))
         .join('');
     }
   }
@@ -328,11 +328,11 @@ export class WalrusImageStorage extends WalrusClient {
       const fs = await import('fs');
       const path = await import('path');
       
-      if (!fs.existsSync(imagePath)) {
+      if (!fs.existsSync(imagePath as any)) {
         throw new WalrusValidationError(`Image file not found: ${imagePath}`, 'imagePath', imagePath);
       }
       
-      return fs.readFileSync(imagePath);
+      return fs.readFileSync(imagePath as any);
     } catch (error) {
       if (error instanceof WalrusValidationError) throw error;
       throw new WalrusStorageError(

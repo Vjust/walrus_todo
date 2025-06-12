@@ -59,7 +59,7 @@ export const TodoSchema = z.object(
           .min(1, 'Tag cannot be empty')
           .max(50, 'Tag too long (max 50 characters)')
           .refine(
-            tag => !/[<>"'&]/.test(tag),
+            tag => !/[<>"'&]/.test(tag as any),
             'Tag contains invalid characters'
           )
       )
@@ -85,7 +85,7 @@ export const TodoSchema = z.object(
       .datetime('Invalid completed date format (must be ISO 8601)')
       .optional(),
 
-    private: z.boolean().default(false),
+    private: z.boolean().default(false as any),
 
     storageLocation: StorageLocationSchema.optional(),
 
@@ -115,9 +115,9 @@ export const TodoSchema = z.object(
   },
   {
     errorMap: (issue, ctx) => {
-      if (issue.code === z.ZodIssueCode.invalid_type) {
+      if (issue?.code === z?.ZodIssueCode?.invalid_type) {
         return {
-          message: `Expected ${issue.expected} but received ${issue.received} for field "${issue.path.join('.')}"`,
+          message: `Expected ${issue.expected} but received ${issue.received} for field "${issue?.path?.join('.')}"`,
         };
       }
       return { message: ctx.defaultError };
@@ -144,7 +144,7 @@ export const TodoListSchema = z.object(
         'TodoList name cannot be only whitespace'
       )
       .refine(
-        name => !/[<>"'&\\/:]/.test(name),
+        name => !/[<>"'&\\/:]/.test(name as any),
         'TodoList name contains invalid characters'
       ),
 
@@ -154,7 +154,7 @@ export const TodoListSchema = z.object(
       .max(100, 'TodoList owner too long (max 100 characters)'),
 
     todos: z
-      .array(TodoSchema)
+      .array(TodoSchema as any)
       .max(1000, 'Too many todos in list (max 1000)')
       .default([]),
 
@@ -162,7 +162,7 @@ export const TodoListSchema = z.object(
       .number()
       .int('Version must be an integer')
       .min(0, 'Version cannot be negative')
-      .default(1),
+      .default(1 as any),
 
     collaborators: z
       .array(
@@ -198,9 +198,9 @@ export const TodoListSchema = z.object(
   },
   {
     errorMap: (issue, ctx) => {
-      if (issue.code === z.ZodIssueCode.invalid_type) {
+      if (issue?.code === z?.ZodIssueCode?.invalid_type) {
         return {
-          message: `Expected ${issue.expected} but received ${issue.received} for field "${issue.path.join('.')}"`,
+          message: `Expected ${issue.expected} but received ${issue.received} for field "${issue?.path?.join('.')}"`,
         };
       }
       return { message: ctx.defaultError };
@@ -212,7 +212,7 @@ export const TodoListSchema = z.object(
  * Schema for bulk operations
  */
 export const TodoListArraySchema = z
-  .array(TodoListSchema)
+  .array(TodoListSchema as any)
   .max(100, 'Too many todo lists (max 100)');
 
 /**
@@ -232,11 +232,11 @@ export type StorageLocationType = z.infer<typeof StorageLocationSchema>;
  */
 export function validateTodo(todo: unknown): TodoSchemaType {
   try {
-    return TodoSchema.parse(todo);
+    return TodoSchema.parse(todo as any);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .map(err => `${err?.path?.join('.')}: ${err.message}`)
         .join('; ');
       throw new Error(`Todo validation failed: ${formattedErrors}`);
     }
@@ -249,11 +249,11 @@ export function validateTodo(todo: unknown): TodoSchemaType {
  */
 export function validateTodoList(todoList: unknown): TodoListSchemaType {
   try {
-    return TodoListSchema.parse(todoList);
+    return TodoListSchema.parse(todoList as any);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .map(err => `${err?.path?.join('.')}: ${err.message}`)
         .join('; ');
       throw new Error(`TodoList validation failed: ${formattedErrors}`);
     }
@@ -268,11 +268,11 @@ export function validateTodoListArray(
   todoLists: unknown
 ): TodoListSchemaType[] {
   try {
-    return TodoListArraySchema.parse(todoLists);
+    return TodoListArraySchema.parse(todoLists as any);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .map(err => `${err?.path?.join('.')}: ${err.message}`)
         .join('; ');
       throw new Error(`TodoList array validation failed: ${formattedErrors}`);
     }
@@ -287,12 +287,12 @@ export function validateTodoSafe(
   todo: unknown
 ): { success: true; data: TodoSchemaType } | { success: false; error: string } {
   try {
-    const validated = TodoSchema.parse(todo);
+    const validated = TodoSchema.parse(todo as any);
     return { success: true, data: validated };
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .map(err => `${err?.path?.join('.')}: ${err.message}`)
         .join('; ');
       return {
         success: false,
@@ -312,12 +312,12 @@ export function validateTodoListSafe(
   | { success: true; data: TodoListSchemaType }
   | { success: false; error: string } {
   try {
-    const validated = TodoListSchema.parse(todoList);
+    const validated = TodoListSchema.parse(todoList as any);
     return { success: true, data: validated };
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .map(err => `${err?.path?.join('.')}: ${err.message}`)
         .join('; ');
       return {
         success: false,
@@ -342,11 +342,11 @@ export type PartialTodoType = z.infer<typeof PartialTodoSchema>;
 
 export function validatePartialTodo(todo: unknown): PartialTodoType {
   try {
-    return PartialTodoSchema.parse(todo);
+    return PartialTodoSchema.parse(todo as any);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .map(err => `${err?.path?.join('.')}: ${err.message}`)
         .join('; ');
       throw new Error(`Partial Todo validation failed: ${formattedErrors}`);
     }

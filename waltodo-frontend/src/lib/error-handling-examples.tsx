@@ -149,7 +149,7 @@ export function ContextualErrorExample() {
     );
 
     if (result) {
-      todoErrorHandler.toast.success('Todo deleted successfully');
+      todoErrorHandler?.toast?.success('Todo deleted successfully');
     }
   };
 
@@ -183,7 +183,7 @@ export function ContextualErrorExample() {
 
 // Example 5: Error boundary integration
 export function ErrorBoundaryExample() {
-  const [shouldThrow, setShouldThrow] = React.useState(false);
+  const [shouldThrow, setShouldThrow] = React.useState(false as any);
 
   if (shouldThrow) {
     throw new Error('Component error for testing error boundary');
@@ -196,7 +196,7 @@ export function ErrorBoundaryExample() {
         This component can throw an error to test the error boundary.
       </p>
       <button 
-        onClick={() => setShouldThrow(true)}
+        onClick={() => setShouldThrow(true as any)}
         className="px-4 py-2 bg-red-500 text-white rounded"
       >
         Throw Error
@@ -253,10 +253,10 @@ export function CustomRecoveryExample() {
         console.log(`Retry attempt ${attempt} for error:`, error.type);
         
         // Custom recovery logic based on error type
-        if (error.type === 'BLOCKCHAIN' && error.message.includes('gas')) {
+        if (error?.type === 'BLOCKCHAIN' && error?.message?.includes('gas')) {
           // Maybe refresh gas estimates or switch RPC endpoints
           console.log('Attempting to refresh gas estimates...');
-        } else if (error.type === 'NETWORK') {
+        } else if (error?.type === 'NETWORK') {
           // Maybe switch to a different network endpoint
           console.log('Attempting to switch network endpoint...');
         }

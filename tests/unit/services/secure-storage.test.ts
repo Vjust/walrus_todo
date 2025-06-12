@@ -53,36 +53,36 @@ describe('SecureStorageService', () => {
       const mockEncrypted = Buffer.from('encrypted-data');
 
       // Mock crypto functions
-      mockRandomBytes.mockReturnValue(mockIv);
+      mockRandomBytes.mockReturnValue(mockIv as any);
       const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest
           .fn()
           .mockReturnValue(Buffer.from('hashed-key-32-bytes-long-enough')),
       } as unknown as Partial<Hash>;
-      mockCreateHash.mockReturnValue(mockHash);
+      mockCreateHash.mockReturnValue(mockHash as any);
 
       const mockCipher = {
-        update: jest.fn().mockReturnValue(mockEncrypted),
-        final: jest.fn().mockReturnValue(Buffer.alloc(0)),
-        getAuthTag: jest.fn().mockReturnValue(mockAuthTag),
+        update: jest.fn().mockReturnValue(mockEncrypted as any),
+        final: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
+        getAuthTag: jest.fn().mockReturnValue(mockAuthTag as any),
       };
-      mockCreateCipheriv.mockReturnValue(mockCipher);
+      mockCreateCipheriv.mockReturnValue(mockCipher as any);
 
       const result = await service.encrypt(plaintext, key);
 
-      expect(result).toEqual({
-        encrypted: Buffer.concat([mockEncrypted, Buffer.alloc(0)]).toString(
+      expect(result as any).toEqual({
+        encrypted: Buffer.concat([mockEncrypted, Buffer.alloc(0 as any)]).toString(
           'base64'
         ),
         iv: mockIv.toString('base64'),
         authTag: mockAuthTag.toString('base64'),
       });
 
-      expect(mockRandomBytes).toHaveBeenCalledWith(16);
-      expect(mockCreateCipheriv).toHaveBeenCalledWith(
+      expect(mockRandomBytes as any).toHaveBeenCalledWith(16 as any);
+      expect(mockCreateCipheriv as any).toHaveBeenCalledWith(
         'aes-256-gcm',
-        expect.any(Buffer),
+        expect.any(Buffer as any),
         mockIv
       );
     });
@@ -91,7 +91,7 @@ describe('SecureStorageService', () => {
       const key = 'test-key';
       const result = await service.encrypt('', key);
 
-      expect(result).toEqual({
+      expect(result as any).toEqual({
         encrypted: '',
         iv: '',
         authTag: '',
@@ -107,14 +107,14 @@ describe('SecureStorageService', () => {
         update: jest.fn().mockReturnThis(),
         digest: jest.fn().mockReturnValue(Buffer.from('hashed-key')),
       } as unknown as Partial<Hash>;
-      mockCreateHash.mockReturnValue(mockHash);
+      mockCreateHash.mockReturnValue(mockHash as any);
 
       const mockCipher = {
         update: jest.fn().mockImplementation(() => {
           throw new Error('Encryption failed');
         }),
       };
-      mockCreateCipheriv.mockReturnValue(mockCipher);
+      mockCreateCipheriv.mockReturnValue(mockCipher as any);
 
       await expect(service.encrypt(plaintext, key)).rejects.toThrow(
         'Failed to encrypt data: Encryption failed'
@@ -138,24 +138,24 @@ describe('SecureStorageService', () => {
           .fn()
           .mockReturnValue(Buffer.from('hashed-key-32-bytes-long-enough')),
       } as unknown as Partial<Hash>;
-      mockCreateHash.mockReturnValue(mockHash);
+      mockCreateHash.mockReturnValue(mockHash as any);
 
       const mockDecipher = {
         setAuthTag: jest.fn(),
-        update: jest.fn().mockReturnValue(Buffer.from(decryptedData)),
-        final: jest.fn().mockReturnValue(Buffer.alloc(0)),
+        update: jest.fn().mockReturnValue(Buffer.from(decryptedData as any)),
+        final: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
       };
-      mockCreateDecipheriv.mockReturnValue(mockDecipher);
+      mockCreateDecipheriv.mockReturnValue(mockDecipher as any);
 
       const result = await service.decrypt(encryptedData, key);
 
-      expect(result).toBe(decryptedData);
+      expect(result as any).toBe(decryptedData as any);
       expect(mockDecipher.setAuthTag).toHaveBeenCalledWith(
         Buffer.from(encryptedData.authTag, 'base64')
       );
-      expect(mockCreateDecipheriv).toHaveBeenCalledWith(
+      expect(mockCreateDecipheriv as any).toHaveBeenCalledWith(
         'aes-256-gcm',
-        expect.any(Buffer),
+        expect.any(Buffer as any),
         Buffer.from(encryptedData.iv, 'base64')
       );
     });
@@ -169,7 +169,7 @@ describe('SecureStorageService', () => {
       const key = 'test-key';
 
       const result = await service.decrypt(encryptedData, key);
-      expect(result).toBe('');
+      expect(result as any).toBe('');
     });
 
     it('should throw error for invalid auth tag', async () => {
@@ -184,7 +184,7 @@ describe('SecureStorageService', () => {
         update: jest.fn().mockReturnThis(),
         digest: jest.fn().mockReturnValue(Buffer.from('hashed-key')),
       } as unknown as Partial<Hash>;
-      mockCreateHash.mockReturnValue(mockHash);
+      mockCreateHash.mockReturnValue(mockHash as any);
 
       const mockDecipher = {
         setAuthTag: jest.fn(),
@@ -192,7 +192,7 @@ describe('SecureStorageService', () => {
           throw new Error('Unsupported state or unable to authenticate data');
         }),
       };
-      mockCreateDecipheriv.mockReturnValue(mockDecipher);
+      mockCreateDecipheriv.mockReturnValue(mockDecipher as any);
 
       await expect(service.decrypt(encryptedData, key)).rejects.toThrow(
         'Failed to decrypt data: Unsupported state or unable to authenticate data'
@@ -210,27 +210,27 @@ describe('SecureStorageService', () => {
       const mockAuthTag = Buffer.from('secure-auth-tag');
       const mockEncrypted = Buffer.from('secured-data');
 
-      mockRandomBytes.mockReturnValue(mockIv);
+      mockRandomBytes.mockReturnValue(mockIv as any);
       const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest
           .fn()
           .mockReturnValue(Buffer.from('hashed-secure-key-32-bytes-long')),
       } as unknown as Partial<Hash>;
-      mockCreateHash.mockReturnValue(mockHash);
+      mockCreateHash.mockReturnValue(mockHash as any);
 
       // Mock cipher for encryption
       const mockCipher = {
-        update: jest.fn().mockReturnValue(mockEncrypted),
-        final: jest.fn().mockReturnValue(Buffer.alloc(0)),
-        getAuthTag: jest.fn().mockReturnValue(mockAuthTag),
+        update: jest.fn().mockReturnValue(mockEncrypted as any),
+        final: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
+        getAuthTag: jest.fn().mockReturnValue(mockAuthTag as any),
       };
-      mockCreateCipheriv.mockReturnValue(mockCipher);
+      mockCreateCipheriv.mockReturnValue(mockCipher as any);
 
       // Encrypt
       const encrypted = await service.encrypt(plaintext, key);
 
-      expect(encrypted).toEqual({
+      expect(encrypted as any).toEqual({
         encrypted: mockEncrypted.toString('base64'),
         iv: mockIv.toString('base64'),
         authTag: mockAuthTag.toString('base64'),
@@ -239,15 +239,15 @@ describe('SecureStorageService', () => {
       // Mock decipher for decryption
       const mockDecipher = {
         setAuthTag: jest.fn(),
-        update: jest.fn().mockReturnValue(Buffer.from(plaintext)),
-        final: jest.fn().mockReturnValue(Buffer.alloc(0)),
+        update: jest.fn().mockReturnValue(Buffer.from(plaintext as any)),
+        final: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
       };
-      mockCreateDecipheriv.mockReturnValue(mockDecipher);
+      mockCreateDecipheriv.mockReturnValue(mockDecipher as any);
 
       // Decrypt
       const decrypted = await service.decrypt(encrypted, key);
 
-      expect(decrypted).toBe(plaintext);
+      expect(decrypted as any).toBe(plaintext as any);
     });
 
     it('should generate consistent keys from same input', async () => {
@@ -256,25 +256,25 @@ describe('SecureStorageService', () => {
       const hashDigest = Buffer.from('consistent-hash-result-32-bytes-');
       const mockHash = {
         update: jest.fn().mockReturnThis(),
-        digest: jest.fn().mockReturnValue(hashDigest),
+        digest: jest.fn().mockReturnValue(hashDigest as any),
       } as unknown as Partial<Hash>;
-      mockCreateHash.mockReturnValue(mockHash);
+      mockCreateHash.mockReturnValue(mockHash as any);
 
       // Use internal method indirectly through encrypt
       mockRandomBytes.mockReturnValue(Buffer.from('iv'));
       const mockCipher = {
-        update: jest.fn().mockReturnValue(Buffer.alloc(0)),
-        final: jest.fn().mockReturnValue(Buffer.alloc(0)),
-        getAuthTag: jest.fn().mockReturnValue(Buffer.alloc(0)),
+        update: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
+        final: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
+        getAuthTag: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
       };
-      mockCreateCipheriv.mockReturnValue(mockCipher);
+      mockCreateCipheriv.mockReturnValue(mockCipher as any);
 
       await service.encrypt('data', key);
       await service.encrypt('data', key);
 
       // Should generate the same hash for the same key
-      expect(mockCreateHash).toHaveBeenCalledTimes(2);
-      const calls = mockCreateHash.mock.calls;
+      expect(mockCreateHash as any).toHaveBeenCalledTimes(2 as any);
+      const calls = mockCreateHash?.mock?.calls;
       expect(calls[0][0]).toBe(calls[1][0]); // Same algorithm
     });
 
@@ -293,14 +293,14 @@ describe('SecureStorageService', () => {
     });
 
     it('should handle large data encryption', async () => {
-      const largeData = 'x'.repeat(1000000); // 1MB of data
+      const largeData = 'x'.repeat(1000000 as any); // 1MB of data
       const key = 'test-key';
 
       const mockIv = Buffer.from('iv-for-large-data');
       const mockAuthTag = Buffer.from('auth-tag-large');
       const mockEncrypted = Buffer.from('encrypted-large-data');
 
-      mockRandomBytes.mockReturnValue(mockIv);
+      mockRandomBytes.mockReturnValue(mockIv as any);
       mockCreateHash.mockReturnValue({
         update: jest.fn().mockReturnThis(),
         digest: jest
@@ -309,17 +309,17 @@ describe('SecureStorageService', () => {
       });
 
       const mockCipher = {
-        update: jest.fn().mockReturnValue(mockEncrypted),
-        final: jest.fn().mockReturnValue(Buffer.alloc(0)),
-        getAuthTag: jest.fn().mockReturnValue(mockAuthTag),
+        update: jest.fn().mockReturnValue(mockEncrypted as any),
+        final: jest.fn().mockReturnValue(Buffer.alloc(0 as any)),
+        getAuthTag: jest.fn().mockReturnValue(mockAuthTag as any),
       };
-      mockCreateCipheriv.mockReturnValue(mockCipher);
+      mockCreateCipheriv.mockReturnValue(mockCipher as any);
 
       const result = await service.encrypt(largeData, key);
 
-      expect(result).toHaveProperty('encrypted');
-      expect(result).toHaveProperty('iv');
-      expect(result).toHaveProperty('authTag');
+      expect(result as any).toHaveProperty('encrypted');
+      expect(result as any).toHaveProperty('iv');
+      expect(result as any).toHaveProperty('authTag');
       expect(mockCipher.update).toHaveBeenCalledWith(largeData, 'utf8');
     });
   });

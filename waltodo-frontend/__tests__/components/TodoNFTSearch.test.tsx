@@ -101,7 +101,7 @@ describe('TodoNFTSearch', () => {
     await user.type(searchInput, 'documentation');
 
     await waitFor(() => {
-      expect(mockOnSearchResults).toHaveBeenCalled();
+      expect(mockOnSearchResults as any).toHaveBeenCalled();
     });
   });
 
@@ -118,7 +118,7 @@ describe('TodoNFTSearch', () => {
     );
 
     const searchInput = screen.getByPlaceholderText('Search NFTs... (use AND, OR, NOT operators)');
-    fireEvent.focus(searchInput);
+    fireEvent.focus(searchInput as any);
 
     await waitFor(() => {
       expect(screen.getByText('Recent Searches')).toBeInTheDocument();
@@ -142,9 +142,9 @@ describe('TodoNFTSearch', () => {
 
     // Clear button should appear
     const clearButton = screen.getByRole('button', { name: '' });
-    await user.click(clearButton);
+    await user.click(clearButton as any);
 
-    expect(searchInput).toHaveValue('');
+    expect(searchInput as any).toHaveValue('');
   });
 
   it('handles voice search toggle', async () => {
@@ -161,14 +161,14 @@ describe('TodoNFTSearch', () => {
     const micButtons = screen.getAllByRole('button');
     const micButton = micButtons.find(button => {
       const svg = button.querySelector('svg');
-      return svg && svg.classList.contains('lucide-mic');
+      return svg && svg?.classList?.contains('lucide-mic');
     });
 
-    expect(micButton).toBeInTheDocument();
+    expect(micButton as any).toBeInTheDocument();
 
     // Click to start voice search
     if (micButton) {
-      await user.click(micButton);
+      await user.click(micButton as any);
       expect(mockSpeechRecognition.start).toHaveBeenCalled();
     }
   });
@@ -187,7 +187,7 @@ describe('TodoNFTSearch', () => {
     await user.type(searchInput, 'documentation AND api');
 
     await waitFor(() => {
-      expect(mockOnSearchResults).toHaveBeenCalled();
+      expect(mockOnSearchResults as any).toHaveBeenCalled();
     });
   });
 
@@ -207,7 +207,7 @@ describe('TodoNFTSearch', () => {
     );
 
     const saveButton = screen.getByRole('button', { name: /save/i });
-    await user.click(saveButton);
+    await user.click(saveButton as any);
 
     await waitFor(() => {
       expect(screen.getByText('Saved Searches')).toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('TodoNFTSearch', () => {
 
   it('saves current search when requested', async () => {
     const user = userEvent.setup();
-    window.prompt = jest.fn().mockReturnValue('Test Search Name');
+    window?.prompt = jest.fn().mockReturnValue('Test Search Name');
 
     render(
       <TodoNFTSearch
@@ -233,11 +233,11 @@ describe('TodoNFTSearch', () => {
 
     // Open saved searches dropdown
     const saveButton = screen.getByRole('button', { name: /save/i });
-    await user.click(saveButton);
+    await user.click(saveButton as any);
 
     // Click save current search
     const saveCurrentButton = screen.getByText('Save current search');
-    await user.click(saveCurrentButton);
+    await user.click(saveCurrentButton as any);
 
     expect(window.prompt).toHaveBeenCalledWith('Name this search:');
   });
@@ -256,7 +256,7 @@ describe('TodoNFTSearch', () => {
     );
 
     const searchInput = screen.getByPlaceholderText('Search NFTs... (use AND, OR, NOT operators)');
-    fireEvent.focus(searchInput);
+    fireEvent.focus(searchInput as any);
 
     // Navigate down
     await user.keyboard('{ArrowDown}');
@@ -265,7 +265,7 @@ describe('TodoNFTSearch', () => {
     // Press Enter to select
     await user.keyboard('{Enter}');
 
-    expect(searchInput).toHaveValue('search 2');
+    expect(searchInput as any).toHaveValue('search 2');
   });
 
   it('returns all NFTs when search is cleared', async () => {
@@ -282,11 +282,11 @@ describe('TodoNFTSearch', () => {
     
     // Type and then clear
     await user.type(searchInput, 'test');
-    await user.clear(searchInput);
+    await user.clear(searchInput as any);
 
     await waitFor(() => {
-      const lastCall = mockOnSearchResults.mock.calls[mockOnSearchResults.mock.calls.length - 1];
-      expect(lastCall[0]).toEqual(mockNFTs);
+      const lastCall = mockOnSearchResults.mock?.calls?.[mockOnSearchResults?.mock?.calls.length - 1];
+      expect(lastCall[0]).toEqual(mockNFTs as any);
     });
   });
 });

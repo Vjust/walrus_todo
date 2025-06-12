@@ -39,7 +39,7 @@ describe('FileValidator', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    validator = new FileValidator(defaultConfig);
+    validator = new FileValidator(defaultConfig as any);
 
     mockBuffer = Buffer.from([
       0xff,
@@ -54,8 +54,8 @@ describe('FileValidator', () => {
       0x00, // Null terminator
     ]);
 
-    (fs.readFileSync as jest.Mock).mockReturnValue(mockBuffer);
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.readFileSync as jest.Mock).mockReturnValue(mockBuffer as any);
+    (fs.existsSync as jest.Mock).mockReturnValue(true as any);
   });
 
   describe('validateFile', () => {
@@ -65,7 +65,7 @@ describe('FileValidator', () => {
 
       const result = await validator.validateFile('/test/image.jpg');
 
-      expect(result).toEqual(
+      expect(result as any).toEqual(
         expect.objectContaining({
           mimeType: 'image/jpeg',
           width: 800,
@@ -89,7 +89,7 @@ describe('FileValidator', () => {
       // Create a mock buffer with an invalid mime type
       const invalidBuffer = Buffer.from([0x00, 0x00, 0x00, 0x00]); // Invalid header
       Object.defineProperty(invalidBuffer, 'length', { value: 100 });
-      (fs.readFileSync as jest.Mock).mockReturnValue(invalidBuffer);
+      (fs.readFileSync as jest.Mock).mockReturnValue(invalidBuffer as any);
       jest
         .spyOn(
           validator as { detectMimeType: (buffer: Buffer) => string },
@@ -140,7 +140,7 @@ describe('FileValidator', () => {
 
       await expect(
         validator.validateFileContent('/test/image.jpg', { validateExif: true })
-      ).resolves.not.toThrow();
+      ).resolves?.not?.toThrow();
     });
 
     it('should reject corrupt EXIF data', async () => {
@@ -157,7 +157,7 @@ describe('FileValidator', () => {
         0x00, // Null terminator
       ]);
       Object.defineProperty(badExifBuffer, 'length', { value: 100 });
-      (fs.readFileSync as jest.Mock).mockReturnValue(badExifBuffer);
+      (fs.readFileSync as jest.Mock).mockReturnValue(badExifBuffer as any);
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 800, height: 600 });
 
       await expect(

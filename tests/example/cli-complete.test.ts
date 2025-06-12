@@ -48,11 +48,11 @@ describe('WalTodo complete command', () => {
     jest.clearAllMocks();
 
     // Mock the TodoService methods
-    (TodoService.prototype.getList as jest.Mock).mockResolvedValue(testList);
+    (TodoService?.prototype?.getList as jest.Mock).mockResolvedValue(testList as any);
 
-    (TodoService.prototype.getTodo as jest.Mock).mockResolvedValue(testTodo);
+    (TodoService?.prototype?.getTodo as jest.Mock).mockResolvedValue(testTodo as any);
 
-    (TodoService.prototype.completeTodo as jest.Mock).mockImplementation(
+    (TodoService?.prototype?.completeTodo as jest.Mock).mockImplementation(
       async (_listName, _todoId) => ({
         ...testTodo,
         completed: true,
@@ -63,19 +63,19 @@ describe('WalTodo complete command', () => {
 
     // Mock walrus storage for blockchain tests
     const mockStorageMethods = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      disconnect: jest.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined as any),
+      disconnect: jest.fn().mockResolvedValue(undefined as any),
       storeTodo: jest.fn().mockResolvedValue({
         blobId: 'test-blob-id',
-        url: 'https://testnet.wal.app/blob/test-blob-id',
+        url: 'https://testnet?.wal?.app/blob/test-blob-id',
       }),
       write: jest.fn().mockResolvedValue({ blobId: 'test-blob-id' }),
-      read: jest.fn().mockResolvedValue(testTodo),
-      verify: jest.fn().mockResolvedValue(true),
+      read: jest.fn().mockResolvedValue(testTodo as any),
+      verify: jest.fn().mockResolvedValue(true as any),
       delete: jest.fn(),
     };
 
-    (createWalrusStorage as jest.Mock).mockReturnValue(mockStorageMethods);
+    (createWalrusStorage as jest.Mock).mockReturnValue(mockStorageMethods as any);
   });
 
   // Test using @oclif/test library for command testing
@@ -86,8 +86,8 @@ describe('WalTodo complete command', () => {
       'test-todo-id-123',
     ]);
 
-    expect(stdout).toContain('Todo completion');
-    expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
+    expect(stdout as any).toContain('Todo completion');
+    expect(TodoService?.prototype?.completeTodo).toHaveBeenCalledWith(
       'default',
       'test-todo-id-123'
     );
@@ -102,8 +102,8 @@ describe('WalTodo complete command', () => {
       'work',
     ]);
 
-    expect(stdout).toContain('Todo completion');
-    expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
+    expect(stdout as any).toContain('Todo completion');
+    expect(TodoService?.prototype?.completeTodo).toHaveBeenCalledWith(
       'work',
       'test-todo-id-123'
     );
@@ -119,9 +119,9 @@ describe('WalTodo complete command', () => {
       'local',
     ]);
 
-    expect(stdout).toContain('Todo completion');
-    expect(TodoService.prototype.completeTodo).toHaveBeenCalled();
-    expect(createWalrusStorage).not.toHaveBeenCalled();
+    expect(stdout as any).toContain('Todo completion');
+    expect(TodoService?.prototype?.completeTodo).toHaveBeenCalled();
+    expect(createWalrusStorage as any).not.toHaveBeenCalled();
   });
 
   // Test blockchain storage (tests the error path when blockchain is unavailable)
@@ -134,14 +134,14 @@ describe('WalTodo complete command', () => {
       'blockchain',
     ]);
 
-    expect(stdout).toContain('Todo completion');
-    expect(createWalrusStorage).toHaveBeenCalled();
+    expect(stdout as any).toContain('Todo completion');
+    expect(createWalrusStorage as any).toHaveBeenCalled();
   });
 
   // Test error handling for non-existent todo
   it('errors when todo does not exist', async () => {
     // Override the implementation to simulate a missing todo
-    (TodoService.prototype.getTodo as jest.Mock).mockRejectedValue(
+    (TodoService?.prototype?.getTodo as jest.Mock).mockRejectedValue(
       new Error('Todo not found')
     );
 
@@ -162,7 +162,7 @@ describe('WalTodo complete command', () => {
     // Mock the walrus storage to throw an error
     const mockStorageMethods = {
       connect: jest.fn().mockRejectedValue(new Error('Network error')),
-      disconnect: jest.fn().mockResolvedValue(undefined),
+      disconnect: jest.fn().mockResolvedValue(undefined as any),
       storeTodo: jest.fn().mockRejectedValue(new Error('Storage failed')),
       write: jest.fn().mockRejectedValue(new Error('Write failed')),
       read: jest.fn(),
@@ -170,7 +170,7 @@ describe('WalTodo complete command', () => {
       delete: jest.fn(),
     };
 
-    (createWalrusStorage as jest.Mock).mockReturnValue(mockStorageMethods);
+    (createWalrusStorage as jest.Mock).mockReturnValue(mockStorageMethods as any);
 
     // Mock execSync to test command execution
     (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -193,6 +193,6 @@ describe('WalTodo complete command', () => {
     const result = execSync(
       'node bin/run.js complete --id test-todo-id-123 --storage local'
     ).toString();
-    expect(result).toContain('Local update successful');
+    expect(result as any).toContain('Local update successful');
   });
 });

@@ -45,38 +45,38 @@ export class WalrusImageLoader extends ProgressiveImageLoader {
     // Convert blob ID to URL if needed
     const url = blobIdOrUrl.startsWith('blob:') || blobIdOrUrl.includes('aggregator')
       ? blobIdOrUrl
-      : getWalrusImageUrl(blobIdOrUrl);
+      : getWalrusImageUrl(blobIdOrUrl as any);
     
-    super(url);
+    super(url as any);
     
     // Extract blob ID for tracking
     if (blobIdOrUrl.includes('blobId=')) {
-      this.walrusBlobId = new URL(blobIdOrUrl).searchParams.get('blobId') || undefined;
+      this?.walrusBlobId = new URL(blobIdOrUrl as any).searchParams.get('blobId') || undefined;
     } else if (!blobIdOrUrl.startsWith('http')) {
-      this.walrusBlobId = blobIdOrUrl;
+      this?.walrusBlobId = blobIdOrUrl;
     }
   }
 
   async load(options: ImagePreloadOptions = {}): Promise<any> {
     try {
-      return await super.load(options);
+      return await super.load(options as any);
     } catch (error) {
       // Enhanced retry logic for Walrus network issues
-      if (this.retryAttempts < WALRUS_IMAGE_CONFIG.retryConfig.maxRetries) {
+      if (this.retryAttempts < WALRUS_IMAGE_CONFIG?.retryConfig?.maxRetries) {
         this.retryAttempts++;
         const delay = Math.min(
-          WALRUS_IMAGE_CONFIG.retryConfig.initialDelay * 
-          Math.pow(WALRUS_IMAGE_CONFIG.retryConfig.backoffFactor, this.retryAttempts - 1),
-          WALRUS_IMAGE_CONFIG.retryConfig.maxDelay
+          WALRUS_IMAGE_CONFIG?.retryConfig?.initialDelay * 
+          Math.pow(WALRUS_IMAGE_CONFIG?.retryConfig?.backoffFactor, this.retryAttempts - 1),
+          WALRUS_IMAGE_CONFIG?.retryConfig?.maxDelay
         );
         
         console.warn(
-          `Walrus image load failed, retrying in ${delay}ms (attempt ${this.retryAttempts}/${WALRUS_IMAGE_CONFIG.retryConfig.maxRetries})`,
+          `Walrus image load failed, retrying in ${delay}ms (attempt ${this.retryAttempts}/${WALRUS_IMAGE_CONFIG?.retryConfig?.maxRetries})`,
           this.walrusBlobId
         );
         
         await new Promise(resolve => setTimeout(resolve, delay));
-        return this.load(options);
+        return this.load(options as any);
       }
       
       throw error;
@@ -96,13 +96,13 @@ export async function batchLoadWalrusImages(
   const inProgress = new Set<Promise<void>>();
 
   async function processNext(): Promise<void> {
-    if (queue.length === 0) {return;}
+    if (queue?.length === 0) {return;}
     
     const blobId = queue.shift()!;
-    const loader = new WalrusImageLoader(blobId);
+    const loader = new WalrusImageLoader(blobId as any);
     
     try {
-      const result = await loader.load(options);
+      const result = await loader.load(options as any);
       results.set(blobId, { success: true, url: result.src });
     } catch (error) {
       results.set(blobId, { 
@@ -116,12 +116,12 @@ export async function batchLoadWalrusImages(
   while (queue.length > 0 || inProgress.size > 0) {
     while (inProgress.size < WALRUS_IMAGE_CONFIG.maxConcurrent && queue.length > 0) {
       const promise = processNext();
-      inProgress.add(promise);
-      promise.finally(() => inProgress.delete(promise));
+      inProgress.add(promise as any);
+      promise.finally(() => inProgress.delete(promise as any));
     }
     
     if (inProgress.size > 0) {
-      await Promise.race(inProgress);
+      await Promise.race(inProgress as any);
     }
   }
 
@@ -148,7 +148,7 @@ export async function preloadTodoImages(
       return todo.imageUrl!;
     });
 
-  if (imageUrls.length === 0) {return;}
+  if (imageUrls?.length === 0) {return;}
 
   // Use the enhanced Walrus batch loader
   await batchLoadWalrusImages(imageUrls, { priority: options.priority });
@@ -179,9 +179,9 @@ export function useWalrusImage(blobIdOrUrl: string | undefined, options: ImagePr
     }
 
     let isMounted = true;
-    const loader = new WalrusImageLoader(blobIdOrUrl);
+    const loader = new WalrusImageLoader(blobIdOrUrl as any);
 
-    loader.load(options)
+    loader.load(options as any)
       .then(result => {
         if (isMounted) {
           setState({
@@ -216,19 +216,19 @@ export function useWalrusImage(blobIdOrUrl: string | undefined, options: ImagePr
  */
 export async function optimizeWalrusImage(
   imageUrl: string,
-  targetSize: keyof typeof WALRUS_IMAGE_CONFIG.sizes = 'medium'
+  targetSize: keyof typeof WALRUS_IMAGE_CONFIG?.sizes = 'medium'
 ): Promise<string> {
   try {
-    const sizeConfig = WALRUS_IMAGE_CONFIG.sizes[targetSize];
+    const sizeConfig = WALRUS_IMAGE_CONFIG?.sizes?.[targetSize];
     
     // Load image
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img?.crossOrigin = 'anonymous';
     
     await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = imageUrl;
+      img?.onload = resolve;
+      img?.onerror = reject;
+      img?.src = imageUrl;
     });
 
     // Create canvas for resizing
@@ -253,12 +253,12 @@ export async function optimizeWalrusImage(
       height = img.height;
     }
 
-    canvas.width = width;
-    canvas.height = height;
+    canvas?.width = width;
+    canvas?.height = height;
 
     // Enable image smoothing for better quality
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    ctx?.imageSmoothingEnabled = true;
+    ctx?.imageSmoothingQuality = 'high';
 
     // Draw resized image
     ctx.drawImage(img, 0, 0, width, height);
@@ -286,9 +286,9 @@ export async function generateWalrusBlurPlaceholder(imageUrl: string): Promise<s
     // Additional blur processing
     const img = new Image();
     await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = optimized;
+      img?.onload = resolve;
+      img?.onerror = reject;
+      img?.src = optimized;
     });
 
     const canvas = document.createElement('canvas');
@@ -296,16 +296,16 @@ export async function generateWalrusBlurPlaceholder(imageUrl: string): Promise<s
     if (!ctx) {throw new Error('Canvas context not available');}
 
     // Very small for performance
-    canvas.width = 20;
-    canvas.height = 20;
+    canvas?.width = 20;
+    canvas?.height = 20;
 
-    ctx.filter = 'blur(10px)';
+    ctx?.filter = 'blur(10px as any)';
     ctx.drawImage(img, 0, 0, 20, 20);
 
     return canvas.toDataURL('image/jpeg', 0.3);
   } catch (error) {
     // Return gradient fallback
-    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 100 100%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e5e7eb%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f3f4f6%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%22100%22 height%3D%22100%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
+    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww?.w3?.org%2F2000%2Fsvg%22 viewBox%3D%220 0 100 100%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e5e7eb%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f3f4f6%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%22100%22 height%3D%22100%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
   }
 }
 
@@ -359,7 +359,7 @@ export function useOptimizedWalrusImage(
         // Generate blur placeholder first if requested
         if (options.generateBlur) {
           try {
-            const blurUrl = await generateWalrusBlurPlaceholder(url);
+            const blurUrl = await generateWalrusBlurPlaceholder(url as any);
             if (isMounted) {
               setState(prev => ({ ...prev, blurDataUrl: blurUrl }));
             }
@@ -381,7 +381,7 @@ export function useOptimizedWalrusImage(
           }));
         }
       } catch (error) {
-        if (isMounted && !abortController.signal.aborted) {
+        if (isMounted && !abortController?.signal?.aborted) {
           console.error('Failed to optimize Walrus image:', error);
           setState(prev => ({
             ...prev,

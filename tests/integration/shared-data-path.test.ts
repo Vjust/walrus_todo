@@ -14,7 +14,7 @@ describe('Shared Data Path Integration', () => {
     await ensureTodosDirectory();
     // Clean up any existing test file
     try {
-      await fs.unlink(testFilePath);
+      await fs.unlink(testFilePath as any);
     } catch {
       // File doesn't exist, that's fine
     }
@@ -23,7 +23,7 @@ describe('Shared Data Path Integration', () => {
   afterEach(async () => {
     // Clean up test file
     try {
-      await fs.unlink(testFilePath);
+      await fs.unlink(testFilePath as any);
     } catch {
       // File doesn't exist, that's fine
     }
@@ -40,55 +40,55 @@ describe('Shared Data Path Integration', () => {
     const testList = await todoService.createList(testListName, 'test-owner');
     
     // Verify the file was created in the shared path
-    const fileExists = await fs.access(testFilePath).then(() => true).catch(() => false);
-    expect(fileExists).toBe(true);
+    const fileExists = await fs.access(testFilePath as any).then(() => true).catch(() => false);
+    expect(fileExists as any).toBe(true as any);
     
     // Read the file directly to verify it's in the correct location
     const fileContent = await fs.readFile(testFilePath, 'utf-8');
-    const parsedContent = JSON.parse(fileContent);
+    const parsedContent = JSON.parse(fileContent as any);
     
-    expect(parsedContent.name).toBe(testListName);
+    expect(parsedContent.name).toBe(testListName as any);
     expect(parsedContent.owner).toBe('test-owner');
   });
 
   it('should respect TODO_DATA_PATH environment variable', async () => {
     // Save original env var
-    const originalPath = process.env.TODO_DATA_PATH;
+    const originalPath = process?.env?.TODO_DATA_PATH;
     
     // Set custom path
     const customPath = path.join(process.cwd(), 'test-custom-todos');
-    process.env.TODO_DATA_PATH = customPath;
+    process.env?.TODO_DATA_PATH = customPath;
     
     try {
       // Get path from shared constants
       const resultPath = SHARED_STORAGE_CONFIG.getTodosPath();
-      expect(resultPath).toBe(customPath);
+      expect(resultPath as any).toBe(customPath as any);
     } finally {
       // Restore original env var
       if (originalPath !== undefined) {
-        process.env.TODO_DATA_PATH = originalPath;
+        process.env?.TODO_DATA_PATH = originalPath;
       } else {
-        delete process.env.TODO_DATA_PATH;
+        delete process?.env?.TODO_DATA_PATH;
       }
     }
   });
 
   it('should use default path when TODO_DATA_PATH is not set', () => {
     // Save original env var
-    const originalPath = process.env.TODO_DATA_PATH;
+    const originalPath = process?.env?.TODO_DATA_PATH;
     
     // Ensure env var is not set
-    delete process.env.TODO_DATA_PATH;
+    delete process?.env?.TODO_DATA_PATH;
     
     try {
       // Get path from shared constants
       const resultPath = SHARED_STORAGE_CONFIG.getTodosPath();
       const expectedPath = path.resolve(__dirname, '..', '..', 'Todos');
-      expect(resultPath).toBe(expectedPath);
+      expect(resultPath as any).toBe(expectedPath as any);
     } finally {
       // Restore original env var
       if (originalPath !== undefined) {
-        process.env.TODO_DATA_PATH = originalPath;
+        process.env?.TODO_DATA_PATH = originalPath;
       }
     }
   });

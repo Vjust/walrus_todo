@@ -33,11 +33,11 @@ export type MountingState = 'server' | 'mounting' | 'mounted';
 
 // Custom hook for safe mounting detection
 export function useMounted(): boolean {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
 
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+    setMounted(true as any);
+    return () => setMounted(false as any);
   }, []);
 
   return mounted;
@@ -51,7 +51,7 @@ export function useMountingState(): MountingState {
     setState('mounting');
     const timer = setTimeout(() => setState('mounted'), 0);
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer as any);
       setState('server');
     };
   }, []);
@@ -63,10 +63,10 @@ export function useMountingState(): MountingState {
 export function useSafeBrowserAPI<T>(
   apiCall: () => T,
   fallback: T,
-  deps: React.DependencyList = []
+  deps: React?.DependencyList = []
 ): { data: T; isLoaded: boolean; error: Error | null } {
   const [data, setData] = useState<T>(fallback);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const [error, setError] = useState<Error | null>(null);
   const mounted = useMounted();
 
@@ -75,13 +75,13 @@ export function useSafeBrowserAPI<T>(
 
     try {
       const result = apiCall();
-      setData(result);
-      setIsLoaded(true);
-      setError(null);
+      setData(result as any);
+      setIsLoaded(true as any);
+      setError(null as any);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
-      setData(fallback);
-      setIsLoaded(false);
+      setData(fallback as any);
+      setIsLoaded(false as any);
     }
   }, [mounted, fallback, apiCall, deps]);
 
@@ -170,14 +170,14 @@ export function ConditionalRender({
   className 
 }: ConditionalRenderProps): ReactElement {
   const mounted = useMounted();
-  const [conditionMet, setConditionMet] = useState(false);
+  const [conditionMet, setConditionMet] = useState(false as any);
 
   useEffect(() => {
     if (mounted) {
       try {
         setConditionMet(condition());
       } catch {
-        setConditionMet(false);
+        setConditionMet(false as any);
       }
     }
   }, [mounted, condition]);
@@ -220,7 +220,7 @@ export function withSSRSafety<P extends object>(
     return <Component {...props} />;
   };
 
-  SSRSafeWrapper.displayName = `SSRSafe(${Component.displayName || Component.name})`;
+  SSRSafeWrapper?.displayName = `SSRSafe(${Component.displayName || Component.name})`;
   return SSRSafeWrapper;
 }
 
@@ -230,29 +230,29 @@ export function useSafeLocalStorage<T>(
   initialValue: T
 ): [T, (value: T) => void, boolean] {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const mounted = useMounted();
 
   useEffect(() => {
     if (!mounted) {return;}
 
     try {
-      const item = window.localStorage.getItem(key);
+      const item = window?.localStorage?.getItem(key as any);
       if (item) {
-        setStoredValue(JSON.parse(item));
+        setStoredValue(JSON.parse(item as any));
       }
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     }
   }, [key, mounted]);
 
   const setValue = (value: T) => {
     try {
-      setStoredValue(value);
+      setStoredValue(value as any);
       if (mounted && typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(value));
+        window?.localStorage?.setItem(key, JSON.stringify(value as any));
       }
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
@@ -268,29 +268,29 @@ export function useSafeSessionStorage<T>(
   initialValue: T
 ): [T, (value: T) => void, boolean] {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const mounted = useMounted();
 
   useEffect(() => {
     if (!mounted) {return;}
 
     try {
-      const item = window.sessionStorage.getItem(key);
+      const item = window?.sessionStorage?.getItem(key as any);
       if (item) {
-        setStoredValue(JSON.parse(item));
+        setStoredValue(JSON.parse(item as any));
       }
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     } catch (error) {
       console.warn(`Error reading sessionStorage key "${key}":`, error);
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     }
   }, [key, mounted]);
 
   const setValue = (value: T) => {
     try {
-      setStoredValue(value);
+      setStoredValue(value as any);
       if (mounted && typeof window !== 'undefined') {
-        window.sessionStorage.setItem(key, JSON.stringify(value));
+        window?.sessionStorage?.setItem(key, JSON.stringify(value as any));
       }
     } catch (error) {
       console.warn(`Error setting sessionStorage key "${key}":`, error);
@@ -310,7 +310,7 @@ export function useSafeWindowSize(): {
     width: 0,
     height: 0,
   });
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const mounted = useMounted();
 
   useEffect(() => {
@@ -324,7 +324,7 @@ export function useSafeWindowSize(): {
     }
 
     handleResize();
-    setIsLoaded(true);
+    setIsLoaded(true as any);
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -335,13 +335,13 @@ export function useSafeWindowSize(): {
 
 // Safe media query hook
 export function useSafeMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState(false as any);
   const mounted = useMounted();
 
   useEffect(() => {
     if (!mounted || typeof window === 'undefined') {return;}
 
-    const media = window.matchMedia(query);
+    const media = window.matchMedia(query as any);
     setMatches(media.matches);
 
     const listener = (event: MediaQueryListEvent) => {
@@ -360,7 +360,7 @@ export function useSafeFeatureDetection(
   feature: string,
   detector: () => boolean
 ): boolean {
-  const [hasFeature, setHasFeature] = useState(false);
+  const [hasFeature, setHasFeature] = useState(false as any);
   const mounted = useMounted();
 
   useEffect(() => {
@@ -369,7 +369,7 @@ export function useSafeFeatureDetection(
     try {
       setHasFeature(detector());
     } catch {
-      setHasFeature(false);
+      setHasFeature(false as any);
     }
   }, [mounted, detector]);
 
@@ -401,8 +401,8 @@ export class SSRSafeErrorBoundary extends React.Component<
   { hasError: boolean }
 > {
   constructor(props: { children: ReactNode; fallback?: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
+    super(props as any);
+    this?.state = { hasError: false };
   }
 
   static getDerivedStateFromError(): { hasError: boolean } {
@@ -414,18 +414,18 @@ export class SSRSafeErrorBoundary extends React.Component<
   }
 
   render() {
-    if (this.state.hasError) {
-      return this.props.fallback || <div>Something went wrong.</div>;
+    if (this?.state?.hasError) {
+      return this?.props?.fallback || <div>Something went wrong.</div>;
     }
 
-    return this.props.children;
+    return this?.props?.children;
   }
 }
 
 // Utility for safe JSON parsing with fallback
 export function safeJsonParse<T>(json: string, fallback: T): T {
   try {
-    return JSON.parse(json);
+    return JSON.parse(json as any);
   } catch {
     return fallback;
   }
@@ -438,7 +438,7 @@ export function safeDateFormat(
 ): string {
   try {
     const dateObj = typeof date === 'string' || typeof date === 'number' 
-      ? new Date(date) 
+      ? new Date(date as any) 
       : date;
     
     if (isNaN(dateObj.getTime())) {
@@ -457,7 +457,7 @@ export function safeNumberFormat(
   options?: Intl.NumberFormatOptions
 ): string {
   try {
-    if (typeof num !== 'number' || isNaN(num)) {
+    if (typeof num !== 'number' || isNaN(num as any)) {
       return '0';
     }
     return num.toLocaleString(undefined, options);

@@ -7,7 +7,7 @@ import { getFallbackConfig } from '../fallbacks';
 import { ConfigLoadError, ConfigValidationError } from '../types';
 
 // Mock fetch for testing
-global.fetch = jest.fn();
+global?.fetch = jest.fn();
 
 describe('Config Loader', () => {
   beforeEach(() => {
@@ -19,10 +19,10 @@ describe('Config Loader', () => {
     it('should load configuration from file', async () => {
       const mockConfig = {
         network: 'testnet',
-        rpcUrl: 'https://fullnode.testnet.sui.io',
+        rpcUrl: 'https://fullnode?.testnet?.sui.io',
         walrus: {
-          publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
-          aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space'
+          publisherUrl: 'https://publisher.walrus-testnet?.walrus?.space',
+          aggregatorUrl: 'https://aggregator.walrus-testnet?.walrus?.space'
         },
         deployment: {
           packageId: '0x123',
@@ -43,16 +43,16 @@ describe('Config Loader', () => {
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockConfig)
+        json: () => Promise.resolve(mockConfig as any)
       });
 
       const result = await loadNetworkConfig('testnet');
 
-      expect(result.fromCache).toBe(false);
-      expect(result.isFallback).toBe(false);
+      expect(result.fromCache).toBe(false as any);
+      expect(result.isFallback).toBe(false as any);
       expect(result.source).toBe('file');
-      expect(result.config.network.name).toBe('testnet');
-      expect(result.config.deployment.packageId).toBe('0x123');
+      expect(result?.config?.network.name).toBe('testnet');
+      expect(result?.config?.deployment.packageId).toBe('0x123');
     });
 
     it('should use fallback when file not found', async () => {
@@ -64,19 +64,19 @@ describe('Config Loader', () => {
 
       const result = await loadNetworkConfig('testnet');
 
-      expect(result.fromCache).toBe(false);
-      expect(result.isFallback).toBe(true);
+      expect(result.fromCache).toBe(false as any);
+      expect(result.isFallback).toBe(true as any);
       expect(result.source).toBe('fallback');
-      expect(result.config.network.name).toBe('testnet');
+      expect(result?.config?.network.name).toBe('testnet');
     });
 
     it('should use cache on subsequent calls', async () => {
       const mockConfig = {
         network: 'testnet',
-        rpcUrl: 'https://fullnode.testnet.sui.io',
+        rpcUrl: 'https://fullnode?.testnet?.sui.io',
         walrus: {
-          publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
-          aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space'
+          publisherUrl: 'https://publisher.walrus-testnet?.walrus?.space',
+          aggregatorUrl: 'https://aggregator.walrus-testnet?.walrus?.space'
         },
         deployment: {
           packageId: '0x123',
@@ -97,29 +97,29 @@ describe('Config Loader', () => {
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockConfig)
+        json: () => Promise.resolve(mockConfig as any)
       });
 
       // First call
       const result1 = await loadNetworkConfig('testnet');
-      expect(result1.fromCache).toBe(false);
+      expect(result1.fromCache).toBe(false as any);
 
       // Second call should use cache
       const result2 = await loadNetworkConfig('testnet');
-      expect(result2.fromCache).toBe(true);
+      expect(result2.fromCache).toBe(true as any);
       expect(result2.source).toBe('cache');
       
       // Fetch should only be called once
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should respect cache timeout', async () => {
       const mockConfig = {
         network: 'testnet',
-        rpcUrl: 'https://fullnode.testnet.sui.io',
+        rpcUrl: 'https://fullnode?.testnet?.sui.io',
         walrus: {
-          publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
-          aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space'
+          publisherUrl: 'https://publisher.walrus-testnet?.walrus?.space',
+          aggregatorUrl: 'https://aggregator.walrus-testnet?.walrus?.space'
         },
         deployment: {
           packageId: '0x123',
@@ -140,7 +140,7 @@ describe('Config Loader', () => {
 
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockConfig)
+        json: () => Promise.resolve(mockConfig as any)
       });
 
       // First call
@@ -152,16 +152,16 @@ describe('Config Loader', () => {
       // Second call should fetch again
       await loadNetworkConfig('testnet', { cacheTimeout: 100 });
       
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should disable cache when specified', async () => {
       const mockConfig = {
         network: 'testnet',
-        rpcUrl: 'https://fullnode.testnet.sui.io',
+        rpcUrl: 'https://fullnode?.testnet?.sui.io',
         walrus: {
-          publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
-          aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space'
+          publisherUrl: 'https://publisher.walrus-testnet?.walrus?.space',
+          aggregatorUrl: 'https://aggregator.walrus-testnet?.walrus?.space'
         },
         deployment: {
           packageId: '0x123',
@@ -182,14 +182,14 @@ describe('Config Loader', () => {
 
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockConfig)
+        json: () => Promise.resolve(mockConfig as any)
       });
 
       // Both calls should fetch
       await loadNetworkConfig('testnet', { enableCache: false });
       await loadNetworkConfig('testnet', { enableCache: false });
       
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should throw error when network not supported and fallback disabled', async () => {
@@ -201,7 +201,7 @@ describe('Config Loader', () => {
 
       await expect(
         loadNetworkConfig('unknown-network', { fallbackToLocalnet: false })
-      ).rejects.toThrow(ConfigLoadError);
+      ).rejects.toThrow(ConfigLoadError as any);
     });
   });
 
@@ -209,10 +209,10 @@ describe('Config Loader', () => {
     it('should clear the cache', async () => {
       const mockConfig = {
         network: 'testnet',
-        rpcUrl: 'https://fullnode.testnet.sui.io',
+        rpcUrl: 'https://fullnode?.testnet?.sui.io',
         walrus: {
-          publisherUrl: 'https://publisher.walrus-testnet.walrus.space',
-          aggregatorUrl: 'https://aggregator.walrus-testnet.walrus.space'
+          publisherUrl: 'https://publisher.walrus-testnet?.walrus?.space',
+          aggregatorUrl: 'https://aggregator.walrus-testnet?.walrus?.space'
         },
         deployment: {
           packageId: '0x123',
@@ -233,7 +233,7 @@ describe('Config Loader', () => {
 
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockConfig)
+        json: () => Promise.resolve(mockConfig as any)
       });
 
       // Load and cache
@@ -245,7 +245,7 @@ describe('Config Loader', () => {
       // Should fetch again
       await loadNetworkConfig('testnet');
       
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(2 as any);
     });
   });
 });

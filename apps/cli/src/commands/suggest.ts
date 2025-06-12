@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import {
   TaskSuggestionService,
   SuggestionType,
@@ -53,7 +53,7 @@ const apiKeyValidationCache = createCache<boolean>('api-key-validation', {
 });
 
 // Add debug logging for cache hits/misses
-const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
+const CACHE_DEBUG = process.env?.CACHE_DEBUG === 'true';
 
 export default class Suggest extends BaseCommand {
   /**
@@ -65,7 +65,7 @@ export default class Suggest extends BaseCommand {
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(
-        `Suggest command: Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}. Please check your Sui configuration and wallet setup.`
+        `Suggest command: Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error as any)}. Please check your Sui configuration and wallet setup.`
       );
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -76,7 +76,7 @@ export default class Suggest extends BaseCommand {
    * @returns The todo service
    */
   private getTodoService() {
-    return new TodoService();
+    return todoService;
   }
   static description =
     'Get intelligent task suggestions based on your current todo list (with performance caching)';
@@ -196,7 +196,7 @@ export default class Suggest extends BaseCommand {
   };
 
   async run() {
-    const { flags } = await this.parse(Suggest);
+    const { flags } = await this.parse(Suggest as any);
 
     // Handle job status check first
     if (flags.jobId) {
@@ -205,7 +205,7 @@ export default class Suggest extends BaseCommand {
 
     // Handle background execution
     if (flags.background) {
-      return this.executeInBackground(flags);
+      return this.executeInBackground(flags as any);
     }
 
     // Enable cache debugging if requested
@@ -217,13 +217,13 @@ export default class Suggest extends BaseCommand {
       await configCache.clear();
       await apiKeyValidationCache.clear();
       this.log(chalk.green('AI suggestion caches cleared'));
-      if (!flags.apiKey && !process.env.XAI_API_KEY) {
+      if (!flags.apiKey && !process?.env?.XAI_API_KEY) {
         return; // Exit if just clearing cache
       }
     }
 
     // Get API key from flag or environment
-    const apiKey = flags.apiKey || process.env.XAI_API_KEY;
+    const apiKey = flags.apiKey || process?.env?.XAI_API_KEY;
     if (!apiKey) {
       this.error(
         'API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.'
@@ -233,10 +233,10 @@ export default class Suggest extends BaseCommand {
     // Check API key validation cache
     const apiKeyCacheKey = crypto
       .createHash('md5')
-      .update(apiKey)
+      .update(apiKey as any)
       .digest('hex');
     const cachedApiKeyValidation =
-      await apiKeyValidationCache.get(apiKeyCacheKey);
+      await apiKeyValidationCache.get(apiKeyCacheKey as any);
 
     if (cachedApiKeyValidation !== null) {
       if (cacheDebugEnabled)
@@ -290,7 +290,7 @@ export default class Suggest extends BaseCommand {
 
         // Create verification service with all required parameters
         // Create a BlockchainVerifier instance first
-        const blockchainVerifier = new BlockchainVerifier(verifierAdapter);
+        const blockchainVerifier = new BlockchainVerifier(verifierAdapter as any);
 
         verificationService = new BlockchainAIVerificationService(
           blockchainVerifier,
@@ -305,14 +305,14 @@ export default class Suggest extends BaseCommand {
           throw error;
         }
         throw new CLIError(
-          `Suggest command: Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error)}. Check registry address, package ID, and Sui connection.`
+          `Suggest command: Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error as any)}. Check registry address, package ID, and Sui connection.`
         );
       }
     }
 
     // Check config cache for AI service initialization
     const configCacheKey = `ai-config-${flags.provider || 'default'}-${flags.model || 'default'}`;
-    let aiServiceConfig = await configCache.get(configCacheKey);
+    let aiServiceConfig = await configCache.get(configCacheKey as any);
 
     if (!aiServiceConfig) {
       // Create config and cache it
@@ -351,7 +351,7 @@ export default class Suggest extends BaseCommand {
     const todoService = await this.getTodoService();
     const todos = await todoService.listTodos();
 
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       this.log('No todos found to analyze for suggestions.');
       return;
     }
@@ -363,10 +363,10 @@ export default class Suggest extends BaseCommand {
     };
 
     // Set type filter
-    if (flags.type && typeof flags.type === 'string') {
+    if (flags.type && typeof flags?.type === 'string') {
       const typeArray = [flags.type];
       if (typeArray[0] !== 'all') {
-        context.includeTypes = typeArray.map(type => {
+        context?.includeTypes = typeArray.map(type => {
           switch (type) {
             case 'related':
               return SuggestionType.RELATED;
@@ -382,19 +382,19 @@ export default class Suggest extends BaseCommand {
     }
 
     // Set tags filter
-    if (flags.tags && typeof flags.tags === 'string') {
-      context.tags = [flags.tags];
+    if (flags.tags && typeof flags?.tags === 'string') {
+      context?.tags = [flags.tags];
     } else if (
       flags.tags &&
       Array.isArray(flags.tags) &&
-      flags.tags.length > 0
+      flags?.tags?.length > 0
     ) {
-      context.tags = flags.tags;
+      context?.tags = flags.tags;
     }
 
     // Set priority filter
-    if (flags.priority && typeof flags.priority === 'string') {
-      context.priorityFilter = [flags.priority] as (
+    if (flags.priority && typeof flags?.priority === 'string') {
+      context?.priorityFilter = [flags.priority] as (
         | 'high'
         | 'medium'
         | 'low'
@@ -402,20 +402,20 @@ export default class Suggest extends BaseCommand {
     } else if (
       flags.priority &&
       Array.isArray(flags.priority) &&
-      flags.priority.length > 0
+      flags?.priority?.length > 0
     ) {
-      context.priorityFilter = flags.priority as ('high' | 'medium' | 'low')[];
+      context?.priorityFilter = flags.priority as ('high' | 'medium' | 'low')[];
     }
 
     // Set todoId filter
-    if (flags.todoId && typeof flags.todoId === 'string') {
-      context.relatedToTodoIds = [flags.todoId];
+    if (flags.todoId && typeof flags?.todoId === 'string') {
+      context?.relatedToTodoIds = [flags.todoId];
     } else if (
       flags.todoId &&
       Array.isArray(flags.todoId) &&
-      flags.todoId.length > 0
+      flags?.todoId?.length > 0
     ) {
-      context.relatedToTodoIds = flags.todoId;
+      context?.relatedToTodoIds = flags.todoId;
     }
 
     this.log(
@@ -424,9 +424,9 @@ export default class Suggest extends BaseCommand {
 
     // Map privacy flag to AIPrivacyLevel
     const privacyLevel =
-      flags.privacy === 'public'
+      flags?.privacy === 'public'
         ? AIPrivacyLevel.PUBLIC
-        : flags.privacy === 'private'
+        : flags?.privacy === 'private'
           ? AIPrivacyLevel.PRIVATE
           : AIPrivacyLevel.HASH_ONLY;
 
@@ -451,7 +451,7 @@ export default class Suggest extends BaseCommand {
         .digest('hex');
 
       // Check suggestion cache
-      let result = await suggestionCache.get(suggestionCacheKey);
+      let result = await suggestionCache.get(suggestionCacheKey as any);
 
       if (result) {
         if (cacheDebugEnabled)
@@ -477,7 +477,7 @@ export default class Suggest extends BaseCommand {
       }
 
       // Display results
-      if (flags.format === 'json') {
+      if (flags?.format === 'json') {
         this.log(JSON.stringify(flags.verify ? result : result, null, 2));
         return;
       }
@@ -511,19 +511,19 @@ export default class Suggest extends BaseCommand {
       // Display context information
       this.log(chalk.cyan('\nContext Information:'));
       this.log(
-        `Analyzed ${chalk.bold((contextInfo?.analyzedTodoCount ?? 0).toString())} todos, ${chalk.bold((contextInfo?.completionPercentage ?? 0).toFixed(0))}% completed`
+        `Analyzed ${chalk.bold((contextInfo?.analyzedTodoCount ?? 0).toString())} todos, ${chalk.bold((contextInfo?.completionPercentage ?? 0).toFixed(0 as any))}% completed`
       );
       this.log(
-        `Top tags: ${(contextInfo?.topContextualTags ?? []).map(tag => chalk.yellow(tag)).join(', ')}`
+        `Top tags: ${(contextInfo?.topContextualTags ?? []).map(tag => chalk.yellow(tag as any)).join(', ')}`
       );
       this.log(
-        `Detected themes: ${(contextInfo?.detectedThemes ?? []).map(theme => chalk.green(theme)).join(', ')}`
+        `Detected themes: ${(contextInfo?.detectedThemes ?? []).map(theme => chalk.green(theme as any)).join(', ')}`
       );
 
       // Display suggestions
       this.log(chalk.cyan(`\nTask Suggestions (${suggestions.length}):`));
 
-      if (suggestions.length === 0) {
+      if (suggestions?.length === 0) {
         this.log(
           chalk.yellow(
             'No suggestions found based on your filters. Try broadening your criteria.'
@@ -543,19 +543,19 @@ export default class Suggest extends BaseCommand {
 
         // Color based on priority
         const priorityColor =
-          suggestion.priority === 'high'
+          suggestion?.priority === 'high'
             ? chalk.red
-            : suggestion.priority === 'medium'
+            : suggestion?.priority === 'medium'
               ? chalk.yellow
               : chalk.green;
 
         // Color based on type
         const typeColor =
-          suggestion.type === SuggestionType.RELATED
+          suggestion?.type === SuggestionType.RELATED
             ? chalk.blue
-            : suggestion.type === SuggestionType.NEXT_STEP
+            : suggestion?.type === SuggestionType.NEXT_STEP
               ? chalk.green
-              : suggestion.type === SuggestionType.DEPENDENCY
+              : suggestion?.type === SuggestionType.DEPENDENCY
                 ? chalk.yellow
                 : chalk.white;
 
@@ -565,15 +565,15 @@ export default class Suggest extends BaseCommand {
           `   Priority: ${priorityColor(suggestion.priority || 'medium')} | Score: ${scoreColor(suggestion.score)} | Type: ${typeColor(suggestion.type)}`
         );
 
-        if (suggestion.tags && suggestion.tags.length > 0) {
+        if (suggestion.tags && suggestion?.tags?.length > 0) {
           this.log(
-            `   Tags: ${suggestion.tags.map(tag => chalk.yellow(tag)).join(', ')}`
+            `   Tags: ${suggestion?.tags?.map(tag => chalk.yellow(tag as any)).join(', ')}`
           );
         }
 
         this.log(`   Reasoning: ${chalk.dim(suggestion.reasoning)}`);
 
-        if (suggestion.relatedTodoIds && suggestion.relatedTodoIds.length > 0) {
+        if (suggestion.relatedTodoIds && suggestion?.relatedTodoIds?.length > 0) {
           const relatedTodos = todos.filter(todo =>
             suggestion.relatedTodoIds?.includes(todo.id)
           );
@@ -617,17 +617,17 @@ export default class Suggest extends BaseCommand {
 
         this.log(
           chalk.dim(
-            `  Suggestions: ${suggestionStats.hits} hits, ${suggestionStats.misses} misses (${(suggestionStats.hitRate * 100).toFixed(1)}% hit rate)`
+            `  Suggestions: ${suggestionStats.hits} hits, ${suggestionStats.misses} misses (${(suggestionStats.hitRate * 100).toFixed(1 as any)}% hit rate)`
           )
         );
         this.log(
           chalk.dim(
-            `  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1)}% hit rate)`
+            `  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1 as any)}% hit rate)`
           )
         );
         this.log(
           chalk.dim(
-            `  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1)}% hit rate)`
+            `  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1 as any)}% hit rate)`
           )
         );
       }
@@ -667,7 +667,7 @@ export default class Suggest extends BaseCommand {
       })),
     });
 
-    if (selectedSuggestions.length === 0) {
+    if (selectedSuggestions?.length === 0) {
       this.log('No suggestions selected.');
       return;
     }
@@ -690,7 +690,7 @@ export default class Suggest extends BaseCommand {
           throw error;
         }
         throw new CLIError(
-          `Failed to add todo: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to add todo: ${error instanceof Error ? error.message : String(error as any)}`
         );
       }
     }
@@ -709,7 +709,7 @@ export default class Suggest extends BaseCommand {
     details?: Record<string, unknown>;
   }) {
     this.log(chalk.bold('\nVerification Details:'));
-    this.log(chalk.dim('─'.repeat(50)));
+    this.log(chalk.dim('─'.repeat(50 as any)));
     this.log(
       `ID:        ${chalk.yellow(verification.verificationId || 'unknown')}`
     );
@@ -719,24 +719,24 @@ export default class Suggest extends BaseCommand {
 
     if (verification.details) {
       this.log(
-        `Privacy:   ${chalk.blue(String(verification.details.privacyLevel || 'hash_only'))}`
+        `Privacy:   ${chalk.blue(String(verification?.details?.privacyLevel || 'hash_only'))}`
       );
 
       // Display transaction ID if available
-      if (verification.details.transactionId) {
+      if (verification?.details?.transactionId) {
         this.log(
-          `Transaction: ${chalk.yellow(String(verification.details.transactionId))}`
+          `Transaction: ${chalk.yellow(String(verification?.details?.transactionId))}`
         );
       }
 
-      if (verification.details.timestamp) {
+      if (verification?.details?.timestamp) {
         this.log(
-          `Timestamp: ${new Date(Number(verification.details.timestamp)).toLocaleString()}`
+          `Timestamp: ${new Date(Number(verification?.details?.timestamp)).toLocaleString()}`
         );
       }
     }
 
-    this.log(chalk.dim('─'.repeat(50)));
+    this.log(chalk.dim('─'.repeat(50 as any)));
     this.log(
       chalk.dim(
         `To view detailed verification information, run: ${chalk.cyan(`walrus_todo ai:verify show --id ${verification.verificationId || 'unknown'}`)}`
@@ -750,14 +750,14 @@ export default class Suggest extends BaseCommand {
   private async handleJobStatus(jobId: string, flags: any) {
     try {
       const backgroundOps = await createBackgroundAIOperationsManager();
-      const status = await backgroundOps.getOperationStatus(jobId);
+      const status = await backgroundOps.getOperationStatus(jobId as any);
 
       if (!status) {
         this.error(`Job ${jobId} not found`);
         return;
       }
 
-      if (flags.format === 'json') {
+      if (flags?.format === 'json') {
         this.log(JSON.stringify(status, null, 2));
         return;
       }
@@ -769,12 +769,12 @@ export default class Suggest extends BaseCommand {
       this.log(`Stage: ${chalk.blue(status.stage)}`);
 
       if (status.startedAt) {
-        this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
+        this.log(`Started: ${chalk.dim(status?.startedAt?.toLocaleString())}`);
       }
 
       if (status.completedAt) {
         this.log(
-          `Completed: ${chalk.dim(status.completedAt.toLocaleString())}`
+          `Completed: ${chalk.dim(status?.completedAt?.toLocaleString())}`
         );
       }
 
@@ -783,8 +783,8 @@ export default class Suggest extends BaseCommand {
       }
 
       // If completed, show results
-      if (status.status === 'completed') {
-        const result = await backgroundOps.getOperationResult(jobId);
+      if (status?.status === 'completed') {
+        const result = await backgroundOps.getOperationResult(jobId as any);
         if (result && flags.format !== 'json') {
           this.log(chalk.bold('\nResults:'));
           this.displaySuggestionResults(result.result, flags);
@@ -794,23 +794,23 @@ export default class Suggest extends BaseCommand {
       // If waiting and operation is still running, wait for completion
       if (
         flags.wait &&
-        (status.status === 'queued' || status.status === 'running')
+        (status?.status === 'queued' || status?.status === 'running')
       ) {
         this.log(chalk.yellow('\nWaiting for operation to complete...'));
 
         const result = await backgroundOps.waitForOperationWithProgress(
           jobId,
           (progress, stage) => {
-            process.stdout.write(
+            process?.stdout?.write(
               `\r${chalk.blue('Progress:')} ${progress}% (${stage})`
             );
           }
         );
 
-        process.stdout.write('\n');
+        process?.stdout?.write('\n');
         this.log(chalk.green('Operation completed!'));
 
-        if (flags.format === 'json') {
+        if (flags?.format === 'json') {
           this.log(JSON.stringify(result, null, 2));
         } else {
           this.displaySuggestionResults(result.result, flags);
@@ -821,7 +821,7 @@ export default class Suggest extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to get job status: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get job status: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -837,7 +837,7 @@ export default class Suggest extends BaseCommand {
       const todoService = await this.getTodoService();
       const todos = await todoService.listTodos();
 
-      if (todos.length === 0) {
+      if (todos?.length === 0) {
         this.log('No todos found to analyze for suggestions.');
         return;
       }
@@ -881,7 +881,7 @@ export default class Suggest extends BaseCommand {
 
         this.log(chalk.green('Operation completed!'));
 
-        if (flags.format === 'json') {
+        if (flags?.format === 'json') {
           this.log(JSON.stringify(result, null, 2));
         } else {
           this.displaySuggestionResults(result.result, flags);
@@ -892,7 +892,7 @@ export default class Suggest extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -901,14 +901,14 @@ export default class Suggest extends BaseCommand {
    * Display suggestion results (simplified version for background operations)
    */
   private displaySuggestionResults(suggestions: any, flags: any) {
-    if (flags.format === 'json') {
+    if (flags?.format === 'json') {
       this.log(JSON.stringify({ suggestions }, null, 2));
       return;
     }
 
     this.log(chalk.cyan('💡 Task Suggestions:'));
 
-    if (Array.isArray(suggestions)) {
+    if (Array.isArray(suggestions as any)) {
       suggestions.forEach((suggestion, index) => {
         this.log(`${index + 1}. ${suggestion}`);
       });
@@ -941,7 +941,7 @@ export default class Suggest extends BaseCommand {
     };
 
     return (
-      statusColors[status as keyof typeof statusColors] || chalk.white(status)
+      statusColors[status as keyof typeof statusColors] || chalk.white(status as any)
     );
   }
 

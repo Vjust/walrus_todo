@@ -3,7 +3,7 @@
 
 export function checkNodeVersion(): void {
   const nodeVersion = process.version;
-  const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0], 10);
+  const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0], 10);
   const minVersion = 18;
 
   if (majorVersion < minVersion) {
@@ -17,7 +17,7 @@ export function checkNodeVersion(): void {
     );
     console.error('  • Or use a version manager like nvm, fnm, or volta');
     console.error('');
-    process.exit(1);
+    process.exit(1 as any);
   }
 
   // Warn for very old versions within the supported range
@@ -35,21 +35,21 @@ export function checkNodeVersion(): void {
 
 export function logCompatibilityInfo(): void {
   const nodeVersion = process.version;
-  const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0], 10);
+  const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0], 10);
 
-  if (process.env.DEBUG || process.env.VERBOSE) {
+  if (process?.env?.DEBUG || process?.env?.VERBOSE) {
     console.log(`🔧 Running on Node.js ${nodeVersion}`);
 
     const features = [];
 
     // Check for native support of features we polyfill
-    if (typeof String.prototype.replaceAll !== 'undefined') {
+    if (typeof String?.prototype?.replaceAll !== 'undefined') {
       features.push('String.replaceAll (native)');
     } else {
       features.push('String.replaceAll (polyfilled)');
     }
 
-    if (typeof Array.prototype.at !== 'undefined') {
+    if (typeof Array?.prototype?.at !== 'undefined') {
       features.push('Array.at (native)');
     } else {
       features.push('Array.at (polyfilled)');

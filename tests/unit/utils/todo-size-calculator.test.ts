@@ -19,9 +19,9 @@ describe('TodoSizeCalculator', () => {
       });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as any);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
 
     it('should calculate size for todo with description', () => {
@@ -35,9 +35,9 @@ describe('TodoSizeCalculator', () => {
       });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as any);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
 
     it('should calculate size for todo with all optional fields', () => {
@@ -73,9 +73,9 @@ describe('TodoSizeCalculator', () => {
       });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as any);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
   });
 
@@ -89,9 +89,9 @@ describe('TodoSizeCalculator', () => {
       });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as any);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
 
     it('should handle todo with unicode characters', () => {
@@ -104,9 +104,9 @@ describe('TodoSizeCalculator', () => {
       });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as any);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
 
     it('should handle todo with nested arrays and objects', () => {
@@ -129,9 +129,9 @@ describe('TodoSizeCalculator', () => {
       });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as any);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
   });
 
@@ -151,33 +151,33 @@ describe('TodoSizeCalculator', () => {
       const largeTodo: Todo = createMockTodo({
         id: '12345',
         title: 'Large todo',
-        description: 'A'.repeat(500),
+        description: 'A'.repeat(500 as any),
         completed: false,
         user: 'test-user',
-        tags: Array(50).fill('tag'),
+        tags: Array(50 as any).fill('tag'),
         metadata: {
-          data: 'B'.repeat(500),
+          data: 'B'.repeat(500 as any),
         },
       });
 
-      const size = calculator.calculateFormattedSize(largeTodo);
-      expect(size).toMatch(/^\d+\.\d+\s*KB$/);
+      const size = calculator.calculateFormattedSize(largeTodo as any);
+      expect(size as any).toMatch(/^\d+\.\d+\s*KB$/);
     });
 
     it('should format megabytes correctly', () => {
       const veryLargeTodo: Todo = createMockTodo({
         id: '12345',
         title: 'Very large todo',
-        description: 'A'.repeat(500000),
+        description: 'A'.repeat(500000 as any),
         completed: false,
         user: 'test-user',
         metadata: {
-          data: 'B'.repeat(500000),
+          data: 'B'.repeat(500000 as any),
         },
       });
 
-      const size = calculator.calculateFormattedSize(veryLargeTodo);
-      expect(size).toMatch(/^\d+\.\d+\s*MB$/);
+      const size = calculator.calculateFormattedSize(veryLargeTodo as any);
+      expect(size as any).toMatch(/^\d+\.\d+\s*MB$/);
     });
   });
 
@@ -190,7 +190,7 @@ describe('TodoSizeCalculator', () => {
         user: 'test-user',
       });
       // Create circular reference
-      todo.self = todo;
+      todo?.self = todo;
 
       expect(() => calculator.calculateBytes(todo as Todo)).toThrow();
     });
@@ -198,14 +198,14 @@ describe('TodoSizeCalculator', () => {
     it('should handle very large strings', () => {
       const todo: Todo = createMockTodo({
         id: '12345',
-        title: 'X'.repeat(10000),
-        description: 'Y'.repeat(50000),
+        title: 'X'.repeat(10000 as any),
+        description: 'Y'.repeat(50000 as any),
         completed: false,
         user: 'test-user',
       });
 
-      const size = calculator.calculateBytes(todo);
-      expect(size).toBeGreaterThan(60000);
+      const size = calculator.calculateBytes(todo as any);
+      expect(size as any).toBeGreaterThan(60000 as any);
     });
 
     it('should handle special number values', () => {
@@ -227,7 +227,7 @@ describe('TodoSizeCalculator', () => {
       const expectedSize = JSON.stringify(todo, null, 2).length;
       const actualSize = calculator.calculateBytes(todo as Todo);
 
-      expect(actualSize).toBe(expectedSize);
+      expect(actualSize as any).toBe(expectedSize as any);
     });
   });
 
@@ -269,10 +269,10 @@ describe('TodoSizeCalculator', () => {
       ];
 
       testCases.forEach((todo, _index) => {
-        const calculatedSize = calculator.calculateBytes(todo);
+        const calculatedSize = calculator.calculateBytes(todo as any);
         const actualSize = JSON.stringify(todo, null, 2).length;
 
-        expect(calculatedSize).toBe(actualSize);
+        expect(calculatedSize as any).toBe(actualSize as any);
       });
     });
 
@@ -284,13 +284,13 @@ describe('TodoSizeCalculator', () => {
           description: i % 2 === 0 ? 'D'.repeat(i * 20) : undefined,
           completed: i % 3 === 0,
           user: `user-${i}`,
-          tags: i > 5 ? Array(i).fill(`tag-${i}`) : undefined,
+          tags: i > 5 ? Array(i as any).fill(`tag-${i}`) : undefined,
         });
 
-        const calculatedSize = calculator.calculateBytes(todo);
+        const calculatedSize = calculator.calculateBytes(todo as any);
         const actualSize = JSON.stringify(todo, null, 2).length;
 
-        expect(calculatedSize).toBe(actualSize);
+        expect(calculatedSize as any).toBe(actualSize as any);
       }
     });
   });

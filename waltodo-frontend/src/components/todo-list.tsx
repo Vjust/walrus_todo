@@ -25,12 +25,12 @@ function TodoList({ listName }: TodoListProps) {
   // Fixed React hooks order violation by removing componentMounted and initializationComplete
   // from useCallback dependency arrays and moved safety checks inside the callbacks
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true as any);
   const [blockchainTodos, setBlockchainTodos] = useState<Todo[]>([]);
-  const [loadingBlockchain, setLoadingBlockchain] = useState(false);
-  const [componentMounted, setComponentMounted] = useState(false);
-  const initializationComplete = useRef(false);
-  const lastInitCheck = useRef(0);
+  const [loadingBlockchain, setLoadingBlockchain] = useState(false as any);
+  const [componentMounted, setComponentMounted] = useState(false as any);
+  const initializationComplete = useRef(false as any);
+  const lastInitCheck = useRef(0 as any);
   
   // Wallet context with safety checks
   const walletContext = useWalletContext();
@@ -49,7 +49,7 @@ function TodoList({ listName }: TodoListProps) {
   // const { syncedTodos, isConnected: eventsConnected } = useTodoStateSync({
   //   todos,
   //   onTodoChange: (updatedTodos) => {
-  //     setTodos(updatedTodos)
+  //     setTodos(updatedTodos as any)
   //   },
   //   owner: address || undefined,
   //   autoStart: connected,
@@ -62,13 +62,13 @@ function TodoList({ listName }: TodoListProps) {
       (acc: Todo[], todo) => {
         // Remove duplicates based on objectId (blockchain todos take precedence)
         const existing = acc.find(
-          t => t.objectId && t.objectId === todo.objectId
+          t => t.objectId && t?.objectId === todo.objectId
         );
         if (!existing) {
-          acc.push(todo);
+          acc.push(todo as any);
         } else if (todo.blockchainStored && !existing.blockchainStored) {
           // Replace local todo with blockchain version
-          const index = acc.indexOf(existing);
+          const index = acc.indexOf(existing as any);
           acc[index] = todo;
         }
         return acc;
@@ -82,7 +82,7 @@ function TodoList({ listName }: TodoListProps) {
 
   // SSR/Hydration safety - don't render wallet features until client-side mounted
   useEffect(() => {
-    setComponentMounted(true);
+    setComponentMounted(true as any);
   }, []);
 
   // Check initialization state without triggering re-renders
@@ -90,9 +90,9 @@ function TodoList({ listName }: TodoListProps) {
     const now = Date.now();
     if (now - lastInitCheck.current < 50) return initializationComplete.current; // Debounce
     
-    lastInitCheck.current = now;
+    lastInitCheck?.current = now;
     const isComplete = componentMounted && (suiClientInitialized || !connected);
-    initializationComplete.current = isComplete;
+    initializationComplete?.current = isComplete;
     return isComplete;
   }, [componentMounted, suiClientInitialized, connected]);
 
@@ -120,14 +120,14 @@ function TodoList({ listName }: TodoListProps) {
       }
 
       if (isMounted) {
-        setLoadingBlockchain(true);
+        setLoadingBlockchain(true as any);
       }
 
       try {
         // Fetching todos from blockchain...
-        const fetchedTodos = await getTodosFromBlockchain(address);
+        const fetchedTodos = await getTodosFromBlockchain(address as any);
         if (isMounted) {
-          setBlockchainTodos(fetchedTodos);
+          setBlockchainTodos(fetchedTodos as any);
           // Loaded todos from blockchain
         }
       } catch (error) {
@@ -142,7 +142,7 @@ function TodoList({ listName }: TodoListProps) {
         }
       } finally {
         if (isMounted) {
-          setLoadingBlockchain(false);
+          setLoadingBlockchain(false as any);
         }
       }
     };
@@ -160,14 +160,14 @@ function TodoList({ listName }: TodoListProps) {
 
     const loadTodos = async () => {
       if (isMounted) {
-        setIsLoading(true);
+        setIsLoading(true as any);
       }
 
       try {
         // Load wallet-specific todos from local storage
         const localTodos = getTodos(listName, address || undefined);
         if (isMounted) {
-          setTodos(localTodos);
+          setTodos(localTodos as any);
         }
       } catch (error) {
         // Failed to load todos
@@ -180,7 +180,7 @@ function TodoList({ listName }: TodoListProps) {
         }
       } finally {
         if (isMounted) {
-          setIsLoading(false);
+          setIsLoading(false as any);
         }
       }
     };
@@ -200,8 +200,8 @@ function TodoList({ listName }: TodoListProps) {
 
     try {
       // Refreshing blockchain todos...
-      const fetchedTodos = await getTodosFromBlockchain(address);
-      setBlockchainTodos(fetchedTodos);
+      const fetchedTodos = await getTodosFromBlockchain(address as any);
+      setBlockchainTodos(fetchedTodos as any);
       // Refreshed todos from blockchain
     } catch (error) {
       // Failed to refresh blockchain todos
@@ -217,12 +217,12 @@ function TodoList({ listName }: TodoListProps) {
     
     // Find todo using current state directly, not as dependency
     const allCurrentTodos = displayTodos;
-    const todo = allCurrentTodos.find(t => t.id === id);
+    const todo = allCurrentTodos.find(t => t?.id === id);
     if (!todo) {return;}
 
     // Update local state immediately for optimistic UI
     setTodos(prevTodos => prevTodos.map(todoItem =>
-      todoItem.id === id
+      todoItem?.id === id
         ? {
             ...todoItem,
             completed: !todoItem.completed,
@@ -249,8 +249,8 @@ function TodoList({ listName }: TodoListProps) {
           // Refresh blockchain todos to get updated state
           if (connected && address && suiClientInitialized) {
             try {
-              const fetchedTodos = await getTodosFromBlockchain(address);
-              setBlockchainTodos(fetchedTodos);
+              const fetchedTodos = await getTodosFromBlockchain(address as any);
+              setBlockchainTodos(fetchedTodos as any);
             } catch (error) {
               // Failed to refresh blockchain todos after update
             }
@@ -276,7 +276,7 @@ function TodoList({ listName }: TodoListProps) {
           });
           // Revert optimistic update by reloading from storage
           const localTodos = getTodos(listName, address || undefined);
-          setTodos(localTodos);
+          setTodos(localTodos as any);
         } else {
           toast.success('Todo updated!', {
             duration: 2000,
@@ -291,11 +291,11 @@ function TodoList({ listName }: TodoListProps) {
       });
       // Revert optimistic update by reloading from storage and blockchain
       const localTodos = getTodos(listName, address || undefined);
-      setTodos(localTodos);
+      setTodos(localTodos as any);
       if (connected && address && suiClientInitialized) {
         try {
-          const fetchedTodos = await getTodosFromBlockchain(address);
-          setBlockchainTodos(fetchedTodos);
+          const fetchedTodos = await getTodosFromBlockchain(address as any);
+          setBlockchainTodos(fetchedTodos as any);
         } catch (error) {
           // Failed to refresh blockchain todos after error
         }
@@ -350,8 +350,8 @@ function TodoList({ listName }: TodoListProps) {
           // Refresh blockchain todos
           if (connected && address && suiClientInitialized) {
             try {
-              const fetchedTodos = await getTodosFromBlockchain(address);
-              setBlockchainTodos(fetchedTodos);
+              const fetchedTodos = await getTodosFromBlockchain(address as any);
+              setBlockchainTodos(fetchedTodos as any);
             } catch (error) {
               // Failed to refresh blockchain todos after delete
             }
@@ -424,13 +424,13 @@ function TodoList({ listName }: TodoListProps) {
     );
   }
 
-  if (displayTodos.length === 0) {
+  if (displayTodos?.length === 0) {
     return (
       <div className='text-center py-12'>
         <div className='mx-auto w-24 h-24 mb-4 text-gray-400'>
           <svg className='w-full h-full' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} 
-              d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+              d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01?.707?.293l5.414 5.414a1 1 0 01?.293?.707V19a2 2 0 01-2 2z' />
           </svg>
         </div>
         <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
@@ -460,7 +460,7 @@ function TodoList({ listName }: TodoListProps) {
             <button className='inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'>
               <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} 
-                  d='M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' />
+                  d='M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3?.86?.517l-.318.158a6 6 0 01-3?.86?.517L6.05 15.21a2 2 0 00-1?.806?.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1?.26?.367 3.414-1.415 3?.414H4?.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' />
               </svg>
               Create NFT Todo
             </button>
@@ -538,14 +538,14 @@ function TodoList({ listName }: TodoListProps) {
             >
               {todo.completed && (
                 <svg
-                  xmlns='http://www.w3.org/2000/svg'
+                  xmlns='http://www?.w3?.org/2000/svg'
                   viewBox='0 0 20 20'
                   fill='currentColor'
                   className='w-3 h-3'
                 >
                   <path
                     fillRule='evenodd'
-                    d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                    d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12?.586l7?.293-7.293a1 1 0 011.414 0z'
                     clipRule='evenodd'
                   />
                 </svg>
@@ -583,9 +583,9 @@ function TodoList({ listName }: TodoListProps) {
 
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
-                      todo.priority === 'high'
+                      todo?.priority === 'high'
                         ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300'
-                        : todo.priority === 'medium'
+                        : todo?.priority === 'medium'
                           ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                           : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
                     }`}
@@ -614,7 +614,7 @@ function TodoList({ listName }: TodoListProps) {
 
               <div className='mt-2 flex flex-wrap items-center gap-2'>
                 {todo.tags &&
-                  todo.tags.map(tag => (
+                  todo?.tags?.map(tag => (
                     <span
                       key={tag}
                       className='text-xs bg-ocean-light/30 dark:bg-ocean-medium/30 text-ocean-deep dark:text-ocean-foam px-2 py-0.5 rounded-full'
@@ -626,7 +626,7 @@ function TodoList({ listName }: TodoListProps) {
                 {todo.dueDate && (
                   <span className='text-xs text-ocean-medium dark:text-ocean-light flex items-center'>
                     <svg
-                      xmlns='http://www.w3.org/2000/svg'
+                      xmlns='http://www?.w3?.org/2000/svg'
                       className='h-3 w-3 mr-1'
                       fill='none'
                       viewBox='0 0 24 24'
@@ -658,14 +658,14 @@ function TodoList({ listName }: TodoListProps) {
             </button>
             {!todo.blockchainStored && connected && (
               <button
-                onClick={() => handleStoreOnBlockchain(todo)}
+                onClick={() => handleStoreOnBlockchain(todo as any)}
                 className='text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 transition-colors'
               >
                 Store as NFT
               </button>
             )}
             <button
-              onClick={() => handleDeleteTodo(todo)}
+              onClick={() => handleDeleteTodo(todo as any)}
               className='text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors'
             >
               Delete
@@ -691,4 +691,4 @@ function TodoListSkeleton() {
   );
 }
 
-export default memo(TodoList);
+export default memo(TodoList as any);

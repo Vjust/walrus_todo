@@ -30,8 +30,8 @@ export class ConfigValidator {
   private readonly frontendConfigDir: string;
 
   constructor(projectRoot?: string) {
-    this.projectRoot = projectRoot || process.cwd();
-    this.frontendConfigDir = path.join(
+    this?.projectRoot = projectRoot || process.cwd();
+    this?.frontendConfigDir = path.join(
       this.projectRoot,
       'waltodo-frontend',
       'src',
@@ -61,8 +61,8 @@ export class ConfigValidator {
       // Check if frontend exists
       const frontendExists = await this.frontendExists();
       if (!frontendExists) {
-        result.warnings.push('Frontend directory not found');
-        result.suggestions.push(
+        result?.warnings?.push('Frontend directory not found');
+        result?.suggestions?.push(
           'Ensure waltodo-frontend directory exists in project root'
         );
         return result;
@@ -78,15 +78,15 @@ export class ConfigValidator {
       this.validateDeploymentConsistency(cliConfig, result);
 
       // Check environment variables
-      this.validateEnvironmentVariables(result);
+      this.validateEnvironmentVariables(result as any);
 
       // Set overall validity
-      result.valid = result.errors.length === 0;
+      result?.valid = result.errors?.length === 0;
     } catch (error) {
-      result.errors.push(
-        `Configuration validation failed: ${error instanceof Error ? error.message : String(error)}`
+      result?.errors?.push(
+        `Configuration validation failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
-      result.valid = false;
+      result?.valid = false;
     }
 
     return result;
@@ -100,27 +100,27 @@ export class ConfigValidator {
     result: ValidationResult
   ): void {
     if (!config.network) {
-      result.errors.push('Network not configured in CLI');
-      result.suggestions.push('Run: waltodo configure --network <network>');
+      result?.errors?.push('Network not configured in CLI');
+      result?.suggestions?.push('Run: waltodo configure --network <network>');
     }
 
     if (!config.walletAddress) {
-      result.warnings.push('Wallet address not configured');
-      result.suggestions.push('Run: waltodo configure --address <address>');
+      result?.warnings?.push('Wallet address not configured');
+      result?.suggestions?.push('Run: waltodo configure --address <address>');
     }
 
     if (!config.packageId && !config.lastDeployment?.packageId) {
-      result.errors.push('Package ID not found in configuration');
-      result.suggestions.push('Run: waltodo deploy --network <network>');
+      result?.errors?.push('Package ID not found in configuration');
+      result?.suggestions?.push('Run: waltodo deploy --network <network>');
     }
 
     // Validate network format
     if (
       config.network &&
-      typeof config.network === 'string' &&
+      typeof config?.network === 'string' &&
       !['mainnet', 'testnet', 'devnet', 'localnet'].includes(config.network)
     ) {
-      result.errors.push(`Invalid network: ${config.network}`);
+      result?.errors?.push(`Invalid network: ${config.network}`);
     }
 
     // Validate package ID format
@@ -133,7 +133,7 @@ export class ConfigValidator {
       typeof packageId === 'string' &&
       !packageId.startsWith('0x')
     ) {
-      result.errors.push('Package ID must start with 0x');
+      result?.errors?.push('Package ID must start with 0x');
     }
   }
 
@@ -146,11 +146,11 @@ export class ConfigValidator {
   ): Promise<void> {
     const configPath = path.join(this.frontendConfigDir, `${network}.json`);
 
-    if (!fs.existsSync(configPath)) {
-      result.errors.push(
+    if (!fs.existsSync(configPath as any)) {
+      result?.errors?.push(
         `Frontend configuration not found for ${network} network`
       );
-      result.suggestions.push(
+      result?.suggestions?.push(
         `Run: waltodo generate-frontend-config --network ${network}`
       );
       return;
@@ -158,19 +158,19 @@ export class ConfigValidator {
 
     try {
       const configContent = fs.readFileSync(configPath, 'utf-8');
-      const frontendConfig = JSON.parse(configContent);
+      const frontendConfig = JSON.parse(configContent as any);
 
       // Validate required fields
       const requiredFields = [
         'network.name',
         'network.url',
         'deployment.packageId',
-        'contracts.todoNft.packageId',
+        'contracts?.todoNft?.packageId',
       ];
 
       for (const field of requiredFields) {
         if (!this.getNestedValue(frontendConfig, field)) {
-          result.errors.push(
+          result?.errors?.push(
             `Missing required field in frontend config: ${field}`
           );
         }
@@ -178,7 +178,7 @@ export class ConfigValidator {
 
       // Validate network consistency
       if (frontendConfig.network?.name !== network) {
-        result.errors.push(
+        result?.errors?.push(
           `Frontend config network mismatch: expected ${network}, got ${frontendConfig.network?.name}`
         );
       }
@@ -186,13 +186,13 @@ export class ConfigValidator {
       // Validate package ID format
       if (
         frontendConfig.deployment?.packageId &&
-        !frontendConfig.deployment.packageId.startsWith('0x')
+        !frontendConfig?.deployment?.packageId.startsWith('0x')
       ) {
-        result.errors.push('Frontend config package ID must start with 0x');
+        result?.errors?.push('Frontend config package ID must start with 0x');
       }
     } catch (error) {
-      result.errors.push(
-        `Invalid JSON in frontend config: ${error instanceof Error ? error.message : String(error)}`
+      result?.errors?.push(
+        `Invalid JSON in frontend config: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -207,13 +207,13 @@ export class ConfigValidator {
   ): Promise<void> {
     const configPath = path.join(this.frontendConfigDir, `${network}.json`);
 
-    if (!fs.existsSync(configPath)) {
+    if (!fs.existsSync(configPath as any)) {
       return; // Already handled in validateFrontendConfig
     }
 
     try {
       const frontendConfigContent = fs.readFileSync(configPath, 'utf-8');
-      const frontendConfig = JSON.parse(frontendConfigContent);
+      const frontendConfig = JSON.parse(frontendConfigContent as any);
 
       const cliPackageId =
         cliConfig.packageId ||
@@ -226,16 +226,16 @@ export class ConfigValidator {
         frontendPackageId &&
         cliPackageId !== frontendPackageId
       ) {
-        result.errors.push(
+        result?.errors?.push(
           `Package ID mismatch: CLI (${cliPackageId}) vs Frontend (${frontendPackageId})`
         );
-        result.suggestions.push(
+        result?.suggestions?.push(
           'Run: waltodo generate-frontend-config --force'
         );
       }
 
       if (cliConfig.network !== frontendConfig.network?.name) {
-        result.warnings.push(
+        result?.warnings?.push(
           `Network mismatch: CLI (${cliConfig.network}) vs Frontend (${frontendConfig.network?.name})`
         );
       }
@@ -243,7 +243,7 @@ export class ConfigValidator {
       if (
         cliConfig.walletAddress !== frontendConfig.deployment?.deployerAddress
       ) {
-        result.warnings.push(
+        result?.warnings?.push(
           'Deployer address mismatch between CLI and frontend config'
         );
       }
@@ -264,33 +264,33 @@ export class ConfigValidator {
       const { packageId, digest, network, timestamp } = lastDeployment;
 
       if (!packageId) {
-        result.errors.push('Last deployment missing package ID');
+        result?.errors?.push('Last deployment missing package ID');
       }
 
       if (!digest) {
-        result.warnings.push('Last deployment missing transaction digest');
+        result?.warnings?.push('Last deployment missing transaction digest');
       }
 
       if (network !== config.network) {
-        result.warnings.push(
+        result?.warnings?.push(
           `Deployment network (${network}) differs from current network (${config.network})`
         );
-        result.suggestions.push(
+        result?.suggestions?.push(
           `Consider redeploying to ${config.network} network`
         );
       }
 
       // Check if deployment is recent (within 30 days)
       if (timestamp) {
-        const deploymentDate = new Date(timestamp);
+        const deploymentDate = new Date(timestamp as any);
         const daysSinceDeployment =
           (Date.now() - deploymentDate.getTime()) / (1000 * 60 * 60 * 24);
 
         if (daysSinceDeployment > 30) {
-          result.warnings.push(
-            `Deployment is ${Math.floor(daysSinceDeployment)} days old`
+          result?.warnings?.push(
+            `Deployment is ${Math.floor(daysSinceDeployment as any)} days old`
           );
-          result.suggestions.push(
+          result?.suggestions?.push(
             'Consider redeploying for latest contract improvements'
           );
         }
@@ -305,14 +305,14 @@ export class ConfigValidator {
     const requiredEnvVars = ['NETWORK'];
 
     for (const envVar of requiredEnvVars) {
-      if (!process.env[envVar]) {
-        result.warnings.push(`Environment variable ${envVar} not set`);
+      if (!process?.env?.[envVar]) {
+        result?.warnings?.push(`Environment variable ${envVar} not set`);
       }
     }
 
     // Check NEXT_PUBLIC_NETWORK for frontend
-    if (!process.env.NEXT_PUBLIC_NETWORK) {
-      result.suggestions.push(
+    if (!process?.env?.NEXT_PUBLIC_NETWORK) {
+      result?.suggestions?.push(
         'Set NEXT_PUBLIC_NETWORK environment variable for frontend'
       );
     }
@@ -336,7 +336,7 @@ export class ConfigValidator {
   private async frontendExists(): Promise<boolean> {
     try {
       const frontendPath = path.join(this.projectRoot, 'waltodo-frontend');
-      const stats = await fs.promises.stat(frontendPath);
+      const stats = await fs?.promises?.stat(frontendPath as any);
       return stats.isDirectory();
     } catch (error: unknown) {
       return false;
@@ -352,7 +352,7 @@ export class ConfigValidator {
         return [];
       }
 
-      const files = await fs.promises.readdir(this.frontendConfigDir);
+      const files = await fs?.promises?.readdir(this.frontendConfigDir);
       return files
         .filter(file => file.endsWith('.json'))
         .map(file => file.replace('.json', ''));
@@ -372,21 +372,21 @@ export class ConfigValidator {
     lines.push(`**Status**: ${result.valid ? '✅ VALID' : '❌ INVALID'}`);
     lines.push('');
 
-    if (result.errors.length > 0) {
+    if (result?.errors?.length > 0) {
       lines.push('## Errors');
-      result.errors.forEach(error => lines.push(`- ❌ ${error}`));
+      result?.errors?.forEach(error => lines.push(`- ❌ ${error}`));
       lines.push('');
     }
 
-    if (result.warnings.length > 0) {
+    if (result?.warnings?.length > 0) {
       lines.push('## Warnings');
-      result.warnings.forEach(warning => lines.push(`- ⚠️ ${warning}`));
+      result?.warnings?.forEach(warning => lines.push(`- ⚠️ ${warning}`));
       lines.push('');
     }
 
-    if (result.suggestions.length > 0) {
+    if (result?.suggestions?.length > 0) {
       lines.push('## Suggestions');
-      result.suggestions.forEach(suggestion =>
+      result?.suggestions?.forEach(suggestion =>
         lines.push(`- 💡 ${suggestion}`)
       );
       lines.push('');
@@ -400,5 +400,5 @@ export class ConfigValidator {
  * Creates a new configuration validator
  */
 export function createConfigValidator(projectRoot?: string): ConfigValidator {
-  return new ConfigValidator(projectRoot);
+  return new ConfigValidator(projectRoot as any);
 }

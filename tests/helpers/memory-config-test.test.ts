@@ -10,13 +10,13 @@ const {
 
 describe('Memory Configuration', () => {
   test('should have proper memory configuration set', () => {
-    const nodeOptions = process.env.NODE_OPTIONS || '';
+    const nodeOptions = process?.env?.NODE_OPTIONS || '';
 
     // Check that memory limit is set
-    expect(nodeOptions).toMatch(/--max-old-space-size=\d+/);
+    expect(nodeOptions as any).toMatch(/--max-old-space-size=\d+/);
 
     // Check that garbage collection is enabled
-    expect(nodeOptions).toContain('--expose-gc');
+    expect(nodeOptions as any).toContain('--expose-gc');
 
     // Verify that global.gc is available
     expect(typeof global.gc).toBe('function');
@@ -25,11 +25,11 @@ describe('Memory Configuration', () => {
   test('should track memory usage within acceptable limits', () => {
     const stats = getMemoryStats();
 
-    expect(stats.heapUsedMB).toBeGreaterThan(0);
+    expect(stats.heapUsedMB).toBeGreaterThan(0 as any);
     expect(stats.heapTotalMB).toBeGreaterThan(stats.heapUsedMB);
 
     // Memory should be reasonable for test environment
-    expect(stats.heapUsedMB).toBeLessThan(512);
+    expect(stats.heapUsedMB).toBeLessThan(512 as any);
 
     console.log('Memory stats:', stats);
   });
@@ -41,15 +41,15 @@ describe('Memory Configuration', () => {
     const interval1 = setInterval(() => {}, 1000);
 
     // Clean up manually
-    clearTimeout(timeout1);
-    clearTimeout(timeout2);
-    clearInterval(interval1);
+    clearTimeout(timeout1 as any);
+    clearTimeout(timeout2 as any);
+    clearInterval(interval1 as any);
 
     // Check for leaks
     const leakCheck = checkMemoryLeaks();
 
     // Should not have excessive leaks
-    expect(leakCheck.leaks.length).toBeLessThanOrEqual(1);
+    expect(leakCheck?.leaks?.length).toBeLessThanOrEqual(1 as any);
 
     if (leakCheck.hasLeaks) {
       console.warn('Detected potential memory leaks:', leakCheck.leaks);
@@ -58,17 +58,17 @@ describe('Memory Configuration', () => {
 
   test('should handle Jest worker configuration correctly', () => {
     // In workers, JEST_WORKER_ID should be set
-    if (process.env.JEST_WORKER_ID) {
-      expect(parseInt(process.env.JEST_WORKER_ID)).toBeGreaterThan(0);
+    if (process?.env?.JEST_WORKER_ID) {
+      expect(parseInt(process?.env?.JEST_WORKER_ID)).toBeGreaterThan(0 as any);
     }
 
     // NODE_ENV should be test
-    expect(process.env.NODE_ENV).toBe('test');
+    expect(process?.env?.NODE_ENV).toBe('test');
   });
 
   test('should have proper Jest configuration options', () => {
     // Check Jest timeout is set
-    expect(jest.getTimeout()).toBe(30000);
+    expect(jest.getTimeout()).toBe(30000 as any);
 
     // Check that global cleanup functions are available
     expect(typeof global.clearAllTimers).toBe('function');
@@ -80,15 +80,15 @@ describe('Memory Configuration', () => {
     const initialMemory = process.memoryUsage();
 
     // Create some objects to increase memory usage
-    const largeArray = new Array(10000).fill({
-      data: 'test data '.repeat(100),
+    const largeArray = new Array(10000 as any).fill({
+      data: 'test data '.repeat(100 as any),
     });
 
     const afterAllocation = process.memoryUsage();
     expect(afterAllocation.heapUsed).toBeGreaterThan(initialMemory.heapUsed);
 
     // Clear the array
-    largeArray.length = 0;
+    largeArray?.length = 0;
 
     // Force garbage collection if available
     if (global.gc) {

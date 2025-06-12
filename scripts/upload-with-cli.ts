@@ -33,7 +33,7 @@ async function uploadImageWithWalrusCLI() {
 
     // Verify image path
     const imagePath = path.join(__dirname, 'assets/todo_bottle.jpeg');
-    if (!fs.existsSync(imagePath)) {
+    if (!fs.existsSync(imagePath as any)) {
       logger.error(`❌ Error: Default image not found at ${imagePath}`);
       logger.error(
         'Please ensure the image exists before running this script.'
@@ -155,7 +155,7 @@ async function uploadImageWithWalrusCLI() {
         logger.error(
           'Please install the Walrus CLI by following the instructions at:'
         );
-        logger.error('https://docs.wal.app/usage/setup.html');
+        logger.error('https://docs?.wal?.app/usage/setup.html');
       }
 
       if (errorMsg.includes('No active address')) {

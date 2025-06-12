@@ -10,9 +10,9 @@ import React, { useEffect, useState } from 'react';
 
 // Simple hydration check hook
 function useIsHydrated() {
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(false as any);
   useEffect(() => {
-    setHydrated(true);
+    setHydrated(true as any);
   }, []);
   return hydrated;
 }
@@ -81,15 +81,15 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
   testnet: {
     network: {
       name: 'testnet',
-      url: 'https://fullnode.testnet.sui.io:443',
-      faucetUrl: 'https://faucet.testnet.sui.io',
-      explorerUrl: 'https://testnet.suiexplorer.com',
+      url: 'https://fullnode?.testnet?.sui.io:443',
+      faucetUrl: 'https://faucet?.testnet?.sui.io',
+      explorerUrl: 'https://testnet?.suiexplorer?.com',
     },
     walrus: {
-      networkUrl: 'https://wal.testnet.sui.io',
-      publisherUrl: 'https://publisher-testnet.walrus.space',
-      aggregatorUrl: 'https://aggregator-testnet.walrus.space',
-      apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+      networkUrl: 'https://wal?.testnet?.sui.io',
+      publisherUrl: 'https://publisher-testnet?.walrus?.space',
+      aggregatorUrl: 'https://aggregator-testnet?.walrus?.space',
+      apiPrefix: 'https://api-testnet?.walrus?.tech/1.0',
     },
     deployment: {
       packageId: '0x0', // Placeholder - should be replaced by deployment
@@ -113,15 +113,15 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
   devnet: {
     network: {
       name: 'devnet',
-      url: 'https://fullnode.devnet.sui.io:443',
-      faucetUrl: 'https://faucet.devnet.sui.io',
-      explorerUrl: 'https://devnet.suiexplorer.com',
+      url: 'https://fullnode?.devnet?.sui.io:443',
+      faucetUrl: 'https://faucet?.devnet?.sui.io',
+      explorerUrl: 'https://devnet?.suiexplorer?.com',
     },
     walrus: {
-      networkUrl: 'https://wal.devnet.sui.io',
-      publisherUrl: 'https://publisher-devnet.walrus.space',
-      aggregatorUrl: 'https://aggregator-devnet.walrus.space',
-      apiPrefix: 'https://api-devnet.walrus.tech/1.0',
+      networkUrl: 'https://wal?.devnet?.sui.io',
+      publisherUrl: 'https://publisher-devnet?.walrus?.space',
+      aggregatorUrl: 'https://aggregator-devnet?.walrus?.space',
+      apiPrefix: 'https://api-devnet?.walrus?.tech/1.0',
     },
     deployment: {
       packageId: '0x0',
@@ -182,7 +182,7 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
 function getCurrentNetwork(): string {
   // Always use the same environment variable logic
   // NEXT_PUBLIC_ variables are available on both server and client
-  return process.env.NEXT_PUBLIC_NETWORK || 'testnet';
+  return process?.env?.NEXT_PUBLIC_NETWORK || 'testnet';
 }
 
 /**
@@ -207,11 +207,11 @@ export async function loadNetworkConfig(network: string): Promise<AppConfig | nu
     if (typeof window !== 'undefined') {
       try {
         const configUrl = `/config/${network}.json`;
-        const configResponse = await fetch(configUrl);
+        const configResponse = await fetch(configUrl as any);
         if (configResponse.ok) {
           const config = await configResponse.json();
           console.log(`Loaded runtime configuration for ${network}`);
-          return transformConfigFormat(config);
+          return transformConfigFormat(config as any);
         }
       } catch (fetchError) {
         console.warn(`Failed to fetch runtime config for ${network}:`, fetchError);
@@ -231,15 +231,15 @@ function transformConfigFormat(config: any): AppConfig {
   return {
     network: {
       name: config.network || 'testnet',
-      url: config.rpcUrl || config.environment?.apiEndpoint || 'https://fullnode.testnet.sui.io:443',
+      url: config.rpcUrl || config.environment?.apiEndpoint || 'https://fullnode?.testnet?.sui.io:443',
       faucetUrl: config.faucetUrl,
-      explorerUrl: config.explorerUrl || 'https://testnet.suiexplorer.com',
+      explorerUrl: config.explorerUrl || 'https://testnet?.suiexplorer?.com',
     },
     walrus: {
-      networkUrl: config.walrus?.networkUrl || 'https://wal.testnet.sui.io',
-      publisherUrl: config.walrus?.publisherUrl || 'https://publisher-testnet.walrus.space',
-      aggregatorUrl: config.walrus?.aggregatorUrl || 'https://aggregator-testnet.walrus.space',
-      apiPrefix: config.walrus?.apiPrefix || 'https://api-testnet.walrus.tech/1.0',
+      networkUrl: config.walrus?.networkUrl || 'https://wal?.testnet?.sui.io',
+      publisherUrl: config.walrus?.publisherUrl || 'https://publisher-testnet?.walrus?.space',
+      aggregatorUrl: config.walrus?.aggregatorUrl || 'https://aggregator-testnet?.walrus?.space',
+      apiPrefix: config.walrus?.apiPrefix || 'https://api-testnet?.walrus?.tech/1.0',
     },
     deployment: {
       packageId: config.deployment?.packageId || '0x0',
@@ -266,7 +266,7 @@ function transformConfigFormat(config: any): AppConfig {
  * Loads configuration from auto-generated files
  */
 async function loadGeneratedConfig(network: string): Promise<AppConfig | null> {
-  return loadNetworkConfig(network);
+  return loadNetworkConfig(network as any);
 }
 
 /**
@@ -299,15 +299,15 @@ export async function loadAppConfig(): Promise<AppConfig> {
   console.log(`Loading configuration for ${network} network`);
 
   // Try to load generated configuration first
-  let config = await loadGeneratedConfig(network);
+  let config = await loadGeneratedConfig(network as any);
 
   // Fall back to default configuration if needed
   if (!config) {
-    config = createFallbackConfig(network);
+    config = createFallbackConfig(network as any);
   }
 
   // Validate configuration
-  if (!config.deployment.packageId || config.deployment.packageId === '0x0') {
+  if (!config?.deployment?.packageId || config.deployment?.packageId === '0x0') {
     console.warn('Package ID not set - some blockchain features may not work');
   }
 
@@ -332,7 +332,7 @@ export function getNetworkName(): string {
  */
 export function useAppConfig() {
   const [config, setConfig] = React.useState<AppConfig | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(true as any);
   const [error, setError] = React.useState<string | null>(null);
   const hydrated = useIsHydrated();
 
@@ -346,20 +346,20 @@ export function useAppConfig() {
       try {
         const loadedConfig = await loadAppConfig();
         if (isMounted) {
-          setConfig(loadedConfig);
-          setError(null);
+          setConfig(loadedConfig as any);
+          setError(null as any);
         }
       } catch (err) {
         if (isMounted) {
           const errorMessage = err instanceof Error ? err.message : 'Unknown configuration error';
-          setError(errorMessage);
+          setError(errorMessage as any);
           console.error('Failed to load app configuration:', err);
           
           // Try to use fallback config as last resort
           try {
             const network = getCurrentNetwork();
-            const fallbackConfig = createFallbackConfig(network);
-            setConfig(fallbackConfig);
+            const fallbackConfig = createFallbackConfig(network as any);
+            setConfig(fallbackConfig as any);
             console.warn('Using fallback configuration due to load failure');
           } catch (fallbackError) {
             console.error('Fallback configuration also failed:', fallbackError);
@@ -367,7 +367,7 @@ export function useAppConfig() {
         }
       } finally {
         if (isMounted) {
-          setLoading(false);
+          setLoading(false as any);
         }
       }
     };
@@ -395,10 +395,10 @@ export function clearConfigCache(): void {
  */
 export function isConfigurationComplete(config: AppConfig): boolean {
   return !!(
-    config.deployment.packageId &&
-    config.deployment.packageId !== '0x0' &&
-    config.deployment.deployerAddress &&
-    config.deployment.deployerAddress !== '0x0'
+    config?.deployment?.packageId &&
+    config?.deployment?.packageId !== '0x0' &&
+    config?.deployment?.deployerAddress &&
+    config?.deployment?.deployerAddress !== '0x0'
   );
 }
 
@@ -406,12 +406,12 @@ export function isConfigurationComplete(config: AppConfig): boolean {
  * Gets the explorer URL for a specific object
  */
 export function getExplorerUrl(config: AppConfig, objectId: string): string {
-  return `${config.network.explorerUrl}/object/${objectId}?network=${config.network.name}`;
+  return `${config?.network?.explorerUrl}/object/${objectId}?network=${config?.network?.name}`;
 }
 
 /**
  * Gets the faucet URL for the current network (if available)
  */
 export function getFaucetUrl(config: AppConfig): string | null {
-  return config.network.faucetUrl || null;
+  return config?.network?.faucetUrl || null;
 }

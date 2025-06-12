@@ -34,7 +34,7 @@ export default function WalrusHealthPage() {
 
         // Verify data integrity
         const retrievedData = retrieveResult.data;
-        if (retrievedData && retrievedData.length === testData.length) {
+        if (retrievedData && retrievedData?.length === testData.length) {
           const matches = testData.every((byte, index) => byte === retrievedData[index]);
           if (matches) {
             toast.success('Data integrity verified!', { duration: 3000 });

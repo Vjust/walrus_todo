@@ -10,7 +10,7 @@ export class AIVerificationService {
   private verifierAdapter: AIVerifierAdapter;
 
   constructor(verifierAdapter: AIVerifierAdapter) {
-    this.verifierAdapter = verifierAdapter;
+    this?.verifierAdapter = verifierAdapter;
   }
 
   /**
@@ -24,11 +24,11 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerificationRecord> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr = typeof request === 'string' ? request : JSON.stringify(request as any);
+    const responseStr = typeof response === 'string' ? response : JSON.stringify(response as any);
 
     // Create verification
-    return this.verifierAdapter.createVerification({
+    return this?.verifierAdapter?.createVerification({
       actionType,
       request: requestStr,
       response: responseStr,
@@ -46,17 +46,17 @@ export class AIVerificationService {
     response: any
   ): Promise<boolean> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr = typeof request === 'string' ? request : JSON.stringify(request as any);
+    const responseStr = typeof response === 'string' ? response : JSON.stringify(response as any);
 
-    return this.verifierAdapter.verifyRecord(record, requestStr, responseStr);
+    return this?.verifierAdapter?.verifyRecord(record, requestStr, responseStr);
   }
 
   /**
    * Get a list of verifications for the current user
    */
   async listVerifications(): Promise<VerificationRecord[]> {
-    return this.verifierAdapter.listVerifications();
+    return this?.verifierAdapter?.listVerifications();
   }
 
   /**
@@ -68,7 +68,7 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<string>> {
     const metadata = {
-      todoCount: todos.length.toString(),
+      todoCount: todos?.length?.toString(),
       timestamp: Date.now().toString()
     };
 
@@ -95,8 +95,8 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<Record<string, string[]>>> {
     const metadata = {
-      todoCount: todos.length.toString(),
-      categoryCount: Object.keys(categories).length.toString(),
+      todoCount: todos?.length?.toString(),
+      categoryCount: Object.keys(categories as any).length.toString(),
       timestamp: Date.now().toString()
     };
 
@@ -123,7 +123,7 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<Record<string, number>>> {
     const metadata = {
-      todoCount: todos.length.toString(),
+      todoCount: todos?.length?.toString(),
       timestamp: Date.now().toString()
     };
 
@@ -150,8 +150,8 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<string[]>> {
     const metadata = {
-      todoCount: todos.length.toString(),
-      suggestionCount: suggestions.length.toString(),
+      todoCount: todos?.length?.toString(),
+      suggestionCount: suggestions?.length?.toString(),
       timestamp: Date.now().toString()
     };
 
@@ -178,8 +178,8 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<Record<string, any>>> {
     const metadata = {
-      todoCount: todos.length.toString(),
-      analysisKeys: Object.keys(analysis).join(','),
+      todoCount: todos?.length?.toString(),
+      analysisKeys: Object.keys(analysis as any).join(','),
       timestamp: Date.now().toString()
     };
 

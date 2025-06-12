@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { CLIError } from '../types/errors/consolidated';
 import { TodoService } from '../services/todoService';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
@@ -91,7 +91,7 @@ export default class ImageCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const config = await configService.getConfig();
-    const { args, flags } = await this.parse(ImageCommand);
+    const { args, flags } = await this.parse(ImageCommand as any);
     const todoService = new TodoService();
 
     try {
@@ -107,18 +107,18 @@ export default class ImageCommand extends BaseCommand {
       } as unknown as typeof SuiClient;
 
       // Initialize WalrusImageStorage
-      const walrusImageStorage = new WalrusImageStorage(suiClient);
+      const walrusImageStorage = new WalrusImageStorage(suiClient as any);
 
       // For list action, we don't need a todo item or connection to Walrus
-      if (args.action === 'list') {
+      if (args?.action === 'list') {
         const allLists = await todoService.getAllLists();
         let foundImages = false;
 
         this.log('📷 Todos with associated images:');
         for (const listName of allLists) {
-          const list = await todoService.getList(listName);
+          const list = await todoService.getList(listName as any);
           if (list) {
-            const todosWithImages = list.todos.filter(todo => todo.imageUrl);
+            const todosWithImages = list?.todos?.filter(todo => todo.imageUrl);
             if (todosWithImages.length > 0) {
               this.log(`\n📝 List: ${listName}`);
               todosWithImages.forEach(todo => {
@@ -161,7 +161,7 @@ export default class ImageCommand extends BaseCommand {
       await walrusImageStorage.connect();
       this.log('Connected to Walrus storage');
 
-      if (args.action === 'upload') {
+      if (args?.action === 'upload') {
         if (flags.background) {
           return await this.handleBackgroundUpload(
             flags,
@@ -208,16 +208,16 @@ export default class ImageCommand extends BaseCommand {
         };
         await todoService.updateTodo(flags.todo, flags.list, updatedTodo);
 
-        if (flags['show-url']) {
+        if (flags?.["show-url"]) {
           // Only show the URL if requested
-          this.log(imageUrl);
+          this.log(imageUrl as any);
           return;
         }
 
         this.log(`✅ Image uploaded successfully to Walrus`);
         this.log(`📝 Image URL: ${imageUrl}`);
         this.log(`📝 Blob ID: ${blobId}`);
-      } else if (args.action === 'create-nft') {
+      } else if (args?.action === 'create-nft') {
         // Create NFT logic (requires image URL and blob ID)
         if (!todoItem.imageUrl) {
           throw new CLIError(
@@ -225,7 +225,7 @@ export default class ImageCommand extends BaseCommand {
             'NO_IMAGE_URL'
           );
         }
-        const blobId = todoItem.imageUrl.split('/').pop() || '';
+        const blobId = todoItem?.imageUrl?.split('/').pop() || '';
 
         if (!config.lastDeployment?.packageId) {
           throw new CLIError(
@@ -245,8 +245,8 @@ export default class ImageCommand extends BaseCommand {
 
         this.log('Creating NFT on Sui blockchain...');
         const nftStorage = new SuiNftStorage(suiClient, {} as Ed25519Keypair, {
-          address: config.lastDeployment.packageId,
-          packageId: config.lastDeployment.packageId,
+          address: config?.lastDeployment?.packageId,
+          packageId: config?.lastDeployment?.packageId,
         });
 
         // Create NFT with todo data and blob ID
@@ -274,7 +274,7 @@ export default class ImageCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to process image: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to process image: ${error instanceof Error ? error.message : String(error as any)}`,
         'IMAGE_FAILED'
       );
     }
@@ -287,7 +287,7 @@ export default class ImageCommand extends BaseCommand {
     todoService: TodoService
   ): Promise<void> {
     const jobId =
-      flags['job-id'] ||
+      flags?.["job-id"] ||
       jobManager.createJob('image', ['upload'], {
         todo: flags.todo,
         list: flags.list,
@@ -314,8 +314,8 @@ export default class ImageCommand extends BaseCommand {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
-          if (flags['progress-file']) {
-            this.writeProgressFile(flags['progress-file'], progress, message);
+          if (flags?.["progress-file"]) {
+            this.writeProgressFile(flags?.["progress-file"], progress, message);
           }
         };
 
@@ -361,7 +361,7 @@ export default class ImageCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `📝 Blob ID: ${blobId}`);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(error as any);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(jobId, `❌ Upload failed: ${errorMessage}`);
       }
@@ -379,7 +379,7 @@ export default class ImageCommand extends BaseCommand {
     config: any
   ): Promise<void> {
     const jobId =
-      flags['job-id'] ||
+      flags?.["job-id"] ||
       jobManager.createJob('image', ['create-nft'], {
         todo: flags.todo,
         list: flags.list,
@@ -405,15 +405,15 @@ export default class ImageCommand extends BaseCommand {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
-          if (flags['progress-file']) {
-            this.writeProgressFile(flags['progress-file'], progress, message);
+          if (flags?.["progress-file"]) {
+            this.writeProgressFile(flags?.["progress-file"], progress, message);
           }
         };
 
         updateProgress('Initializing NFT storage...', 20);
         const nftStorage = new SuiNftStorage(suiClient, {} as Ed25519Keypair, {
-          address: config.lastDeployment.packageId,
-          packageId: config.lastDeployment.packageId,
+          address: config?.lastDeployment?.packageId,
+          packageId: config?.lastDeployment?.packageId,
         });
 
         updateProgress('Preparing NFT metadata...', 20);
@@ -437,7 +437,7 @@ export default class ImageCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `📝 Walrus Blob ID: ${blobId}`);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(error as any);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(
           jobId,

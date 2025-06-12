@@ -34,13 +34,13 @@ export async function withTimeout<T>(
     // Race the original promise against the timeout
     const result = await Promise.race([promise, timeoutPromise]);
     if (timeoutId) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId as any);
     }
     return result;
   } catch (error: unknown) {
     // Always clear the timeout to prevent memory leaks
     if (timeoutId) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId as any);
     }
 
     if (error instanceof TimeoutError) {
@@ -48,7 +48,7 @@ export async function withTimeout<T>(
     }
 
     const typedError =
-      error instanceof Error ? error : new Error(String(error));
+      error instanceof Error ? error : new Error(String(error as any));
     throw new OperationError(
       `Operation '${operationName}' failed: ${typedError.message}`,
       { operationName, cause: typedError }
@@ -67,16 +67,16 @@ export async function safeParallel<T>(
   promises: Array<Promise<T>>,
   operationName: string
 ): Promise<Array<T>> {
-  if (promises.length === 0) {
+  if (promises?.length === 0) {
     return [];
   }
 
-  const results: PromiseSettledResult<T>[] = await Promise.allSettled(promises);
+  const results: PromiseSettledResult<T>[] = await Promise.allSettled(promises as any);
   const successResults: T[] = [];
   const errors: Error[] = [];
 
   results.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
+    if (result?.status === 'fulfilled') {
       successResults.push(result.value);
     } else {
       const error =
@@ -128,14 +128,14 @@ export async function withRetry<T>(
       return await fn();
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
 
       lastError = new OperationError(
         `Attempt ${attempt} failed: ${typedError.message}`,
         { operationName, cause: typedError }
       );
 
-      if (attempt > maxRetries || !shouldRetry(typedError)) {
+      if (attempt > maxRetries || !shouldRetry(typedError as any)) {
         break;
       }
 
@@ -167,8 +167,8 @@ export class TimeoutError extends Error {
       timeoutMs: number;
     }
   ) {
-    super(message);
-    this.name = 'TimeoutError';
+    super(message as any);
+    this?.name = 'TimeoutError';
   }
 }
 
@@ -185,9 +185,9 @@ export class OperationError extends Error {
       cause?: unknown;
     }
   ) {
-    super(message);
-    this.name = 'OperationError';
-    this.cause = context.cause;
+    super(message as any);
+    this?.name = 'OperationError';
+    this?.cause = context.cause;
   }
 }
 
@@ -205,9 +205,9 @@ export class RetryError extends Error {
       lastError: Error | null;
     }
   ) {
-    super(message);
-    this.name = 'RetryError';
-    this.cause = context.lastError;
+    super(message as any);
+    this?.name = 'RetryError';
+    this?.cause = context.lastError;
   }
 }
 
@@ -223,8 +223,8 @@ export class AggregateOperationError extends Error {
     errors: Error[],
     public readonly context: { operationName: string }
   ) {
-    super(message);
-    this.errors = errors;
+    super(message as any);
+    this?.errors = errors;
 
     // Use AggregateError if available, otherwise fall back to custom implementation
     const globalWithAggregateError = globalThis as unknown as {
@@ -235,7 +235,7 @@ export class AggregateOperationError extends Error {
         errors,
         message
       );
-      this.stack = aggregateError.stack;
+      this?.stack = aggregateError.stack;
     }
   }
 }

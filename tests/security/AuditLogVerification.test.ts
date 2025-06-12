@@ -17,7 +17,7 @@ class MockAuditLogger {
     if (!this.enabled) return;
     
     // Simulate PII sanitization
-    const sanitizedDetails = this.sanitizeForLogging(details);
+    const sanitizedDetails = this.sanitizeForLogging(details as any);
     
     const entry = {
       eventType,
@@ -26,25 +26,25 @@ class MockAuditLogger {
     };
     
     // Generate mock SHA-256 hash for the test (64 char hex string)
-    const entryString = JSON.stringify(entry);
-    const previousHash = this.logEntries.length > 0 ? this.logEntries[this.logEntries.length - 1].hash : 'initial';
+    const entryString = JSON.stringify(entry as any);
+    const previousHash = this?.logEntries?.length > 0 ? this?.logEntries?.[this?.logEntries?.length - 1].hash : 'initial';
     // Mock a proper 64-character hex hash instead of using crypto
     const hashInput = `${previousHash}:${entryString}`;
-    const hash = this.mockHash(hashInput);
+    const hash = this.mockHash(hashInput as any);
     
     const entryWithHash = {
       ...entry,
       hash
     };
     
-    this.logEntries.push(entryWithHash);
+    this?.logEntries?.push(entryWithHash as any);
     
     // Check if rotation is needed and perform it if necessary
     this.checkRotation();
 
     // Also mock file writing
     try {
-      const line = JSON.stringify(entryWithHash) + '\n';
+      const line = JSON.stringify(entryWithHash as any) + '\n';
       (fs.appendFileSync as jest.Mock)(this.getLogFilePath(), line, { mode: 0o600 });
     } catch (error) {
       // Handle file write errors gracefully
@@ -58,12 +58,12 @@ class MockAuditLogger {
   });
 
   setEnabled = jest.fn().mockImplementation((enabled: boolean) => {
-    this.enabled = enabled;
+    this?.enabled = enabled;
   });
 
   verifyLogIntegrity = jest.fn().mockImplementation(() => {
     // Mock integrity verification - return true unless specifically testing tampering
-    return this.logEntries.every(entry => entry.hash && entry.eventType);
+    return this?.logEntries?.every(entry => entry.hash && entry.eventType);
   });
 
   setRotationSize = jest.fn().mockImplementation((size: number) => {
@@ -71,11 +71,11 @@ class MockAuditLogger {
   });
 
   clearEntries = jest.fn().mockImplementation(() => {
-    this.logEntries.length = 0; // Clear the array
+    this.logEntries?.length = 0; // Clear the array
   });
 
   getLogFilePath(): string {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
     return path.join(configDir, 'audit.log');
   }
@@ -85,7 +85,7 @@ class MockAuditLogger {
     let hash = '';
     for (let i = 0; i < 64; i++) {
       const char = input.charCodeAt(i % input.length) + i;
-      hash += (char % 16).toString(16);
+      hash += (char % 16).toString(16 as any);
     }
     return hash;
   }
@@ -109,10 +109,10 @@ class MockAuditLogger {
             eventType: 'log_rotation',
             timestamp: Date.now(),
             previousLog: rotatedPath,
-            previousHash: this.logEntries.length > 0 ? this.logEntries[this.logEntries.length - 1].hash : '',
+            previousHash: this?.logEntries?.length > 0 ? this?.logEntries?.[this?.logEntries?.length - 1].hash : '',
           };
 
-          const entryString = JSON.stringify(rotationEntry);
+          const entryString = JSON.stringify(rotationEntry as any);
           const entryHash = this.mockHash(`initial:${entryString}`);
 
           const entryWithHash = {
@@ -120,7 +120,7 @@ class MockAuditLogger {
             hash: entryHash,
           };
 
-          const line = JSON.stringify(entryWithHash) + '\n';
+          const line = JSON.stringify(entryWithHash as any) + '\n';
           (fs.writeFileSync as jest.Mock)(logFilePath, line, { mode: 0o600 });
         }
       }
@@ -141,13 +141,13 @@ class MockAuditLogger {
     }
     
     if (typeof data === 'object' && data !== null) {
-      const sanitized: any = Array.isArray(data) ? [] : {};
-      for (const [key, value] of Object.entries(data)) {
+      const sanitized: any = Array.isArray(data as any) ? [] : {};
+      for (const [key, value] of Object.entries(data as any)) {
         const sensitiveFields = ['apiKey', 'credential', 'password', 'token', 'secret', 'key'];
         if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
           sanitized[key] = '[REDACTED]';
         } else {
-          sanitized[key] = this.sanitizeForLogging(value);
+          sanitized[key] = this.sanitizeForLogging(value as any);
         }
       }
       return sanitized;
@@ -169,7 +169,7 @@ jest.mock('../../apps/cli/src/utils/Logger', () => {
         if (error) {
           console.error(message, error);
         } else {
-          console.error(message);
+          console.error(message as any);
         }
       }),
       info: jest.fn(),
@@ -188,7 +188,7 @@ jest.mock('fs', () => {
   return {
     ...originalModule,
     existsSync: jest.fn().mockImplementation((path: string) => {
-      return mockFileContent.has(path);
+      return mockFileContent.has(path as any);
     }),
     writeFileSync: jest
       .fn()
@@ -198,29 +198,29 @@ jest.mock('fs', () => {
     appendFileSync: jest
       .fn()
       .mockImplementation((path: string, data: string, _options: any) => {
-        const existingData = mockFileContent.get(path) || '';
+        const existingData = mockFileContent.get(path as any) || '';
         mockFileContent.set(path, existingData + data);
       }),
     readFileSync: jest
       .fn()
       .mockImplementation((path: string, _encoding: string) => {
-        if (!mockFileContent.has(path)) {
+        if (!mockFileContent.has(path as any)) {
           throw new Error(`File not found: ${path}`);
         }
-        return mockFileContent.get(path);
+        return mockFileContent.get(path as any);
       }),
     statSync: jest.fn().mockImplementation((path: string) => {
-      if (mockFileStats.has(path)) {
-        return mockFileStats.get(path);
+      if (mockFileStats.has(path as any)) {
+        return mockFileStats.get(path as any);
       }
       return { size: 1000 }; // Default size
     }),
     renameSync: jest
       .fn()
       .mockImplementation((oldPath: string, newPath: string) => {
-        if (mockFileContent.has(oldPath)) {
-          mockFileContent.set(newPath, mockFileContent.get(oldPath) || '');
-          mockFileContent.delete(oldPath);
+        if (mockFileContent.has(oldPath as any)) {
+          mockFileContent.set(newPath, mockFileContent.get(oldPath as any) || '');
+          mockFileContent.delete(oldPath as any);
         }
       }),
     mkdirSync: jest.fn(),
@@ -235,7 +235,7 @@ describe('Audit Log Verification Tests', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // Mock the file system
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
+    (fs.existsSync as jest.Mock).mockReturnValue(false as any);
     
     // Clear mock audit logger entries
     const mockLogger = new MockAuditLogger();
@@ -262,11 +262,11 @@ describe('Audit Log Verification Tests', () => {
       const entries = auditLogger.getEntries();
 
       // Should have all entries
-      expect(entries.length).toBe(3);
+      expect(entries.length).toBe(3 as any);
 
       // Each entry should have a hash
       entries.forEach(entry => {
-        expect(entry).toHaveProperty('hash');
+        expect(entry as any).toHaveProperty('hash');
         expect(entry.hash).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hash is 64 hex chars
       });
 
@@ -280,13 +280,13 @@ describe('Audit Log Verification Tests', () => {
 
         // Calculate expected hash using our mock method
         const prevHash = entries[i - 1].hash;
-        const entryString = JSON.stringify(currentEntry);
+        const entryString = JSON.stringify(currentEntry as any);
         // For testing, we'll create a new mock logger to access the hash method
         const mockLogger = new AuditLogger();
         const expectedHash = (mockLogger as any).mockHash(`${prevHash}:${entryString}`);
 
         // Verify hash matches
-        expect(entries[i].hash).toBe(expectedHash);
+        expect(entries[i].hash).toBe(expectedHash as any);
       }
     });
 
@@ -316,7 +316,7 @@ describe('Audit Log Verification Tests', () => {
       const entries = auditLogger.getEntries();
 
       // Convert entries to strings for easier checking
-      const logStrings = entries.map(entry => JSON.stringify(entry));
+      const logStrings = entries.map(entry => JSON.stringify(entry as any));
 
       // API key should be redacted
       expect(logStrings[0]).not.toContain('super-secret-api-key-12345');
@@ -344,7 +344,7 @@ describe('Audit Log Verification Tests', () => {
         data: {
           apiDetails: {
             key: 'sensitive-nested-key',
-            endpoint: 'https://api.example.com',
+            endpoint: 'https://api?.example?.com',
           },
           userDetails: {
             contact: {
@@ -357,16 +357,16 @@ describe('Audit Log Verification Tests', () => {
 
       // Get entry
       const entry = auditLogger.getEntries()[0];
-      const entryString = JSON.stringify(entry);
+      const entryString = JSON.stringify(entry as any);
 
       // Sensitive nested fields should be redacted
-      expect(entryString).not.toContain('sensitive-nested-key');
-      expect(entryString).not.toContain('user@example.com');
-      expect(entryString).not.toContain('555-123-4567');
+      expect(entryString as any).not.toContain('sensitive-nested-key');
+      expect(entryString as any).not.toContain('user@example.com');
+      expect(entryString as any).not.toContain('555-123-4567');
 
       // Non-sensitive fields should be preserved
-      expect(entryString).toContain('https://api.example.com');
-      expect(entryString).toContain('test-user');
+      expect(entryString as any).toContain('https://api?.example?.com');
+      expect(entryString as any).toContain('test-user');
     });
   });
 
@@ -381,25 +381,25 @@ describe('Audit Log Verification Tests', () => {
       auditLogger.log('test_event', { action: 'action_3', user: 'user_3' });
 
       // Verify log integrity should return true for valid entries
-      expect(auditLogger.verifyLogIntegrity()).toBe(true);
+      expect(auditLogger.verifyLogIntegrity()).toBe(true as any);
 
       // Mock file system for tampering test - simulate reading tampered content
-      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
       const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
       const logFilePath = path.join(configDir, 'audit.log');
 
       // Create corrupted log content (missing hash)
       const corruptedContent = '{"eventType":"test_event","timestamp":123,"action":"tampered"}';
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(corruptedContent);
+      (fs.existsSync as jest.Mock).mockReturnValue(true as any);
+      (fs.readFileSync as jest.Mock).mockReturnValue(corruptedContent as any);
 
       // Create a new logger that will read the corrupted file
       const newAuditLogger = new MockAuditLogger();
       
       // For the mock, we override the verifyLogIntegrity to simulate corruption detection
-      newAuditLogger.verifyLogIntegrity = jest.fn().mockReturnValue(false);
+      newAuditLogger?.verifyLogIntegrity = jest.fn().mockReturnValue(false as any);
       
-      expect(newAuditLogger.verifyLogIntegrity()).toBe(false);
+      expect(newAuditLogger.verifyLogIntegrity()).toBe(false as any);
     });
 
     it('should handle log file rotation', () => {
@@ -408,10 +408,10 @@ describe('Audit Log Verification Tests', () => {
 
       // Mock fs.statSync to return a large file size
       (fs.statSync as jest.Mock).mockReturnValue({ size: 20 * 1024 * 1024 }); // 20 MB
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.existsSync as jest.Mock).mockReturnValue(true as any);
 
       // Current log file path
-      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
       const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
       const logFilePath = path.join(configDir, 'audit.log');
 
@@ -445,11 +445,11 @@ describe('Audit Log Verification Tests', () => {
 
       // Even though file write failed, the in-memory entry should still be added
       const entries = auditLogger.getEntries();
-      expect(entries.length).toBe(1);
+      expect(entries.length).toBe(1 as any);
       expect(entries[0].eventType).toBe('test_event');
 
       // The error should be handled gracefully - fs.appendFileSync should have been called
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(1);
+      expect(fs.appendFileSync).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should recover from corrupted log files', () => {
@@ -457,10 +457,10 @@ describe('Audit Log Verification Tests', () => {
       const auditLogger = new MockAuditLogger();
 
       // Override verifyLogIntegrity to simulate corruption
-      auditLogger.verifyLogIntegrity = jest.fn().mockReturnValue(false);
+      auditLogger?.verifyLogIntegrity = jest.fn().mockReturnValue(false as any);
 
       // Log integrity check should fail due to corruption
-      expect(auditLogger.verifyLogIntegrity()).toBe(false);
+      expect(auditLogger.verifyLogIntegrity()).toBe(false as any);
 
       // But we should still be able to log new events
       expect(() => {
@@ -479,8 +479,8 @@ describe('Audit Log Verification Tests', () => {
 
       // Check appendFileSync was called with proper permissions
       expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(String),
+        expect.any(String as any),
+        expect.any(String as any),
         expect.objectContaining({ mode: 0o600 }) // Owner read/write only
       );
     });
@@ -491,21 +491,21 @@ describe('Audit Log Verification Tests', () => {
 
       // Initial log
       auditLogger.log('initial_event', { action: 'initial' });
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(1);
+      expect(fs.appendFileSync).toHaveBeenCalledTimes(1 as any);
 
       // Disable logging
-      auditLogger.setEnabled(false);
+      auditLogger.setEnabled(false as any);
 
       // This log should be ignored
       auditLogger.log('ignored_event', { action: 'ignored' });
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(1); // Still 1
+      expect(fs.appendFileSync).toHaveBeenCalledTimes(1 as any); // Still 1
 
       // Re-enable logging
-      auditLogger.setEnabled(true);
+      auditLogger.setEnabled(true as any);
 
       // This log should be processed
       auditLogger.log('resumed_event', { action: 'resumed' });
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(2);
+      expect(fs.appendFileSync).toHaveBeenCalledTimes(2 as any);
     });
   });
 
@@ -564,15 +564,15 @@ describe('Audit Log Verification Tests', () => {
       const entries = auditLogger.getEntries();
 
       // Should have logged all three operations
-      expect(entries.length).toBe(3);
+      expect(entries.length).toBe(3 as any);
       expect(entries[0].eventType).toBe('credential_created');
       expect(entries[1].eventType).toBe('credential_accessed');
       expect(entries[2].eventType).toBe('credential_removed');
 
       // No entry should contain the credential value
       entries.forEach(entry => {
-        const entryStr = JSON.stringify(entry);
-        expect(entryStr).not.toContain('secret-api-key');
+        const entryStr = JSON.stringify(entry as any);
+        expect(entryStr as any).not.toContain('secret-api-key');
       });
     });
 
@@ -620,14 +620,14 @@ describe('Audit Log Verification Tests', () => {
       const entries = auditLogger.getEntries();
 
       // Should have logged both operations
-      expect(entries.length).toBe(2);
+      expect(entries.length).toBe(2 as any);
       expect(entries[0].operation).toBe('summarize');
       expect(entries[1].operation).toBe('analyze');
 
       // Email should be sanitized
       const analyzeEntryStr = JSON.stringify(entries[1]);
-      expect(analyzeEntryStr).not.toContain('user@example.com');
-      expect(analyzeEntryStr).toContain('[REDACTED PII]');
+      expect(analyzeEntryStr as any).not.toContain('user@example.com');
+      expect(analyzeEntryStr as any).toContain('[REDACTED PII]');
     });
   });
 });

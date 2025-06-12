@@ -44,13 +44,13 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     // Initialize with empty adapter as we're replacing functionality
     super({} as any);
     
-    this.blockchainVerifier = blockchainVerifier;
-    this.permissionManager = permissionManager;
-    this.credentialManager = credentialManager;
-    this.defaultProvider = defaultProvider;
+    this?.blockchainVerifier = blockchainVerifier;
+    this?.permissionManager = permissionManager;
+    this?.credentialManager = credentialManager;
+    this?.defaultProvider = defaultProvider;
     
     // Initialize proof system
-    this.proofSystem = new AIProofSystem(blockchainVerifier);
+    this?.proofSystem = new AIProofSystem(blockchainVerifier as any);
   }
 
   /**
@@ -85,7 +85,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
 
     // Check permission using the permission manager
-    const permissionGranted = await this.permissionManager.checkPermission(provider, operationName);
+    const permissionGranted = await this?.permissionManager?.checkPermission(provider, operationName);
 
     if (!permissionGranted) {
       throw new CLIError(
@@ -116,16 +116,16 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     // Add standard metadata
     const enhancedMetadata = {
       ...metadata,
-      todoCount: todos.length.toString(),
+      todoCount: todos?.length?.toString(),
       timestamp: Date.now().toString(),
       privacyLevel
     };
     
     // Create verification on blockchain
-    const verificationResult = await this.blockchainVerifier.verifyOperation({
+    const verificationResult = await this?.blockchainVerifier?.verifyOperation({
       actionType: operationType,
-      request: JSON.stringify(todos),
-      response: JSON.stringify(result),
+      request: JSON.stringify(todos as any),
+      response: JSON.stringify(result as any),
       provider,
       metadata: enhancedMetadata,
       privacyLevel
@@ -140,7 +140,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
     
     // Generate proof for the operation
-    const proof = await this.proofSystem.generateProof(verificationResult.id);
+    const proof = await this?.proofSystem?.generateProof(verificationResult.id);
     
     // Return enhanced result
     return {
@@ -169,7 +169,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        summaryLength: summary.length.toString()
+        summaryLength: summary?.length?.toString()
       }
     );
   }
@@ -190,7 +190,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        categoryCount: Object.keys(categories).length.toString()
+        categoryCount: Object.keys(categories as any).length.toString()
       }
     );
   }
@@ -229,7 +229,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        suggestionCount: suggestions.length.toString()
+        suggestionCount: suggestions?.length?.toString()
       }
     );
   }
@@ -250,7 +250,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        analysisKeys: Object.keys(analysis).join(',')
+        analysisKeys: Object.keys(analysis as any).join(',')
       }
     );
   }
@@ -262,7 +262,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     try {
       // For path-based proofs, we need to import from a file
       // For string-based proofs, we can directly verify the string
-      const verificationResult = await this.proofSystem.verifyProof(exportedProof);
+      const verificationResult = await this?.proofSystem?.verifyProof(exportedProof as any);
       return verificationResult.isValid;
     } catch (error) {
       logger.error('Failed to verify proof:', error);
@@ -275,7 +275,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
    */
   public async getVerification(verificationId: string): Promise<BlockchainVerifiedResult<any>> {
     // Get verification from blockchain
-    const verification = await this.blockchainVerifier.getVerification(verificationId);
+    const verification = await this?.blockchainVerifier?.getVerification(verificationId as any);
 
     // The actual result content will depend on the privacy level
     // For non-public data, we'd need to fetch from Walrus storage
@@ -292,7 +292,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
    * List all verifications for the current user
    */
   public async listVerifications(): Promise<BlockchainVerifiedResult<any>[]> {
-    const verifications = await this.blockchainVerifier.listVerifications();
+    const verifications = await this?.blockchainVerifier?.listVerifications();
     
     return verifications.map(verification => ({
       result: {}, // Placeholder - would fetch actual content

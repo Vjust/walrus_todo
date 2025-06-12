@@ -60,27 +60,27 @@ describe('WalTodo Sui Integration Tests', () => {
       backupPath: path.join(testDataDir, 'backup'),
     });
 
-    logger.info(`Test wallet created: ${testSetup.wallet.address}`);
+    logger.info(`Test wallet created: ${testSetup?.wallet?.address}`);
     logger.info(
-      `Initial balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`
+      `Initial balance: ${formatSuiBalance(testSetup?.wallet?.balance)} SUI`
     );
   });
 
   test('should have a funded wallet', async () => {
-    const balance = BigInt(testSetup.wallet.balance);
+    const balance = BigInt(testSetup?.wallet?.balance);
     if (balance === 0n) {
       throw new Error('Wallet should be funded');
     }
     logger.info(
-      `    Balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`
+      `    Balance: ${formatSuiBalance(testSetup?.wallet?.balance)} SUI`
     );
   });
 
   test('should have correct network configuration', () => {
-    if (testSetup.wallet.networkUrl !== 'https://fullnode.testnet.sui.io:443') {
+    if (testSetup?.wallet?.networkUrl !== 'https://fullnode?.testnet?.sui.io:443') {
       throw new Error('Incorrect network URL');
     }
-    logger.info(`    Network: ${testSetup.wallet.networkUrl}`);
+    logger.info(`    Network: ${testSetup?.wallet?.networkUrl}`);
   });
 
   test('should backup and restore wallet', async () => {
@@ -91,7 +91,7 @@ describe('WalTodo Sui Integration Tests', () => {
 
     // Test restore from backup
     const restoredWallet = await restoreFromBackup(testSetup.backupPath);
-    if (restoredWallet.address !== testSetup.wallet.address) {
+    if (restoredWallet.address !== testSetup?.wallet?.address) {
       throw new Error('Restored wallet address should match original');
     }
     logger.info(`    Restored wallet: ${restoredWallet.address}`);
@@ -99,12 +99,12 @@ describe('WalTodo Sui Integration Tests', () => {
 
   test('should create environment file', () => {
     const envPath = path.join(process.cwd(), '.env.testnet');
-    if (!fs.existsSync(envPath)) {
+    if (!fs.existsSync(envPath as any)) {
       throw new Error('Environment file should be created');
     }
 
     const envContent = fs.readFileSync(envPath, 'utf-8');
-    if (!envContent.includes(testSetup.wallet.address)) {
+    if (!envContent.includes(testSetup?.wallet?.address)) {
       throw new Error('Environment file should contain wallet address');
     }
     logger.info(`    Environment file created`);
@@ -114,14 +114,14 @@ describe('WalTodo Sui Integration Tests', () => {
     logger.info('Cleaning up test environment...');
 
     // Clean up test data directory
-    if (fs.existsSync(testDataDir)) {
+    if (fs.existsSync(testDataDir as any)) {
       fs.rmSync(testDataDir, { recursive: true, force: true });
     }
 
     // Clean up environment file
     const envPath = path.join(process.cwd(), '.env.testnet');
-    if (fs.existsSync(envPath)) {
-      fs.unlinkSync(envPath);
+    if (fs.existsSync(envPath as any)) {
+      fs.unlinkSync(envPath as any);
     }
 
     logger.info('Test cleanup complete');
@@ -129,8 +129,8 @@ describe('WalTodo Sui Integration Tests', () => {
 });
 
 function formatSuiBalance(mist: string): string {
-  const sui = Number(BigInt(mist)) / 1_000_000_000;
-  return sui.toFixed(9);
+  const sui = Number(BigInt(mist as any)) / 1_000_000_000;
+  return sui.toFixed(9 as any);
 }
 
 // Run the test suite

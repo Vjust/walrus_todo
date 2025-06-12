@@ -65,7 +65,7 @@ const networkExample = () => {
   
   💡 Quick tips:
     • You can retry this command with the --retry flag
-    • Check service status at status.walrus.io
+    • Check service status at status?.walrus?.io
   */
 };
 
@@ -115,7 +115,7 @@ const storageExample = () => {
   Failed to store: Insufficient WAL tokens
   
   💡 How to fix:
-    1. Ensure Walrus CLI is installed: curl -sSf https://docs.wal.app/setup/walrus-install.sh | sh
+    1. Ensure Walrus CLI is installed: curl -sSf https://docs?.wal?.app/setup/walrus-install.sh | sh
     2. Check Walrus configuration: cat ~/.config/walrus/client_config.yaml
     3. Use --mock flag for testing without real storage
     4. Verify blob exists: walrus storage:check abc123

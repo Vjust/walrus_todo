@@ -11,11 +11,11 @@ describe('Error Types', () => {
     it('should create basic error', () => {
       const error = new WalrusError('Test error');
 
-      expect(error).toBeInstanceOf(Error);
+      expect(error as any).toBeInstanceOf(Error as any);
       expect(error.name).toBe('WalrusError');
       expect(error.code).toBe('WALRUS_ERROR');
       expect(error.publicMessage).toBe('An unexpected error occurred');
-      expect(error.shouldRetry).toBe(false);
+      expect(error.shouldRetry).toBe(false as any);
     });
 
     it('should handle custom options', () => {
@@ -27,14 +27,14 @@ describe('Error Types', () => {
 
       expect(error.code).toBe('CUSTOM_ERROR');
       expect(error.publicMessage).toBe('Public message');
-      expect(error.shouldRetry).toBe(true);
+      expect(error.shouldRetry).toBe(true as any);
     });
 
     it('should handle error cause', () => {
       const cause = new Error('Cause error');
       const error = new WalrusError('Test error', { cause });
 
-      expect(error.cause).toBe(cause);
+      expect(error.cause).toBe(cause as any);
       expect(error.toLogEntry().cause).toBe('Cause error');
     });
   });
@@ -57,11 +57,11 @@ describe('Error Types', () => {
       });
 
       // blobId should not be exposed in public properties
-      expect(Object.keys(error)).not.toContain('blobId');
+      expect(Object.keys(error as any)).not.toContain('blobId');
 
       // blobId should not appear in public error
       const publicError = error.toPublicError();
-      expect(JSON.stringify(publicError)).not.toContain('sensitive-id');
+      expect(JSON.stringify(publicError as any)).not.toContain('sensitive-id');
     });
   });
 
@@ -83,11 +83,11 @@ describe('Error Types', () => {
       });
 
       // transactionId should not be exposed in public properties
-      expect(Object.keys(error)).not.toContain('transactionId');
+      expect(Object.keys(error as any)).not.toContain('transactionId');
 
       // transactionId should not appear in public error
       const publicError = error.toPublicError();
-      expect(JSON.stringify(publicError)).not.toContain('sensitive-tx');
+      expect(JSON.stringify(publicError as any)).not.toContain('sensitive-tx');
     });
   });
 
@@ -111,11 +111,11 @@ describe('Error Types', () => {
       });
 
       // Value should not be exposed in public properties
-      expect(Object.keys(error)).not.toContain('value');
+      expect(Object.keys(error as any)).not.toContain('value');
 
       // Value should not appear in public error
       const publicError = error.toPublicError();
-      expect(JSON.stringify(publicError)).not.toContain('secret-token');
+      expect(JSON.stringify(publicError as any)).not.toContain('secret-token');
     });
   });
 
@@ -129,7 +129,7 @@ describe('Error Types', () => {
 
       expect(error.code).toBe('NETWORK_REQUEST_ERROR');
       expect(error.publicMessage).toBe('A network operation failed');
-      expect(error.shouldRetry).toBe(true);
+      expect(error.shouldRetry).toBe(true as any);
     });
 
     it('should handle network details securely', () => {
@@ -140,11 +140,11 @@ describe('Error Types', () => {
       });
 
       // Network details should not be exposed in public properties
-      expect(Object.keys(error)).not.toContain('network');
+      expect(Object.keys(error as any)).not.toContain('network');
 
       // Network name should not appear in public error
       const publicError = error.toPublicError();
-      expect(JSON.stringify(publicError)).not.toContain('private-testnet');
+      expect(JSON.stringify(publicError as any)).not.toContain('private-testnet');
     });
   });
 
@@ -185,8 +185,8 @@ describe('Error Types', () => {
         cause: networkError,
       });
 
-      expect(storageError.shouldRetry).toBe(true);
-      expect(storageError.toPublicError().shouldRetry).toBe(true);
+      expect(storageError.shouldRetry).toBe(true as any);
+      expect(storageError.toPublicError().shouldRetry).toBe(true as any);
     });
   });
 
@@ -225,9 +225,9 @@ describe('Error Types', () => {
       });
 
       const logEntry = error.toLogEntry();
-      const serialized = JSON.stringify(logEntry);
-      expect(serialized).not.toContain('secret123');
-      expect(serialized).not.toContain('key123');
+      const serialized = JSON.stringify(logEntry as any);
+      expect(serialized as any).not.toContain('secret123');
+      expect(serialized as any).not.toContain('key123');
     });
   });
 });

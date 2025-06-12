@@ -1,5 +1,5 @@
 import { Flags, ux } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { authenticationService } from '../../services/authentication-service';
 import { UserRole } from '../../types/permissions';
 import { CLIError } from '../../types/errors/consolidated';
@@ -88,7 +88,7 @@ export default class AuthCommand extends BaseCommand {
     }),
     role: Flags.string({
       description: 'Role for the new user',
-      options: Object.values(UserRole),
+      options: Object.values(UserRole as any),
       dependsOn: ['register'],
       default: UserRole.USER,
     }),
@@ -150,11 +150,11 @@ export default class AuthCommand extends BaseCommand {
   private authTokenFilePath = path.join(os.homedir(), '.walrus', 'auth.json');
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(AuthCommand);
+    const { flags } = await this.parse(AuthCommand as any);
 
     // Create the .walrus directory if it doesn't exist
     const walrusDir = path.dirname(this.authTokenFilePath);
-    if (!fs.existsSync(walrusDir)) {
+    if (!fs.existsSync(walrusDir as any)) {
       fs.mkdirSync(walrusDir, { recursive: true });
     }
 
@@ -171,13 +171,13 @@ export default class AuthCommand extends BaseCommand {
       await this.logout();
     } else if (flags.status) {
       await this.showStatus();
-    } else if (flags['change-password']) {
-      await this.changePassword(flags.password, flags['new-password']);
-    } else if (flags['create-apikey']) {
-      await this.createApiKey(flags['create-apikey'], flags.expiry);
-    } else if (flags['revoke-apikey']) {
-      await this.revokeApiKey(flags['revoke-apikey']);
-    } else if (flags['list-apikeys']) {
+    } else if (flags?.["change-password"]) {
+      await this.changePassword(flags.password, flags?.["new-password"]);
+    } else if (flags?.["create-apikey"]) {
+      await this.createApiKey(flags?.["create-apikey"], flags.expiry);
+    } else if (flags?.["revoke-apikey"]) {
+      await this.revokeApiKey(flags?.["revoke-apikey"]);
+    } else if (flags?.["list-apikeys"]) {
       await this.listApiKeys();
     } else {
       this.log('Please specify an action to perform. See --help for details.');
@@ -196,8 +196,8 @@ export default class AuthCommand extends BaseCommand {
     try {
       // Prompt for password if not provided
       if (!password) {
-        password = await this.ux.prompt('Enter password', { type: 'hide' });
-        const confirm = await this.ux.prompt('Confirm password', {
+        password = await this?.ux?.prompt('Enter password', { type: 'hide' });
+        const confirm = await this?.ux?.prompt('Confirm password', {
           type: 'hide',
         });
         if (password !== confirm) {
@@ -216,7 +216,7 @@ export default class AuthCommand extends BaseCommand {
 
       this.log(chalk.green(`User ${username} created successfully`));
       this.log(`User ID: ${user.id}`);
-      this.log(`Role: ${user.roles.join(', ')}`);
+      this.log(`Role: ${user?.roles?.join(', ')}`);
       if (address) {
         this.log(`Wallet Address: ${address}`);
       }
@@ -238,7 +238,7 @@ export default class AuthCommand extends BaseCommand {
     try {
       // Prompt for password if not provided
       if (!password) {
-        password = await this.ux.prompt('Enter password', { type: 'hide' });
+        password = await this?.ux?.prompt('Enter password', { type: 'hide' });
       }
 
       // Login
@@ -256,7 +256,7 @@ export default class AuthCommand extends BaseCommand {
       );
 
       this.log(chalk.green(`Logged in as ${username}`));
-      this.log(`Roles: ${authResult.user.roles.join(', ')}`);
+      this.log(`Roles: ${authResult?.user?.roles.join(', ')}`);
       this.log(
         `Session expires at: ${new Date(authResult.expiresAt).toLocaleString()}`
       );
@@ -330,7 +330,7 @@ export default class AuthCommand extends BaseCommand {
       }
       this.log(chalk.green(`Logged in as ${user.username}`));
       this.log(`User ID: ${user.id}`);
-      this.log(`Roles: ${user.roles.join(', ')}`);
+      this.log(`Roles: ${user?.roles?.join(', ')}`);
       if (user.address) {
         this.log(`Wallet Address: ${user.address}`);
       }
@@ -374,17 +374,17 @@ export default class AuthCommand extends BaseCommand {
 
       // Prompt for current password if not provided
       if (!currentPassword) {
-        currentPassword = await this.ux.prompt('Enter current password', {
+        currentPassword = await this?.ux?.prompt('Enter current password', {
           type: 'hide',
         });
       }
 
       // Prompt for new password if not provided
       if (!newPassword) {
-        newPassword = await this.ux.prompt('Enter new password', {
+        newPassword = await this?.ux?.prompt('Enter new password', {
           type: 'hide',
         });
-        const confirm = await this.ux.prompt('Confirm new password', {
+        const confirm = await this?.ux?.prompt('Confirm new password', {
           type: 'hide',
         });
         if (newPassword !== confirm) {
@@ -399,7 +399,7 @@ export default class AuthCommand extends BaseCommand {
         return;
       }
       await authenticationService.changePassword(
-        validation.user.id,
+        validation?.user?.id,
         currentPassword,
         newPassword
       );
@@ -454,7 +454,7 @@ export default class AuthCommand extends BaseCommand {
         return;
       }
       const apiKey = await authenticationService.createApiKey(
-        validation.user.id,
+        validation?.user?.id,
         name,
         expiryDays
       );
@@ -503,7 +503,7 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Revoke API key
-      await authenticationService.revokeApiKey(apiKey);
+      await authenticationService.revokeApiKey(apiKey as any);
 
       this.log(chalk.green(`API key revoked successfully`));
     } catch (error) {
@@ -558,7 +558,7 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       const data = fs.readFileSync(this.authTokenFilePath, 'utf-8');
-      return JSON.parse(String(data));
+      return JSON.parse(String(data as any));
     } catch (_error) {
       return null;
     }

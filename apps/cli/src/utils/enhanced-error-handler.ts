@@ -81,7 +81,7 @@ export class EnhancedErrorHandler {
 
     if (typeof error === 'object') {
       try {
-        const stringified = JSON.stringify(error);
+        const stringified = JSON.stringify(error as any);
         const message =
           stringified === '{}'
             ? 'Empty object error'
@@ -106,7 +106,7 @@ export class EnhancedErrorHandler {
 
     // Last resort for unknown error types
     try {
-      const errorStr = String(error);
+      const errorStr = String(error as any);
       return {
         message: `Unknown error of type ${typeof error}: ${errorStr}${context?.operation ? ` (during ${context.operation})` : ''}`,
         type: `UnknownError_${typeof error}`,
@@ -136,7 +136,7 @@ export class EnhancedErrorHandler {
     error: Error,
     context?: ErrorContext
   ): EnhancedErrorInfo {
-    const errorType = error.constructor.name;
+    const errorType = error?.constructor?.name;
     const baseMessage = error.message || 'No error message provided';
 
     // Add context to the message
@@ -172,8 +172,8 @@ export class EnhancedErrorHandler {
     context?: ErrorContext
   ): string[] {
     const suggestions: string[] = [];
-    const errorMessage = error.message.toLowerCase();
-    const errorType = error.constructor.name;
+    const errorMessage = error?.message?.toLowerCase();
+    const errorType = error?.constructor?.name;
 
     // Network-related errors
     if (
@@ -254,7 +254,7 @@ export class EnhancedErrorHandler {
     }
 
     // Generic fallback suggestions
-    if (suggestions.length === 0) {
+    if (suggestions?.length === 0) {
       suggestions.push('Try running the command again');
       suggestions.push('Use --debug for detailed error information');
       suggestions.push('Check the command documentation');
@@ -275,7 +275,7 @@ export class EnhancedErrorHandler {
     error: Error,
     context?: ErrorContext
   ): boolean {
-    const errorMessage = error.message.toLowerCase();
+    const errorMessage = error?.message?.toLowerCase();
 
     // Non-recoverable errors
     if (
@@ -318,7 +318,7 @@ export class EnhancedErrorHandler {
 
     const cliError = new CLIError(
       errorInfo.message,
-      errorInfo.type.toUpperCase().replace(/ERROR$/, '') + '_ERROR'
+      errorInfo?.type?.toUpperCase().replace(/ERROR$/, '') + '_ERROR'
     );
 
     // Add suggestions as a property if the CLIError supports it
@@ -345,9 +345,9 @@ export class EnhancedErrorHandler {
     };
 
     if (errorInfo.isRecoverable) {
-      this.logger.warn(errorInfo.message, errorInfo.originalError, logContext);
+      this?.logger?.warn(errorInfo.message, errorInfo.originalError, logContext);
     } else {
-      this.logger.error(errorInfo.message, errorInfo.originalError, logContext);
+      this?.logger?.error(errorInfo.message, errorInfo.originalError, logContext);
     }
   }
 
@@ -362,9 +362,9 @@ export class EnhancedErrorHandler {
 
     let message = errorInfo.message;
 
-    if (errorInfo.suggestions && errorInfo.suggestions.length > 0) {
+    if (errorInfo.suggestions && errorInfo?.suggestions?.length > 0) {
       message += '\n\nSuggestions:';
-      errorInfo.suggestions.forEach(suggestion => {
+      errorInfo?.suggestions?.forEach(suggestion => {
         message += `\n• ${suggestion}`;
       });
     }

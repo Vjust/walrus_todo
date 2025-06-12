@@ -21,25 +21,25 @@ export default async function globalSetup() {
   
   testDirs.forEach(dir => {
     const fullPath = path.join(rootDir, dir);
-    if (!existsSync(fullPath)) {
+    if (!existsSync(fullPath as any)) {
       mkdirSync(fullPath, { recursive: true });
       console.log(`✅ Created directory: ${dir}`);
     }
   });
 
   // Set up test environment variables
-  process.env.NODE_ENV = 'test';
-  process.env.LOG_LEVEL = 'error';
-  process.env.ENABLE_WEBSOCKET = 'true';
-  process.env.ENABLE_AUTH = 'false';
-  process.env.API_KEY = 'test-integration-key';
-  process.env.JWT_SECRET = 'test-jwt-secret';
-  process.env.RATE_LIMIT_MAX = '0'; // Disable rate limiting for tests
+  process.env?.NODE_ENV = 'test';
+  process.env?.LOG_LEVEL = 'error';
+  process.env?.ENABLE_WEBSOCKET = 'true';
+  process.env?.ENABLE_AUTH = 'false';
+  process.env?.API_KEY = 'test-integration-key';
+  process.env?.JWT_SECRET = 'test-jwt-secret';
+  process.env?.RATE_LIMIT_MAX = '0'; // Disable rate limiting for tests
 
   // Clean up any leftover test data
   const todoPath = path.join(rootDir, 'Todos', 'todos.json');
-  if (existsSync(todoPath)) {
-    rmSync(todoPath);
+  if (existsSync(todoPath as any)) {
+    rmSync(todoPath as any);
     console.log('✅ Cleaned up previous test data');
   }
 

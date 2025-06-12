@@ -84,22 +84,22 @@ export class NetworkRetryManager extends RetryManager {
     // Extract URLs for parent RetryManager
     const urls = endpoints.map(e => e.url);
     super(urls, {
-      maxRetries: options.maxRetries || NetworkRetryManager.DEFAULT_OPTIONS.maxRetries,
-      timeout: options.timeoutMs || NetworkRetryManager.DEFAULT_OPTIONS.timeoutMs,
-      adaptiveDelay: options.adaptiveDelay ?? NetworkRetryManager.DEFAULT_OPTIONS.adaptiveDelay,
-      loadBalancing: options.loadBalancing || NetworkRetryManager.DEFAULT_OPTIONS.loadBalancing,
+      maxRetries: options.maxRetries || NetworkRetryManager?.DEFAULT_OPTIONS?.maxRetries,
+      timeout: options.timeoutMs || NetworkRetryManager?.DEFAULT_OPTIONS?.timeoutMs,
+      adaptiveDelay: options.adaptiveDelay ?? NetworkRetryManager?.DEFAULT_OPTIONS?.adaptiveDelay,
+      loadBalancing: options.loadBalancing || NetworkRetryManager?.DEFAULT_OPTIONS?.loadBalancing,
       circuitBreaker: options.circuitBreakerEnabled ? {
         failureThreshold: 5,
         resetTimeout: 60000,
       } : undefined,
     });
 
-    this.logger = new Logger('NetworkRetryManager');
-    this.options = { ...NetworkRetryManager.DEFAULT_OPTIONS, ...options };
+    this?.logger = new Logger('NetworkRetryManager');
+    this?.options = { ...NetworkRetryManager.DEFAULT_OPTIONS, ...options };
 
     // Initialize endpoints with default values
     endpoints.forEach(endpoint => {
-      this.endpoints.set(endpoint.url, {
+      this?.endpoints?.set(endpoint.url, {
         ...endpoint,
         healthScore: 1.0,
         consecutiveFailures: 0,
@@ -108,7 +108,7 @@ export class NetworkRetryManager extends RetryManager {
     });
 
     // Start health checking if enabled
-    if (this.options.healthCheckInterval > 0) {
+    if (this?.options?.healthCheckInterval > 0) {
       this.startHealthChecking();
     }
   }
@@ -119,7 +119,7 @@ export class NetworkRetryManager extends RetryManager {
   async executeWithFailover<T>(
     operation: (endpoint: NetworkEndpoint) => Promise<T>,
     context: string,
-    endpointTypes?: NetworkEndpoint['type'][]
+    endpointTypes?: NetworkEndpoint?.["type"][]
   ): Promise<T> {
     const retryContext: RetryContext = {
       operation: context,
@@ -133,43 +133,43 @@ export class NetworkRetryManager extends RetryManager {
 
     try {
       // Filter endpoints by type if specified
-      const candidateEndpoints = Array.from(this.endpoints.values()).filter(
+      const candidateEndpoints = Array.from(this?.endpoints?.values()).filter(
         endpoint => !endpointTypes || endpointTypes.includes(endpoint.type)
       );
 
-      if (candidateEndpoints.length === 0) {
+      if (candidateEndpoints?.length === 0) {
         throw new ValidationError(`No endpoints available for types: ${endpointTypes?.join(', ') || 'any'}`);
       }
 
       const result = await this.retryWithEndpoints(operation, candidateEndpoints, retryContext);
       
       // Update metrics on success
-      this.networkMetrics.totalRequests++;
-      this.networkMetrics.successfulRequests++;
-      this.networkMetrics.averageResponseTime = this.calculateAverageResponseTime();
-      this.networkMetrics.errorRate = 1 - (this.networkMetrics.successfulRequests / this.networkMetrics.totalRequests);
+      this?.networkMetrics?.totalRequests++;
+      this?.networkMetrics?.successfulRequests++;
+      this.networkMetrics?.averageResponseTime = this.calculateAverageResponseTime();
+      this.networkMetrics?.errorRate = 1 - (this?.networkMetrics?.successfulRequests / this?.networkMetrics?.totalRequests);
 
       return result;
     } catch (error) {
       // Update metrics on failure
-      this.networkMetrics.totalRequests++;
-      this.networkMetrics.errorRate = 1 - (this.networkMetrics.successfulRequests / this.networkMetrics.totalRequests);
+      this?.networkMetrics?.totalRequests++;
+      this.networkMetrics?.errorRate = 1 - (this?.networkMetrics?.successfulRequests / this?.networkMetrics?.totalRequests);
 
       const duration = Date.now() - startTime;
-      this.logger.error('Network operation failed after all retries', {
+      this?.logger?.error('Network operation failed after all retries', {
         context,
         duration,
         attempts: retryContext.attempt,
         networkCondition: retryContext.networkCondition,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
 
       throw new NetworkError(
-        `Operation '${context}' failed after ${retryContext.attempt} attempts: ${error instanceof Error ? error.message : String(error)}`,
+        `Operation '${context}' failed after ${retryContext.attempt} attempts: ${error instanceof Error ? error.message : String(error as any)}`,
         error
       );
     } finally {
-      retryContext.totalDuration = Date.now() - startTime;
+      retryContext?.totalDuration = Date.now() - startTime;
     }
   }
 
@@ -183,7 +183,7 @@ export class NetworkRetryManager extends RetryManager {
   ): Promise<T> {
     let lastError: Error | undefined;
 
-    while (context.attempt < this.options.maxRetries) {
+    while (context.attempt < this?.options?.maxRetries) {
       context.attempt++;
 
       // Select best endpoint based on strategy
@@ -193,8 +193,8 @@ export class NetworkRetryManager extends RetryManager {
       }
 
       // Check if we should skip this endpoint due to circuit breaker
-      if (this.isEndpointCircuitOpen(endpoint)) {
-        this.logger.debug('Skipping endpoint with open circuit', { url: endpoint.url });
+      if (this.isEndpointCircuitOpen(endpoint as any)) {
+        this?.logger?.debug('Skipping endpoint with open circuit', { url: endpoint.url });
         continue;
       }
 
@@ -209,17 +209,17 @@ export class NetworkRetryManager extends RetryManager {
         
         return result;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
         const responseTime = Date.now() - startTime;
 
         // Update endpoint health on failure
         this.updateEndpointHealth(endpoint, false, responseTime);
         
         // Record failure for this endpoint
-        const failures = context.endpointFailures.get(endpoint.url) || 0;
-        context.endpointFailures.set(endpoint.url, failures + 1);
+        const failures = context?.endpointFailures?.get(endpoint.url) || 0;
+        context?.endpointFailures?.set(endpoint.url, failures + 1);
 
-        this.logger.warn('Endpoint request failed', {
+        this?.logger?.warn('Endpoint request failed', {
           url: endpoint.url,
           attempt: context.attempt,
           error: lastError.message,
@@ -234,8 +234,8 @@ export class NetworkRetryManager extends RetryManager {
         // Calculate adaptive delay
         const delay = this.calculateAdaptiveDelay(context, endpoint);
         if (delay > 0) {
-          this.logger.debug('Waiting before retry', { delay, attempt: context.attempt });
-          await this.sleep(delay);
+          this?.logger?.debug('Waiting before retry', { delay, attempt: context.attempt });
+          await this.sleep(delay as any);
         }
       }
     }
@@ -252,21 +252,21 @@ export class NetworkRetryManager extends RetryManager {
   ): NetworkEndpoint | undefined {
     // Filter out endpoints with too many recent failures
     const availableEndpoints = candidates.filter(endpoint => {
-      const failures = context.endpointFailures.get(endpoint.url) || 0;
-      return failures < 3 && !this.isEndpointCircuitOpen(endpoint);
+      const failures = context?.endpointFailures?.get(endpoint.url) || 0;
+      return failures < 3 && !this.isEndpointCircuitOpen(endpoint as any);
     });
 
-    if (availableEndpoints.length === 0) {
+    if (availableEndpoints?.length === 0) {
       // If no endpoints available, try the least failed ones
       const sortedByFailures = candidates.sort((a, b) => {
-        const failuresA = context.endpointFailures.get(a.url) || 0;
-        const failuresB = context.endpointFailures.get(b.url) || 0;
+        const failuresA = context?.endpointFailures?.get(a.url) || 0;
+        const failuresB = context?.endpointFailures?.get(b.url) || 0;
         return failuresA - failuresB;
       });
       return sortedByFailures[0];
     }
 
-    switch (this.options.loadBalancing) {
+    switch (this?.options?.loadBalancing) {
       case 'priority':
         return availableEndpoints.sort((a, b) => a.priority - b.priority)[0];
 
@@ -275,8 +275,8 @@ export class NetworkRetryManager extends RetryManager {
 
       case 'response-time':
         return availableEndpoints.sort((a, b) => {
-          const avgA = this.getAverageResponseTime(a);
-          const avgB = this.getAverageResponseTime(b);
+          const avgA = this.getAverageResponseTime(a as any);
+          const avgB = this.getAverageResponseTime(b as any);
           return avgA - avgB;
         })[0];
 
@@ -296,17 +296,17 @@ export class NetworkRetryManager extends RetryManager {
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error(`Operation timeout after ${this.options.timeoutMs}ms`));
-      }, this.options.timeoutMs);
+        reject(new Error(`Operation timeout after ${this?.options?.timeoutMs}ms`));
+      }, this?.options?.timeoutMs);
 
-      operation(endpoint)
+      operation(endpoint as any)
         .then(result => {
-          clearTimeout(timeout);
-          resolve(result);
+          clearTimeout(timeout as any);
+          resolve(result as any);
         })
         .catch(error => {
-          clearTimeout(timeout);
-          reject(error);
+          clearTimeout(timeout as any);
+          reject(error as any);
         });
     });
   }
@@ -316,19 +316,19 @@ export class NetworkRetryManager extends RetryManager {
    */
   private updateEndpointHealth(endpoint: NetworkEndpoint, success: boolean, responseTime: number): void {
     if (success) {
-      endpoint.lastSuccess = Date.now();
-      endpoint.consecutiveFailures = 0;
-      endpoint.healthScore = Math.min(endpoint.healthScore + 0.1, 1.0);
+      endpoint?.lastSuccess = Date.now();
+      endpoint?.consecutiveFailures = 0;
+      endpoint?.healthScore = Math.min(endpoint.healthScore + 0.1, 1.0);
     } else {
-      endpoint.lastFailure = Date.now();
+      endpoint?.lastFailure = Date.now();
       endpoint.consecutiveFailures++;
-      endpoint.healthScore = Math.max(endpoint.healthScore - 0.2, 0.1);
+      endpoint?.healthScore = Math.max(endpoint.healthScore - 0.2, 0.1);
     }
 
     // Update response time history (keep last 10 measurements)
-    endpoint.responseTimeHistory.push(responseTime);
-    if (endpoint.responseTimeHistory.length > 10) {
-      endpoint.responseTimeHistory.shift();
+    endpoint?.responseTimeHistory?.push(responseTime as any);
+    if (endpoint?.responseTimeHistory?.length > 10) {
+      endpoint?.responseTimeHistory?.shift();
     }
   }
 
@@ -336,7 +336,7 @@ export class NetworkRetryManager extends RetryManager {
    * Check if endpoint circuit breaker is open
    */
   private isEndpointCircuitOpen(endpoint: NetworkEndpoint): boolean {
-    if (!this.options.circuitBreakerEnabled) {
+    if (!this?.options?.circuitBreakerEnabled) {
       return false;
     }
 
@@ -354,11 +354,11 @@ export class NetworkRetryManager extends RetryManager {
    * Calculate adaptive delay based on network conditions and endpoint health
    */
   private calculateAdaptiveDelay(context: RetryContext, endpoint: NetworkEndpoint): number {
-    if (!this.options.adaptiveDelay) {
-      return this.options.initialDelay * Math.pow(2, context.attempt - 1);
+    if (!this?.options?.adaptiveDelay) {
+      return this?.options?.initialDelay * Math.pow(2, context.attempt - 1);
     }
 
-    let baseDelay = this.options.initialDelay * Math.pow(2, context.attempt - 1);
+    let baseDelay = this?.options?.initialDelay * Math.pow(2, context.attempt - 1);
     
     // Adjust based on network condition
     switch (context.networkCondition) {
@@ -381,16 +381,16 @@ export class NetworkRetryManager extends RetryManager {
     const jitter = baseDelay * 0.2 * (Math.random() - 0.5);
     baseDelay += jitter;
 
-    return Math.min(baseDelay, this.options.maxDelay);
+    return Math.min(baseDelay, this?.options?.maxDelay);
   }
 
   /**
    * Assess current network condition based on recent metrics
    */
   private assessNetworkCondition(): 'good' | 'degraded' | 'poor' {
-    if (this.networkMetrics.errorRate > 0.5) {
+    if (this?.networkMetrics?.errorRate > 0.5) {
       return 'poor';
-    } else if (this.networkMetrics.errorRate > 0.2 || this.networkMetrics.averageResponseTime > 5000) {
+    } else if (this?.networkMetrics?.errorRate > 0.2 || this?.networkMetrics?.averageResponseTime > 5000) {
       return 'degraded';
     }
     return 'good';
@@ -411,7 +411,7 @@ export class NetworkRetryManager extends RetryManager {
     }
 
     // Check error message for retryable patterns
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
     const retryablePatterns = [
       'timeout',
       'network',
@@ -427,27 +427,27 @@ export class NetworkRetryManager extends RetryManager {
       '504',
     ];
 
-    return retryablePatterns.some(pattern => message.includes(pattern));
+    return retryablePatterns.some(pattern => message.includes(pattern as any));
   }
 
   /**
    * Get average response time for an endpoint
    */
   private getAverageResponseTime(endpoint: NetworkEndpoint): number {
-    if (endpoint.responseTimeHistory.length === 0) {
+    if (endpoint.responseTimeHistory?.length === 0) {
       return 0;
     }
-    return endpoint.responseTimeHistory.reduce((sum, time) => sum + time, 0) / endpoint.responseTimeHistory.length;
+    return endpoint?.responseTimeHistory?.reduce((sum, time) => sum + time, 0) / endpoint?.responseTimeHistory?.length;
   }
 
   /**
    * Calculate overall average response time
    */
   private calculateAverageResponseTime(): number {
-    const allTimes = Array.from(this.endpoints.values())
+    const allTimes = Array.from(this?.endpoints?.values())
       .flatMap(endpoint => endpoint.responseTimeHistory);
     
-    if (allTimes.length === 0) {
+    if (allTimes?.length === 0) {
       return 0;
     }
     
@@ -458,25 +458,25 @@ export class NetworkRetryManager extends RetryManager {
    * Start periodic health checking
    */
   private startHealthChecking(): void {
-    this.healthCheckTimer = setInterval(() => {
+    this?.healthCheckTimer = setInterval(() => {
       this.performHealthChecks();
-    }, this.options.healthCheckInterval);
+    }, this?.options?.healthCheckInterval);
   }
 
   /**
    * Perform health checks on all endpoints
    */
   private async performHealthChecks(): Promise<void> {
-    this.logger.debug('Performing periodic health checks');
+    this?.logger?.debug('Performing periodic health checks');
 
-    const healthCheckPromises = Array.from(this.endpoints.values()).map(async (endpoint) => {
+    const healthCheckPromises = Array.from(this?.endpoints?.values()).map(async (endpoint) => {
       try {
         const startTime = Date.now();
         
         // Simple health check - try to connect to the endpoint
         const response = await fetch(endpoint.url, {
           method: 'HEAD',
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(5000 as any),
         });
 
         const responseTime = Date.now() - startTime;
@@ -488,14 +488,14 @@ export class NetworkRetryManager extends RetryManager {
         }
       } catch (error) {
         this.updateEndpointHealth(endpoint, false, 5000);
-        this.logger.debug('Health check failed', {
+        this?.logger?.debug('Health check failed', {
           url: endpoint.url,
-          error: error instanceof Error ? error.message : String(error),
+          error: error instanceof Error ? error.message : String(error as any),
         });
       }
     });
 
-    await Promise.allSettled(healthCheckPromises);
+    await Promise.allSettled(healthCheckPromises as any);
   }
 
   /**
@@ -514,13 +514,13 @@ export class NetworkRetryManager extends RetryManager {
   } {
     return {
       metrics: { ...this.networkMetrics },
-      endpoints: Array.from(this.endpoints.values()).map(endpoint => ({
+      endpoints: Array.from(this?.endpoints?.values()).map(endpoint => ({
         url: endpoint.url,
         type: endpoint.type,
-        healthy: endpoint.healthScore > 0.5 && !this.isEndpointCircuitOpen(endpoint),
+        healthy: endpoint.healthScore > 0.5 && !this.isEndpointCircuitOpen(endpoint as any),
         healthScore: endpoint.healthScore,
         consecutiveFailures: endpoint.consecutiveFailures,
-        averageResponseTime: this.getAverageResponseTime(endpoint),
+        averageResponseTime: this.getAverageResponseTime(endpoint as any),
       })),
     };
   }
@@ -529,7 +529,7 @@ export class NetworkRetryManager extends RetryManager {
    * Add new endpoint dynamically
    */
   addEndpoint(endpoint: Omit<NetworkEndpoint, 'healthScore' | 'consecutiveFailures' | 'responseTimeHistory'>): void {
-    this.endpoints.set(endpoint.url, {
+    this?.endpoints?.set(endpoint.url, {
       ...endpoint,
       healthScore: 1.0,
       consecutiveFailures: 0,
@@ -541,7 +541,7 @@ export class NetworkRetryManager extends RetryManager {
    * Remove endpoint
    */
   removeEndpoint(url: string): void {
-    this.endpoints.delete(url);
+    this?.endpoints?.delete(url as any);
   }
 
   /**
@@ -557,7 +557,7 @@ export class NetworkRetryManager extends RetryManager {
   destroy(): void {
     if (this.healthCheckTimer) {
       clearInterval(this.healthCheckTimer);
-      this.healthCheckTimer = undefined;
+      this?.healthCheckTimer = undefined;
     }
   }
 }

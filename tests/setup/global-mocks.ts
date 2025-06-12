@@ -12,13 +12,13 @@ import {
 } from '../mocks';
 
 // Global mock classes
-global.MockTodoService = createTodoServiceClassMock();
-global.MockSuiClient = createSuiClientClassMock();
-global.MockSuiNftStorage = createSuiNftStorageClassMock();
+global?.MockTodoService = createTodoServiceClassMock();
+global?.MockSuiClient = createSuiClientClassMock();
+global?.MockSuiNftStorage = createSuiNftStorageClassMock();
 
 // Make SuiClient available globally for tests that reference it without proper imports
 // @ts-ignore - Global assignment for test compatibility
-global.SuiClient = MockSuiClientClass;
+global?.SuiClient = MockSuiClientClass;
 
 // Setup global Jest mocks for common modules
 jest.mock('@mysten/sui/client', () => ({
@@ -47,18 +47,18 @@ jest.mock('@mysten/walrus', () => ({
 }));
 
 // Ensure console methods don't interfere with test output in CI
-if (process.env.CI) {
+if (process?.env?.CI) {
   const originalLog = console.log;
   const originalError = console.error;
 
-  console.log = jest.fn((...args) => {
-    if (process.env.DEBUG) {
+  console?.log = jest.fn((...args) => {
+    if (process?.env?.DEBUG) {
       originalLog(...args);
     }
   });
 
-  console.error = jest.fn((...args) => {
-    if (process.env.DEBUG) {
+  console?.error = jest.fn((...args) => {
+    if (process?.env?.DEBUG) {
       originalError(...args);
     }
   });

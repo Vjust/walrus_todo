@@ -51,13 +51,13 @@ class ComprehensiveE2ETestRunner {
   };
 
   constructor() {
-    this.projectRoot = path.resolve(__dirname, '..');
+    this?.projectRoot = path.resolve(__dirname, '..');
     logger.info(chalk.blue(`🔍 Project root: ${this.projectRoot}`));
   }
 
   async run(): Promise<void> {
     logger.info(
-      chalk.bold.blue('\n🚀 Starting Comprehensive Waltodo E2E Test Suite\n')
+      chalk?.bold?.blue('\n🚀 Starting Comprehensive Waltodo E2E Test Suite\n')
     );
 
     try {
@@ -68,15 +68,15 @@ class ComprehensiveE2ETestRunner {
       this.generateTestReport();
 
       logger.info(
-        chalk.bold.green(
+        chalk?.bold?.green(
           '\n✅ Comprehensive E2E Test Suite Completed Successfully!\n'
         )
       );
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
-      logger.error(chalk.bold.red('\n❌ E2E Test Suite Failed:'), errorObj);
-      this.generateFailureReport(errorObj);
-      process.exit(1);
+      const errorObj = error instanceof Error ? error : new Error(String(error as any));
+      logger.error(chalk?.bold?.red('\n❌ E2E Test Suite Failed:'), errorObj);
+      this.generateFailureReport(errorObj as any);
+      process.exit(1 as any);
     }
   }
 
@@ -89,12 +89,12 @@ class ComprehensiveE2ETestRunner {
         encoding: 'utf8',
         timeout: 10000,
       });
-      this.systemStatus.suiCli = true;
+      this.systemStatus?.suiCli = true;
       logger.info(chalk.green(`✓ Sui CLI: ${suiVersion.trim()}`));
     } catch (error) {
       logger.info(chalk.red('✗ Sui CLI not found'));
       throw new Error(
-        'Sui CLI is required but not found. Please install: https://docs.sui.io/guides/developer/getting-started/sui-install'
+        'Sui CLI is required but not found. Please install: https://docs?.sui?.io/guides/developer/getting-started/sui-install'
       );
     }
 
@@ -104,7 +104,7 @@ class ComprehensiveE2ETestRunner {
         encoding: 'utf8',
         timeout: 10000,
       });
-      this.systemStatus.walrusCli = true;
+      this.systemStatus?.walrusCli = true;
       logger.info(chalk.green(`✓ Walrus CLI: ${walrusVersion.trim()}`));
     } catch (error) {
       logger.info(
@@ -118,7 +118,7 @@ class ComprehensiveE2ETestRunner {
     try {
       const nodeVersion = execSync('node --version', { encoding: 'utf8' });
       const pnpmVersion = execSync('pnpm --version', { encoding: 'utf8' });
-      this.systemStatus.nodeAndPnpm = true;
+      this.systemStatus?.nodeAndPnpm = true;
       logger.info(chalk.green(`✓ Node.js: ${nodeVersion.trim()}`));
       logger.info(chalk.green(`✓ pnpm: ${pnpmVersion.trim()}`));
     } catch (error) {
@@ -152,7 +152,7 @@ class ComprehensiveE2ETestRunner {
         stdio: 'inherit',
         timeout: 120000,
       });
-      this.systemStatus.waltodoCli = true;
+      this.systemStatus?.waltodoCli = true;
       logger.info(chalk.green('✓ Waltodo CLI built successfully'));
     } catch (error) {
       throw new Error(`Failed to build Waltodo CLI: ${error}`);
@@ -160,7 +160,7 @@ class ComprehensiveE2ETestRunner {
 
     // Install frontend dependencies
     const frontendPath = path.join(this.projectRoot, 'waltodo-frontend');
-    if (fs.existsSync(frontendPath)) {
+    if (fs.existsSync(frontendPath as any)) {
       try {
         logger.info('Installing frontend dependencies...');
         execSync('pnpm install', {
@@ -168,7 +168,7 @@ class ComprehensiveE2ETestRunner {
           stdio: 'inherit',
           timeout: 120000,
         });
-        this.systemStatus.frontend = true;
+        this.systemStatus?.frontend = true;
         logger.info(chalk.green('✓ Frontend dependencies installed'));
       } catch (error) {
         logger.info(
@@ -204,7 +204,7 @@ class ComprehensiveE2ETestRunner {
       {
         name: 'E2E System Integration Tests',
         command:
-          'pnpm test tests/e2e/comprehensive-system-integration.e2e.test.ts',
+          'pnpm test tests/e2e/comprehensive-system-integration?.e2e?.test.ts',
         timeout: 300000,
       },
     ];
@@ -222,7 +222,7 @@ class ComprehensiveE2ETestRunner {
 
         const duration = Date.now() - startTime;
         const result = this.parseTestOutput(testConfig.name, output, duration);
-        this.testResults.push(result);
+        this?.testResults?.push(result as any);
 
         logger.info(
           chalk.green(`✓ ${testConfig.name} completed in ${duration}ms`)
@@ -235,13 +235,13 @@ class ComprehensiveE2ETestRunner {
           failed: 1,
           skipped: 0,
           duration,
-          errors: [error instanceof Error ? error.message : String(error)],
+          errors: [error instanceof Error ? error.message : String(error as any)],
         };
-        this.testResults.push(result);
+        this?.testResults?.push(result as any);
 
         logger.info(chalk.red(`✗ ${testConfig.name} failed`));
         logger.info(
-          chalk.red(`  Error: ${(error instanceof Error ? error.message : String(error)).substring(0, 200)}...`)
+          chalk.red(`  Error: ${(error instanceof Error ? error.message : String(error as any)).substring(0, 200)}...`)
         );
       }
     }
@@ -267,9 +267,9 @@ class ComprehensiveE2ETestRunner {
           }
         );
         logger.info(chalk.green('✓ Smart contract deployment successful'));
-        this.systemStatus.smartContract = true;
+        this.systemStatus?.smartContract = true;
       } catch (error) {
-        const errorStr = error instanceof Error ? error.message : String(error);
+        const errorStr = error instanceof Error ? error.message : String(error as any);
         if (
           errorStr.includes('already deployed') ||
           errorStr.includes('Package ID already exists')
@@ -279,7 +279,7 @@ class ComprehensiveE2ETestRunner {
               '⚠ Contract already deployed - continuing with existing deployment'
             )
           );
-          this.systemStatus.smartContract = true;
+          this.systemStatus?.smartContract = true;
         } else {
           throw error;
         }
@@ -290,8 +290,8 @@ class ComprehensiveE2ETestRunner {
         this.projectRoot,
         'waltodo-frontend/src/config'
       );
-      if (fs.existsSync(frontendConfigPath)) {
-        const configFiles = fs.readdirSync(frontendConfigPath);
+      if (fs.existsSync(frontendConfigPath as any)) {
+        const configFiles = fs.readdirSync(frontendConfigPath as any);
         const hasNetworkConfig = configFiles.some(file =>
           file.endsWith('.json')
         );
@@ -356,9 +356,9 @@ class ComprehensiveE2ETestRunner {
     const failedMatch = output.match(/(\d+) failing/);
     const skippedMatch = output.match(/(\d+) pending/);
 
-    if (passedMatch && passedMatch[1]) result.passed = parseInt(passedMatch[1], 10);
-    if (failedMatch && failedMatch[1]) result.failed = parseInt(failedMatch[1], 10);
-    if (skippedMatch && skippedMatch[1]) result.skipped = parseInt(skippedMatch[1], 10);
+    if (passedMatch && passedMatch[1]) result?.passed = parseInt(passedMatch[1], 10);
+    if (failedMatch && failedMatch[1]) result?.failed = parseInt(failedMatch[1], 10);
+    if (skippedMatch && skippedMatch[1]) result?.skipped = parseInt(skippedMatch[1], 10);
 
     // Extract error messages
     const errorLines = output
@@ -367,23 +367,23 @@ class ComprehensiveE2ETestRunner {
         line =>
           line.includes('Error:') || line.includes('FAIL') || line.includes('✗')
       );
-    result.errors = errorLines.slice(0, 5); // Limit to first 5 errors
+    result?.errors = errorLines.slice(0, 5); // Limit to first 5 errors
 
     return result;
   }
 
   private generateTestReport(): void {
-    logger.info(chalk.bold.blue('\n📊 COMPREHENSIVE E2E TEST REPORT\n'));
+    logger.info(chalk?.bold?.blue('\n📊 COMPREHENSIVE E2E TEST REPORT\n'));
 
     // System Status Report
-    logger.info(chalk.bold.yellow('🔧 SYSTEM STATUS:'));
+    logger.info(chalk?.bold?.yellow('🔧 SYSTEM STATUS:'));
     const statusItems = [
-      { name: 'Sui CLI', status: this.systemStatus.suiCli },
-      { name: 'Walrus CLI', status: this.systemStatus.walrusCli },
-      { name: 'Node.js & pnpm', status: this.systemStatus.nodeAndPnpm },
-      { name: 'Waltodo CLI', status: this.systemStatus.waltodoCli },
-      { name: 'Frontend', status: this.systemStatus.frontend },
-      { name: 'Smart Contract', status: this.systemStatus.smartContract },
+      { name: 'Sui CLI', status: this?.systemStatus?.suiCli },
+      { name: 'Walrus CLI', status: this?.systemStatus?.walrusCli },
+      { name: 'Node.js & pnpm', status: this?.systemStatus?.nodeAndPnpm },
+      { name: 'Waltodo CLI', status: this?.systemStatus?.waltodoCli },
+      { name: 'Frontend', status: this?.systemStatus?.frontend },
+      { name: 'Smart Contract', status: this?.systemStatus?.smartContract },
     ];
 
     statusItems.forEach(item => {
@@ -393,30 +393,30 @@ class ComprehensiveE2ETestRunner {
     });
 
     // Test Results Summary
-    logger.info(chalk.bold.yellow('\n🧪 TEST RESULTS SUMMARY:'));
+    logger.info(chalk?.bold?.yellow('\n🧪 TEST RESULTS SUMMARY:'));
 
     let totalPassed = 0;
     let totalFailed = 0;
     let totalSkipped = 0;
     let totalDuration = 0;
 
-    this.testResults.forEach(result => {
+    this?.testResults?.forEach(result => {
       totalPassed += result.passed;
       totalFailed += result.failed;
       totalSkipped += result.skipped;
       totalDuration += result.duration;
 
       const status =
-        result.failed === 0 ? chalk.green('✅ PASS') : chalk.red('❌ FAIL');
+        result?.failed === 0 ? chalk.green('✅ PASS') : chalk.red('❌ FAIL');
       logger.info(`  ${status} ${result.testSuite}`);
       logger.info(
         `    Passed: ${result.passed}, Failed: ${result.failed}, Skipped: ${result.skipped}`
       );
       logger.info(`    Duration: ${result.duration}ms`);
 
-      if (result.errors.length > 0) {
-        logger.info(`    Errors: ${result.errors.length}`);
-        result.errors.forEach(error => {
+      if (result?.errors?.length > 0) {
+        logger.info(`    Errors: ${result?.errors?.length}`);
+        result?.errors?.forEach(error => {
           logger.info(chalk.red(`      - ${error.substring(0, 100)}...`));
         });
       }
@@ -424,7 +424,7 @@ class ComprehensiveE2ETestRunner {
     });
 
     // Overall Summary
-    logger.info(chalk.bold.yellow('📈 OVERALL SUMMARY:'));
+    logger.info(chalk?.bold?.yellow('📈 OVERALL SUMMARY:'));
     logger.info(`  Total Tests: ${totalPassed + totalFailed + totalSkipped}`);
     logger.info(`  ${chalk.green('✅ Passed:')} ${totalPassed}`);
     logger.info(`  ${chalk.red('❌ Failed:')} ${totalFailed}`);
@@ -432,10 +432,10 @@ class ComprehensiveE2ETestRunner {
     logger.info(`  ⏱️  Total Duration: ${Math.round(totalDuration / 1000)}s`);
 
     const successRate = (totalPassed / (totalPassed + totalFailed)) * 100;
-    logger.info(`  📊 Success Rate: ${Math.round(successRate)}%`);
+    logger.info(`  📊 Success Rate: ${Math.round(successRate as any)}%`);
 
     // Recommendations
-    logger.info(chalk.bold.yellow('\n💡 RECOMMENDATIONS:'));
+    logger.info(chalk?.bold?.yellow('\n💡 RECOMMENDATIONS:'));
 
     if (totalFailed === 0) {
       logger.info(
@@ -446,12 +446,12 @@ class ComprehensiveE2ETestRunner {
     } else {
       logger.info(
         chalk.red(
-          `  ⚠️  ${totalFailed} test(s) failed. Please address the issues before deployment.`
+          `  ⚠️  ${totalFailed} test(s as any) failed. Please address the issues before deployment.`
         )
       );
     }
 
-    if (!this.systemStatus.walrusCli) {
+    if (!this?.systemStatus?.walrusCli) {
       logger.info(
         chalk.yellow(
           '  📦 Consider installing Walrus CLI for full storage functionality.'
@@ -459,7 +459,7 @@ class ComprehensiveE2ETestRunner {
       );
     }
 
-    if (!this.systemStatus.frontend) {
+    if (!this?.systemStatus?.frontend) {
       logger.info(
         chalk.yellow(
           '  🖥️  Frontend setup incomplete. Run "pnpm run nextjs:install" to fix.'
@@ -479,13 +479,13 @@ class ComprehensiveE2ETestRunner {
       systemStatus: this.systemStatus,
       testResults: this.testResults,
       summary: {
-        totalPassed: this.testResults.reduce((sum, r) => sum + r.passed, 0),
-        totalFailed: this.testResults.reduce((sum, r) => sum + r.failed, 0),
-        totalSkipped: this.testResults.reduce((sum, r) => sum + r.skipped, 0),
-        totalDuration: this.testResults.reduce((sum, r) => sum + r.duration, 0),
+        totalPassed: this?.testResults?.reduce((sum, r) => sum + r.passed, 0),
+        totalFailed: this?.testResults?.reduce((sum, r) => sum + r.failed, 0),
+        totalSkipped: this?.testResults?.reduce((sum, r) => sum + r.skipped, 0),
+        totalDuration: this?.testResults?.reduce((sum, r) => sum + r.duration, 0),
         successRate:
-          (this.testResults.reduce((sum, r) => sum + r.passed, 0) /
-            this.testResults.reduce((sum, r) => sum + r.passed + r.failed, 0)) *
+          (this?.testResults?.reduce((sum, r) => sum + r.passed, 0) /
+            this?.testResults?.reduce((sum, r) => sum + r.passed + r.failed, 0)) *
           100,
       },
     };
@@ -495,10 +495,10 @@ class ComprehensiveE2ETestRunner {
   }
 
   private generateFailureReport(error: Error | unknown): void {
-    logger.info(chalk.bold.red('\n💥 FAILURE REPORT\n'));
+    logger.info(chalk?.bold?.red('\n💥 FAILURE REPORT\n'));
 
     logger.info(chalk.red('Error Details:'));
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
     logger.info(chalk.red(`  ${errorMessage}`));
 
     logger.info(chalk.yellow('\nSystem Status at Failure:'));
@@ -508,13 +508,13 @@ class ComprehensiveE2ETestRunner {
     });
 
     logger.info(chalk.yellow('\nFailure Analysis:'));
-    if (!this.systemStatus.suiCli) {
+    if (!this?.systemStatus?.suiCli) {
       logger.info(chalk.red('  - Sui CLI not installed or not working'));
     }
-    if (!this.systemStatus.nodeAndPnpm) {
+    if (!this?.systemStatus?.nodeAndPnpm) {
       logger.info(chalk.red('  - Node.js or pnpm not properly installed'));
     }
-    if (!this.systemStatus.waltodoCli) {
+    if (!this?.systemStatus?.waltodoCli) {
       logger.info(chalk.red('  - Waltodo CLI build failed'));
     }
 
@@ -532,10 +532,10 @@ async function main() {
   await runner.run();
 }
 
-if (require.main === module) {
+if (require?.main === module) {
   main().catch(error => {
-    logger.error(chalk.bold.red('Fatal error:'), error);
-    process.exit(1);
+    logger.error(chalk?.bold?.red('Fatal error:'), error);
+    process.exit(1 as any);
   });
 }
 

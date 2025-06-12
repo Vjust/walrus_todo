@@ -28,9 +28,9 @@ class ResourceRegistry {
    */
   register(resource: Cleanupable | (() => void | Promise<void>)): void {
     if (typeof resource === 'function') {
-      this.cleanupCallbacks.add(resource);
+      this?.cleanupCallbacks?.add(resource as any);
     } else {
-      this.resources.add(resource);
+      this?.resources?.add(resource as any);
     }
   }
 
@@ -39,9 +39,9 @@ class ResourceRegistry {
    */
   unregister(resource: Cleanupable | (() => void | Promise<void>)): void {
     if (typeof resource === 'function') {
-      this.cleanupCallbacks.delete(resource);
+      this?.cleanupCallbacks?.delete(resource as any);
     } else {
-      this.resources.delete(resource);
+      this?.resources?.delete(resource as any);
     }
   }
 
@@ -78,15 +78,15 @@ class ResourceRegistry {
     await Promise.all([...resourceCleanups, ...callbackCleanups]);
 
     // Clear the registry
-    this.resources.clear();
-    this.cleanupCallbacks.clear();
+    this?.resources?.clear();
+    this?.cleanupCallbacks?.clear();
   }
 
   /**
    * Get count of registered resources
    */
   getResourceCount(): number {
-    return this.resources.size + this.cleanupCallbacks.size;
+    return this?.resources?.size + this?.cleanupCallbacks?.size;
   }
 }
 
@@ -100,7 +100,7 @@ const globalRegistry = new ResourceRegistry();
 export function registerForCleanup(
   resource: Cleanupable | (() => void | Promise<void>)
 ): void {
-  globalRegistry.register(resource);
+  globalRegistry.register(resource as any);
 }
 
 /**
@@ -110,7 +110,7 @@ export function registerForCleanup(
 export function unregisterCleanup(
   resource: Cleanupable | (() => void | Promise<void>)
 ): void {
-  globalRegistry.unregister(resource);
+  globalRegistry.unregister(resource as any);
 }
 
 /**
@@ -137,9 +137,9 @@ export class MemoryLeakDetector {
 
   constructor(label: string = 'test', threshold: number = 50 * 1024 * 1024) {
     // 50MB default
-    this.label = label;
-    this.threshold = threshold;
-    this.initialMemory = process.memoryUsage();
+    this?.label = label;
+    this?.threshold = threshold;
+    this?.initialMemory = process.memoryUsage();
   }
 
   /**
@@ -148,7 +148,7 @@ export class MemoryLeakDetector {
    */
   checkForLeaks(): boolean {
     const currentMemory = process.memoryUsage();
-    const heapIncrease = currentMemory.heapUsed - this.initialMemory.heapUsed;
+    const heapIncrease = currentMemory.heapUsed - this?.initialMemory?.heapUsed;
 
     if (heapIncrease > this.threshold) {
       console.warn(`Potential memory leak detected in ${this.label}:`);
@@ -234,10 +234,10 @@ export function withMemoryLeakDetection(
 
 /**
  * Setup function for Jest tests to enable automatic cleanup
- * Note: Jest hooks (beforeEach, afterEach, etc.) are now set up in jest.setup.js
+ * Note: Jest hooks (beforeEach, afterEach, etc.) are now set up in jest?.setup?.js
  */
 export function setupMemoryLeakPrevention(): void {
-  // Just run the timer tracking setup - Jest hooks are handled in jest.setup.js
+  // Just run the timer tracking setup - Jest hooks are handled in jest?.setup?.js
   // to avoid conflicts with Jest globals during module loading
 }
 
@@ -253,7 +253,7 @@ export function createTestTimeout(timeout: number): NodeJS.Timeout {
   }, timeout);
 
   registerForCleanup(() => {
-    clearTimeout(handle);
+    clearTimeout(handle as any);
   });
 
   return handle;
@@ -273,13 +273,13 @@ export async function withMemoryMonitoring(
   }, interval);
 
   registerForCleanup(() => {
-    clearInterval(monitor);
+    clearInterval(monitor as any);
   });
 
   try {
     await testFn();
   } finally {
-    clearInterval(monitor);
+    clearInterval(monitor as any);
   }
 }
 
@@ -291,7 +291,7 @@ export class ResourcePool<T extends Cleanupable> {
   private factory: () => T | Promise<T>;
 
   constructor(factory: () => T | Promise<T>) {
-    this.factory = factory;
+    this?.factory = factory;
     registerForCleanup(() => this.cleanup());
   }
 
@@ -300,7 +300,7 @@ export class ResourcePool<T extends Cleanupable> {
    */
   async acquire(): Promise<T> {
     const resource = await this.factory();
-    this.resources.add(resource);
+    this?.resources?.add(resource as any);
     return resource;
   }
 
@@ -308,8 +308,8 @@ export class ResourcePool<T extends Cleanupable> {
    * Release a resource back to the pool
    */
   async release(resource: T): Promise<void> {
-    if (this.resources.has(resource)) {
-      this.resources.delete(resource);
+    if (this?.resources?.has(resource as any)) {
+      this?.resources?.delete(resource as any);
 
       if (resource.cleanup) {
         await resource.cleanup();
@@ -326,16 +326,16 @@ export class ResourcePool<T extends Cleanupable> {
    */
   async cleanup(): Promise<void> {
     const cleanupPromises = Array.from(this.resources).map(resource =>
-      this.release(resource)
+      this.release(resource as any)
     );
-    await Promise.all(cleanupPromises);
-    this.resources.clear();
+    await Promise.all(cleanupPromises as any);
+    this?.resources?.clear();
   }
 
   /**
    * Get the current number of resources in the pool
    */
   size(): number {
-    return this.resources.size;
+    return this?.resources?.size;
   }
 }

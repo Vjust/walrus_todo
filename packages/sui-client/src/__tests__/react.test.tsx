@@ -67,7 +67,7 @@ jest.mock('@tanstack/react-query', () => ({
 // Mock config loading
 jest.mock('../config', () => ({
   loadAppConfig: jest.fn().mockResolvedValue({
-    network: { name: 'testnet', url: 'https://fullnode.testnet.sui.io:443' },
+    network: { name: 'testnet', url: 'https://fullnode?.testnet?.sui.io:443' },
     contracts: {
       todoNft: {
         packageId: '0xtest',
@@ -108,9 +108,9 @@ function TestComponent() {
       <div data-testid="connected">{wallet.connected ? 'true' : 'false'}</div>
       <div data-testid="account">{account?.address || 'none'}</div>
       <div data-testid="execute-available">{typeof executeTxn === 'function' ? 'true' : 'false'}</div>
-      <div data-testid="connection-available">{typeof connection.connect === 'function' ? 'true' : 'false'}</div>
-      <div data-testid="transaction-execution-available">{typeof transactionExecution.executeTransaction === 'function' ? 'true' : 'false'}</div>
-      <div data-testid="todo-ops-available">{typeof todoOps.createTodoNFT === 'function' ? 'true' : 'false'}</div>
+      <div data-testid="connection-available">{typeof connection?.connect === 'function' ? 'true' : 'false'}</div>
+      <div data-testid="transaction-execution-available">{typeof transactionExecution?.executeTransaction === 'function' ? 'true' : 'false'}</div>
+      <div data-testid="todo-ops-available">{typeof todoOps?.createTodoNFT === 'function' ? 'true' : 'false'}</div>
       <div data-testid="config-loading">{config.loading ? 'true' : 'false'}</div>
     </div>
   );
@@ -192,7 +192,7 @@ describe('React Components and Hooks', () => {
         try {
           // Mock transaction
           const mockTx = { setSender: jest.fn() } as any;
-          await executeTransaction(mockTx);
+          await executeTransaction(mockTx as any);
         } catch (error) {
           // Expected for wallet not connected
         }

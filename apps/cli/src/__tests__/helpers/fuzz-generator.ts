@@ -7,7 +7,7 @@ export class FuzzGenerator {
   constructor(private seed?: string) {
     if (seed) {
       // Use seed for reproducible tests
-      crypto.createHash('sha256').update(seed);
+      crypto.createHash('sha256').update(seed as any);
     }
   }
 
@@ -53,7 +53,7 @@ export class FuzzGenerator {
   }
 
   // Generate random date within range
-  date(start: Date = new Date(0), end: Date = new Date()): Date {
+  date(start: Date = new Date(0 as any), end: Date = new Date()): Date {
     return new Date(this.number(start.getTime(), end.getTime()));
   }
 

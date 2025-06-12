@@ -128,14 +128,14 @@ Return the result as a JSON object where keys are todo IDs and values are object
 // Provider-specific optimizations
 const PROVIDER_OPTIMIZATIONS = {
   [AIProvider.XAI]: {
-    summarize: `${PROMPTS.summarize.enhanced}\n\nBe objective and factual in your summary.`,
-    prioritize: `${PROMPTS.prioritize.enhanced}\n\nBe objective in your prioritization, focusing on measurable criteria.`,
+    summarize: `${PROMPTS?.summarize?.enhanced}\n\nBe objective and factual in your summary.`,
+    prioritize: `${PROMPTS?.prioritize?.enhanced}\n\nBe objective in your prioritization, focusing on measurable criteria.`,
   },
   [AIProvider.OPENAI]: {
-    analyze: `${PROMPTS.analyze.enhanced}\n\nProvide concrete, specific insights rather than general observations.`,
+    analyze: `${PROMPTS?.analyze?.enhanced}\n\nProvide concrete, specific insights rather than general observations.`,
   },
   [AIProvider.ANTHROPIC]: {
-    schedule: `${PROMPTS.schedule.default}\n\nFocus on realistic timelines that consider dependencies between tasks.`,
+    schedule: `${PROMPTS?.schedule?.default}\n\nFocus on realistic timelines that consider dependencies between tasks.`,
   },
 };
 
@@ -152,7 +152,7 @@ export class PromptManager {
    */
   public static getInstance(): PromptManager {
     if (!PromptManager.instance) {
-      PromptManager.instance = new PromptManager();
+      PromptManager?.instance = new PromptManager();
     }
 
     return PromptManager.instance;
@@ -167,7 +167,7 @@ export class PromptManager {
    * @returns A new PromptTemplate instance
    */
   public static fromTemplate(template: string): PromptTemplate {
-    return PromptTemplate.fromTemplate(template);
+    return PromptTemplate.fromTemplate(template as any);
   }
 
   /**
@@ -179,8 +179,8 @@ export class PromptManager {
     enhanced: boolean = true
   ): PromptTemplate {
     // Check for user override
-    if (this.promptOverrides[operation]) {
-      return PromptTemplate.fromTemplate(this.promptOverrides[operation]);
+    if (this?.promptOverrides?.[operation]) {
+      return PromptTemplate.fromTemplate(this?.promptOverrides?.[operation]);
     }
 
     // Check for provider-specific optimization
@@ -199,7 +199,7 @@ export class PromptManager {
       throw new Error(`No prompt template found for operation: ${operation}`);
     }
 
-    return PromptTemplate.fromTemplate(promptText);
+    return PromptTemplate.fromTemplate(promptText as any);
   }
 
   /**
@@ -211,27 +211,27 @@ export class PromptManager {
    * @returns A new PromptTemplate instance
    */
   public fromTemplate(template: string): PromptTemplate {
-    return PromptTemplate.fromTemplate(template);
+    return PromptTemplate.fromTemplate(template as any);
   }
 
   /**
    * Set a custom prompt override
    */
   public setPromptOverride(operation: string, promptTemplate: string): void {
-    this.promptOverrides[operation] = promptTemplate;
+    this?.promptOverrides?.[operation] = promptTemplate;
   }
 
   /**
    * Clear a prompt override
    */
   public clearPromptOverride(operation: string): void {
-    delete this.promptOverrides[operation];
+    delete this?.promptOverrides?.[operation];
   }
 
   /**
    * Clear all prompt overrides
    */
   public clearAllPromptOverrides(): void {
-    this.promptOverrides = {};
+    this?.promptOverrides = {};
   }
 }

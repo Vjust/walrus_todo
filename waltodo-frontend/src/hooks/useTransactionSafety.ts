@@ -119,7 +119,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
         
         if (!result.success) {
           toast.error(`Simulation failed: ${result.error}`);
-        } else if (result.warnings.length > 0) {
+        } else if (result?.warnings?.length > 0) {
           toast('Simulation completed with warnings', {
             icon: '⚠️',
           });
@@ -204,7 +204,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
       const safetyManager = await getSafetyManager();
       if (!safetyManager) {return;}
 
-      const recovery = await safetyManager.handleTransactionError(error);
+      const recovery = await safetyManager.handleTransactionError(error as any);
       
       if (recovery.action) {
         await recovery.action();
@@ -242,7 +242,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
  * Hook for creating safe todo NFT transactions
  */
 export function useSafeTodoTransaction(options: UseTransactionSafetyOptions = {}) {
-  const transactionSafety = useTransactionSafety(options);
+  const transactionSafety = useTransactionSafety(options as any);
   const walletContext = useWalletContext();
   const address = walletContext?.address;
 

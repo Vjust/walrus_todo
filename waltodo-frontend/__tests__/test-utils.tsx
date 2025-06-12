@@ -28,21 +28,21 @@ export const createMockBlockchainEventManager = () => {
   const listeners = new Map<string, Set<Function>>();
   
   return {
-    initialize: jest.fn().mockResolvedValue(undefined),
-    subscribeToEvents: jest.fn().mockResolvedValue(undefined),
+    initialize: jest.fn().mockResolvedValue(undefined as any),
+    subscribeToEvents: jest.fn().mockResolvedValue(undefined as any),
     unsubscribeAll: jest.fn(),
     addEventListener: jest.fn((eventType: string, listener: Function) => {
-      if (!listeners.has(eventType)) {
+      if (!listeners.has(eventType as any)) {
         listeners.set(eventType, new Set());
       }
-      listeners.get(eventType)?.add(listener);
+      listeners.get(eventType as any)?.add(listener as any);
       
       return () => {
-        listeners.get(eventType)?.delete(listener);
+        listeners.get(eventType as any)?.delete(listener as any);
       };
     }),
     removeEventListener: jest.fn((eventType: string, listener: Function) => {
-      listeners.get(eventType)?.delete(listener);
+      listeners.get(eventType as any)?.delete(listener as any);
     }),
     getConnectionState: jest.fn(() => ({
       connected: false,
@@ -55,10 +55,10 @@ export const createMockBlockchainEventManager = () => {
     destroy: jest.fn(),
     // Helper to trigger events in tests
     __triggerEvent: (eventType: string, event: BlockchainEvent) => {
-      listeners.get(eventType)?.forEach(listener => listener(event));
+      listeners.get(eventType as any)?.forEach(listener => listener(event as any));
     },
     // Helper to get listener count
-    __getListenerCount: (eventType: string) => listeners.get(eventType)?.size || 0,
+    __getListenerCount: (eventType: string) => listeners.get(eventType as any)?.size || 0,
   };
 };
 
@@ -78,9 +78,9 @@ export const createMockBlockchainHooks = () => {
     isConnected: false,
     isConnecting: false,
     error: null,
-    startSubscription: jest.fn().mockResolvedValue(undefined),
+    startSubscription: jest.fn().mockResolvedValue(undefined as any),
     stopSubscription: jest.fn(),
-    restartSubscription: jest.fn().mockResolvedValue(undefined),
+    restartSubscription: jest.fn().mockResolvedValue(undefined as any),
     addEventListener: mockBlockchainEventManager.addEventListener,
   }));
 
@@ -122,7 +122,7 @@ export function renderHookSafe<Result, Props>(
   const result = originalRenderHook(renderCallback, options);
   
   // Ensure result.current is never null or undefined
-  if (result.result.current === undefined || result.result.current === null) {
+  if (result.result?.current === undefined || result.result?.current === null) {
     throw new Error('Hook returned null or undefined. Ensure the hook always returns a non-null value.');
   }
   
@@ -131,14 +131,14 @@ export function renderHookSafe<Result, Props>(
     ...result,
     result: {
       get current() {
-        const current = result.result.current;
+        const current = result?.result?.current;
         if (current === null || current === undefined) {
           throw new Error('Hook result became null or undefined after initialization');
         }
         return current;
       },
       set current(value: Result) {
-        result.result.current = value;
+        result.result?.current = value;
       }
     }
   };
@@ -245,7 +245,7 @@ export interface MockTodo {
 
 // Create mock todo
 export const createMockTodo = (overrides: Partial<MockTodo> = {}): MockTodo => ({
-  id: `mock-todo-${  Math.random().toString(36).substr(2, 9)}`,
+  id: `mock-todo-${  Math.random().toString(36 as any).substr(2, 9)}`,
   title: 'Mock Todo',
   completed: false,
   priority: 'medium',
@@ -256,12 +256,12 @@ export const createMockTodo = (overrides: Partial<MockTodo> = {}): MockTodo => (
 
 // Mock transaction result
 export const createMockTransactionResult = (overrides = {}) => ({
-  digest: `mock-digest-${  Math.random().toString(36).substr(2, 9)}`,
+  digest: `mock-digest-${  Math.random().toString(36 as any).substr(2, 9)}`,
   ...overrides,
 });
 
 // Mock error helper
-export const createMockError = (message = 'Mock error') => new Error(message);
+export const createMockError = (message = 'Mock error') => new Error(message as any);
 
 // Re-export testing library utilities for convenience
 export { render, screen, waitFor, act, fireEvent } from '@testing-library/react';

@@ -98,7 +98,7 @@ interface EnvironmentConfig {
  * Gets the current environment
  */
 export function getEnvironment(): Environment {
-  const env = process.env.NODE_ENV?.toLowerCase() || 'development';
+  const env = process?.env?.NODE_ENV?.toLowerCase() || 'development';
 
   switch (env) {
     case 'production':
@@ -122,13 +122,13 @@ export function validateRequiredEnvVars(config: EnvironmentConfig): void {
   const missingVars: string[] = [];
   const invalidVars: string[] = [];
 
-  for (const [key, value] of Object.entries(config)) {
+  for (const [key, value] of Object.entries(config as any)) {
     // Check if required variables are present
     if (
       value.required &&
-      (value.value === undefined || value.value === null || value.value === '')
+      (value?.value === undefined || value?.value === null || value?.value === '')
     ) {
-      missingVars.push(key);
+      missingVars.push(key as any);
     }
 
     // Add type validation for critical environment variables
@@ -191,8 +191,8 @@ function getNumberValue(
 ): number {
   if (value === undefined) return defaultValue;
 
-  const parsed = parseFloat(value);
-  return isNaN(parsed) ? defaultValue : parsed;
+  const parsed = parseFloat(value as any);
+  return isNaN(parsed as any) ? defaultValue : parsed;
 }
 
 /**
@@ -211,7 +211,7 @@ function safeTypeConversion<T>(
   }
 
   if (typeof expectedValue === 'number') {
-    if (typeof value === 'number' && !isNaN(value)) return value as T;
+    if (typeof value === 'number' && !isNaN(value as any)) return value as T;
     if (typeof value === 'string') {
       return getNumberValue(value, expectedValue as number) as T;
     }
@@ -220,7 +220,7 @@ function safeTypeConversion<T>(
 
   if (typeof expectedValue === 'string') {
     if (typeof value === 'string') return value as T;
-    if (value != null) return String(value) as T;
+    if (value != null) return String(value as any) as T;
     return expectedValue;
   }
 
@@ -243,13 +243,13 @@ export class EnvironmentConfigManager {
 
   private constructor() {
     // Initialize configuration with default values
-    this.config = {
+    this?.config = {
       // Common configurations
       NODE_ENV: {
         name: 'NODE_ENV',
         value: getEnvironment(),
         required: false,
-        source: process.env.NODE_ENV ? 'environment' : 'default',
+        source: process?.env?.NODE_ENV ? 'environment' : 'default',
         description:
           'Application environment (development, testing, staging, production)',
         example: 'development',
@@ -257,9 +257,9 @@ export class EnvironmentConfigManager {
 
       LOG_LEVEL: {
         name: 'LOG_LEVEL',
-        value: process.env.LOG_LEVEL || 'info',
+        value: process?.env?.LOG_LEVEL || 'info',
         required: false,
-        source: process.env.LOG_LEVEL ? 'environment' : 'default',
+        source: process?.env?.LOG_LEVEL ? 'environment' : 'default',
         description: 'Logging level (error, warn, info, debug, trace)',
         example: 'info',
         validationFn: val =>
@@ -271,9 +271,9 @@ export class EnvironmentConfigManager {
       // Blockchain related
       NETWORK: {
         name: 'NETWORK',
-        value: process.env.NETWORK || 'testnet',
+        value: process?.env?.NETWORK || 'testnet',
         required: false,
-        source: process.env.NETWORK ? 'environment' : 'default',
+        source: process?.env?.NETWORK ? 'environment' : 'default',
         description: 'Blockchain network (mainnet, testnet, devnet, local)',
         example: 'testnet',
         validationFn: val =>
@@ -286,18 +286,18 @@ export class EnvironmentConfigManager {
 
       FULLNODE_URL: {
         name: 'FULLNODE_URL',
-        value: process.env.FULLNODE_URL || '',
+        value: process?.env?.FULLNODE_URL || '',
         required: false,
-        source: process.env.FULLNODE_URL ? 'environment' : 'default',
+        source: process?.env?.FULLNODE_URL ? 'environment' : 'default',
         description: 'Custom full node URL for the blockchain network',
-        example: 'https://fullnode.testnet.sui.io:443',
+        example: 'https://fullnode?.testnet?.sui.io:443',
       },
 
       TODO_PACKAGE_ID: {
         name: 'TODO_PACKAGE_ID',
-        value: process.env.TODO_PACKAGE_ID || '',
+        value: process?.env?.TODO_PACKAGE_ID || '',
         required: false,
-        source: process.env.TODO_PACKAGE_ID ? 'environment' : 'default',
+        source: process?.env?.TODO_PACKAGE_ID ? 'environment' : 'default',
         description: 'Package ID for the deployed Todo smart contract',
         example:
           '0x25a04efc88188231b2f9eb35310a5025c293c4211d2482fd24fe2c8e2dbc9f74',
@@ -305,9 +305,9 @@ export class EnvironmentConfigManager {
 
       REGISTRY_ID: {
         name: 'REGISTRY_ID',
-        value: process.env.REGISTRY_ID || '',
+        value: process?.env?.REGISTRY_ID || '',
         required: false,
-        source: process.env.REGISTRY_ID ? 'environment' : 'default',
+        source: process?.env?.REGISTRY_ID ? 'environment' : 'default',
         description: 'Registry ID for the AI verification registry',
         example:
           '0xa1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
@@ -316,18 +316,18 @@ export class EnvironmentConfigManager {
       // Storage related
       STORAGE_PATH: {
         name: 'STORAGE_PATH',
-        value: process.env.STORAGE_PATH || 'Todos',
+        value: process?.env?.STORAGE_PATH || 'Todos',
         required: false,
-        source: process.env.STORAGE_PATH ? 'environment' : 'default',
+        source: process?.env?.STORAGE_PATH ? 'environment' : 'default',
         description: 'Local path for storing todo data',
         example: 'Todos',
       },
 
       TEMPORARY_STORAGE: {
         name: 'TEMPORARY_STORAGE',
-        value: process.env.TEMPORARY_STORAGE || '/tmp/waltodo',
+        value: process?.env?.TEMPORARY_STORAGE || '/tmp/waltodo',
         required: false,
-        source: process.env.TEMPORARY_STORAGE ? 'environment' : 'default',
+        source: process?.env?.TEMPORARY_STORAGE ? 'environment' : 'default',
         description: 'Temporary storage location for in-progress operations',
         example: '/tmp/waltodo',
       },
@@ -335,9 +335,9 @@ export class EnvironmentConfigManager {
       // AI related configurations
       XAI_API_KEY: {
         name: 'XAI_API_KEY',
-        value: process.env.XAI_API_KEY || '',
+        value: process?.env?.XAI_API_KEY || '',
         required: false,
-        source: process.env.XAI_API_KEY ? 'environment' : 'default',
+        source: process?.env?.XAI_API_KEY ? 'environment' : 'default',
         description: 'API key for XAI (Grok) services',
         example: 'xai_api_key_12345',
         sensitive: true,
@@ -345,9 +345,9 @@ export class EnvironmentConfigManager {
 
       OPENAI_API_KEY: {
         name: 'OPENAI_API_KEY',
-        value: process.env.OPENAI_API_KEY || '',
+        value: process?.env?.OPENAI_API_KEY || '',
         required: false,
-        source: process.env.OPENAI_API_KEY ? 'environment' : 'default',
+        source: process?.env?.OPENAI_API_KEY ? 'environment' : 'default',
         description: 'API key for OpenAI services',
         example: 'sk-openai123456789',
         sensitive: true,
@@ -355,9 +355,9 @@ export class EnvironmentConfigManager {
 
       ANTHROPIC_API_KEY: {
         name: 'ANTHROPIC_API_KEY',
-        value: process.env.ANTHROPIC_API_KEY || '',
+        value: process?.env?.ANTHROPIC_API_KEY || '',
         required: false,
-        source: process.env.ANTHROPIC_API_KEY ? 'environment' : 'default',
+        source: process?.env?.ANTHROPIC_API_KEY ? 'environment' : 'default',
         description: 'API key for Anthropic (Claude) services',
         example: 'sk-ant-api123456789',
         sensitive: true,
@@ -365,9 +365,9 @@ export class EnvironmentConfigManager {
 
       OLLAMA_API_KEY: {
         name: 'OLLAMA_API_KEY',
-        value: process.env.OLLAMA_API_KEY || '',
+        value: process?.env?.OLLAMA_API_KEY || '',
         required: false,
-        source: process.env.OLLAMA_API_KEY ? 'environment' : 'default',
+        source: process?.env?.OLLAMA_API_KEY ? 'environment' : 'default',
         description: 'API key for Ollama services',
         example: 'ollama_api_key_12345',
         sensitive: true,
@@ -375,9 +375,9 @@ export class EnvironmentConfigManager {
 
       AI_DEFAULT_PROVIDER: {
         name: 'AI_DEFAULT_PROVIDER',
-        value: process.env.AI_DEFAULT_PROVIDER || 'xai',
+        value: process?.env?.AI_DEFAULT_PROVIDER || 'xai',
         required: false,
-        source: process.env.AI_DEFAULT_PROVIDER ? 'environment' : 'default',
+        source: process?.env?.AI_DEFAULT_PROVIDER ? 'environment' : 'default',
         description:
           'Default AI provider for operations (xai, openai, anthropic)',
         example: 'xai',
@@ -389,161 +389,161 @@ export class EnvironmentConfigManager {
 
       AI_DEFAULT_MODEL: {
         name: 'AI_DEFAULT_MODEL',
-        value: process.env.AI_DEFAULT_MODEL || 'grok-beta',
+        value: process?.env?.AI_DEFAULT_MODEL || 'grok-beta',
         required: false,
-        source: process.env.AI_DEFAULT_MODEL ? 'environment' : 'default',
+        source: process?.env?.AI_DEFAULT_MODEL ? 'environment' : 'default',
         description: 'Default AI model to use for AI operations',
         example: 'grok-beta',
       },
 
       AI_TEMPERATURE: {
         name: 'AI_TEMPERATURE',
-        value: getNumberValue(process.env.AI_TEMPERATURE, 0.7),
+        value: getNumberValue(process?.env?.AI_TEMPERATURE, 0.7),
         required: false,
-        source: process.env.AI_TEMPERATURE ? 'environment' : 'default',
+        source: process?.env?.AI_TEMPERATURE ? 'environment' : 'default',
         description:
           'Temperature parameter for AI model output randomness (0.0-1.0)',
         example: '0.7',
-        validationFn: val => Number(val) >= 0 && Number(val) <= 1,
+        validationFn: val => Number(val as any) >= 0 && Number(val as any) <= 1,
         validationError: 'AI_TEMPERATURE must be between 0.0 and 1.0',
       },
 
       AI_MAX_TOKENS: {
         name: 'AI_MAX_TOKENS',
-        value: getNumberValue(process.env.AI_MAX_TOKENS, 2000),
+        value: getNumberValue(process?.env?.AI_MAX_TOKENS, 2000),
         required: false,
-        source: process.env.AI_MAX_TOKENS ? 'environment' : 'default',
+        source: process?.env?.AI_MAX_TOKENS ? 'environment' : 'default',
         description: 'Maximum tokens to generate in AI responses',
         example: '2000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'AI_MAX_TOKENS must be a positive number',
       },
 
       AI_CACHE_ENABLED: {
         name: 'AI_CACHE_ENABLED',
-        value: getBooleanValue(process.env.AI_CACHE_ENABLED, true),
+        value: getBooleanValue(process?.env?.AI_CACHE_ENABLED, true),
         required: false,
-        source: process.env.AI_CACHE_ENABLED ? 'environment' : 'default',
+        source: process?.env?.AI_CACHE_ENABLED ? 'environment' : 'default',
         description: 'Enable caching of AI responses to reduce API calls',
         example: 'true',
       },
 
       AI_CACHE_TTL_MS: {
         name: 'AI_CACHE_TTL_MS',
-        value: getNumberValue(process.env.AI_CACHE_TTL_MS, 15 * 60 * 1000),
+        value: getNumberValue(process?.env?.AI_CACHE_TTL_MS, 15 * 60 * 1000),
         required: false,
-        source: process.env.AI_CACHE_TTL_MS ? 'environment' : 'default',
+        source: process?.env?.AI_CACHE_TTL_MS ? 'environment' : 'default',
         description: 'Time-to-live for cached AI responses in milliseconds',
         example: '900000', // 15 minutes
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'AI_CACHE_TTL_MS must be a positive number',
       },
 
       // Credential security
       CREDENTIAL_KEY_ITERATIONS: {
         name: 'CREDENTIAL_KEY_ITERATIONS',
-        value: getNumberValue(process.env.CREDENTIAL_KEY_ITERATIONS, 100000),
+        value: getNumberValue(process?.env?.CREDENTIAL_KEY_ITERATIONS, 100000),
         required: false,
-        source: process.env.CREDENTIAL_KEY_ITERATIONS
+        source: process?.env?.CREDENTIAL_KEY_ITERATIONS
           ? 'environment'
           : 'default',
         description: 'Number of iterations for PBKDF2 key derivation',
         example: '100000',
-        validationFn: val => Number(val) >= 10000,
+        validationFn: val => Number(val as any) >= 10000,
         validationError: 'CREDENTIAL_KEY_ITERATIONS must be at least 10000',
       },
 
       CREDENTIAL_AUTO_ROTATION_DAYS: {
         name: 'CREDENTIAL_AUTO_ROTATION_DAYS',
-        value: getNumberValue(process.env.CREDENTIAL_AUTO_ROTATION_DAYS, 90),
+        value: getNumberValue(process?.env?.CREDENTIAL_AUTO_ROTATION_DAYS, 90),
         required: false,
-        source: process.env.CREDENTIAL_AUTO_ROTATION_DAYS
+        source: process?.env?.CREDENTIAL_AUTO_ROTATION_DAYS
           ? 'environment'
           : 'default',
         description: 'Days before credentials are auto-rotated',
         example: '90',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError:
           'CREDENTIAL_AUTO_ROTATION_DAYS must be a positive number',
       },
 
       CREDENTIAL_ROTATION_WARNING_DAYS: {
         name: 'CREDENTIAL_ROTATION_WARNING_DAYS',
-        value: getNumberValue(process.env.CREDENTIAL_ROTATION_WARNING_DAYS, 75),
+        value: getNumberValue(process?.env?.CREDENTIAL_ROTATION_WARNING_DAYS, 75),
         required: false,
-        source: process.env.CREDENTIAL_ROTATION_WARNING_DAYS
+        source: process?.env?.CREDENTIAL_ROTATION_WARNING_DAYS
           ? 'environment'
           : 'default',
         description: 'Days before showing credential rotation warnings',
         example: '75',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError:
           'CREDENTIAL_ROTATION_WARNING_DAYS must be a positive number',
       },
 
       CREDENTIAL_MAX_FAILED_AUTH: {
         name: 'CREDENTIAL_MAX_FAILED_AUTH',
-        value: getNumberValue(process.env.CREDENTIAL_MAX_FAILED_AUTH, 5),
+        value: getNumberValue(process?.env?.CREDENTIAL_MAX_FAILED_AUTH, 5),
         required: false,
-        source: process.env.CREDENTIAL_MAX_FAILED_AUTH
+        source: process?.env?.CREDENTIAL_MAX_FAILED_AUTH
           ? 'environment'
           : 'default',
         description:
           'Maximum failed authentication attempts before temporary lockout',
         example: '5',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'CREDENTIAL_MAX_FAILED_AUTH must be a positive number',
       },
 
       // Advanced configurations
       WALLET_ADDRESS: {
         name: 'WALLET_ADDRESS',
-        value: process.env.WALLET_ADDRESS || '',
+        value: process?.env?.WALLET_ADDRESS || '',
         required: false,
-        source: process.env.WALLET_ADDRESS ? 'environment' : 'default',
+        source: process?.env?.WALLET_ADDRESS ? 'environment' : 'default',
         description: 'Default wallet address for blockchain operations',
         example: '0x1234567890abcdef1234567890abcdef',
       },
 
       ENCRYPTED_STORAGE: {
         name: 'ENCRYPTED_STORAGE',
-        value: getBooleanValue(process.env.ENCRYPTED_STORAGE, false),
+        value: getBooleanValue(process?.env?.ENCRYPTED_STORAGE, false),
         required: false,
-        source: process.env.ENCRYPTED_STORAGE ? 'environment' : 'default',
+        source: process?.env?.ENCRYPTED_STORAGE ? 'environment' : 'default',
         description: 'Enable encryption for local storage',
         example: 'false',
       },
 
       RETRY_ATTEMPTS: {
         name: 'RETRY_ATTEMPTS',
-        value: getNumberValue(process.env.RETRY_ATTEMPTS, 3),
+        value: getNumberValue(process?.env?.RETRY_ATTEMPTS, 3),
         required: false,
-        source: process.env.RETRY_ATTEMPTS ? 'environment' : 'default',
+        source: process?.env?.RETRY_ATTEMPTS ? 'environment' : 'default',
         description: 'Number of retry attempts for failed operations',
         example: '3',
-        validationFn: val => Number(val) >= 0,
+        validationFn: val => Number(val as any) >= 0,
         validationError: 'RETRY_ATTEMPTS must be a non-negative number',
       },
 
       RETRY_DELAY_MS: {
         name: 'RETRY_DELAY_MS',
-        value: getNumberValue(process.env.RETRY_DELAY_MS, 1000),
+        value: getNumberValue(process?.env?.RETRY_DELAY_MS, 1000),
         required: false,
-        source: process.env.RETRY_DELAY_MS ? 'environment' : 'default',
+        source: process?.env?.RETRY_DELAY_MS ? 'environment' : 'default',
         description: 'Delay between retry attempts in milliseconds',
         example: '1000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'RETRY_DELAY_MS must be a positive number',
       },
 
       TIMEOUT_MS: {
         name: 'TIMEOUT_MS',
-        value: getNumberValue(process.env.TIMEOUT_MS, 30000),
+        value: getNumberValue(process?.env?.TIMEOUT_MS, 30000),
         required: false,
-        source: process.env.TIMEOUT_MS ? 'environment' : 'default',
+        source: process?.env?.TIMEOUT_MS ? 'environment' : 'default',
         description: 'Timeout for network operations in milliseconds',
         example: '30000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'TIMEOUT_MS must be a positive number',
       },
 
@@ -551,11 +551,11 @@ export class EnvironmentConfigManager {
       REQUIRE_SIGNATURE_VERIFICATION: {
         name: 'REQUIRE_SIGNATURE_VERIFICATION',
         value: getBooleanValue(
-          process.env.REQUIRE_SIGNATURE_VERIFICATION,
+          process?.env?.REQUIRE_SIGNATURE_VERIFICATION,
           false
         ),
         required: false,
-        source: process.env.REQUIRE_SIGNATURE_VERIFICATION
+        source: process?.env?.REQUIRE_SIGNATURE_VERIFICATION
           ? 'environment'
           : 'default',
         description:
@@ -566,11 +566,11 @@ export class EnvironmentConfigManager {
       ENABLE_BLOCKCHAIN_VERIFICATION: {
         name: 'ENABLE_BLOCKCHAIN_VERIFICATION',
         value: getBooleanValue(
-          process.env.ENABLE_BLOCKCHAIN_VERIFICATION,
+          process?.env?.ENABLE_BLOCKCHAIN_VERIFICATION,
           false
         ),
         required: false,
-        source: process.env.ENABLE_BLOCKCHAIN_VERIFICATION
+        source: process?.env?.ENABLE_BLOCKCHAIN_VERIFICATION
           ? 'environment'
           : 'default',
         description: 'Enable blockchain verification for AI operations',
@@ -580,65 +580,65 @@ export class EnvironmentConfigManager {
       // Additional retry and connection configurations
       MAX_RETRY_DELAY_MS: {
         name: 'MAX_RETRY_DELAY_MS',
-        value: getNumberValue(process.env.MAX_RETRY_DELAY_MS, 60000),
+        value: getNumberValue(process?.env?.MAX_RETRY_DELAY_MS, 60000),
         required: false,
-        source: process.env.MAX_RETRY_DELAY_MS ? 'environment' : 'default',
+        source: process?.env?.MAX_RETRY_DELAY_MS ? 'environment' : 'default',
         description: 'Maximum delay between retries in milliseconds',
         example: '60000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'MAX_RETRY_DELAY_MS must be a positive number',
       },
 
       MAX_RETRY_DURATION: {
         name: 'MAX_RETRY_DURATION',
-        value: getNumberValue(process.env.MAX_RETRY_DURATION, 300000),
+        value: getNumberValue(process?.env?.MAX_RETRY_DURATION, 300000),
         required: false,
-        source: process.env.MAX_RETRY_DURATION ? 'environment' : 'default',
+        source: process?.env?.MAX_RETRY_DURATION ? 'environment' : 'default',
         description: 'Maximum duration for retry attempts in milliseconds',
         example: '300000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'MAX_RETRY_DURATION must be a positive number',
       },
 
       CONNECTION_TIMEOUT_MS: {
         name: 'CONNECTION_TIMEOUT_MS',
-        value: getNumberValue(process.env.CONNECTION_TIMEOUT_MS, 30000),
+        value: getNumberValue(process?.env?.CONNECTION_TIMEOUT_MS, 30000),
         required: false,
-        source: process.env.CONNECTION_TIMEOUT_MS ? 'environment' : 'default',
+        source: process?.env?.CONNECTION_TIMEOUT_MS ? 'environment' : 'default',
         description: 'Timeout for connection operations in milliseconds',
         example: '30000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'CONNECTION_TIMEOUT_MS must be a positive number',
       },
 
       CONNECTION_KEEP_ALIVE: {
         name: 'CONNECTION_KEEP_ALIVE',
-        value: getBooleanValue(process.env.CONNECTION_KEEP_ALIVE, false),
+        value: getBooleanValue(process?.env?.CONNECTION_KEEP_ALIVE, false),
         required: false,
-        source: process.env.CONNECTION_KEEP_ALIVE ? 'environment' : 'default',
+        source: process?.env?.CONNECTION_KEEP_ALIVE ? 'environment' : 'default',
         description: 'Enable keep-alive for connections',
         example: 'false',
       },
 
       CONNECTION_MAX_IDLE_TIME_MS: {
         name: 'CONNECTION_MAX_IDLE_TIME_MS',
-        value: getNumberValue(process.env.CONNECTION_MAX_IDLE_TIME_MS, 60000),
+        value: getNumberValue(process?.env?.CONNECTION_MAX_IDLE_TIME_MS, 60000),
         required: false,
-        source: process.env.CONNECTION_MAX_IDLE_TIME_MS
+        source: process?.env?.CONNECTION_MAX_IDLE_TIME_MS
           ? 'environment'
           : 'default',
         description: 'Maximum idle time for connections in milliseconds',
         example: '60000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError:
           'CONNECTION_MAX_IDLE_TIME_MS must be a positive number',
       },
 
       CONNECTION_AUTO_RECONNECT: {
         name: 'CONNECTION_AUTO_RECONNECT',
-        value: getBooleanValue(process.env.CONNECTION_AUTO_RECONNECT, true),
+        value: getBooleanValue(process?.env?.CONNECTION_AUTO_RECONNECT, true),
         required: false,
-        source: process.env.CONNECTION_AUTO_RECONNECT
+        source: process?.env?.CONNECTION_AUTO_RECONNECT
           ? 'environment'
           : 'default',
         description: 'Enable automatic reconnection',
@@ -647,44 +647,44 @@ export class EnvironmentConfigManager {
 
       CONNECTION_MAX_RETRIES: {
         name: 'CONNECTION_MAX_RETRIES',
-        value: getNumberValue(process.env.CONNECTION_MAX_RETRIES, 3),
+        value: getNumberValue(process?.env?.CONNECTION_MAX_RETRIES, 3),
         required: false,
-        source: process.env.CONNECTION_MAX_RETRIES ? 'environment' : 'default',
+        source: process?.env?.CONNECTION_MAX_RETRIES ? 'environment' : 'default',
         description: 'Maximum connection retry attempts',
         example: '3',
-        validationFn: val => Number(val) >= 0,
+        validationFn: val => Number(val as any) >= 0,
         validationError: 'CONNECTION_MAX_RETRIES must be a non-negative number',
       },
 
       CONNECTION_BASE_DELAY_MS: {
         name: 'CONNECTION_BASE_DELAY_MS',
-        value: getNumberValue(process.env.CONNECTION_BASE_DELAY_MS, 1000),
+        value: getNumberValue(process?.env?.CONNECTION_BASE_DELAY_MS, 1000),
         required: false,
-        source: process.env.CONNECTION_BASE_DELAY_MS
+        source: process?.env?.CONNECTION_BASE_DELAY_MS
           ? 'environment'
           : 'default',
         description: 'Base delay for connection retries in milliseconds',
         example: '1000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'CONNECTION_BASE_DELAY_MS must be a positive number',
       },
 
       CONNECTION_MAX_DELAY_MS: {
         name: 'CONNECTION_MAX_DELAY_MS',
-        value: getNumberValue(process.env.CONNECTION_MAX_DELAY_MS, 10000),
+        value: getNumberValue(process?.env?.CONNECTION_MAX_DELAY_MS, 10000),
         required: false,
-        source: process.env.CONNECTION_MAX_DELAY_MS ? 'environment' : 'default',
+        source: process?.env?.CONNECTION_MAX_DELAY_MS ? 'environment' : 'default',
         description: 'Maximum delay for connection retries in milliseconds',
         example: '10000',
-        validationFn: val => Number(val) > 0,
+        validationFn: val => Number(val as any) > 0,
         validationError: 'CONNECTION_MAX_DELAY_MS must be a positive number',
       },
 
       WALRUS_TODO_CONFIG_DIR: {
         name: 'WALRUS_TODO_CONFIG_DIR',
-        value: process.env.WALRUS_TODO_CONFIG_DIR || '',
+        value: process?.env?.WALRUS_TODO_CONFIG_DIR || '',
         required: false,
-        source: process.env.WALRUS_TODO_CONFIG_DIR ? 'environment' : 'default',
+        source: process?.env?.WALRUS_TODO_CONFIG_DIR ? 'environment' : 'default',
         description: 'Custom configuration directory for Walrus Todo',
         example: '/path/to/config',
       },
@@ -696,7 +696,7 @@ export class EnvironmentConfigManager {
    */
   public static getInstance(): EnvironmentConfigManager {
     if (!EnvironmentConfigManager.instance) {
-      EnvironmentConfigManager.instance = new EnvironmentConfigManager();
+      EnvironmentConfigManager?.instance = new EnvironmentConfigManager();
     }
 
     return EnvironmentConfigManager.instance;
@@ -734,8 +734,8 @@ export class EnvironmentConfigManager {
     value: EnvironmentConfig[K]['value'],
     source: 'environment' | 'config' | 'default' = 'config'
   ): void {
-    this.config[key] = {
-      ...this.config[key],
+    this?.config?.[key] = {
+      ...this?.config?.[key],
       value,
       source,
     };
@@ -747,7 +747,7 @@ export class EnvironmentConfigManager {
   public get<K extends keyof EnvironmentConfig>(
     key: K
   ): EnvironmentConfig[K]['value'] {
-    return this.config[key].value;
+    return this?.config?.[key].value;
   }
 
   /**
@@ -755,7 +755,7 @@ export class EnvironmentConfigManager {
    */
   public getExtension<T>(key: string, defaultValue?: T): T | undefined {
     if (key in this.extensionVars) {
-      return this.extensionVars[key]?.value as T;
+      return this?.extensionVars?.[key]?.value as T;
     }
     return defaultValue;
   }
@@ -765,10 +765,10 @@ export class EnvironmentConfigManager {
    */
   public has<K extends keyof EnvironmentConfig>(key: K): boolean {
     return (
-      this.config[key] !== undefined &&
-      this.config[key].value !== undefined &&
-      this.config[key].value !== null &&
-      this.config[key].value !== ''
+      this?.config?.[key] !== undefined &&
+      this?.config?.[key].value !== undefined &&
+      this?.config?.[key].value !== null &&
+      this?.config?.[key].value !== ''
     );
   }
 
@@ -777,10 +777,10 @@ export class EnvironmentConfigManager {
    */
   public hasExtension(key: string): boolean {
     return (
-      this.extensionVars[key] !== undefined &&
-      this.extensionVars[key].value !== undefined &&
-      this.extensionVars[key].value !== null &&
-      this.extensionVars[key].value !== ''
+      this?.extensionVars?.[key] !== undefined &&
+      this?.extensionVars?.[key].value !== undefined &&
+      this?.extensionVars?.[key].value !== null &&
+      this?.extensionVars?.[key].value !== ''
     );
   }
 
@@ -793,11 +793,11 @@ export class EnvironmentConfigManager {
         // Standard config key
         const configKey = key as keyof EnvironmentConfig;
         // Set required flag safely
-        this.config[configKey].required = true;
+        this?.config?.[configKey].required = true;
       } else if (key in this.extensionVars) {
         // Extension variable
         // Set required flag safely
-        this.extensionVars[key].required = true;
+        this?.extensionVars?.[key].required = true;
       }
     }
   }
@@ -821,7 +821,7 @@ export class EnvironmentConfigManager {
   ): void {
     // Check for conflicts with core variables
     if (key in this.config) {
-      this.variableWarnings.push(
+      this?.variableWarnings?.push(
         `Extension variable ${key} conflicts with a core environment variable`
       );
       return;
@@ -829,7 +829,7 @@ export class EnvironmentConfigManager {
 
     // Check if already registered
     if (key in this.extensionVars) {
-      this.variableWarnings.push(
+      this?.variableWarnings?.push(
         `Extension variable ${key} is already registered`
       );
       return;
@@ -851,7 +851,7 @@ export class EnvironmentConfigManager {
     }
 
     // Register the extension variable
-    this.extensionVars[key] = {
+    this?.extensionVars?.[key] = {
       name: key,
       value,
       required: options.required || false,
@@ -884,11 +884,11 @@ export class EnvironmentConfigManager {
       // Check if required variables are present
       if (
         config.required &&
-        (config.value === undefined ||
-          config.value === null ||
-          config.value === '')
+        (config?.value === undefined ||
+          config?.value === null ||
+          config?.value === '')
       ) {
-        missingExtVars.push(key);
+        missingExtVars.push(key as any);
       }
 
       // Check against custom validation function
@@ -907,7 +907,7 @@ export class EnvironmentConfigManager {
           }
         } catch (_error) {
           invalidExtVars.push(
-            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error)}`
+            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
           );
         }
       }
@@ -950,7 +950,7 @@ export class EnvironmentConfigManager {
           }
         } catch (_error) {
           invalidVars.push(
-            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error)}`
+            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
           );
         }
       }
@@ -984,7 +984,7 @@ export class EnvironmentConfigManager {
 
     // Add any deprecation warnings
     if (deprecatedVars.length > 0) {
-      this.variableWarnings.push(...deprecatedVars);
+      this?.variableWarnings?.push(...deprecatedVars);
     }
 
     if (invalidVars.length > 0) {
@@ -1008,9 +1008,9 @@ export class EnvironmentConfigManager {
         let typedValue: string | number | boolean = envValue;
 
         // Convert the string value to the appropriate type based on the default value
-        if (typeof config.value === 'boolean') {
+        if (typeof config?.value === 'boolean') {
           typedValue = getBooleanValue(envValue, config.value);
-        } else if (typeof config.value === 'number') {
+        } else if (typeof config?.value === 'number') {
           typedValue = getNumberValue(envValue, config.value);
         }
 
@@ -1028,14 +1028,14 @@ export class EnvironmentConfigManager {
         let typedValue: string | number | boolean = envValue;
 
         // Convert the string value to the appropriate type based on the default value
-        if (typeof config.value === 'boolean') {
+        if (typeof config?.value === 'boolean') {
           typedValue = getBooleanValue(envValue, config.value as boolean);
-        } else if (typeof config.value === 'number') {
+        } else if (typeof config?.value === 'number') {
           typedValue = getNumberValue(envValue, config.value as number);
         }
 
-        this.extensionVars[key] = {
-          ...this.extensionVars[key],
+        this?.extensionVars?.[key] = {
+          ...this?.extensionVars?.[key],
           value: typedValue,
           source: 'environment',
         };
@@ -1047,19 +1047,19 @@ export class EnvironmentConfigManager {
    * Load configuration from a JSON object (e.g., from a config file)
    */
   public loadFromObject(obj: Record<string, string | number | boolean>): void {
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(obj as any)) {
       // Check if it's a core config key
       if (key in this.config) {
         const configKey = key as keyof EnvironmentConfig;
         // Safe type conversion with proper validation
-        const configValue = this.config[configKey].value;
+        const configValue = this?.config?.[configKey].value;
         const safeValue = safeTypeConversion(value, configValue);
         this.updateConfig(configKey, safeValue, 'config');
       }
       // Check if it's an extension variable
       else if (key in this.extensionVars) {
-        this.extensionVars[key] = {
-          ...this.extensionVars[key],
+        this?.extensionVars?.[key] = {
+          ...this?.extensionVars?.[key],
           value,
           source: 'config',
         };
@@ -1183,14 +1183,14 @@ export class EnvironmentConfigManager {
     if (env === Environment.PRODUCTION) {
       // In production, verify security settings
       if (this.get('REQUIRE_SIGNATURE_VERIFICATION') === false) {
-        const source = this.config.REQUIRE_SIGNATURE_VERIFICATION.source;
+        const source = this?.config?.REQUIRE_SIGNATURE_VERIFICATION.source;
         inconsistencies.push(
           `REQUIRE_SIGNATURE_VERIFICATION should be true in production but is set to false from ${source}`
         );
       }
 
       if (this.get('ENABLE_BLOCKCHAIN_VERIFICATION') === false) {
-        const source = this.config.ENABLE_BLOCKCHAIN_VERIFICATION.source;
+        const source = this?.config?.ENABLE_BLOCKCHAIN_VERIFICATION.source;
         inconsistencies.push(
           `ENABLE_BLOCKCHAIN_VERIFICATION should be true in production but is set to false from ${source}`
         );
@@ -1199,7 +1199,7 @@ export class EnvironmentConfigManager {
 
     // Check for sensitive values that might be exposed
     for (const [key, config] of Object.entries(this.getAllVariables())) {
-      if (config.sensitive && config.value && config.source === 'config') {
+      if (config.sensitive && config.value && config?.source === 'config') {
         inconsistencies.push(
           `Sensitive value ${key} is stored in config file and should be moved to environment variables`
         );
@@ -1217,23 +1217,23 @@ export const envConfig = EnvironmentConfigManager.getInstance();
 export const getEnv = <K extends keyof EnvironmentConfig>(
   key: K
 ): EnvironmentConfig[K]['value'] => {
-  return envConfig.get(key);
+  return envConfig.get(key as any);
 };
 
 export const hasEnv = <K extends keyof EnvironmentConfig>(key: K): boolean => {
-  return envConfig.has(key);
+  return envConfig.has(key as any);
 };
 
 export const requireEnv = <K extends keyof EnvironmentConfig>(
   key: K
 ): EnvironmentConfig[K]['value'] => {
-  if (!envConfig.has(key)) {
+  if (!envConfig.has(key as any)) {
     throw new CLIError(
       `Required environment variable ${key} is missing`,
       'MISSING_ENV_VAR'
     );
   }
-  return envConfig.get(key);
+  return envConfig.get(key as any);
 };
 
 /**

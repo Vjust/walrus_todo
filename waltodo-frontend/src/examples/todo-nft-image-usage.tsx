@@ -10,7 +10,7 @@ import { TodoNFTImage } from '@/components/TodoNFTImage';
 export default function TodoNFTImageUsageExample() {
   // Example Walrus URLs and blob IDs
   const exampleWalrusUrl = 'walrus://1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-  const exampleHttpUrl = 'https://testnet.wal.app/blob/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+  const exampleHttpUrl = 'https://testnet?.wal?.app/blob/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
   const exampleBlobId = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   return (
@@ -228,7 +228,7 @@ export default function TodoNFTImageUsageExample() {
 
 // Different URL formats supported
 <TodoNFTImage url="walrus://blob123..." alt="Walrus URL" />
-<TodoNFTImage url="https://testnet.wal.app/blob/123..." alt="HTTP URL" />
+<TodoNFTImage url="https://testnet?.wal?.app/blob/123..." alt="HTTP URL" />
 <TodoNFTImage url="1234567890abcdef..." alt="Direct Blob ID" />`}</code>
           </pre>
         </div>

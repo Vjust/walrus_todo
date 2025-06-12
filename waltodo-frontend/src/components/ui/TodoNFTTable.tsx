@@ -50,7 +50,7 @@ export const TodoNFTTable = forwardRef<HTMLDivElement, TodoNFTTableProps>(
         <table className="w-full">
           <TodoNFTTableHeader table={table} />
           <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-            {loading && rows.length === 0 ? (
+            {loading && rows?.length === 0 ? (
               // Loading skeleton
               Array.from({ length: 5 }).map((_, index) => (
                 <tr key={`skeleton-${index}`} className="animate-pulse">
@@ -82,7 +82,7 @@ export const TodoNFTTable = forwardRef<HTMLDivElement, TodoNFTTableProps>(
         </table>
         
         {/* Empty state when not loading */}
-        {!loading && rows.length === 0 && (
+        {!loading && rows?.length === 0 && (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,4 +100,4 @@ export const TodoNFTTable = forwardRef<HTMLDivElement, TodoNFTTableProps>(
   }
 );
 
-TodoNFTTable.displayName = 'TodoNFTTable';
+TodoNFTTable?.displayName = 'TodoNFTTable';

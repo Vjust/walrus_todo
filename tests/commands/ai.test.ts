@@ -57,8 +57,8 @@ jest.mock('../../apps/cli/src/services/todoService', () => {
   return {
     TodoService: jest.fn().mockImplementation(() => {
       return {
-        getList: jest.fn().mockResolvedValue(mockTodoList),
-        getTodoByTitleOrId: jest.fn().mockResolvedValue(mockTodo),
+        getList: jest.fn().mockResolvedValue(mockTodoList as any),
+        getTodoByTitleOrId: jest.fn().mockResolvedValue(mockTodo as any),
         updateTodo: jest.fn().mockResolvedValue({
           ...mockTodo,
           tags: ['work', 'urgent', 'meeting'],
@@ -66,7 +66,7 @@ jest.mock('../../apps/cli/src/services/todoService', () => {
         addTodo: jest.fn().mockImplementation((listName, todoData) => {
           return Promise.resolve({
             ...mockTodo,
-            id: 'new-todo-' + Math.random().toString(36).substring(7),
+            id: 'new-todo-' + Math.random().toString(36 as any).substring(7 as any),
             title: todoData.title || 'New Task',
             tags: todoData.tags || [],
             priority: todoData.priority || 'medium',
@@ -82,12 +82,12 @@ describe('AI Command', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    process.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
+    process?.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   test('summarize operation', async () => {
@@ -95,9 +95,9 @@ describe('AI Command', () => {
 
     expect(result.stdout).toContain('Todo List Summary');
     expect(result.stdout).toContain('Mock summary of the todo list');
-    expect(AiService).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
     expect(
-      AiService.mock.results[0].value.summarizeTodoList
+      AiService.mock?.results?.[0].value.summarizeTodoList
     ).toHaveBeenCalled();
   });
 
@@ -113,10 +113,10 @@ describe('AI Command', () => {
     expect(result.stdout).toContain('work');
     expect(result.stdout).toContain('urgent');
     expect(result.stdout).toContain('meeting');
-    expect(AiService).toHaveBeenCalled();
-    expect(AiService.mock.results[0].value.suggestTags).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
+    expect(AiService.mock?.results?.[0].value.suggestTags).toHaveBeenCalled();
     expect(
-      TodoService.mock.results[0].value.getTodoByTitleOrId
+      TodoService.mock?.results?.[0].value.getTodoByTitleOrId
     ).toHaveBeenCalledWith('todo-123', 'default');
   });
 
@@ -131,9 +131,9 @@ describe('AI Command', () => {
 
     expect(result.stdout).toContain('Suggested Tags');
     expect(result.stdout).toContain('Tags applied to todo');
-    expect(AiService).toHaveBeenCalled();
-    expect(AiService.mock.results[0].value.suggestTags).toHaveBeenCalled();
-    expect(TodoService.mock.results[0].value.updateTodo).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
+    expect(AiService.mock?.results?.[0].value.suggestTags).toHaveBeenCalled();
+    expect(TodoService.mock?.results?.[0].value.updateTodo).toHaveBeenCalled();
   });
 
   test('prioritize operation', async () => {
@@ -146,10 +146,10 @@ describe('AI Command', () => {
 
     expect(result.stdout).toContain('Suggested Priority');
     expect(result.stdout).toContain('high');
-    expect(AiService).toHaveBeenCalled();
-    expect(AiService.mock.results[0].value.suggestPriority).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
+    expect(AiService.mock?.results?.[0].value.suggestPriority).toHaveBeenCalled();
     expect(
-      TodoService.mock.results[0].value.getTodoByTitleOrId
+      TodoService.mock?.results?.[0].value.getTodoByTitleOrId
     ).toHaveBeenCalledWith('todo-123', 'default');
   });
 
@@ -164,9 +164,9 @@ describe('AI Command', () => {
 
     expect(result.stdout).toContain('Suggested Priority');
     expect(result.stdout).toContain('Priority applied to todo');
-    expect(AiService).toHaveBeenCalled();
-    expect(AiService.mock.results[0].value.suggestPriority).toHaveBeenCalled();
-    expect(TodoService.mock.results[0].value.updateTodo).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
+    expect(AiService.mock?.results?.[0].value.suggestPriority).toHaveBeenCalled();
+    expect(TodoService.mock?.results?.[0].value.updateTodo).toHaveBeenCalled();
   });
 
   test('suggest operation', async () => {
@@ -176,9 +176,9 @@ describe('AI Command', () => {
     expect(result.stdout).toContain('Task 1');
     expect(result.stdout).toContain('Task 2');
     expect(result.stdout).toContain('Task 3');
-    expect(AiService).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
     expect(
-      AiService.mock.results[0].value.suggestRelatedTasks
+      AiService.mock?.results?.[0].value.suggestRelatedTasks
     ).toHaveBeenCalled();
   });
 
@@ -187,11 +187,11 @@ describe('AI Command', () => {
 
     expect(result.stdout).toContain('Suggested Tasks');
     expect(result.stdout).toContain('Added');
-    expect(AiService).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
     expect(
-      AiService.mock.results[0].value.suggestRelatedTasks
+      AiService.mock?.results?.[0].value.suggestRelatedTasks
     ).toHaveBeenCalled();
-    expect(TodoService.mock.results[0].value.addTodo).toHaveBeenCalledTimes(3);
+    expect(TodoService.mock?.results?.[0].value.addTodo).toHaveBeenCalledTimes(3 as any);
   });
 
   test('analyze operation', async () => {
@@ -199,14 +199,14 @@ describe('AI Command', () => {
 
     expect(result.stdout).toContain('Productivity Analysis');
     expect(result.stdout).toContain('Mock productivity analysis');
-    expect(AiService).toHaveBeenCalled();
+    expect(AiService as any).toHaveBeenCalled();
     expect(
-      AiService.mock.results[0].value.analyzeProductivity
+      AiService.mock?.results?.[0].value.analyzeProductivity
     ).toHaveBeenCalled();
   });
 
   test('missing API key error', async () => {
-    delete process.env.XAI_API_KEY;
+    delete process?.env?.XAI_API_KEY;
 
     // Override AiService mock to throw error for missing API key
     AiService.mockImplementationOnce(() => {

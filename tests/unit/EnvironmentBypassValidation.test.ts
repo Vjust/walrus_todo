@@ -24,12 +24,12 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
   afterEach(() => {
     // Restore original environment
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   describe('Environment Variable Detection', () => {
     it('should detect WALTODO_SKIP_ORCHESTRATOR=true and throw error', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       expect(() => getBackgroundOrchestrator()).toThrow(
         'Background orchestrator disabled'
@@ -37,7 +37,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
     });
 
     it('should detect WALTODO_NO_BACKGROUND=true and throw error', () => {
-      process.env.WALTODO_NO_BACKGROUND = 'true';
+      process.env?.WALTODO_NO_BACKGROUND = 'true';
 
       expect(() => getBackgroundOrchestrator()).toThrow(
         'Background orchestrator disabled'
@@ -45,29 +45,29 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
     });
 
     it('should allow orchestrator when environment variables are false', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'false';
-      process.env.WALTODO_NO_BACKGROUND = 'false';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'false';
+      process.env?.WALTODO_NO_BACKGROUND = 'false';
 
       expect(() => getBackgroundOrchestrator()).not.toThrow();
     });
 
     it('should allow orchestrator when environment variables are undefined', () => {
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
-      delete process.env.WALTODO_NO_BACKGROUND;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_NO_BACKGROUND;
 
       expect(() => getBackgroundOrchestrator()).not.toThrow();
     });
 
     it('should handle case-sensitive environment variable values', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'TRUE';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'TRUE';
 
       // Should not throw because it's case-sensitive and only 'true' disables
       expect(() => getBackgroundOrchestrator()).not.toThrow();
     });
 
     it('should handle empty string environment variables', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = '';
-      process.env.WALTODO_NO_BACKGROUND = '';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = '';
+      process.env?.WALTODO_NO_BACKGROUND = '';
 
       expect(() => getBackgroundOrchestrator()).not.toThrow();
     });
@@ -75,50 +75,50 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
   describe('Backward Compatibility shouldRunInBackground', () => {
     it('should return false when orchestrator is disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       const result = backgroundOrchestrator.shouldRunInBackground(
         'store',
         [],
         {}
       );
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should return true for background commands when orchestrator is enabled', () => {
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
-      delete process.env.WALTODO_NO_BACKGROUND;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_NO_BACKGROUND;
 
       const result = backgroundOrchestrator.shouldRunInBackground(
         'store',
         [],
         {}
       );
-      expect(result).toBe(true);
+      expect(result as any).toBe(true as any);
     });
 
     it('should handle explicit background flag when orchestrator is disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       const result = backgroundOrchestrator.shouldRunInBackground('add', [], {
         background: true,
       });
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should respect explicit foreground flag when orchestrator is disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       const result = backgroundOrchestrator.shouldRunInBackground('store', [], {
         foreground: true,
       });
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
   });
 
   describe('Backward Compatibility executeInBackground', () => {
     it('should throw error when trying to execute in background with orchestrator disabled', async () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       await expect(
         backgroundOrchestrator.executeInBackground('store', ['test.txt'], {})
@@ -126,8 +126,8 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
     });
 
     it('should work normally when orchestrator is enabled', async () => {
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
-      delete process.env.WALTODO_NO_BACKGROUND;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_NO_BACKGROUND;
 
       // Mock the actual execution
       const mockSpawn = jest.fn().mockReturnValue({
@@ -158,34 +158,34 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
     describe('Local Commands (orchestrator disabled)', () => {
       beforeEach(() => {
-        process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+        process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
       });
 
-      commands.local.forEach(command => {
+      commands?.local?.forEach(command => {
         it(`should handle ${command} command gracefully without orchestrator`, () => {
           const shouldBackground = backgroundOrchestrator.shouldRunInBackground(
             command,
             [],
             {}
           );
-          expect(shouldBackground).toBe(false);
+          expect(shouldBackground as any).toBe(false as any);
         });
       });
     });
 
     describe('Blockchain Commands (orchestrator disabled)', () => {
       beforeEach(() => {
-        process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+        process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
       });
 
-      commands.blockchain.forEach(command => {
+      commands?.blockchain?.forEach(command => {
         it(`should handle ${command} command without orchestrator`, () => {
           const shouldBackground = backgroundOrchestrator.shouldRunInBackground(
             command,
             [],
             {}
           );
-          expect(shouldBackground).toBe(false);
+          expect(shouldBackground as any).toBe(false as any);
         });
 
         it(`should not execute ${command} in background when disabled`, async () => {
@@ -198,17 +198,17 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
     describe('Mixed Commands (orchestrator disabled)', () => {
       beforeEach(() => {
-        process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+        process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
       });
 
-      commands.mixed.forEach(command => {
+      commands?.mixed?.forEach(command => {
         it(`should handle ${command} command without orchestrator`, () => {
           const shouldBackground = backgroundOrchestrator.shouldRunInBackground(
             command,
             [],
             {}
           );
-          expect(shouldBackground).toBe(false);
+          expect(shouldBackground as any).toBe(false as any);
         });
       });
     });
@@ -216,15 +216,15 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle invalid environment variable values gracefully', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'invalid_value';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'invalid_value';
 
       // Should not throw for non-'true' values
       expect(() => getBackgroundOrchestrator()).not.toThrow();
     });
 
     it('should handle numeric environment variable values', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = '1';
-      process.env.WALTODO_NO_BACKGROUND = '0';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = '1';
+      process.env?.WALTODO_NO_BACKGROUND = '0';
 
       // Should not throw for non-'true' values
       expect(() => getBackgroundOrchestrator()).not.toThrow();
@@ -232,7 +232,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
     it('should handle boolean environment variable values', () => {
       // Test with actual boolean (though env vars are always strings)
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       expect(() => getBackgroundOrchestrator()).toThrow(
         'Background orchestrator disabled'
@@ -240,15 +240,15 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
     });
 
     it('should handle whitespace in environment variables', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = ' true ';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = ' true ';
 
       // Should not throw because it's not exactly 'true'
       expect(() => getBackgroundOrchestrator()).not.toThrow();
     });
 
     it('should handle multiple disable flags set simultaneously', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
-      process.env.WALTODO_NO_BACKGROUND = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_NO_BACKGROUND = 'true';
 
       expect(() => getBackgroundOrchestrator()).toThrow(
         'Background orchestrator disabled'
@@ -258,7 +258,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
   describe('Lazy Initialization Pattern', () => {
     it('should not create orchestrator instance when disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       // Should throw before creating instance
       expect(() => getBackgroundOrchestrator()).toThrow(
@@ -267,72 +267,72 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
     });
 
     it('should create orchestrator instance when enabled', () => {
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
-      delete process.env.WALTODO_NO_BACKGROUND;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_NO_BACKGROUND;
 
       const orchestrator = getBackgroundOrchestrator();
-      expect(orchestrator).toBeDefined();
+      expect(orchestrator as any).toBeDefined();
       expect(typeof orchestrator.shouldRunInBackground).toBe('function');
       expect(typeof orchestrator.executeInBackground).toBe('function');
     });
 
     it('should reuse orchestrator instance on subsequent calls', () => {
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
-      delete process.env.WALTODO_NO_BACKGROUND;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_NO_BACKGROUND;
 
       const orchestrator1 = getBackgroundOrchestrator();
       const orchestrator2 = getBackgroundOrchestrator();
 
-      expect(orchestrator1).toBe(orchestrator2);
+      expect(orchestrator1 as any).toBe(orchestrator2 as any);
     });
 
     it('should handle environment changes during runtime', () => {
       // Start with orchestrator enabled
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
       const orchestrator = getBackgroundOrchestrator();
-      expect(orchestrator).toBeDefined();
+      expect(orchestrator as any).toBeDefined();
 
       // Environment changes don't affect already-created instance
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
       const orchestrator2 = getBackgroundOrchestrator();
-      expect(orchestrator2).toBe(orchestrator); // Still same instance
+      expect(orchestrator2 as any).toBe(orchestrator as any); // Still same instance
     });
   });
 
   describe('Shutdown Handling with Bypass', () => {
     it('should handle shutdown when orchestrator is disabled', async () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       // Should not throw when calling shutdown on disabled orchestrator
-      await expect(backgroundOrchestrator.shutdown()).resolves.not.toThrow();
+      await expect(backgroundOrchestrator.shutdown()).resolves?.not?.toThrow();
     });
 
     it('should handle shutdown when orchestrator is enabled', async () => {
-      delete process.env.WALTODO_SKIP_ORCHESTRATOR;
-      delete process.env.WALTODO_NO_BACKGROUND;
+      delete process?.env?.WALTODO_SKIP_ORCHESTRATOR;
+      delete process?.env?.WALTODO_NO_BACKGROUND;
 
       const orchestrator = getBackgroundOrchestrator();
-      await expect(orchestrator.shutdown()).resolves.not.toThrow();
+      await expect(orchestrator.shutdown()).resolves?.not?.toThrow();
     });
   });
 
   describe('Command Flag Interaction with Bypass', () => {
     beforeEach(() => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
     });
 
     it('should ignore --background flag when orchestrator is disabled', () => {
       const result = backgroundOrchestrator.shouldRunInBackground('add', [], {
         background: true,
       });
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should ignore --bg flag when orchestrator is disabled', () => {
       const result = backgroundOrchestrator.shouldRunInBackground('add', [], {
         bg: true,
       });
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should ignore auto-background detection when orchestrator is disabled', () => {
@@ -341,27 +341,27 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
         [],
         {}
       );
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should respect --foreground flag when orchestrator is disabled', () => {
       const result = backgroundOrchestrator.shouldRunInBackground('store', [], {
         foreground: true,
       });
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should respect --fg flag when orchestrator is disabled', () => {
       const result = backgroundOrchestrator.shouldRunInBackground('store', [], {
         fg: true,
       });
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
   });
 
   describe('Resource Management with Bypass', () => {
     it('should not consume resources when orchestrator is disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       // Getting disabled orchestrator should not create resource monitors
       expect(() => getBackgroundOrchestrator()).toThrow(
@@ -374,11 +374,11 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
         [],
         {}
       );
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should gracefully handle resource queries when disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       // These should not throw but return safe defaults
       expect(() =>
@@ -389,7 +389,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
   describe('Integration with CLI Commands', () => {
     it('should allow CLI commands to detect orchestrator availability', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       // CLI commands should be able to check if orchestrator is available
       let orchestratorAvailable = true;
@@ -399,11 +399,11 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
         orchestratorAvailable = false;
       }
 
-      expect(orchestratorAvailable).toBe(false);
+      expect(orchestratorAvailable as any).toBe(false as any);
     });
 
     it('should provide graceful fallback for disabled orchestrator', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       // The shouldRunInBackground should always return false when disabled
       const testCases = [
@@ -419,14 +419,14 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
           args,
           flags
         );
-        expect(result).toBe(false);
+        expect(result as any).toBe(false as any);
       });
     });
   });
 
   describe('Error Message Quality', () => {
     it('should provide clear error message when orchestrator is disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       expect(() => getBackgroundOrchestrator()).toThrow(
         'Background orchestrator disabled'
@@ -434,7 +434,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
     });
 
     it('should provide clear error message when trying to execute background command', async () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       await expect(
         backgroundOrchestrator.executeInBackground('store', [], {})
@@ -444,7 +444,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
 
   describe('Performance with Bypass', () => {
     it('should have minimal performance impact when disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       const start = performance.now();
 
@@ -457,11 +457,11 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
       const duration = end - start;
 
       // Should complete very quickly (under 10ms for 100 calls)
-      expect(duration).toBeLessThan(10);
+      expect(duration as any).toBeLessThan(10 as any);
     });
 
     it('should not create memory leaks when disabled', () => {
-      process.env.WALTODO_SKIP_ORCHESTRATOR = 'true';
+      process.env?.WALTODO_SKIP_ORCHESTRATOR = 'true';
 
       const startMemory = process.memoryUsage().heapUsed;
 
@@ -479,7 +479,7 @@ describe('Environment Bypass Validator - WALTODO_SKIP_ORCHESTRATOR', () => {
       const memoryIncrease = endMemory - startMemory;
 
       // Memory increase should be minimal (less than 1MB)
-      expect(memoryIncrease).toBeLessThan(1024 * 1024);
+      expect(memoryIncrease as any).toBeLessThan(1024 * 1024);
     });
   });
 });

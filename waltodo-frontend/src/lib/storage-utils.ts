@@ -67,10 +67,10 @@ export function detectContext(): StorageContext {
     // Only test localStorage if we're sure we're in browser context
     if (typeof window.localStorage !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
       const testKey = '__storage_test__';
-      window.localStorage.setItem(testKey, testKey);
-      window.localStorage.removeItem(testKey);
-      window.sessionStorage.setItem(testKey, testKey);
-      window.sessionStorage.removeItem(testKey);
+      window?.localStorage?.setItem(testKey, testKey);
+      window?.localStorage?.removeItem(testKey as any);
+      window?.sessionStorage?.setItem(testKey, testKey);
+      window?.sessionStorage?.removeItem(testKey as any);
       return 'browser';
     }
     return 'unknown';
@@ -88,18 +88,18 @@ export function isStorageAvailable(): boolean {
     // First check if we're in a context that blocks storage APIs
     // Common in SSR, cross-origin iframes, or when "Block all cookies" is enabled
     if (
-      typeof window.localStorage === 'undefined' ||
-      typeof window.sessionStorage === 'undefined' ||
-      window.localStorage === null ||
-      window.sessionStorage === null
+      typeof window?.localStorage === 'undefined' ||
+      typeof window?.sessionStorage === 'undefined' ||
+      window?.localStorage === null ||
+      window?.sessionStorage === null
     ) {
       return false;
     }
 
     const testKey = '__storage_test__';
-    window.localStorage.setItem(testKey, testKey);
-    const result = window.localStorage.getItem(testKey);
-    window.localStorage.removeItem(testKey);
+    window?.localStorage?.setItem(testKey, testKey);
+    const result = window?.localStorage?.getItem(testKey as any);
+    window?.localStorage?.removeItem(testKey as any);
     return result === testKey;
   } catch (e) {
     return false;
@@ -156,7 +156,7 @@ export function safeGetItem(key: string): string | null {
       return memoryStorage[key] || null;
     }
 
-    return (storage as Storage).getItem(key);
+    return (storage as Storage).getItem(key as any);
   } catch (e) {
     console.warn(`Safe storage getItem failed for key "${key}":`, e);
     return memoryStorage[key] || null;
@@ -211,7 +211,7 @@ export function safeRemoveItem(key: string): boolean {
       return true;
     }
 
-    (storage as Storage).removeItem(key);
+    (storage as Storage).removeItem(key as any);
     return true;
   } catch (e) {
     console.warn(`Safe storage removeItem failed for key "${key}":`, e);
@@ -228,7 +228,7 @@ export function safeRemoveItem(key: string): boolean {
 export function safeClear(): boolean {
   // Always use memory storage in server context
   if (!isBrowser()) {
-    Object.keys(memoryStorage).forEach(key => {
+    Object.keys(memoryStorage as any).forEach(key => {
       delete memoryStorage[key];
     });
     return true;
@@ -238,7 +238,7 @@ export function safeClear(): boolean {
     const storage = getStorage();
 
     if (storage === memoryStorage) {
-      Object.keys(memoryStorage).forEach(key => {
+      Object.keys(memoryStorage as any).forEach(key => {
         delete memoryStorage[key];
       });
       return true;
@@ -249,7 +249,7 @@ export function safeClear(): boolean {
   } catch (e) {
     console.warn('Safe storage clear failed:', e);
     // Still clear memory storage
-    Object.keys(memoryStorage).forEach(key => {
+    Object.keys(memoryStorage as any).forEach(key => {
       delete memoryStorage[key];
     });
     return true;
@@ -270,20 +270,20 @@ export function isUsingFallbackStorage(): boolean {
 export function getStorageKeys(): string[] {
   // Always use memory storage in server context
   if (!isBrowser()) {
-    return Object.keys(memoryStorage);
+    return Object.keys(memoryStorage as any);
   }
 
   try {
     const storage = getStorage();
 
     if (storage === memoryStorage) {
-      return Object.keys(memoryStorage);
+      return Object.keys(memoryStorage as any);
     }
 
-    return Object.keys(storage);
+    return Object.keys(storage as any);
   } catch (e) {
     console.warn('Failed to get storage keys:', e);
-    return Object.keys(memoryStorage);
+    return Object.keys(memoryStorage as any);
   }
 }
 

@@ -54,29 +54,29 @@ describe('ConfigService', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // Setup basic fs mocks
-    mockFs.existsSync.mockReturnValue(false);
-    mockFs.readFileSync.mockReturnValue('{}');
-    mockFs.readdirSync.mockReturnValue([]);
-    mockFs.writeFileSync.mockImplementation(() => {});
-    mockFs.mkdirSync.mockImplementation(() => {});
-    mockFs.unlinkSync.mockImplementation(() => {});
+    mockFs?.existsSync?.mockReturnValue(false as any);
+    mockFs?.readFileSync?.mockReturnValue('{}');
+    mockFs?.readdirSync?.mockReturnValue([]);
+    mockFs?.writeFileSync?.mockImplementation(() => {});
+    mockFs?.mkdirSync?.mockImplementation(() => {});
+    mockFs?.unlinkSync?.mockImplementation(() => {});
 
     // Setup fs/promises mocks
-    mockFsPromises.access.mockResolvedValue(undefined);
-    mockFsPromises.readFile.mockResolvedValue('{}');
-    mockFsPromises.writeFile.mockResolvedValue(undefined);
-    mockFsPromises.readdir.mockResolvedValue([]);
-    mockFsPromises.mkdir.mockResolvedValue(undefined);
-    mockFsPromises.unlink.mockResolvedValue(undefined);
+    mockFsPromises?.access?.mockResolvedValue(undefined as any);
+    mockFsPromises?.readFile?.mockResolvedValue('{}');
+    mockFsPromises?.writeFile?.mockResolvedValue(undefined as any);
+    mockFsPromises?.readdir?.mockResolvedValue([]);
+    mockFsPromises?.mkdir?.mockResolvedValue(undefined as any);
+    mockFsPromises?.unlink?.mockResolvedValue(undefined as any);
 
     // Setup default mocks
     mockGetEnv.mockReturnValue('');
-    mockEnvConfig.updateConfig.mockReturnValue(undefined);
+    mockEnvConfig?.updateConfig?.mockReturnValue(undefined as any);
     mockLoadConfigFile.mockReturnValue({});
-    mockSaveConfigToFile.mockReturnValue(undefined);
+    mockSaveConfigToFile.mockReturnValue(undefined as any);
 
     // Mock HOME environment
-    process.env.HOME = '/home/user';
+    process.env?.HOME = '/home/user';
   });
 
   afterEach(() => {
@@ -86,26 +86,26 @@ describe('ConfigService', () => {
   describe('constructor', () => {
     test('should use current directory config if it exists', () => {
       const currentDirConfig = path.join(process.cwd(), '.waltodo.json');
-      mockFs.existsSync.mockImplementation(path => {
+      mockFs?.existsSync?.mockImplementation(path => {
         return path === currentDirConfig;
       });
-      mockLoadConfigFile.mockReturnValue(mockConfig);
+      mockLoadConfigFile.mockReturnValue(mockConfig as any);
 
       configService = new ConfigService();
 
-      expect(mockFs.existsSync).toHaveBeenCalledWith(currentDirConfig);
-      expect(mockLoadConfigFile).toHaveBeenCalledWith(currentDirConfig);
+      expect(mockFs.existsSync).toHaveBeenCalledWith(currentDirConfig as any);
+      expect(mockLoadConfigFile as any).toHaveBeenCalledWith(currentDirConfig as any);
     });
 
     test('should use home directory config if current directory config does not exist', () => {
-      mockFs.existsSync.mockImplementation(path => {
+      mockFs?.existsSync?.mockImplementation(path => {
         return path === mockConfigPath;
       });
-      mockLoadConfigFile.mockReturnValue(mockConfig);
+      mockLoadConfigFile.mockReturnValue(mockConfig as any);
 
       configService = new ConfigService();
 
-      expect(mockLoadConfigFile).toHaveBeenCalledWith(mockConfigPath);
+      expect(mockLoadConfigFile as any).toHaveBeenCalledWith(mockConfigPath as any);
     });
 
     test('should use environment storage path if set', () => {
@@ -116,12 +116,12 @@ describe('ConfigService', () => {
 
       configService = new ConfigService();
 
-      expect(mockGetEnv).toHaveBeenCalledWith('STORAGE_PATH');
+      expect(mockGetEnv as any).toHaveBeenCalledWith('STORAGE_PATH');
     });
 
     test('should create todos directory if it does not exist', async () => {
-      mockFsPromises.access.mockRejectedValue(new Error('ENOENT'));
-      mockFsPromises.mkdir.mockResolvedValue(undefined);
+      mockFsPromises?.access?.mockRejectedValue(new Error('ENOENT'));
+      mockFsPromises?.mkdir?.mockResolvedValue(undefined as any);
 
       configService = new ConfigService();
 
@@ -135,8 +135,8 @@ describe('ConfigService', () => {
     });
 
     test('should handle error if todos directory creation fails without throwing in constructor', async () => {
-      mockFsPromises.access.mockRejectedValue(new Error('ENOENT'));
-      mockFsPromises.mkdir.mockRejectedValue(new Error('Permission denied'));
+      mockFsPromises?.access?.mockRejectedValue(new Error('ENOENT'));
+      mockFsPromises?.mkdir?.mockRejectedValue(new Error('Permission denied'));
 
       configService = new ConfigService();
 
@@ -151,7 +151,7 @@ describe('ConfigService', () => {
 
   describe('loadConfig', () => {
     test('should load config from file if it exists', () => {
-      mockFs.existsSync.mockReturnValue(true);
+      mockFs?.existsSync?.mockReturnValue(true as any);
       mockLoadConfigFile.mockReturnValue({
         network: 'mainnet',
         walletAddress: '0x456',
@@ -163,11 +163,11 @@ describe('ConfigService', () => {
 
       expect(config.network).toBe('mainnet');
       expect(config.walletAddress).toBe('0x456');
-      expect(config.encryptedStorage).toBe(true);
+      expect(config.encryptedStorage).toBe(true as any);
     });
 
     test('should fall back to environment variables', () => {
-      mockFs.existsSync.mockReturnValue(false);
+      mockFs?.existsSync?.mockReturnValue(false as any);
       mockGetEnv.mockImplementation(key => {
         if (key === 'NETWORK') return 'devnet';
         if (key === 'WALLET_ADDRESS') return '0x789';
@@ -183,7 +183,7 @@ describe('ConfigService', () => {
     });
 
     test('should use defaults if no config or env vars', () => {
-      mockFs.existsSync.mockReturnValue(false);
+      mockFs?.existsSync?.mockReturnValue(false as any);
       mockGetEnv.mockReturnValue('');
 
       configService = new ConfigService();
@@ -191,23 +191,23 @@ describe('ConfigService', () => {
 
       expect(config.network).toBe('testnet');
       expect(config.walletAddress).toBe('');
-      expect(config.encryptedStorage).toBe(false);
+      expect(config.encryptedStorage).toBe(false as any);
     });
 
     test('should throw error if config file is corrupted', () => {
-      mockFs.existsSync.mockReturnValue(true);
+      mockFs?.existsSync?.mockReturnValue(true as any);
       mockLoadConfigFile.mockImplementation(() => {
         throw new Error('Invalid JSON');
       });
 
-      expect(() => new ConfigService()).toThrow(CLIError);
+      expect(() => new ConfigService()).toThrow(CLIError as any);
     });
   });
 
   describe('updateEnvironmentConfig', () => {
     test('should update environment with config values', () => {
-      mockFs.existsSync.mockReturnValue(true);
-      mockLoadConfigFile.mockReturnValue(mockConfig);
+      mockFs?.existsSync?.mockReturnValue(true as any);
+      mockLoadConfigFile.mockReturnValue(mockConfig as any);
 
       configService = new ConfigService();
 
@@ -229,7 +229,7 @@ describe('ConfigService', () => {
     });
 
     test('should update package ID from config', () => {
-      mockFs.existsSync.mockReturnValue(true);
+      mockFs?.existsSync?.mockReturnValue(true as any);
       mockLoadConfigFile.mockReturnValue({
         ...mockConfig,
         packageId: '0xnewpackage',
@@ -245,7 +245,7 @@ describe('ConfigService', () => {
     });
 
     test('should update package ID from lastDeployment', () => {
-      mockFs.existsSync.mockReturnValue(true);
+      mockFs?.existsSync?.mockReturnValue(true as any);
       mockLoadConfigFile.mockReturnValue({
         ...mockConfig,
         packageId: undefined,
@@ -262,7 +262,7 @@ describe('ConfigService', () => {
     });
 
     test('should update registry ID if present', () => {
-      mockFs.existsSync.mockReturnValue(true);
+      mockFs?.existsSync?.mockReturnValue(true as any);
       mockLoadConfigFile.mockReturnValue({
         ...mockConfig,
         registryId: '0xnewregistry',
@@ -280,15 +280,15 @@ describe('ConfigService', () => {
 
   describe('saveConfig', () => {
     beforeEach(() => {
-      mockFs.existsSync.mockReturnValue(true);
-      mockLoadConfigFile.mockReturnValue(mockConfig);
+      mockFs?.existsSync?.mockReturnValue(true as any);
+      mockLoadConfigFile.mockReturnValue(mockConfig as any);
       configService = new ConfigService();
     });
 
     test('should merge and save partial config', async () => {
       await configService.saveConfig({ network: 'mainnet' });
 
-      expect(mockSaveConfigToFile).toHaveBeenCalledWith(
+      expect(mockSaveConfigToFile as any).toHaveBeenCalledWith(
         expect.objectContaining({
           network: 'mainnet',
           walletAddress: '0x123',
@@ -316,7 +316,7 @@ describe('ConfigService', () => {
 
       await expect(
         configService.saveConfig({ network: 'mainnet' })
-      ).rejects.toThrow(CLIError);
+      ).rejects.toThrow(CLIError as any);
     });
   });
 
@@ -341,14 +341,14 @@ describe('ConfigService', () => {
     };
 
     beforeEach(() => {
-      mockFs.existsSync.mockReturnValue(true);
-      mockLoadConfigFile.mockReturnValue(mockConfig);
+      mockFs?.existsSync?.mockReturnValue(true as any);
+      mockLoadConfigFile.mockReturnValue(mockConfig as any);
       configService = new ConfigService();
     });
 
     describe('saveListData', () => {
       test('should save list data to file', async () => {
-        mockFsPromises.writeFile.mockResolvedValue(undefined);
+        mockFsPromises?.writeFile?.mockResolvedValue(undefined as any);
 
         await configService.saveListData(mockListName, mockTodoList);
 
@@ -359,22 +359,22 @@ describe('ConfigService', () => {
       });
 
       test('should throw error if save fails', async () => {
-        mockFsPromises.writeFile.mockRejectedValue(new Error('Write failed'));
+        mockFsPromises?.writeFile?.mockRejectedValue(new Error('Write failed'));
 
         await expect(
           configService.saveListData(mockListName, mockTodoList)
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
     });
 
     describe('loadListData', () => {
       test('should load list data from file', async () => {
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(mockTodoList as any));
 
-        const result = await configService.getLocalTodos(mockListName);
+        const result = await configService.getLocalTodos(mockListName as any);
 
-        expect(result).toEqual(mockTodoList);
+        expect(result as any).toEqual(mockTodoList as any);
         expect(mockFsPromises.readFile).toHaveBeenCalledWith(
           mockListPath,
           'utf-8'
@@ -382,18 +382,18 @@ describe('ConfigService', () => {
       });
 
       test('should return null if list does not exist', async () => {
-        mockFs.existsSync.mockReturnValue(false);
+        mockFs?.existsSync?.mockReturnValue(false as any);
 
-        const result = await configService.getLocalTodos(mockListName);
+        const result = await configService.getLocalTodos(mockListName as any);
 
-        expect(result).toBeNull();
+        expect(result as any).toBeNull();
       });
 
       test('should throw error if read fails', async () => {
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockRejectedValue(new Error('Read failed'));
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockRejectedValue(new Error('Read failed'));
 
-        await expect(configService.getLocalTodos(mockListName)).rejects.toThrow(
+        await expect(configService.getLocalTodos(mockListName as any)).rejects.toThrow(
           CLIError
         );
       });
@@ -401,7 +401,7 @@ describe('ConfigService', () => {
 
     describe('getAllLists', () => {
       test('should return all list names', async () => {
-        mockFsPromises.readdir.mockResolvedValue([
+        mockFsPromises?.readdir?.mockResolvedValue([
           'list1.json',
           'list2.json',
           'other.txt',
@@ -409,21 +409,21 @@ describe('ConfigService', () => {
 
         const result = await configService.getAllLists();
 
-        expect(result).toEqual(['list1', 'list2']);
+        expect(result as any).toEqual(['list1', 'list2']);
       });
 
       test('should throw error if readdir fails', async () => {
-        mockFsPromises.readdir.mockRejectedValue(new Error('Read failed'));
+        mockFsPromises?.readdir?.mockRejectedValue(new Error('Read failed'));
 
-        await expect(configService.getAllLists()).rejects.toThrow(CLIError);
+        await expect(configService.getAllLists()).rejects.toThrow(CLIError as any);
       });
     });
 
     describe('saveLocalTodo', () => {
       test('should add todo to existing list', async () => {
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
-        mockFsPromises.writeFile.mockResolvedValue(undefined);
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(mockTodoList as any));
+        mockFsPromises?.writeFile?.mockResolvedValue(undefined as any);
 
         await configService.saveLocalTodo(mockListName, mockTodo);
 
@@ -434,8 +434,8 @@ describe('ConfigService', () => {
       });
 
       test('should create new list if it does not exist', async () => {
-        mockFs.existsSync.mockReturnValue(false);
-        mockFsPromises.writeFile.mockResolvedValue(undefined);
+        mockFs?.existsSync?.mockReturnValue(false as any);
+        mockFsPromises?.writeFile?.mockResolvedValue(undefined as any);
 
         await configService.saveLocalTodo(mockListName, mockTodo);
 
@@ -454,9 +454,9 @@ describe('ConfigService', () => {
         };
         const updatedTodo = { ...mockTodo, completed: true };
 
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(existingList));
-        mockFsPromises.writeFile.mockResolvedValue(undefined);
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(existingList as any));
+        mockFsPromises?.writeFile?.mockResolvedValue(undefined as any);
 
         await configService.updateLocalTodo(mockListName, updatedTodo);
 
@@ -467,7 +467,7 @@ describe('ConfigService', () => {
       });
 
       test('should throw error if list not found', async () => {
-        mockFs.existsSync.mockReturnValue(false);
+        mockFs?.existsSync?.mockReturnValue(false as any);
 
         await expect(
           configService.updateLocalTodo(mockListName, mockTodo)
@@ -475,8 +475,8 @@ describe('ConfigService', () => {
       });
 
       test('should throw error if todo not found', async () => {
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(mockTodoList as any));
 
         await expect(
           configService.updateLocalTodo(mockListName, mockTodo)
@@ -493,19 +493,19 @@ describe('ConfigService', () => {
           todos: [mockTodo],
         };
 
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(existingList));
-        mockFsPromises.writeFile.mockResolvedValue(undefined);
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(existingList as any));
+        mockFsPromises?.writeFile?.mockResolvedValue(undefined as any);
 
         await configService.deleteLocalTodo(mockListName, mockTodo.id);
 
-        const writeCall = mockFsPromises.writeFile.mock.calls[0];
+        const writeCall = mockFsPromises?.writeFile?.mock?.calls?.[0];
         const savedData = JSON.parse(writeCall[1] as string);
-        expect(savedData.todos).toHaveLength(0);
+        expect(savedData.todos).toHaveLength(0 as any);
       });
 
       test('should throw error if list not found', async () => {
-        mockFs.existsSync.mockReturnValue(false);
+        mockFs?.existsSync?.mockReturnValue(false as any);
 
         await expect(
           configService.deleteLocalTodo(mockListName, mockTodo.id)
@@ -513,8 +513,8 @@ describe('ConfigService', () => {
       });
 
       test('should throw error if todo not found', async () => {
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(mockTodoList as any));
 
         await expect(
           configService.deleteLocalTodo(mockListName, 'non-existent')
@@ -524,27 +524,27 @@ describe('ConfigService', () => {
 
     describe('deleteList', () => {
       test('should delete list file', async () => {
-        mockFsPromises.access.mockResolvedValue(undefined);
-        mockFsPromises.unlink.mockResolvedValue(undefined);
+        mockFsPromises?.access?.mockResolvedValue(undefined as any);
+        mockFsPromises?.unlink?.mockResolvedValue(undefined as any);
 
-        await configService.deleteList(mockListName);
+        await configService.deleteList(mockListName as any);
 
-        expect(mockFsPromises.unlink).toHaveBeenCalledWith(mockListPath);
+        expect(mockFsPromises.unlink).toHaveBeenCalledWith(mockListPath as any);
       });
 
       test('should not throw if list does not exist', async () => {
-        mockFsPromises.access.mockRejectedValue({ code: 'ENOENT' });
+        mockFsPromises?.access?.mockRejectedValue({ code: 'ENOENT' });
 
         await expect(
-          configService.deleteList(mockListName)
-        ).resolves.not.toThrow();
+          configService.deleteList(mockListName as any)
+        ).resolves?.not?.toThrow();
       });
 
       test('should throw error if unlink fails', async () => {
-        mockFsPromises.access.mockResolvedValue(undefined);
-        mockFsPromises.unlink.mockRejectedValue(new Error('Permission denied'));
+        mockFsPromises?.access?.mockResolvedValue(undefined as any);
+        mockFsPromises?.unlink?.mockRejectedValue(new Error('Permission denied'));
 
-        await expect(configService.deleteList(mockListName)).rejects.toThrow(
+        await expect(configService.deleteList(mockListName as any)).rejects.toThrow(
           CLIError
         );
       });
@@ -552,10 +552,10 @@ describe('ConfigService', () => {
 
     describe('getLocalTodoById', () => {
       test('should find todo across all lists', async () => {
-        mockFsPromises.readdir.mockResolvedValue(['list1.json', 'list2.json']);
-        mockFs.existsSync.mockReturnValue(true);
+        mockFsPromises?.readdir?.mockResolvedValue(['list1.json', 'list2.json']);
+        mockFs?.existsSync?.mockReturnValue(true as any);
         mockFsPromises.readFile
-          .mockResolvedValueOnce(JSON.stringify(mockTodoList))
+          .mockResolvedValueOnce(JSON.stringify(mockTodoList as any))
           .mockResolvedValueOnce(
             JSON.stringify({
               ...mockTodoList,
@@ -565,24 +565,24 @@ describe('ConfigService', () => {
 
         const result = await configService.getLocalTodoById(mockTodo.id);
 
-        expect(result).toEqual(mockTodo);
+        expect(result as any).toEqual(mockTodo as any);
       });
 
       test('should return null if todo not found', async () => {
-        mockFsPromises.readdir.mockResolvedValue(['list1.json']);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
+        mockFsPromises?.readdir?.mockResolvedValue(['list1.json']);
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockFsPromises?.readFile?.mockResolvedValue(JSON.stringify(mockTodoList as any));
 
         const result = await configService.getLocalTodoById('non-existent');
 
-        expect(result).toBeNull();
+        expect(result as any).toBeNull();
       });
     });
 
     describe('updateFromEnvironment', () => {
       beforeEach(() => {
-        mockFs.existsSync.mockReturnValue(true);
-        mockLoadConfigFile.mockReturnValue(mockConfig);
+        mockFs?.existsSync?.mockReturnValue(true as any);
+        mockLoadConfigFile.mockReturnValue(mockConfig as any);
         configService = new ConfigService();
       });
 
@@ -592,11 +592,11 @@ describe('ConfigService', () => {
           if (key === 'WALLET_ADDRESS') return '0xnewaddress';
           return '';
         });
-        mockSaveConfigToFile.mockReturnValue(undefined);
+        mockSaveConfigToFile.mockReturnValue(undefined as any);
 
         configService.updateFromEnvironment();
 
-        expect(mockSaveConfigToFile).toHaveBeenCalledWith(
+        expect(mockSaveConfigToFile as any).toHaveBeenCalledWith(
           expect.objectContaining({
             network: 'mainnet',
             walletAddress: '0xnewaddress',
@@ -614,7 +614,7 @@ describe('ConfigService', () => {
 
         configService.updateFromEnvironment();
 
-        expect(mockSaveConfigToFile).not.toHaveBeenCalled();
+        expect(mockSaveConfigToFile as any).not.toHaveBeenCalled();
       });
 
       test('should update encrypted storage', () => {
@@ -625,7 +625,7 @@ describe('ConfigService', () => {
 
         configService.updateFromEnvironment();
 
-        expect(mockSaveConfigToFile).toHaveBeenCalledWith(
+        expect(mockSaveConfigToFile as any).toHaveBeenCalledWith(
           expect.objectContaining({
             encryptedStorage: true,
           }),
@@ -642,7 +642,7 @@ describe('ConfigService', () => {
 
         configService.updateFromEnvironment();
 
-        expect(mockSaveConfigToFile).toHaveBeenCalledWith(
+        expect(mockSaveConfigToFile as any).toHaveBeenCalledWith(
           expect.objectContaining({
             packageId: '0xnewpackage',
             registryId: '0xnewregistry',
@@ -658,8 +658,8 @@ describe('ConfigService', () => {
       // Import the singleton
       const { configService: singleton } = configServiceModule;
 
-      expect(singleton).toBeDefined();
-      expect(singleton).toBeInstanceOf(ConfigService);
+      expect(singleton as any).toBeDefined();
+      expect(singleton as any).toBeInstanceOf(ConfigService as any);
     });
   });
 });

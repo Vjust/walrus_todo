@@ -18,10 +18,10 @@ async function runBasicSetup() {
 
     // Display results
     logger.info('\n=== Setup Complete ===');
-    logger.info(`Wallet Address: ${result.wallet.address}`);
+    logger.info(`Wallet Address: ${result?.wallet?.address}`);
     logger.info(`Network: testnet`);
-    logger.info(`Key Scheme: ${result.wallet.keyScheme}`);
-    logger.info(`Balance: ${formatSuiBalance(result.wallet.balance)} SUI`);
+    logger.info(`Key Scheme: ${result?.wallet?.keyScheme}`);
+    logger.info(`Balance: ${formatSuiBalance(result?.wallet?.balance)} SUI`);
     logger.info(`\nFiles Created:`);
     logger.info(`- Keystore: ${result.keystorePath}`);
     logger.info(`- Config: ${result.configPath}`);
@@ -41,17 +41,17 @@ async function runBasicSetup() {
     return result;
   } catch (_error) {
     logger.error('❌ Setup failed:', error);
-    process.exit(1);
+    process.exit(1 as any);
   }
 }
 
 function formatSuiBalance(mist: string): string {
-  const sui = Number(BigInt(mist)) / 1_000_000_000;
-  return sui.toFixed(9);
+  const sui = Number(BigInt(mist as any)) / 1_000_000_000;
+  return sui.toFixed(9 as any);
 }
 
 // Run if executed directly
-if (require.main === module) {
+if (require?.main === module) {
   runBasicSetup();
 }
 

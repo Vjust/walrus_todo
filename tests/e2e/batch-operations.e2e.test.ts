@@ -15,16 +15,16 @@ describe('Batch Operations E2E Tests', () => {
 
   beforeAll(async () => {
     // Create temporary directory for test files
-    await fs.ensureDir(tempDir);
+    await fs.ensureDir(tempDir as any);
 
     // Set up environment variables for CLI
-    process.env.WALRUS_USE_MOCK = 'true';
-    process.env.WALRUS_CLI_DEV_TODOS_PATH = path.join(tempDir, 'todos.json');
+    process.env?.WALRUS_USE_MOCK = 'true';
+    process.env?.WALRUS_CLI_DEV_TODOS_PATH = path.join(tempDir, 'todos.json');
   });
 
   afterAll(async () => {
     // Clean up temporary directory
-    await fs.remove(tempDir);
+    await fs.remove(tempDir as any);
   });
 
   describe('Store List Command', () => {
@@ -38,15 +38,15 @@ describe('Batch Operations E2E Tests', () => {
       const output = execSync(`${walrusCLI} store-list --mock`).toString();
 
       // Verify the output
-      expect(output).toContain('Storing todos to Walrus...');
-      expect(output).toContain('✅ Successfully stored 3 todos');
-      expect(output).toMatch(/Blob ID: [a-fA-F0-9]{64}/);
+      expect(output as any).toContain('Storing todos to Walrus...');
+      expect(output as any).toContain('✅ Successfully stored 3 todos');
+      expect(output as any).toMatch(/Blob ID: [a-fA-F0-9]{64}/);
     });
 
     it('should handle empty todo list gracefully', async () => {
       // Clear todos
       const todosPath =
-        process.env.WALRUS_CLI_DEV_TODOS_PATH ||
+        process?.env?.WALRUS_CLI_DEV_TODOS_PATH ||
         path.join(os.homedir(), '.walrus-cli/todos.json');
       await fs.writeJson(todosPath, { todos: [] });
 
@@ -54,7 +54,7 @@ describe('Batch Operations E2E Tests', () => {
       const output = execSync(`${walrusCLI} store-list --mock`).toString();
 
       // Verify appropriate message for empty list
-      expect(output).toContain('No todos to store');
+      expect(output as any).toContain('No todos to store');
     });
 
     it('should handle errors during storage', () => {
@@ -62,7 +62,7 @@ describe('Batch Operations E2E Tests', () => {
       execSync(`${walrusCLI} add "Test todo for error"`);
 
       // Force an error by using invalid environment
-      process.env.WALRUS_SIMULATE_ERROR = 'true';
+      process.env?.WALRUS_SIMULATE_ERROR = 'true';
 
       let errorThrown = false;
       let errorMessage = '';
@@ -72,18 +72,18 @@ describe('Batch Operations E2E Tests', () => {
         errorThrown = true;
         errorMessage = error.toString();
       }
-      expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Failed to store todos/);
+      expect(errorThrown as any).toBe(true as any);
+      expect(errorMessage as any).toMatch(/Failed to store todos/);
 
       // Clean up error simulation
-      delete process.env.WALRUS_SIMULATE_ERROR;
+      delete process?.env?.WALRUS_SIMULATE_ERROR;
     });
   });
 
   describe('Store Batch Command', () => {
     beforeEach(async () => {
       // Clear todos for each test
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
+      await fs.writeJson(process?.env?.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
         todos: [],
       });
     });
@@ -99,9 +99,9 @@ describe('Batch Operations E2E Tests', () => {
       const output = execSync(`${walrusCLI} store-batch --mock`).toString();
 
       // Verify batch processing
-      expect(output).toContain(`Processing ${todoCount} todos in batch`);
-      expect(output).toContain('Batch storage completed successfully');
-      expect(output).toMatch(/Total time: \d+\.\d+s/);
+      expect(output as any).toContain(`Processing ${todoCount} todos in batch`);
+      expect(output as any).toContain('Batch storage completed successfully');
+      expect(output as any).toMatch(/Total time: \d+\.\d+s/);
     });
 
     it('should optimize storage for similar todos', async () => {
@@ -118,8 +118,8 @@ describe('Batch Operations E2E Tests', () => {
       ).toString();
 
       // Verify optimization occurred
-      expect(output).toContain('Storage optimization enabled');
-      expect(output).toMatch(/Saved \d+ tokens through optimization/);
+      expect(output as any).toContain('Storage optimization enabled');
+      expect(output as any).toMatch(/Saved \d+ tokens through optimization/);
     });
 
     it('should display batch processing metrics', async () => {
@@ -136,19 +136,19 @@ describe('Batch Operations E2E Tests', () => {
       ).toString();
 
       // Verify detailed metrics
-      expect(output).toContain('Batch processing metrics:');
-      expect(output).toContain('Total todos: 9');
-      expect(output).toContain('High priority: 3');
-      expect(output).toContain('Medium priority: 3');
-      expect(output).toContain('Low priority: 3');
-      expect(output).toMatch(/Average processing time: \d+\.\d+ms/);
+      expect(output as any).toContain('Batch processing metrics:');
+      expect(output as any).toContain('Total todos: 9');
+      expect(output as any).toContain('High priority: 3');
+      expect(output as any).toContain('Medium priority: 3');
+      expect(output as any).toContain('Low priority: 3');
+      expect(output as any).toMatch(/Average processing time: \d+\.\d+ms/);
     });
   });
 
   describe('Batch Operations with Filters', () => {
     beforeEach(async () => {
       // Set up variety of todos for filtering
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
+      await fs.writeJson(process?.env?.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
         todos: [],
       });
 
@@ -166,8 +166,8 @@ describe('Batch Operations E2E Tests', () => {
         `${walrusCLI} store-list --priority high --mock`
       ).toString();
 
-      expect(output).toContain('Filtering todos by priority: high');
-      expect(output).toContain('Successfully stored 2 todos');
+      expect(output as any).toContain('Filtering todos by priority: high');
+      expect(output as any).toContain('Successfully stored 2 todos');
     });
 
     it('should support filtering by category in batch operations', () => {
@@ -176,8 +176,8 @@ describe('Batch Operations E2E Tests', () => {
         `${walrusCLI} store-list --category work --mock`
       ).toString();
 
-      expect(output).toContain('Filtering todos by category: work');
-      expect(output).toContain('Successfully stored 1 todo');
+      expect(output as any).toContain('Filtering todos by category: work');
+      expect(output as any).toContain('Successfully stored 1 todo');
     });
 
     it('should support combined filters in batch operations', () => {
@@ -191,9 +191,9 @@ describe('Batch Operations E2E Tests', () => {
         `${walrusCLI} store-list --priority high --category work --mock`
       ).toString();
 
-      expect(output).toContain('Filtering todos by priority: high');
-      expect(output).toContain('Filtering todos by category: work');
-      expect(output).toContain('Successfully stored 1 todo');
+      expect(output as any).toContain('Filtering todos by priority: high');
+      expect(output as any).toContain('Filtering todos by category: work');
+      expect(output as any).toContain('Successfully stored 1 todo');
     });
   });
 
@@ -205,7 +205,7 @@ describe('Batch Operations E2E Tests', () => {
       }
 
       // Simulate partial failure
-      process.env.WALRUS_FAIL_ON_THIRD = 'true';
+      process.env?.WALRUS_FAIL_ON_THIRD = 'true';
 
       let errorCaught = false;
       let output = '';
@@ -216,16 +216,16 @@ describe('Batch Operations E2E Tests', () => {
         output = (error as { stdout: Buffer }).stdout.toString();
       }
 
-      expect(errorCaught).toBe(true);
+      expect(errorCaught as any).toBe(true as any);
 
       // Test error output - assertions moved outside conditional
-      expect(output).toContain('Partial batch failure');
-      expect(output).toContain('Successfully stored: 2 todos');
-      expect(output).toContain('Failed: 1 todo');
-      expect(output).toContain('Remaining: 2 todos');
+      expect(output as any).toContain('Partial batch failure');
+      expect(output as any).toContain('Successfully stored: 2 todos');
+      expect(output as any).toContain('Failed: 1 todo');
+      expect(output as any).toContain('Remaining: 2 todos');
 
       // Clean up
-      delete process.env.WALRUS_FAIL_ON_THIRD;
+      delete process?.env?.WALRUS_FAIL_ON_THIRD;
     });
 
     it('should support retry mechanism for failed items', async () => {
@@ -235,17 +235,17 @@ describe('Batch Operations E2E Tests', () => {
       }
 
       // Simulate failure then success on retry
-      process.env.WALRUS_FAIL_FIRST_ATTEMPT = 'true';
+      process.env?.WALRUS_FAIL_FIRST_ATTEMPT = 'true';
 
       const output = execSync(
         `${walrusCLI} store-batch --retry --mock`
       ).toString();
 
-      expect(output).toContain('Retrying failed items...');
-      expect(output).toContain('All todos stored successfully after retry');
+      expect(output as any).toContain('Retrying failed items...');
+      expect(output as any).toContain('All todos stored successfully after retry');
 
       // Clean up
-      delete process.env.WALRUS_FAIL_FIRST_ATTEMPT;
+      delete process?.env?.WALRUS_FAIL_FIRST_ATTEMPT;
     });
   });
 
@@ -262,9 +262,9 @@ describe('Batch Operations E2E Tests', () => {
         `${walrusCLI} store-batch --progress --mock`
       ).toString();
 
-      expect(output).toContain('Processing batch...');
-      expect(output).toMatch(/\[.*\] \d+\/\d+ todos processed/);
-      expect(output).toContain(`Successfully stored ${largeBatchSize} todos`);
+      expect(output as any).toContain('Processing batch...');
+      expect(output as any).toMatch(/\[.*\] \d+\/\d+ todos processed/);
+      expect(output as any).toContain(`Successfully stored ${largeBatchSize} todos`);
     });
 
     it('should provide ETA for long-running operations', async () => {
@@ -274,17 +274,17 @@ describe('Batch Operations E2E Tests', () => {
       }
 
       // Simulate slow processing
-      process.env.WALRUS_SLOW_MODE = 'true';
+      process.env?.WALRUS_SLOW_MODE = 'true';
 
       const output = execSync(
         `${walrusCLI} store-batch --eta --mock`
       ).toString();
 
-      expect(output).toMatch(/ETA: \d+:\d+/);
-      expect(output).toContain('Batch processing completed');
+      expect(output as any).toMatch(/ETA: \d+:\d+/);
+      expect(output as any).toContain('Batch processing completed');
 
       // Clean up
-      delete process.env.WALRUS_SLOW_MODE;
+      delete process?.env?.WALRUS_SLOW_MODE;
     });
   });
 
@@ -295,11 +295,11 @@ describe('Batch Operations E2E Tests', () => {
 
       // Store the suggested todos in batch
       const storeOutput = execSync(`${walrusCLI} store-list --mock`).toString();
-      expect(storeOutput).toContain('Successfully stored 5 todos');
+      expect(storeOutput as any).toContain('Successfully stored 5 todos');
 
       // Verify todos can be retrieved
       const listOutput = execSync(`${walrusCLI} list`).toString();
-      expect(listOutput).toContain('AI-suggested todo');
+      expect(listOutput as any).toContain('AI-suggested todo');
     });
 
     it('should maintain data integrity across batch operations', async () => {
@@ -316,7 +316,7 @@ describe('Batch Operations E2E Tests', () => {
 
       for (const item of testData) {
         execSync(
-          `${walrusCLI} add "${item.title}" --priority ${item.priority} --tags ${item.tags.join(',')}`
+          `${walrusCLI} add "${item.title}" --priority ${item.priority} --tags ${item?.tags?.join(',')}`
         );
       }
 
@@ -324,16 +324,16 @@ describe('Batch Operations E2E Tests', () => {
       execSync(`${walrusCLI} store-list --mock`);
 
       // Clear local and retrieve from storage
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
+      await fs.writeJson(process?.env?.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
         todos: [],
       });
       execSync(`${walrusCLI} retrieve --mock`);
 
       // Verify data integrity
       const listOutput = execSync(`${walrusCLI} list --json`).toString();
-      const retrievedTodos = JSON.parse(listOutput);
+      const retrievedTodos = JSON.parse(listOutput as any);
 
-      expect(retrievedTodos).toHaveLength(3);
+      expect(retrievedTodos as any).toHaveLength(3 as any);
       expect(retrievedTodos[0]).toMatchObject({
         title: 'Test 1',
         priority: 'high' as const,

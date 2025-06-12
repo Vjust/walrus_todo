@@ -1,5 +1,5 @@
 import { Flags, Args, ux } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { AIProvider } from '../../services/ai/types';
 import {
   credentialManager,
@@ -82,7 +82,7 @@ export default class Credentials extends BaseCommand {
   // Use the Logger from BaseCommand
 
   async run() {
-    const { args, flags } = await this.parse(Credentials);
+    const { args, flags } = await this.parse(Credentials as any);
 
     // Get the arguments
     const actionType = args.action as
@@ -127,13 +127,13 @@ export default class Credentials extends BaseCommand {
         );
         break;
       case 'remove':
-        await this.removeCredential(providerName);
+        await this.removeCredential(providerName as any);
         break;
       case 'list':
         await this.listCredentials();
         break;
       case 'verify':
-        await this.verifyCredential(providerName);
+        await this.verifyCredential(providerName as any);
         break;
       case 'rotate':
         await this.rotateCredential(
@@ -165,7 +165,7 @@ export default class Credentials extends BaseCommand {
     }
 
     // Ask for API key if not provided
-    const apiKey = await this.promptForAPIKey(provider);
+    const apiKey = await this.promptForAPIKey(provider as any);
 
     try {
       // Create options object from flags
@@ -178,15 +178,15 @@ export default class Credentials extends BaseCommand {
       };
 
       if (flags.expiry) {
-        options.expiryDays = flags.expiry;
+        options?.expiryDays = flags.expiry;
       }
 
       if (flags.rotation) {
-        options.rotationReminder = flags.rotation;
+        options?.rotationReminder = flags.rotation;
       }
 
       // Sanitize the API key
-      const sanitizedKey = ApiKeyValidator.sanitize(apiKey);
+      const sanitizedKey = ApiKeyValidator.sanitize(apiKey as any);
 
       // Store the credential
       const storeOptions = {
@@ -203,7 +203,7 @@ export default class Credentials extends BaseCommand {
 
       // Success message
       this.log(
-        `${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} stored successfully with ${chalk.blue(flags.permission)} permissions`
+        `${chalk.green('\u2713')} API key for ${chalk.cyan(provider as any)} stored successfully with ${chalk.blue(flags.permission)} permissions`
       );
 
       if (flags.verify) {
@@ -224,15 +224,15 @@ export default class Credentials extends BaseCommand {
         );
       }
     } catch (error) {
-      const errorCode = hasCode(error) ? error.code : undefined;
-      const errorMessage = getErrorMessage(error);
+      const errorCode = hasCode(error as any) ? error.code : undefined;
+      const errorMessage = getErrorMessage(error as any);
 
       if (errorCode === 'CREDENTIAL_VERIFICATION_FAILED') {
         this.log(`${chalk.yellow('\u26a0')} ${errorMessage}`);
       } else if (errorCode === 'INVALID_API_KEY_FORMAT') {
         this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {
-        this.error(errorMessage);
+        this.error(errorMessage as any);
       }
     }
   }
@@ -254,12 +254,12 @@ export default class Credentials extends BaseCommand {
         return;
       }
 
-      await credentialManager.removeCredential(provider);
+      await credentialManager.removeCredential(provider as any);
       this.log(
-        `${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} removed successfully`
+        `${chalk.green('\u2713')} API key for ${chalk.cyan(provider as any)} removed successfully`
       );
     } catch (error) {
-      this.error(getErrorMessage(error));
+      this.error(getErrorMessage(error as any));
     }
   }
 
@@ -267,7 +267,7 @@ export default class Credentials extends BaseCommand {
     try {
       const credentials = await credentialManager.listCredentials();
 
-      if (credentials.length === 0) {
+      if (credentials?.length === 0) {
         this.log('No API credentials found.');
         this.log(
           `To add a credential, use: ${chalk.cyan('walrus_todo ai credentials add <provider> --key YOUR_API_KEY')}`
@@ -299,7 +299,7 @@ export default class Credentials extends BaseCommand {
         const permissionColor =
           cred.permissionLevel >= AIPermissionLevel.ADVANCED
             ? chalk.red
-            : cred.permissionLevel === AIPermissionLevel.STANDARD
+            : cred?.permissionLevel === AIPermissionLevel.STANDARD
               ? chalk.green
               : chalk.yellow;
 
@@ -330,7 +330,7 @@ export default class Credentials extends BaseCommand {
             (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
           );
           const daysUntilRotation =
-            Number(cred.metadata.rotationReminder) - daysSinceCreation;
+            Number(cred?.metadata?.rotationReminder) - daysSinceCreation;
 
           if (daysUntilRotation <= 0) {
             this.log(
@@ -362,7 +362,7 @@ export default class Credentials extends BaseCommand {
         `- Set expiry: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --expiry <days>')}`
       );
     } catch (error) {
-      this.error(getErrorMessage(error));
+      this.error(getErrorMessage(error as any));
     }
   }
 
@@ -374,7 +374,7 @@ export default class Credentials extends BaseCommand {
 
     try {
       // This will throw if credential doesn't exist
-      const metadata = await credentialManager.getCredentialMetadata(provider);
+      const metadata = await credentialManager.getCredentialMetadata(provider as any);
 
       // Check if already verified
       if (metadata.verified) {
@@ -385,7 +385,7 @@ export default class Credentials extends BaseCommand {
         });
 
         this.log(
-          `${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} is valid and verified on blockchain`
+          `${chalk.green('\u2713')} API key for ${chalk.cyan(provider as any)} is valid and verified on blockchain`
         );
         this.log(`  Verification ID: ${chalk.dim(metadata.verificationId)}`);
         return;
@@ -402,22 +402,22 @@ export default class Credentials extends BaseCommand {
       }
 
       // Get the credential and verify it
-      await credentialManager.getCredential(provider);
+      await credentialManager.getCredential(provider as any);
 
       // Verify on blockchain
       this.log(
-        `${chalk.yellow('[PREVIEW]')} Verifying API key for ${chalk.cyan(provider)} on blockchain...`
+        `${chalk.yellow('[PREVIEW]')} Verifying API key for ${chalk.cyan(provider as any)} on blockchain...`
       );
       // NOTE: Blockchain verification is a planned feature - see docs/ai-blockchain-verification-roadmap.md
 
       this.log(
-        `${chalk.yellow('[PREVIEW]')} ${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} verification complete`
+        `${chalk.yellow('[PREVIEW]')} ${chalk.green('\u2713')} API key for ${chalk.cyan(provider as any)} verification complete`
       );
       this.log(
         chalk.gray('Note: Blockchain verification is currently in preview mode')
       );
     } catch (error) {
-      this.error(getErrorMessage(error));
+      this.error(getErrorMessage(error as any));
     }
   }
 
@@ -434,7 +434,7 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Check if credential exists
-      const exists = await credentialManager.hasCredential(provider);
+      const exists = await credentialManager.hasCredential(provider as any);
       if (!exists) {
         this.error(
           `No API key found for ${provider}. Use 'add' command instead.`
@@ -449,7 +449,7 @@ export default class Credentials extends BaseCommand {
       );
 
       // Sanitize the API key
-      const sanitizedKey = ApiKeyValidator.sanitize(newApiKey);
+      const sanitizedKey = ApiKeyValidator.sanitize(newApiKey as any);
 
       // Create options object from flags
       const options: { verify?: boolean; preserveMetadata: boolean } = {
@@ -465,7 +465,7 @@ export default class Credentials extends BaseCommand {
       );
 
       this.log(
-        `${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} rotated successfully`
+        `${chalk.green('\u2713')} API key for ${chalk.cyan(provider as any)} rotated successfully`
       );
 
       if (flags.verify) {
@@ -483,17 +483,17 @@ export default class Credentials extends BaseCommand {
 
       if (result.metadata?.rotationReminder) {
         this.log(
-          `${chalk.green('\u2713')} You will be reminded to rotate this key in ${chalk.yellow(result.metadata.rotationReminder)} days`
+          `${chalk.green('\u2713')} You will be reminded to rotate this key in ${chalk.yellow(result?.metadata?.rotationReminder)} days`
         );
       }
     } catch (error) {
-      const errorCode = hasCode(error) ? error.code : undefined;
-      const errorMessage = getErrorMessage(error);
+      const errorCode = hasCode(error as any) ? error.code : undefined;
+      const errorMessage = getErrorMessage(error as any);
 
       if (errorCode === 'INVALID_API_KEY_FORMAT') {
         this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {
-        this.error(errorMessage);
+        this.error(errorMessage as any);
       }
     }
   }
@@ -502,7 +502,7 @@ export default class Credentials extends BaseCommand {
     provider: AIProvider,
     message?: string
   ): Promise<string> {
-    const { flags } = await this.parse(Credentials);
+    const { flags } = await this.parse(Credentials as any);
 
     // Check if key is provided via flag
     if (flags.key) {
@@ -510,7 +510,7 @@ export default class Credentials extends BaseCommand {
     }
 
     // Show validation guidance for the provider
-    const validationHelp = ApiKeyValidator.getValidationHelp(provider);
+    const validationHelp = ApiKeyValidator.getValidationHelp(provider as any);
     this.log(`${chalk.blue('i')} ${validationHelp}`);
 
     // Otherwise prompt for it

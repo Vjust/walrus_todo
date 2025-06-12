@@ -33,8 +33,8 @@ export class TransactionHelper {
     private readonly signer?: Signer,
     config?: Partial<RetryConfig>
   ) {
-    this.logger = Logger.getInstance();
-    this.config = { ...DEFAULT_RETRY_CONFIG, ...config };
+    this?.logger = Logger.getInstance();
+    this?.config = { ...DEFAULT_RETRY_CONFIG, ...config };
   }
 
   /**
@@ -84,7 +84,7 @@ export class TransactionHelper {
         const response = await operation();
 
         // Validate response if validator provided
-        if (validateResponse && !validateResponse(response)) {
+        if (validateResponse && !validateResponse(response as any)) {
           throw new ValidationError('Invalid response from operation', {
             operation: name,
             attempt,
@@ -94,15 +94,15 @@ export class TransactionHelper {
 
         return response;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
 
         const shouldRetry =
-          this.shouldRetry(lastError) && attempt < retryConfig.attempts;
+          this.shouldRetry(lastError as any) && attempt < retryConfig.attempts;
         if (!shouldRetry) break;
 
         // Calculate delay with exponential backoff
-        const delay = this.getRetryDelay(attempt);
-        this.logger.warn(`Retry attempt ${attempt} for ${name}`, {
+        const delay = this.getRetryDelay(attempt as any);
+        this?.logger?.warn(`Retry attempt ${attempt} for ${name}`, {
           attempt,
           delay,
           error: lastError.message,
@@ -143,9 +143,9 @@ export class TransactionHelper {
   public shouldRetry(error: Error): boolean {
     // Retry on network errors
     if (
-      error.message.includes('network') ||
-      error.message.includes('timeout') ||
-      error.message.includes('connection')
+      error?.message?.includes('network') ||
+      error?.message?.includes('timeout') ||
+      error?.message?.includes('connection')
     ) {
       return true;
     }
@@ -168,13 +168,13 @@ export class TransactionHelper {
    * Get delay for next retry attempt
    */
   public getRetryDelay(attempt: number): number {
-    if (!this.config.exponential) {
-      return this.config.baseDelay;
+    if (!this?.config?.exponential) {
+      return this?.config?.baseDelay;
     }
 
     return Math.min(
-      this.config.baseDelay * Math.pow(2, attempt - 1),
-      this.config.maxDelay
+      this?.config?.baseDelay * Math.pow(2, attempt - 1),
+      this?.config?.maxDelay
     );
   }
 

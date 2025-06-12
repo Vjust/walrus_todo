@@ -27,14 +27,14 @@ describe('Package Index', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset environment variables
-    delete process.env.NETWORK;
-    delete process.env.NEXT_PUBLIC_NETWORK;
-    delete process.env.SUI_NETWORK;
+    delete process?.env?.NETWORK;
+    delete process?.env?.NEXT_PUBLIC_NETWORK;
+    delete process?.env?.SUI_NETWORK;
   });
 
   describe('loadCurrentNetworkConfig', () => {
     it('should use NETWORK env var', async () => {
-      process.env.NETWORK = 'testnet';
+      process.env?.NETWORK = 'testnet';
       
       mockLoadNetworkConfig.mockResolvedValue({
         config: TESTNET_CONFIG,
@@ -45,11 +45,11 @@ describe('Package Index', () => {
 
       await loadCurrentNetworkConfig();
 
-      expect(mockLoadNetworkConfig).toHaveBeenCalledWith('testnet', undefined);
+      expect(mockLoadNetworkConfig as any).toHaveBeenCalledWith('testnet', undefined);
     });
 
     it('should fallback to NEXT_PUBLIC_NETWORK', async () => {
-      process.env.NEXT_PUBLIC_NETWORK = 'devnet';
+      process.env?.NEXT_PUBLIC_NETWORK = 'devnet';
       
       mockLoadNetworkConfig.mockResolvedValue({
         config: TESTNET_CONFIG,
@@ -60,11 +60,11 @@ describe('Package Index', () => {
 
       await loadCurrentNetworkConfig();
 
-      expect(mockLoadNetworkConfig).toHaveBeenCalledWith('devnet', undefined);
+      expect(mockLoadNetworkConfig as any).toHaveBeenCalledWith('devnet', undefined);
     });
 
     it('should fallback to SUI_NETWORK', async () => {
-      process.env.SUI_NETWORK = 'mainnet';
+      process.env?.SUI_NETWORK = 'mainnet';
       
       mockLoadNetworkConfig.mockResolvedValue({
         config: TESTNET_CONFIG,
@@ -75,7 +75,7 @@ describe('Package Index', () => {
 
       await loadCurrentNetworkConfig();
 
-      expect(mockLoadNetworkConfig).toHaveBeenCalledWith('mainnet', undefined);
+      expect(mockLoadNetworkConfig as any).toHaveBeenCalledWith('mainnet', undefined);
     });
 
     it('should default to localnet', async () => {
@@ -88,7 +88,7 @@ describe('Package Index', () => {
 
       await loadCurrentNetworkConfig();
 
-      expect(mockLoadNetworkConfig).toHaveBeenCalledWith('localnet', undefined);
+      expect(mockLoadNetworkConfig as any).toHaveBeenCalledWith('localnet', undefined);
     });
   });
 
@@ -103,7 +103,7 @@ describe('Package Index', () => {
         }
       };
 
-      expect(isConfigurationComplete(config)).toBe(true);
+      expect(isConfigurationComplete(config as any)).toBe(true as any);
     });
 
     it('should return false for incomplete configuration', () => {
@@ -116,7 +116,7 @@ describe('Package Index', () => {
         }
       };
 
-      expect(isConfigurationComplete(config)).toBe(false);
+      expect(isConfigurationComplete(config as any)).toBe(false as any);
     });
 
     it('should return false for zero address placeholders', () => {
@@ -129,7 +129,7 @@ describe('Package Index', () => {
         }
       };
 
-      expect(isConfigurationComplete(config)).toBe(false);
+      expect(isConfigurationComplete(config as any)).toBe(false as any);
     });
   });
 
@@ -138,17 +138,17 @@ describe('Package Index', () => {
 
     it('should generate object URL by default', () => {
       const url = getExplorerUrl(config, '0x123');
-      expect(url).toBe(`${config.network.explorerUrl}/object/0x123?network=${config.network.name}`);
+      expect(url as any).toBe(`${config?.network?.explorerUrl}/object/0x123?network=${config?.network?.name}`);
     });
 
     it('should generate object URL explicitly', () => {
       const url = getExplorerUrl(config, '0x123', 'object');
-      expect(url).toBe(`${config.network.explorerUrl}/object/0x123?network=${config.network.name}`);
+      expect(url as any).toBe(`${config?.network?.explorerUrl}/object/0x123?network=${config?.network?.name}`);
     });
 
     it('should generate transaction URL', () => {
       const url = getExplorerUrl(config, '0x456', 'txn');
-      expect(url).toBe(`${config.network.explorerUrl}/txblock/0x456?network=${config.network.name}`);
+      expect(url as any).toBe(`${config?.network?.explorerUrl}/txblock/0x456?network=${config?.network?.name}`);
     });
   });
 
@@ -158,11 +158,11 @@ describe('Package Index', () => {
         ...TESTNET_CONFIG,
         network: {
           ...TESTNET_CONFIG.network,
-          faucetUrl: 'https://faucet.testnet.sui.io'
+          faucetUrl: 'https://faucet?.testnet?.sui.io'
         }
       };
 
-      expect(getFaucetUrl(config)).toBe('https://faucet.testnet.sui.io');
+      expect(getFaucetUrl(config as any)).toBe('https://faucet?.testnet?.sui.io');
     });
 
     it('should return null when not available', () => {
@@ -174,7 +174,7 @@ describe('Package Index', () => {
         }
       };
 
-      expect(getFaucetUrl(config)).toBe(null);
+      expect(getFaucetUrl(config as any)).toBe(null as any);
     });
   });
 
@@ -184,11 +184,11 @@ describe('Package Index', () => {
         ...TESTNET_CONFIG,
         network: {
           ...TESTNET_CONFIG.network,
-          faucetUrl: 'https://faucet.testnet.sui.io'
+          faucetUrl: 'https://faucet?.testnet?.sui.io'
         }
       };
 
-      expect(hasFaucet(config)).toBe(true);
+      expect(hasFaucet(config as any)).toBe(true as any);
     });
 
     it('should return false when faucet not available', () => {
@@ -200,7 +200,7 @@ describe('Package Index', () => {
         }
       };
 
-      expect(hasFaucet(config)).toBe(false);
+      expect(hasFaucet(config as any)).toBe(false as any);
     });
   });
 
@@ -208,15 +208,15 @@ describe('Package Index', () => {
     it('should generate correct blob URL', () => {
       const config = TESTNET_CONFIG;
       const url = getWalrusBlobUrl(config, 'blob-123');
-      expect(url).toBe(`${config.walrus.aggregatorUrl}/v1/blob-123`);
+      expect(url as any).toBe(`${config?.walrus?.aggregatorUrl}/v1/blob-123`);
     });
   });
 
   describe('getWalrusPublisherUrl', () => {
     it('should generate correct publisher URL', () => {
       const config = TESTNET_CONFIG;
-      const url = getWalrusPublisherUrl(config);
-      expect(url).toBe(`${config.walrus.publisherUrl}/v1/store`);
+      const url = getWalrusPublisherUrl(config as any);
+      expect(url as any).toBe(`${config?.walrus?.publisherUrl}/v1/store`);
     });
   });
 });

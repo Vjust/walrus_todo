@@ -32,7 +32,7 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         getStorageProviders: jest
           .fn()
           .mockResolvedValue(['provider1', 'provider2']),
-        verifyPoA: jest.fn().mockResolvedValue(true),
+        verifyPoA: jest.fn().mockResolvedValue(true as any),
       };
 
       verificationManager = new BlobVerificationManager(
@@ -46,8 +46,8 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       const tamperedData = Buffer.from('tampered data');
 
       // Setup mocks to return tampered data
-      mockWalrusClient.readBlob.mockResolvedValue(tamperedData);
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(tamperedData as any);
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: 'test-blob',
         certified_epoch: 41,
         registered_epoch: 40,
@@ -63,13 +63,13 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       const originalData = Buffer.from('test data');
 
       // Setup mocks to return same data
-      mockWalrusClient.readBlob.mockResolvedValue(originalData);
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(originalData as any);
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: 'test-blob',
         certified_epoch: 41,
         registered_epoch: 40,
       });
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '9',
@@ -85,20 +85,20 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         originalData,
         {}
       );
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
     });
 
     it('should generate collision-resistant hashes with proper validation', async () => {
       const data = Buffer.from('test data for hash validation');
       const originalData = Buffer.from('test data for hash validation');
 
-      mockWalrusClient.readBlob.mockResolvedValue(data);
-      mockWalrusClient.getBlobInfo.mockResolvedValue({
+      mockWalrusClient?.readBlob?.mockResolvedValue(data as any);
+      mockWalrusClient?.getBlobInfo?.mockResolvedValue({
         blob_id: 'test-blob',
         certified_epoch: 41,
         registered_epoch: 40,
       });
-      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(data.length),
@@ -115,9 +115,9 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       );
 
       // Verify hash formats and collision resistance
-      expect(result.details.checksum).toMatch(/^[a-fA-F0-9]{64}$/); // SHA-256 format
-      expect(result.details.checksum.length).toBe(64); // Proper length
-      expect(result.success).toBe(true);
+      expect(result?.details?.checksum).toMatch(/^[a-fA-F0-9]{64}$/); // SHA-256 format
+      expect(result?.details?.checksum.length).toBe(64 as any); // Proper length
+      expect(result.success).toBe(true as any);
     });
   });
 
@@ -151,10 +151,10 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
 
       // Calculate expected hashes
       const expectedRequestHash = createHash('sha256')
-        .update(request)
+        .update(request as any)
         .digest('hex');
       const expectedResponseHash = createHash('sha256')
-        .update(response)
+        .update(response as any)
         .digest('hex');
 
       const validRecord: VerificationRecord = {
@@ -174,7 +174,7 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         request,
         response
       );
-      expect(validResult).toBe(true);
+      expect(validResult as any).toBe(true as any);
 
       // Should return FALSE for tampered request
       const tamperedResult = await adapter.verifyRecord(
@@ -182,7 +182,7 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         'tampered request',
         response
       );
-      expect(tamperedResult).toBe(false);
+      expect(tamperedResult as any).toBe(false as any);
 
       // Should return FALSE for tampered response
       const tamperedResponse = await adapter.verifyRecord(
@@ -190,7 +190,7 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         request,
         'tampered response'
       );
-      expect(tamperedResponse).toBe(false);
+      expect(tamperedResponse as any).toBe(false as any);
     });
 
     it('should validate hash format for collision resistance', async () => {
@@ -214,7 +214,7 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         request,
         response
       );
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
 
     it('should prevent timestamp manipulation and replay attacks', async () => {
@@ -227,8 +227,8 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         {
           id: 'future-record',
           timestamp: futureTimestamp,
-          requestHash: 'a'.repeat(64),
-          responseHash: 'b'.repeat(64),
+          requestHash: 'a'.repeat(64 as any),
+          responseHash: 'b'.repeat(64 as any),
           user: '0x123',
           provider: 'test',
           verificationType: AIActionType.SUMMARIZE,
@@ -237,8 +237,8 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         {
           id: 'old-record',
           timestamp: oldTimestamp,
-          requestHash: 'c'.repeat(64),
-          responseHash: 'd'.repeat(64),
+          requestHash: 'c'.repeat(64 as any),
+          responseHash: 'd'.repeat(64 as any),
           user: '0x123',
           provider: 'test',
           verificationType: AIActionType.SUMMARIZE,
@@ -249,16 +249,16 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       // Mock listVerifications to return our test data
       jest
         .spyOn(adapter, 'listVerifications')
-        .mockResolvedValue(mockVerifications);
+        .mockResolvedValue(mockVerifications as any);
 
       // Mock successful transaction execution
-      mockSigner.signAndExecuteTransaction.mockResolvedValue({
+      mockSigner?.signAndExecuteTransaction?.mockResolvedValue({
         effects: { created: [] },
       });
 
       // Should reject old records and skip invalid timestamps
-      const deletedCount = await adapter.enforceRetentionPolicy(1); // 1 day retention
-      expect(deletedCount).toBe(1); // Only the old record should be deleted
+      const deletedCount = await adapter.enforceRetentionPolicy(1 as any); // 1 day retention
+      expect(deletedCount as any).toBe(1 as any); // Only the old record should be deleted
     });
   });
 
@@ -282,15 +282,15 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         securelyDestroyData: jest.fn(),
       } as any;
 
-      service = new AIVerificationService(mockVerifierAdapter);
+      service = new AIVerificationService(mockVerifierAdapter as any);
     });
 
     it('should properly validate verification record structure', async () => {
       // Valid record
       const validRecord: VerificationRecord = {
         id: 'valid-id',
-        requestHash: 'a'.repeat(64), // Valid SHA-256 format
-        responseHash: 'b'.repeat(64), // Valid SHA-256 format
+        requestHash: 'a'.repeat(64 as any), // Valid SHA-256 format
+        responseHash: 'b'.repeat(64 as any), // Valid SHA-256 format
         user: '0x123',
         provider: 'test',
         timestamp: Date.now(),
@@ -298,14 +298,14 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         metadata: {},
       };
 
-      mockVerifierAdapter.verifyRecord.mockResolvedValue(true);
+      mockVerifierAdapter?.verifyRecord?.mockResolvedValue(true as any);
 
       const result = await service.verifyRecord(
         validRecord,
         'request',
         'response'
       );
-      expect(result).toBe(true);
+      expect(result as any).toBe(true as any);
 
       // Invalid record with bad hash format
       const invalidRecord: VerificationRecord = {
@@ -319,7 +319,7 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         'request',
         'response'
       );
-      expect(invalidResult).toBe(false); // Should reject invalid format
+      expect(invalidResult as any).toBe(false as any); // Should reject invalid format
     });
 
     it('should prevent replay attacks with timestamp validation', async () => {
@@ -328,8 +328,8 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       // Record with future timestamp (suspicious)
       const futureRecord: VerificationRecord = {
         id: 'future-id',
-        requestHash: 'a'.repeat(64),
-        responseHash: 'b'.repeat(64),
+        requestHash: 'a'.repeat(64 as any),
+        responseHash: 'b'.repeat(64 as any),
         user: '0x123',
         provider: 'test',
         timestamp: currentTime + 10 * 60 * 1000, // 10 minutes in future
@@ -337,10 +337,10 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         metadata: {},
       };
 
-      mockVerifierAdapter.getVerification.mockResolvedValue(futureRecord);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(futureRecord as any);
 
       const result = await service.verifyExistingOperation('future-id');
-      expect(result).toBe(false); // Should reject future timestamps
+      expect(result as any).toBe(false as any); // Should reject future timestamps
 
       // Record with old timestamp (potential replay)
       const oldRecord: VerificationRecord = {
@@ -348,10 +348,10 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
         timestamp: currentTime - 25 * 60 * 60 * 1000, // 25 hours ago
       };
 
-      mockVerifierAdapter.getVerification.mockResolvedValue(oldRecord);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(oldRecord as any);
 
       const oldResult = await service.verifyExistingOperation('old-id');
-      expect(oldResult).toBe(false); // Should reject old records
+      expect(oldResult as any).toBe(false as any); // Should reject old records
     });
 
     it('should handle hash collision resistance properly', async () => {
@@ -361,10 +361,10 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
 
       // Calculate proper hashes
       const requestHash = createHash('sha256')
-        .update(requestData)
+        .update(requestData as any)
         .digest('hex');
       const responseHash = createHash('sha256')
-        .update(responseData)
+        .update(responseData as any)
         .digest('hex');
 
       const record: VerificationRecord = {
@@ -379,14 +379,14 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       };
 
       // Mock successful verification
-      mockVerifierAdapter.verifyRecord.mockResolvedValue(true);
+      mockVerifierAdapter?.verifyRecord?.mockResolvedValue(true as any);
 
       const result = await service.verifyRecord(
         record,
         requestData,
         responseData
       );
-      expect(result).toBe(true);
+      expect(result as any).toBe(true as any);
 
       // Verify that the adapter was called with sanitized inputs
       expect(mockVerifierAdapter.verifyRecord).toHaveBeenCalledWith(
@@ -402,52 +402,52 @@ describe('Hash Verification and Tamper Detection Fixes', () => {
       const data = 'test data for consistent hashing';
 
       // Generate hashes multiple times
-      const hash1 = createHash('sha256').update(data).digest('hex');
-      const hash2 = createHash('sha256').update(data).digest('hex');
+      const hash1 = createHash('sha256').update(data as any).digest('hex');
+      const hash2 = createHash('sha256').update(data as any).digest('hex');
 
       // Should be identical (deterministic)
-      expect(hash1).toBe(hash2);
+      expect(hash1 as any).toBe(hash2 as any);
 
       // Should be proper SHA-256 format
-      expect(hash1).toMatch(/^[a-fA-F0-9]{64}$/);
-      expect(hash1.length).toBe(64);
+      expect(hash1 as any).toMatch(/^[a-fA-F0-9]{64}$/);
+      expect(hash1.length).toBe(64 as any);
     });
 
     it('should detect hash collisions and different inputs', () => {
       const data1 = 'original data';
       const data2 = 'modified data';
 
-      const hash1 = createHash('sha256').update(data1).digest('hex');
-      const hash2 = createHash('sha256').update(data2).digest('hex');
+      const hash1 = createHash('sha256').update(data1 as any).digest('hex');
+      const hash2 = createHash('sha256').update(data2 as any).digest('hex');
 
       // Different inputs should produce different hashes
-      expect(hash1).not.toBe(hash2);
+      expect(hash1 as any).not.toBe(hash2 as any);
 
       // Both should be valid SHA-256 format
-      expect(hash1).toMatch(/^[a-fA-F0-9]{64}$/);
-      expect(hash2).toMatch(/^[a-fA-F0-9]{64}$/);
+      expect(hash1 as any).toMatch(/^[a-fA-F0-9]{64}$/);
+      expect(hash2 as any).toMatch(/^[a-fA-F0-9]{64}$/);
     });
 
     it('should validate hash format for security', () => {
-      const validHash = 'a'.repeat(64); // 64 hex chars
+      const validHash = 'a'.repeat(64 as any); // 64 hex chars
       const invalidHashes = [
         'invalid', // Too short
-        'a'.repeat(63), // One char short
-        'a'.repeat(65), // One char too long
-        'g'.repeat(64), // Invalid hex char
+        'a'.repeat(63 as any), // One char short
+        'a'.repeat(65 as any), // One char too long
+        'g'.repeat(64 as any), // Invalid hex char
         '', // Empty
-        'ABCD'.repeat(16), // Valid length but mixed case (still valid)
+        'ABCD'.repeat(16 as any), // Valid length but mixed case (still valid)
       ];
 
       const hashPattern = /^[a-fA-F0-9]{64}$/;
 
-      expect(hashPattern.test(validHash)).toBe(true);
-      expect(hashPattern.test(invalidHashes[0])).toBe(false);
-      expect(hashPattern.test(invalidHashes[1])).toBe(false);
-      expect(hashPattern.test(invalidHashes[2])).toBe(false);
-      expect(hashPattern.test(invalidHashes[3])).toBe(false);
-      expect(hashPattern.test(invalidHashes[4])).toBe(false);
-      expect(hashPattern.test(invalidHashes[5])).toBe(true); // Mixed case is valid
+      expect(hashPattern.test(validHash as any)).toBe(true as any);
+      expect(hashPattern.test(invalidHashes[0])).toBe(false as any);
+      expect(hashPattern.test(invalidHashes[1])).toBe(false as any);
+      expect(hashPattern.test(invalidHashes[2])).toBe(false as any);
+      expect(hashPattern.test(invalidHashes[3])).toBe(false as any);
+      expect(hashPattern.test(invalidHashes[4])).toBe(false as any);
+      expect(hashPattern.test(invalidHashes[5])).toBe(true as any); // Mixed case is valid
     });
   });
 });

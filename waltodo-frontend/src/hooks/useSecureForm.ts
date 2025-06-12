@@ -84,8 +84,8 @@ export function useSecureForm<T extends Record<string, any>>(
   // CSRF token management
   const [csrfToken] = useState(() => {
     if (csrfProtection) {
-      const token = SecurityUtils.CSRFProtection.generateToken();
-      SecurityUtils.CSRFProtection.storeToken(token);
+      const token = SecurityUtils?.CSRFProtection?.generateToken();
+      SecurityUtils?.CSRFProtection?.storeToken(token as any);
       return token;
     }
     return null;
@@ -121,7 +121,7 @@ export function useSecureForm<T extends Record<string, any>>(
   // Set single field value
   const setValue = useCallback((field: keyof T, value: any) => {
     setState(prev => {
-      const sanitizedValue = typeof value === 'string' ? sanitizeValue(value) : value;
+      const sanitizedValue = typeof value === 'string' ? sanitizeValue(value as any) : value;
       const newData = { ...prev.data, [field]: sanitizedValue };
       
       // Clear field error when value changes
@@ -142,8 +142,8 @@ export function useSecureForm<T extends Record<string, any>>(
     setState(prev => {
       const sanitizedValues: Partial<T> = {};
       
-      for (const [key, value] of Object.entries(values)) {
-        sanitizedValues[key as keyof T] = typeof value === 'string' ? sanitizeValue(value) : value;
+      for (const [key, value] of Object.entries(values as any)) {
+        sanitizedValues[key as keyof T] = typeof value === 'string' ? sanitizeValue(value as any) : value;
       }
       
       return {
@@ -179,19 +179,19 @@ export function useSecureForm<T extends Record<string, any>>(
   // Validate single field
   const validateField = useCallback((field: keyof T): boolean => {
     try {
-      const fieldSchema = schema.shape[field as string];
+      const fieldSchema = schema?.shape?.[field as string];
       if (!fieldSchema) return true;
       
-      const value = state.data[field];
-      const result = fieldSchema.safeParse(value);
+      const value = state?.data?.[field];
+      const result = fieldSchema.safeParse(value as any);
       
       if (!result.success) {
-        const error = result.error.errors[0]?.message || 'Invalid value';
+        const error = result.error?.errors?.[0]?.message || 'Invalid value';
         setError(field, error);
         return false;
       }
       
-      clearError(field);
+      clearError(field as any);
       return true;
     } catch {
       return true; // If we can't validate, assume it's ok
@@ -239,7 +239,7 @@ export function useSecureForm<T extends Record<string, any>>(
     
     // Validate CSRF token
     if (csrfProtection && csrfToken) {
-      if (!SecurityUtils.CSRFProtection.validateToken(csrfToken)) {
+      if (!SecurityUtils?.CSRFProtection?.validateToken(csrfToken as any)) {
         setError('form' as keyof T, 'Security token invalid. Please refresh the page.');
         return;
       }
@@ -275,7 +275,7 @@ export function useSecureForm<T extends Record<string, any>>(
       }
       
       // Call submit handler
-      await onSubmit(finalData);
+      await onSubmit(finalData as any);
       
       // Update submission count and time
       setState(prev => ({
@@ -326,25 +326,25 @@ export function useSecureForm<T extends Record<string, any>>(
     
     // Generate new CSRF token
     if (csrfProtection) {
-      const newToken = SecurityUtils.CSRFProtection.generateToken();
-      SecurityUtils.CSRFProtection.storeToken(newToken);
+      const newToken = SecurityUtils?.CSRFProtection?.generateToken();
+      SecurityUtils?.CSRFProtection?.storeToken(newToken as any);
     }
   }, [csrfProtection]);
 
   // Get field props for easy binding
   const getFieldProps = useCallback((field: keyof T) => {
-    const value = state.data[field] ?? '';
-    const error = state.errors[field as string];
+    const value = state?.data?.[field] ?? '';
+    const error = state?.errors?.[field as string];
     
     return {
       value,
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setValue(field, e.target.value);
+        setValue(field, e?.target?.value);
       },
-      onBlur: () => validateField(field),
+      onBlur: () => validateField(field as any),
       error,
       'aria-invalid': !!error,
-      'aria-describedby': error ? `${String(field)}-error` : undefined,
+      'aria-describedby': error ? `${String(field as any)}-error` : undefined,
     };
   }, [state.data, state.errors, setValue, validateField]);
 

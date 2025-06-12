@@ -111,18 +111,18 @@ export interface UIState {
 
 export interface UIActions {
   // Modal actions
-  openModal: (modal: keyof UIState['modals'], data?: any) => void;
-  closeModal: (modal: keyof UIState['modals']) => void;
+  openModal: (modal: keyof UIState?.["modals"], data?: any) => void;
+  closeModal: (modal: keyof UIState?.["modals"]) => void;
   closeAllModals: () => void;
   
   // Form actions
-  updateForm: <K extends keyof UIState['forms']>(
+  updateForm: <K extends keyof UIState?.["forms"]>(
     form: K, 
-    updates: Partial<UIState['forms'][K]>
+    updates: Partial<UIState?.["forms"][K]>
   ) => void;
-  resetForm: (form: keyof UIState['forms']) => void;
-  setFormError: (form: keyof UIState['forms'], field: string, error: string) => void;
-  clearFormErrors: (form: keyof UIState['forms']) => void;
+  resetForm: (form: keyof UIState?.["forms"]) => void;
+  setFormError: (form: keyof UIState?.["forms"], field: string, error: string) => void;
+  clearFormErrors: (form: keyof UIState?.["forms"]) => void;
   
   // Error actions
   setError: (key: string, error: string | null) => void;
@@ -131,7 +131,7 @@ export interface UIActions {
   setNetworkError: (error: string | null) => void;
   
   // Loading actions
-  setLoading: (key: keyof UIState['loading'] | string, loading: boolean) => void;
+  setLoading: (key: keyof UIState?.["loading"] | string, loading: boolean) => void;
   setTransactionLoading: (txId: string, loading: boolean) => void;
   
   // Navigation actions
@@ -140,17 +140,17 @@ export interface UIActions {
   toggleMobileMenu: () => void;
   
   // Preference actions
-  setTheme: (theme: UIState['preferences']['theme']) => void;
-  setDisplayMode: (mode: UIState['preferences']['todoDisplayMode']) => void;
-  updatePreferences: (updates: Partial<UIState['preferences']>) => void;
+  setTheme: (theme: UIState?.["preferences"]['theme']) => void;
+  setDisplayMode: (mode: UIState?.["preferences"]['todoDisplayMode']) => void;
+  updatePreferences: (updates: Partial<UIState?.["preferences"]>) => void;
   
   // Search actions
   setSearchQuery: (query: string) => void;
-  setFilter: <K extends keyof UIState['search']['filters']>(
+  setFilter: <K extends keyof UIState?.["search"]['filters']>(
     filter: K,
-    value: UIState['search']['filters'][K]
+    value: UIState?.["search"]['filters'][K]
   ) => void;
-  setSorting: (sortBy: UIState['search']['sortBy'], sortOrder: UIState['search']['sortOrder']) => void;
+  setSorting: (sortBy: UIState?.["search"]['sortBy'], sortOrder: UIState?.["search"]['sortOrder']) => void;
   clearFilters: () => void;
   resetSearch: () => void;
 }
@@ -210,7 +210,7 @@ export interface WalletActions {
   // Connection actions
   connect: () => void;
   disconnect: () => void;
-  setConnectionStatus: (status: WalletState['connection']['status']) => void;
+  setConnectionStatus: (status: WalletState?.["connection"]['status']) => void;
   setAccount: (address: string | null, name?: string | null) => void;
   setNetwork: (network: NetworkType, chainId?: string | null) => void;
   
@@ -235,7 +235,7 @@ export interface WalletActions {
   closeModal: () => void;
   
   // Capabilities
-  setCapabilities: (capabilities: Partial<WalletState['capabilities']>) => void;
+  setCapabilities: (capabilities: Partial<WalletState?.["capabilities"]>) => void;
 }
 
 // ========== Todo Store Types ==========
@@ -352,21 +352,21 @@ export interface AppActions {
   
   // Network health
   updateNetworkStatus: (
-    service: keyof AppState['network'],
-    status: AppState['network'][keyof AppState['network']]['status'],
+    service: keyof AppState?.["network"],
+    status: AppState?.["network"][keyof AppState?.["network"]]['status'],
     latency?: number
   ) => void;
   
   // Feature flags
-  toggleFeature: (feature: keyof AppState['features']) => void;
-  setFeatures: (features: Partial<AppState['features']>) => void;
+  toggleFeature: (feature: keyof AppState?.["features"]) => void;
+  setFeatures: (features: Partial<AppState?.["features"]>) => void;
   
   // Performance tracking
   recordRender: (renderTime: number) => void;
   updateMemoryUsage: (usage: number) => void;
   
   // Environment detection
-  setEnvironment: (env: Partial<AppState['environment']>) => void;
+  setEnvironment: (env: Partial<AppState?.["environment"]>) => void;
 }
 
 // ========== Combined Store Type ==========

@@ -73,13 +73,13 @@ export function isTransactionVariant(obj: unknown): obj is TransactionVariant {
 export function isSuiVariant(
   variant: TransactionVariant
 ): variant is { kind: 'sui'; transaction: SuiTransaction } {
-  return variant.kind === 'sui';
+  return variant?.kind === 'sui';
 }
 
 export function isAdapterVariant(
   variant: TransactionVariant
 ): variant is { kind: 'adapter'; transaction: TransactionBlockAdapter } {
-  return variant.kind === 'adapter';
+  return variant?.kind === 'adapter';
 }
 
 /**
@@ -94,7 +94,7 @@ export function isLegacyVariant(_variant: unknown): _variant is never {
  */
 export function isTransactionType(obj: unknown): obj is TransactionType {
   return (
-    isSuiTransaction(obj) ||
+    isSuiTransaction(obj as any) ||
     (obj &&
       typeof obj === 'object' &&
       obj !== null &&
@@ -108,17 +108,17 @@ export function isTransactionType(obj: unknown): obj is TransactionType {
 export function asTransaction(
   input: SuiTransaction | TransactionBlockAdapter
 ): SuiTransaction {
-  if (isSuiTransaction(input)) {
+  if (isSuiTransaction(input as any)) {
     return input;
   }
 
   // For adapter types, extract the underlying implementation
   if (
     'getUnderlyingImplementation' in input &&
-    typeof input.getUnderlyingImplementation === 'function'
+    typeof input?.getUnderlyingImplementation === 'function'
   ) {
     const underlying = input.getUnderlyingImplementation();
-    if (isSuiTransaction(underlying)) {
+    if (isSuiTransaction(underlying as any)) {
       return underlying;
     }
   }
@@ -137,7 +137,7 @@ export function asUint8ArrayOrTransactionBlock(
   }
 
   if (typeof data === 'string') {
-    return new TextEncoder().encode(data);
+    return new TextEncoder().encode(data as any);
   }
 
   return data;
@@ -154,11 +154,11 @@ export function asStringUint8ArrayOrTransactionBlock(
   }
 
   if (data instanceof Uint8Array) {
-    return new TextDecoder().decode(data);
+    return new TextDecoder().decode(data as any);
   }
 
   // For Transaction objects, return a string representation
-  return JSON.stringify(data);
+  return JSON.stringify(data as any);
 }
 
 /**
@@ -198,7 +198,7 @@ export function extractTransaction(
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;
       throw new Error(
-        `Unknown transaction variant: ${JSON.stringify(_exhaustive)}`
+        `Unknown transaction variant: ${JSON.stringify(_exhaustive as any)}`
       );
     }
   }
@@ -223,7 +223,7 @@ export function processTransactionVariant<T>(
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;
       throw new Error(
-        `Unknown transaction variant: ${JSON.stringify(_exhaustive)}`
+        `Unknown transaction variant: ${JSON.stringify(_exhaustive as any)}`
       );
     }
   }

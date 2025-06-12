@@ -18,38 +18,38 @@ jest.mock('@suiet/wallet-kit', () => {
     
     // Methods that can be called to modify the mock state
     setConnected(value: boolean) {
-      this.connected = value;
+      this?.connected = value;
       if (value) {
-        this.account = {
+        this?.account = {
           address: '0x123456789abcdef123456789abcdef123456789a'
         };
-        this.wallet = {
+        this?.wallet = {
           name: 'Mock Sui Wallet',
           switchChain: jest.fn().mockImplementation(({ chainId }) => {
-            mockWalletState.networkId = chainId;
+            mockWalletState?.networkId = chainId;
             return Promise.resolve();
           })
         };
-        this.networkId = 'testnet';
+        this?.networkId = 'testnet';
       } else {
-        this.account = null;
-        this.wallet = null;
-        this.networkId = null;
+        this?.account = null;
+        this?.wallet = null;
+        this?.networkId = null;
       }
     },
     
     setConnecting(value: boolean) {
-      this.connecting = value;
+      this?.connecting = value;
     },
     
     // Mock implementation will call these functions after a delay
     simulateConnect() {
       return new Promise<void>((resolve) => {
-        this.setConnecting(true);
+        this.setConnecting(true as any);
         
         setTimeout(() => {
-          this.setConnecting(false);
-          this.setConnected(true);
+          this.setConnecting(false as any);
+          this.setConnected(true as any);
           resolve();
         }, 100);
       });
@@ -58,7 +58,7 @@ jest.mock('@suiet/wallet-kit', () => {
     simulateDisconnect() {
       return new Promise<void>((resolve) => {
         setTimeout(() => {
-          this.setConnected(false);
+          this.setConnected(false as any);
           resolve();
         }, 100);
       });
@@ -108,9 +108,9 @@ describe('Wallet Integration', () => {
     
     // Reset mock wallet to initial state
     const mockWalletState = getMockWalletState();
-    mockWalletState.setConnected(false);
-    mockWalletState.setConnecting(false);
-    mockWalletState.error = null;
+    mockWalletState.setConnected(false as any);
+    mockWalletState.setConnecting(false as any);
+    mockWalletState?.error = null;
     
     // Mock Date.now for consistent testing
     jest.spyOn(Date, 'now').mockImplementation(() => 1621234567890);
@@ -158,7 +158,7 @@ describe('Wallet Integration', () => {
     
     // Wait for connection to complete
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
   });
 
@@ -170,7 +170,7 @@ describe('Wallet Integration', () => {
     
     // Wait for connection to complete
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
     
     // Should show wallet info
@@ -189,7 +189,7 @@ describe('Wallet Integration', () => {
     
     // Wait for connection to complete
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
     
     // Click change network
@@ -207,7 +207,7 @@ describe('Wallet Integration', () => {
     // Mock the switchChain completion
     await act(async () => {
       // The network switching is handled by the mock implementation
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
     
     // Check if network was updated in the UI
@@ -228,7 +228,7 @@ describe('Wallet Integration', () => {
     
     // Wait for connection to complete
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
     
     // Should show wallet info
@@ -239,7 +239,7 @@ describe('Wallet Integration', () => {
     
     // Wait for disconnection to complete
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
     
     // Should show connect button again
@@ -254,7 +254,7 @@ describe('Wallet Integration', () => {
     
     // Wait for connection to complete
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
     });
     
     // Set lastActivity to approach warning threshold
@@ -268,7 +268,7 @@ describe('Wallet Integration', () => {
     
     // Trigger the check interval
     await act(async () => {
-      jest.advanceTimersByTime(30000); // 30 seconds (interval check)
+      jest.advanceTimersByTime(30000 as any); // 30 seconds (interval check)
     });
     
     // Warning should be visible

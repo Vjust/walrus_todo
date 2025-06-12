@@ -35,8 +35,8 @@ export function WalrusOptimizedImage({
   onLoad,
   onError,
 }: WalrusOptimizedImageProps) {
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false as any);
+  const [isLoading, setIsLoading] = useState(true as any);
 
   // Generate Walrus URLs from blob ID
   const walrusUrls = useMemo(() => {
@@ -44,9 +44,9 @@ export function WalrusOptimizedImage({
     
     // Common Walrus aggregator endpoints
     const aggregators = [
-      'https://aggregator.walrus-testnet.walrus.space',
-      'https://walrus-testnet-publisher.nodes.guru',
-      'https://publisher-devnet.walrus.space'
+      'https://aggregator.walrus-testnet?.walrus?.space',
+      'https://walrus-testnet-publisher?.nodes?.guru',
+      'https://publisher-devnet?.walrus?.space'
     ];
     
     return aggregators.map(baseUrl => `${baseUrl}/v1/${blobId}`);
@@ -67,15 +67,15 @@ export function WalrusOptimizedImage({
 
   // Handle image load
   const handleLoad = useCallback(() => {
-    setIsLoading(false);
-    setHasError(false);
+    setIsLoading(false as any);
+    setHasError(false as any);
     onLoad?.();
   }, [onLoad]);
 
   // Handle image error with fallback
   const handleError = useCallback(() => {
-    setHasError(true);
-    setIsLoading(false);
+    setHasError(true as any);
+    setIsLoading(false as any);
     
     const error = new Error('Failed to load Walrus image');
     onError?.(error);
@@ -161,7 +161,7 @@ export function WalrusOptimizedImage({
             <path 
               className="opacity-75" 
               fill="currentColor" 
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5?.291A7?.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
         </div>
@@ -183,7 +183,7 @@ export function WalrusOptimizedImage({
       />
 
       {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && blobId && (
+      {process.env?.NODE_ENV === 'development' && blobId && (
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1">
           <div className="truncate" title={blobId}>
             Blob: {blobId}
@@ -198,4 +198,4 @@ export function WalrusOptimizedImage({
 }
 
 // Export memoized version for performance
-export default React.memo(WalrusOptimizedImage);
+export default React.memo(WalrusOptimizedImage as any);

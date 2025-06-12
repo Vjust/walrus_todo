@@ -38,33 +38,33 @@ export function validateEnvironmentFull(): ValidationResult {
   const allVars = envConfig.getAllVariables();
 
   // Check each environment variable
-  for (const [key, config] of Object.entries(allVars)) {
+  for (const [key, config] of Object.entries(allVars as any)) {
     // Check for required variables
     if (config.required && !hasValue(config.value)) {
-      result.missingVars.push(key);
-      result.isValid = false;
+      result?.missingVars?.push(key as any);
+      result?.isValid = false;
     }
 
     // Run validation function if available
     if (hasValue(config.value) && config.validationFn) {
       try {
         if (!config.validationFn(config.value)) {
-          result.invalidVars.push(
+          result?.invalidVars?.push(
             `${key}: ${config.validationError || 'Failed validation'}`
           );
-          result.isValid = false;
+          result?.isValid = false;
         }
       } catch (error) {
-        result.invalidVars.push(
-          `${key}: ${error instanceof Error ? error.message : String(error)}`
+        result?.invalidVars?.push(
+          `${key}: ${error instanceof Error ? error.message : String(error as any)}`
         );
-        result.isValid = false;
+        result?.isValid = false;
       }
     }
 
     // Check for deprecated variables
     if (config.deprecated && hasValue(config.value)) {
-      result.deprecatedVars.push(
+      result?.deprecatedVars?.push(
         `${key}${config.deprecated_message ? ': ' + config.deprecated_message : ''}`
       );
     }
@@ -73,10 +73,10 @@ export function validateEnvironmentFull(): ValidationResult {
     if (
       config.sensitive &&
       hasValue(config.value) &&
-      config.source === 'config'
+      config?.source === 'config'
     ) {
-      result.insecureVars.push(key);
-      result.warnings.push(
+      result?.insecureVars?.push(key as any);
+      result?.warnings?.push(
         `Sensitive value ${key} should be stored in environment variables, not config files`
       );
     }
@@ -85,7 +85,7 @@ export function validateEnvironmentFull(): ValidationResult {
   // Add environment-specific warnings
   const inconsistencies = envConfig.checkEnvironmentConsistency();
   if (inconsistencies.length > 0) {
-    result.warnings.push(...inconsistencies);
+    result?.warnings?.push(...inconsistencies);
   }
 
   return result;
@@ -106,17 +106,17 @@ export function validateOrThrow(
   const { showWarnings = true, exitOnWarning = false } = options;
 
   // Always check for missing required variables
-  if (result.missingVars.length > 0) {
+  if (result?.missingVars?.length > 0) {
     throw new CLIError(
-      `Missing required environment variables:\n${result.missingVars.map(v => `  - ${v}`).join('\n')}`,
+      `Missing required environment variables:\n${result?.missingVars?.map(v => `  - ${v}`).join('\n')}`,
       'MISSING_ENV_VARS'
     );
   }
 
   // Always check for invalid variables
-  if (result.invalidVars.length > 0) {
+  if (result?.invalidVars?.length > 0) {
     throw new CLIError(
-      `Invalid environment variables:\n${result.invalidVars.map(v => `  - ${v}`).join('\n')}`,
+      `Invalid environment variables:\n${result?.invalidVars?.map(v => `  - ${v}`).join('\n')}`,
       'INVALID_ENV_VARS'
     );
   }
@@ -124,23 +124,23 @@ export function validateOrThrow(
   // Show warnings if enabled
   if (
     showWarnings &&
-    (result.warnings.length > 0 ||
-      result.deprecatedVars.length > 0 ||
-      result.insecureVars.length > 0)
+    (result?.warnings?.length > 0 ||
+      result?.deprecatedVars?.length > 0 ||
+      result?.insecureVars?.length > 0)
   ) {
-    if (result.deprecatedVars.length > 0) {
+    if (result?.deprecatedVars?.length > 0) {
       logger.warn(chalk.yellow('\nDeprecated environment variables:'));
-      result.deprecatedVars.forEach(v => logger.warn(chalk.yellow(`  - ${v}`)));
+      result?.deprecatedVars?.forEach(v => logger.warn(chalk.yellow(`  - ${v}`)));
     }
 
-    if (result.insecureVars.length > 0) {
+    if (result?.insecureVars?.length > 0) {
       logger.warn(chalk.yellow('\nInsecure storage of sensitive variables:'));
-      result.insecureVars.forEach(v => logger.warn(chalk.yellow(`  - ${v}`)));
+      result?.insecureVars?.forEach(v => logger.warn(chalk.yellow(`  - ${v}`)));
     }
 
-    if (result.warnings.length > 0) {
+    if (result?.warnings?.length > 0) {
       logger.warn(chalk.yellow('\nEnvironment configuration warnings:'));
-      result.warnings.forEach(w => logger.warn(chalk.yellow(`  - ${w}`)));
+      result?.warnings?.forEach(w => logger.warn(chalk.yellow(`  - ${w}`)));
     }
 
     // Exit if configured to do so
@@ -174,43 +174,43 @@ export function generateEnvironmentDocs(): string {
     Other: [],
   };
 
-  for (const [key, config] of Object.entries(allVars)) {
+  for (const [key, config] of Object.entries(allVars as any)) {
     if (key.startsWith('AI_') || key.endsWith('_API_KEY')) {
-      categories['AI'].push({ ...config, name: key });
+      categories?.["AI"].push({ ...config, name: key });
     } else if (
       key.includes('STORAGE') ||
       key.includes('FILE') ||
       key.includes('DIR')
     ) {
-      categories['Storage'].push({ ...config, name: key });
+      categories?.["Storage"].push({ ...config, name: key });
     } else if (
       key.includes('NETWORK') ||
       key.includes('BLOCKCHAIN') ||
       key.includes('WALLET')
     ) {
-      categories['Blockchain'].push({ ...config, name: key });
+      categories?.["Blockchain"].push({ ...config, name: key });
     } else if (
       key.includes('SECURITY') ||
       key.includes('VERIFICATION') ||
       key.includes('CRYPTO')
     ) {
-      categories['Security'].push({ ...config, name: key });
+      categories?.["Security"].push({ ...config, name: key });
     } else if (key === 'NODE_ENV' || key === 'LOG_LEVEL') {
-      categories['Common'].push({ ...config, name: key });
+      categories?.["Common"].push({ ...config, name: key });
     } else if (
       key.includes('RETRY') ||
       key.includes('TIMEOUT') ||
       key.includes('CREDENTIAL')
     ) {
-      categories['Advanced'].push({ ...config, name: key });
+      categories?.["Advanced"].push({ ...config, name: key });
     } else {
-      categories['Other'].push({ ...config, name: key });
+      categories?.["Other"].push({ ...config, name: key });
     }
   }
 
   // Add each category to documentation
-  for (const [category, vars] of Object.entries(categories)) {
-    if (vars.length === 0) continue;
+  for (const [category, vars] of Object.entries(categories as any)) {
+    if (vars?.length === 0) continue;
 
     documentation += `## ${category}\n\n`;
     documentation +=
@@ -258,12 +258,12 @@ function formatValue(value: unknown): string {
   } else if (typeof value === 'string') {
     return value === '' ? '""' : value;
   } else if (typeof value === 'boolean' || typeof value === 'number') {
-    return String(value);
+    return String(value as any);
   } else {
     try {
-      return JSON.stringify(value);
+      return JSON.stringify(value as any);
     } catch (error: unknown) {
-      return String(value);
+      return String(value as any);
     }
   }
 }

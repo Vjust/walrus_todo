@@ -58,10 +58,10 @@ export const hydrateAllStores = async () => {
       ]);
       
       // Rehydrate stores
-      useAppStore.persist.rehydrate();
-      useUIStore.persist.rehydrate();
-      useWalletStore.persist.rehydrate();
-      useTodoStore.persist.rehydrate();
+      useAppStore?.persist?.rehydrate();
+      useUIStore?.persist?.rehydrate();
+      useWalletStore?.persist?.rehydrate();
+      useTodoStore?.persist?.rehydrate();
     } catch (error) {
       console.warn('Failed to hydrate stores:', error);
     }
@@ -85,7 +85,7 @@ export const STORE_NAMES = {
 /**
  * Performance debugging utilities (development only)
  */
-export const storeDebugUtils = process.env.NODE_ENV === 'development' ? {
+export const storeDebugUtils = process.env?.NODE_ENV === 'development' ? {
   logPerformanceSummary: async () => {
     try {
       const { debugPerformance } = await import('./performance-monitor');
@@ -113,7 +113,7 @@ export const storeDebugUtils = process.env.NODE_ENV === 'development' ? {
   setThreshold: async (ms: number) => {
     try {
       const { debugPerformance } = await import('./performance-monitor');
-      debugPerformance.setThreshold(ms);
+      debugPerformance.setThreshold(ms as any);
     } catch (error) {
       console.warn('Failed to load performance monitor:', error);
     }

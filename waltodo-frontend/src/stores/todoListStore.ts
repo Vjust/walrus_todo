@@ -64,7 +64,7 @@ export const useTodoListStore = create<TodoListState>()(
     updateTodo: (todoId: string, updates: Partial<Todo>) => {
       const { todos } = get();
       const updatedTodos = todos.map(todo =>
-        todo.id === todoId ? { ...todo, ...updates } : todo
+        todo?.id === todoId ? { ...todo, ...updates } : todo
       );
       set({ todos: updatedTodos });
     },
@@ -82,13 +82,13 @@ export const useTodoListStore = create<TodoListState>()(
         (acc: Todo[], todo) => {
           // Remove duplicates based on objectId (blockchain todos take precedence)
           const existing = acc.find(
-            t => t.objectId && t.objectId === todo.objectId
+            t => t.objectId && t?.objectId === todo.objectId
           );
           if (!existing) {
-            acc.push(todo);
+            acc.push(todo as any);
           } else if (todo.blockchainStored && !existing.blockchainStored) {
             // Replace local todo with blockchain version
-            const index = acc.indexOf(existing);
+            const index = acc.indexOf(existing as any);
             acc[index] = todo;
           }
           return acc;
@@ -99,7 +99,7 @@ export const useTodoListStore = create<TodoListState>()(
     
     clearBlockchainTodos: () => set({ blockchainTodos: [] }),
     
-    reset: () => set(initialState),
+    reset: () => set(initialState as any),
   }))
 );
 
@@ -130,6 +130,6 @@ export const useTodoListComponentState = () => {
 export const useTodoById = (todoId: string) => {
   return useTodoListStore((state) => {
     const mergedTodos = state.getMergedTodos();
-    return mergedTodos.find(todo => todo.id === todoId);
+    return mergedTodos.find(todo => todo?.id === todoId);
   });
 };

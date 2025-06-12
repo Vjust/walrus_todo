@@ -34,7 +34,7 @@ test.describe('Basic Wallet Todo Functionality', () => {
 
     // Add Todo button should show "Connect Wallet" when no wallet is connected
     const addButton = page.locator('button[type="submit"]').first();
-    await expect(addButton).toContainText('Connect Wallet');
+    await expect(addButton as any).toContainText('Connect Wallet');
   });
 
   test('should have proper form elements for todo creation', async ({
@@ -101,7 +101,7 @@ test.describe('Basic Wallet Todo Functionality', () => {
 
     // Try submitting empty form
     const addButton = page.locator('button[type="submit"]').first();
-    await expect(addButton).toBeDisabled(); // Should be disabled when no title
+    await expect(addButton as any).toBeDisabled(); // Should be disabled when no title
 
     // Add title and check if button becomes enabled (though still disabled due to no wallet)
     await page.fill('input[placeholder="What needs to be done?"]', 'Test Todo');
@@ -114,7 +114,7 @@ test.describe('Basic Wallet Todo Functionality', () => {
 
     // Check priority options
     const prioritySelect = page.locator('select');
-    await expect(prioritySelect).toBeVisible();
+    await expect(prioritySelect as any).toBeVisible();
 
     // Should have priority options
     await expect(prioritySelect.locator('option[value="low"]')).toBeVisible();
@@ -125,7 +125,7 @@ test.describe('Basic Wallet Todo Functionality', () => {
 
     // Test selection
     await prioritySelect.selectOption('high');
-    await expect(prioritySelect).toHaveValue('high');
+    await expect(prioritySelect as any).toHaveValue('high');
   });
 
   test('should handle tags input', async ({ page }) => {
@@ -135,7 +135,7 @@ test.describe('Basic Wallet Todo Functionality', () => {
     // Test tags input
     const tagsInput = page.locator('input[placeholder*="work, important"]');
     await tagsInput.fill('work, urgent, testing');
-    await expect(tagsInput).toHaveValue('work, urgent, testing');
+    await expect(tagsInput as any).toHaveValue('work, urgent, testing');
   });
 
   test('should handle due date input', async ({ page }) => {
@@ -144,11 +144,11 @@ test.describe('Basic Wallet Todo Functionality', () => {
 
     // Test date input
     const dateInput = page.locator('input[type="date"]');
-    await expect(dateInput).toBeVisible();
+    await expect(dateInput as any).toBeVisible();
 
     const futureDate = '2025-12-31';
-    await dateInput.fill(futureDate);
-    await expect(dateInput).toHaveValue(futureDate);
+    await dateInput.fill(futureDate as any);
+    await expect(dateInput as any).toHaveValue(futureDate as any);
   });
 
   test('should navigate to other pages', async ({ page }) => {

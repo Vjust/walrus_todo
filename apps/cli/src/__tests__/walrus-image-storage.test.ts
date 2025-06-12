@@ -130,7 +130,7 @@ describe('WalrusImageStorage', () => {
     });
 
     // Setup default mock responses
-    mockSuiClient.getBalance.mockResolvedValue({
+    mockSuiClient?.getBalance?.mockResolvedValue({
       coinType: 'WAL',
       totalBalance: '1000',
       coinObjectCount: 1,
@@ -138,8 +138,8 @@ describe('WalrusImageStorage', () => {
       coinObjectId: 'mock-coin-object-id',
     });
 
-    mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '1' });
-    mockSuiClient.getOwnedObjects.mockResolvedValue({
+    mockSuiClient?.getLatestSuiSystemState?.mockResolvedValue({ epoch: '1' });
+    mockSuiClient?.getOwnedObjects?.mockResolvedValue({
       data: [
         {
           data: {
@@ -168,12 +168,12 @@ describe('WalrusImageStorage', () => {
       nextCursor: null,
     });
 
-    mockSuiClient.signAndExecuteTransactionBlock.mockResolvedValue({
+    mockSuiClient?.signAndExecuteTransactionBlock?.mockResolvedValue({
       digest: 'test-digest',
       effects: { status: { status: 'success' } },
     });
 
-    mockWalrusClient.writeBlob.mockResolvedValue({
+    mockWalrusClient?.writeBlob?.mockResolvedValue({
       blobId: 'test-blob-id',
       blobObject: {
         id: { id: 'test-blob-id' },
@@ -193,7 +193,7 @@ describe('WalrusImageStorage', () => {
       },
     });
 
-    mockWalrusClient.getBlobObject.mockResolvedValue({
+    mockWalrusClient?.getBlobObject?.mockResolvedValue({
       id: { id: 'test-blob-id' },
       blob_id: 'test-blob-id',
       registered_epoch: 100,
@@ -210,9 +210,9 @@ describe('WalrusImageStorage', () => {
       deletable: true,
     });
 
-    mockWalrusClient.verifyPoA.mockResolvedValue(true);
+    mockWalrusClient?.verifyPoA?.mockResolvedValue(true as any);
 
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as jest.Mock).mockReturnValue(true as any);
     (fs.readFileSync as jest.Mock).mockReturnValue(
       Buffer.concat([mockJpegHeader, mockImageBuffer])
     );
@@ -224,7 +224,7 @@ describe('WalrusImageStorage', () => {
 
   describe('uploadImage', () => {
     it('should validate input path', async () => {
-      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.existsSync as jest.Mock).mockReturnValue(false as any);
       await expect(storage.uploadImage('')).rejects.toThrow(
         /Image path is required/
       );
@@ -236,13 +236,13 @@ describe('WalrusImageStorage', () => {
     it('should validate image format', async () => {
       // Invalid magic numbers
       (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.from('invalid'));
-      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+      await expect(storage.uploadImage(mockImagePath as any)).rejects.toThrow(
         /Unsupported image format/
       );
 
       // Too small
       (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.from([0xff]));
-      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+      await expect(storage.uploadImage(mockImagePath as any)).rejects.toThrow(
         /File too small/
       );
     });
@@ -251,9 +251,9 @@ describe('WalrusImageStorage', () => {
       // Create large buffer > 10MB
       const largeBuffer = Buffer.alloc(11 * 1024 * 1024);
       largeBuffer.write('\xFF\xD8'); // JPEG header
-      (fs.readFileSync as jest.Mock).mockReturnValue(largeBuffer);
+      (fs.readFileSync as jest.Mock).mockReturnValue(largeBuffer as any);
 
-      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+      await expect(storage.uploadImage(mockImagePath as any)).rejects.toThrow(
         /exceeds maximum allowed size/
       );
     });
@@ -282,18 +282,18 @@ describe('WalrusImageStorage', () => {
           },
         });
 
-      mockWalrusClient.readBlob.mockResolvedValueOnce(
+      mockWalrusClient?.readBlob?.mockResolvedValueOnce(
         Buffer.concat([mockJpegHeader, mockImageBuffer])
       );
 
-      const result = await storage.uploadImage(mockImagePath);
-      expect(result).toBe('https://testnet.wal.app/blob/test-blob-id');
-      expect(mockWalrusClient.writeBlob).toHaveBeenCalledTimes(3);
+      const result = await storage.uploadImage(mockImagePath as any);
+      expect(result as any).toBe('https://testnet?.wal?.app/blob/test-blob-id');
+      expect(mockWalrusClient.writeBlob).toHaveBeenCalledTimes(3 as any);
     });
 
     it('should verify uploaded content', async () => {
       // Mock successful upload but verification failure
-      mockWalrusClient.writeBlob.mockResolvedValueOnce({
+      mockWalrusClient?.writeBlob?.mockResolvedValueOnce({
         blobId: 'test-blob-id',
         blobObject: {
           id: { id: 'test-blob-id' },
@@ -314,20 +314,20 @@ describe('WalrusImageStorage', () => {
       });
 
       // Mock verification returning different content
-      mockWalrusClient.readBlob.mockResolvedValueOnce(
+      mockWalrusClient?.readBlob?.mockResolvedValueOnce(
         Buffer.from('different content')
       );
 
-      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+      await expect(storage.uploadImage(mockImagePath as any)).rejects.toThrow(
         /Content integrity check failed/
       );
     });
 
     it('should upload successfully with metadata', async () => {
       const imageBuffer = Buffer.concat([mockJpegHeader, mockImageBuffer]);
-      (fs.readFileSync as jest.Mock).mockReturnValue(imageBuffer);
+      (fs.readFileSync as jest.Mock).mockReturnValue(imageBuffer as any);
 
-      mockWalrusClient.writeBlob.mockResolvedValueOnce({
+      mockWalrusClient?.writeBlob?.mockResolvedValueOnce({
         blobId: 'test-blob-id',
         blobObject: {
           id: { id: 'test-blob-id' },
@@ -347,19 +347,19 @@ describe('WalrusImageStorage', () => {
         },
       });
 
-      mockWalrusClient.readBlob.mockResolvedValueOnce(imageBuffer);
+      mockWalrusClient?.readBlob?.mockResolvedValueOnce(imageBuffer as any);
 
       const result = await storage.uploadTodoImage(
         mockImagePath,
         'Test Todo',
         true
       );
-      expect(result).toBe('https://testnet.wal.app/blob/test-blob-id');
+      expect(result as any).toBe('https://testnet?.wal?.app/blob/test-blob-id');
 
       // Verify metadata was included
       expect(mockWalrusClient.writeBlob).toHaveBeenCalledWith(
         expect.objectContaining({
-          blob: expect.any(Uint8Array),
+          blob: expect.any(Uint8Array as any),
           deletable: false,
           epochs: 52,
           signer: expect.anything(),
@@ -371,11 +371,11 @@ describe('WalrusImageStorage', () => {
             type: 'todo-nft-image',
             checksum_algo: 'sha256',
             encoding: 'binary',
-            width: expect.any(String),
-            height: expect.any(String),
-            size: expect.any(String),
-            checksum: expect.any(String),
-            uploadedAt: expect.any(String),
+            width: expect.any(String as any),
+            height: expect.any(String as any),
+            size: expect.any(String as any),
+            checksum: expect.any(String as any),
+            uploadedAt: expect.any(String as any),
           }),
         })
       );

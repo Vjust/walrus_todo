@@ -24,7 +24,7 @@ export const getFullnodeUrl = getFullnodeUrlFn;
 
 // Create factory function for compatibility
 export function createSuiClient(options: SuiClientOptions): SuiClientClass {
-  return new SuiClient(options);
+  return new SuiClient(options as any);
 }
 
 // Alias for compatibility

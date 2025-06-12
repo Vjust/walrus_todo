@@ -36,7 +36,7 @@ export async function isOwnerOfList(
   list: TodoList
 ): Promise<boolean> {
   // Check owner field
-  if (list.owner === userId) {
+  if (list?.owner === userId) {
     return true;
   }
 
@@ -52,7 +52,7 @@ export async function isCollaboratorOnList(
   list: TodoList
 ): Promise<boolean> {
   // Check collaborators array
-  if (list.collaborators && list.collaborators.includes(userId)) {
+  if (list.collaborators && list?.collaborators?.includes(userId as any)) {
     return true;
   }
 

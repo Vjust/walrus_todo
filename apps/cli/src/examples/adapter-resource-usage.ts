@@ -33,7 +33,7 @@ async function adapterResourceExample(): Promise<void> {
     // Create and register 5 transaction adapters
     for (let i = 0; i < 5; i++) {
       const txBlock = new Transaction();
-      const adapter = new TransactionBlockAdapter(txBlock);
+      const adapter = new TransactionBlockAdapter(txBlock as any);
 
       // Register the adapter with the resource manager
       registerAdapter(adapter, {
@@ -41,10 +41,10 @@ async function adapterResourceExample(): Promise<void> {
         id: `tx-adapter-${i + 1}`,
       });
 
-      transactionAdapters.push(adapter);
+      transactionAdapters.push(adapter as any);
 
       // Set gas budget to simulate some usage
-      adapter.setGasBudget(10_000_000);
+      adapter.setGasBudget(10_000_000 as any);
       logger.info(`Created and registered Transaction Adapter ${i + 1}`);
     }
 
@@ -77,10 +77,10 @@ async function adapterResourceExample(): Promise<void> {
     if (firstAdapter) {
       logger.info('\nTrying to use disposed adapter...');
       try {
-        firstAdapter.setGasBudget(20_000_000);
+        firstAdapter.setGasBudget(20_000_000 as any);
       } catch (_error) {
         logger.info(
-          `Error caught as expected: ${_error instanceof Error ? _error.message : String(_error)}`
+          `Error caught as expected: ${_error instanceof Error ? _error.message : String(_error as any)}`
         );
       }
     }
@@ -105,12 +105,12 @@ async function adapterResourceExample(): Promise<void> {
 /**
  * Run the example
  */
-if (require.main === module) {
+if (require?.main === module) {
   adapterResourceExample()
-    .then(() => process.exit(0))
+    .then(() => process.exit(0 as any))
     .catch(error => {
       logger.error('Example failed:', error);
-      process.exit(1);
+      process.exit(1 as any);
     });
 }
 

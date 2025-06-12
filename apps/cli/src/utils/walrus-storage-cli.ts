@@ -15,14 +15,14 @@ import * as path from 'path';
 import * as os from 'os';
 import { Logger } from './Logger';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec as any);
 const logger = new Logger('walrus-storage-cli');
 
 /**
  * Determines if mock mode should be used based on environment
  */
 function shouldUseMock(): boolean {
-  return process.env.NODE_ENV === 'test';
+  return process.env?.NODE_ENV === 'test';
 }
 
 /**
@@ -51,13 +51,13 @@ export class WalrusStorage {
    * @param {boolean} [forceMock=false] - Force mock mode regardless of environment
    */
   constructor(network: string = 'testnet', forceMock: boolean = false) {
-    this._network = network;
-    this.tempDir = path.join(os.tmpdir(), 'walrus-storage');
-    this.walrusPath = path.join(os.homedir(), '.local', 'bin', 'walrus');
-    this.configPath =
-      process.env.WALRUS_CONFIG_PATH ||
+    this?._network = network;
+    this?.tempDir = path.join(os.tmpdir(), 'walrus-storage');
+    this?.walrusPath = path.join(os.homedir(), '.local', 'bin', 'walrus');
+    this?.configPath =
+      process?.env?.WALRUS_CONFIG_PATH ||
       path.join(os.homedir(), '.config', 'walrus', 'client_config.yaml');
-    this.useMock = forceMock || shouldUseMock();
+    this?.useMock = forceMock || shouldUseMock();
 
     // Create temp directory if it doesn't exist
     if (!fs.existsSync(this.tempDir)) {
@@ -71,17 +71,17 @@ export class WalrusStorage {
   async init(): Promise<void> {
     if (this.useMock) {
       logger.info('Using mock Walrus storage');
-      this.isConnected = true;
+      this?.isConnected = true;
       return;
     }
 
     // Check if Walrus CLI is available
     try {
       await execAsync(`${this.walrusPath} --version`);
-      this.isConnected = true;
+      this?.isConnected = true;
     } catch (error) {
       throw new CLIError(
-        'Walrus CLI not found. Please install it from https://docs.wal.app',
+        'Walrus CLI not found. Please install it from https://docs?.wal?.app',
         'WALRUS_CLI_NOT_FOUND'
       );
     }
@@ -100,7 +100,7 @@ export class WalrusStorage {
    * Disconnect (no-op for CLI version)
    */
   async disconnect(): Promise<void> {
-    this.isConnected = false;
+    this?.isConnected = false;
   }
 
   /**
@@ -140,7 +140,7 @@ export class WalrusStorage {
 
       // Store using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command);
+      const { stdout } = await execAsync(command as any);
 
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -154,8 +154,8 @@ export class WalrusStorage {
       return blobIdMatch[1];
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -211,7 +211,7 @@ export class WalrusStorage {
       // Store using Walrus CLI with verbose output
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
       logger.info(`Executing: ${command}`);
-      const { stdout, stderr } = await execAsync(command);
+      const { stdout, stderr } = await execAsync(command as any);
 
       logger.info(`Walrus CLI output: ${stdout}`);
       if (stderr) {
@@ -242,7 +242,7 @@ export class WalrusStorage {
       ];
 
       for (const pattern of txIdPatterns) {
-        const match = stdout.match(pattern) || stderr?.match(pattern);
+        const match = stdout.match(pattern as any) || stderr?.match(pattern as any);
         if (match) {
           transactionId = match[1].trim();
           break;
@@ -252,7 +252,7 @@ export class WalrusStorage {
       // Generate explorer URL if we have transaction ID
       if (transactionId) {
         const explorerBase =
-          this._network === 'mainnet'
+          this?._network === 'mainnet'
             ? 'https://suiscan.xyz/mainnet'
             : 'https://suiscan.xyz/testnet';
         explorerUrl = `${explorerBase}/tx/${transactionId}`;
@@ -260,9 +260,9 @@ export class WalrusStorage {
 
       // Generate Walrus aggregator URL for blob access
       const aggregatorUrl =
-        this._network === 'mainnet'
-          ? `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${blobId}`
-          : `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`;
+        this?._network === 'mainnet'
+          ? `https://aggregator.walrus-mainnet?.walrus?.space/v1/blobs/${blobId}`
+          : `https://aggregator.walrus-testnet?.walrus?.space/v1/blobs/${blobId}`;
 
       return {
         blobId,
@@ -276,8 +276,8 @@ export class WalrusStorage {
       };
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -301,7 +301,7 @@ export class WalrusStorage {
 
       // Store using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command);
+      const { stdout } = await execAsync(command as any);
 
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -315,8 +315,8 @@ export class WalrusStorage {
       return blobIdMatch[1];
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -353,7 +353,7 @@ export class WalrusStorage {
     const tempFile = path.join(this.tempDir, fileName);
 
     try {
-      if (Buffer.isBuffer(data)) {
+      if (Buffer.isBuffer(data as any)) {
         fs.writeFileSync(tempFile, data);
       } else {
         fs.writeFileSync(tempFile, data, 'utf8');
@@ -361,7 +361,7 @@ export class WalrusStorage {
 
       // Store using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command);
+      const { stdout } = await execAsync(command as any);
 
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -375,8 +375,8 @@ export class WalrusStorage {
       return blobIdMatch[1];
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -408,15 +408,15 @@ export class WalrusStorage {
     try {
       // Retrieve using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} get ${blobId} --output ${tempFile}`;
-      await execAsync(command);
+      await execAsync(command as any);
 
       // Read and parse the file
       const data = fs.readFileSync(tempFile, 'utf8');
-      return JSON.parse(data);
+      return JSON.parse(data as any);
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -448,15 +448,15 @@ export class WalrusStorage {
     try {
       // Retrieve using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} get ${blobId} --output ${tempFile}`;
-      await execAsync(command);
+      await execAsync(command as any);
 
       // Read and parse the file
       const data = fs.readFileSync(tempFile, 'utf8');
-      return JSON.parse(data);
+      return JSON.parse(data as any);
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -474,10 +474,10 @@ export class WalrusStorage {
 
     try {
       const command = `${this.walrusPath} --config ${this.configPath} delete ${blobId}`;
-      await execAsync(command);
+      await execAsync(command as any);
     } catch (error) {
       // Some blobs may not be deletable
-      if (error.message.includes('not deletable')) {
+      if (error?.message?.includes('not deletable')) {
         throw new CLIError('Blob is not deletable', 'NOT_DELETABLE');
       }
       throw error;
@@ -496,10 +496,10 @@ export class WalrusStorage {
 
     try {
       const command = `${this.walrusPath} --config ${this.configPath} status ${blobId}`;
-      await execAsync(command);
+      await execAsync(command as any);
       return true;
     } catch (error) {
-      if (error.message.includes('not found')) {
+      if (error?.message?.includes('not found')) {
         return false;
       }
       throw error;

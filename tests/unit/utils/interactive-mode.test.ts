@@ -62,8 +62,8 @@ function createMockOutputStream(): MockWritableStream {
     },
   }) as MockWritableStream;
 
-  stream.getOutput = () => chunks.join('');
-  stream.chunks = chunks;
+  stream?.getOutput = () => chunks.join('');
+  stream?.chunks = chunks;
   return stream;
 }
 
@@ -83,11 +83,11 @@ function createMockReadlineInterface(
         default: 'test response',
       };
 
-      const response = Object.keys(responses).find(key => query.includes(key))
-        ? responses[Object.keys(responses).find(key => query.includes(key))!]
+      const response = Object.keys(responses as any).find(key => query.includes(key as any))
+        ? responses[Object.keys(responses as any).find(key => query.includes(key as any))!]
         : responses.default;
 
-      setTimeout(() => callback(response), 0);
+      setTimeout(() => callback(response as any), 0);
     }),
     close: jest.fn(),
     prompt: jest.fn(),
@@ -154,7 +154,7 @@ describe('InteractiveMode', () => {
 
   // Helper function to access private methods for testing
   function getPrivateMethod(instance: InteractiveMode, methodName: string) {
-    return instance[methodName]?.bind(instance);
+    return instance[methodName]?.bind(instance as any);
   }
 
   describe('start', () => {
@@ -162,27 +162,27 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       // Mock the prompt method to avoid hanging
-      mockRl.prompt.mockImplementation(() => {});
+      mockRl?.prompt?.mockImplementation(() => {});
 
       // Start interactive mode (this will call the welcome message)
       const startPromise = interactiveMode.start();
 
       // Trigger immediate exit to avoid hanging
       setTimeout(() => {
-        mockRl.on.mock.calls.forEach(([event, handler]) => {
+        mockRl?.on?.mock.calls.forEach(([event, handler]) => {
           if (event === 'line') {
             handler('exit');
           }
         });
       }, 10);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('Welcome to Walrus Todo Interactive Mode')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('help')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('exit')
       );
       expect(mockRl.prompt).toHaveBeenCalled();
@@ -197,13 +197,13 @@ describe('InteractiveMode', () => {
         .spyOn(require('child_process'), 'spawn')
         .mockImplementation(() => ({
           on: jest.fn((event, callback) => {
-            if (event === 'exit') callback(0);
+            if (event === 'exit') callback(0 as any);
           }),
         }));
 
       // Find the line event handler
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -216,10 +216,10 @@ describe('InteractiveMode', () => {
       // Simulate user input
       lineHandler('list');
 
-      expect(spawnSpy).toHaveBeenCalledWith(
+      expect(spawnSpy as any).toHaveBeenCalledWith(
         process.execPath,
         expect.arrayContaining(['list']),
-        expect.any(Object)
+        expect.any(Object as any)
       );
 
       spawnSpy.mockRestore();
@@ -229,7 +229,7 @@ describe('InteractiveMode', () => {
       let lineHandler: (input: string) => void = () => {};
       let closeHandler: () => void = () => {};
 
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         } else if (event === 'close') {
@@ -250,7 +250,7 @@ describe('InteractiveMode', () => {
     it('should handle empty input', () => {
       let lineHandler: (input: string) => void = () => {};
 
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -271,16 +271,16 @@ describe('InteractiveMode', () => {
     it('should execute CLI commands through spawn', () => {
       const mockChild = {
         on: jest.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') callback(0 as any);
         }),
       };
 
       const spawnSpy = jest
         .spyOn(require('child_process'), 'spawn')
-        .mockReturnValue(mockChild);
+        .mockReturnValue(mockChild as any);
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -293,7 +293,7 @@ describe('InteractiveMode', () => {
       // Simulate command input
       lineHandler('add "New todo"');
 
-      expect(spawnSpy).toHaveBeenCalledWith(
+      expect(spawnSpy as any).toHaveBeenCalledWith(
         process.execPath,
         expect.arrayContaining(['add', '"New todo"']),
         expect.objectContaining({
@@ -315,10 +315,10 @@ describe('InteractiveMode', () => {
 
       const spawnSpy = jest
         .spyOn(require('child_process'), 'spawn')
-        .mockReturnValue(mockChild);
+        .mockReturnValue(mockChild as any);
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -332,14 +332,14 @@ describe('InteractiveMode', () => {
       lineHandler('invalid-command');
 
       // Trigger error
-      const errorCallback = mockChild.on.mock.calls.find(
+      const errorCallback = mockChild?.on?.mock.calls.find(
         call => call[0] === 'error'
       )?.[1];
       if (errorCallback) {
         errorCallback(new Error('Command failed'));
       }
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy as any).toHaveBeenCalled();
 
       spawnSpy.mockRestore();
       consoleErrorSpy.mockRestore();
@@ -352,12 +352,12 @@ describe('InteractiveMode', () => {
         .spyOn(require('child_process'), 'spawn')
         .mockImplementation(() => ({
           on: jest.fn((event, callback) => {
-            if (event === 'exit') callback(0);
+            if (event === 'exit') callback(0 as any);
           }),
         }));
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -370,10 +370,10 @@ describe('InteractiveMode', () => {
       // Test shortcut expansion
       lineHandler('l'); // Should expand to 'list'
 
-      expect(spawnSpy).toHaveBeenCalledWith(
+      expect(spawnSpy as any).toHaveBeenCalledWith(
         process.execPath,
         expect.arrayContaining(['list']),
-        expect.any(Object)
+        expect.any(Object as any)
       );
 
       spawnSpy.mockRestore();
@@ -384,12 +384,12 @@ describe('InteractiveMode', () => {
         .spyOn(require('child_process'), 'spawn')
         .mockImplementation(() => ({
           on: jest.fn((event, callback) => {
-            if (event === 'exit') callback(0);
+            if (event === 'exit') callback(0 as any);
           }),
         }));
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -402,10 +402,10 @@ describe('InteractiveMode', () => {
       // Test shortcut with arguments
       lineHandler('a "Test todo"'); // Should expand to 'add "Test todo"'
 
-      expect(spawnSpy).toHaveBeenCalledWith(
+      expect(spawnSpy as any).toHaveBeenCalledWith(
         process.execPath,
         expect.arrayContaining(['add', '"Test todo"']),
-        expect.any(Object)
+        expect.any(Object as any)
       );
 
       spawnSpy.mockRestore();
@@ -417,7 +417,7 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -430,16 +430,16 @@ describe('InteractiveMode', () => {
       // Trigger help command
       lineHandler('help');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('Interactive Mode Commands')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('add')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('list')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('exit')
       );
 
@@ -452,7 +452,7 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -465,7 +465,7 @@ describe('InteractiveMode', () => {
       // Trigger set-list command
       lineHandler('set-list work');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('Current list set to: work')
       );
 
@@ -479,7 +479,7 @@ describe('InteractiveMode', () => {
       interactiveMode.setCurrentList('test-list');
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -492,7 +492,7 @@ describe('InteractiveMode', () => {
       // Trigger current-list command
       lineHandler('current-list');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('Current list: test-list')
       );
 
@@ -502,16 +502,16 @@ describe('InteractiveMode', () => {
 
   describe('autocomplete', () => {
     it('should be configured with completer function', () => {
-      expect(mockCreateInterface).toHaveBeenCalledWith(
+      expect(mockCreateInterface as any).toHaveBeenCalledWith(
         expect.objectContaining({
-          completer: expect.any(Function),
+          completer: expect.any(Function as any),
         })
       );
     });
 
     it('should provide command suggestions through completer', () => {
       // Get the completer function from the createInterface call
-      const createInterfaceCall = mockCreateInterface.mock.calls[0];
+      const createInterfaceCall = mockCreateInterface.mock?.calls?.[0];
       const options = createInterfaceCall[0] as readline.ReadLineOptions;
       const completer = options.completer as (
         line: string
@@ -519,12 +519,12 @@ describe('InteractiveMode', () => {
 
       if (completer) {
         const result = completer('ad');
-        expect(result).toEqual([['add'], 'ad']);
+        expect(result as any).toEqual([['add'], 'ad']);
       }
     });
 
     it('should handle no matches in completer', () => {
-      const createInterfaceCall = mockCreateInterface.mock.calls[0];
+      const createInterfaceCall = mockCreateInterface.mock?.calls?.[0];
       const options = createInterfaceCall[0] as readline.ReadLineOptions;
       const completer = options.completer as (
         line: string
@@ -538,7 +538,7 @@ describe('InteractiveMode', () => {
     });
 
     it('should provide all commands for empty input in completer', () => {
-      const createInterfaceCall = mockCreateInterface.mock.calls[0];
+      const createInterfaceCall = mockCreateInterface.mock?.calls?.[0];
       const options = createInterfaceCall[0] as readline.ReadLineOptions;
       const completer = options.completer as (
         line: string
@@ -559,7 +559,7 @@ describe('InteractiveMode', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -587,7 +587,7 @@ describe('InteractiveMode', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
       let lineHandler: (input: string) => void = () => {};
-      mockRl.on.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
+      mockRl?.on?.mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
         if (event === 'line') {
           lineHandler = handler;
         }
@@ -600,8 +600,8 @@ describe('InteractiveMode', () => {
       // Trigger clear command
       lineHandler('clear');
 
-      expect(consoleClearSpy).toHaveBeenCalled();
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleClearSpy as any).toHaveBeenCalled();
+      expect(consoleLogSpy as any).toHaveBeenCalledWith(
         expect.stringContaining('Welcome to Walrus Todo Interactive Mode')
       );
 
@@ -612,7 +612,7 @@ describe('InteractiveMode', () => {
 
   describe('stream handling', () => {
     it('should use process.stdin and process.stdout by default', () => {
-      expect(mockCreateInterface).toHaveBeenCalledWith(
+      expect(mockCreateInterface as any).toHaveBeenCalledWith(
         expect.objectContaining({
           input: process.stdin,
           output: process.stdout,
@@ -621,12 +621,12 @@ describe('InteractiveMode', () => {
     });
 
     it('should configure readline interface correctly', () => {
-      expect(mockCreateInterface).toHaveBeenCalledWith(
+      expect(mockCreateInterface as any).toHaveBeenCalledWith(
         expect.objectContaining({
-          input: expect.any(Object),
-          output: expect.any(Object),
+          input: expect.any(Object as any),
+          output: expect.any(Object as any),
           prompt: expect.stringContaining('walrus'),
-          completer: expect.any(Function),
+          completer: expect.any(Function as any),
         })
       );
     });

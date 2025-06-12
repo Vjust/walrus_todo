@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import { BlockchainVerifier } from '../../services/ai/BlockchainVerifier';
 import { SuiAIVerifierAdapter } from '../../services/ai/adapters/SuiAIVerifierAdapter';
@@ -26,7 +26,7 @@ export default class AiPermissions extends BaseCommand {
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(
-        `Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error as any)}`
       );
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -73,7 +73,7 @@ export default class AiPermissions extends BaseCommand {
   };
 
   private async initializePermissionManager() {
-    const { flags } = await this.parse(AiPermissions);
+    const { flags } = await this.parse(AiPermissions as any);
 
     // Check for required blockchain flags
     if (!flags.registry || !flags.packageId) {
@@ -108,7 +108,7 @@ export default class AiPermissions extends BaseCommand {
       );
 
       // Create blockchain verifier
-      const blockchainVerifier = new BlockchainVerifier(verifierAdapter);
+      const blockchainVerifier = new BlockchainVerifier(verifierAdapter as any);
 
       // Create permission manager
       const permissionManager = initializePermissionManager(
@@ -127,7 +127,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   async run() {
-    const { flags } = await this.parse(AiPermissions);
+    const { flags } = await this.parse(AiPermissions as any);
 
     // Initialize permission manager
     const permissionManager = await this.initializePermissionManager();
@@ -195,7 +195,7 @@ export default class AiPermissions extends BaseCommand {
           flags.provider
         );
 
-        if (flags.format === 'json') {
+        if (flags?.format === 'json') {
           this.log(
             JSON.stringify(
               {
@@ -215,7 +215,7 @@ export default class AiPermissions extends BaseCommand {
             `Permission Level: ${chalk.cyan(this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD))}`
           );
 
-          if (operations.length === 0) {
+          if (operations?.length === 0) {
             this.log(chalk.yellow('No operations allowed for this provider.'));
           } else {
             this.log(chalk.bold('\nAllowed Operations:'));
@@ -228,7 +228,7 @@ export default class AiPermissions extends BaseCommand {
         // List all providers and their permission levels
         const credentials = await secureCredentialManager.listCredentials();
 
-        if (credentials.length === 0) {
+        if (credentials?.length === 0) {
           this.log(chalk.yellow('No credentials found.'));
           this.log(
             chalk.dim(
@@ -238,7 +238,7 @@ export default class AiPermissions extends BaseCommand {
           return;
         }
 
-        if (flags.format === 'json') {
+        if (flags?.format === 'json') {
           const providers = await Promise.all(
             credentials.map(async c => {
               const operations = await permissionManager.getAllowedOperations(
@@ -268,7 +268,7 @@ export default class AiPermissions extends BaseCommand {
               `  Permission Level: ${chalk.cyan(this.permissionLevelToString(credential.permissionLevel || AIPermissionLevel.STANDARD))}`
             );
 
-            if (operations.length === 0) {
+            if (operations?.length === 0) {
               this.log(`  Operations:       ${chalk.yellow('None')}`);
             } else if (operations.length <= 5) {
               this.log(`  Operations:       ${operations.join(', ')}`);
@@ -324,7 +324,7 @@ export default class AiPermissions extends BaseCommand {
         flags.provider
       );
 
-      if (flags.format === 'json') {
+      if (flags?.format === 'json') {
         this.log(
           JSON.stringify(
             {
@@ -485,7 +485,7 @@ export default class AiPermissions extends BaseCommand {
         );
 
         this.log(chalk.bold('\nAllowed Operations:'));
-        if (operations.length === 0) {
+        if (operations?.length === 0) {
           this.log(
             chalk.yellow('No operations allowed with this permission level.')
           );

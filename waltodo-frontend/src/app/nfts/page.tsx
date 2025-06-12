@@ -31,9 +31,9 @@ const HelpCircleIcon = () => (
 );
 
 const Loader2Icon = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  <svg className={className} xmlns="http://www?.w3?.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5?.291A7?.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
   </svg>
 );
 
@@ -51,8 +51,8 @@ function NFTGalleryPage() {
   const { loading, error } = state;
   const todos = useMemo(() => state.todos, [state.todos]);
   const { refreshTodos } = actions;
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false as any);
+  const [showHelpModal, setShowHelpModal] = useState(false as any);
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
 
   // Filter NFT todos - todos with images or marked as NFTs
@@ -60,8 +60,8 @@ function NFTGalleryPage() {
     return todos.filter(todo => 
       todo.imageUrl || 
       todo.blockchainStored || 
-      (todo.metadata && todo.metadata.includes('nft')) ||
-      (todo.tags && todo.tags.includes('nft'))
+      (todo.metadata && todo?.metadata?.includes('nft')) ||
+      (todo.tags && todo?.tags?.includes('nft'))
     );
   }, [todos]);
 
@@ -69,7 +69,7 @@ function NFTGalleryPage() {
   const stats = useMemo(() => {
     const total = nftTodos.length;
     const byCategory = nftTodos.reduce((acc, todo) => {
-      const category = (todo.tags && todo.tags[0]) || 'Uncategorized';
+      const category = (todo.tags && todo?.tags?.[0]) || 'Uncategorized';
       acc[category] = (acc[category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -93,12 +93,12 @@ function NFTGalleryPage() {
       if (exportFormat === 'json') {
         const data = JSON.stringify(nftTodos, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob as any);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `todo-nfts-${new Date().toISOString().split('T')[0]}.json`;
+        a?.href = url;
+        a?.download = `todo-nfts-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url as any);
       } else {
         // CSV export
         const headers = ['ID', 'Title', 'Description', 'Category', 'Created', 'Walrus URL', 'File Size'];
@@ -106,23 +106,23 @@ function NFTGalleryPage() {
           todo.id,
           todo.title,
           todo.description || '',
-          (todo.tags && todo.tags[0]) || 'Uncategorized',
+          (todo.tags && todo?.tags?.[0]) || 'Uncategorized',
           todo.createdAt ? new Date(todo.createdAt).toISOString() : new Date().toISOString(),
           todo.imageUrl || '',
           100000, // estimated size
         ]);
         
         const csv = [headers, ...rows]
-          .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+          .map(row => row.map(cell => `"${String(cell as any).replace(/"/g, '""')}"`).join(','))
           .join('\n');
         
         const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob as any);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `todo-nfts-${new Date().toISOString().split('T')[0]}.csv`;
+        a?.href = url;
+        a?.download = `todo-nfts-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url as any);
       }
       
       toast.success('NFTs exported successfully');
@@ -142,8 +142,8 @@ function NFTGalleryPage() {
     if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any))  } ${  sizes[i]}`;
   };
 
   return (
@@ -207,7 +207,7 @@ function NFTGalleryPage() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                   <button
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => setShowCreateModal(true as any)}
                     disabled={!isConnected}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -215,7 +215,7 @@ function NFTGalleryPage() {
                     Create NFT
                   </button>
                   <button
-                    onClick={() => setShowHelpModal(true)}
+                    onClick={() => setShowHelpModal(true as any)}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <span className="mr-2"><HelpCircleIcon /></span>
@@ -228,7 +228,7 @@ function NFTGalleryPage() {
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <select
                     value={exportFormat}
-                    onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')}
+                    onChange={(e) => setExportFormat(e?.target?.value as 'json' | 'csv')}
                     className="flex-1 sm:flex-none block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                   >
                     <option value="json">JSON</option>
@@ -236,7 +236,7 @@ function NFTGalleryPage() {
                   </select>
                   <button
                     onClick={handleExport}
-                    disabled={nftTodos.length === 0}
+                    disabled={nftTodos?.length === 0}
                     className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="mr-2"><DownloadIcon /></span>
@@ -279,7 +279,7 @@ function NFTGalleryPage() {
                 Error loading NFTs
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {String(error) || 'Failed to load your NFT collection'}
+                {String(error as any) || 'Failed to load your NFT collection'}
               </p>
               <div className="mt-6">
                 <button
@@ -290,7 +290,7 @@ function NFTGalleryPage() {
                 </button>
               </div>
             </div>
-          ) : nftTodos.length === 0 ? (
+          ) : nftTodos?.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
                 <span className="text-gray-600"><PlusIcon /></span>
@@ -303,7 +303,7 @@ function NFTGalleryPage() {
               </p>
               <div className="mt-6">
                 <button
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => setShowCreateModal(true as any)}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <span className="mr-2"><PlusIcon /></span>
@@ -319,9 +319,9 @@ function NFTGalleryPage() {
         {/* Create NFT Modal */}
         {showCreateModal && (
           <CreateNFTModal
-            onClose={() => setShowCreateModal(false)}
+            onClose={() => setShowCreateModal(false as any)}
             onSuccess={() => {
-              setShowCreateModal(false);
+              setShowCreateModal(false as any);
               refreshTodos();
             }}
           />
@@ -329,7 +329,7 @@ function NFTGalleryPage() {
 
         {/* Help Modal */}
         {showHelpModal && (
-          <HelpModal onClose={() => setShowHelpModal(false)} />
+          <HelpModal onClose={() => setShowHelpModal(false as any)} />
         )}
         
         {/* Mobile Bottom Navigation */}
@@ -372,7 +372,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false as any);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -381,7 +381,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
       return;
     }
 
-    setLoading(true);
+    setLoading(true as any);
     try {
       // TODO: Implement NFT creation logic
       toast('NFT creation not yet implemented', { icon: 'ℹ️' });
@@ -390,7 +390,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
       console.error('NFT creation error:', error);
       toast.error('Failed to create NFT');
     } finally {
-      setLoading(false);
+      setLoading(false as any);
     }
   };
 
@@ -418,7 +418,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
               type="text"
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e?.target?.value)}
               required
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
@@ -430,7 +430,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
             <textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e?.target?.value)}
               rows={3}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
@@ -443,7 +443,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
               type="text"
               id="category"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => setCategory(e?.target?.value)}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
@@ -455,7 +455,7 @@ function CreateNFTModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
               type="file"
               id="file"
               accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => setFile(e?.target?.files?.[0] || null)}
               required
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />

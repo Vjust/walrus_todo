@@ -22,8 +22,8 @@ export class WalletExtensionSigner extends Signer {
 
   constructor() {
     super();
-    this.cachedAddress = 'demo-address';
-    this.mockPublicKey = this.createMockPublicKey();
+    this?.cachedAddress = 'demo-address';
+    this?.mockPublicKey = this.createMockPublicKey();
   }
 
   private createMockPublicKey(): PublicKey {
@@ -36,9 +36,9 @@ export class WalletExtensionSigner extends Signer {
         data: Uint8Array,
         signature: Uint8Array
       ): Promise<boolean> => {
-        return signature.length === 64 && blake2b(data).length > 0;
+        return signature?.length === 64 && blake2b(data as any).length > 0;
       },
-      toRawBytes: () => new Uint8Array(32),
+      toRawBytes: () => new Uint8Array(32 as any),
       // Implementation of toString with never return type
       toString: (): never => {
         throw new Error('toString() should not be called');
@@ -69,22 +69,22 @@ export class WalletExtensionSigner extends Signer {
   }
 
   private generateSignature(data: Uint8Array): Uint8Array {
-    if (!data || data.length === 0) {
+    if (!data || data?.length === 0) {
       throw new Error('Invalid data bytes');
     }
     // Generate deterministic mock signature based on input data
-    const mockSignature = new Uint8Array(64);
-    const hash = blake2b(data);
+    const mockSignature = new Uint8Array(64 as any);
+    const hash = blake2b(data as any);
     mockSignature.set(hash.slice(0, 32), 0);
     mockSignature.set(hash.slice(32, 64), 32);
     return mockSignature;
   }
 
   async signData(data: Uint8Array): Promise<SignatureWithBytes> {
-    const signature = this.generateSignature(data);
+    const signature = this.generateSignature(data as any);
     return {
-      signature: toB64(signature),
-      bytes: toB64(data),
+      signature: toB64(signature as any),
+      bytes: toB64(data as any),
     };
   }
 
@@ -98,10 +98,10 @@ export class WalletExtensionSigner extends Signer {
       'TransactionData' as IntentScope,
       bytes
     );
-    const signature = this.generateSignature(intentMessage);
+    const signature = this.generateSignature(intentMessage as any);
     return {
-      signature: toB64(signature),
-      bytes: toB64(bytes),
+      signature: toB64(signature as any),
+      bytes: toB64(bytes as any),
     } as SignatureWithBytes;
   }
 
@@ -110,10 +110,10 @@ export class WalletExtensionSigner extends Signer {
       'PersonalMessage' as IntentScope,
       message
     );
-    const signature = this.generateSignature(intentMessage);
+    const signature = this.generateSignature(intentMessage as any);
     return {
-      signature: toB64(signature),
-      bytes: toB64(message),
+      signature: toB64(signature as any),
+      bytes: toB64(message as any),
     } as SignatureWithBytes;
   }
 
@@ -126,7 +126,7 @@ export class WalletExtensionSigner extends Signer {
   }
 
   async sign(data: Uint8Array): Promise<Uint8Array> {
-    return this.generateSignature(data);
+    return this.generateSignature(data as any);
   }
 
   getKeyScheme(): SignatureScheme {

@@ -49,14 +49,14 @@ jest.mock('../utils/environment-config', () => ({
     };
     return defaults[key as keyof typeof defaults];
   }),
-  hasEnv: jest.fn().mockReturnValue(true),
+  hasEnv: jest.fn().mockReturnValue(true as any),
 }));
 
 describe('OCLIF Command Parsing Fix', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.NODE_ENV = 'test';
-    process.env.XAI_API_KEY = 'test-key';
+    process.env?.NODE_ENV = 'test';
+    process.env?.XAI_API_KEY = 'test-key';
   });
 
   describe('OCLIF Config Creation', () => {
@@ -65,7 +65,7 @@ describe('OCLIF Command Parsing Fix', () => {
 
       expect(config.name).toBe('waltodo');
       expect(config.bin).toBe('waltodo');
-      expect(config.version).toBe('1.0.0');
+      expect(config.version).toBe('1?.0?.0');
       expect(config.runHook).toBeDefined();
       expect(typeof config.runHook).toBe('function');
     });
@@ -78,7 +78,7 @@ describe('OCLIF Command Parsing Fix', () => {
       expect(config.dataDir).toBeDefined();
       expect(config.configDir).toBeDefined();
       expect(config.cacheDir).toBeDefined();
-      expect(config.valid).toBe(true);
+      expect(config.valid).toBe(true as any);
       expect(config.platform).toBeDefined();
       expect(config.arch).toBeDefined();
     });
@@ -87,15 +87,15 @@ describe('OCLIF Command Parsing Fix', () => {
   describe('BaseCommand Initialization', () => {
     it('should initialize a command extending BaseCommand without config errors', async () => {
       // Use AI command which extends BaseCommand instead of BaseCommand directly
-      const command = await initializeCommandForTest(AI, [], {
+      const command = await initializeCommandForTest(AI as any, [], {
         mockParse: true,
         parseResult: { flags: {}, args: {} },
       });
 
       expect(command.config).toBeDefined();
-      expect(command.config.runHook).toBeDefined();
-      expect(typeof command.config.runHook).toBe('function');
-      expect(command).toBeInstanceOf(Command); // BaseCommand extends Command
+      expect(command?.config?.runHook).toBeDefined();
+      expect(typeof command?.config?.runHook).toBe('function');
+      expect(command as any).toBeInstanceOf(Command as any); // BaseCommand extends Command
     });
   });
 
@@ -108,9 +108,9 @@ describe('OCLIF Command Parsing Fix', () => {
         { operation: 'status' }
       );
 
-      expect(command).toBeDefined();
+      expect(command as any).toBeDefined();
       expect(command.config).toBeDefined();
-      expect(command.config.runHook).toBeDefined();
+      expect(command?.config?.runHook).toBeDefined();
       expect(output.join('')).toContain('AI Service Status');
     });
 
@@ -122,7 +122,7 @@ describe('OCLIF Command Parsing Fix', () => {
         { operation: 'help' }
       );
 
-      expect(command).toBeDefined();
+      expect(command as any).toBeDefined();
       expect(output.join('')).toContain('AI Command Help');
     });
 
@@ -134,7 +134,7 @@ describe('OCLIF Command Parsing Fix', () => {
         { operation: 'summarize' }
       );
 
-      expect(command).toBeDefined();
+      expect(command as any).toBeDefined();
       expect(output.join('')).toContain('summary');
     });
 
@@ -143,22 +143,22 @@ describe('OCLIF Command Parsing Fix', () => {
       const command = new AI([], undefined as any);
 
       // The init method should handle missing config in test env
-      await expect(command.init()).resolves.not.toThrow();
+      await expect(command.init()).resolves?.not?.toThrow();
 
       expect(command.config).toBeDefined();
-      expect(command.config.runHook).toBeDefined();
+      expect(command?.config?.runHook).toBeDefined();
     });
   });
 
   describe('Command Error Handling', () => {
     it('should handle parse errors gracefully', async () => {
-      const command = await initializeCommandForTest(AI, [], {
+      const command = await initializeCommandForTest(AI as any, [], {
         mockParse: true,
         parseResult: { flags: {}, args: { operation: 'invalid' } },
       });
 
       // Should not throw during initialization
-      expect(command).toBeDefined();
+      expect(command as any).toBeDefined();
       expect(command.config).toBeDefined();
     });
 

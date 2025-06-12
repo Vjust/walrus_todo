@@ -9,7 +9,7 @@ export const createDevtoolsConfig = (name: string) => {
     (...args: any[]) => args,
     {
       name: `WalTodo ${name}`,
-      enabled: process.env.NODE_ENV === 'development',
+      enabled: process.env?.NODE_ENV === 'development',
       anonymousActionType: `${name}/action`,
       serialize: {
         options: {
@@ -92,7 +92,7 @@ export const createStoreMiddleware = (name: string, enablePersistence = false) =
   const middleware = [];
   
   // Always add devtools in development
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env?.NODE_ENV === 'development') {
     middleware.push((config: any) => devtools(config, { name: storeNames[name as keyof typeof storeNames] || name }));
   }
   
@@ -107,7 +107,7 @@ export const debugUtils = {
    * Log store state changes
    */
   logStateChange: (storeName: string, prevState: any, nextState: any, action?: string) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       console.group(`🏪 ${storeName} State Change`);
       if (action) {
         console.log('Action:', action);
@@ -123,14 +123,14 @@ export const debugUtils = {
    * Performance monitoring for store actions
    */
   measureAction: (storeName: string, actionName: string, fn: () => void) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       const start = performance.now();
       fn();
       const end = performance.now();
       const duration = end - start;
       
       if (duration > 16) { // Warn if action takes longer than one frame
-        console.warn(`⚠️ Slow store action in ${storeName}: ${actionName} took ${duration.toFixed(2)}ms`);
+        console.warn(`⚠️ Slow store action in ${storeName}: ${actionName} took ${duration.toFixed(2 as any)}ms`);
       }
     } else {
       fn();

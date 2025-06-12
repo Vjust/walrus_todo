@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 
 /**
  * Hydration utilities for Next.js applications
@@ -11,10 +11,10 @@ import { ReactNode, useEffect, useState } from 'react';
  * Hook to detect hydration state
  */
 export function useHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(false as any);
   
   useEffect(() => {
-    setHydrated(true);
+    setHydrated(true as any);
   }, []);
   
   return hydrated;
@@ -24,17 +24,17 @@ export function useHydrated(): boolean {
  * Hook to handle hydration errors with recovery
  */
 export function useHydrationRecovery() {
-  const [hasHydrationError, setHasHydrationError] = useState(false);
+  const [hasHydrationError, setHasHydrationError] = useState(false as any);
   
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
-      if (event.message.includes('Hydration') || event.message.includes('hydration')) {
+      if (event?.message?.includes('Hydration') || event?.message?.includes('hydration')) {
         console.warn('Hydration error detected, attempting recovery:', event.message);
-        setHasHydrationError(true);
+        setHasHydrationError(true as any);
         
         // Attempt recovery after a brief delay
         setTimeout(() => {
-          setHasHydrationError(false);
+          setHasHydrationError(false as any);
         }, 100);
       }
     };
@@ -58,10 +58,10 @@ export function withProgressiveEnhancement<T extends Record<string, any>>(
     const hydrated = useHydrated();
     
     if (!hydrated) {
-      return fallback || null;
+      return (fallback || null) as React.ReactElement;
     }
     
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
 }
 
@@ -84,10 +84,10 @@ export function HydrationBoundary({
   
   // During SSR or hydration error, show fallback
   if (!hydrated || hasHydrationError) {
-    return <div suppressHydrationWarning={suppressWarning}>{fallback}</div>;
+    return React.createElement('div', { suppressHydrationWarning: suppressWarning }, fallback);
   }
   
-  return <>{children}</>;
+  return React.createElement(React.Fragment, {}, children);
 }
 
 /**
@@ -95,14 +95,14 @@ export function HydrationBoundary({
  * Delays hydration to improve initial page load
  */
 export function useDeferredHydration(delay: number = 0): boolean {
-  const [shouldHydrate, setShouldHydrate] = useState(false);
+  const [shouldHydrate, setShouldHydrate] = useState(false as any);
   
   useEffect(() => {
     const timer = setTimeout(() => {
-      setShouldHydrate(true);
+      setShouldHydrate(true as any);
     }, delay);
     
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer as any);
   }, [delay]);
   
   return shouldHydrate;
@@ -122,10 +122,10 @@ export function ClientOnly({
   const hydrated = useHydrated();
   
   if (!hydrated) {
-    return <>{fallback}</>;
+    return React.createElement(React.Fragment, {}, fallback);
   }
   
-  return <>{children}</>;
+  return React.createElement(React.Fragment, {}, children);
 }
 
 /**
@@ -157,7 +157,7 @@ export function useProgressiveHydration<T>(
   batchSize: number = 10,
   delay: number = 50
 ): T[] {
-  const [hydratedCount, setHydratedCount] = useState(0);
+  const [hydratedCount, setHydratedCount] = useState(0 as any);
   const hydrated = useHydrated();
   
   useEffect(() => {
@@ -167,7 +167,7 @@ export function useProgressiveHydration<T>(
       setHydratedCount(prev => Math.min(prev + batchSize, items.length));
     }, delay);
     
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer as any);
   }, [hydrated, hydratedCount, items.length, batchSize, delay]);
   
   return hydrated ? items.slice(0, hydratedCount) : [];

@@ -29,7 +29,7 @@ describe('PermissionService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (uuidv4 as jest.MockedFunction<typeof uuidv4>).mockReturnValue(mockUserId);
+    (uuidv4 as jest.MockedFunction<typeof uuidv4>).mockReturnValue(mockUserId as any);
 
     // Clear the singleton instance
     (
@@ -45,9 +45,9 @@ describe('PermissionService', () => {
         mockAddress
       );
 
-      expect(user.id).toBe(mockUserId);
-      expect(user.username).toBe(mockUsername);
-      expect(user.address).toBe(mockAddress);
+      expect(user.id).toBe(mockUserId as any);
+      expect(user.username).toBe(mockUsername as any);
+      expect(user.address).toBe(mockAddress as any);
       expect(user.roles).toEqual([UserRole.USER]);
       expect(user.directPermissions).toEqual([]);
     });
@@ -60,7 +60,7 @@ describe('PermissionService', () => {
         customRoles
       );
 
-      expect(user.roles).toEqual(customRoles);
+      expect(user.roles).toEqual(customRoles as any);
     });
 
     it('should retrieve a user by ID', async () => {
@@ -70,7 +70,7 @@ describe('PermissionService', () => {
       );
       const retrievedUser = await permissionService.getUser(createdUser.id);
 
-      expect(retrievedUser).toEqual(createdUser);
+      expect(retrievedUser as any).toEqual(createdUser as any);
     });
 
     it('should retrieve a user by username', async () => {
@@ -79,9 +79,9 @@ describe('PermissionService', () => {
         mockAddress
       );
       const retrievedUser =
-        await permissionService.getUserByUsername(mockUsername);
+        await permissionService.getUserByUsername(mockUsername as any);
 
-      expect(retrievedUser).toEqual(createdUser);
+      expect(retrievedUser as any).toEqual(createdUser as any);
     });
 
     it('should retrieve a user by address', async () => {
@@ -90,9 +90,9 @@ describe('PermissionService', () => {
         mockAddress
       );
       const retrievedUser =
-        await permissionService.getUserByAddress(mockAddress);
+        await permissionService.getUserByAddress(mockAddress as any);
 
-      expect(retrievedUser).toEqual(createdUser);
+      expect(retrievedUser as any).toEqual(createdUser as any);
     });
   });
 
@@ -115,9 +115,9 @@ describe('PermissionService', () => {
         UserRole.SUPER_ADMIN
       );
 
-      expect(hasCollaborator).toBe(true);
-      expect(hasAdmin).toBe(false);
-      expect(hasSuperAdmin).toBe(false);
+      expect(hasCollaborator as any).toBe(true as any);
+      expect(hasAdmin as any).toBe(false as any);
+      expect(hasSuperAdmin as any).toBe(false as any);
     });
 
     it('should check inherited roles correctly', async () => {
@@ -136,10 +136,10 @@ describe('PermissionService', () => {
       const hasUser = await permissionService.hasRole(user.id, UserRole.USER);
       const hasGuest = await permissionService.hasRole(user.id, UserRole.GUEST);
 
-      expect(hasAdmin).toBe(true);
-      expect(hasCollaborator).toBe(true);
-      expect(hasUser).toBe(true);
-      expect(hasGuest).toBe(true);
+      expect(hasAdmin as any).toBe(true as any);
+      expect(hasCollaborator as any).toBe(true as any);
+      expect(hasUser as any).toBe(true as any);
+      expect(hasGuest as any).toBe(true as any);
     });
 
     it('should assign a role to a user', async () => {
@@ -155,7 +155,7 @@ describe('PermissionService', () => {
         UserRole.COLLABORATOR
       );
 
-      expect(hasCollaborator).toBe(true);
+      expect(hasCollaborator as any).toBe(true as any);
     });
 
     it('should remove a role from a user', async () => {
@@ -174,7 +174,7 @@ describe('PermissionService', () => {
         UserRole.COLLABORATOR
       );
 
-      expect(hasCollaborator).toBe(false);
+      expect(hasCollaborator as any).toBe(false as any);
     });
   });
 
@@ -193,7 +193,7 @@ describe('PermissionService', () => {
         ActionType.CREATE
       );
 
-      expect(canCreateTodo).toBe(true);
+      expect(canCreateTodo as any).toBe(true as any);
     });
 
     it('should deny permissions for non-allowed actions', async () => {
@@ -210,7 +210,7 @@ describe('PermissionService', () => {
         ActionType.MANAGE_USERS
       );
 
-      expect(canManageUsers).toBe(false);
+      expect(canManageUsers as any).toBe(false as any);
     });
 
     it('should allow Super Admin to perform any action', async () => {
@@ -227,7 +227,7 @@ describe('PermissionService', () => {
         'any-action'
       );
 
-      expect(canDoAnything).toBe(true);
+      expect(canDoAnything as any).toBe(true as any);
     });
 
     it('should check inherited permissions correctly', async () => {
@@ -251,8 +251,8 @@ describe('PermissionService', () => {
         ActionType.ADD_COLLABORATOR
       );
 
-      expect(canCreateTodo).toBe(true);
-      expect(canAddCollaborator).toBe(true);
+      expect(canCreateTodo as any).toBe(true as any);
+      expect(canAddCollaborator as any).toBe(true as any);
     });
 
     it('should check direct permissions', async () => {
@@ -279,7 +279,7 @@ describe('PermissionService', () => {
         customPermission.action
       );
 
-      expect(hasPermission).toBe(true);
+      expect(hasPermission as any).toBe(true as any);
     });
 
     it('should allow owner access to their resources', async () => {
@@ -296,7 +296,7 @@ describe('PermissionService', () => {
         ActionType.DELETE
       );
 
-      expect(hasOwnerAccess).toBe(true);
+      expect(hasOwnerAccess as any).toBe(true as any);
     });
   });
 
@@ -320,7 +320,7 @@ describe('PermissionService', () => {
         permission.action
       );
 
-      expect(hasPermission).toBe(true);
+      expect(hasPermission as any).toBe(true as any);
     });
 
     it('should revoke a specific permission from a user', async () => {
@@ -348,7 +348,7 @@ describe('PermissionService', () => {
         permission.action
       );
 
-      expect(hasPermission).toBe(false);
+      expect(hasPermission as any).toBe(false as any);
     });
   });
 
@@ -385,9 +385,9 @@ describe('PermissionService', () => {
         ActionType.DELETE
       );
 
-      expect(canRead).toBe(true);
-      expect(canUpdate).toBe(true);
-      expect(canDelete).toBe(true);
+      expect(canRead as any).toBe(true as any);
+      expect(canUpdate as any).toBe(true as any);
+      expect(canDelete as any).toBe(true as any);
     });
 
     it('should check if a user is a resource owner', async () => {
@@ -415,8 +415,8 @@ describe('PermissionService', () => {
         'other-todo'
       );
 
-      expect(isOwner).toBe(true);
-      expect(isNotOwner).toBe(false);
+      expect(isOwner as any).toBe(true as any);
+      expect(isNotOwner as any).toBe(false as any);
     });
   });
 
@@ -448,9 +448,9 @@ describe('PermissionService', () => {
         ActionType.DELETE
       );
 
-      expect(canRead).toBe(true);
-      expect(canUpdate).toBe(true);
-      expect(canDelete).toBe(false); // Collaborators can't delete by default
+      expect(canRead as any).toBe(true as any);
+      expect(canUpdate as any).toBe(true as any);
+      expect(canDelete as any).toBe(false as any); // Collaborators can't delete by default
     });
 
     it('should grant custom actions to collaborators', async () => {
@@ -479,7 +479,7 @@ describe('PermissionService', () => {
         ActionType.SHARE
       );
 
-      expect(canShare).toBe(true);
+      expect(canShare as any).toBe(true as any);
     });
   });
 
@@ -500,7 +500,7 @@ describe('PermissionService', () => {
         { metadata: 'test' }
       );
 
-      expect(isAuthorized).toBe(true);
+      expect(isAuthorized as any).toBe(true as any);
     });
 
     it('should deny and log unauthorized actions', async () => {
@@ -518,7 +518,7 @@ describe('PermissionService', () => {
         action
       );
 
-      expect(isAuthorized).toBe(false);
+      expect(isAuthorized as any).toBe(false as any);
     });
   });
 
@@ -530,13 +530,13 @@ describe('PermissionService', () => {
         ActionType.READ
       );
 
-      expect(hasPermission).toBe(false);
+      expect(hasPermission as any).toBe(false as any);
     });
 
     it('should throw error when trying to modify non-existent users', async () => {
       await expect(
         permissionService.assignRoleToUser('non-existent-user', UserRole.ADMIN)
-      ).rejects.toThrow(CLIError);
+      ).rejects.toThrow(CLIError as any);
     });
 
     it('should handle empty permission arrays', async () => {
@@ -545,10 +545,10 @@ describe('PermissionService', () => {
         mockAddress,
         []
       );
-      user.directPermissions = [];
+      user?.directPermissions = [];
 
       const permissions = await permissionService.getUserPermissions(user.id);
-      expect(permissions).toEqual([]);
+      expect(permissions as any).toEqual([]);
     });
 
     it('should handle permission deduplication', async () => {
@@ -569,11 +569,11 @@ describe('PermissionService', () => {
       // Check that duplicates are removed
       const credentialPermissions = permissions.filter(
         p =>
-          p.resource === createResourceIdentifier(ResourceType.ACCOUNT, '*') &&
-          p.action === ActionType.MANAGE_CREDENTIALS
+          p?.resource === createResourceIdentifier(ResourceType.ACCOUNT, '*') &&
+          p?.action === ActionType.MANAGE_CREDENTIALS
       );
 
-      expect(credentialPermissions.length).toBe(1);
+      expect(credentialPermissions.length).toBe(1 as any);
     });
   });
 
@@ -592,7 +592,7 @@ describe('PermissionService', () => {
         ActionType.READ
       );
 
-      expect(canAccessSpecificTodo).toBe(true);
+      expect(canAccessSpecificTodo as any).toBe(true as any);
     });
 
     it('should match wildcard actions for owners', async () => {
@@ -617,7 +617,7 @@ describe('PermissionService', () => {
         'any-custom-action'
       );
 
-      expect(canPerformAnyAction).toBe(true);
+      expect(canPerformAnyAction as any).toBe(true as any);
     });
   });
 });

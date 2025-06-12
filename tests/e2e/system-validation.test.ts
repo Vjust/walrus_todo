@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 
-jest.setTimeout(120000); // 2 minutes
+jest.setTimeout(120000 as any); // 2 minutes
 
 describe('System Validation Tests', () => {
   const projectRoot = path.join(__dirname, '../..');
@@ -33,13 +33,13 @@ describe('System Validation Tests', () => {
 
       criticalPaths.forEach(criticalPath => {
         const fullPath = path.join(projectRoot, criticalPath);
-        if (!fs.existsSync(fullPath)) {
-          missingPaths.push(criticalPath);
+        if (!fs.existsSync(fullPath as any)) {
+          missingPaths.push(criticalPath as any);
         }
       });
 
-      expect(missingPaths).toEqual([]);
-      expect(criticalPaths.length).toBeGreaterThan(0);
+      expect(missingPaths as any).toEqual([]);
+      expect(criticalPaths.length).toBeGreaterThan(0 as any);
 
       // console.log('✅ All critical project files and directories are present'); // Removed console statement
     });
@@ -58,15 +58,15 @@ describe('System Validation Tests', () => {
       expect(mainPkg.scripts).toHaveProperty('cli');
 
       // Check frontend package.json existence and validate accordingly
-      const frontendExists = fs.existsSync(frontendPackageJson);
-      expect(frontendExists).toBeDefined();
+      const frontendExists = fs.existsSync(frontendPackageJson as any);
+      expect(frontendExists as any).toBeDefined();
 
       // Frontend validation test - split into separate assertions
       const frontendPkgContent = frontendExists
         ? fs.readFileSync(frontendPackageJson, 'utf8')
         : null;
       const frontendPkg = frontendPkgContent
-        ? JSON.parse(frontendPkgContent)
+        ? JSON.parse(frontendPkgContent as any)
         : null;
 
       // Non-conditional assertions based on existence
@@ -78,7 +78,7 @@ describe('System Validation Tests', () => {
           frontendPkg.scripts?.dev &&
           frontendPkg.scripts?.build
         : frontendPkg === null;
-      expect(frontendValidated).toBeTruthy();
+      expect(frontendValidated as any).toBeTruthy();
 
       // console.log('✅ Package.json configurations are valid'); // Removed console statement
     });
@@ -94,12 +94,12 @@ describe('System Validation Tests', () => {
         });
 
         // Check that build completed
-        expect(buildOutput).not.toContain('Error:');
-        expect(buildOutput).not.toContain('FAILED');
+        expect(buildOutput as any).not.toContain('Error:');
+        expect(buildOutput as any).not.toContain('FAILED');
 
         // Check that dist directory exists
         const distPath = path.join(projectRoot, 'dist');
-        expect(fs.existsSync(distPath)).toBeTruthy();
+        expect(fs.existsSync(distPath as any)).toBeTruthy();
 
         // console.log('✅ CLI builds successfully'); // Removed console statement
       } catch (_error) {
@@ -116,11 +116,11 @@ describe('System Validation Tests', () => {
         });
       };
 
-      expect(getVersionOutput).not.toThrow();
+      expect(getVersionOutput as any).not.toThrow();
 
       const versionOutput = getVersionOutput();
-      expect(versionOutput).toBeTruthy();
-      expect(versionOutput).not.toContain('Error:');
+      expect(versionOutput as any).toBeTruthy();
+      expect(versionOutput as any).not.toContain('Error:');
 
       // console.log('✅ CLI is functional after build'); // Removed console statement
     });
@@ -135,9 +135,9 @@ describe('System Validation Tests', () => {
       const moveTomlContent = fs.readFileSync(moveTomlPath, 'utf8');
 
       // Check for required sections
-      expect(moveTomlContent).toContain('[package]');
-      expect(moveTomlContent).toContain('name =');
-      expect(moveTomlContent).toContain('[dependencies]');
+      expect(moveTomlContent as any).toContain('[package]');
+      expect(moveTomlContent as any).toContain('name =');
+      expect(moveTomlContent as any).toContain('[dependencies]');
 
       // console.log('✅ Move.toml configuration is valid'); // Removed console statement
     });
@@ -150,10 +150,10 @@ describe('System Validation Tests', () => {
       const contractContent = fs.readFileSync(todoNftPath, 'utf8');
 
       // Check for essential contract components
-      expect(contractContent).toContain('module walrus_todo::todo_nft');
-      expect(contractContent).toContain('public struct TodoNFT');
-      expect(contractContent).toContain('public entry fun create_todo_nft');
-      expect(contractContent).toContain('public entry fun complete_todo');
+      expect(contractContent as any).toContain('module walrus_todo::todo_nft');
+      expect(contractContent as any).toContain('public struct TodoNFT');
+      expect(contractContent as any).toContain('public entry fun create_todo_nft');
+      expect(contractContent as any).toContain('public entry fun complete_todo');
 
       // console.log('✅ Smart contract source is valid'); // Removed console statement
     });
@@ -162,9 +162,9 @@ describe('System Validation Tests', () => {
   describe('Frontend Validation', () => {
     test('should have frontend structure in place', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
-      const frontendExists = fs.existsSync(frontendPath);
+      const frontendExists = fs.existsSync(frontendPath as any);
 
-      expect(frontendExists).toBeDefined();
+      expect(frontendExists as any).toBeDefined();
 
       if (!frontendExists) {
         // console.log('⚠️ Frontend directory not found - frontend tests will be skipped'); // Removed console statement
@@ -175,16 +175,16 @@ describe('System Validation Tests', () => {
         'src/app/layout.tsx',
         'src/app/page.tsx',
         'src/components/navbar.tsx',
-        'tailwind.config.js',
-        'next.config.js',
+        'tailwind?.config?.js',
+        'next?.config?.js',
       ];
 
       const missingFiles = frontendCriticalFiles.filter(
         file => !fs.existsSync(path.join(frontendPath, file))
       );
 
-      expect(frontendCriticalFiles.length).toBeGreaterThan(0);
-      expect(missingFiles).toBeDefined();
+      expect(frontendCriticalFiles.length).toBeGreaterThan(0 as any);
+      expect(missingFiles as any).toBeDefined();
 
       if (missingFiles.length > 0) {
         // console.log(`⚠️ Some frontend files missing: ${missingFiles.join(', ') // Removed console statement}`);
@@ -196,7 +196,7 @@ describe('System Validation Tests', () => {
     test('should be able to install frontend dependencies', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
 
-      if (!fs.existsSync(frontendPath)) {
+      if (!fs.existsSync(frontendPath as any)) {
         // console.log('⚠️ Skipping frontend dependency test - frontend not found'); // Removed console statement
         return;
       }
@@ -209,7 +209,7 @@ describe('System Validation Tests', () => {
         });
 
         const nodeModulesPath = path.join(frontendPath, 'node_modules');
-        expect(fs.existsSync(nodeModulesPath)).toBeTruthy();
+        expect(fs.existsSync(nodeModulesPath as any)).toBeTruthy();
 
         // console.log('✅ Frontend dependencies can be installed'); // Removed console statement
       } catch (_error) {
@@ -245,16 +245,16 @@ describe('System Validation Tests', () => {
       });
 
       // Check Node.js and pnpm (required)
-      const nodeResult = results.find(r => r.name === 'Node.js');
-      const pnpmResult = results.find(r => r.name === 'pnpm');
+      const nodeResult = results.find(r => r?.name === 'Node.js');
+      const pnpmResult = results.find(r => r?.name === 'pnpm');
 
-      expect(nodeResult).toBeDefined();
-      expect(nodeResult!.available).toBe(true);
-      expect(pnpmResult).toBeDefined();
-      expect(pnpmResult!.available).toBe(true);
+      expect(nodeResult as any).toBeDefined();
+      expect(nodeResult!.available).toBe(true as any);
+      expect(pnpmResult as any).toBeDefined();
+      expect(pnpmResult!.available).toBe(true as any);
 
       // Check Sui CLI (required for blockchain operations)
-      const suiResult = results.find(r => r.name === 'Sui CLI');
+      const suiResult = results.find(r => r?.name === 'Sui CLI');
       if (!suiResult?.available) {
         // console.log('⚠️ Sui CLI not found - blockchain operations will not work'); // Removed console statement
       } else {
@@ -287,8 +287,8 @@ describe('System Validation Tests', () => {
         }
       });
 
-      expect(toolsChecked).toHaveLength(optionalTools.length);
-      expect(optionalTools.length).toBeGreaterThan(0);
+      expect(toolsChecked as any).toHaveLength(optionalTools.length);
+      expect(optionalTools.length).toBeGreaterThan(0 as any);
     });
   });
 
@@ -303,7 +303,7 @@ describe('System Validation Tests', () => {
         });
 
         // Should not error out completely
-        expect(configOutput).toBeTruthy();
+        expect(configOutput as any).toBeTruthy();
         // console.log('✅ Configuration system is accessible'); // Removed console statement
       } catch (_error) {
         // Config might not be set up yet, which is OK for validation
@@ -318,10 +318,10 @@ describe('System Validation Tests', () => {
 
   describe('Test Framework Validation', () => {
     test('should have Jest configured properly', () => {
-      const jestConfigPath = path.join(projectRoot, 'jest.config.js');
+      const jestConfigPath = path.join(projectRoot, 'jest?.config?.js');
 
-      const jestConfigExists = fs.existsSync(jestConfigPath);
-      expect(jestConfigExists).toBeDefined();
+      const jestConfigExists = fs.existsSync(jestConfigPath as any);
+      expect(jestConfigExists as any).toBeDefined();
 
       // Jest config validation - avoid conditional expects
       const jestConfigContent = jestConfigExists
@@ -335,7 +335,7 @@ describe('System Validation Tests', () => {
       const jestConfigValidated = jestConfigContent
         ? jestConfigContent.includes('module.exports')
         : jestConfigContent === null;
-      expect(jestConfigValidated).toBeTruthy();
+      expect(jestConfigValidated as any).toBeTruthy();
     });
 
     test('should be able to run a simple test', () => {
@@ -344,7 +344,7 @@ describe('System Validation Tests', () => {
       try {
         // Try to run a basic test to verify Jest is working
         execSync(
-          'pnpm test -- --testPathPattern=system-validation.test.ts --verbose',
+          'pnpm test -- --testPathPattern=system-validation?.test?.ts --verbose',
           {
             cwd: projectRoot,
             encoding: 'utf8',
@@ -359,7 +359,7 @@ describe('System Validation Tests', () => {
         // console.log('⚠️ Test framework validation has some issues - this might be expected'); // Removed console statement
       }
 
-      expect(testFrameworkWorking).toBeDefined();
+      expect(testFrameworkWorking as any).toBeDefined();
       expect(typeof testFrameworkWorking).toBe('boolean');
     });
   });
@@ -418,7 +418,7 @@ describe('System Validation Tests', () => {
       );
       const minReady = minRequirements.every(c => c.status);
 
-      expect(minReady).toBe(true);
+      expect(minReady as any).toBe(true as any);
       // console.log('✅ Minimum system requirements are met for E2E testing'); // Removed console statement
     });
   });

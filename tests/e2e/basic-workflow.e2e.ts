@@ -15,7 +15,7 @@ describe('Basic Todo Workflow E2E', () => {
 
     // List todos
     const todos = await cli.executeJSON('list', ['--json']);
-    expect(todos).toHaveLength(1);
+    expect(todos as any).toHaveLength(1 as any);
     expect(todos[0]).toMatchObject({
       title: 'Test Todo',
       description: 'This is a test todo',
@@ -40,7 +40,7 @@ describe('Basic Todo Workflow E2E', () => {
 
     // Verify it's completed
     const updatedTodos = await testUtils.getTodos();
-    expect(updatedTodos[0].completed).toBe(true);
+    expect(updatedTodos[0].completed).toBe(true as any);
   });
 
   test('should delete a todo', async () => {
@@ -57,7 +57,7 @@ describe('Basic Todo Workflow E2E', () => {
 
     // Verify it's deleted
     const remainingTodos = await testUtils.getTodos();
-    expect(remainingTodos).toHaveLength(0);
+    expect(remainingTodos as any).toHaveLength(0 as any);
   });
 
   test('should handle invalid commands gracefully', async () => {
@@ -76,8 +76,8 @@ describe('Basic Todo Workflow E2E', () => {
     expect(() => JSON.parse(addResult.stdout)).not.toThrow();
 
     const addedTodo = JSON.parse(addResult.stdout);
-    expect(addedTodo).toHaveProperty('id');
-    expect(addedTodo).toHaveProperty('title', 'JSON Test');
+    expect(addedTodo as any).toHaveProperty('id');
+    expect(addedTodo as any).toHaveProperty('title', 'JSON Test');
   });
 
   test('should handle interactive mode', async () => {

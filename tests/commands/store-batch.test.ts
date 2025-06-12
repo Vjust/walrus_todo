@@ -20,8 +20,8 @@ describe('store command batch processing', () => {
     sandbox = sinon.createSandbox();
 
     // Mock TodoService
-    todoServiceStub = sandbox.createStubInstance(TodoService);
-    todoServiceStub.getList.resolves({
+    todoServiceStub = sandbox.createStubInstance(TodoService as any);
+    todoServiceStub?.getList?.resolves({
       name: 'test-list',
       todos: [
         { id: '1', title: 'Todo 1', completed: false },
@@ -31,7 +31,7 @@ describe('store command batch processing', () => {
         { id: '5', title: 'Todo 5', completed: false },
       ],
     });
-    todoServiceStub.updateTodo.resolves();
+    todoServiceStub?.updateTodo?.resolves();
 
     // Mock Walrus storage
     walrusStorageStub = {
@@ -41,15 +41,15 @@ describe('store command batch processing', () => {
     };
     sandbox
       .stub(walrusStorage, 'createWalrusStorage')
-      .returns(walrusStorageStub);
+      .returns(walrusStorageStub as any);
 
     // Mock cache
     cacheStub = {
-      get: sandbox.stub().resolves(null),
+      get: sandbox.stub().resolves(null as any),
       set: sandbox.stub().resolves(),
       shutdown: sandbox.stub().resolves(),
     };
-    sandbox.stub(performanceCache, 'createCache').returns(cacheStub);
+    sandbox.stub(performanceCache, 'createCache').returns(cacheStub as any);
   });
 
   afterEach(() => {
@@ -67,12 +67,12 @@ describe('store command batch processing', () => {
       )
       .command(['store', '--all', '--list', 'test-list', '--mock'])
       .it('uploads all todos in batch', ctx => {
-        expect(ctx.stdout).to.contain('Found 5 todo(s) to store');
+        expect(ctx.stdout).to.contain('Found 5 todo(s as any) to store');
         expect(ctx.stdout).to.contain('Starting batch upload of 5 todos');
         expect(ctx.stdout).to.contain('Batch Upload Summary');
         expect(ctx.stdout).to.contain('Total todos: 5');
         expect(ctx.stdout).to.contain('Successful: 5');
-        expect(walrusStorageStub.storeTodo.callCount).to.equal(5);
+        expect(walrusStorageStub?.storeTodo?.callCount).to.equal(5 as any);
       });
 
     test
@@ -109,7 +109,7 @@ describe('store command batch processing', () => {
       )
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('caches uploaded todos', ctx => {
-        expect(cacheStub.set.called).to.be.true;
+        expect(cacheStub?.set?.called).to?.be?.true;
         expect(ctx.stdout).to.contain('Todo stored successfully on Walrus');
       });
 
@@ -117,7 +117,7 @@ describe('store command batch processing', () => {
       .stdout()
       .do(() => {
         // Simulate cache hit
-        cacheStub.get.resolves('cached-blob-id');
+        cacheStub?.get?.resolves('cached-blob-id');
       })
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
       .stub(
@@ -127,8 +127,8 @@ describe('store command batch processing', () => {
       )
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('uses cached blob IDs when available', ctx => {
-        expect(cacheStub.get.called).to.be.true;
-        expect(walrusStorageStub.storeTodo.called).to.be.false;
+        expect(cacheStub?.get?.called).to?.be?.true;
+        expect(walrusStorageStub?.storeTodo?.called).to?.be?.false;
         expect(ctx.stdout).to.contain('Using cached blob ID');
       });
   });
@@ -140,15 +140,15 @@ describe('store command batch processing', () => {
       .do(() => {
         // Simulate some uploads failing
         walrusStorageStub.storeTodo
-          .onCall(0)
+          .onCall(0 as any)
           .resolves('blob-1')
-          .onCall(1)
+          .onCall(1 as any)
           .rejects(new Error('Upload failed'))
-          .onCall(2)
+          .onCall(2 as any)
           .resolves('blob-3')
-          .onCall(3)
+          .onCall(3 as any)
           .rejects(new Error('Network error'))
-          .onCall(4)
+          .onCall(4 as any)
           .resolves('blob-5');
       })
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
@@ -200,8 +200,8 @@ describe('store command batch processing', () => {
         const fsReadStub = sandbox.stub(fs, 'readFileSync');
 
         // Mock existing config directory
-        fsStub.withArgs(sinon.match(/\.config.*waltodo/)).returns(true);
-        fsStub.withArgs(sinon.match(/blob-mappings\.json/)).returns(false);
+        fsStub.withArgs(sinon.match(/\.config.*waltodo/)).returns(true as any);
+        fsStub.withArgs(sinon.match(/blob-mappings\.json/)).returns(false as any);
         fsReadStub.returns('{}');
 
         // Mock BaseCommand methods
@@ -224,7 +224,7 @@ describe('store command batch processing', () => {
               writeFileSafe: { called: boolean };
             }
           ).writeFileSafe.called
-        ).to.be.true;
+        ).to?.be?.true;
         expect(ctx.stdout).to.contain('Todo stored successfully on Walrus');
       });
   });
@@ -233,7 +233,7 @@ describe('store command batch processing', () => {
     test
       .stderr()
       .command(['store'])
-      .exit(1)
+      .exit(1 as any)
       .it('requires either --todo or --all flag', ctx => {
         expect(ctx.stderr).to.contain(
           'Either --todo or --all must be specified'
@@ -243,7 +243,7 @@ describe('store command batch processing', () => {
     test
       .stderr()
       .command(['store', '--todo', 'test', '--all'])
-      .exit(1)
+      .exit(1 as any)
       .it('prevents using both --todo and --all flags', ctx => {
         expect(ctx.stderr).to.contain('Cannot specify both --todo and --all');
       });
@@ -252,10 +252,10 @@ describe('store command batch processing', () => {
       .stderr()
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
       .do(() => {
-        todoServiceStub.getList.resolves({ name: 'empty-list', todos: [] });
+        todoServiceStub?.getList?.resolves({ name: 'empty-list', todos: [] });
       })
       .command(['store', '--all', '--list', 'empty-list'])
-      .exit(1)
+      .exit(1 as any)
       .it('errors when no todos are found with --all flag', ctx => {
         expect(ctx.stderr).to.contain('No todos found in list');
       });

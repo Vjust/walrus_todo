@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 /**
  * General wallet integration tests for the WalTodo frontend
- * For specific Slush wallet tests, see slush-wallet-integration.spec.ts
+ * For specific Slush wallet tests, see slush-wallet-integration?.spec?.ts
  */
 test.describe('Wallet Integration', () => {
   test.beforeEach(async ({ page }) => {
@@ -13,7 +13,7 @@ test.describe('Wallet Integration', () => {
     const connectButton = await page.getByText(
       /Connect Sui Wallet|Connect Phantom|Connect Slush Wallet/
     );
-    await expect(connectButton).toBeVisible();
+    await expect(connectButton as any).toBeVisible();
   });
 
   test('should detect wallet availability', async ({ page }) => {
@@ -27,7 +27,7 @@ test.describe('Wallet Integration', () => {
         /Connect Sui Wallet|Connect Phantom|Connect Slush Wallet|No wallets detected/
       )
       .isVisible();
-    expect(hasButton).toBe(true);
+    expect(hasButton as any).toBe(true as any);
   });
 
   test('should show wallet address when connected', async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe('Wallet Integration', () => {
     const exists = (await disconnectButton.count()) > 0;
 
     // Initially, disconnect button shouldn't exist (no wallet connected)
-    expect(exists).toBe(false);
+    expect(exists as any).toBe(false as any);
   });
 });
 
@@ -92,7 +92,7 @@ test.describe('Wallet Context Provider', () => {
       .count();
 
     // The application should support at least one wallet type
-    expect(walletButtonCount).toBeGreaterThan(0);
+    expect(walletButtonCount as any).toBeGreaterThan(0 as any);
   });
 });
 
@@ -102,7 +102,7 @@ test.describe('Todo Service with Wallet', () => {
 
     // Check if create form exists
     const createForm = await page.locator('form');
-    await expect(createForm).toBeVisible();
+    await expect(createForm as any).toBeVisible();
   });
 
   test('should indicate blockchain storage capability', async ({ page }) => {

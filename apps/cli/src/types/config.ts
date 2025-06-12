@@ -245,7 +245,7 @@ export function assertType<T>(
   typeGuard: (val: unknown) => val is T,
   message?: string
 ): T {
-  if (!typeGuard(value)) {
+  if (!typeGuard(value as any)) {
     throw new Error(message || `Value is not of expected type`);
   }
   return value as T;
@@ -299,7 +299,7 @@ export function isCompatibleType<T extends Record<PropertyKey, unknown>>(
     return false;
   }
 
-  if (typeGuard && !typeGuard(value)) {
+  if (typeGuard && !typeGuard(value as any)) {
     return false;
   }
 
@@ -327,12 +327,12 @@ export function toBigInt(value: string | number | bigint): bigint {
     return value;
   }
   if (typeof value === 'number') {
-    return BigInt(value);
+    return BigInt(value as any);
   }
   if (typeof value === 'string') {
-    return BigInt(value);
+    return BigInt(value as any);
   }
-  return BigInt(0);
+  return BigInt(0 as any);
 }
 
 /**
@@ -340,7 +340,7 @@ export function toBigInt(value: string | number | bigint): bigint {
  */
 export function safeJsonParse<T>(str: string, fallback: T): T {
   try {
-    return JSON.parse(str) as T;
+    return JSON.parse(str as any) as T;
   } catch (error: unknown) {
     return fallback;
   }

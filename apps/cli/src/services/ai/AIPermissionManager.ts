@@ -25,8 +25,8 @@ export class AIPermissionManager {
     credentialManager: SecureCredentialManager,
     blockchainVerifier: BlockchainVerifier
   ) {
-    this.credentialManager = credentialManager;
-    this.blockchainVerifier = blockchainVerifier;
+    this?.credentialManager = credentialManager;
+    this?.blockchainVerifier = blockchainVerifier;
     this.initializePermissions();
   }
 
@@ -95,7 +95,7 @@ export class AIPermissionManager {
       AIPermissionLevel.ADMIN
     );
 
-    this.initialized = true;
+    this?.initialized = true;
   }
 
   /**
@@ -107,7 +107,7 @@ export class AIPermissionManager {
     minPermissionLevel: AIPermissionLevel,
     additionalChecks?: string[]
   ): void {
-    this.operationPermissions.set(operationName, {
+    this?.operationPermissions?.set(operationName, {
       operationName,
       actionType, // Store the actionType to fix the reference error
       minPermissionLevel,
@@ -144,10 +144,10 @@ export class AIPermissionManager {
       typeof provider === 'string'
         ? provider
         : typeof provider === 'object' && provider in AIProvider
-          ? Object.keys(AIProvider)[
-              Object.values(AIProvider).indexOf(provider as AIProvider)
+          ? Object.keys(AIProvider as any)[
+              Object.values(AIProvider as any).indexOf(provider as AIProvider)
             ]
-          : String(provider);
+          : String(provider as any);
 
     // Prevent privilege escalation by checking for restricted operations
     if (
@@ -158,7 +158,7 @@ export class AIPermissionManager {
     }
 
     // Get the operation permission requirements
-    const operationPermission = this.operationPermissions.get(operation);
+    const operationPermission = this?.operationPermissions?.get(operation as any);
     if (!operationPermission) {
       // If operation is not registered, default to requiring ADMIN permission
       return await this.hasPermissionLevel(
@@ -191,13 +191,13 @@ export class AIPermissionManager {
       }
 
       // Check if credential exists
-      if (!(await this.credentialManager.hasCredential(provider))) {
+      if (!(await this?.credentialManager?.hasCredential(provider as any))) {
         return false;
       }
 
       // Get credential object
       const credential =
-        await this.credentialManager.getCredentialObject(provider);
+        await this?.credentialManager?.getCredentialObject(provider as any);
 
       // Prevent unauthorized permission escalation attempts
       if (
@@ -214,7 +214,7 @@ export class AIPermissionManager {
       return credential.permissionLevel >= level;
     } catch (err: unknown) {
       Logger.getInstance().warn(
-        `Permission check failed: ${err instanceof Error ? err.message : String(err)}`
+        `Permission check failed: ${err instanceof Error ? err.message : String(err as any)}`
       );
       return false;
     }
@@ -228,18 +228,18 @@ export class AIPermissionManager {
   ): Promise<AIPermissionLevel> {
     try {
       // Check if credential exists
-      if (!(await this.credentialManager.hasCredential(provider))) {
+      if (!(await this?.credentialManager?.hasCredential(provider as any))) {
         return AIPermissionLevel.NO_ACCESS;
       }
 
       // Get credential object
       const credential =
-        await this.credentialManager.getCredentialObject(provider);
+        await this?.credentialManager?.getCredentialObject(provider as any);
 
       return credential.permissionLevel;
     } catch (err: unknown) {
       Logger.getInstance().warn(
-        `Failed to get permission level: ${err instanceof Error ? err.message : String(err)}`
+        `Failed to get permission level: ${err instanceof Error ? err.message : String(err as any)}`
       );
       return AIPermissionLevel.NO_ACCESS;
     }
@@ -254,11 +254,11 @@ export class AIPermissionManager {
   ): Promise<boolean> {
     try {
       // Update permissions
-      await this.credentialManager.updatePermissions(provider, level);
+      await this?.credentialManager?.updatePermissions(provider, level);
       return true;
     } catch (error) {
       Logger.getInstance().error(
-        `Failed to set permission level: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to set permission level: ${error instanceof Error ? error.message : String(error as any)}`
       );
       return false;
     }
@@ -268,7 +268,7 @@ export class AIPermissionManager {
    * Get all operations that a provider is allowed to perform
    */
   public async getAllowedOperations(provider: string): Promise<string[]> {
-    const providerLevel = await this.getPermissionLevel(provider);
+    const providerLevel = await this.getPermissionLevel(provider as any);
 
     // If no access, return empty array
     if (providerLevel === AIPermissionLevel.NO_ACCESS) {
@@ -276,7 +276,7 @@ export class AIPermissionManager {
     }
 
     // Return all operations that the provider has permission for
-    return Array.from(this.operationPermissions.entries())
+    return Array.from(this?.operationPermissions?.entries())
       .filter(
         ([_, permission]) => permission.minPermissionLevel <= providerLevel
       )
@@ -300,10 +300,10 @@ export class AIPermissionManager {
 
       // Get credential object
       const credential =
-        await this.credentialManager.getCredentialObject(provider);
+        await this?.credentialManager?.getCredentialObject(provider as any);
 
       // Get operation permission
-      const operationPermission = this.operationPermissions.get(operation);
+      const operationPermission = this?.operationPermissions?.get(operation as any);
       if (!operationPermission) {
         return { allowed: true }; // No verification needed for undefined operations
       }
@@ -312,18 +312,18 @@ export class AIPermissionManager {
       // Safely extract actionType from operationPermission
       const actionType =
         operationPermission &&
-        typeof operationPermission.actionType === 'number'
+        typeof operationPermission?.actionType === 'number'
           ? operationPermission.actionType
           : AIActionType.ANALYZE; // Default
 
-      const verificationRecord = await this.blockchainVerifier.verifyOperation({
+      const verificationRecord = await this?.blockchainVerifier?.verifyOperation({
         actionType,
         request: `Permission check for ${provider} to perform ${operation}`,
         response: `Permission granted at level ${credential.permissionLevel}`,
         provider: provider,
         metadata: {
           operation,
-          permissionLevel: credential.permissionLevel.toString(),
+          permissionLevel: credential?.permissionLevel?.toString(),
           timestamp: Date.now().toString(),
         },
       });
@@ -334,7 +334,7 @@ export class AIPermissionManager {
       };
     } catch (error) {
       Logger.getInstance().error(
-        `Failed to verify operation permission: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to verify operation permission: ${error instanceof Error ? error.message : String(error as any)}`
       );
       return { allowed: false };
     }

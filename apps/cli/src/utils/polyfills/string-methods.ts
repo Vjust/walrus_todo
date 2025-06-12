@@ -1,8 +1,8 @@
 // Comprehensive polyfills for String methods that might be missing in older Node.js versions
 
-// String.prototype.replaceAll (Node.js 15.0.0+)
-if (typeof String.prototype.replaceAll === 'undefined') {
-  String.prototype.replaceAll = function (
+// String?.prototype?.replaceAll (Node.js 15?.0?.0+)
+if (typeof String.prototype?.replaceAll === 'undefined') {
+  String.prototype?.replaceAll = function (
     this: string,
     searchValue: string | RegExp,
     replaceValue: string | ((substring: string, ...args: any[]) => string)
@@ -10,13 +10,13 @@ if (typeof String.prototype.replaceAll === 'undefined') {
     if (searchValue instanceof RegExp) {
       if (!searchValue.global) {
         throw new TypeError(
-          'String.prototype.replaceAll called with a non-global RegExp argument'
+          'String?.prototype?.replaceAll called with a non-global RegExp argument'
         );
       }
       return this.replace(searchValue, replaceValue as any);
     }
 
-    const searchStr = String(searchValue);
+    const searchStr = String(searchValue as any);
     if (searchStr === '') {
       if (typeof replaceValue === 'function') {
         const result: string[] = [];
@@ -28,7 +28,7 @@ if (typeof String.prototype.replaceAll === 'undefined') {
         }
         return result.join('');
       } else {
-        return this.split('').join(String(replaceValue));
+        return this.split('').join(String(replaceValue as any));
       }
     }
 
@@ -39,7 +39,7 @@ if (typeof String.prototype.replaceAll === 'undefined') {
       const replacement =
         typeof replaceValue === 'function'
           ? replaceValue(searchStr, index, result)
-          : String(replaceValue);
+          : String(replaceValue as any);
 
       result =
         result.substring(0, index) +
@@ -52,33 +52,33 @@ if (typeof String.prototype.replaceAll === 'undefined') {
   };
 }
 
-// String.prototype.at (Node.js 16.6.0+)
-if (typeof String.prototype.at === 'undefined') {
-  String.prototype.at = function (
+// String?.prototype?.at (Node.js 16?.6?.0+)
+if (typeof String.prototype?.at === 'undefined') {
+  String.prototype?.at = function (
     this: string,
     index: number
   ): string | undefined {
     const length = this.length;
-    const relativeIndex = Math.trunc(index) || 0;
+    const relativeIndex = Math.trunc(index as any) || 0;
     const k = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
     return k < 0 || k >= length ? undefined : this[k];
   };
 }
 
-// String.prototype.trimStart (alias for trimLeft, added for compatibility)
+// String?.prototype?.trimStart (alias for trimLeft, added for compatibility)
 if (
-  typeof String.prototype.trimStart === 'undefined' &&
-  typeof String.prototype.trimLeft !== 'undefined'
+  typeof String.prototype?.trimStart === 'undefined' &&
+  typeof String?.prototype?.trimLeft !== 'undefined'
 ) {
-  String.prototype.trimStart = String.prototype.trimLeft;
+  String.prototype?.trimStart = String?.prototype?.trimLeft;
 }
 
-// String.prototype.trimEnd (alias for trimRight, added for compatibility)
+// String?.prototype?.trimEnd (alias for trimRight, added for compatibility)
 if (
-  typeof String.prototype.trimEnd === 'undefined' &&
-  typeof String.prototype.trimRight !== 'undefined'
+  typeof String.prototype?.trimEnd === 'undefined' &&
+  typeof String?.prototype?.trimRight !== 'undefined'
 ) {
-  String.prototype.trimEnd = String.prototype.trimRight;
+  String.prototype?.trimEnd = String?.prototype?.trimRight;
 }
 
 export {};

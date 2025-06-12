@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 // Removed unused Todo import
@@ -78,12 +78,12 @@ export default class SimpleCommand extends BaseCommand {
   private todoService = new TodoService();
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(SimpleCommand);
+    const { args, flags } = await this.parse(SimpleCommand as any);
 
     try {
       switch (args.action) {
         case 'create': {
-          await this.todoService.createList(args.list, 'local-user'); // Removed unused list variable assignment
+          await this?.todoService?.createList(args.list, 'local-user'); // Removed unused list variable assignment
           this.log('✅ Todo list "' + args.list + '" created successfully');
           break;
         }
@@ -92,11 +92,11 @@ export default class SimpleCommand extends BaseCommand {
           if (!args.title) {
             throw new Error('Title is required for add command');
           }
-          const todo = await this.todoService.addTodo(args.list, {
+          const todo = await this?.todoService?.addTodo(args.list, {
             title: args.title,
             completed: false,
             priority: flags.priority as 'high' | 'medium' | 'low',
-            tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
+            tags: flags.tags ? flags?.tags?.split(',').map(t => t.trim()) : [],
             private: true,
           });
           this.log(
@@ -106,21 +106,21 @@ export default class SimpleCommand extends BaseCommand {
         }
 
         case 'list': {
-          const todoList = await this.todoService.getList(args.list);
+          const todoList = await this?.todoService?.getList(args.list);
           if (!todoList) {
             this.log(`List "${args.list}" not found`);
             return;
           }
           this.log(
-            `\n${chalk.bold(todoList.name)} (${todoList.todos.length} todos):`
+            `\n${chalk.bold(todoList.name)} (${todoList?.todos?.length} todos):`
           );
           let filteredTodos = todoList.todos;
 
           // Apply filter if specified
           if (flags.filter) {
-            if (flags.filter === 'completed') {
+            if (flags?.filter === 'completed') {
               filteredTodos = filteredTodos.filter(todo => todo.completed);
-            } else if (flags.filter === 'incomplete') {
+            } else if (flags?.filter === 'incomplete') {
               filteredTodos = filteredTodos.filter(todo => !todo.completed);
             } else {
               this.warn(`Unknown filter: ${flags.filter}. Ignoring.`);
@@ -129,13 +129,13 @@ export default class SimpleCommand extends BaseCommand {
 
           // Apply sort if specified
           if (flags.sort) {
-            if (flags.sort === 'priority') {
+            if (flags?.sort === 'priority') {
               filteredTodos.sort((a, b) => {
                 const priorityOrder = { high: 3, medium: 2, low: 1 };
                 return priorityOrder[b.priority] - priorityOrder[a.priority];
               });
-            } else if (flags.sort === 'title') {
-              filteredTodos.sort((a, b) => a.title.localeCompare(b.title));
+            } else if (flags?.sort === 'title') {
+              filteredTodos.sort((a, b) => a?.title?.localeCompare(b.title));
             } else {
               this.warn(`Unknown sort field: ${flags.sort}. Ignoring.`);
             }
@@ -145,14 +145,14 @@ export default class SimpleCommand extends BaseCommand {
           filteredTodos.forEach(todo => {
             const status = todo.completed ? chalk.green('✓') : chalk.gray('☐');
             const priority =
-              todo.priority === 'high'
+              todo?.priority === 'high'
                 ? chalk.red('⚠️')
-                : todo.priority === 'medium'
+                : todo?.priority === 'medium'
                   ? chalk.yellow('•')
                   : chalk.green('○');
             this.log(`${status} ${priority} ${todo.title} (${todo.id})`);
-            if (todo.tags.length > 0) {
-              this.log(`   ${chalk.dim('Tags: ' + todo.tags.join(', '))}`); // Changed to double quotes for consistency
+            if (todo?.tags?.length > 0) {
+              this.log(`   ${chalk.dim('Tags: ' + todo?.tags?.join(', '))}`); // Changed to double quotes for consistency
             }
           });
           break;
@@ -164,7 +164,7 @@ export default class SimpleCommand extends BaseCommand {
               'Todo ID is required for complete command (use --id)'
             );
           }
-          await this.todoService.toggleItemStatus(args.list, flags.id, true);
+          await this?.todoService?.toggleItemStatus(args.list, flags.id, true);
           this.log('✅ Marked todo as completed'); // Changed to double quotes for consistency
           break;
         }
@@ -177,7 +177,7 @@ export default class SimpleCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed in simple command: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed in simple command: ${error instanceof Error ? error.message : String(error as any)}`,
         'SIMPLE_FAILED'
       );
     }

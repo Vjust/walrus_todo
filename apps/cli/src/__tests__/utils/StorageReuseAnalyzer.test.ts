@@ -71,10 +71,10 @@ describe('StorageReuseAnalyzer', () => {
     };
 
     // Mock the storageCost method
-    mockWalrusClient.storageCost = jest.fn().mockResolvedValue({
-      storageCost: BigInt(5000),
-      writeCost: BigInt(1000),
-      totalCost: BigInt(6000),
+    mockWalrusClient?.storageCost = jest.fn().mockResolvedValue({
+      storageCost: BigInt(5000 as any),
+      writeCost: BigInt(1000 as any),
+      totalCost: BigInt(6000 as any),
     });
 
     // Create the analyzer instance
@@ -88,22 +88,22 @@ describe('StorageReuseAnalyzer', () => {
   describe('findBestStorageForReuse', () => {
     it('should return no viable storage when no storage objects exist', async () => {
       // Mock the getOwnedObjects to return empty array
-      mockSuiClient.getOwnedObjects = jest.fn().mockResolvedValue({
+      mockSuiClient?.getOwnedObjects = jest.fn().mockResolvedValue({
         data: [],
       });
 
-      const result = await storageReuseAnalyzer.findBestStorageForReuse(1024);
+      const result = await storageReuseAnalyzer.findBestStorageForReuse(1024 as any);
 
-      expect(result.hasViableStorage).toBe(false);
+      expect(result.hasViableStorage).toBe(false as any);
       expect(result.bestMatch).toBeNull();
-      expect(result.totalStorage).toBe(0);
-      expect(result.usedStorage).toBe(0);
+      expect(result.totalStorage).toBe(0 as any);
+      expect(result.usedStorage).toBe(0 as any);
       expect(result.recommendation).toBe('allocate-new');
     });
 
     it('should find and return the best viable storage object', async () => {
       // Mock the getOwnedObjects to return storage objects
-      mockSuiClient.getOwnedObjects = jest.fn().mockResolvedValue({
+      mockSuiClient?.getOwnedObjects = jest.fn().mockResolvedValue({
         data: [
           {
             data: {
@@ -151,19 +151,19 @@ describe('StorageReuseAnalyzer', () => {
       });
 
       // Test looking for 100KB of storage
-      const result = await storageReuseAnalyzer.findBestStorageForReuse(100000);
+      const result = await storageReuseAnalyzer.findBestStorageForReuse(100000 as any);
 
-      expect(result.hasViableStorage).toBe(true);
+      expect(result.hasViableStorage).toBe(true as any);
       expect(result.bestMatch).not.toBeNull();
       expect(result.bestMatch?.id).toBe('storage-2'); // Best fit for 100KB
-      expect(result.totalStorage).toBe(8000000); // 8MB total
-      expect(result.usedStorage).toBe(5800000); // 5.8MB used
+      expect(result.totalStorage).toBe(8000000 as any); // 8MB total
+      expect(result.usedStorage).toBe(5800000 as any); // 5.8MB used
       expect(result.recommendation).toBe('use-existing');
     });
 
     it('should recommend allocate-new when no viable storage exists', async () => {
       // Mock the getOwnedObjects to return expired storage objects
-      mockSuiClient.getOwnedObjects = jest.fn().mockResolvedValue({
+      mockSuiClient?.getOwnedObjects = jest.fn().mockResolvedValue({
         data: [
           {
             data: {
@@ -182,18 +182,18 @@ describe('StorageReuseAnalyzer', () => {
         ],
       });
 
-      const result = await storageReuseAnalyzer.findBestStorageForReuse(100000);
+      const result = await storageReuseAnalyzer.findBestStorageForReuse(100000 as any);
 
-      expect(result.hasViableStorage).toBe(false);
+      expect(result.hasViableStorage).toBe(false as any);
       expect(result.bestMatch).toBeNull();
-      expect(result.activeStorageCount).toBe(0);
-      expect(result.inactiveStorageCount).toBe(1);
+      expect(result.activeStorageCount).toBe(0 as any);
+      expect(result.inactiveStorageCount).toBe(1 as any);
       expect(result.recommendation).toBe('allocate-new');
     });
 
     it('should recommend extend-existing when storage exists but is insufficient', async () => {
       // Mock the getOwnedObjects to return storage with insufficient space
-      mockSuiClient.getOwnedObjects = jest.fn().mockResolvedValue({
+      mockSuiClient?.getOwnedObjects = jest.fn().mockResolvedValue({
         data: [
           {
             data: {
@@ -213,11 +213,11 @@ describe('StorageReuseAnalyzer', () => {
       });
 
       // Test looking for 50KB of storage (more than the 10KB available)
-      const result = await storageReuseAnalyzer.findBestStorageForReuse(50000);
+      const result = await storageReuseAnalyzer.findBestStorageForReuse(50000 as any);
 
-      expect(result.hasViableStorage).toBe(false);
+      expect(result.hasViableStorage).toBe(false as any);
       expect(result.bestMatch).toBeNull();
-      expect(result.activeStorageCount).toBe(1);
+      expect(result.activeStorageCount).toBe(1 as any);
       expect(result.recommendation).toBe('extend-existing');
     });
   });
@@ -252,19 +252,19 @@ describe('StorageReuseAnalyzer', () => {
         });
 
       // Mock the storageCost method for our test
-      mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(5000),
-        writeCost: BigInt(1000),
-        totalCost: BigInt(6000),
+      mockWalrusClient?.storageCost?.mockResolvedValue({
+        storageCost: BigInt(5000 as any),
+        writeCost: BigInt(1000 as any),
+        totalCost: BigInt(6000 as any),
       });
 
       const result =
-        await storageReuseAnalyzer.analyzeStorageEfficiency(100000);
+        await storageReuseAnalyzer.analyzeStorageEfficiency(100000 as any);
 
-      expect(result.analysisResult.recommendation).toBe('use-existing');
-      expect(result.costComparison.newStorageCost).toBe(BigInt(6000));
-      expect(result.costComparison.reuseExistingSavings).toBe(BigInt(5000));
-      expect(result.costComparison.reuseExistingPercentSaved).toBe(83);
+      expect(result?.analysisResult?.recommendation).toBe('use-existing');
+      expect(result?.costComparison?.newStorageCost).toBe(BigInt(6000 as any));
+      expect(result?.costComparison?.reuseExistingSavings).toBe(BigInt(5000 as any));
+      expect(result?.costComparison?.reuseExistingPercentSaved).toBe(83 as any);
       expect(result.detailedRecommendation).toContain('Reuse existing storage');
       expect(result.detailedRecommendation).toContain('storage-1');
     });
@@ -290,11 +290,11 @@ describe('StorageReuseAnalyzer', () => {
         });
 
       const result =
-        await storageReuseAnalyzer.analyzeStorageEfficiency(100000);
+        await storageReuseAnalyzer.analyzeStorageEfficiency(100000 as any);
 
-      expect(result.analysisResult.recommendation).toBe('allocate-new');
-      expect(result.costComparison.reuseExistingSavings).toBe(BigInt(0));
-      expect(result.costComparison.reuseExistingPercentSaved).toBe(0);
+      expect(result?.analysisResult?.recommendation).toBe('allocate-new');
+      expect(result?.costComparison?.reuseExistingSavings).toBe(BigInt(0 as any));
+      expect(result?.costComparison?.reuseExistingPercentSaved).toBe(0 as any);
       expect(result.detailedRecommendation).toContain('Allocate new storage');
     });
   });

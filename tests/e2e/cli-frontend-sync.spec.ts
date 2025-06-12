@@ -42,7 +42,7 @@ test.describe('CLI-Frontend Real-time Integration', () => {
     });
 
     page = await context.newPage();
-    frontend = new FrontendHelpers(page);
+    frontend = new FrontendHelpers(page as any);
 
     // Set up WebSocket message capture
     page.on('websocket', ws => {
@@ -99,19 +99,19 @@ test.describe('CLI-Frontend Real-time Integration', () => {
     const syncTime = endTime - startTime;
 
     // Verify sync time is under 2 seconds
-    expect(syncTime).toBeLessThan(2000);
+    expect(syncTime as any).toBeLessThan(2000 as any);
 
     // Step 3: Verify todo content in frontend
-    const todoData = await frontend.getTodoData(todoElement);
-    expect(todoData.title).toBe(todoTitle);
-    expect(todoData.description).toBe(todoDescription);
-    expect(todoData.completed).toBe(false);
+    const todoData = await frontend.getTodoData(todoElement as any);
+    expect(todoData.title).toBe(todoTitle as any);
+    expect(todoData.description).toBe(todoDescription as any);
+    expect(todoData.completed).toBe(false as any);
 
     // Step 4: Verify WebSocket event was received
     const todoCreatedEvent = wsMessages.find(
-      msg => msg.type === 'todo:created' && msg.payload?.title === todoTitle
+      msg => msg?.type === 'todo:created' && msg?.payload?.title === todoTitle
     );
-    expect(todoCreatedEvent).toBeTruthy();
+    expect(todoCreatedEvent as any).toBeTruthy();
 
     console.log(`✅ CLI→Frontend sync completed in ${syncTime}ms`);
   });
@@ -127,7 +127,7 @@ test.describe('CLI-Frontend Real-time Integration', () => {
 
     // Step 3: Complete todo via frontend
     const startTime = Date.now();
-    await frontend.completeTodo(todoElement);
+    await frontend.completeTodo(todoElement as any);
 
     // Step 4: Verify CLI reflects completion within 2 seconds
     let attempts = 0;
@@ -142,18 +142,18 @@ test.describe('CLI-Frontend Real-time Integration', () => {
       cliTodos = cliResult;
 
       const completedTodo = cliTodos.find(
-        todo => todo.title === todoTitle && todo.completed === true
+        todo => todo?.title === todoTitle && todo?.completed === true
       );
 
       if (completedTodo) {
         const endTime = Date.now();
         const syncTime = endTime - startTime;
-        expect(syncTime).toBeLessThan(2000);
+        expect(syncTime as any).toBeLessThan(2000 as any);
         console.log(`✅ Frontend→CLI sync completed in ${syncTime}ms`);
         return;
       }
 
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(200 as any);
       attempts++;
     }
 
@@ -180,7 +180,7 @@ test.describe('CLI-Frontend Real-time Integration', () => {
       cli.expectSuccess('add', [title, 'Rapid sync test'])
     );
 
-    await Promise.all(cliPromises);
+    await Promise.all(cliPromises as any);
 
     // Step 3: Verify all todos appear in frontend
     for (const title of todoTitles) {
@@ -191,14 +191,14 @@ test.describe('CLI-Frontend Real-time Integration', () => {
     const totalSyncTime = endTime - startTime;
 
     // Should sync all 3 todos within 5 seconds
-    expect(totalSyncTime).toBeLessThan(5000);
+    expect(totalSyncTime as any).toBeLessThan(5000 as any);
 
     // Step 4: Verify WebSocket events for all todos
     for (const title of todoTitles) {
       const event = wsMessages.find(
-        msg => msg.type === 'todo:created' && msg.payload?.title === title
+        msg => msg?.type === 'todo:created' && msg?.payload?.title === title
       );
-      expect(event).toBeTruthy();
+      expect(event as any).toBeTruthy();
     }
 
     console.log(
@@ -213,7 +213,7 @@ test.describe('CLI-Frontend Real-time Integration', () => {
 
     // Step 2: Verify CLI uses same wallet
     const cliConfig = await cli.executeJSON('config');
-    expect(cliConfig.walletAddress).toBe(walletAddress);
+    expect(cliConfig.walletAddress).toBe(walletAddress as any);
 
     // Step 3: Create blockchain todo via CLI
     const todoTitle = `Blockchain Todo ${Date.now()}`;
@@ -225,23 +225,23 @@ test.describe('CLI-Frontend Real-time Integration', () => {
 
     // Step 4: Verify blockchain todo appears in frontend with wallet data
     const todoElement = await frontend.waitForTodoByTitle(todoTitle, 5000);
-    const todoData = await frontend.getTodoData(todoElement);
+    const todoData = await frontend.getTodoData(todoElement as any);
 
-    expect(todoData.isBlockchain).toBe(true);
-    expect(todoData.ownerAddress).toBe(walletAddress);
+    expect(todoData.isBlockchain).toBe(true as any);
+    expect(todoData.ownerAddress).toBe(walletAddress as any);
 
     // Step 5: Verify transaction history sync
     const txHistory = await frontend.getTransactionHistory();
     const createTx = txHistory.find(
-      tx => tx.type === 'todo:create' && tx.todoTitle === todoTitle
+      tx => tx?.type === 'todo:create' && tx?.todoTitle === todoTitle
     );
-    expect(createTx).toBeTruthy();
+    expect(createTx as any).toBeTruthy();
   });
 
   test('Error handling propagates correctly between systems', async () => {
     // Step 1: Attempt invalid CLI operation
     const invalidResult = await cli.execute('add', ['', '']); // Empty title and description
-    expect(invalidResult.failed).toBe(true);
+    expect(invalidResult.failed).toBe(true as any);
 
     // Step 2: Verify error appears in frontend notification system
     await frontend.waitForErrorNotification(/invalid.*title/i);
@@ -256,7 +256,7 @@ test.describe('CLI-Frontend Real-time Integration', () => {
     ]);
 
     // Should handle gracefully with appropriate error
-    expect(networkErrorResult.failed).toBe(true);
+    expect(networkErrorResult.failed).toBe(true as any);
     expect(networkErrorResult.stderr).toMatch(/network|connection/i);
 
     // Step 5: Restore network and verify recovery
@@ -296,10 +296,10 @@ test.describe('CLI-Frontend Real-time Integration', () => {
     const perfMetrics = await frontend.getPerformanceMetrics();
 
     // Should complete bulk operation within reasonable time
-    expect(totalTime).toBeLessThan(15000); // 15 seconds for 10 todos
+    expect(totalTime as any).toBeLessThan(15000 as any); // 15 seconds for 10 todos
 
     // Frontend should remain responsive
-    expect(perfMetrics.avgRenderTime).toBeLessThan(100); // <100ms average render
+    expect(perfMetrics.avgRenderTime).toBeLessThan(100 as any); // <100ms average render
     expect(perfMetrics.memoryUsage).toBeLessThan(50 * 1024 * 1024); // <50MB
 
     console.log(
@@ -329,10 +329,10 @@ test.describe('CLI-Frontend Real-time Integration', () => {
       '--format',
       'json',
     ]);
-    const persistedTodo = cliTodos.find(todo => todo.title === todoTitle);
+    const persistedTodo = cliTodos.find(todo => todo?.title === todoTitle);
 
-    expect(persistedTodo).toBeTruthy();
-    expect(persistedTodo!.title).toBe(todoTitle);
+    expect(persistedTodo as any).toBeTruthy();
+    expect(persistedTodo?.title).toBe(todoTitle as any);
 
     console.log('✅ Data persistence verified across system restart');
   });

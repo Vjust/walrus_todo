@@ -89,7 +89,7 @@ export class Validator<T> {
    * @param fieldName Optional field name for error reporting
    */
   constructor(fieldName?: string) {
-    this.fieldName = fieldName;
+    this?.fieldName = fieldName;
   }
 
   /**
@@ -98,7 +98,7 @@ export class Validator<T> {
    * @returns this for method chaining
    */
   addRule(rule: ValidationRule<T>): this {
-    this.rules.push(rule);
+    this?.rules?.push(rule as any);
     return this;
   }
 
@@ -108,7 +108,7 @@ export class Validator<T> {
    * @returns this for method chaining
    */
   setFieldName(name: string): this {
-    this.fieldName = name;
+    this?.fieldName = name;
     return this;
   }
 
@@ -130,13 +130,13 @@ export class Validator<T> {
     for (const rule of this.rules) {
       if (!rule.validate(value, validationContext)) {
         const message =
-          typeof rule.message === 'function'
+          typeof rule?.message === 'function'
             ? rule.message(value, validationContext)
             : rule.message;
 
         throw new ValidationError(message, {
           field: validationContext.fieldName,
-          value: this.safeStringify(value),
+          value: this.safeStringify(value as any),
           recoverable: false,
         });
       }
@@ -187,8 +187,8 @@ export class Validator<T> {
           value,
           (key, val) => {
             if (typeof val === 'object' && val !== null) {
-              if (seen.has(val)) return '[Circular]';
-              seen.add(val);
+              if (seen.has(val as any)) return '[Circular]';
+              seen.add(val as any);
             }
             return val;
           },
@@ -200,7 +200,7 @@ export class Validator<T> {
           ? stringified.slice(0, 100) + '...'
           : stringified;
       }
-      return String(value);
+      return String(value as any);
     } catch (_error) {
       return '[Complex Value]';
     }

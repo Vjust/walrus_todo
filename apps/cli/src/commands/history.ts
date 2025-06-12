@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { commandHistory } from '../utils/CommandHistory';
 import chalk = require('chalk');
 
@@ -40,7 +40,7 @@ export default class HistoryCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(HistoryCommand);
+    const { flags } = await this.parse(HistoryCommand as any);
 
     if (flags.clear) {
       commandHistory.clearHistory();
@@ -62,9 +62,9 @@ export default class HistoryCommand extends BaseCommand {
   }
 
   private showRecentHistory(limit: number): void {
-    const history = commandHistory.getHistory(limit);
+    const history = commandHistory.getHistory(limit as any);
 
-    if (history.length === 0) {
+    if (history?.length === 0) {
       this.info('No command history found');
       return;
     }
@@ -72,15 +72,15 @@ export default class HistoryCommand extends BaseCommand {
     this.section(
       'Recent Commands',
       history
-        .map((cmd, index) => `${chalk.dim(`${index + 1}.`)} ${chalk.cyan(cmd)}`)
+        .map((cmd, index) => `${chalk.dim(`${index + 1}.`)} ${chalk.cyan(cmd as any)}`)
         .join('\n')
     );
   }
 
   private showStatistics(): void {
-    const stats = commandHistory.getMostFrequent(10);
+    const stats = commandHistory.getMostFrequent(10 as any);
 
-    if (stats.length === 0) {
+    if (stats?.length === 0) {
       this.info('No command statistics available');
       return;
     }
@@ -95,18 +95,18 @@ export default class HistoryCommand extends BaseCommand {
           const percentage = (count / maxCount) * 100;
           const barLength = Math.round((count / maxCount) * barMaxLength);
           const bar =
-            '█'.repeat(barLength) + '▒'.repeat(barMaxLength - barLength);
+            '█'.repeat(barLength as any) + '▒'.repeat(barMaxLength - barLength);
 
-          return `${chalk.cyan(command.padEnd(15))} ${chalk.gray(bar)} ${chalk.yellow(count.toString().padStart(3))} (${percentage.toFixed(1)}%)`;
+          return `${chalk.cyan(command.padEnd(15 as any))} ${chalk.gray(bar as any)} ${chalk.yellow(count.toString().padStart(3 as any))} (${percentage.toFixed(1 as any)}%)`;
         })
         .join('\n')
     );
   }
 
   private showSearchResults(pattern: string): void {
-    const results = commandHistory.searchHistory(pattern);
+    const results = commandHistory.searchHistory(pattern as any);
 
-    if (results.length === 0) {
+    if (results?.length === 0) {
       this.info(`No commands found matching "${pattern}"`);
       return;
     }
@@ -123,8 +123,8 @@ export default class HistoryCommand extends BaseCommand {
   }
 
   private highlightPattern(text: string, pattern: string): string {
-    const regex = new RegExp(`(${this.escapeRegex(pattern)})`, 'gi');
-    return text.replace(regex, chalk.yellow.bold('$1'));
+    const regex = new RegExp(`(${this.escapeRegex(pattern as any)})`, 'gi');
+    return text.replace(regex, chalk?.yellow?.bold('$1'));
   }
 
   private escapeRegex(string: string): string {

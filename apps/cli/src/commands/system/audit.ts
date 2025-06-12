@@ -1,5 +1,5 @@
 import { Flags, ux } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { auditLogger } from '../../utils/AuditLogger';
 import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
@@ -98,7 +98,7 @@ export default class AuditCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(AuditCommand);
+    const { flags } = await this.parse(AuditCommand as any);
 
     // Check if user has permission to manage audit logs
     const hasPermission = await this.checkAuditPermission();
@@ -108,11 +108,11 @@ export default class AuditCommand extends BaseCommand {
     }
 
     if (flags.search) {
-      await this.searchLogs(flags);
+      await this.searchLogs(flags as any);
     } else if (flags.verify) {
       await this.verifyLogs(flags.file);
     } else if (flags.configure) {
-      await this.configureLogs(flags);
+      await this.configureLogs(flags as any);
     } else {
       this.log('Please specify an action to perform. See --help for details.');
     }
@@ -140,16 +140,16 @@ export default class AuditCommand extends BaseCommand {
       let startDate: Date | undefined;
       let endDate: Date | undefined;
 
-      if (flags['start-date']) {
-        startDate = new Date(flags['start-date']);
+      if (flags?.["start-date"]) {
+        startDate = new Date(flags?.["start-date"]);
         if (isNaN(startDate.getTime())) {
           this.error('Invalid start date format. Use YYYY-MM-DD');
           return;
         }
       }
 
-      if (flags['end-date']) {
-        endDate = new Date(flags['end-date']);
+      if (flags?.["end-date"]) {
+        endDate = new Date(flags?.["end-date"]);
         if (isNaN(endDate.getTime())) {
           this.error('Invalid end date format. Use YYYY-MM-DD');
           return;
@@ -161,14 +161,14 @@ export default class AuditCommand extends BaseCommand {
         userId: flags.user,
         action: flags.action,
         resource: flags.resource,
-        resourceId: flags['resource-id'],
+        resourceId: flags?.["resource-id"],
         outcome: flags.outcome as string,
         startDate,
         endDate,
         limit: flags.limit,
       });
 
-      if (logs.length === 0) {
+      if (logs?.length === 0) {
         this.log('No audit logs found matching the criteria');
         return;
       }
@@ -230,7 +230,7 @@ export default class AuditCommand extends BaseCommand {
    */
   private async verifyLogs(filePath?: string): Promise<void> {
     try {
-      const result = await auditLogger.verifyLogs(filePath);
+      const result = await auditLogger.verifyLogs(filePath as any);
 
       if (result.valid) {
         this.log(chalk.green(`✓ Audit logs verified successfully`));
@@ -262,32 +262,32 @@ export default class AuditCommand extends BaseCommand {
     try {
       const config: Record<string, unknown> = {};
 
-      if (flags['storage-type']) {
-        config.storage = {
-          type: flags['storage-type'],
+      if (flags?.["storage-type"]) {
+        config?.storage = {
+          type: flags?.["storage-type"],
         };
 
-        if (flags.path && flags['storage-type'] === 'file') {
-          config.storage.path = flags.path;
+        if (flags.path && flags?.["storage-type"] === 'file') {
+          config.storage?.path = flags.path;
         }
       }
 
-      if (flags['blockchain-backup']) {
-        config.blockchainBackup = {
+      if (flags?.["blockchain-backup"]) {
+        config?.blockchainBackup = {
           enabled: true,
         };
 
         if (flags.frequency) {
-          config.blockchainBackup.frequency = flags.frequency;
+          config.blockchainBackup?.frequency = flags.frequency;
         }
 
-        if (flags['critical-only'] !== undefined) {
-          config.blockchainBackup.criticalEventsOnly = flags['critical-only'];
+        if (flags?.["critical-only"] !== undefined) {
+          config.blockchainBackup?.criticalEventsOnly = flags?.["critical-only"];
         }
       }
 
       // Apply configuration
-      auditLogger.configure(config);
+      auditLogger.configure(config as any);
 
       this.log(chalk.green('Audit logging configuration updated'));
     } catch (error) {

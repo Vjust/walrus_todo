@@ -60,7 +60,7 @@ export async function loadCurrentNetworkConfig(options?: import('./types.js').Co
  * @param options - Configuration loader options
  */
 export async function loadConfig(options?: import('./types.js').ConfigLoaderOptions) {
-  return loadCurrentNetworkConfig(options);
+  return loadCurrentNetworkConfig(options as any);
 }
 
 /**
@@ -75,9 +75,9 @@ function getNetworkFromEnvironment(): string {
   }
   
   // Node.js environment
-  return process.env.NETWORK || 
-         process.env.NEXT_PUBLIC_NETWORK || 
-         process.env.SUI_NETWORK || 
+  return process?.env?.NETWORK || 
+         process?.env?.NEXT_PUBLIC_NETWORK || 
+         process?.env?.SUI_NETWORK || 
          'localnet';
 }
 
@@ -86,12 +86,12 @@ function getNetworkFromEnvironment(): string {
  */
 export function isConfigurationComplete(config: import('./types.js').AppConfig): boolean {
   return !!(
-    config.deployment.packageId &&
-    config.deployment.packageId !== '0x0000000000000000000000000000000000000000000000000000000000000000' &&
-    config.deployment.packageId !== '0x0' &&
-    config.deployment.deployerAddress &&
-    config.deployment.deployerAddress !== '0x0000000000000000000000000000000000000000000000000000000000000000' &&
-    config.deployment.deployerAddress !== '0x0'
+    config?.deployment?.packageId &&
+    config?.deployment?.packageId !== '0x0000000000000000000000000000000000000000000000000000000000000000' &&
+    config?.deployment?.packageId !== '0x0' &&
+    config?.deployment?.deployerAddress &&
+    config?.deployment?.deployerAddress !== '0x0000000000000000000000000000000000000000000000000000000000000000' &&
+    config?.deployment?.deployerAddress !== '0x0'
   );
 }
 
@@ -99,8 +99,8 @@ export function isConfigurationComplete(config: import('./types.js').AppConfig):
  * Get explorer URL for a specific object or transaction
  */
 export function getExplorerUrl(config: import('./types.js').AppConfig, objectId: string, type: 'object' | 'txn' = 'object'): string {
-  const baseUrl = config.network.explorerUrl;
-  const network = config.network.name;
+  const baseUrl = config?.network?.explorerUrl;
+  const network = config?.network?.name;
   
   if (type === 'txn') {
     return `${baseUrl}/txblock/${objectId}?network=${network}`;
@@ -113,26 +113,26 @@ export function getExplorerUrl(config: import('./types.js').AppConfig, objectId:
  * Get faucet URL for the current network (if available)
  */
 export function getFaucetUrl(config: import('./types.js').AppConfig): string | null {
-  return config.network.faucetUrl || null;
+  return config?.network?.faucetUrl || null;
 }
 
 /**
  * Check if the current network has a faucet available
  */
 export function hasFaucet(config: import('./types.js').AppConfig): boolean {
-  return !!config.network.faucetUrl;
+  return !!config?.network?.faucetUrl;
 }
 
 /**
  * Get Walrus blob URL for reading
  */
 export function getWalrusBlobUrl(config: import('./types.js').AppConfig, blobId: string): string {
-  return `${config.walrus.aggregatorUrl}/v1/${blobId}`;
+  return `${config?.walrus?.aggregatorUrl}/v1/${blobId}`;
 }
 
 /**
  * Get Walrus publisher URL for uploading
  */
 export function getWalrusPublisherUrl(config: import('./types.js').AppConfig): string {
-  return `${config.walrus.publisherUrl}/v1/store`;
+  return `${config?.walrus?.publisherUrl}/v1/store`;
 }

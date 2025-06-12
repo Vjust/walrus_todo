@@ -60,20 +60,20 @@ class PWAManager {
       return;
     }
     
-    this.initialized = true;
+    this?.initialized = true;
     this.loadMetrics();
     // Register service worker
     if ('serviceWorker' in navigator) {
       try {
-        this.swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+        this?.swRegistration = await navigator?.serviceWorker?.register('/service-worker.js');
         console.log('[PWA] Service Worker registered');
 
         // Check for updates
-        this.swRegistration.addEventListener('updatefound', () => {
+        this?.swRegistration?.addEventListener('updatefound', () => {
           const newWorker = this.swRegistration!.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (newWorker?.state === 'installed' && navigator?.serviceWorker?.controller) {
                 this.showUpdatePrompt();
               }
             });
@@ -81,8 +81,8 @@ class PWAManager {
         });
 
         // Handle controller change
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload();
+        navigator?.serviceWorker?.addEventListener('controllerchange', () => {
+          window?.location?.reload();
         });
       } catch (error) {
         console.error('[PWA] Service Worker registration failed:', error);
@@ -92,15 +92,15 @@ class PWAManager {
     // Listen for beforeinstallprompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      this.deferredPrompt = e as BeforeInstallPromptEvent;
-      this.metrics.installPromptShown++;
+      this?.deferredPrompt = e as BeforeInstallPromptEvent;
+      this?.metrics?.installPromptShown++;
       this.saveMetrics();
     });
 
     // Listen for app installed
     window.addEventListener('appinstalled', () => {
       console.log('[PWA] App installed');
-      this.deferredPrompt = null;
+      this?.deferredPrompt = null;
       if (toast) {
         toast.success('WalTodo installed successfully!');
       }
@@ -120,13 +120,13 @@ class PWAManager {
           icon: 'ℹ️',
         });
       }
-      this.metrics.offlineUsage++;
+      this?.metrics?.offlineUsage++;
       this.saveMetrics();
     });
 
     // Request notification permission if needed
     if ('Notification' in window) {
-      this.metrics.notificationPermission = Notification.permission;
+      this.metrics?.notificationPermission = Notification.permission;
       this.saveMetrics();
     }
   }
@@ -138,19 +138,19 @@ class PWAManager {
     }
 
     try {
-      await this.deferredPrompt.prompt();
-      const { outcome } = await this.deferredPrompt.userChoice;
+      await this?.deferredPrompt?.prompt();
+      const { outcome } = await this?.deferredPrompt?.userChoice;
       
       if (outcome === 'accepted') {
-        this.metrics.installAccepted++;
+        this?.metrics?.installAccepted++;
         console.log('[PWA] User accepted install prompt');
       } else {
-        this.metrics.installDismissed++;
+        this?.metrics?.installDismissed++;
         console.log('[PWA] User dismissed install prompt');
       }
       
       this.saveMetrics();
-      this.deferredPrompt = null;
+      this?.deferredPrompt = null;
       return outcome === 'accepted';
     } catch (error) {
       console.error('[PWA] Install prompt error:', error);
@@ -187,9 +187,9 @@ class PWAManager {
       return 'denied';
     }
 
-    if (Notification.permission === 'default') {
+    if (Notification?.permission === 'default') {
       const permission = await Notification.requestPermission();
-      this.metrics.notificationPermission = permission;
+      this.metrics?.notificationPermission = permission;
       this.saveMetrics();
       return permission;
     }
@@ -205,7 +205,7 @@ class PWAManager {
     }
 
     if (this.swRegistration) {
-      await this.swRegistration.showNotification(title, {
+      await this?.swRegistration?.showNotification(title, {
         icon: '/icons/icon-192x192.png',
         badge: '/icons/badge-72x72.png',
         ...options
@@ -219,7 +219,7 @@ class PWAManager {
       return;
     }
     
-    navigator.serviceWorker.controller.postMessage({
+    navigator?.serviceWorker?.controller.postMessage({
       type: 'CACHE_NFT',
       url
     });
@@ -231,7 +231,7 @@ class PWAManager {
       return;
     }
     
-    navigator.serviceWorker.controller.postMessage({
+    navigator?.serviceWorker?.controller.postMessage({
       type: 'CLEAR_NFT_CACHE'
     });
   }
@@ -244,7 +244,7 @@ class PWAManager {
     }
 
     try {
-      await (this.swRegistration as any).sync.register(tag);
+      await (this.swRegistration as any).sync.register(tag as any);
       console.log(`[PWA] Sync registered: ${tag}`);
     } catch (error) {
       console.error('[PWA] Sync registration failed:', error);
@@ -276,7 +276,7 @@ class PWAManager {
     }
 
     try {
-      await navigator.share(data);
+      await navigator.share(data as any);
       return true;
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -295,8 +295,8 @@ class PWAManager {
     if (!data) {return true;}
     
     // Check if navigator.canShare exists (newer API)
-    if ('canShare' in navigator && typeof navigator.canShare === 'function') {
-      return navigator.canShare(data);
+    if ('canShare' in navigator && typeof navigator?.canShare === 'function') {
+      return navigator.canShare(data as any);
     }
     
     return true;
@@ -309,12 +309,12 @@ class PWAManager {
 
   // Track cache performance
   trackCacheHit() {
-    this.metrics.cacheHits++;
+    this?.metrics?.cacheHits++;
     this.saveMetrics();
   }
 
   trackCacheMiss() {
-    this.metrics.cacheMisses++;
+    this?.metrics?.cacheMisses++;
     this.saveMetrics();
   }
 
@@ -344,8 +344,8 @@ class PWAManager {
   }
 
   private updateServiceWorker() {
-    if (this.swRegistration && this.swRegistration.waiting) {
-      this.swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    if (this.swRegistration && this?.swRegistration?.waiting) {
+      this?.swRegistration?.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
   }
 
@@ -362,7 +362,7 @@ class PWAManager {
     try {
       const stored = localStorage.getItem('pwa-metrics');
       if (stored) {
-        this.metrics = { ...this.metrics, ...JSON.parse(stored) };
+        this?.metrics = { ...this.metrics, ...JSON.parse(stored as any) };
       }
     } catch (error) {
       console.error('[PWA] Failed to load metrics:', error);

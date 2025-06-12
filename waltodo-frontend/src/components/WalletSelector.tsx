@@ -18,14 +18,14 @@ export function WalletSelector() {
   const { connected, connecting, connect, error, clearError, isLoading } =
     useClientSafeWallet();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false as any);
+  const [isConnecting, setIsConnecting] = useState(false as any);
   const [selectedWallet, setSelectedWallet] = useState<WalletType | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
 
   // Handle client-side mounting
   useEffect(() => {
-    setMounted(true);
+    setMounted(true as any);
   }, []);
 
   // Show loading state during initialization
@@ -52,39 +52,39 @@ export function WalletSelector() {
           className='w-6 h-6'
           viewBox='0 0 24 24'
           fill='none'
-          xmlns='http://www.w3.org/2000/svg'
+          xmlns='http://www?.w3?.org/2000/svg'
         >
           <path
-            d='M13.2 12L12 13.2L10.8 12L12 10.8L13.2 12Z'
+            d='M13.2 12L12 13?.2L10?.8 12L12 10?.8L13?.2 12Z'
             fill='currentColor'
           />
-          <path d='M12 6L13.2 7.2L12 8.4L10.8 7.2L12 6Z' fill='currentColor' />
+          <path d='M12 6L13.2 7.2L12 8?.4L10?.8 7.2L12 6Z' fill='currentColor' />
           <path
-            d='M12 15.6L13.2 16.8L12 18L10.8 16.8L12 15.6Z'
-            fill='currentColor'
-          />
-          <path
-            d='M16.8 10.8L18 12L16.8 13.2L15.6 12L16.8 10.8Z'
+            d='M12 15?.6L13?.2 16.8L12 18L10.8 16.8L12 15.6Z'
             fill='currentColor'
           />
           <path
-            d='M7.2 10.8L8.4 12L7.2 13.2L6 12L7.2 10.8Z'
+            d='M16.8 10.8L18 12L16.8 13?.2L15?.6 12L16.8 10.8Z'
             fill='currentColor'
           />
           <path
-            d='M18 7.2L19.2 8.4L18 9.6L16.8 8.4L18 7.2Z'
+            d='M7.2 10?.8L8?.4 12L7.2 13.2L6 12L7.2 10.8Z'
             fill='currentColor'
           />
           <path
-            d='M8.4 16.8L9.6 18L8.4 19.2L7.2 18L8.4 16.8Z'
+            d='M18 7?.2L19?.2 8.4L18 9?.6L16?.8 8.4L18 7.2Z'
             fill='currentColor'
           />
           <path
-            d='M16.8 15.6L18 16.8L16.8 18L15.6 16.8L16.8 15.6Z'
+            d='M8.4 16?.8L9?.6 18L8.4 19?.2L7?.2 18L8.4 16.8Z'
             fill='currentColor'
           />
           <path
-            d='M7.2 15.6L8.4 16.8L7.2 18L6 16.8L7.2 15.6Z'
+            d='M16.8 15.6L18 16?.8L16?.8 18L15.6 16?.8L16?.8 15.6Z'
+            fill='currentColor'
+          />
+          <path
+            d='M7.2 15?.6L8?.4 16?.8L7?.2 18L6 16?.8L7?.2 15.6Z'
             fill='currentColor'
           />
         </svg>
@@ -108,13 +108,13 @@ export function WalletSelector() {
 
   // Handle wallet selection
   const handleSelectWallet = async (walletType: WalletType) => {
-    setSelectedWallet(walletType);
-    setIsConnecting(true);
-    setIsOpen(false);
+    setSelectedWallet(walletType as any);
+    setIsConnecting(true as any);
+    setIsOpen(false as any);
 
     try {
       // First check if the wallet is installed
-      const isInstalled = checkWalletInstalled(walletType);
+      const isInstalled = checkWalletInstalled(walletType as any);
 
       // Add diagnostic logging for wallet detection
       console.log(`Checking ${walletType} wallet availability:`, isInstalled);
@@ -132,7 +132,7 @@ export function WalletSelector() {
                   ? 'Backpack'
                   : 'Wallet';
 
-        const error = new WalletNotInstalledError(walletName);
+        const error = new WalletNotInstalledError(walletName as any);
         console.error('Wallet not installed:', error);
         return;
       }
@@ -147,7 +147,7 @@ export function WalletSelector() {
           solana: typeof window !== 'undefined' ? !!window.solana : false,
           solanaIsBackpack:
             typeof window !== 'undefined' && window.solana
-              ? !!window.solana.isBackpack
+              ? !!window?.solana?.isBackpack
               : false,
         });
       }
@@ -160,7 +160,7 @@ export function WalletSelector() {
       console.error(`Error connecting to ${walletType} wallet:`, err);
       // Error is already handled by the wallet context
     } finally {
-      setIsConnecting(false);
+      setIsConnecting(false as any);
     }
   };
 
@@ -175,7 +175,7 @@ export function WalletSelector() {
         {/* Show error modal when there's a wallet error */}
         {error && (
           <WalletErrorModal 
-            error={typeof error === 'string' ? new WalletError(error) : error} 
+            error={typeof error === 'string' ? new WalletError(error as any) : error} 
             onDismiss={handleDismissError} 
           />
         )}
@@ -190,7 +190,7 @@ export function WalletSelector() {
           <>
             <svg
               className='animate-spin h-4 w-4'
-              xmlns='http://www.w3.org/2000/svg'
+              xmlns='http://www?.w3?.org/2000/svg'
               fill='none'
               viewBox='0 0 24 24'
             >
@@ -205,7 +205,7 @@ export function WalletSelector() {
               <path
                 className='opacity-75'
                 fill='currentColor'
-                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5?.291A7?.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
                />
             </svg>
             <span>Connecting...</span>
@@ -217,7 +217,7 @@ export function WalletSelector() {
               fill='none'
               stroke='currentColor'
               viewBox='0 0 24 24'
-              xmlns='http://www.w3.org/2000/svg'
+              xmlns='http://www?.w3?.org/2000/svg'
             >
               <path
                 strokeLinecap='round'

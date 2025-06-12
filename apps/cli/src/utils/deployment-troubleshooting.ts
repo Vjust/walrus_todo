@@ -38,9 +38,9 @@ export class DeploymentTroubleshooting {
     const errorLower = errorMessage.toLowerCase();
     
     for (const [key, guide] of this.guides) {
-      if (guide.relatedErrors.some(pattern => 
+      if (guide?.relatedErrors?.some(pattern => 
         errorLower.includes(pattern.toLowerCase()) ||
-        new RegExp(pattern, 'i').test(errorMessage)
+        new RegExp(pattern, 'i').test(errorMessage as any)
       )) {
         return guide;
       }
@@ -53,15 +53,15 @@ export class DeploymentTroubleshooting {
    * Get all available guides
    */
   getAllGuides(): TroubleshootingGuide[] {
-    return Array.from(this.guides.values());
+    return Array.from(this?.guides?.values());
   }
 
   /**
    * Get guides by category
    */
   getGuidesByCategory(category: string): TroubleshootingGuide[] {
-    return Array.from(this.guides.values()).filter(guide =>
-      guide.title.toLowerCase().includes(category.toLowerCase())
+    return Array.from(this?.guides?.values()).filter(guide =>
+      guide?.title?.toLowerCase().includes(category.toLowerCase())
     );
   }
 
@@ -70,17 +70,17 @@ export class DeploymentTroubleshooting {
    */
   searchGuides(keyword: string): TroubleshootingGuide[] {
     const keywordLower = keyword.toLowerCase();
-    return Array.from(this.guides.values()).filter(guide =>
-      guide.title.toLowerCase().includes(keywordLower) ||
-      guide.description.toLowerCase().includes(keywordLower) ||
-      guide.symptoms.some(symptom => symptom.toLowerCase().includes(keywordLower)) ||
-      guide.causes.some(cause => cause.toLowerCase().includes(keywordLower))
+    return Array.from(this?.guides?.values()).filter(guide =>
+      guide?.title?.toLowerCase().includes(keywordLower as any) ||
+      guide?.description?.toLowerCase().includes(keywordLower as any) ||
+      guide?.symptoms?.some(symptom => symptom.toLowerCase().includes(keywordLower as any)) ||
+      guide?.causes?.some(cause => cause.toLowerCase().includes(keywordLower as any))
     );
   }
 
   private initializeGuides(): void {
     // Network Connectivity Issues
-    this.guides.set('network-connectivity', {
+    this?.guides?.set('network-connectivity', {
       title: 'Network Connectivity Issues',
       description: 'Problems connecting to Walrus endpoints or Sui network',
       symptoms: [
@@ -110,7 +110,7 @@ export class DeploymentTroubleshooting {
             'ping google.com',
             'curl -I https://walrus.site',
             'nslookup walrus.site',
-            'curl -I https://publisher.walrus.space'
+            'curl -I https://publisher?.walrus?.space'
           ],
           difficulty: 'easy',
           timeEstimate: '5-10 minutes'
@@ -136,7 +136,7 @@ export class DeploymentTroubleshooting {
           description: 'Fix DNS and network configuration issues',
           steps: [
             'Flush DNS cache',
-            'Try alternative DNS servers (8.8.8.8, 1.1.1.1)',
+            'Try alternative DNS servers (8?.8?.8.8, 1?.1?.1.1)',
             'Reset network configuration',
             'Check hosts file for conflicts'
           ],
@@ -162,7 +162,7 @@ export class DeploymentTroubleshooting {
     });
 
     // Authentication and Wallet Issues
-    this.guides.set('authentication-wallet', {
+    this?.guides?.set('authentication-wallet', {
       title: 'Authentication and Wallet Issues',
       description: 'Problems with wallet configuration, authentication, or insufficient funds',
       symptoms: [
@@ -253,7 +253,7 @@ export class DeploymentTroubleshooting {
     });
 
     // Build and Configuration Issues
-    this.guides.set('build-configuration', {
+    this?.guides?.set('build-configuration', {
       title: 'Build and Configuration Issues',
       description: 'Problems with build process, missing files, or configuration errors',
       symptoms: [
@@ -301,7 +301,7 @@ export class DeploymentTroubleshooting {
           commands: [
             'ls -la sites-config.yaml',
             'yamllint sites-config.yaml',
-            'cp sites-config.example.yaml sites-config.yaml'
+            'cp sites-config?.example?.yaml sites-config.yaml'
           ],
           notes: [
             'YAML is indentation-sensitive',
@@ -342,7 +342,7 @@ export class DeploymentTroubleshooting {
     });
 
     // Walrus CLI and Environment Issues
-    this.guides.set('walrus-cli-environment', {
+    this?.guides?.set('walrus-cli-environment', {
       title: 'Walrus CLI and Environment Issues',
       description: 'Problems with Walrus CLI installation, PATH configuration, or environment setup',
       symptoms: [
@@ -369,7 +369,7 @@ export class DeploymentTroubleshooting {
             'Verify installation'
           ],
           commands: [
-            'curl -fLJO https://docs.walrus.site/walrus',
+            'curl -fLJO https://docs?.walrus?.site/walrus',
             'chmod +x walrus',
             'sudo mv walrus /usr/local/bin/',
             'site-builder --version'
@@ -429,7 +429,7 @@ export class DeploymentTroubleshooting {
     });
 
     // Performance and Resource Issues
-    this.guides.set('performance-resources', {
+    this?.guides?.set('performance-resources', {
       title: 'Performance and Resource Issues',
       description: 'Problems with slow deployments, large builds, or resource constraints',
       symptoms: [
@@ -518,7 +518,7 @@ export class DeploymentTroubleshooting {
     });
 
     // Blockchain and Network Issues
-    this.guides.set('blockchain-network', {
+    this?.guides?.set('blockchain-network', {
       title: 'Blockchain and Network Issues',
       description: 'Problems with Sui blockchain connectivity or Walrus network operations',
       symptoms: [
@@ -546,7 +546,7 @@ export class DeploymentTroubleshooting {
             'Check for network upgrades'
           ],
           commands: [
-            'curl -X POST https://fullnode.testnet.sui.io:443 -H "Content-Type: application/json" -d \'{"jsonrpc":"2.0","id":1,"method":"sui_getLatestSuiSystemState","params":[]}\'',
+            'curl -X POST https://fullnode?.testnet?.sui.io:443 -H "Content-Type: application/json" -d \'{"jsonrpc":"2.0","id":1,"method":"sui_getLatestSuiSystemState","params":[]}\'',
             'curl -I https://walrus.site',
             'sui client active-env'
           ],
@@ -569,7 +569,7 @@ export class DeploymentTroubleshooting {
           ],
           commands: [
             'sui client envs',
-            'sui client new-env --alias backup-testnet --rpc https://alternative-rpc.sui.io',
+            'sui client new-env --alias backup-testnet --rpc https://alternative-rpc?.sui?.io',
             'sui client switch --env backup-testnet'
           ],
           difficulty: 'medium',
@@ -612,7 +612,7 @@ export class DeploymentTroubleshooting {
     let markdown = `# ${guide.title}\n\n`;
     markdown += `${guide.description}\n\n`;
     
-    markdown += `**Priority:** ${guide.priority.toUpperCase()}\n\n`;
+    markdown += `**Priority:** ${guide?.priority?.toUpperCase()}\n\n`;
     
     // Symptoms
     markdown += `## Symptoms\n\n`;
@@ -630,8 +630,8 @@ export class DeploymentTroubleshooting {
     
     // Solutions
     markdown += `## Solutions\n\n`;
-    for (let i = 0; i < guide.solutions.length; i++) {
-      const solution = guide.solutions[i];
+    for (let i = 0; i < guide?.solutions?.length; i++) {
+      const solution = guide?.solutions?.[i];
       markdown += `### ${i + 1}. ${solution.title}\n\n`;
       markdown += `${solution.description}\n\n`;
       
@@ -646,7 +646,7 @@ export class DeploymentTroubleshooting {
       }
       markdown += '\n';
       
-      if (solution.commands && solution.commands.length > 0) {
+      if (solution.commands && solution?.commands?.length > 0) {
         markdown += `**Commands:**\n`;
         markdown += '```bash\n';
         for (const command of solution.commands) {
@@ -655,7 +655,7 @@ export class DeploymentTroubleshooting {
         markdown += '```\n\n';
       }
       
-      if (solution.notes && solution.notes.length > 0) {
+      if (solution.notes && solution?.notes?.length > 0) {
         markdown += `**Notes:**\n`;
         for (const note of solution.notes) {
           markdown += `- ${note}\n`;
@@ -676,7 +676,7 @@ export class DeploymentTroubleshooting {
     doc += `## Table of Contents\n\n`;
     
     // Table of contents
-    const guides = Array.from(this.guides.values());
+    const guides = Array.from(this?.guides?.values());
     for (let i = 0; i < guides.length; i++) {
       doc += `${i + 1}. [${guides[i].title}](#${guides[i].title.toLowerCase().replace(/\s+/g, '-')})\n`;
     }
@@ -684,7 +684,7 @@ export class DeploymentTroubleshooting {
     
     // Generate each guide
     for (const guide of guides) {
-      doc += this.generateMarkdownGuide(guide);
+      doc += this.generateMarkdownGuide(guide as any);
       doc += '---\n\n';
     }
     

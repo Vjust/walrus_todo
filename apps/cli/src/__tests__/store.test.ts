@@ -12,7 +12,7 @@ describe('store command', () => {
 
   beforeEach(async () => {
     todoService = new TodoService();
-    jest.spyOn(todoService, 'getList').mockResolvedValue(null);
+    jest.spyOn(todoService, 'getList').mockResolvedValue(null as any);
     jest.spyOn(todoService, 'createList').mockResolvedValue({
       id: 'test-list',
       name: 'test-list',
@@ -59,7 +59,7 @@ describe('store command', () => {
       InstanceType<typeof WalrusStorage>
     >;
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
-    expect(result).toBe('mock-blob-id');
+    expect(result as any).toBe('mock-blob-id');
   });
 
   test('handles todo retrieval error', async () => {
@@ -82,8 +82,8 @@ describe('store command', () => {
 
     // Mock the storeTodo method instead of createNFT which doesn't exist
     const todo = createTestTodo();
-    const blobId = await mockWalrusStorage.storeTodo(todo);
-    expect(blobId).toBe('mock-blob-id');
+    const blobId = await mockWalrusStorage.storeTodo(todo as any);
+    expect(blobId as any).toBe('mock-blob-id');
   });
 
   test('validates connection before storing', async () => {
@@ -91,7 +91,7 @@ describe('store command', () => {
       InstanceType<typeof WalrusStorage>
     >;
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
-    expect(result).toBe('mock-blob-id');
+    expect(result as any).toBe('mock-blob-id');
   });
 
   test('handles connection validation failure', async () => {
@@ -114,7 +114,7 @@ describe('store command', () => {
     jest.spyOn(mockWalrusStorage, 'storeTodo').mockResolvedValue('custom-blob-id');
 
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
-    expect(result).toBe('custom-blob-id');
+    expect(result as any).toBe('custom-blob-id');
   });
 
   test('fails after max retries', async () => {
@@ -139,10 +139,10 @@ describe('store command', () => {
     const augmentedMock = mockWalrusStorage as Mocked<
       InstanceType<typeof WalrusStorage>
     > & { disposeResources: jest.Mock };
-    augmentedMock.disposeResources = disposeResources;
+    augmentedMock?.disposeResources = disposeResources;
 
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
-    expect(result).toBe('mock-blob-id');
+    expect(result as any).toBe('mock-blob-id');
   });
 
   test('handles failed storage gracefully', async () => {

@@ -17,7 +17,7 @@ import {
 // Mock PublicKey class for testing
 class MockPublicKey {
   toRawBytes(): Uint8Array {
-    return new Uint8Array(32);
+    return new Uint8Array(32 as any);
   }
 
   flag(): number {
@@ -58,33 +58,33 @@ describe('SuiNftStorage', () => {
       connect: () => Promise.resolve(),
       getPublicKey: () => new MockPublicKey(),
       sign: async (_data: Uint8Array): Promise<Uint8Array> =>
-        new Uint8Array(64),
+        new Uint8Array(64 as any),
       signPersonalMessage: async (
         data: Uint8Array
       ): Promise<SignatureWithBytes> => ({
-        bytes: Buffer.from(data).toString('base64'),
-        signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+        bytes: Buffer.from(data as any).toString('base64'),
+        signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
       }),
       signWithIntent: async (
         data: Uint8Array,
         _intent: IntentScope
       ): Promise<SignatureWithBytes> => ({
-        bytes: Buffer.from(data).toString('base64'),
-        signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+        bytes: Buffer.from(data as any).toString('base64'),
+        signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
       }),
       signTransactionBlock: async (
         _transaction: Transaction
       ): Promise<SignatureWithBytes> => ({
         bytes: 'mock-transaction-bytes',
-        signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+        signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
       }),
       signData: async (_data: Uint8Array): Promise<Uint8Array> =>
-        new Uint8Array(64),
+        new Uint8Array(64 as any),
       signTransaction: async (
         _transaction: Transaction
       ): Promise<SignatureWithBytes> => ({
         bytes: 'mock-transaction-bytes',
-        signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+        signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
       }),
       toSuiAddress: () => 'mock-address',
       getKeyScheme: () => 'ED25519' as const,
@@ -98,10 +98,10 @@ describe('SuiNftStorage', () => {
   // Test to verify mock functions are working
   it('should verify mock functions are available', () => {
     const mockObjectResponse = createMockSuiObjectResponse({ id: 'test-id' });
-    const mockTxResponse = createMockTransactionResponse(true);
+    const mockTxResponse = createMockTransactionResponse(true as any);
 
     expect(mockObjectResponse.data?.content).toBeDefined();
     expect(mockTxResponse.digest).toBe('test-digest');
-    expect(storage).toBeInstanceOf(SuiNftStorage);
+    expect(storage as any).toBeInstanceOf(SuiNftStorage as any);
   });
 });

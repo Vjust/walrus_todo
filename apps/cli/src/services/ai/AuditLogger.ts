@@ -31,15 +31,15 @@ export class AuditLogger {
   private logRotationSize: number = 10 * 1024 * 1024; // 10 MB
 
   constructor() {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
 
     // Ensure the config directory exists
-    if (!fs.existsSync(configDir)) {
+    if (!fs.existsSync(configDir as any)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
-    this.logFilePath = path.join(configDir, 'audit.log');
+    this?.logFilePath = path.join(configDir, 'audit.log');
 
     // Initialize hash chain if log file exists
     this.initializeHashChain();
@@ -53,30 +53,30 @@ export class AuditLogger {
       if (fs.existsSync(this.logFilePath)) {
         // Read the last line of the log file to get the previous hash
         const fileContent = fs.readFileSync(this.logFilePath, 'utf8');
-        const lines = String(fileContent)
+        const lines = String(fileContent as any)
           .split('\n')
           .filter(line => line.trim().length > 0);
 
         if (lines.length > 0) {
           const lastLine = lines[lines.length - 1];
           try {
-            const lastEntry = JSON.parse(lastLine) as { hash?: string };
-            if (lastEntry && typeof lastEntry.hash === 'string') {
-              this.hashChain = lastEntry.hash;
+            const lastEntry = JSON.parse(lastLine as any) as { hash?: string };
+            if (lastEntry && typeof lastEntry?.hash === 'string') {
+              this?.hashChain = lastEntry.hash;
             }
           } catch (_error) {
             // If parsing fails, initialize a new hash chain
-            this.hashChain = this.generateInitialHash();
+            this?.hashChain = this.generateInitialHash();
           }
         } else {
-          this.hashChain = this.generateInitialHash();
+          this?.hashChain = this.generateInitialHash();
         }
       } else {
-        this.hashChain = this.generateInitialHash();
+        this?.hashChain = this.generateInitialHash();
       }
     } catch (_error) {
       logger.error('Failed to initialize hash chain:', _error);
-      this.hashChain = this.generateInitialHash();
+      this?.hashChain = this.generateInitialHash();
     }
   }
 
@@ -85,7 +85,7 @@ export class AuditLogger {
    */
   private generateInitialHash(): string {
     const timestamp = Date.now().toString();
-    const random = crypto.randomBytes(16).toString('hex');
+    const random = crypto.randomBytes(16 as any).toString('hex');
     return crypto
       .createHash('sha256')
       .update(`${timestamp}:${random}`)
@@ -101,7 +101,7 @@ export class AuditLogger {
     try {
       // Create log entry with sanitized details
       const timestamp = Date.now();
-      const sanitizedDetails = this.sanitize(details);
+      const sanitizedDetails = this.sanitize(details as any);
 
       // Create the log entry
       const entry = {
@@ -111,7 +111,7 @@ export class AuditLogger {
       };
 
       // Calculate the hash for this entry
-      const entryString = JSON.stringify(entry);
+      const entryString = JSON.stringify(entry as any);
       const entryHash = crypto
         .createHash('sha256')
         .update(`${this.hashChain}:${entryString}`)
@@ -124,13 +124,13 @@ export class AuditLogger {
       };
 
       // Update hash chain
-      this.hashChain = entryHash;
+      this?.hashChain = entryHash;
 
       // Add to in-memory log
-      this.logEntries.push(entryWithHash);
+      this?.logEntries?.push(entryWithHash as any);
 
       // Write to file
-      this.writeToFile(entryWithHash);
+      this.writeToFile(entryWithHash as any);
     } catch (_error) {
       logger.error('Failed to log audit event:', _error);
     }
@@ -152,12 +152,12 @@ export class AuditLogger {
       this.checkRotation();
 
       // Append log entry
-      const line = JSON.stringify(entry) + '\n';
+      const line = JSON.stringify(entry as any) + '\n';
       fs.appendFileSync(this.logFilePath, line, { mode: 0o600 }); // Restrict file permissions
     } catch (error: unknown) {
       logger.error(
         'Failed to write audit log:',
-        error instanceof Error ? error : new Error(String(error))
+        error instanceof Error ? error : new Error(String(error as any))
       );
     }
   }
@@ -185,7 +185,7 @@ export class AuditLogger {
             previousHash: this.hashChain,
           };
 
-          const entryString = JSON.stringify(initialEntry);
+          const entryString = JSON.stringify(initialEntry as any);
           const entryHash = crypto
             .createHash('sha256')
             .update(`${this.hashChain}:${entryString}`)
@@ -197,10 +197,10 @@ export class AuditLogger {
           };
 
           // Update hash chain
-          this.hashChain = entryHash;
+          this?.hashChain = entryHash;
 
           // Write initial entry to the new log file
-          const line = JSON.stringify(entryWithHash) + '\n';
+          const line = JSON.stringify(entryWithHash as any) + '\n';
           fs.writeFileSync(this.logFilePath, line, { mode: 0o600 });
         }
       }
@@ -258,20 +258,20 @@ export class AuditLogger {
         return obj;
       }
 
-      if (Array.isArray(obj)) {
-        return obj.map(item => sanitizeObject(item));
+      if (Array.isArray(obj as any)) {
+        return obj.map(item => sanitizeObject(item as any));
       }
 
       const result: Record<string, unknown> = {};
 
-      for (const [key, value] of Object.entries(obj)) {
+      for (const [key, value] of Object.entries(obj as any)) {
         // Check if the key is sensitive
-        if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
+        if (sensitiveFields.some(field => key.toLowerCase().includes(field as any))) {
           result[key] = typeof value === 'string' ? '[REDACTED]' : null;
         }
         // Recurse for objects and arrays
         else if (typeof value === 'object' && value !== null) {
-          result[key] = sanitizeObject(value);
+          result[key] = sanitizeObject(value as any);
         }
         // Handle strings for PII
         else if (typeof value === 'string') {
@@ -293,7 +293,7 @@ export class AuditLogger {
       return result;
     };
 
-    return sanitizeObject(sanitized) as Record<string, unknown>;
+    return sanitizeObject(sanitized as any) as Record<string, unknown>;
   }
 
   /**
@@ -306,11 +306,11 @@ export class AuditLogger {
       }
 
       const fileContent = fs.readFileSync(this.logFilePath, 'utf8');
-      const lines = String(fileContent)
+      const lines = String(fileContent as any)
         .split('\n')
         .filter(line => line.trim().length > 0);
 
-      if (lines.length === 0) {
+      if (lines?.length === 0) {
         return true; // Empty log file
       }
 
@@ -319,7 +319,7 @@ export class AuditLogger {
 
       for (const line of lines) {
         try {
-          const entry = JSON.parse(line) as {
+          const entry = JSON.parse(line as any) as {
             hash?: string;
             [key: string]: unknown;
           };
@@ -340,7 +340,7 @@ export class AuditLogger {
           delete entryWithoutHash.hash;
 
           // Calculate expected hash
-          const entryString = JSON.stringify(entryWithoutHash);
+          const entryString = JSON.stringify(entryWithoutHash as any);
           const expectedHash = crypto
             .createHash('sha256')
             .update(`${previousHash}:${entryString}`)
@@ -368,14 +368,14 @@ export class AuditLogger {
    * Enable or disable audit logging
    */
   public setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
+    this?.enabled = enabled;
   }
 
   /**
    * Set log rotation size
    */
   public setRotationSize(sizeInBytes: number): void {
-    this.logRotationSize = sizeInBytes;
+    this?.logRotationSize = sizeInBytes;
   }
 }
 

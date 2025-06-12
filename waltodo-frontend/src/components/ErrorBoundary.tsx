@@ -13,19 +13,19 @@ interface ErrorBoundaryProps {
 }
 
 export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProps) {
-  const [hasError, setHasError] = useState(false);
+  const [hasError, setHasError] = useState(false as any);
   const [error, setError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRecovering, setIsRecovering] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
+  const [retryCount, setRetryCount] = useState(0 as any);
+  const [isRecovering, setIsRecovering] = useState(false as any);
 
   // Reset error state with retry functionality
   const resetError = useCallback(async () => {
     if (isRecovering) {return;}
     
-    setIsRecovering(true);
-    setHasError(false);
-    setError(null);
+    setIsRecovering(true as any);
+    setHasError(false as any);
+    setError(null as any);
     setRetryCount(prev => prev + 1);
     
     // Show a toast that we're retrying
@@ -36,12 +36,12 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
     
     // Add delay for recovery
     await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRecovering(false);
+    setIsRecovering(false as any);
   }, [isRecovering]);
 
   useEffect(() => {
     // Track mounting for hydration safety
-    setMounted(true);
+    setMounted(true as any);
     
     // Only run in the browser
     if (typeof window === 'undefined') {return;}
@@ -78,7 +78,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
 
       const errorMessage = event.error?.message || '';
       const isCriticalError = criticalErrors.some(pattern => 
-        errorMessage.includes(pattern)
+        errorMessage.includes(pattern as any)
       );
 
       const errorInstance = event.error instanceof Error
@@ -86,9 +86,9 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         : new Error(String(event.error));
 
       // Save error to persistence
-      const errorType = classifyError(errorInstance);
+      const errorType = classifyError(errorInstance as any);
       errorPersistence.saveError({
-        id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `error_${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`,
         timestamp: Date.now(),
         type: errorType,
         message: errorInstance.message,
@@ -113,14 +113,14 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         });
       }
 
-      setError(errorInstance);
-      setHasError(true);
+      setError(errorInstance as any);
+      setHasError(true as any);
       onError?.(errorInstance);
       
       // Track error in analytics
       const analytics = getAnalytics();
       if (analytics) {
-        analytics.trackError(errorInstance);
+        analytics.trackError(errorInstance as any);
       }
 
       // Prevent the error from propagating
@@ -177,7 +177,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
 
       const rejectionMessage = String(event.reason);
       const isCriticalError = criticalErrors.some(pattern => 
-        rejectionMessage.includes(pattern)
+        rejectionMessage.includes(pattern as any)
       );
 
       const errorInstance = event.reason instanceof Error
@@ -185,9 +185,9 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         : new Error(String(event.reason));
 
       // Save error to persistence
-      const errorType = classifyError(errorInstance);
+      const errorType = classifyError(errorInstance as any);
       errorPersistence.saveError({
-        id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `error_${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`,
         timestamp: Date.now(),
         type: errorType,
         message: errorInstance.message,
@@ -213,14 +213,14 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       }
 
       // Only set error state for genuine errors that should show error UI
-      setError(errorInstance);
-      setHasError(true);
+      setError(errorInstance as any);
+      setHasError(true as any);
       onError?.(errorInstance);
       
       // Track rejection in analytics
       const analytics = getAnalytics();
       if (analytics) {
-        analytics.trackError(errorInstance);
+        analytics.trackError(errorInstance as any);
       }
 
       // Prevent the error from propagating
@@ -244,8 +244,8 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       <div className='bg-red-50 border border-red-200 rounded-lg p-6'>
         <div className='flex items-start'>
           <div className='flex-shrink-0'>
-            <svg className='h-6 w-6 text-red-400' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+            <svg className='h-6 w-6 text-red-400' xmlns='http://www?.w3?.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13?.856c1?.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1?.333?.192 3 1.732 3z' />
             </svg>
           </div>
           <div className='ml-3 flex-1'>
@@ -262,7 +262,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
                 </p>
               )}
             </div>
-            {process.env.NODE_ENV !== 'production' && error?.stack && (
+            {process?.env?.NODE_ENV !== 'production' && error?.stack && (
               <details className='mt-4'>
                 <summary className='cursor-pointer text-sm text-red-600 hover:text-red-700'>
                   Show technical details
@@ -280,7 +280,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
                 Try Again
               </button>
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => window?.location?.reload()}
                 className='px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors'
               >
                 Reload Page

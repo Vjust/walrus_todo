@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { commandRegistry } from '../utils/CommandRegistry';
 import {
   CommandShortcuts,
@@ -41,7 +41,7 @@ export default class HelpCommand extends BaseCommand {
   static aliases = ['h', '?'];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(HelpCommand);
+    const { args, flags } = await this.parse(HelpCommand as any);
 
     // Show shortcuts if flag is set
     if (flags.shortcuts) {
@@ -54,11 +54,11 @@ export default class HelpCommand extends BaseCommand {
       const expandedCommand = CommandShortcuts.expand(args.command);
 
       // Show help for specific command
-      const command = commandRegistry.resolveAlias(expandedCommand);
-      const metadata = commandRegistry.getCommand(command);
+      const command = commandRegistry.resolveAlias(expandedCommand as any);
+      const metadata = commandRegistry.getCommand(command as any);
 
       if (metadata) {
-        this.showCommandHelp(metadata);
+        this.showCommandHelp(metadata as any);
       } else {
         // Suggest commands if not found
         const suggestions = commandRegistry.suggestCommands(args.command);
@@ -83,7 +83,7 @@ export default class HelpCommand extends BaseCommand {
 ${chalk.bold('WalTodo - A powerful CLI for managing todos with blockchain integration')}
 
 ${chalk.bold('Usage')}
-  $ ${this.config.bin} COMMAND
+  $ ${this?.config?.bin} COMMAND
 
 ${chalk.bold('Command Groups')}
 ${commandRegistry.generateGroupHelp()}
@@ -94,9 +94,9 @@ ${chalk.bold('Common Commands')}
   complete        Mark todo as complete
   
 ${chalk.bold('Getting Started')}
-  $ ${this.config.bin} add "My first todo"
-  $ ${this.config.bin} list
-  $ ${this.config.bin} complete --id 123
+  $ ${this?.config?.bin} add "My first todo"
+  $ ${this?.config?.bin} list
+  $ ${this?.config?.bin} complete --id 123
 
 ${chalk.bold('Options')}
   -h, --help      Show help
@@ -109,22 +109,22 @@ ${chalk.bold('Command Shortcuts')}
   Smart: todo (add), done (complete), nft (create NFT)
   Unix-style: ls (list), rm (delete)
   
-  ${chalk.dim('Run')} ${chalk.cyan(`${this.config.bin} help --shortcuts`)} ${chalk.dim('to see all available shortcuts.')}
+  ${chalk.dim('Run')} ${chalk.cyan(`${this?.config?.bin} help --shortcuts`)} ${chalk.dim('to see all available shortcuts.')}
 
 ${chalk.bold('Examples')}
   ${chalk.dim('# Add a todo with priority')}
-  $ ${this.config.bin} add "Important task" -p high
+  $ ${this?.config?.bin} add "Important task" -p high
   
   ${chalk.dim('# Using shortcuts')}
-  $ ${this.config.bin} a "Quick todo"      ${chalk.dim('# Same as: add')}
-  $ ${this.config.bin} l                   ${chalk.dim('# Same as: list')}
-  $ ${this.config.bin} c --id 456          ${chalk.dim('# Same as: complete')}
+  $ ${this?.config?.bin} a "Quick todo"      ${chalk.dim('# Same as: add')}
+  $ ${this?.config?.bin} l                   ${chalk.dim('# Same as: list')}
+  $ ${this?.config?.bin} c --id 456          ${chalk.dim('# Same as: complete')}
   
   ${chalk.dim('# Smart shortcuts')}
-  $ ${this.config.bin} todo "Get groceries" ${chalk.dim('# Natural way to add')}
-  $ ${this.config.bin} done 123            ${chalk.dim('# Natural way to complete')}
+  $ ${this?.config?.bin} todo "Get groceries" ${chalk.dim('# Natural way to add')}
+  $ ${this?.config?.bin} done 123            ${chalk.dim('# Natural way to complete')}
 
-${chalk.dim('Run')} ${chalk.cyan(`${this.config.bin} help COMMAND`)} ${chalk.dim('for more information on a specific command.')}
+${chalk.dim('Run')} ${chalk.cyan(`${this?.config?.bin} help COMMAND`)} ${chalk.dim('for more information on a specific command.')}
 `);
   }
 
@@ -135,12 +135,12 @@ ${chalk.dim('Run')} ${chalk.cyan(`${this.config.bin} help COMMAND`)} ${chalk.dim
 ${chalk.bold(command.name)} - ${command.description}
 
 ${chalk.bold('Usage')}
-  $ ${this.config.bin} ${command.name} ${command.usage?.join(' ') || ''}
+  $ ${this?.config?.bin} ${command.name} ${command.usage?.join(' ') || ''}
 
-${command.aliases?.length ? `${chalk.bold('Aliases')}\n  ${command.aliases.join(', ')}\n` : ''}
+${command.aliases?.length ? `${chalk.bold('Aliases')}\n  ${command?.aliases?.join(', ')}\n` : ''}
 ${shortcuts.length ? `${chalk.bold('Shortcuts')}\n  ${shortcuts.join(', ')}\n` : ''}
 
-${command.examples?.length ? `${chalk.bold('Examples')}\n${command.examples.map(ex => `  ${ex}`).join('\n')}` : ''}
+${command.examples?.length ? `${chalk.bold('Examples')}\n${command?.examples?.map(ex => `  ${ex}`).join('\n')}` : ''}
 `);
   }
 

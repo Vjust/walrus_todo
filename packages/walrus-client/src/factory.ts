@@ -15,11 +15,11 @@ export function createWalrusClient(
   networkOrConfig?: WalrusNetwork | WalrusConfig | Partial<WalrusConfig>
 ): WalrusClient {
   if (typeof networkOrConfig === 'string') {
-    return new WalrusClient(WalrusConfig.forNetwork(networkOrConfig));
+    return new WalrusClient(WalrusConfig.forNetwork(networkOrConfig as any));
   }
   
   if (networkOrConfig instanceof WalrusConfig) {
-    return new WalrusClient(networkOrConfig);
+    return new WalrusClient(networkOrConfig as any);
   }
   
   return new WalrusClient(new WalrusConfig(networkOrConfig as any || 'testnet'));
@@ -36,7 +36,7 @@ export function createWalrusImageStorage(
   }
 ): WalrusImageStorage {
   if (typeof networkOrConfig === 'string') {
-    return new WalrusImageStorage(WalrusConfig.forNetwork(networkOrConfig), options);
+    return new WalrusImageStorage(WalrusConfig.forNetwork(networkOrConfig as any), options);
   }
   
   if (networkOrConfig instanceof WalrusConfig) {
@@ -67,8 +67,8 @@ export function createWalrusClientFromEnv(): WalrusClient {
  * Create client with custom config URL
  */
 export async function createWalrusClientFromUrl(configUrl: string): Promise<WalrusClient> {
-  const config = await WalrusConfig.fromUrl(configUrl);
-  return new WalrusClient(config);
+  const config = await WalrusConfig.fromUrl(configUrl as any);
+  return new WalrusClient(config as any);
 }
 
 /**
@@ -109,7 +109,7 @@ export async function createWalrusClientWithDynamicConfig(
   try {
     // Try to import config-loader if available
     const { loadNetworkConfig } = await import('@waltodo/config-loader');
-    const configResult = await loadNetworkConfig(network);
+    const configResult = await loadNetworkConfig(network as any);
     const config = configResult.config;
     
     return new WalrusClient({
@@ -120,6 +120,6 @@ export async function createWalrusClientWithDynamicConfig(
   } catch (error) {
     // eslint-disable-next-line no-console
     console.warn('Config loader not available, using default config:', error);
-    return createWalrusClient(network);
+    return createWalrusClient(network as any);
   }
 }

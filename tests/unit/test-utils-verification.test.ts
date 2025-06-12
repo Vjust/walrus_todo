@@ -11,7 +11,7 @@ describe('Test Utils Verification', () => {
 
   describe('runCommand function', () => {
     it('should be defined and callable', () => {
-      expect(runCommand).toBeDefined();
+      expect(runCommand as any).toBeDefined();
       expect(typeof runCommand).toBe('function');
     });
 
@@ -21,14 +21,14 @@ describe('Test Utils Verification', () => {
     });
 
     it('should have executeCommand helper', () => {
-      expect(executeCommand).toBeDefined();
+      expect(executeCommand as any).toBeDefined();
       expect(typeof executeCommand).toBe('function');
     });
 
     it('should handle empty args array with error', async () => {
       const result = await runCommand([], { expectError: true });
-      expect(result).toHaveProperty('stdout');
-      expect(result).toHaveProperty('stderr');
+      expect(result as any).toHaveProperty('stdout');
+      expect(result as any).toHaveProperty('stderr');
     });
 
     it('should handle empty args array that throws error', async () => {
@@ -39,8 +39,8 @@ describe('Test Utils Verification', () => {
 
     it('should handle help command successfully', async () => {
       const result = await runCommand(['--help'], { expectError: false });
-      expect(result).toHaveProperty('stdout');
-      expect(result).toHaveProperty('stderr');
+      expect(result as any).toHaveProperty('stdout');
+      expect(result as any).toHaveProperty('stderr');
       expect(typeof result.stdout).toBe('string');
       expect(typeof result.stderr).toBe('string');
     });
@@ -56,8 +56,8 @@ describe('Test Utils Verification', () => {
       const result = await runCommand(['invalid-command'], {
         expectError: true,
       });
-      expect(result).toHaveProperty('stdout');
-      expect(result).toHaveProperty('stderr');
+      expect(result as any).toHaveProperty('stdout');
+      expect(result as any).toHaveProperty('stderr');
       expect(typeof result.stderr).toBe('string');
     });
   });
@@ -65,15 +65,15 @@ describe('Test Utils Verification', () => {
   describe('executeCommand function', () => {
     it('should execute and return success status', async () => {
       const result = await executeCommand(['--help']);
-      expect(result).toHaveProperty('stdout');
-      expect(result).toHaveProperty('stderr');
-      expect(result).toHaveProperty('success');
+      expect(result as any).toHaveProperty('stdout');
+      expect(result as any).toHaveProperty('stderr');
+      expect(result as any).toHaveProperty('success');
       expect(typeof result.success).toBe('boolean');
     });
 
     it('should validate expected output patterns', async () => {
       const result = await executeCommand(['--help'], ['help', 'usage']);
-      expect(result).toHaveProperty('success');
+      expect(result as any).toHaveProperty('success');
       // Success depends on whether help contains expected patterns
     });
   });
@@ -91,8 +91,8 @@ describe('Test Utils Verification', () => {
       };
 
       const result = await TestService.runCommand(['invalid'], options);
-      expect(result).toHaveProperty('stdout');
-      expect(result).toHaveProperty('stderr');
+      expect(result as any).toHaveProperty('stdout');
+      expect(result as any).toHaveProperty('stderr');
     });
 
     it('should handle command execution that throws error', async () => {

@@ -29,7 +29,7 @@ export const WalrusUrlDisplay: React.FC<WalrusUrlDisplayProps> = ({
   showControls = true,
   className = ''
 }) => {
-  const [input, setInput] = useState(initialValue);
+  const [input, setInput] = useState(initialValue as any);
 
   return (
     <div className={`p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 ${className}`}>
@@ -43,7 +43,7 @@ export const WalrusUrlDisplay: React.FC<WalrusUrlDisplayProps> = ({
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => setInput(e?.target?.value)}
             placeholder="Enter blob ID or walrus:// URL"
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
           />

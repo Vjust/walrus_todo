@@ -56,7 +56,7 @@ describe('Batch Operation Fuzzer Tests', () => {
         ? randomString(50 + Math.floor(Math.random() * 150))
         : undefined,
     tags: Array.from({ length: Math.floor(Math.random() * 5) }, () =>
-      randomString(5)
+      randomString(5 as any)
     ),
     priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as
       | 'low'
@@ -76,8 +76,8 @@ describe('Batch Operation Fuzzer Tests', () => {
 
     for (let i = 0; i < count; i++) {
       const operationType =
-        Object.values(BatchOperationType)[
-          Math.floor(Math.random() * Object.values(BatchOperationType).length)
+        Object.values(BatchOperationType as any)[
+          Math.floor(Math.random() * Object.values(BatchOperationType as any).length)
         ];
       const batchSize = Math.floor(Math.random() * 50) + 1;
 
@@ -97,7 +97,7 @@ describe('Batch Operation Fuzzer Tests', () => {
           operations = Array.from({ length: batchSize }, (_, index) => ({
             type: 'update',
             id: `todo-${index}`,
-            data: { text: randomString(20), completed: Math.random() > 0.5 },
+            data: { text: randomString(20 as any), completed: Math.random() > 0.5 },
           }));
           expectedBehavior = `Should attempt to update ${batchSize} todos`;
           break;
@@ -129,7 +129,7 @@ describe('Batch Operation Fuzzer Tests', () => {
                 return {
                   type,
                   id: `todo-${index % 10}`,
-                  data: { text: randomString(20) },
+                  data: { text: randomString(20 as any) },
                 };
               case 'complete':
                 return { type, id: `todo-${index % 10}` };
@@ -159,13 +159,13 @@ describe('Batch Operation Fuzzer Tests', () => {
             () => ({
               type: 'add',
               data: {
-                text: randomString(1000), // Large text
-                description: randomString(5000), // Very large description
-                tags: Array.from({ length: 50 }, () => randomString(10)), // Many tags
+                text: randomString(1000 as any), // Large text
+                description: randomString(5000 as any), // Very large description
+                tags: Array.from({ length: 50 }, () => randomString(10 as any)), // Many tags
                 attachments: Array.from({ length: 10 }, () => ({
                   // Large attachments
-                  filename: randomString(20),
-                  data: randomString(10000),
+                  filename: randomString(20 as any),
+                  data: randomString(10000 as any),
                 })),
               },
             })
@@ -191,7 +191,7 @@ describe('Batch Operation Fuzzer Tests', () => {
     testCase: FuzzTestCase
   ): Promise<BatchResult> => {
     const operationId = `batch-${testCase.id}`;
-    activeOperations.add(operationId);
+    activeOperations.add(operationId as any);
 
     try {
       const results: PromiseSettledResult<{
@@ -202,10 +202,10 @@ describe('Batch Operation Fuzzer Tests', () => {
       const startTime = Date.now();
 
       // Execute operations in batches
-      const chunkSize = Math.min(testCase.operations.length, 10);
+      const chunkSize = Math.min(testCase?.operations?.length, 10);
 
-      for (let i = 0; i < testCase.operations.length; i += chunkSize) {
-        const chunk = testCase.operations.slice(i, i + chunkSize);
+      for (let i = 0; i < testCase?.operations?.length; i += chunkSize) {
+        const chunk = testCase?.operations?.slice(i, i + chunkSize);
 
         const promises = chunk.map(async operation => {
           try {
@@ -220,7 +220,7 @@ describe('Batch Operation Fuzzer Tests', () => {
           }
         });
 
-        const chunkResults = await Promise.allSettled(promises);
+        const chunkResults = await Promise.allSettled(promises as any);
         results.push(...chunkResults);
       }
 
@@ -228,28 +228,28 @@ describe('Batch Operation Fuzzer Tests', () => {
       const duration = endTime - startTime;
 
       return {
-        success: errors.length === 0,
-        totalOperations: testCase.operations.length,
-        successfulOperations: results.filter(r => r.status === 'fulfilled')
+        success: errors?.length === 0,
+        totalOperations: testCase?.operations?.length,
+        successfulOperations: results.filter(r => r?.status === 'fulfilled')
           .length,
         failedOperations: errors.length,
         duration,
         errors: errors.slice(0, 5), // Limit error reporting
       };
     } finally {
-      activeOperations.delete(operationId);
+      activeOperations.delete(operationId as any);
     }
   };
 
   describe('Fuzz Testing Suite', () => {
     it('should handle random batch operations without crashing', async () => {
-      const testCases = generateFuzzTestCases(50);
+      const testCases = generateFuzzTestCases(50 as any);
 
       for (const testCase of testCases) {
-        const result = await executeBatchTest(testCase);
+        const result = await executeBatchTest(testCase as any);
 
         // Basic assertions that the system doesn't crash
-        expect(result).toBeDefined();
+        expect(result as any).toBeDefined();
         expect(typeof result.success).toBe('boolean');
         expect(typeof result.totalOperations).toBe('number');
         expect(typeof result.duration).toBe('number');
@@ -266,15 +266,15 @@ describe('Batch Operation Fuzzer Tests', () => {
       };
 
       // Generate stress operations
-      stressTest.operations = Array.from({ length: 100 }, () => ({
+      stressTest?.operations = Array.from({ length: 100 }, () => ({
         type: 'add',
         data: generateRandomTodo(),
       }));
 
-      const result = await executeBatchTest(stressTest);
+      const result = await executeBatchTest(stressTest as any);
 
-      expect(result).toBeDefined();
-      expect(result.totalOperations).toBe(100);
+      expect(result as any).toBeDefined();
+      expect(result.totalOperations).toBe(100 as any);
     });
 
     it('should handle mixed operation types', async () => {
@@ -287,7 +287,7 @@ describe('Batch Operation Fuzzer Tests', () => {
       };
 
       // Generate mixed operations
-      mixedTest.operations = Array.from({ length: 25 }, (_, index) => {
+      mixedTest?.operations = Array.from({ length: 25 }, (_, index) => {
         const types = ['add', 'update', 'complete', 'delete'];
         const type = types[index % types.length];
         return {
@@ -300,10 +300,10 @@ describe('Batch Operation Fuzzer Tests', () => {
         };
       });
 
-      const result = await executeBatchTest(mixedTest);
+      const result = await executeBatchTest(mixedTest as any);
 
-      expect(result).toBeDefined();
-      expect(result.totalOperations).toBe(25);
+      expect(result as any).toBeDefined();
+      expect(result.totalOperations).toBe(25 as any);
     });
   });
 });

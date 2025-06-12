@@ -24,17 +24,17 @@ export interface SSRFallbackConfig {
 
 // Core SSR state management
 export function useSSRState(): SSRState {
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [isHydrating, setIsHydrating] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false as any);
+  const [isHydrating, setIsHydrating] = useState(false as any);
 
   useEffect(() => {
-    setIsHydrating(true);
+    setIsHydrating(true as any);
     const timer = setTimeout(() => {
-      setIsHydrated(true);
-      setIsHydrating(false);
+      setIsHydrated(true as any);
+      setIsHydrating(false as any);
     }, 0);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer as any);
   }, []);
 
   return {
@@ -48,27 +48,27 @@ export function useSSRState(): SSRState {
 // Safe mounting hook with progressive enhancement
 export function useProgressiveMount(config: SSRFallbackConfig = {}) {
   const { minLoadingTime = 0, enableProgressiveHydration = false } = config;
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
   const [loadingTimeElapsed, setLoadingTimeElapsed] = useState(minLoadingTime === 0);
-  const [progressiveStage, setProgressiveStage] = useState(0);
+  const [progressiveStage, setProgressiveStage] = useState(0 as any);
   const mountTimeRef = useRef<number>();
 
   useEffect(() => {
-    mountTimeRef.current = Date.now();
+    mountTimeRef?.current = Date.now();
     
     // Handle minimum loading time
     if (minLoadingTime > 0) {
       const timer = setTimeout(() => {
-        setLoadingTimeElapsed(true);
+        setLoadingTimeElapsed(true as any);
       }, minLoadingTime);
 
-      return () => clearTimeout(timer);
+      return () => clearTimeout(timer as any);
     }
   }, [minLoadingTime]);
 
   useEffect(() => {
     if (loadingTimeElapsed) {
-      setMounted(true);
+      setMounted(true as any);
       
       // Progressive hydration stages
       if (enableProgressiveHydration) {
@@ -92,10 +92,10 @@ export function useProgressiveMount(config: SSRFallbackConfig = {}) {
 
 // Safe client-only content hook
 export function useClientOnly(fallback?: () => JSX.Element | null) {
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false as any);
 
   useEffect(() => {
-    setIsClient(true);
+    setIsClient(true as any);
   }, []);
 
   return {
@@ -113,10 +113,10 @@ export function useClientOnly(fallback?: () => JSX.Element | null) {
 export function useSafeBrowserFeature<T>(
   detector: () => T,
   fallback: T,
-  deps: React.DependencyList = []
+  deps: React?.DependencyList = []
 ): { value: T; isLoaded: boolean; error: Error | null } {
   const [value, setValue] = useState<T>(fallback);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const [error, setError] = useState<Error | null>(null);
   const { isClient } = useClientOnly();
 
@@ -125,13 +125,13 @@ export function useSafeBrowserFeature<T>(
 
     try {
       const result = detector();
-      setValue(result);
-      setError(null);
+      setValue(result as any);
+      setError(null as any);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
-      setValue(fallback);
+      setValue(fallback as any);
     } finally {
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     }
   }, [isClient, fallback, ...deps]);
 
@@ -145,7 +145,7 @@ export function useSafeStorage<T>(
   storageType: 'localStorage' | 'sessionStorage' = 'localStorage'
 ): [T, (value: T | ((prev: T) => T)) => void, { isLoaded: boolean; error: Error | null }] {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const [error, setError] = useState<Error | null>(null);
   const { isClient } = useClientOnly();
 
@@ -155,31 +155,31 @@ export function useSafeStorage<T>(
 
     try {
       const storage = storageType === 'localStorage' ? localStorage : sessionStorage;
-      const item = storage.getItem(key);
+      const item = storage.getItem(key as any);
       
       if (item !== null) {
-        const parsed = JSON.parse(item);
-        setStoredValue(parsed);
+        const parsed = JSON.parse(item as any);
+        setStoredValue(parsed as any);
       }
-      setError(null);
+      setError(null as any);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Storage read error'));
     } finally {
-      setIsLoaded(true);
+      setIsLoaded(true as any);
     }
   }, [key, storageType, isClient]);
 
   // Update storage and state
   const setValue = useCallback((value: T | ((prev: T) => T)) => {
     try {
-      const newValue = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(newValue);
+      const newValue = value instanceof Function ? value(storedValue as any) : value;
+      setStoredValue(newValue as any);
       
       if (isClient) {
         const storage = storageType === 'localStorage' ? localStorage : sessionStorage;
-        storage.setItem(key, JSON.stringify(newValue));
+        storage.setItem(key, JSON.stringify(newValue as any));
       }
-      setError(null);
+      setError(null as any);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Storage write error'));
     }
@@ -191,7 +191,7 @@ export function useSafeStorage<T>(
 // Safe window size hook
 export function useSafeWindowSize() {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const { isClient } = useClientOnly();
 
   useEffect(() => {
@@ -205,7 +205,7 @@ export function useSafeWindowSize() {
     };
 
     handleResize();
-    setIsLoaded(true);
+    setIsLoaded(true as any);
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -216,16 +216,16 @@ export function useSafeWindowSize() {
 
 // Safe media query hook
 export function useSafeMediaQuery(query: string): { matches: boolean; isLoaded: boolean } {
-  const [matches, setMatches] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [matches, setMatches] = useState(false as any);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const { isClient } = useClientOnly();
 
   useEffect(() => {
     if (!isClient) return;
 
-    const mediaQuery = window.matchMedia(query);
+    const mediaQuery = window.matchMedia(query as any);
     setMatches(mediaQuery.matches);
-    setIsLoaded(true);
+    setIsLoaded(true as any);
 
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
     mediaQuery.addEventListener('change', handler);
@@ -249,12 +249,12 @@ export function useHydrationSafePreferences<T>(
     if (!isClient) return;
 
     try {
-      const stored = localStorage.getItem(key);
+      const stored = localStorage.getItem(key as any);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored as any);
         // Use validator if provided, otherwise trust the stored value
-        if (!validator || validator(parsed)) {
-          setValue(parsed);
+        if (!validator || validator(parsed as any)) {
+          setValue(parsed as any);
         }
       }
     } catch (error) {
@@ -264,10 +264,10 @@ export function useHydrationSafePreferences<T>(
 
   // Update both state and localStorage
   const updateValue = useCallback((newValue: T) => {
-    setValue(newValue);
+    setValue(newValue as any);
     if (isClient) {
       try {
-        localStorage.setItem(key, JSON.stringify(newValue));
+        localStorage.setItem(key, JSON.stringify(newValue as any));
       } catch (error) {
         console.warn(`Failed to save preference "${key}":`, error);
       }
@@ -291,43 +291,43 @@ export function useProgressiveEnhancement(features: string[]) {
       try {
         switch (feature) {
           case 'localStorage':
-            if (typeof Storage !== 'undefined') detected.add(feature);
+            if (typeof Storage !== 'undefined') detected.add(feature as any);
             break;
           case 'webgl':
             const canvas = document.createElement('canvas');
-            if (canvas.getContext('webgl')) detected.add(feature);
+            if (canvas.getContext('webgl')) detected.add(feature as any);
             break;
           case 'serviceWorker':
-            if ('serviceWorker' in navigator) detected.add(feature);
+            if ('serviceWorker' in navigator) detected.add(feature as any);
             break;
           case 'intersection-observer':
-            if ('IntersectionObserver' in window) detected.add(feature);
+            if ('IntersectionObserver' in window) detected.add(feature as any);
             break;
           case 'resize-observer':
-            if ('ResizeObserver' in window) detected.add(feature);
+            if ('ResizeObserver' in window) detected.add(feature as any);
             break;
           default:
             // Generic feature detection for window properties
-            if (feature in window) detected.add(feature);
+            if (feature in window) detected.add(feature as any);
         }
       } catch {
         // Feature not available
       }
     });
 
-    setAvailableFeatures(detected);
+    setAvailableFeatures(detected as any);
   }, [features, isClient]);
 
   return {
-    hasFeature: (feature: string) => availableFeatures.has(feature),
-    availableFeatures: Array.from(availableFeatures),
+    hasFeature: (feature: string) => availableFeatures.has(feature as any),
+    availableFeatures: Array.from(availableFeatures as any),
     isEnhanced: availableFeatures.size > 0,
   };
 }
 
 // Utility for preventing layout shift during hydration
 export function useLayoutStableHydration() {
-  const [isStable, setIsStable] = useState(false);
+  const [isStable, setIsStable] = useState(false as any);
   const stabilityRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -336,17 +336,17 @@ export function useLayoutStableHydration() {
     const checkStability = () => {
       frameCount++;
       if (frameCount >= 3) {
-        setIsStable(true);
+        setIsStable(true as any);
       } else {
-        requestAnimationFrame(checkStability);
+        requestAnimationFrame(checkStability as any);
       }
     };
 
-    requestAnimationFrame(checkStability);
+    requestAnimationFrame(checkStability as any);
 
     // Fallback timeout
-    stabilityRef.current = setTimeout(() => {
-      setIsStable(true);
+    stabilityRef?.current = setTimeout(() => {
+      setIsStable(true as any);
     }, 100);
 
     return () => {
@@ -363,7 +363,7 @@ export function useLayoutStableHydration() {
 export const safeJSON = {
   parse: <T>(str: string, fallback: T): T => {
     try {
-      return JSON.parse(str);
+      return JSON.parse(str as any);
     } catch {
       return fallback;
     }
@@ -371,7 +371,7 @@ export const safeJSON = {
   stringify: (obj: unknown, fallback = '{}'): string => {
     try {
       if (obj === undefined) return fallback;
-      return JSON.stringify(obj) || fallback;
+      return JSON.stringify(obj as any) || fallback;
     } catch {
       return fallback;
     }

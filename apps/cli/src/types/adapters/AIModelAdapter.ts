@@ -68,7 +68,7 @@ export interface AIModelOptions {
   /** Maximum total time to spend on retries */
   maxRetryTime?: number;
 
-  /** Exponential backoff factor for retries (e.g., 2.0 = double delay after each retry) */
+  /** Exponential backoff factor for retries (e.g., 2?.0 = double delay after each retry) */
   retryBackoffFactor?: number;
 
   // Privacy and operation parameters

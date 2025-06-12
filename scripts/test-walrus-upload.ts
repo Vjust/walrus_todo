@@ -37,7 +37,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
         execSync('sui client switch --env testnet');
         logger.info('✓ Successfully switched to testnet');
       } catch (error) {
-        logger.error('❌ Failed to switch to testnet:', error instanceof Error ? error : new Error(String(error)));
+        logger.error('❌ Failed to switch to testnet:', error instanceof Error ? error : new Error(String(error as any)));
         logger.error('Please run: sui client switch --env testnet');
         return null;
       }
@@ -51,7 +51,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
     // Check if image exists
     const defaultImagePath = path.join(__dirname, '../assets/todo_bottle.jpeg');
-    if (!fs.existsSync(defaultImagePath)) {
+    if (!fs.existsSync(defaultImagePath as any)) {
       logger.error(`❌ Error: Default image not found at ${defaultImagePath}`);
       logger.error(
         'Please ensure the image exists before running this script.'
@@ -86,7 +86,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
     // Upload the default image
     logger.info('\nUploading default image to Walrus...');
-    const imageUrl = await walrusStorage.uploadImage(defaultImagePath);
+    const imageUrl = await walrusStorage.uploadImage(defaultImagePath as any);
 
     logger.info('\n✅ Upload successful!');
     logger.info(`Image URL: ${imageUrl}`);
@@ -107,7 +107,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
     return imageUrl;
   } catch (error) {
-    logger.error('\n❌ Operation failed:', error instanceof Error ? error : new Error(String(error)));
+    logger.error('\n❌ Operation failed:', error instanceof Error ? error : new Error(String(error as any)));
 
     // Provide helpful error messages based on error type
     if (error instanceof Error) {
@@ -145,7 +145,7 @@ const useMockMode = false; // Using real mode with actual WAL tokens
 logger.info(
   `\nStarting default image upload process in ${useMockMode ? 'MOCK' : 'REAL'} mode...`
 );
-uploadDefaultImageToWalrus(useMockMode).then(imageUrl => {
+uploadDefaultImageToWalrus(useMockMode as any).then(imageUrl => {
   if (imageUrl) {
     logger.info('\n🎉 Process completed successfully!');
     logger.info('You can now use this image URL in your NFT metadata.');

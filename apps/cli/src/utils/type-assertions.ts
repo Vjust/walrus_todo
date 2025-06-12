@@ -192,7 +192,7 @@ export function normalizeSignatureResponse(signature: unknown): {
 
   let sigValue = sigObj.signature;
   if (sigValue instanceof Uint8Array) {
-    sigValue = Buffer.from(sigValue).toString('base64');
+    sigValue = Buffer.from(sigValue as any).toString('base64');
   } else if (typeof sigValue !== 'string') {
     throw new Error('Signature property must be string or Uint8Array');
   }
@@ -203,9 +203,9 @@ export function normalizeSignatureResponse(signature: unknown): {
   if ('bytes' in sigObj) {
     const bytesValue = sigObj.bytes;
     if (bytesValue instanceof Uint8Array) {
-      result.bytes = Buffer.from(bytesValue).toString('base64');
+      result?.bytes = Buffer.from(bytesValue as any).toString('base64');
     } else if (typeof bytesValue === 'string') {
-      result.bytes = bytesValue;
+      result?.bytes = bytesValue;
     }
   }
 
@@ -226,14 +226,14 @@ export function toUint8Array(data: unknown): Uint8Array {
   if (typeof data === 'string') {
     // Try base64 decode first, then UTF-8
     try {
-      return Uint8Array.from(atob(data), c => c.charCodeAt(0));
+      return Uint8Array.from(atob(data as any), c => c.charCodeAt(0 as any));
     } catch {
-      return new TextEncoder().encode(data);
+      return new TextEncoder().encode(data as any);
     }
   }
 
-  if (Array.isArray(data)) {
-    return new Uint8Array(data);
+  if (Array.isArray(data as any)) {
+    return new Uint8Array(data as any);
   }
 
   throw new Error('Cannot convert data to Uint8Array');

@@ -69,18 +69,18 @@ export class StorageClient {
    * @param options - Options for initializing the client
    */
   constructor(private options: StorageClientOptions) {
-    this.useMockMode = options.useMockMode || false;
+    this?.useMockMode = options.useMockMode || false;
 
     try {
       // Initialize SuiClient with proper error handling
-      this.suiClient = new SuiClient({
+      this?.suiClient = new SuiClient({
         url: options.suiUrl,
       });
     } catch (error) {
       // In test environments, the constructor might fail
       // Create a mock client if in mock mode or running in a test environment
-      if (this.useMockMode || process.env.NODE_ENV === 'test') {
-        this.suiClient = {
+      if (this.useMockMode || process.env?.NODE_ENV === 'test') {
+        this?.suiClient = {
           getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '1' }),
           getBalance: jest.fn().mockResolvedValue({ totalBalance: '1000' }),
           // Add other required methods as needed
@@ -88,7 +88,7 @@ export class StorageClient {
       } else {
         // Re-throw the error in production environments
         throw new NetworkError(
-          `Failed to initialize SuiClient: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to initialize SuiClient: ${error instanceof Error ? error.message : String(error as any)}`,
           {
             operation: 'client initialization',
             recoverable: false,
@@ -99,10 +99,10 @@ export class StorageClient {
     }
 
     // Address will be set during initialization
-    this.address = options.address || null;
+    this?.address = options.address || null;
 
     // WalrusClient will be initialized later in init()
-    this.walrusClient = null;
+    this?.walrusClient = null;
   }
 
   /**
@@ -129,7 +129,7 @@ export class StorageClient {
 
     try {
       // Validate network environment if needed
-      if (this.options.validateEnvironment && !this.useMockMode) {
+      if (this?.options?.validateEnvironment && !this.useMockMode) {
         await this.validateNetworkEnvironment();
       }
 
@@ -153,29 +153,29 @@ export class StorageClient {
           reset: jest.fn(),
         } as unknown as WalrusClient;
 
-        this.walrusClient = createWalrusClientAdapter(mockWalrusClient);
+        this?.walrusClient = createWalrusClientAdapter(mockWalrusClient as any);
       } else {
         // Create real WalrusClient
         const walrusClient = new WalrusClient({
-          network: this.options.network,
-          fullnode: this.options.suiUrl,
+          network: this?.options?.network,
+          fullnode: this?.options?.suiUrl,
           fetchOptions: {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
           },
         });
 
-        this.walrusClient = createWalrusClientAdapter(walrusClient);
+        this?.walrusClient = createWalrusClientAdapter(walrusClient as any);
       }
 
-      this.initialized = true;
+      this?.initialized = true;
     } catch (error) {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
 
       throw new NetworkError(
-        `Failed to initialize storage client: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to initialize storage client: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'client initialization',
           recoverable: false,
@@ -201,7 +201,7 @@ export class StorageClient {
         }
       );
 
-      if (!envInfo.success || !envInfo.data.includes('testnet')) {
+      if (!envInfo.success || !envInfo?.data?.includes('testnet')) {
         throw new ValidationError(
           'Must be connected to testnet environment. Use "sui client switch --env testnet"',
           { operation: 'environment validation' }
@@ -240,7 +240,7 @@ export class StorageClient {
       }
 
       throw new ValidationError(
-        `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Network verification failed: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'environment validation',
           cause: error instanceof Error ? error : undefined,
@@ -290,7 +290,7 @@ export class StorageClient {
    * @param address - The wallet address to use
    */
   public setAddress(address: string): void {
-    this.address = address;
+    this?.address = address;
   }
 
   /**
@@ -324,7 +324,7 @@ export class StorageClient {
 
       const balanceResult = await AsyncOperationHandler.execute(
         () =>
-          this.suiClient.getBalance({
+          this?.suiClient?.getBalance({
             owner: address,
             coinType: 'WAL',
           }),
@@ -342,7 +342,7 @@ export class StorageClient {
         });
       }
 
-      return BigInt(balanceResult.data.totalBalance);
+      return BigInt(balanceResult?.data?.totalBalance);
     } catch (error) {
       if (
         error instanceof ValidationError ||
@@ -352,7 +352,7 @@ export class StorageClient {
       }
 
       throw new BlockchainError(
-        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'get balance',
           recoverable: true,
@@ -414,7 +414,7 @@ export class StorageClient {
       }
 
       throw new StorageError(
-        `Failed to retrieve blob: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to retrieve blob: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'blob retrieval',
           itemId: blobId,
@@ -461,7 +461,7 @@ export class StorageClient {
       };
 
       const result = await AsyncOperationHandler.execute(
-        () => walrusClient.writeBlob(writeOptions),
+        () => walrusClient.writeBlob(writeOptions as any),
         {
           operation: 'store content',
           maxRetries,
@@ -484,7 +484,7 @@ export class StorageClient {
 
       // Extract blob ID from result
       const blobId = result.data?.blobId || 
-                     (typeof result.data === 'string' ? result.data : '');
+                     (typeof result?.data === 'string' ? result.data : '');
 
       if (!blobId) {
         throw new StorageError('No blob ID returned from storage operation', {
@@ -500,7 +500,7 @@ export class StorageClient {
       }
 
       throw new StorageError(
-        `Failed to store content: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to store content: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'store content',
           recoverable: true,

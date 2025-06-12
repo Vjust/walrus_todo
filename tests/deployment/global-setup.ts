@@ -30,7 +30,7 @@ export default async function globalSetup(): Promise<void> {
     
   } catch (error) {
     console.error('❌ Global setup failed:', error);
-    process.exit(1);
+    process.exit(1 as any);
   }
 }
 
@@ -60,9 +60,9 @@ async function setupTestEnvironment(): Promise<void> {
   console.log('🔧 Setting up test environment...');
 
   // Set test environment variables
-  process.env.NODE_ENV = 'test';
-  process.env.WALRUS_TEST_MODE = 'true';
-  process.env.JEST_TIMEOUT = '30000';
+  process.env?.NODE_ENV = 'test';
+  process.env?.WALRUS_TEST_MODE = 'true';
+  process.env?.JEST_TIMEOUT = '30000';
   
   // Create test configuration files
   await createTestConfigFiles();
@@ -83,7 +83,7 @@ waltodo-test:
       - "X-Content-Type-Options: nosniff"
   redirects:
     - from: "/api/*"
-      to: "https://api-test.waltodo.com/api/*"
+      to: "https://api-test?.waltodo?.com/api/*"
       status: 307
   error_pages:
     404: "/404.html"
@@ -101,7 +101,7 @@ waltodo-prod:
       - "X-XSS-Protection: 1; mode=block"
   redirects:
     - from: "/api/*"
-      to: "https://api.waltodo.com/api/*"
+      to: "https://api?.waltodo?.com/api/*"
       status: 307
   error_pages:
     404: "/404.html"
@@ -127,7 +127,7 @@ waltodo-malformed:
 `
   };
 
-  for (const [filename, content] of Object.entries(testConfigs)) {
+  for (const [filename, content] of Object.entries(testConfigs as any)) {
     const filePath = path.join('./tests/deployment/fixtures', filename);
     await fs.writeFile(filePath, content.trim());
   }
@@ -189,13 +189,13 @@ async function createMockBuildDirectories(): Promise<void> {
     }
   };
 
-  for (const [buildName, structure] of Object.entries(buildStructures)) {
+  for (const [buildName, structure] of Object.entries(buildStructures as any)) {
     const buildDir = path.join('./tests/deployment/fixtures', buildName);
     await fs.mkdir(buildDir, { recursive: true });
     
-    for (const [filePath, content] of Object.entries(structure)) {
+    for (const [filePath, content] of Object.entries(structure as any)) {
       const fullPath = path.join(buildDir, filePath);
-      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+      await fs.mkdir(path.dirname(fullPath as any), { recursive: true });
       await fs.writeFile(fullPath, content);
     }
   }
@@ -203,13 +203,13 @@ async function createMockBuildDirectories(): Promise<void> {
 
 function setupMockEnvironmentVariables(): void {
   // Mock site-builder path
-  process.env.SITE_BUILDER_PATH = '/usr/local/bin/site-builder';
+  process.env?.SITE_BUILDER_PATH = '/usr/local/bin/site-builder';
   
   // Mock Walrus configuration
-  process.env.WALRUS_CONFIG_PATH = './tests/deployment/fixtures/walrus-config.yaml';
+  process.env?.WALRUS_CONFIG_PATH = './tests/deployment/fixtures/walrus-config.yaml';
   
   // Mock wallet path (optional)
-  process.env.WALRUS_WALLET_PATH = './tests/deployment/fixtures/test-wallet.keystore';
+  process.env?.WALRUS_WALLET_PATH = './tests/deployment/fixtures/test-wallet.keystore';
 }
 
 async function validateTestPrerequisites(): Promise<void> {
@@ -217,7 +217,7 @@ async function validateTestPrerequisites(): Promise<void> {
 
   // Check Node.js version
   const nodeVersion = process.version;
-  const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
+  const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0]);
   
   if (majorVersion < 18) {
     throw new Error(`Node.js 18+ required, found ${nodeVersion}`);
@@ -232,7 +232,7 @@ async function validateTestPrerequisites(): Promise<void> {
 
   for (const dir of requiredDirs) {
     try {
-      await fs.access(dir);
+      await fs.access(dir as any);
       console.log(`  ✓ Test directory exists: ${dir}`);
     } catch (error) {
       throw new Error(`Required test directory missing: ${dir}`);
@@ -247,7 +247,7 @@ async function validateTestPrerequisites(): Promise<void> {
 
   for (const fixture of requiredFixtures) {
     try {
-      await fs.access(fixture);
+      await fs.access(fixture as any);
       console.log(`  ✓ Test fixture exists: ${fixture}`);
     } catch (error) {
       throw new Error(`Required test fixture missing: ${fixture}`);

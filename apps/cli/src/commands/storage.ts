@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { WalrusStorage } from '../utils/walrus-storage';
 import { StorageReuseAnalyzer } from '../utils/storage-reuse-analyzer';
 import chalk = require('chalk');
@@ -50,8 +50,8 @@ export default class StorageCommand extends BaseCommand {
   ];
 
   async run() {
-    const { flags } = await this.parse(StorageCommand);
-    this.log(this.format.highlight('Walrus Storage Manager'));
+    const { flags } = await this.parse(StorageCommand as any);
+    this.log(this?.format?.highlight('Walrus Storage Manager'));
 
     const spinner = this.startUnifiedSpinner('Connecting to storage...');
 
@@ -61,15 +61,15 @@ export default class StorageCommand extends BaseCommand {
       spinner.succeed('Connected to Walrus storage');
 
       if (flags.summary || (!flags.detail && !flags.analyze)) {
-        await this.showStorageSummary(walrusStorage);
+        await this.showStorageSummary(walrusStorage as any);
       }
 
       if (flags.detail) {
-        await this.showStorageDetails(walrusStorage);
+        await this.showStorageDetails(walrusStorage as any);
       }
 
       if (flags.analyze) {
-        await this.analyzeStorageEfficiency(walrusStorage);
+        await this.analyzeStorageEfficiency(walrusStorage as any);
       }
     } catch (error) {
       spinner.fail('Failed to connect to storage');
@@ -77,13 +77,13 @@ export default class StorageCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Storage connection failed: ${error instanceof Error ? error.message : String(error)}`
+        `Storage connection failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
 
   async showStorageSummary(walrusStorage: WalrusStorage) {
-    this.log(`\n${chalk.blue.bold('Storage Summary')}`);
+    this.log(`\n${chalk?.blue?.bold('Storage Summary')}`);
 
     const storageInfo = await walrusStorage.checkExistingStorage();
     if (!storageInfo) {
@@ -95,7 +95,7 @@ export default class StorageCommand extends BaseCommand {
     const { epoch } = await new SuiClient({
       url: NETWORK_URLS[CURRENT_NETWORK],
     }).getLatestSuiSystemState();
-    const currentEpoch = Number(epoch);
+    const currentEpoch = Number(epoch as any);
 
     // Calculate storage metrics
     const totalSize = Number(storageInfo.storage_size);
@@ -122,19 +122,19 @@ export default class StorageCommand extends BaseCommand {
     // Format sizes for display
     const formatBytes = (bytes: number): string => {
       if (bytes < 1024) return `${bytes} bytes`;
-      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2 as any)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2 as any)} MB`;
     };
 
     // Display summary
-    this.log(`Storage ID: ${chalk.green(storageInfo.id.id)}`);
-    this.log(`Total Size: ${chalk.cyan(formatBytes(totalSize))}`);
+    this.log(`Storage ID: ${chalk.green(storageInfo?.id?.id)}`);
+    this.log(`Total Size: ${chalk.cyan(formatBytes(totalSize as any))}`);
     this.log(
-      `Used: ${chalk.yellow(formatBytes(usedSize))} (${usagePercentage.toFixed(2)}%)`
+      `Used: ${chalk.yellow(formatBytes(usedSize as any))} (${usagePercentage.toFixed(2 as any)}%)`
     );
-    this.log(`Remaining: ${chalk.green(formatBytes(remainingSize))}`);
+    this.log(`Remaining: ${chalk.green(formatBytes(remainingSize as any))}`);
     this.log(
-      `Expires in: ${chalk.magenta(remainingEpochs)} epochs (approximately ${Math.floor(remainingEpochs / 7)} weeks)`
+      `Expires in: ${chalk.magenta(remainingEpochs as any)} epochs (approximately ${Math.floor(remainingEpochs / 7)} weeks)`
     );
 
     // Add recommendations based on usage
@@ -162,12 +162,12 @@ export default class StorageCommand extends BaseCommand {
   }
 
   async showStorageDetails(walrusStorage: WalrusStorage) {
-    this.log(`\n${chalk.blue.bold('Detailed Storage Information')}`);
+    this.log(`\n${chalk?.blue?.bold('Detailed Storage Information')}`);
 
     try {
       const suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
       const { epoch } = await suiClient.getLatestSuiSystemState();
-      const currentEpoch = Number(epoch);
+      const currentEpoch = Number(epoch as any);
       const address = await walrusStorage.getActiveAddress();
 
       // Get all storage objects
@@ -177,18 +177,18 @@ export default class StorageCommand extends BaseCommand {
         options: { showContent: true },
       });
 
-      if (response.data.length === 0) {
+      if (response.data?.length === 0) {
         this.log(chalk.yellow('No storage objects found for this address.'));
         return;
       }
 
-      this.log(`Found ${chalk.green(response.data.length)} storage objects:`);
+      this.log(`Found ${chalk.green(response?.data?.length)} storage objects:`);
 
       // Helper function to format bytes
       const formatBytes = (bytes: number): string => {
         if (bytes < 1024) return `${bytes} bytes`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2 as any)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2 as any)} MB`;
       };
 
       let totalAllocation = 0;
@@ -197,11 +197,11 @@ export default class StorageCommand extends BaseCommand {
 
       // Process and display each storage object
       for (const item of response.data) {
-        if (!item.data?.content || item.data.content.dataType !== 'moveObject')
+        if (!item.data?.content || item?.data?.content.dataType !== 'moveObject')
           continue;
 
         const fields = (
-          item.data.content as { fields?: Record<string, unknown> }
+          item?.data?.content as { fields?: Record<string, unknown> }
         ).fields;
         if (!fields) continue;
 
@@ -232,15 +232,15 @@ export default class StorageCommand extends BaseCommand {
 
         this.log('\n--------------------------------------------------------');
         this.log(
-          `${chalk.bold('Storage ID:')} ${chalk.green(item.data.objectId)}`
+          `${chalk.bold('Storage ID:')} ${chalk.green(item?.data?.objectId)}`
         );
         this.log(`${chalk.bold('Status:')} ${statusIndicator}`);
-        this.log(`${chalk.bold('Total Size:')} ${formatBytes(storageSize)}`);
+        this.log(`${chalk.bold('Total Size:')} ${formatBytes(storageSize as any)}`);
         this.log(
-          `${chalk.bold('Used Size:')} ${formatBytes(usedSize)} (${usagePercentage.toFixed(2)}%)`
+          `${chalk.bold('Used Size:')} ${formatBytes(usedSize as any)} (${usagePercentage.toFixed(2 as any)}%)`
         );
         this.log(
-          `${chalk.bold('Remaining Size:')} ${formatBytes(remainingSize)}`
+          `${chalk.bold('Remaining Size:')} ${formatBytes(remainingSize as any)}`
         );
         this.log(
           `${chalk.bold('End Epoch:')} ${endEpoch} (current: ${currentEpoch})`
@@ -254,29 +254,29 @@ export default class StorageCommand extends BaseCommand {
       this.log('\n--------------------------------------------------------');
       this.log(`${chalk.bold('Summary:')}`);
       this.log(
-        `${chalk.bold('Total Storage:')} ${formatBytes(totalAllocation)}`
+        `${chalk.bold('Total Storage:')} ${formatBytes(totalAllocation as any)}`
       );
       this.log(
-        `${chalk.bold('Total Used:')} ${formatBytes(totalUsed)} (${((totalUsed / totalAllocation) * 100).toFixed(2)}%)`
+        `${chalk.bold('Total Used:')} ${formatBytes(totalUsed as any)} (${((totalUsed / totalAllocation) * 100).toFixed(2 as any)}%)`
       );
       this.log(
         `${chalk.bold('Total Remaining:')} ${formatBytes(totalAllocation - totalUsed)}`
       );
       this.log(
-        `${chalk.bold('Active Storage Objects:')} ${activeCount} of ${response.data.length}`
+        `${chalk.bold('Active Storage Objects:')} ${activeCount} of ${response?.data?.length}`
       );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to retrieve storage details: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to retrieve storage details: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
 
   async analyzeStorageEfficiency(walrusStorage: WalrusStorage) {
-    this.log(`\n${chalk.blue.bold('Storage Efficiency Analysis')}`);
+    this.log(`\n${chalk?.blue?.bold('Storage Efficiency Analysis')}`);
 
     try {
       // Initialize clients
@@ -295,10 +295,10 @@ export default class StorageCommand extends BaseCommand {
 
       // Connect to walrus
       const storage = walrusStorage as any;
-      if (storage.storageReuseAnalyzer === null) {
+      if (storage?.storageReuseAnalyzer === null) {
         this.log('Initializing storage analyzer...');
         // Initialize the managers via private method
-        if (typeof storage.initializeManagers === 'function') {
+        if (typeof storage?.initializeManagers === 'function') {
           storage.initializeManagers();
         }
       }
@@ -316,28 +316,28 @@ export default class StorageCommand extends BaseCommand {
 
       // Function to analyze and display results
       const analyzeAndDisplay = async (size: number, description: string) => {
-        const analysis = await analyzer.analyzeStorageEfficiency(size);
+        const analysis = await analyzer.analyzeStorageEfficiency(size as any);
 
-        this.log(`\n${chalk.bold(description)} (${size} bytes):`);
+        this.log(`\n${chalk.bold(description as any)} (${size} bytes):`);
         this.log(
           `Recommendation: ${chalk.cyan(analysis.detailedRecommendation)}`
         );
 
-        if (analysis.analysisResult.bestMatch) {
-          const match = analysis.analysisResult.bestMatch;
+        if (analysis?.analysisResult?.bestMatch) {
+          const match = analysis?.analysisResult?.bestMatch;
           this.log(`Best storage for reuse: ${chalk.green(match.id)}`);
           this.log(
             `Remaining after operation: ${(match.remaining - size).toLocaleString()} bytes`
           );
           this.log(
-            `WAL tokens saved by reusing: ${chalk.green(analysis.costComparison.reuseExistingSavings.toString())} WAL`
+            `WAL tokens saved by reusing: ${chalk.green(analysis?.costComparison?.reuseExistingSavings.toString())} WAL`
           );
           this.log(
-            `Percentage saved: ${chalk.green(analysis.costComparison.reuseExistingPercentSaved.toString())}%`
+            `Percentage saved: ${chalk.green(analysis?.costComparison?.reuseExistingPercentSaved.toString())}%`
           );
         } else {
           this.log(
-            `New storage cost estimate: ${chalk.yellow(analysis.costComparison.newStorageCost.toString())} WAL`
+            `New storage cost estimate: ${chalk.yellow(analysis?.costComparison?.newStorageCost.toString())} WAL`
           );
         }
       };
@@ -352,15 +352,15 @@ export default class StorageCommand extends BaseCommand {
       this.log('\n--------------------------------------------------------');
       this.log(`${chalk.bold('Overall Recommendations:')}`);
 
-      const overallAnalysis = await analyzer.findBestStorageForReuse(0);
+      const overallAnalysis = await analyzer.findBestStorageForReuse(0 as any);
 
-      if (overallAnalysis.totalStorage === 0) {
+      if (overallAnalysis?.totalStorage === 0) {
         this.log(
           chalk.yellow(
             'You have no storage allocations. Consider creating storage when storing todos.'
           )
         );
-      } else if (overallAnalysis.activeStorageCount === 0) {
+      } else if (overallAnalysis?.activeStorageCount === 0) {
         this.log(
           chalk.red(
             'All your storage allocations have expired. Create new storage for your todos.'
@@ -408,7 +408,7 @@ export default class StorageCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }

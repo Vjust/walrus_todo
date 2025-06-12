@@ -36,8 +36,8 @@ interface StorageVerification {
 }
 
 export class StorageManager {
-  private readonly MIN_WAL_BALANCE = BigInt(100); // Minimum WAL tokens needed
-  private readonly MIN_STORAGE_BUFFER = BigInt(10240); // 10KB minimum buffer
+  private readonly MIN_WAL_BALANCE = BigInt(100 as any); // Minimum WAL tokens needed
+  private readonly MIN_STORAGE_BUFFER = BigInt(10240 as any); // 10KB minimum buffer
   private readonly DEFAULT_EPOCH_DURATION = 52; // ~6 months
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs
 
@@ -62,7 +62,7 @@ export class StorageManager {
       }
 
       // Verify network connectivity
-      const systemState = await this.suiClient.getLatestSuiSystemState();
+      const systemState = await this?.suiClient?.getLatestSuiSystemState();
       if (!systemState?.epoch) {
         throw new CLIError(
           'Failed to verify network state. Check your connection.',
@@ -72,7 +72,7 @@ export class StorageManager {
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       throw new CLIError(
         `Network verification failed: ${typedError.message}`,
         'WALRUS_NETWORK_ERROR'
@@ -92,13 +92,13 @@ export class StorageManager {
   }> {
     try {
       // Check WAL token balance
-      const walBalance = await this.suiClient.getBalance({
+      const walBalance = await this?.suiClient?.getBalance({
         owner: this.address,
         coinType: 'WAL',
       });
 
       // Get Storage Fund balance
-      const storageFundBalance = await this.suiClient.getBalance({
+      const storageFundBalance = await this?.suiClient?.getBalance({
         owner: this.address,
         coinType: '0x2::storage::Storage',
       });
@@ -121,7 +121,7 @@ export class StorageManager {
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       throw new CLIError(
         `Failed to check balances: ${typedError.message}`,
         'WALRUS_BALANCE_CHECK_FAILED'
@@ -137,28 +137,28 @@ export class StorageManager {
   ): Promise<StorageCostEstimate> {
     try {
       // Add buffer to requested size
-      const sizeWithBuffer = BigInt(sizeBytes) + this.MIN_STORAGE_BUFFER;
+      const sizeWithBuffer = BigInt(sizeBytes as any) + this.MIN_STORAGE_BUFFER;
 
       // Calculate costs with default epoch duration
       const { storageCost, writeCost, totalCost } =
-        await this.walrusClient.storageCost(
-          Number(sizeWithBuffer),
+        await this?.walrusClient?.storageCost(
+          Number(sizeWithBuffer as any),
           this.DEFAULT_EPOCH_DURATION
         );
 
       // Add 10% buffer to total cost for gas fees and price fluctuations
-      const requiredBalance = (BigInt(totalCost) * BigInt(110)) / BigInt(100);
+      const requiredBalance = (BigInt(totalCost as any) * BigInt(110 as any)) / BigInt(100 as any);
 
       return {
-        storageCost: BigInt(storageCost),
-        writeCost: BigInt(writeCost),
-        totalCost: BigInt(totalCost),
+        storageCost: BigInt(storageCost as any),
+        writeCost: BigInt(writeCost as any),
+        totalCost: BigInt(totalCost as any),
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION,
       };
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       throw new CLIError(
         `Failed to estimate storage cost: ${typedError.message}`,
         'WALRUS_COST_ESTIMATION_FAILED'
@@ -174,7 +174,7 @@ export class StorageManager {
     currentEpoch: number
   ): Promise<StorageVerification> {
     try {
-      const response = await this.suiClient.getOwnedObjects({
+      const response = await this?.suiClient?.getOwnedObjects({
         owner: this.address,
         filter: { StructType: '0x2::storage::Storage' },
         options: { showContent: true },
@@ -210,7 +210,7 @@ export class StorageManager {
         return { isValid: false, remainingSize: 0, remainingEpochs: 0 };
       }
 
-      const content = suitableStorage.data.content as WalrusMoveObject;
+      const content = suitableStorage?.data?.content as WalrusMoveObject;
       if (!content?.fields) {
         return { isValid: false, remainingSize: 0, remainingEpochs: 0 };
       }
@@ -224,7 +224,7 @@ export class StorageManager {
         remainingSize,
         remainingEpochs,
         details: {
-          id: suitableStorage.data.objectId,
+          id: suitableStorage?.data?.objectId,
           totalSize: Number(fields.storage_size),
           usedSize: Number(fields.used_size || 0),
           endEpoch: Number(fields.end_epoch),
@@ -256,8 +256,8 @@ export class StorageManager {
       const balances = await this.checkBalances();
 
       // 3. Get current epoch
-      const { epoch } = await this.suiClient.getLatestSuiSystemState();
-      const currentEpoch = Number(epoch);
+      const { epoch } = await this?.suiClient?.getLatestSuiSystemState();
+      const currentEpoch = Number(epoch as any);
 
       // 4. Check existing storage
       const existingStorage = await this.verifyExistingStorage(
@@ -273,7 +273,7 @@ export class StorageManager {
       }
 
       // 5. Estimate new storage cost
-      const requiredCost = await this.estimateStorageCost(sizeBytes);
+      const requiredCost = await this.estimateStorageCost(sizeBytes as any);
 
       // 6. Verify sufficient balance for new storage
       const canProceed = balances.walBalance >= requiredCost.requiredBalance;
@@ -287,7 +287,7 @@ export class StorageManager {
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       throw new CLIError(
         `Storage validation failed: ${typedError.message}`,
         'WALRUS_STORAGE_VALIDATION_FAILED'

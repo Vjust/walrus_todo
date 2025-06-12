@@ -22,7 +22,7 @@ describe('Transaction Edge Cases', () => {
     suiService = new SuiTestService({
       activeNetwork: {
         name: 'testnet',
-        fullnode: 'https://fullnode.testnet.sui.io',
+        fullnode: 'https://fullnode?.testnet?.sui.io',
       },
       activeAccount: {
         address: fuzzer.blockchainData().address(),
@@ -61,21 +61,21 @@ describe('Transaction Edge Cases', () => {
 
       // Create many todos simultaneously
       await Promise.all(
-        Array(largeVolume)
-          .fill(null)
+        Array(largeVolume as any)
+          .fill(null as any)
           .map(() => suiService.addTodo(listId, fuzzer.string()))
       );
 
-      const todos = await suiService.getTodos(listId);
-      expect(todos.length).toBe(largeVolume);
+      const todos = await suiService.getTodos(listId as any);
+      expect(todos.length).toBe(largeVolume as any);
     });
 
     it('should handle memory pressure', async () => {
       const listId = await suiService.createTodoList();
 
       // Create todos with large content
-      const largeTodos = Array(100)
-        .fill(null)
+      const largeTodos = Array(100 as any)
+        .fill(null as any)
         .map(() => ({
           text: fuzzer.string({ minLength: 1000000, maxLength: 2000000 }), // 1-2MB strings
         }));
@@ -84,8 +84,8 @@ describe('Transaction Edge Cases', () => {
         await suiService.addTodo(listId, todo.text);
       }
 
-      const todos = await suiService.getTodos(listId);
-      expect(todos.length).toBe(100);
+      const todos = await suiService.getTodos(listId as any);
+      expect(todos.length).toBe(100 as any);
     });
   });
 
@@ -94,14 +94,14 @@ describe('Transaction Edge Cases', () => {
       const listId = await suiService.createTodoList();
 
       // Simulate multiple users modifying the same list
-      const users = Array(10)
-        .fill(null)
+      const users = Array(10 as any)
+        .fill(null as any)
         .map(
           () =>
             new SuiTestService({
               activeNetwork: {
                 name: 'testnet',
-                fullnode: 'https://fullnode.testnet.sui.io',
+                fullnode: 'https://fullnode?.testnet?.sui.io',
               },
               activeAccount: {
                 address: fuzzer.blockchainData().address(),
@@ -136,7 +136,7 @@ describe('Transaction Edge Cases', () => {
         users.map(user =>
           Promise.all([
             user.addTodo(listId, fuzzer.string()),
-            user.getTodos(listId),
+            user.getTodos(listId as any),
             user.updateTodo(listId, fuzzer.string(), { completed: true }),
           ])
         )
@@ -144,12 +144,12 @@ describe('Transaction Edge Cases', () => {
 
       // Check that at least some operations failed with expected errors
       const rejectedResults = results.filter(
-        result => result.status === 'rejected'
+        result => result?.status === 'rejected'
       ) as PromiseRejectedResult[];
 
       // Verify rejected results have proper error structure
       rejectedResults.forEach(result => {
-        expect(result.reason).toBeInstanceOf(Error);
+        expect(result.reason).toBeInstanceOf(Error as any);
         expect((result.reason as Error).message).toContain('Unauthorized');
       });
     });
@@ -170,16 +170,16 @@ describe('Transaction Edge Cases', () => {
       };
 
       const operationResults = await Promise.allSettled(
-        Array(10).fill(null).map(operations)
+        Array(10 as any).fill(null as any).map(operations as any)
       );
 
       // Verify that operations either succeeded or failed with expected errors
       const failedOperations = operationResults.filter(
-        result => result.status === 'rejected'
+        result => result?.status === 'rejected'
       ) as PromiseRejectedResult[];
 
       failedOperations.forEach(result => {
-        expect(result.reason).toBeInstanceOf(Error);
+        expect(result.reason).toBeInstanceOf(Error as any);
         expect((result.reason as Error).message).toMatch(
           /timeout|failed|error/i
         );
@@ -199,7 +199,7 @@ describe('Transaction Edge Cases', () => {
         const duration = Date.now() - start;
         // Account for JavaScript timing precision limitations (typically 1-2ms variance)
         const tolerance = 5; // Allow 5ms tolerance for timing precision
-        expect(duration).toBeGreaterThanOrEqual(latency - tolerance);
+        expect(duration as any).toBeGreaterThanOrEqual(latency - tolerance);
       }
     });
   });
@@ -218,13 +218,13 @@ describe('Transaction Edge Cases', () => {
         },
         // Update deleted todo
         async () => {
-          await suiService.deleteTodoList(listId);
+          await suiService.deleteTodoList(listId as any);
           await suiService.updateTodo(listId, todoId, { text: 'new text' });
         },
         // Double deletion
         async () => {
-          await suiService.deleteTodoList(listId);
-          await suiService.deleteTodoList(listId);
+          await suiService.deleteTodoList(listId as any);
+          await suiService.deleteTodoList(listId as any);
         },
       ];
 
@@ -243,12 +243,12 @@ describe('Transaction Edge Cases', () => {
           suiService.updateTodo(listId, todoId, { text: 'update 1' }),
           suiService.updateTodo(listId, todoId, { text: 'update 2' }),
           suiService.updateTodo(listId, todoId, { completed: true }),
-          suiService.deleteTodoList(listId),
+          suiService.deleteTodoList(listId as any),
         ].map(p => p.catch(e => e))
       ); // Capture but don't fail on errors
 
       // Verify final state is consistent
-      await expect(suiService.getTodos(listId)).rejects.toThrow('not found');
+      await expect(suiService.getTodos(listId as any)).rejects.toThrow('not found');
     });
   });
 
@@ -262,8 +262,8 @@ describe('Transaction Edge Cases', () => {
       });
 
       // Simulate rapid ownership changes
-      const newOwners = Array(5)
-        .fill(null)
+      const newOwners = Array(5 as any)
+        .fill(null as any)
         .map(() => fuzzer.blockchainData().address());
 
       await Promise.all(

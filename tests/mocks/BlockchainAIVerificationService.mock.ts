@@ -118,7 +118,7 @@ export function createMockBlockchainAIVerificationService(
   }
 
   const mockBlockchainVerifier = blockchainVerifier || {
-    verifySignature: jest.fn().mockImplementation(verifySignature),
+    verifySignature: jest.fn().mockImplementation(verifySignature as any),
     createVerification: jest.fn().mockImplementation(async (params: any) => {
       const { actionType, request, response, metadata } = params;
 
@@ -132,10 +132,10 @@ export function createMockBlockchainAIVerificationService(
 
       return {
         id: `ver-${Date.now()}`,
-        requestHash: crypto.createHash('sha256').update(request).digest('hex'),
+        requestHash: crypto.createHash('sha256').update(request as any).digest('hex'),
         responseHash: crypto
           .createHash('sha256')
-          .update(response)
+          .update(response as any)
           .digest('hex'),
         user: metadata?.userAddress || 'user-123',
         provider: provider || 'xai',
@@ -222,7 +222,7 @@ export function createMockBlockchainAIVerificationService(
 
           const verification = await mockBlockchainVerifier.createVerification({
             actionType: AIActionType.SUMMARIZE,
-            request: JSON.stringify(todos),
+            request: JSON.stringify(todos as any),
             response: summary,
             metadata: { privacyLevel },
           });
@@ -245,7 +245,7 @@ export function createMockBlockchainAIVerificationService(
         ) => {
           // Simulate signature verification
           const isValidSignature = mockBlockchainVerifier.verifySignature(
-            JSON.stringify(data),
+            JSON.stringify(data as any),
             signature,
             mockKeyPair.publicKey
           );
@@ -263,8 +263,8 @@ export function createMockBlockchainAIVerificationService(
       .mockImplementation(
         async (actionType: AIActionType, request: string, response: string) => {
           const data = { actionType, request, response };
-          const dataString = JSON.stringify(data);
-          const signature = signData(dataString);
+          const dataString = JSON.stringify(data as any);
+          const signature = signData(dataString as any);
 
           return {
             proofId: `proof-${Date.now()}`,
@@ -283,7 +283,7 @@ export function createMockBlockchainAIVerificationService(
           data: Record<string, unknown>
         ) => {
           // Check if signature matches data
-          const dataString = JSON.stringify(data);
+          const dataString = JSON.stringify(data as any);
           return verifySignature(dataString, signature, mockKeyPair.publicKey);
         }
       ),

@@ -29,23 +29,23 @@ describe('CLI Commands Integration Tests', () => {
       const addedTodo = await todoService.addTodo('default', newTodo);
       expect(addedTodo.id).toBeDefined();
       expect(addedTodo.title).toBe(newTodo.title);
-      expect(addedTodo.completed).toBe(false);
+      expect(addedTodo.completed).toBe(false as any);
 
       // Step 2: List todos and verify the new todo is there
       const todos = await todoService.listTodos();
-      const foundTodo = todos.find(t => t.id === addedTodo.id);
-      expect(foundTodo).toBeDefined();
+      const foundTodo = todos.find(t => t?.id === addedTodo.id);
+      expect(foundTodo as any).toBeDefined();
       expect(foundTodo?.title).toBe(newTodo.title);
 
       // Step 3: Complete the todo
       const completedTodo = await todoService.completeTodo(addedTodo.id);
-      expect(completedTodo.completed).toBe(true);
+      expect(completedTodo.completed).toBe(true as any);
       expect(completedTodo.updatedAt).not.toBe(addedTodo.updatedAt);
 
       // Step 4: Verify completion in list
       const updatedTodos = await todoService.listTodos();
-      const completedFoundTodo = updatedTodos.find(t => t.id === addedTodo.id);
-      expect(completedFoundTodo?.completed).toBe(true);
+      const completedFoundTodo = updatedTodos.find(t => t?.id === addedTodo.id);
+      expect(completedFoundTodo?.completed).toBe(true as any);
     });
 
     it('should handle multiple todos in batch operations', async () => {
@@ -59,17 +59,17 @@ describe('CLI Commands Integration Tests', () => {
       const addedTodos: Todo[] = [];
       for (const todo of batchTodos) {
         const added = await todoService.addTodo('default', todo);
-        addedTodos.push(added);
+        addedTodos.push(added as any);
       }
 
-      expect(addedTodos).toHaveLength(3);
+      expect(addedTodos as any).toHaveLength(3 as any);
 
       // List and verify all are present
       const allTodos = await todoService.listTodos();
       const batchIds = addedTodos.map(t => t.id);
       const foundBatchTodos = allTodos.filter(t => batchIds.includes(t.id));
 
-      expect(foundBatchTodos).toHaveLength(3);
+      expect(foundBatchTodos as any).toHaveLength(3 as any);
 
       // Complete some todos
       await todoService.toggleItemStatus('default', addedTodos[0]!.id, true);
@@ -82,8 +82,8 @@ describe('CLI Commands Integration Tests', () => {
       const completedCount = finalBatchTodos.filter(t => t.completed).length;
       const pendingCount = finalBatchTodos.filter(t => !t.completed).length;
 
-      expect(completedCount).toBe(2);
-      expect(pendingCount).toBe(1);
+      expect(completedCount as any).toBe(2 as any);
+      expect(pendingCount as any).toBe(1 as any);
     });
   });
 
@@ -104,9 +104,9 @@ describe('CLI Commands Integration Tests', () => {
 
       // Should be able to retrieve the todo
       const retrievedTodos = await newTodoService.listTodos();
-      const foundTodo = retrievedTodos.find(t => t.id === addedTodo.id);
+      const foundTodo = retrievedTodos.find(t => t?.id === addedTodo.id);
 
-      expect(foundTodo).toBeDefined();
+      expect(foundTodo as any).toBeDefined();
       expect(foundTodo?.title).toBe(persistentTodo.title);
       expect(foundTodo?.description).toBe(persistentTodo.description);
     });
@@ -124,9 +124,9 @@ describe('CLI Commands Integration Tests', () => {
       const addPromises = concurrentTodos.map(todo =>
         todoService.addTodo('default', todo)
       );
-      const addedTodos = await Promise.all(addPromises);
+      const addedTodos = await Promise.all(addPromises as any);
 
-      expect(addedTodos).toHaveLength(10);
+      expect(addedTodos as any).toHaveLength(10 as any);
       addedTodos.forEach((todo, index) => {
         expect(todo.title).toBe(`Concurrent Todo ${index}`);
         expect(todo.id).toBeDefined();
@@ -137,10 +137,10 @@ describe('CLI Commands Integration Tests', () => {
         .slice(0, 5)
         .map(todo => todoService.completeTodo(todo.id));
 
-      const completedTodos = await Promise.all(completePromises);
-      expect(completedTodos).toHaveLength(5);
+      const completedTodos = await Promise.all(completePromises as any);
+      expect(completedTodos as any).toHaveLength(5 as any);
       completedTodos.forEach(todo => {
-        expect(todo.completed).toBe(true);
+        expect(todo.completed).toBe(true as any);
       });
 
       // Verify final state
@@ -157,8 +157,8 @@ describe('CLI Commands Integration Tests', () => {
         t => !t.completed
       ).length;
 
-      expect(completedCount).toBe(5);
-      expect(pendingCount).toBe(5);
+      expect(completedCount as any).toBe(5 as any);
+      expect(pendingCount as any).toBe(5 as any);
     });
   });
 
@@ -252,35 +252,35 @@ describe('CLI Commands Integration Tests', () => {
       const completedTodos = allTodos.filter(t => t.completed);
       const pendingTodos = allTodos.filter(t => !t.completed);
 
-      expect(completedTodos.length).toBeGreaterThan(0);
-      expect(pendingTodos.length).toBeGreaterThan(0);
+      expect(completedTodos.length).toBeGreaterThan(0 as any);
+      expect(pendingTodos.length).toBeGreaterThan(0 as any);
       expect(completedTodos.length + pendingTodos.length).toBe(allTodos.length);
     });
 
     it('should filter todos by priority', async () => {
       const allTodos = await todoService.listTodos();
 
-      const highPriorityTodos = allTodos.filter(t => t.priority === 'high');
-      const mediumPriorityTodos = allTodos.filter(t => t.priority === 'medium');
-      const lowPriorityTodos = allTodos.filter(t => t.priority === 'low');
+      const highPriorityTodos = allTodos.filter(t => t?.priority === 'high');
+      const mediumPriorityTodos = allTodos.filter(t => t?.priority === 'medium');
+      const lowPriorityTodos = allTodos.filter(t => t?.priority === 'low');
 
-      expect(highPriorityTodos.length).toBeGreaterThan(0);
-      expect(mediumPriorityTodos.length).toBeGreaterThan(0);
-      expect(lowPriorityTodos.length).toBeGreaterThan(0);
+      expect(highPriorityTodos.length).toBeGreaterThan(0 as any);
+      expect(mediumPriorityTodos.length).toBeGreaterThan(0 as any);
+      expect(lowPriorityTodos.length).toBeGreaterThan(0 as any);
     });
 
     it('should search todos by title', async () => {
       const allTodos = await todoService.listTodos();
 
       const workTodos = allTodos.filter(t =>
-        t.title.toLowerCase().includes('work')
+        t?.title?.toLowerCase().includes('work')
       );
       const taskTodos = allTodos.filter(t =>
-        t.title.toLowerCase().includes('task')
+        t?.title?.toLowerCase().includes('task')
       );
 
-      expect(workTodos.length).toBeGreaterThan(0);
-      expect(taskTodos.length).toBeGreaterThan(0);
+      expect(workTodos.length).toBeGreaterThan(0 as any);
+      expect(taskTodos.length).toBeGreaterThan(0 as any);
     });
   });
 });

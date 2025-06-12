@@ -15,7 +15,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   setGlobalFilter,
   table,
 }) => {
-  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false as any);
 
   return (
     <div className="flex items-center gap-4">
@@ -25,7 +25,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             type="text"
             placeholder="Search all columns..."
             value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e) => setGlobalFilter(e?.target?.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
           />
           <svg
@@ -71,7 +71,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                         className="mr-2"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                        {column.id.replace(/([A-Z])/g, ' $1').trim()}
+                        {column?.id?.replace(/([A-Z])/g, ' $1').trim()}
                       </span>
                     </label>
                   ))}
@@ -99,7 +99,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
       <div className="flex items-center gap-2">
         <button
-          onClick={() => table.setPageIndex(0)}
+          onClick={() => table.setPageIndex(0 as any)}
           disabled={!table.getCanPreviousPage()}
           className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors"
         >
@@ -139,8 +139,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
             type="number"
             defaultValue={table.getState().pagination.pageIndex + 1}
             onChange={e => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              table.setPageIndex(page)
+              const page = e?.target?.value ? Number(e?.target?.value) - 1 : 0
+              table.setPageIndex(page as any)
             }}
             className="w-16 px-2 py-1 border rounded text-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             min="1"
@@ -150,7 +150,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
 
         <select
           value={table.getState().pagination.pageSize}
-          onChange={e => table.setPageSize(Number(e.target.value))}
+          onChange={e => table.setPageSize(Number(e?.target?.value))}
           className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         >
           {[10, 20, 30, 40, 50].map(pageSize => (

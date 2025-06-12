@@ -21,13 +21,13 @@ export const RowActions: React.FC<RowActionsProps> = ({
   isProcessing, 
   setIsProcessing 
 }) => {
-  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false as any);
   const [transferAddress, setTransferAddress] = useState('');
 
   const handleComplete = async () => {
     if (!onComplete || todo.completed || isProcessing) return;
     
-    setIsProcessing(true);
+    setIsProcessing(true as any);
     try {
       await onComplete(todo.id);
       toast.success('Todo marked as completed!');
@@ -35,7 +35,7 @@ export const RowActions: React.FC<RowActionsProps> = ({
       console.error('Failed to complete todo:', error);
       toast.error('Failed to complete todo');
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false as any);
     }
   };
 
@@ -48,17 +48,17 @@ export const RowActions: React.FC<RowActionsProps> = ({
       return;
     }
     
-    setIsProcessing(true);
+    setIsProcessing(true as any);
     try {
       await onTransfer(todo.id, transferAddress);
       toast.success('NFT transferred successfully!');
-      setShowTransferModal(false);
+      setShowTransferModal(false as any);
       setTransferAddress('');
     } catch (error) {
       console.error('Failed to transfer NFT:', error);
       toast.error('Failed to transfer NFT');
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false as any);
     }
   };
 
@@ -86,7 +86,7 @@ export const RowActions: React.FC<RowActionsProps> = ({
         
         {onTransfer && (
           <button
-            onClick={() => setShowTransferModal(true)}
+            onClick={() => setShowTransferModal(true as any)}
             disabled={isProcessing}
             className="p-1.5 text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700 rounded-md disabled:opacity-50 transition-colors"
             title="Transfer"
@@ -128,7 +128,7 @@ export const RowActions: React.FC<RowActionsProps> = ({
             <input
               type="text"
               value={transferAddress}
-              onChange={(e) => setTransferAddress(e.target.value)}
+              onChange={(e) => setTransferAddress(e?.target?.value)}
               placeholder="0x..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
               disabled={isProcessing}
@@ -143,7 +143,7 @@ export const RowActions: React.FC<RowActionsProps> = ({
               </button>
               <button
                 onClick={() => {
-                  setShowTransferModal(false);
+                  setShowTransferModal(false as any);
                   setTransferAddress('');
                 }}
                 disabled={isProcessing}
@@ -183,56 +183,56 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     if (!onComplete) return;
     
     const selectedRows = table.getSelectedRowModel().rows;
-    const incompleteTodos = selectedRows.filter(row => !row.original.completed);
+    const incompleteTodos = selectedRows.filter(row => !row?.original?.completed);
     
-    if (incompleteTodos.length === 0) {
+    if (incompleteTodos?.length === 0) {
       toast.error('No incomplete todos selected');
       return;
     }
 
-    setIsProcessing(true);
+    setIsProcessing(true as any);
     try {
-      await Promise.all(incompleteTodos.map(row => onComplete(row.original.id)));
+      await Promise.all(incompleteTodos.map(row => onComplete(row?.original?.id)));
       toast.success(`Completed ${incompleteTodos.length} todos`);
       table.resetRowSelection();
     } catch (error) {
       console.error('Failed to complete todos:', error);
       toast.error('Failed to complete some todos');
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false as any);
     }
   };
 
   const handleExportSelected = () => {
     const selectedRows = table.getSelectedRowModel().rows;
-    if (selectedRows.length === 0) {
+    if (selectedRows?.length === 0) {
       toast.error('No rows selected for export');
       return;
     }
 
     const data = selectedRows.map(row => ({
-      id: row.original.id,
-      title: row.original.title,
-      description: row.original.description,
-      status: row.original.completed ? 'completed' : 'pending',
-      priority: row.original.priority,
-      owner: row.original.owner,
-      createdAt: row.original.createdAt,
-      completedAt: row.original.completedAt,
-      tags: row.original.tags,
-      objectId: row.original.objectId,
-      imageUrl: row.original.imageUrl,
+      id: row?.original?.id,
+      title: row?.original?.title,
+      description: row?.original?.description,
+      status: row?.original?.completed ? 'completed' : 'pending',
+      priority: row?.original?.priority,
+      owner: row?.original?.owner,
+      createdAt: row?.original?.createdAt,
+      completedAt: row?.original?.completedAt,
+      tags: row?.original?.tags,
+      objectId: row?.original?.objectId,
+      imageUrl: row?.original?.imageUrl,
     }));
 
     if (exportFormat === 'json') {
       const jsonStr = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob as any);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `todo-nfts-${Date.now()}.json`;
+      a?.href = url;
+      a?.download = `todo-nfts-${Date.now()}.json`;
       a.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url as any);
     } else {
       // CSV export
       const headers = ['ID', 'Title', 'Description', 'Status', 'Priority', 'Owner', 'Created At', 'Completed At', 'Tags', 'Object ID', 'Image URL'];
@@ -241,7 +241,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
       data.forEach(row => {
         const values = [
           row.id,
-          `"${row.title.replace(/"/g, '""')}"`,
+          `"${row?.title?.replace(/"/g, '""')}"`,
           `"${(row.description || '').replace(/"/g, '""')}"`,
           row.status,
           row.priority,
@@ -257,12 +257,12 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
       const csvStr = csvRows.join('\n');
       const blob = new Blob([csvStr], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob as any);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `todo-nfts-${Date.now()}.csv`;
+      a?.href = url;
+      a?.download = `todo-nfts-${Date.now()}.csv`;
       a.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url as any);
     }
 
     toast.success(`Exported ${selectedRows.length} items`);
@@ -273,7 +273,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   return (
     <div className="flex items-center gap-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
       <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-        {selectedCount} item(s) selected
+        {selectedCount} item(s as any) selected
       </span>
       <div className="flex items-center gap-2">
         {onComplete && (
@@ -288,7 +288,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         <div className="flex items-center gap-2">
           <select
             value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')}
+            onChange={(e) => setExportFormat(e?.target?.value as 'json' | 'csv')}
             className="px-2 py-1 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           >
             <option value="json">JSON</option>

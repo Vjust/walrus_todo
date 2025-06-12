@@ -56,14 +56,14 @@ export function createMockBlockchainVerifier(
   const mockAdapter = createMockAIVerifierAdapter();
 
   return {
-    verifyOperation: jest.fn().mockResolvedValue(mockRecord),
+    verifyOperation: jest.fn().mockResolvedValue(mockRecord as any),
     verifyCredential: jest.fn().mockResolvedValue({
       isValid: true,
       verificationId: 'test-credential-verification',
       timestamp: Date.now(),
     }),
-    verifyRecord: jest.fn().mockResolvedValue(true),
-    getVerification: jest.fn().mockResolvedValue(mockRecord),
+    verifyRecord: jest.fn().mockResolvedValue(true as any),
+    getVerification: jest.fn().mockResolvedValue(mockRecord as any),
     listVerifications: jest.fn().mockResolvedValue([mockRecord]),
     retrieveVerificationData: jest.fn().mockResolvedValue({
       request: 'test-request',
@@ -75,8 +75,8 @@ export function createMockBlockchainVerifier(
     verifyProof: jest
       .fn()
       .mockResolvedValue({ isValid: true, record: mockRecord }),
-    getVerifierAdapter: jest.fn().mockReturnValue(mockAdapter),
-    getCredentialAdapter: jest.fn().mockReturnValue(undefined),
+    getVerifierAdapter: jest.fn().mockReturnValue(mockAdapter as any),
+    getCredentialAdapter: jest.fn().mockReturnValue(undefined as any),
     getSigner: jest.fn().mockReturnValue({
       getPublicKey: jest.fn().mockReturnValue({
         toBase64: jest.fn().mockReturnValue('test-public-key'),
@@ -85,10 +85,10 @@ export function createMockBlockchainVerifier(
     }),
     generateProof: jest.fn().mockResolvedValue('test-proof-string'),
     exportVerifications: jest.fn().mockResolvedValue('test-export'),
-    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-    securelyDestroyData: jest.fn().mockResolvedValue(true),
-    deleteVerification: jest.fn().mockResolvedValue(true),
-    verifySignature: jest.fn().mockResolvedValue(true),
+    enforceRetentionPolicy: jest.fn().mockResolvedValue(0 as any),
+    securelyDestroyData: jest.fn().mockResolvedValue(true as any),
+    deleteVerification: jest.fn().mockResolvedValue(true as any),
+    verifySignature: jest.fn().mockResolvedValue(true as any),
     setCredentialAdapter: jest.fn(),
     setWalrusAdapter: jest.fn(),
     ...customBehavior,
@@ -100,9 +100,9 @@ export function createMockBlockchainVerifier(
  */
 export function createMockPermissionManager(customBehavior: any = {}) {
   return {
-    checkPermission: jest.fn().mockResolvedValue(true),
-    getPermissionLevel: jest.fn().mockResolvedValue(1), // STANDARD level
-    setPermissionLevel: jest.fn().mockResolvedValue(true),
+    checkPermission: jest.fn().mockResolvedValue(true as any),
+    getPermissionLevel: jest.fn().mockResolvedValue(1 as any), // STANDARD level
+    setPermissionLevel: jest.fn().mockResolvedValue(true as any),
     getAllowedOperations: jest.fn().mockResolvedValue(['summarize', 'analyze']),
     verifyOperationPermission: jest.fn().mockResolvedValue({
       allowed: true,
@@ -128,9 +128,9 @@ export function createMockCredentialManager(customBehavior: any = {}) {
       createdAt: Date.now(),
       permissionLevel: 1,
     }),
-    hasCredential: jest.fn().mockResolvedValue(true),
-    removeCredential: jest.fn().mockResolvedValue(true),
-    verifyCredential: jest.fn().mockResolvedValue(true),
+    hasCredential: jest.fn().mockResolvedValue(true as any),
+    removeCredential: jest.fn().mockResolvedValue(true as any),
+    verifyCredential: jest.fn().mockResolvedValue(true as any),
     updatePermissions: jest.fn().mockResolvedValue({
       providerName: 'test-provider',
       permissionLevel: 1,
@@ -161,7 +161,7 @@ export function createMockAIVerificationService(
   customBehavior: any = {}
 ): AIVerificationService {
   const mockAdapter = createMockAIVerifierAdapter(customBehavior.adapter);
-  return new AIVerificationService(mockAdapter);
+  return new AIVerificationService(mockAdapter as any);
 }
 
 /**
@@ -193,7 +193,7 @@ export function createMockBlockchainAIVerificationService(
  */
 export function assertReturnsPromise<T>(fn: () => Promise<T>): void {
   const result = fn();
-  expect(result).toBeInstanceOf(Promise);
+  expect(result as any).toBeInstanceOf(Promise as any);
   expect(typeof result.then).toBe('function');
   expect(typeof result.catch).toBe('function');
 }
@@ -206,18 +206,18 @@ export async function assertVerificationSuccess<T>(
   expectedType?: string
 ): Promise<T> {
   // Ensure it's a promise
-  expect(verificationPromise).toBeInstanceOf(Promise);
+  expect(verificationPromise as any).toBeInstanceOf(Promise as any);
 
   // Wait for completion
   const result = await verificationPromise;
 
   // Ensure result is not undefined
-  expect(result).toBeDefined();
-  expect(result).not.toBeNull();
+  expect(result as any).toBeDefined();
+  expect(result as any).not.toBeNull();
 
   // Check type if specified
   if (expectedType) {
-    expect(typeof result).toBe(expectedType);
+    expect(typeof result).toBe(expectedType as any);
   }
 
   return result;
@@ -231,10 +231,10 @@ export async function assertVerificationFailure(
   expectedErrorMessage?: string | RegExp
 ): Promise<Error> {
   // Ensure it's a promise
-  expect(verificationPromise).toBeInstanceOf(Promise);
+  expect(verificationPromise as any).toBeInstanceOf(Promise as any);
 
   // Expect it to reject
-  await expect(verificationPromise).rejects.toThrow(expectedErrorMessage);
+  await expect(verificationPromise as any).rejects.toThrow(expectedErrorMessage as any);
 
   try {
     await verificationPromise;

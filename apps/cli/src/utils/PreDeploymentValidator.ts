@@ -80,15 +80,15 @@ export class PreDeploymentValidator {
     networkConfig?: NetworkConfig,
     options: Partial<ValidationOptions> = {}
   ) {
-    this.logger = new Logger('PreDeploymentValidator');
-    this.options = { ...PreDeploymentValidator.DEFAULT_OPTIONS, ...options };
+    this?.logger = new Logger('PreDeploymentValidator');
+    this?.options = { ...PreDeploymentValidator.DEFAULT_OPTIONS, ...options };
 
     // Initialize network health checker if network config provided
-    if (networkConfig && !this.options.skipNetworkCheck) {
-      this.networkHealthChecker = new NetworkHealthChecker(networkConfig, {
-        timeout: this.options.timeout,
-        skipWallet: this.options.skipWalletCheck,
-        skipGasCheck: this.options.skipGasCheck,
+    if (networkConfig && !this?.options?.skipNetworkCheck) {
+      this?.networkHealthChecker = new NetworkHealthChecker(networkConfig, {
+        timeout: this?.options?.timeout,
+        skipWallet: this?.options?.skipWalletCheck,
+        skipGasCheck: this?.options?.skipGasCheck,
         verbose: false,
       });
     }
@@ -98,10 +98,10 @@ export class PreDeploymentValidator {
    * Perform comprehensive pre-deployment validation
    */
   async validate(context: DeploymentContext): Promise<ValidationSummary> {
-    this.logger.info('Starting pre-deployment validation', {
+    this?.logger?.info('Starting pre-deployment validation', {
       network: context.network,
       sitePath: context.sitePath,
-      strictMode: this.options.strictMode,
+      strictMode: this?.options?.strictMode,
     });
 
     const startTime = Date.now();
@@ -111,12 +111,12 @@ export class PreDeploymentValidator {
       // Run all validation checks
       const checks = [
         () => this.validateDependencies(),
-        () => this.validateConfiguration(context),
-        () => this.validateDeploymentPath(context),
-        () => this.validateWallet(context),
-        () => this.validateNetwork(context),
-        () => this.validateDeploymentSize(context),
-        () => this.validatePermissions(context),
+        () => this.validateConfiguration(context as any),
+        () => this.validateDeploymentPath(context as any),
+        () => this.validateWallet(context as any),
+        () => this.validateNetwork(context as any),
+        () => this.validateDeploymentSize(context as any),
+        () => this.validatePermissions(context as any),
       ];
 
       // Execute checks based on options
@@ -129,7 +129,7 @@ export class PreDeploymentValidator {
             passed: false,
             category: 'deployment',
             name: 'Validation Error',
-            message: error instanceof Error ? error.message : String(error),
+            message: error instanceof Error ? error.message : String(error as any),
             severity: 'error',
           });
         }
@@ -138,7 +138,7 @@ export class PreDeploymentValidator {
       // Generate summary
       const summary = this.generateSummary(results, Date.now() - startTime);
 
-      this.logger.info('Pre-deployment validation completed', {
+      this?.logger?.info('Pre-deployment validation completed', {
         status: summary.overallStatus,
         score: summary.readinessScore,
         duration: Date.now() - startTime,
@@ -148,8 +148,8 @@ export class PreDeploymentValidator {
 
       return summary;
     } catch (error) {
-      this.logger.error('Pre-deployment validation failed', {
-        error: error instanceof Error ? error.message : String(error),
+      this?.logger?.error('Pre-deployment validation failed', {
+        error: error instanceof Error ? error.message : String(error as any),
       });
 
       return {
@@ -163,7 +163,7 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'deployment',
           name: 'Validation System Error',
-          message: error instanceof Error ? error.message : String(error),
+          message: error instanceof Error ? error.message : String(error as any),
           severity: 'error',
         }],
         recommendedActions: ['Fix validation system error and retry'],
@@ -175,13 +175,13 @@ export class PreDeploymentValidator {
    * Validate required dependencies
    */
   private async validateDependencies(): Promise<ValidationResult[]> {
-    if (this.options.skipDependencyCheck) {
+    if (this?.options?.skipDependencyCheck) {
       return [];
     }
 
     const results: ValidationResult[] = [];
 
-    for (const dependency of this.options.requiredDependencies) {
+    for (const dependency of this?.options?.requiredDependencies) {
       try {
         const version = execSync(`${dependency} --version`, { encoding: 'utf8' });
         
@@ -208,7 +208,7 @@ export class PreDeploymentValidator {
     // Check Node.js version
     try {
       const nodeVersion = process.version;
-      const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
+      const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0]);
       
       if (majorVersion >= 18) {
         results.push({
@@ -245,7 +245,7 @@ export class PreDeploymentValidator {
    * Validate configuration files and settings
    */
   private async validateConfiguration(context: DeploymentContext): Promise<ValidationResult[]> {
-    if (this.options.skipConfigValidation) {
+    if (this?.options?.skipConfigValidation) {
       return [];
     }
 
@@ -265,11 +265,11 @@ export class PreDeploymentValidator {
         });
       } else {
         results.push({
-          passed: this.options.strictMode ? false : true,
+          passed: this?.options?.strictMode ? false : true,
           category: 'configuration',
           name: 'Sui network configuration',
           message: `Sui CLI environment mismatch: expected ${context.network}, got ${activeEnv}`,
-          severity: this.options.strictMode ? 'error' : 'warning',
+          severity: this?.options?.strictMode ? 'error' : 'warning',
           suggestion: `Run: sui client switch --env ${context.network}`,
         });
       }
@@ -289,13 +289,13 @@ export class PreDeploymentValidator {
       if (existsSync(context.configPath)) {
         try {
           const configContent = readFileSync(context.configPath, 'utf8');
-          const config = JSON.parse(configContent);
+          const config = JSON.parse(configContent as any);
           
           // Validate config structure
           const requiredFields = ['network', 'walrus'];
           const missingFields = requiredFields.filter(field => !config[field]);
           
-          if (missingFields.length === 0) {
+          if (missingFields?.length === 0) {
             results.push({
               passed: true,
               category: 'configuration',
@@ -381,7 +381,7 @@ export class PreDeploymentValidator {
 
     // Check for index.html
     const indexPath = `${context.sitePath}/index.html`;
-    if (existsSync(indexPath)) {
+    if (existsSync(indexPath as any)) {
       results.push({
         passed: true,
         category: 'deployment',
@@ -391,11 +391,11 @@ export class PreDeploymentValidator {
       });
     } else {
       results.push({
-        passed: this.options.strictMode ? false : true,
+        passed: this?.options?.strictMode ? false : true,
         category: 'deployment',
         name: 'Index file',
         message: 'index.html not found',
-        severity: this.options.strictMode ? 'error' : 'warning',
+        severity: this?.options?.strictMode ? 'error' : 'warning',
         suggestion: 'Create index.html as the main entry point',
       });
     }
@@ -407,7 +407,7 @@ export class PreDeploymentValidator {
    * Validate wallet configuration and balance
    */
   private async validateWallet(context: DeploymentContext): Promise<ValidationResult[]> {
-    if (this.options.skipWalletCheck) {
+    if (this?.options?.skipWalletCheck) {
       return [];
     }
 
@@ -427,17 +427,17 @@ export class PreDeploymentValidator {
       });
 
       // Check gas balance if not skipped
-      if (!this.options.skipGasCheck) {
+      if (!this?.options?.skipGasCheck) {
         try {
           const balance = await this.getWalletBalance(activeAddress, context.network);
-          const balanceNum = parseInt(balance);
+          const balanceNum = parseInt(balance as any);
           
-          if (balanceNum >= this.options.minGasBalance) {
+          if (balanceNum >= this?.options?.minGasBalance) {
             results.push({
               passed: true,
               category: 'wallet',
               name: 'Gas balance',
-              message: `Sufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3)} SUI`,
+              message: `Sufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3 as any)} SUI`,
               severity: 'info',
               details: { balance, balanceInSui: balanceNum / 1_000_000_000 },
             });
@@ -446,10 +446,10 @@ export class PreDeploymentValidator {
               passed: false,
               category: 'wallet',
               name: 'Gas balance',
-              message: `Insufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3)} SUI (minimum: ${this.options.minGasBalance / 1_000_000_000} SUI)`,
+              message: `Insufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3 as any)} SUI (minimum: ${this?.options?.minGasBalance / 1_000_000_000} SUI)`,
               severity: 'error',
               suggestion: `Add gas funds to wallet address: ${activeAddress}`,
-              details: { balance, required: this.options.minGasBalance },
+              details: { balance, required: this?.options?.minGasBalance },
             });
           }
         } catch (error) {
@@ -489,8 +489,8 @@ export class PreDeploymentValidator {
         }
       } catch (error) {
         // Non-critical, don't fail validation
-        this.logger.debug('Could not check wallet activity', {
-          error: error instanceof Error ? error.message : String(error),
+        this?.logger?.debug('Could not check wallet activity', {
+          error: error instanceof Error ? error.message : String(error as any),
         });
       }
 
@@ -512,47 +512,47 @@ export class PreDeploymentValidator {
    * Validate network connectivity and health
    */
   private async validateNetwork(context: DeploymentContext): Promise<ValidationResult[]> {
-    if (this.options.skipNetworkCheck || !this.networkHealthChecker) {
+    if (this?.options?.skipNetworkCheck || !this.networkHealthChecker) {
       return [];
     }
 
     const results: ValidationResult[] = [];
 
     try {
-      const networkHealth = await this.networkHealthChecker.checkHealth();
+      const networkHealth = await this?.networkHealthChecker?.checkHealth();
       
       // Overall network health
-      if (networkHealth.overall.healthy) {
+      if (networkHealth?.overall?.healthy) {
         results.push({
           passed: true,
           category: 'network',
           name: 'Network health',
-          message: `Network health is good (score: ${networkHealth.overall.score})`,
+          message: `Network health is good (score: ${networkHealth?.overall?.score})`,
           severity: 'info',
-          details: { score: networkHealth.overall.score },
+          details: { score: networkHealth?.overall?.score },
         });
       } else {
         results.push({
           passed: false,
           category: 'network',
           name: 'Network health',
-          message: `Network health issues detected (score: ${networkHealth.overall.score})`,
+          message: `Network health issues detected (score: ${networkHealth?.overall?.score})`,
           severity: 'error',
           suggestion: 'Address network issues before deployment',
           details: { 
-            score: networkHealth.overall.score,
-            issues: networkHealth.overall.issues,
+            score: networkHealth?.overall?.score,
+            issues: networkHealth?.overall?.issues,
           },
         });
       }
 
       // Sui RPC connectivity
-      if (networkHealth.sui.primary.available) {
+      if (networkHealth?.sui?.primary.available) {
         results.push({
           passed: true,
           category: 'network',
           name: 'Sui RPC connectivity',
-          message: `Sui RPC connected (${networkHealth.sui.primary.responseTime}ms)`,
+          message: `Sui RPC connected (${networkHealth?.sui?.primary.responseTime}ms)`,
           severity: 'info',
         });
       } else {
@@ -560,19 +560,19 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'network',
           name: 'Sui RPC connectivity',
-          message: `Sui RPC unavailable: ${networkHealth.sui.primary.errorMessage}`,
+          message: `Sui RPC unavailable: ${networkHealth?.sui?.primary.errorMessage}`,
           severity: 'error',
           suggestion: 'Check network connection and Sui RPC endpoint',
         });
       }
 
       // Walrus publisher connectivity
-      if (networkHealth.walrus.publisher.available) {
+      if (networkHealth?.walrus?.publisher.available) {
         results.push({
           passed: true,
           category: 'network',
           name: 'Walrus publisher connectivity',
-          message: `Walrus publisher connected (${networkHealth.walrus.publisher.responseTime}ms)`,
+          message: `Walrus publisher connected (${networkHealth?.walrus?.publisher.responseTime}ms)`,
           severity: 'info',
         });
       } else {
@@ -580,19 +580,19 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'network',
           name: 'Walrus publisher connectivity',
-          message: `Walrus publisher unavailable: ${networkHealth.walrus.publisher.errorMessage}`,
+          message: `Walrus publisher unavailable: ${networkHealth?.walrus?.publisher.errorMessage}`,
           severity: 'error',
           suggestion: 'Check Walrus publisher endpoint or use fallback',
         });
       }
 
       // Walrus aggregator connectivity
-      if (networkHealth.walrus.aggregator.available) {
+      if (networkHealth?.walrus?.aggregator.available) {
         results.push({
           passed: true,
           category: 'network',
           name: 'Walrus aggregator connectivity',
-          message: `Walrus aggregator connected (${networkHealth.walrus.aggregator.responseTime}ms)`,
+          message: `Walrus aggregator connected (${networkHealth?.walrus?.aggregator.responseTime}ms)`,
           severity: 'info',
         });
       } else {
@@ -600,7 +600,7 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'network',
           name: 'Walrus aggregator connectivity',
-          message: `Walrus aggregator unavailable: ${networkHealth.walrus.aggregator.errorMessage}`,
+          message: `Walrus aggregator unavailable: ${networkHealth?.walrus?.aggregator.errorMessage}`,
           severity: 'error',
           suggestion: 'Check Walrus aggregator endpoint',
         });
@@ -611,7 +611,7 @@ export class PreDeploymentValidator {
         passed: false,
         category: 'network',
         name: 'Network health check',
-        message: `Network health check failed: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Network health check failed: ${error instanceof Error ? error.message : String(error as any)}`,
         severity: 'error',
         suggestion: 'Check network connectivity and endpoint configuration',
       });
@@ -629,12 +629,12 @@ export class PreDeploymentValidator {
     try {
       const totalSize = this.calculateDirectorySize(context.sitePath);
       
-      if (totalSize <= this.options.maxDeploymentSize) {
+      if (totalSize <= this?.options?.maxDeploymentSize) {
         results.push({
           passed: true,
           category: 'deployment',
           name: 'Deployment size',
-          message: `Deployment size is acceptable: ${this.formatBytes(totalSize)}`,
+          message: `Deployment size is acceptable: ${this.formatBytes(totalSize as any)}`,
           severity: 'info',
           details: { sizeBytes: totalSize, sizeMB: totalSize / (1024 * 1024) },
         });
@@ -643,12 +643,12 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'deployment',
           name: 'Deployment size',
-          message: `Deployment size exceeds limit: ${this.formatBytes(totalSize)} (max: ${this.formatBytes(this.options.maxDeploymentSize)})`,
+          message: `Deployment size exceeds limit: ${this.formatBytes(totalSize as any)} (max: ${this.formatBytes(this?.options?.maxDeploymentSize)})`,
           severity: 'error',
           suggestion: 'Reduce deployment size by removing unnecessary files or assets',
           details: { 
             sizeBytes: totalSize, 
-            maxSizeBytes: this.options.maxDeploymentSize,
+            maxSizeBytes: this?.options?.maxDeploymentSize,
           },
         });
       }
@@ -672,7 +672,7 @@ export class PreDeploymentValidator {
         passed: false,
         category: 'deployment',
         name: 'Size calculation',
-        message: `Failed to calculate deployment size: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Failed to calculate deployment size: ${error instanceof Error ? error.message : String(error as any)}`,
         severity: 'warning',
       });
     }
@@ -727,7 +727,7 @@ export class PreDeploymentValidator {
         passed: false,
         category: 'deployment',
         name: 'Permission check',
-        message: `Failed to check permissions: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Failed to check permissions: ${error instanceof Error ? error.message : String(error as any)}`,
         severity: 'warning',
       });
     }
@@ -748,7 +748,7 @@ export class PreDeploymentValidator {
       }
       return '0';
     } catch (error) {
-      throw new NetworkError(`Failed to get wallet balance: ${error instanceof Error ? error.message : String(error)}`);
+      throw new NetworkError(`Failed to get wallet balance: ${error instanceof Error ? error.message : String(error as any)}`);
     }
   }
 
@@ -760,12 +760,12 @@ export class PreDeploymentValidator {
     
     const traverse = (path: string) => {
       try {
-        const stat = statSync(path);
+        const stat = statSync(path as any);
         if (stat.isFile()) {
           totalSize += stat.size;
         } else if (stat.isDirectory()) {
           const fs = require('fs');
-          const files = fs.readdirSync(path);
+          const files = fs.readdirSync(path as any);
           for (const file of files) {
             traverse(`${path}/${file}`);
           }
@@ -775,7 +775,7 @@ export class PreDeploymentValidator {
       }
     };
 
-    traverse(dirPath);
+    traverse(dirPath as any);
     return totalSize;
   }
 
@@ -787,12 +787,12 @@ export class PreDeploymentValidator {
     
     const traverse = (path: string) => {
       try {
-        const stat = statSync(path);
+        const stat = statSync(path as any);
         if (stat.isFile() && stat.size > threshold) {
           largeFiles.push({ path, size: stat.size });
         } else if (stat.isDirectory()) {
           const fs = require('fs');
-          const files = fs.readdirSync(path);
+          const files = fs.readdirSync(path as any);
           for (const file of files) {
             traverse(`${path}/${file}`);
           }
@@ -802,7 +802,7 @@ export class PreDeploymentValidator {
       }
     };
 
-    traverse(dirPath);
+    traverse(dirPath as any);
     return largeFiles;
   }
 
@@ -814,16 +814,16 @@ export class PreDeploymentValidator {
     
     const traverse = (path: string) => {
       try {
-        const stat = statSync(path);
+        const stat = statSync(path as any);
         const filename = path.split('/').pop() || '';
         
         if (filename.startsWith('.') && filename !== '.' && filename !== '..') {
-          hiddenFiles.push(path);
+          hiddenFiles.push(path as any);
         }
         
         if (stat.isDirectory() && !filename.startsWith('.')) {
           const fs = require('fs');
-          const files = fs.readdirSync(path);
+          const files = fs.readdirSync(path as any);
           for (const file of files) {
             traverse(`${path}/${file}`);
           }
@@ -833,7 +833,7 @@ export class PreDeploymentValidator {
       }
     };
 
-    traverse(dirPath);
+    traverse(dirPath as any);
     return hiddenFiles;
   }
 
@@ -845,9 +845,9 @@ export class PreDeploymentValidator {
     
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
     
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any))} ${sizes[i]}`;
   }
 
   /**
@@ -856,8 +856,8 @@ export class PreDeploymentValidator {
   private generateSummary(results: ValidationResult[], duration: number): ValidationSummary {
     const totalChecks = results.length;
     const passedChecks = results.filter(r => r.passed).length;
-    const warnings = results.filter(r => r.severity === 'warning').length;
-    const errors = results.filter(r => r.severity === 'error').length;
+    const warnings = results.filter(r => r?.severity === 'warning').length;
+    const errors = results.filter(r => r?.severity === 'error').length;
 
     const readinessScore = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 0;
 
@@ -873,7 +873,7 @@ export class PreDeploymentValidator {
     // Generate recommended actions
     const recommendedActions: string[] = [];
     
-    for (const result of results.filter(r => !r.passed || r.severity === 'warning')) {
+    for (const result of results.filter(r => !r.passed || r?.severity === 'warning')) {
       if (result.suggestion) {
         recommendedActions.push(result.suggestion);
       }
@@ -899,7 +899,7 @@ export class PreDeploymentValidator {
       errors,
       results,
       estimatedDeploymentTime,
-      recommendedActions: [...new Set(recommendedActions)], // Remove duplicates
+      recommendedActions: [...new Set(recommendedActions as any)], // Remove duplicates
     };
   }
 
@@ -928,7 +928,7 @@ export class PreDeploymentValidator {
     }
 
     // Quick wallet check
-    if (!this.options.skipWalletCheck) {
+    if (!this?.options?.skipWalletCheck) {
       try {
         execSync('sui client active-address', { stdio: 'ignore' });
       } catch {
@@ -937,7 +937,7 @@ export class PreDeploymentValidator {
     }
 
     return {
-      ready: issues.length === 0,
+      ready: issues?.length === 0,
       issues,
     };
   }

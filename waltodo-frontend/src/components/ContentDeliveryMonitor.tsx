@@ -17,14 +17,14 @@ export default function ContentDeliveryMonitor() {
     errorCount: 0,
     totalRequests: 0
   });
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false as any);
   const { loading, error } = useWalrusStorage();
   const isConnected = !loading && !error;
 
   useEffect(() => {
     // Only show monitor in development or when specifically enabled
-    const shouldShow = process.env.NODE_ENV === 'development' || 
-                      process.env.NEXT_PUBLIC_SHOW_CDN_MONITOR === 'true';
+    const shouldShow = process.env?.NODE_ENV === 'development' || 
+                      process.env?.NEXT_PUBLIC_SHOW_CDN_MONITOR === 'true';
     setIsVisible(shouldShow && isConnected);
   }, [isConnected]);
 
@@ -41,7 +41,7 @@ export default function ContentDeliveryMonitor() {
       }));
     }, 5000);
 
-    return () => clearInterval(monitorInterval);
+    return () => clearInterval(monitorInterval as any);
   }, [isVisible]);
 
   if (!isVisible) {

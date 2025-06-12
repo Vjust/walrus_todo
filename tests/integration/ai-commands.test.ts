@@ -18,11 +18,11 @@ describe('AI Commands Integration Tests', () => {
 
   beforeEach(() => {
     (execSync as jest.Mock).mockReset();
-    process.env.XAI_API_KEY = MOCK_API_KEY;
+    process.env?.XAI_API_KEY = MOCK_API_KEY;
   });
 
   afterEach(() => {
-    delete process.env.XAI_API_KEY;
+    delete process?.env?.XAI_API_KEY;
   });
 
   describe('AI Summarize Command', () => {
@@ -36,13 +36,13 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
       });
 
       const result = execSync(`${CLI_CMD} ai summarize`).toString();
-      expect(result).toContain('Summary of your todos');
-      expect(result).toContain('financial reporting');
-      expect(result).toContain('67% incomplete');
+      expect(result as any).toContain('Summary of your todos');
+      expect(result as any).toContain('financial reporting');
+      expect(result as any).toContain('67% incomplete');
     });
 
     it('should handle missing API key', () => {
-      delete process.env.XAI_API_KEY;
+      delete process?.env?.XAI_API_KEY;
       (execSync as jest.Mock).mockImplementation(() => {
         throw new Error(
           'API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.'
@@ -78,10 +78,10 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
       });
 
       const result = execSync(`${CLI_CMD} ai summarize --json`).toString();
-      const parsed = JSON.parse(result);
-      expect(parsed).toHaveProperty('summary');
+      const parsed = JSON.parse(result as any);
+      expect(parsed as any).toHaveProperty('summary');
       expect(parsed.summary).toContain('financial');
-      expect(parsed.stats.total).toBe(3);
+      expect(parsed?.stats?.total).toBe(3 as any);
     });
 
     it('should summarize specific list', () => {
@@ -94,8 +94,8 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
       });
 
       const result = execSync(`${CLI_CMD} ai summarize --list work`).toString();
-      expect(result).toContain('work list');
-      expect(result).toContain('financial tasks');
+      expect(result as any).toContain('work list');
+      expect(result as any).toContain('financial tasks');
     });
   });
 
@@ -139,11 +139,11 @@ Task Suggestions (4):
       });
 
       const result = execSync(`${CLI_CMD} suggest`).toString();
-      expect(result).toContain('Task Suggestions');
-      expect(result).toContain('Prepare Q1 financial forecast');
-      expect(result).toContain('Priority: high');
-      expect(result).toContain('Score: 85');
-      expect(result).toContain('Type: NEXT_STEP');
+      expect(result as any).toContain('Task Suggestions');
+      expect(result as any).toContain('Prepare Q1 financial forecast');
+      expect(result as any).toContain('Priority: high');
+      expect(result as any).toContain('Score: 85');
+      expect(result as any).toContain('Type: NEXT_STEP');
     });
 
     it('should support filtering suggestions by type', () => {
@@ -157,8 +157,8 @@ Task Suggestions (4):
       });
 
       const result = execSync(`${CLI_CMD} suggest --type next_step`).toString();
-      expect(result).toContain('Type: NEXT_STEP');
-      expect(result).not.toContain('Type: RELATED');
+      expect(result as any).toContain('Type: NEXT_STEP');
+      expect(result as any).not.toContain('Type: RELATED');
     });
 
     it('should support blockchain verification', () => {
@@ -186,9 +186,9 @@ Transaction: 0xdef456...
       const result = execSync(
         `${CLI_CMD} suggest --verify --registryAddress 0x123 --packageId 0x456`
       ).toString();
-      expect(result).toContain('Blockchain verification enabled');
-      expect(result).toContain('Verification Details');
-      expect(result).toContain('Transaction:');
+      expect(result as any).toContain('Blockchain verification enabled');
+      expect(result as any).toContain('Verification Details');
+      expect(result as any).toContain('Transaction:');
     });
 
     it('should filter suggestions by tags', () => {
@@ -204,8 +204,8 @@ Transaction: 0xdef456...
       });
 
       const result = execSync(`${CLI_CMD} suggest --tags finance`).toString();
-      expect(result).toContain('finance');
-      expect(result).not.toContain('team productivity');
+      expect(result as any).toContain('finance');
+      expect(result as any).not.toContain('team productivity');
     });
 
     it('should filter suggestions by priority', () => {
@@ -221,8 +221,8 @@ Transaction: 0xdef456...
       });
 
       const result = execSync(`${CLI_CMD} suggest --priority high`).toString();
-      expect(result).toContain('Priority: high');
-      expect(result).not.toContain('Priority: medium');
+      expect(result as any).toContain('Priority: high');
+      expect(result as any).not.toContain('Priority: medium');
     });
 
     it('should limit number of suggestions', () => {
@@ -236,7 +236,7 @@ Transaction: 0xdef456...
       });
 
       const result = execSync(`${CLI_CMD} suggest --maxResults 2`).toString();
-      expect(result).toContain('Task Suggestions (2)');
+      expect(result as any).toContain('Task Suggestions (2)');
     });
 
     it('should support caching with cache debug', () => {
@@ -259,9 +259,9 @@ Cache Statistics:
       });
 
       const result = execSync(`${CLI_CMD} suggest --cacheDebug`).toString();
-      expect(result).toContain('loaded from cache');
-      expect(result).toContain('Cache Statistics');
-      expect(result).toContain('hit rate');
+      expect(result as any).toContain('loaded from cache');
+      expect(result as any).toContain('Cache Statistics');
+      expect(result as any).toContain('hit rate');
     });
 
     it('should clear cache when requested', () => {
@@ -275,8 +275,8 @@ Task Suggestions (3):`);
       });
 
       const result = execSync(`${CLI_CMD} suggest --clearCache`).toString();
-      expect(result).toContain('caches cleared');
-      expect(result).toContain('Generating new AI suggestions');
+      expect(result as any).toContain('caches cleared');
+      expect(result as any).toContain('Generating new AI suggestions');
     });
   });
 
@@ -309,11 +309,11 @@ trends:
       });
 
       const result = execSync(`${CLI_CMD} ai analyze`).toString();
-      expect(result).toContain('Todo Analysis');
-      expect(result).toContain('themes:');
-      expect(result).toContain('Financial planning');
-      expect(result).toContain('bottlenecks:');
-      expect(result).toContain('recommendations:');
+      expect(result as any).toContain('Todo Analysis');
+      expect(result as any).toContain('themes:');
+      expect(result as any).toContain('Financial planning');
+      expect(result as any).toContain('bottlenecks:');
+      expect(result as any).toContain('recommendations:');
     });
 
     it('should output analysis in JSON format', () => {
@@ -338,9 +338,9 @@ trends:
       });
 
       const result = execSync(`${CLI_CMD} ai analyze --json`).toString();
-      const parsed = JSON.parse(result);
+      const parsed = JSON.parse(result as any);
       expect(parsed.analysis).toHaveProperty('themes');
-      expect(parsed.analysis.themes).toContain('Financial planning');
+      expect(parsed?.analysis?.themes).toContain('Financial planning');
     });
 
     it('should analyze specific list', () => {
@@ -357,8 +357,8 @@ themes:
       const result = execSync(
         `${CLI_CMD} ai analyze --list personal`
       ).toString();
-      expect(result).toContain("'personal' list");
-      expect(result).toContain('Personal development');
+      expect(result as any).toContain("'personal' list");
+      expect(result as any).toContain('Personal development');
     });
   });
 
@@ -379,9 +379,9 @@ Management Tasks:
       });
 
       const result = execSync(`${CLI_CMD} ai categorize`).toString();
-      expect(result).toContain('Todo Categories');
-      expect(result).toContain('Financial Tasks');
-      expect(result).toContain('Management Tasks');
+      expect(result as any).toContain('Todo Categories');
+      expect(result as any).toContain('Financial Tasks');
+      expect(result as any).toContain('Management Tasks');
     });
 
     it('should output categories in JSON format', () => {
@@ -404,9 +404,9 @@ Management Tasks:
       });
 
       const result = execSync(`${CLI_CMD} ai categorize --json`).toString();
-      const parsed = JSON.parse(result);
+      const parsed = JSON.parse(result as any);
       expect(parsed.categories).toHaveProperty('Financial Tasks');
-      expect(parsed.categories['Financial Tasks']).toHaveLength(2);
+      expect(parsed?.categories?.['Financial Tasks']).toHaveLength(2 as any);
     });
   });
 
@@ -424,9 +424,9 @@ Management Tasks:
       });
 
       const result = execSync(`${CLI_CMD} ai prioritize`).toString();
-      expect(result).toContain('Prioritized Todos');
-      expect(result).toContain('[9] Complete financial report');
-      expect(result).toContain('[3] Schedule team meeting');
+      expect(result as any).toContain('Prioritized Todos');
+      expect(result as any).toContain('[9] Complete financial report');
+      expect(result as any).toContain('[3] Schedule team meeting');
     });
 
     it('should output priorities in JSON format', () => {
@@ -450,9 +450,9 @@ Management Tasks:
       });
 
       const result = execSync(`${CLI_CMD} ai prioritize --json`).toString();
-      const parsed = JSON.parse(result);
+      const parsed = JSON.parse(result as any);
       expect(parsed.priorities).toHaveProperty('1');
-      expect(parsed.priorities['1']).toBe(9);
+      expect(parsed?.priorities?.['1']).toBe(9 as any);
     });
   });
 
@@ -535,17 +535,17 @@ Summary: Analysis of 3 local todos.`);
       const openaiResult = execSync(
         `${CLI_CMD} ai summarize --provider openai --apiKey test-key`
       ).toString();
-      expect(openaiResult).toContain('Using OpenAI provider');
+      expect(openaiResult as any).toContain('Using OpenAI provider');
 
       const anthropicResult = execSync(
         `${CLI_CMD} ai summarize --provider anthropic --apiKey test-key`
       ).toString();
-      expect(anthropicResult).toContain('Using Anthropic provider');
+      expect(anthropicResult as any).toContain('Using Anthropic provider');
 
       const ollamaResult = execSync(
         `${CLI_CMD} ai summarize --provider ollama`
       ).toString();
-      expect(ollamaResult).toContain('Using Ollama provider');
+      expect(ollamaResult as any).toContain('Using Ollama provider');
     });
 
     it('should support custom models', () => {
@@ -560,7 +560,7 @@ Advanced analysis of your todos...`);
       const result = execSync(
         `${CLI_CMD} ai analyze --provider openai --model gpt-4 --apiKey test-key`
       ).toString();
-      expect(result).toContain('Using model: gpt-4');
+      expect(result as any).toContain('Using model: gpt-4');
     });
 
     it('should show AI status', () => {
@@ -589,16 +589,16 @@ walrus_todo ai credentials  - Manage AI provider credentials`);
       });
 
       const result = execSync(`${CLI_CMD} ai`).toString();
-      expect(result).toContain('AI Service Status');
-      expect(result).toContain('Active provider:');
-      expect(result).toContain('API Key Status');
-      expect(result).toContain('Available Commands');
+      expect(result as any).toContain('AI Service Status');
+      expect(result as any).toContain('Active provider:');
+      expect(result as any).toContain('API Key Status');
+      expect(result as any).toContain('Available Commands');
     });
   });
 
   describe('AI with Mock AI Providers', () => {
     it('should use mock providers during testing', () => {
-      process.env.USE_MOCK_AI = 'true';
+      process.env?.USE_MOCK_AI = 'true';
 
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('ai summarize')) {
@@ -609,14 +609,14 @@ Mock response for testing purposes. 3 todos analyzed.`);
       });
 
       const result = execSync(`${CLI_CMD} ai summarize`).toString();
-      expect(result).toContain('[MOCK]');
-      expect(result).toContain('Mock response');
+      expect(result as any).toContain('[MOCK]');
+      expect(result as any).toContain('Mock response');
 
-      delete process.env.USE_MOCK_AI;
+      delete process?.env?.USE_MOCK_AI;
     });
 
     it('should simulate provider-specific responses', () => {
-      process.env.USE_MOCK_AI = 'true';
+      process.env?.USE_MOCK_AI = 'true';
 
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('--provider xai')) {
@@ -630,14 +630,14 @@ Mock response for testing purposes. 3 todos analyzed.`);
       const xaiResult = execSync(
         `${CLI_CMD} ai analyze --provider xai`
       ).toString();
-      expect(xaiResult).toContain('[MOCK XAI]');
+      expect(xaiResult as any).toContain('[MOCK XAI]');
 
       const openaiResult = execSync(
         `${CLI_CMD} ai analyze --provider openai`
       ).toString();
-      expect(openaiResult).toContain('[MOCK OpenAI]');
+      expect(openaiResult as any).toContain('[MOCK OpenAI]');
 
-      delete process.env.USE_MOCK_AI;
+      delete process?.env?.USE_MOCK_AI;
     });
   });
 });

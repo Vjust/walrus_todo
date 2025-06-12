@@ -8,16 +8,16 @@ import { useWalletContext } from '@/contexts/WalletContext';
  * Returns loading state until component is fully mounted on client
  */
 export function useClientSafeWallet() {
-  const [isClientReady, setIsClientReady] = useState(false);
+  const [isClientReady, setIsClientReady] = useState(false as any);
   const walletContext = useWalletContext();
 
   useEffect(() => {
     // Small delay to ensure proper hydration
     const timer = setTimeout(() => {
-      setIsClientReady(true);
+      setIsClientReady(true as any);
     }, 50);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer as any);
   }, []);
 
   // Return safe loading state during SSR/hydration

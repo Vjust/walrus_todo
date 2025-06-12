@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { CLIError } from '../types/errors/consolidated';
@@ -145,7 +145,7 @@ export default class StoreCommand extends BaseCommand {
   private uploadQueue = getGlobalUploadQueue();
 
   async run() {
-    const { args, flags } = await this.parse(StoreCommand);
+    const { args, flags } = await this.parse(StoreCommand as any);
 
     // Check for background operation
     if (flags.background) {
@@ -175,7 +175,7 @@ export default class StoreCommand extends BaseCommand {
       const todoService = new TodoService();
       const allLists = await todoService.getAllLists();
 
-      if (allLists.length === 0) {
+      if (allLists?.length === 0) {
         throw new CLIError(
           'No todo lists found. Create a list first with: waltodo add <list-name> -t "First todo"',
           'NO_LISTS_FOUND'
@@ -197,7 +197,7 @@ export default class StoreCommand extends BaseCommand {
       const list = await this.withSpinner(
         'Loading configuration...',
         async () => {
-          const todoList = await this.todoService.getList(listName);
+          const todoList = await this?.todoService?.getList(listName as any);
           if (!todoList) {
             throw new CLIError(
               `List "${listName}" not found`,
@@ -213,7 +213,7 @@ export default class StoreCommand extends BaseCommand {
 
       if (storeAll) {
         todosToStore = list.todos;
-        if (todosToStore.length === 0) {
+        if (todosToStore?.length === 0) {
           throw new CLIError(
             `No todos found in list "${listName}"`,
             'NO_TODOS_FOUND'
@@ -225,8 +225,8 @@ export default class StoreCommand extends BaseCommand {
           )
         );
       } else {
-        const todo = list.todos.find(
-          t => t.id === todoIdentifier || t.title === todoIdentifier
+        const todo = list?.todos?.find(
+          t => t?.id === todoIdentifier || t?.title === todoIdentifier
         );
         if (!todo) {
           // Show available todos to help user
@@ -245,7 +245,7 @@ export default class StoreCommand extends BaseCommand {
         );
       }
 
-      this.success(`Found ${todosToStore.length} todo(s) to store`);
+      this.success(`Found ${todosToStore.length} todo(s as any) to store`);
 
       // Step 2: Initialize Walrus storage
       const walrusStorage = await this.withSpinner(
@@ -259,7 +259,7 @@ export default class StoreCommand extends BaseCommand {
       );
 
       // Step 3: Store todos (single or batch)
-      if (todosToStore.length === 1) {
+      if (todosToStore?.length === 1) {
         // Single todo upload
         const todoToStore = todosToStore[0];
         if (!todoToStore) {
@@ -277,7 +277,7 @@ export default class StoreCommand extends BaseCommand {
       } else {
         // Batch upload
         await this.storeBatchTodos(todosToStore, walrusStorage, {
-          'batch-size': flags['batch-size'],
+          'batch-size': flags?.["batch-size"],
           epochs: flags.epochs,
           reuse: flags.reuse,
           list: listName,
@@ -292,7 +292,7 @@ export default class StoreCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Store failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Store failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'STORE_FAILED'
       );
     }
@@ -304,20 +304,20 @@ export default class StoreCommand extends BaseCommand {
    */
   private displayBackgroundResults(result: { uploads?: Array<{ success: boolean; id: string; blobId?: string; error?: string }> }, todoCount: number): void {
     this.log('');
-    this.log(chalk.green.bold('🎉 Background Upload Summary:'));
+    this.log(chalk?.green?.bold('🎉 Background Upload Summary:'));
     this.log('');
 
     if (result.uploads) {
-      const successful = result.uploads.filter(u => u.success);
-      const failed = result.uploads.filter(u => !u.success);
+      const successful = result?.uploads?.filter(u => u.success);
+      const failed = result?.uploads?.filter(u => !u.success);
 
-      this.log(chalk.white(`  Total todos: ${chalk.cyan(todoCount)}`));
+      this.log(chalk.white(`  Total todos: ${chalk.cyan(todoCount as any)}`));
       this.log(chalk.white(`  Successful: ${chalk.green(successful.length)}`));
       this.log(chalk.white(`  Failed: ${chalk.red(failed.length)}`));
 
       if (successful.length > 0) {
         this.log('');
-        this.log(chalk.white.bold('Successful uploads:'));
+        this.log(chalk?.white?.bold('Successful uploads:'));
         successful.forEach(upload => {
           this.log(
             chalk.white(`  ✅ ${upload.id}: ${chalk.yellow(upload.blobId)}`)
@@ -327,7 +327,7 @@ export default class StoreCommand extends BaseCommand {
 
       if (failed.length > 0) {
         this.log('');
-        this.log(chalk.white.bold('Failed uploads:'));
+        this.log(chalk?.white?.bold('Failed uploads:'));
         failed.forEach(upload => {
           this.log(
             chalk.white(`  ❌ ${upload.id}: ${chalk.red(upload.error)}`)
@@ -348,7 +348,7 @@ export default class StoreCommand extends BaseCommand {
   ): Promise<void> {
     try {
       const retryManager = new RetryManager([
-        'https://walrus-testnet.nodes.guru:443',
+        'https://walrus-testnet?.nodes?.guru:443',
       ]);
       await retryManager.retry(() => walrusStorage.connect(), {
         maxRetries: 3,
@@ -364,9 +364,9 @@ export default class StoreCommand extends BaseCommand {
         },
       });
     } catch (error) {
-      if (error.code === 'WALRUS_CLI_NOT_FOUND') {
+      if (error?.code === 'WALRUS_CLI_NOT_FOUND') {
         throw new CLIError(
-          'Walrus CLI not found. Please install it from https://docs.wal.app',
+          'Walrus CLI not found. Please install it from https://docs?.wal?.app',
           'WALRUS_CLI_NOT_FOUND'
         );
       }
@@ -410,7 +410,7 @@ export default class StoreCommand extends BaseCommand {
                   );
                 } catch (_error) {
                   this.warning(
-                    `Retry attempt ${attemptCount}: ${_error instanceof Error ? _error.message : String(_error)}`
+                    `Retry attempt ${attemptCount}: ${_error instanceof Error ? _error.message : String(_error as any)}`
                   );
                   throw _error;
                 }
@@ -430,7 +430,7 @@ export default class StoreCommand extends BaseCommand {
           } else {
             // Use legacy RetryManager for backward compatibility
             const retryManager = new RetryManager([
-              'https://walrus-testnet.nodes.guru:443',
+              'https://walrus-testnet?.nodes?.guru:443',
             ]);
             return await retryManager.retry(
               () =>
@@ -489,22 +489,22 @@ export default class StoreCommand extends BaseCommand {
     this.section('Batch Upload', `Uploading ${todos.length} todos to Walrus`);
 
     // Use the enhanced BatchUploader with rate limiting
-    const batchUploader = new BatchUploader(walrusStorage);
+    const batchUploader = new BatchUploader(walrusStorage as any);
 
     try {
       const result = await batchUploader.uploadTodos(todos, {
         epochs: options.epochs,
         progressCallback: (current: number, total: number, todoId: string) => {
           // Find the todo to get its title for display
-          const todo = todos.find(t => t.id === todoId);
+          const todo = todos.find(t => t?.id === todoId);
           const title = todo?.title || todoId;
-          this.log(`📦 [${current}/${total}] Uploading: ${chalk.cyan(title)}`);
+          this.log(`📦 [${current}/${total}] Uploading: ${chalk.cyan(title as any)}`);
         },
       });
 
       // Process results and update local storage
       for (const success of result.successful) {
-        const todo = todos.find(t => t.id === success.id);
+        const todo = todos.find(t => t?.id === success.id);
         if (todo) {
           // Update local todo with blob ID
           await this.updateLocalTodo(todo, options.list, success.blobId);
@@ -513,8 +513,8 @@ export default class StoreCommand extends BaseCommand {
           this.saveBlobMapping(todo.id, success.blobId);
 
           // Cache the result for future use
-          const hash = this.getTodoHash(todo);
-          await this.uploadCache.set(hash, success.blobId);
+          const hash = this.getTodoHash(todo as any);
+          await this?.uploadCache?.set(hash, success.blobId);
         }
       }
 
@@ -526,26 +526,26 @@ export default class StoreCommand extends BaseCommand {
         'Batch Upload Summary',
         [
           `Total todos: ${chalk.cyan(todos.length)}`,
-          `Successful: ${chalk.green(result.successful.length)}`,
-          `Failed: ${chalk.red(result.failed.length)}`,
-          `Cache hits: ${chalk.yellow(0)}`, // Cache logic handled by BatchUploader internally
-          `Time taken: ${chalk.cyan(this.formatDurationLocal(duration))}`,
+          `Successful: ${chalk.green(result?.successful?.length)}`,
+          `Failed: ${chalk.red(result?.failed?.length)}`,
+          `Cache hits: ${chalk.yellow(0 as any)}`, // Cache logic handled by BatchUploader internally
+          `Time taken: ${chalk.cyan(this.formatDurationLocal(duration as any))}`,
           `Network: ${chalk.cyan(options.network || 'testnet')}`,
           `Epochs: ${chalk.cyan(options.epochs || 5)}`,
         ].join('\n')
       );
 
       // Display successful uploads with transaction details
-      if (result.successful.length > 0) {
+      if (result?.successful?.length > 0) {
         this.log('');
-        this.log(chalk.white.bold('📋 Successful Uploads:'));
-        this.log(chalk.white('─'.repeat(60)));
+        this.log(chalk?.white?.bold('📋 Successful Uploads:'));
+        this.log(chalk.white('─'.repeat(60 as any)));
 
         for (const success of result.successful) {
-          const todo = todos.find(t => t.id === success.id);
+          const todo = todos.find(t => t?.id === success.id);
           const title = todo?.title || success.id;
 
-          this.log(chalk.white(`✅ ${chalk.cyan(title)}`));
+          this.log(chalk.white(`✅ ${chalk.cyan(title as any)}`));
           this.log(chalk.white(`   Blob ID: ${chalk.yellow(success.blobId)}`));
 
           if (success.transactionId) {
@@ -569,7 +569,7 @@ export default class StoreCommand extends BaseCommand {
           } else {
             this.log(
               chalk.white(
-                `   Walrus URL: ${chalk.blue(`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${success.blobId}`)}`
+                `   Walrus URL: ${chalk.blue(`https://aggregator.walrus-testnet?.walrus?.space/v1/blobs/${success.blobId}`)}`
               )
             );
           }
@@ -578,13 +578,13 @@ export default class StoreCommand extends BaseCommand {
       }
 
       // Display any failures
-      if (result.failed.length > 0) {
+      if (result?.failed?.length > 0) {
         this.log('');
         this.log(chalk.red('Failed uploads:'));
         for (const failure of result.failed) {
-          const todo = todos.find(t => t.id === failure.id);
+          const todo = todos.find(t => t?.id === failure.id);
           const title = todo?.title || failure.id;
-          this.log(`  ❌ ${chalk.red(title)}: ${failure.error}`);
+          this.log(`  ❌ ${chalk.red(title as any)}: ${failure.error}`);
         }
         this.log('');
         this.log(
@@ -597,7 +597,7 @@ export default class StoreCommand extends BaseCommand {
       this.log('');
     } catch (error) {
       throw new CLIError(
-        `Batch upload failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Batch upload failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'BATCH_UPLOAD_FAILED'
       );
     }
@@ -612,8 +612,8 @@ export default class StoreCommand extends BaseCommand {
     flags: { epochs: number; reuse: boolean }
   ): Promise<string> {
     // Check cache first
-    const hash = this.getTodoHash(todo);
-    const cachedBlobId = await this.uploadCache.get(hash);
+    const hash = this.getTodoHash(todo as any);
+    const cachedBlobId = await this?.uploadCache?.get(hash as any);
 
     if (cachedBlobId) {
       this.log(chalk.gray(`Using cached blob ID for "${todo.title}"`));
@@ -624,7 +624,7 @@ export default class StoreCommand extends BaseCommand {
     const blobId = await walrusStorage.storeTodo(todo, flags.epochs);
 
     // Cache the result
-    await this.uploadCache.set(hash, blobId);
+    await this?.uploadCache?.set(hash, blobId);
 
     return blobId;
   }
@@ -638,8 +638,8 @@ export default class StoreCommand extends BaseCommand {
     flags: { epochs: number; reuse: boolean }
   ): Promise<{ blobId: string; transactionId?: string; explorerUrl?: string; aggregatorUrl?: string }> {
     // Check cache first
-    const hash = this.getTodoHash(todo);
-    const cachedBlobId = await this.uploadCache.get(hash);
+    const hash = this.getTodoHash(todo as any);
+    const cachedBlobId = await this?.uploadCache?.get(hash as any);
 
     if (cachedBlobId) {
       this.log(chalk.gray(`Using cached blob ID for "${todo.title}"`));
@@ -653,13 +653,13 @@ export default class StoreCommand extends BaseCommand {
         flags.epochs
       ) as { blobId: string; transactionId?: string; explorerUrl?: string; aggregatorUrl?: string };
       // Cache the result
-      await this.uploadCache.set(hash, result.blobId);
+      await this?.uploadCache?.set(hash, result.blobId);
       return result;
     } else {
       // Fallback to basic method
       const blobId = await walrusStorage.storeTodo(todo, flags.epochs);
       // Cache the result
-      await this.uploadCache.set(hash, blobId);
+      await this?.uploadCache?.set(hash, blobId);
       return { blobId };
     }
   }
@@ -676,7 +676,7 @@ export default class StoreCommand extends BaseCommand {
       await this.withSpinner(
         'Updating local todo with blob ID...',
         async () => {
-          await this.todoService.updateTodo(listName, todo.id, {
+          await this?.todoService?.updateTodo(listName, todo.id, {
             walrusBlobId: blobId,
             storageLocation: 'blockchain',
             updatedAt: new Date().toISOString(),
@@ -712,11 +712,11 @@ export default class StoreCommand extends BaseCommand {
       );
     }
 
-    this.log(chalk.green.bold('✅ Todo stored successfully on Walrus!'));
+    this.log(chalk?.green?.bold('✅ Todo stored successfully on Walrus!'));
     this.log('');
-    this.log(chalk.white.bold('Storage Details:'));
+    this.log(chalk?.white?.bold('Storage Details:'));
     this.log(chalk.white(`  Todo: ${chalk.cyan(todo.title)}`));
-    this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId)}`));
+    this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId as any)}`));
     this.log(
       chalk.white(`  Network: ${chalk.cyan(flags.network || 'testnet')}`)
     );
@@ -724,10 +724,10 @@ export default class StoreCommand extends BaseCommand {
 
     if (!flags.mock) {
       this.log('');
-      this.log(chalk.white.bold('Access your todo:'));
+      this.log(chalk?.white?.bold('Access your todo:'));
       this.log(
         chalk.white(
-          `  Walrus URL: ${chalk.cyan(`https://blob.wal.app/${blobId}`)}`
+          `  Walrus URL: ${chalk.cyan(`https://blob?.wal?.app/${blobId}`)}`
         )
       );
     }
@@ -759,15 +759,15 @@ export default class StoreCommand extends BaseCommand {
       );
     }
 
-    this.log(chalk.green.bold('✅ Todo stored successfully on Walrus!'));
+    this.log(chalk?.green?.bold('✅ Todo stored successfully on Walrus!'));
     this.log('');
-    this.log(chalk.white.bold('📋 Storage Details:'));
-    this.log(chalk.white('─'.repeat(50)));
+    this.log(chalk?.white?.bold('📋 Storage Details:'));
+    this.log(chalk.white('─'.repeat(50 as any)));
     this.log(chalk.white(`  Todo: ${chalk.cyan(todo.title)}`));
 
     const blobId =
       typeof uploadResult === 'string' ? uploadResult : uploadResult.blobId;
-    this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId)}`));
+    this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId as any)}`));
 
     if (uploadResult.transactionId) {
       this.log(
@@ -784,8 +784,8 @@ export default class StoreCommand extends BaseCommand {
 
     if (!flags.mock) {
       this.log('');
-      this.log(chalk.white.bold('🔗 Access Links:'));
-      this.log(chalk.white('─'.repeat(50)));
+      this.log(chalk?.white?.bold('🔗 Access Links:'));
+      this.log(chalk.white('─'.repeat(50 as any)));
       if (uploadResult.aggregatorUrl) {
         this.log(
           chalk.white(`  Walrus URL: ${chalk.blue(uploadResult.aggregatorUrl)}`)
@@ -794,8 +794,8 @@ export default class StoreCommand extends BaseCommand {
         const network = flags.network || 'testnet';
         const aggregatorBase =
           network === 'mainnet'
-            ? 'https://aggregator.walrus-mainnet.walrus.space'
-            : 'https://aggregator.walrus-testnet.walrus.space';
+            ? 'https://aggregator.walrus-mainnet?.walrus?.space'
+            : 'https://aggregator.walrus-testnet?.walrus?.space';
         this.log(
           chalk.white(
             `  Walrus URL: ${chalk.blue(`${aggregatorBase}/v1/blobs/${blobId}`)}`
@@ -819,7 +819,7 @@ export default class StoreCommand extends BaseCommand {
    */
   private formatDurationLocal(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
   }
 
@@ -836,7 +836,7 @@ export default class StoreCommand extends BaseCommand {
       completed: todo.completed,
     });
 
-    return crypto.createHash('sha256').update(content).digest('hex');
+    return crypto.createHash('sha256').update(content as any).digest('hex');
   }
 
   /**
@@ -865,13 +865,13 @@ export default class StoreCommand extends BaseCommand {
 
       // Read existing mappings or create empty object
       let mappings: Record<string, string> = {};
-      if (fs.existsSync(blobMappingsFile)) {
+      if (fs.existsSync(blobMappingsFile as any)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           mappings = JSON.parse(content.toString());
         } catch (error) {
           this.warning(
-            `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`
+            `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error as any)}`
           );
           // Continue with empty mappings
         }
@@ -889,7 +889,7 @@ export default class StoreCommand extends BaseCommand {
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
     } catch (error) {
       this.warning(
-        `Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to save blob mapping: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -906,13 +906,13 @@ export default class StoreCommand extends BaseCommand {
     if (args.todo) commandArgs.push(args.todo);
 
     // Convert flags to arguments
-    Object.entries(flags).forEach(([key, value]) => {
+    Object.entries(flags as any).forEach(([key, value]) => {
       if (key === 'background' || key === 'detach' || key === 'job-id') return;
 
       if (value === true) {
         commandArgs.push(`--${key}`);
       } else if (value !== false && value !== undefined) {
-        commandArgs.push(`--${key}`, String(value));
+        commandArgs.push(`--${key}`, String(value as any));
       }
     });
 
@@ -932,10 +932,10 @@ export default class StoreCommand extends BaseCommand {
 
       // Redirect output to job files
       if (child.stdout && job.outputFile) {
-        child.stdout.pipe(fs.createWriteStream(job.outputFile));
+        child?.stdout?.pipe(fs.createWriteStream(job.outputFile));
       }
       if (child.stderr && job.logFile) {
-        child.stderr.pipe(fs.createWriteStream(job.logFile, { flags: 'a' }));
+        child?.stderr?.pipe(fs.createWriteStream(job.logFile, { flags: 'a' }));
       }
 
       child.unref();
@@ -965,7 +965,7 @@ export default class StoreCommand extends BaseCommand {
         this.log(chalk.green(`✅ Background operation completed: ${job.id}`));
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(error as any);
         jobManager.failJob(job.id, errorMessage);
         this.log(chalk.red(`❌ Background operation failed: ${job.id}`));
         this.log(chalk.red(`   Error: ${errorMessage}`));
@@ -1002,7 +1002,7 @@ export default class StoreCommand extends BaseCommand {
 
     try {
       // Step 1: Load configuration
-      const list = await this.todoService.getList(listName);
+      const list = await this?.todoService?.getList(listName as any);
       if (!list) {
         throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
       }
@@ -1014,7 +1014,7 @@ export default class StoreCommand extends BaseCommand {
 
       if (storeAll) {
         todosToStore = list.todos;
-        if (todosToStore.length === 0) {
+        if (todosToStore?.length === 0) {
           throw new CLIError(
             `No todos found in list "${listName}"`,
             'NO_TODOS_FOUND'
@@ -1022,8 +1022,8 @@ export default class StoreCommand extends BaseCommand {
         }
         updateProgress(30, `Found ${todosToStore.length} todos to store`);
       } else {
-        const todo = list.todos.find(
-          t => t.id === todoIdentifier || t.title === todoIdentifier
+        const todo = list?.todos?.find(
+          t => t?.id === todoIdentifier || t?.title === todoIdentifier
         );
         if (!todo) {
           throw new CLIError(
@@ -1047,7 +1047,7 @@ export default class StoreCommand extends BaseCommand {
       updateProgress(50, 'Starting upload process...');
 
       // Step 3: Store todos (single or batch)
-      if (todosToStore.length === 1) {
+      if (todosToStore?.length === 1) {
         // Single todo upload
         const todoToStore = todosToStore[0];
         if (!todoToStore) {
@@ -1073,7 +1073,7 @@ export default class StoreCommand extends BaseCommand {
           todosToStore,
           walrusStorage,
           {
-            'batch-size': flags['batch-size'],
+            'batch-size': flags?.["batch-size"],
             epochs: flags.epochs,
             reuse: flags.reuse,
             list: listName,
@@ -1091,7 +1091,7 @@ export default class StoreCommand extends BaseCommand {
       if (jobId) {
         jobManager.writeJobLog(
           jobId,
-          `Error: ${error instanceof Error ? error.message : String(error)}`
+          `Error: ${error instanceof Error ? error.message : String(error as any)}`
         );
       }
       throw error;
@@ -1149,14 +1149,14 @@ export default class StoreCommand extends BaseCommand {
   ): Promise<void> {
     updateProgress(60, `Starting batch upload of ${todos.length} todos...`);
 
-    const batchUploader = new BatchUploader(walrusStorage);
+    const batchUploader = new BatchUploader(walrusStorage as any);
 
     try {
       const result = await batchUploader.uploadTodos(todos, {
         epochs: options.epochs,
         progressCallback: (current: number, total: number, todoId: string) => {
           const progress = 60 + (current / total) * 30; // Progress from 60% to 90%
-          const todo = todos.find(t => t.id === todoId);
+          const todo = todos.find(t => t?.id === todoId);
           const title = todo?.title || todoId;
           updateProgress(progress, `[${current}/${total}] Uploading: ${title}`);
         },
@@ -1166,34 +1166,34 @@ export default class StoreCommand extends BaseCommand {
 
       // Process results and update local storage
       for (const success of result.successful) {
-        const todo = todos.find(t => t.id === success.id);
+        const todo = todos.find(t => t?.id === success.id);
         if (todo) {
           await this.updateLocalTodo(todo, options.list, success.blobId);
           this.saveBlobMapping(todo.id, success.blobId);
 
           // Cache the result for future use
-          const hash = this.getTodoHash(todo);
-          await this.uploadCache.set(hash, success.blobId);
+          const hash = this.getTodoHash(todo as any);
+          await this?.uploadCache?.set(hash, success.blobId);
         }
       }
 
       updateProgress(
         100,
-        `Batch upload completed: ${result.successful.length}/${todos.length} successful`
+        `Batch upload completed: ${result?.successful?.length}/${todos.length} successful`
       );
 
       // Log any failures
-      if (result.failed.length > 0) {
-        updateProgress(100, `Failed uploads: ${result.failed.length}`);
+      if (result?.failed?.length > 0) {
+        updateProgress(100, `Failed uploads: ${result?.failed?.length}`);
         for (const failure of result.failed) {
-          const todo = todos.find(t => t.id === failure.id);
+          const todo = todos.find(t => t?.id === failure.id);
           const title = todo?.title || failure.id;
           updateProgress(100, `Failed: ${title} - ${failure.error}`);
         }
       }
     } catch (error) {
       throw new CLIError(
-        `Batch upload failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Batch upload failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'BATCH_UPLOAD_FAILED'
       );
     }
@@ -1224,7 +1224,7 @@ export default class StoreCommand extends BaseCommand {
     try {
       // Load todo list
       const list = await this.withSpinner('Loading todo list...', async () => {
-        const todoList = await this.todoService.getList(listName);
+        const todoList = await this?.todoService?.getList(listName as any);
         if (!todoList) {
           throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
         }
@@ -1236,15 +1236,15 @@ export default class StoreCommand extends BaseCommand {
 
       if (storeAll) {
         todosToQueue = list.todos;
-        if (todosToQueue.length === 0) {
+        if (todosToQueue?.length === 0) {
           throw new CLIError(
             `No todos found in list "${listName}"`,
             'NO_TODOS_FOUND'
           );
         }
       } else {
-        const todo = list.todos.find(
-          t => t.id === todoIdentifier || t.title === todoIdentifier
+        const todo = list?.todos?.find(
+          t => t?.id === todoIdentifier || t?.title === todoIdentifier
         );
         if (!todo) {
           throw new CLIError(
@@ -1262,15 +1262,15 @@ export default class StoreCommand extends BaseCommand {
         epochs: flags.epochs,
         network: flags.network,
         listName: listName,
-        maxRetries: flags['max-retries'],
+        maxRetries: flags?.["max-retries"],
       };
 
       this.log('');
       this.log(chalk.cyan('📋 Queueing uploads...'));
 
       for (const todo of todosToQueue) {
-        const jobId = await this.uploadQueue.addTodoJob(todo, queueOptions);
-        jobIds.push(jobId);
+        const jobId = await this?.uploadQueue?.addTodoJob(todo, queueOptions);
+        jobIds.push(jobId as any);
 
         this.log(
           `  ✓ Queued: ${chalk.yellow(todo.title)} (Job: ${chalk.gray(jobId.substring(0, 8) + '...')})`
@@ -1279,40 +1279,40 @@ export default class StoreCommand extends BaseCommand {
 
       this.log('');
       this.success(
-        `Successfully queued ${todosToQueue.length} todo(s) for upload`
+        `Successfully queued ${todosToQueue.length} todo(s as any) for upload`
       );
 
       // Show queue status
-      const stats = await this.uploadQueue.getStats();
+      const stats = await this?.uploadQueue?.getStats();
       this.log('');
-      this.log(chalk.white.bold('Queue Status:'));
+      this.log(chalk?.white?.bold('Queue Status:'));
       this.log(`  Pending: ${chalk.yellow(stats.pending)}`);
       this.log(`  Processing: ${chalk.blue(stats.processing)}`);
       this.log(`  Completed: ${chalk.green(stats.completed)}`);
       this.log(`  Failed: ${chalk.red(stats.failed)}`);
 
       this.log('');
-      this.log(chalk.white.bold('Next Steps:'));
+      this.log(chalk?.white?.bold('Next Steps:'));
       this.log(`  • Monitor progress: ${chalk.cyan('waltodo queue status')}`);
       this.log(`  • Watch real-time: ${chalk.cyan('waltodo queue watch')}`);
       this.log(`  • View job details: ${chalk.cyan('waltodo queue list')}`);
 
       // Optional: Setup progress monitoring if requested
-      if (flags['show-progress'] && !flags.detach) {
+      if (flags?.["show-progress"] && !flags.detach) {
         this.log('');
         this.log(
           chalk.cyan(
             '👀 Monitoring upload progress... (Press Ctrl+C to stop monitoring)'
           )
         );
-        this.monitorQueueProgress(jobIds);
+        this.monitorQueueProgress(jobIds as any);
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Queue operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Queue operation failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'QUEUE_FAILED'
       );
     }
@@ -1326,30 +1326,30 @@ export default class StoreCommand extends BaseCommand {
     let monitoring = true;
 
     // Setup progress event listeners
-    this.uploadQueue.on('jobStarted', job => {
+    this?.uploadQueue?.on('jobStarted', job => {
       if (jobIds.includes(job.id)) {
-        const details = this.getJobDetails(job);
-        this.log(`🔄 Started: ${chalk.blue(details)}`);
+        const details = this.getJobDetails(job as any);
+        this.log(`🔄 Started: ${chalk.blue(details as any)}`);
       }
     });
 
-    this.uploadQueue.on('jobProgress', progress => {
+    this?.uploadQueue?.on('jobProgress', progress => {
       if (jobIds.includes(progress.jobId)) {
-        process.stdout.write(
+        process?.stdout?.write(
           `\r⏳ ${progress.message} (${progress.progress}%)`
         );
       }
     });
 
-    this.uploadQueue.on('jobCompleted', job => {
+    this?.uploadQueue?.on('jobCompleted', job => {
       if (jobIds.includes(job.id)) {
         completedJobs.add(job.id);
-        const details = this.getJobDetails(job);
+        const details = this.getJobDetails(job as any);
         this.log(
-          `\r✅ Completed: ${chalk.green(details)} -> ${chalk.yellow(job.blobId || 'Unknown')}`
+          `\r✅ Completed: ${chalk.green(details as any)} -> ${chalk.yellow(job.blobId || 'Unknown')}`
         );
 
-        if (completedJobs.size === jobIds.length) {
+        if (completedJobs?.size === jobIds.length) {
           this.log('');
           this.success('All uploads completed!');
           monitoring = false;
@@ -1357,10 +1357,10 @@ export default class StoreCommand extends BaseCommand {
       }
     });
 
-    this.uploadQueue.on('jobFailed', job => {
+    this?.uploadQueue?.on('jobFailed', job => {
       if (jobIds.includes(job.id)) {
-        const details = this.getJobDetails(job);
-        this.log(`\r❌ Failed: ${chalk.red(details)} - ${job.error}`);
+        const details = this.getJobDetails(job as any);
+        this.log(`\r❌ Failed: ${chalk.red(details as any)} - ${job.error}`);
       }
     });
 

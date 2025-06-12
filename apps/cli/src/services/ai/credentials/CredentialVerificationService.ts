@@ -87,7 +87,7 @@ export class CredentialVerificationService {
     private walrusClient: WalrusClientExt,
     private signer: Ed25519Keypair
   ) {
-    this.logger = new Logger('CredentialVerificationService');
+    this?.logger = new Logger('CredentialVerificationService');
   }
 
   /**
@@ -120,7 +120,7 @@ export class CredentialVerificationService {
 
     try {
       // 1. Get credential data from Walrus storage
-      const credentialData = await this.walrusClient.readBlob({
+      const credentialData = await this?.walrusClient?.readBlob({
         blobId: credentialId,
       });
       if (!credentialData) {
@@ -129,26 +129,26 @@ export class CredentialVerificationService {
 
       // 2. Parse credential
       const credential = JSON.parse(
-        Buffer.from(credentialData).toString('utf-8')
+        Buffer.from(credentialData as any).toString('utf-8')
       );
 
       // 3. Get metadata for verification
       // These will be used for enhanced verification in future implementations
-      await this.walrusClient.getBlobMetadata({ blobId: credentialId });
-      await this.walrusClient.getBlobInfo(credentialId);
+      await this?.walrusClient?.getBlobMetadata({ blobId: credentialId });
+      await this?.walrusClient?.getBlobInfo(credentialId as any);
 
       // 4. Verify credential components
       const signatureValid = verifySignature
-        ? await this.verifyDigitalSignature(credential)
+        ? await this.verifyDigitalSignature(credential as any)
         : true;
       const timestampValid = verifyTimestamp
-        ? this.verifyTimestamps(credential)
+        ? this.verifyTimestamps(credential as any)
         : true;
       const notRevoked = verifyRevocation
         ? await this.checkRevocationStatus(credential.id)
         : true;
       const schemaValid = verifySchemaCompliance
-        ? this.validateSchema(credential)
+        ? this.validateSchema(credential as any)
         : true;
 
       // 5. Return verification results with proper boolean types
@@ -159,7 +159,7 @@ export class CredentialVerificationService {
         revocation: notRevoked,
         schemaCompliance: schemaValid,
         issuer:
-          typeof credential.issuer === 'string'
+          typeof credential?.issuer === 'string'
             ? credential.issuer
             : credential.issuer?.id || 'unknown',
         subject: credential.credentialSubject?.id || 'unknown',
@@ -169,11 +169,11 @@ export class CredentialVerificationService {
           : null,
       };
     } catch (_error) {
-      this.logger.error(
-        `Credential verification failed: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Credential verification failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       throw new CLIError(
-        `Credential verification failed: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Credential verification failed: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'CREDENTIAL_VERIFICATION_ERROR'
       );
     }
@@ -190,7 +190,7 @@ export class CredentialVerificationService {
       const { proof } = credential;
       const signatureValue = proof?.jws || proof?.proofValue;
       if (!proof || !signatureValue) {
-        this.logger.error('Missing proof in credential');
+        this?.logger?.error('Missing proof in credential');
         return false;
       }
 
@@ -199,7 +199,7 @@ export class CredentialVerificationService {
       // For now, we'll perform a basic check
       const signatureBytes = Buffer.from(signatureValue, 'base64');
       if (signatureBytes.length < 64) {
-        this.logger.error('Invalid signature length');
+        this?.logger?.error('Invalid signature length');
         return false;
       }
 
@@ -209,7 +209,7 @@ export class CredentialVerificationService {
       // Current implementation returns true for compatibility
       return true;
     } catch (_error) {
-      this.logger.error(`Signature verification failed: ${_error.message}`);
+      this?.logger?.error(`Signature verification failed: ${_error.message}`);
       return false;
     }
   }
@@ -224,7 +224,7 @@ export class CredentialVerificationService {
 
       // Credential cannot be issued in the future
       if (issuanceDate > now) {
-        this.logger.warn(
+        this?.logger?.warn(
           `Credential has future issuance date: ${issuanceDate.toISOString()}`
         );
         return false;
@@ -234,7 +234,7 @@ export class CredentialVerificationService {
       if (credential.expirationDate) {
         const expirationDate = new Date(credential.expirationDate);
         if (expirationDate < now) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Credential expired on: ${expirationDate.toISOString()}`
           );
           return false;
@@ -243,7 +243,7 @@ export class CredentialVerificationService {
 
       return true;
     } catch (_error) {
-      this.logger.error(`Timestamp verification failed: ${_error.message}`);
+      this?.logger?.error(`Timestamp verification failed: ${_error.message}`);
       return false;
     }
   }
@@ -257,7 +257,7 @@ export class CredentialVerificationService {
       // For testing, we'll just return true (not revoked)
       return true;
     } catch (_error) {
-      this.logger.error(`Revocation check failed: ${_error.message}`);
+      this?.logger?.error(`Revocation check failed: ${_error.message}`);
       return false;
     }
   }
@@ -273,20 +273,20 @@ export class CredentialVerificationService {
         typeof credential === 'object' &&
         !!credential.issuer &&
         !!credential.credentialSubject &&
-        typeof credential.credentialSubject === 'object' &&
-        !!credential.credentialSubject.id &&
+        typeof credential?.credentialSubject === 'object' &&
+        !!credential?.credentialSubject?.id &&
         !!credential.issuanceDate &&
         Array.isArray(credential.type) &&
-        credential.type.includes('VerifiableCredential');
+        credential?.type?.includes('VerifiableCredential');
 
       if (!isValid) {
-        this.logger.warn('Credential failed schema validation');
+        this?.logger?.warn('Credential failed schema validation');
       }
 
       return isValid;
     } catch (_error) {
-      this.logger.error(
-        `Schema validation failed: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Schema validation failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       return false;
     }
@@ -312,7 +312,7 @@ export class CredentialVerificationService {
       const now = new Date();
       const credential: DigitalCredential = {
         '@context': [
-          'https://www.w3.org/2018/credentials/v1',
+          'https://www?.w3?.org/2018/credentials/v1',
           'https://w3id.org/security/suites/ed25519-2020/v1',
         ],
         id: `uuid:${this.generateUuid()}`,
@@ -327,20 +327,20 @@ export class CredentialVerificationService {
       };
 
       // 2. Sign credential
-      const signedCredential = await this.signCredential(credential);
+      const signedCredential = await this.signCredential(credential as any);
 
       // 3. Store on Walrus
       const credentialBytes = new TextEncoder().encode(
-        JSON.stringify(signedCredential)
+        JSON.stringify(signedCredential as any)
       );
-      const response = await this.walrusClient.writeBlob({
+      const response = await this?.walrusClient?.writeBlob({
         blob: credentialBytes,
         signer: this.signer,
         deletable: false,
         epochs: 52,
         attributes: {
           contentType: 'application/json',
-          credentialType: data.type.join(','),
+          credentialType: data?.type?.join(','),
           issuer: data.issuer,
           subject: data.subject,
         },
@@ -359,11 +359,11 @@ export class CredentialVerificationService {
         transactionDigest: 'mock-transaction-digest', // Replace with actual transaction digest
       };
     } catch (_error) {
-      this.logger.error(
-        `Failed to issue credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Failed to issue credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       throw new CLIError(
-        `Failed to issue credential: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to issue credential: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'CREDENTIAL_ISSUANCE_ERROR'
       );
     }
@@ -378,9 +378,9 @@ export class CredentialVerificationService {
     const now = new Date();
 
     // Generate a signature (mock implementation)
-    const dataToSign = JSON.stringify(credential);
-    const signatureBytes = await this.signer.sign(
-      new TextEncoder().encode(dataToSign)
+    const dataToSign = JSON.stringify(credential as any);
+    const signatureBytes = await this?.signer?.sign(
+      new TextEncoder().encode(dataToSign as any)
     );
 
     // Add a proof to the credential
@@ -389,10 +389,10 @@ export class CredentialVerificationService {
       proof: {
         type: 'Ed25519Signature2020',
         created: now.toISOString(),
-        verificationMethod: `${typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id}#key-1`,
+        verificationMethod: `${typeof credential?.issuer === 'string' ? credential.issuer : credential?.issuer?.id}#key-1`,
         proofPurpose: 'assertionMethod',
-        jws: Buffer.from(signatureBytes).toString('base64'),
-        proofValue: Buffer.from(signatureBytes).toString('base64'),
+        jws: Buffer.from(signatureBytes as any).toString('base64'),
+        proofValue: Buffer.from(signatureBytes as any).toString('base64'),
       },
     };
   }
@@ -410,7 +410,7 @@ export class CredentialVerificationService {
     try {
       // Check if credential exists
       const exists = await this.walrusClient
-        .getBlobInfo(credentialId)
+        .getBlobInfo(credentialId as any)
         .then(() => true)
         .catch(() => false);
 
@@ -423,18 +423,18 @@ export class CredentialVerificationService {
       // See docs/ai-blockchain-verification-roadmap.md for details
       // For now, we're just returning a mock response
 
-      this.logger.info(`Credential ${credentialId} revoked: ${reason}`);
+      this?.logger?.info(`Credential ${credentialId} revoked: ${reason}`);
 
       return {
         revoked: true,
         transactionDigest: 'mock-revocation-digest', // Replace with actual transaction digest
       };
     } catch (_error) {
-      this.logger.error(
-        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       throw new CLIError(
-        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'CREDENTIAL_REVOCATION_ERROR'
       );
     }
@@ -447,7 +447,7 @@ export class CredentialVerificationService {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
       const r = (Math.random() * 16) | 0;
       const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
+      return v.toString(16 as any);
     });
   }
 }

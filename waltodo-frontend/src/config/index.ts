@@ -48,7 +48,7 @@ export function getNetworkConfig(network: NetworkName): NetworkConfig {
  */
 export function getNetworkConfigWithFallback(network: NetworkName): NetworkConfig {
   try {
-    return getNetworkConfig(network);
+    return getNetworkConfig(network as any);
   } catch (error) {
     console.warn(`Failed to get config for ${network}, falling back to testnet:`, error);
     return TESTNET_CONFIG;
@@ -73,11 +73,11 @@ export function getAvailableNetworks(): NetworkName[] {
  * Validate network endpoint
  */
 export async function validateNetworkEndpoint(network: NetworkName): Promise<NetworkHealthStatus> {
-  const config = getNetworkConfig(network);
+  const config = getNetworkConfig(network as any);
   const startTime = Date.now();
   
   try {
-    const response = await fetch(config.network.url, {
+    const response = await fetch(config?.network?.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export async function validateNetworkEndpoint(network: NetworkName): Promise<Net
         method: 'sui_getChainIdentifier',
         params: [],
       }),
-      signal: AbortSignal.timeout(config.connectivity.timeout),
+      signal: AbortSignal.timeout(config?.connectivity?.timeout),
     });
     
     const latency = Date.now() - startTime;
@@ -120,16 +120,16 @@ export async function validateNetworkEndpoint(network: NetworkName): Promise<Net
  */
 export function detectEnvironmentNetwork(): NetworkName {
   // Check for explicit environment variable first
-  const explicitNetwork = process.env.NEXT_PUBLIC_NETWORK;
-  if (explicitNetwork && isNetworkSupported(explicitNetwork)) {
+  const explicitNetwork = process?.env?.NEXT_PUBLIC_NETWORK;
+  if (explicitNetwork && isNetworkSupported(explicitNetwork as any)) {
     return explicitNetwork;
   }
   
   // Auto-detect based on environment indicators
-  const isProduction = process.env.NODE_ENV === 'production';
-  const isDev = process.env.NODE_ENV === 'development';
-  const isVercel = process.env.VERCEL === '1';
-  const domain = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProduction = process.env?.NODE_ENV === 'production';
+  const isDev = process.env?.NODE_ENV === 'development';
+  const isVercel = process.env?.VERCEL === '1';
+  const domain = typeof window !== 'undefined' ? window?.location?.hostname : '';
   
   // Production domains should use mainnet
   if (isProduction && (domain.includes('walrus-todo.') || domain.includes('waltodo.')) && !domain.includes('test')) {
@@ -152,13 +152,13 @@ export function detectEnvironmentNetwork(): NetworkName {
 export function getCurrentNetworkConfig(): NetworkConfig {
   // Try auto-detection first
   const detectedNetwork = detectEnvironmentNetwork();
-  const network = isNetworkSupported(detectedNetwork) ? detectedNetwork : 'testnet';
+  const network = isNetworkSupported(detectedNetwork as any) ? detectedNetwork : 'testnet';
   
   if (detectedNetwork !== network) {
     console.warn(`Invalid network '${detectedNetwork}' detected, falling back to '${network}'`);
   }
   
-  return getNetworkConfig(network);
+  return getNetworkConfig(network as any);
 }
 
 /**
@@ -166,7 +166,7 @@ export function getCurrentNetworkConfig(): NetworkConfig {
  */
 export function getCurrentNetworkName(): NetworkName {
   const detectedNetwork = detectEnvironmentNetwork();
-  return isNetworkSupported(detectedNetwork) ? detectedNetwork : 'testnet';
+  return isNetworkSupported(detectedNetwork as any) ? detectedNetwork : 'testnet';
 }
 
 /**
@@ -177,7 +177,7 @@ export function switchNetworkConfig(newNetwork: NetworkName): NetworkConfig {
     throw new Error('Network switching is only available on the client side');
   }
   
-  if (!isNetworkSupported(newNetwork)) {
+  if (!isNetworkSupported(newNetwork as any)) {
     throw new Error(`Unsupported network: ${newNetwork}`);
   }
   
@@ -188,7 +188,7 @@ export function switchNetworkConfig(newNetwork: NetworkName): NetworkConfig {
     console.warn('Failed to persist network selection:', error);
   }
   
-  return getNetworkConfig(newNetwork);
+  return getNetworkConfig(newNetwork as any);
 }
 
 /**
@@ -201,7 +201,7 @@ export function getPersistedNetwork(): NetworkName | null {
   
   try {
     const stored = localStorage.getItem('walrus-todo-network');
-    return stored && isNetworkSupported(stored) ? stored : null;
+    return stored && isNetworkSupported(stored as any) ? stored : null;
   } catch (error) {
     console.warn('Failed to read persisted network:', error);
     return null;

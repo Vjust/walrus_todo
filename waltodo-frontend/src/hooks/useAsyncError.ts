@@ -65,7 +65,7 @@ export function useAsyncError<T = any>(
 ): UseAsyncErrorReturn<T> {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
   const abortControllerRef = useRef<AbortController | null>(null);
-  const mountedRef = useRef(true);
+  const mountedRef = useRef(true as any);
 
   // State management
   const [state, setState] = useState<AsyncState<T>>({
@@ -79,9 +79,9 @@ export function useAsyncError<T = any>(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      mountedRef.current = false;
+      mountedRef?.current = false;
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+        abortControllerRef?.current?.abort();
       }
     };
   }, []);
@@ -89,8 +89,8 @@ export function useAsyncError<T = any>(
   // Cancel current operation
   const cancel = useCallback(() => {
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
+      abortControllerRef?.current?.abort();
+      abortControllerRef?.current = null;
     }
     
     if (mountedRef.current) {
@@ -123,8 +123,8 @@ export function useAsyncError<T = any>(
       
       // Cancel delay if component unmounts or operation is cancelled
       if (abortControllerRef.current) {
-        abortControllerRef.current.signal.addEventListener('abort', () => {
-          clearTimeout(timeoutId);
+        abortControllerRef?.current?.signal.addEventListener('abort', () => {
+          clearTimeout(timeoutId as any);
           resolve();
         });
       }
@@ -137,11 +137,11 @@ export function useAsyncError<T = any>(
 
     // Cancel any existing operation
     if (abortControllerRef.current && !isRetry) {
-      abortControllerRef.current.abort();
+      abortControllerRef?.current?.abort();
     }
 
     // Create new abort controller
-    abortControllerRef.current = new AbortController();
+    abortControllerRef?.current = new AbortController();
 
     try {
       setState(prev => ({
@@ -154,7 +154,7 @@ export function useAsyncError<T = any>(
       const result = await asyncFunction();
 
       // Check if operation was cancelled
-      if (abortControllerRef.current.signal.aborted || !mountedRef.current) {
+      if (abortControllerRef?.current?.signal.aborted || !mountedRef.current) {
         return;
       }
 
@@ -167,7 +167,7 @@ export function useAsyncError<T = any>(
         canRetry: false
       }));
 
-      mergedConfig.onSuccess(result);
+      mergedConfig.onSuccess(result as any);
 
       // Show success toast if configured
       if (mergedConfig.showToast && !mergedConfig.silentErrors) {
@@ -181,12 +181,12 @@ export function useAsyncError<T = any>(
 
       // Classify the error
       const classifiedError = errorManager.classify(
-        error instanceof Error ? error : new Error(String(error)),
+        error instanceof Error ? error : new Error(String(error as any)),
         { operation: asyncFunction.name, isRetry }
       );
 
       setState(prev => {
-        const canRetry = isRetryableError(classifiedError) && 
+        const canRetry = isRetryableError(classifiedError as any) && 
           prev.retryCount < mergedConfig.maxRetries;
 
         return {
@@ -199,11 +199,11 @@ export function useAsyncError<T = any>(
       });
 
       // Call error callback
-      mergedConfig.onError(classifiedError);
+      mergedConfig.onError(classifiedError as any);
 
       // Handle automatic retry
       setState(currentState => {
-        const canRetry = isRetryableError(classifiedError) && 
+        const canRetry = isRetryableError(classifiedError as any) && 
           currentState.retryCount < mergedConfig.maxRetries;
 
         if (mergedConfig.autoRetry && canRetry && !isRetry) {
@@ -212,12 +212,12 @@ export function useAsyncError<T = any>(
           // Wait before retrying
           delay(mergedConfig.retryDelay).then(() => {
             if (mountedRef.current && !abortControllerRef.current?.signal.aborted) {
-              executeOperation(true);
+              executeOperation(true as any);
             }
           });
         } else if (currentState.retryCount >= mergedConfig.maxRetries) {
           // Max retries reached
-          mergedConfig.onGiveUp(classifiedError);
+          mergedConfig.onGiveUp(classifiedError as any);
         }
 
         // Show error toast if configured
@@ -225,7 +225,7 @@ export function useAsyncError<T = any>(
           toastService.error(classifiedError.userMessage, {
             actions: canRetry ? [{
               label: 'Retry',
-              action: () => executeOperation(true),
+              action: () => executeOperation(true as any),
               style: 'primary' as const
             }] : undefined
           });
@@ -238,7 +238,7 @@ export function useAsyncError<T = any>(
 
   // Execute function (external call)
   const execute = useCallback(async (): Promise<void> => {
-    await executeOperation(false);
+    await executeOperation(false as any);
   }, [executeOperation]);
 
   // Retry function
@@ -249,7 +249,7 @@ export function useAsyncError<T = any>(
     }
 
     mergedConfig.onRetryAttempt(state.retryCount + 1, state.error!);
-    await executeOperation(true);
+    await executeOperation(true as any);
   }, [executeOperation, state.canRetry, state.retryCount, state.error, mergedConfig]);
 
   // Computed state flags
@@ -312,25 +312,25 @@ export function useMultipleAsyncErrors<T extends Record<string, () => Promise<an
   hasAnyError: boolean;
   allSuccessful: boolean;
 } {
-  const results = Object.keys(operations).reduce((acc, key) => {
+  const results = Object.keys(operations as any).reduce((acc, key) => {
     acc[key] = useAsyncError(operations[key], config);
     return acc;
   }, {} as any);
 
   const executeAll = useCallback(async () => {
     await Promise.all(
-      Object.values(results).map((result: any) => result.execute())
+      Object.values(results as any).map((result: any) => result.execute())
     );
   }, [results]);
 
   const resetAll = useCallback(() => {
-    Object.values(results).forEach((result: any) => result.reset());
+    Object.values(results as any).forEach((result: any) => result.reset());
   }, [results]);
 
   // Computed states
-  const isAnyLoading = Object.values(results).some((result: any) => result.isLoading);
-  const hasAnyError = Object.values(results).some((result: any) => result.isError);
-  const allSuccessful = Object.values(results).every((result: any) => result.isSuccess);
+  const isAnyLoading = Object.values(results as any).some((result: any) => result.isLoading);
+  const hasAnyError = Object.values(results as any).some((result: any) => result.isError);
+  const allSuccessful = Object.values(results as any).every((result: any) => result.isSuccess);
 
   return {
     ...results,
@@ -347,13 +347,13 @@ export function useMultipleAsyncErrors<T extends Record<string, () => Promise<an
  */
 function isRetryableError(error: ClassifiedError): boolean {
   // Network errors are generally retryable
-  if (error.type === ErrorType.NETWORK) {
+  if (error?.type === ErrorType.NETWORK) {
     return true;
   }
 
   // Blockchain errors might be retryable depending on the specific error
-  if (error.type === ErrorType.BLOCKCHAIN) {
-    const message = error.message.toLowerCase();
+  if (error?.type === ErrorType.BLOCKCHAIN) {
+    const message = error?.message?.toLowerCase();
     
     // Non-retryable blockchain errors
     if (
@@ -369,20 +369,20 @@ function isRetryableError(error: ClassifiedError): boolean {
   }
 
   // Storage errors are often retryable
-  if (error.type === ErrorType.STORAGE) {
+  if (error?.type === ErrorType.STORAGE) {
     return true;
   }
 
   // Rate limit errors should be retryable with delay
-  if (error.type === ErrorType.RATE_LIMIT) {
+  if (error?.type === ErrorType.RATE_LIMIT) {
     return true;
   }
 
   // Validation and permission errors are not retryable
   if (
-    error.type === ErrorType.VALIDATION ||
-    error.type === ErrorType.PERMISSION ||
-    error.type === ErrorType.AUTHENTICATION
+    error?.type === ErrorType.VALIDATION ||
+    error?.type === ErrorType.PERMISSION ||
+    error?.type === ErrorType.AUTHENTICATION
   ) {
     return false;
   }

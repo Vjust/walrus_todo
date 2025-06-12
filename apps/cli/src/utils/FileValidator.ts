@@ -28,99 +28,99 @@ export class FileValidator {
   constructor(private config: FileValidationConfig) {}
 
   async validateFile(filePath: string): Promise<FileMetadata> {
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(filePath as any)) {
       throw new WalrusError(`File not found: ${filePath}`);
     }
 
-    const fileBuffer = fs.readFileSync(filePath);
+    const fileBuffer = fs.readFileSync(filePath as any);
     const extension = filePath.split('.').pop()?.toLowerCase() || '';
 
     const metadata: FileMetadata = {
       size: fileBuffer.length,
-      mimeType: this.detectMimeType(fileBuffer),
-      checksum: this.calculateChecksum(fileBuffer),
+      mimeType: this.detectMimeType(fileBuffer as any),
+      checksum: this.calculateChecksum(fileBuffer as any),
       extension,
     };
 
     // Validate file type
-    if (!this.config.allowedTypes.includes(metadata.mimeType)) {
+    if (!this?.config?.allowedTypes.includes(metadata.mimeType)) {
       throw new WalrusError(
-        `File type ${metadata.mimeType} not allowed. Allowed types: ${this.config.allowedTypes.join(', ')}`
+        `File type ${metadata.mimeType} not allowed. Allowed types: ${this?.config?.allowedTypes.join(', ')}`
       );
     }
 
     // Validate extension if needed
     if (
-      this.config.allowedExtensions &&
-      !this.config.allowedExtensions.includes(extension)
+      this?.config?.allowedExtensions &&
+      !this?.config?.allowedExtensions.includes(extension as any)
     ) {
       throw new WalrusError(
-        `File extension .${extension} not allowed. Allowed extensions: ${this.config.allowedExtensions.join(', ')}`
+        `File extension .${extension} not allowed. Allowed extensions: ${this?.config?.allowedExtensions.join(', ')}`
       );
     }
 
     // Validate file size
-    if (metadata.size > this.config.maxSize) {
+    if (metadata.size > this?.config?.maxSize) {
       throw new WalrusError(
-        `File size ${metadata.size} bytes exceeds maximum allowed size of ${this.config.maxSize} bytes`
+        `File size ${metadata.size} bytes exceeds maximum allowed size of ${this?.config?.maxSize} bytes`
       );
     }
 
     // Validate mime type
     // Validate file type
-    const mimeType = this.detectMimeType(fileBuffer);
-    if (!this.config.allowedTypes.includes(mimeType)) {
+    const mimeType = this.detectMimeType(fileBuffer as any);
+    if (!this?.config?.allowedTypes.includes(mimeType as any)) {
       throw new WalrusError(
-        `File type ${mimeType} not allowed. Allowed types: ${this.config.allowedTypes.join(', ')}`
+        `File type ${mimeType} not allowed. Allowed types: ${this?.config?.allowedTypes.join(', ')}`
       );
     }
 
-    metadata.mimeType = mimeType;
+    metadata?.mimeType = mimeType;
 
     // For images, validate dimensions
-    if (metadata.mimeType.startsWith('image/')) {
+    if (metadata?.mimeType?.startsWith('image/')) {
       try {
-        const dimensions = sizeOf(fileBuffer);
+        const dimensions = sizeOf(fileBuffer as any);
         if (!dimensions?.width || !dimensions?.height) {
           throw new WalrusError('Invalid image dimensions');
         }
 
-        metadata.width = dimensions.width;
-        metadata.height = dimensions.height;
+        metadata?.width = dimensions.width;
+        metadata?.height = dimensions.height;
 
-        if (this.config.minWidth && dimensions.width < this.config.minWidth) {
+        if (this?.config?.minWidth && dimensions.width < this?.config?.minWidth) {
           throw new WalrusError(
-            `Image width ${dimensions.width}px below minimum ${this.config.minWidth}px`
+            `Image width ${dimensions.width}px below minimum ${this?.config?.minWidth}px`
           );
         }
 
         if (
-          this.config.minHeight &&
-          dimensions.height < this.config.minHeight
+          this?.config?.minHeight &&
+          dimensions.height < this?.config?.minHeight
         ) {
           throw new WalrusError(
-            `Image height ${dimensions.height}px below minimum ${this.config.minHeight}px`
+            `Image height ${dimensions.height}px below minimum ${this?.config?.minHeight}px`
           );
         }
 
-        if (this.config.maxWidth && dimensions.width > this.config.maxWidth) {
+        if (this?.config?.maxWidth && dimensions.width > this?.config?.maxWidth) {
           throw new WalrusError(
-            `Image width ${dimensions.width}px exceeds maximum ${this.config.maxWidth}px`
+            `Image width ${dimensions.width}px exceeds maximum ${this?.config?.maxWidth}px`
           );
         }
 
         if (
-          this.config.maxHeight &&
-          dimensions.height > this.config.maxHeight
+          this?.config?.maxHeight &&
+          dimensions.height > this?.config?.maxHeight
         ) {
           throw new WalrusError(
-            `Image height ${dimensions.height}px exceeds maximum ${this.config.maxHeight}px`
+            `Image height ${dimensions.height}px exceeds maximum ${this?.config?.maxHeight}px`
           );
         }
       } catch (error) {
         if (error instanceof WalrusError) throw error;
         throw new WalrusError(
-          `Failed to validate image dimensions: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to validate image dimensions: ${error instanceof Error ? error.message : String(error as any)}`
         );
       }
     }
@@ -129,7 +129,7 @@ export class FileValidator {
   }
 
   private calculateChecksum(data: Buffer): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash('sha256').update(data as any).digest('hex');
   }
 
   private detectMimeType(buffer: Buffer): string {
@@ -158,38 +158,38 @@ export class FileValidator {
     filePath: string,
     options: { validateExif?: boolean; validateMetadata?: boolean } = {}
   ): Promise<void> {
-    const fileBuffer = fs.readFileSync(filePath);
+    const fileBuffer = fs.readFileSync(filePath as any);
 
     // Basic file corruption check
     if (fileBuffer.length < 24) {
       throw new WalrusError('Invalid file: too small to be valid');
     }
 
-    const mimeType = this.detectMimeType(fileBuffer);
+    const mimeType = this.detectMimeType(fileBuffer as any);
 
     // For images, perform additional checks
     if (mimeType.startsWith('image/')) {
       try {
         // Validate image parsing
-        const dimensions = sizeOf(fileBuffer);
+        const dimensions = sizeOf(fileBuffer as any);
         if (!dimensions.width || !dimensions.height) {
           throw new WalrusError('Invalid image dimensions');
         }
 
         // Optional EXIF validation for JPEG
         if (options.validateExif && mimeType === 'image/jpeg') {
-          this.validateExif(fileBuffer);
+          this.validateExif(fileBuffer as any);
         }
       } catch (error) {
         if (error instanceof WalrusError) throw error;
         throw new WalrusError(
-          `Image content validation failed: ${error instanceof Error ? error.message : String(error)}`
+          `Image content validation failed: ${error instanceof Error ? error.message : String(error as any)}`
         );
       }
     }
 
     // Optional metadata validation
-    if (options.validateMetadata && this.config.requireMetadata) {
+    if (options.validateMetadata && this?.config?.requireMetadata) {
       // Implement metadata validation if needed
     }
   }

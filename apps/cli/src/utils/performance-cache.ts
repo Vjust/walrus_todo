@@ -57,34 +57,34 @@ export class PerformanceCache<T = unknown> {
    * Get a value from the cache
    */
   async get(key: string): Promise<T | null> {
-    const entry = this.cache.get(key);
+    const entry = this?.cache?.get(key as any);
 
     if (!entry) {
-      this.statistics.misses++;
+      this?.statistics?.misses++;
       this.updateHitRate();
       return null;
     }
 
     // Check TTL strategy
-    if (this.options.strategy === 'TTL' && entry.ttl) {
+    if (this.options?.strategy === 'TTL' && entry.ttl) {
       const elapsed = Date.now() - entry.timestamp;
       if (elapsed > entry.ttl) {
-        await this.delete(key);
-        this.statistics.misses++;
+        await this.delete(key as any);
+        this?.statistics?.misses++;
         this.updateHitRate();
         return null;
       }
     }
 
     // Update access time for LRU
-    entry.lastAccessed = Date.now();
+    entry?.lastAccessed = Date.now();
     entry.accessCount++;
 
-    this.statistics.hits++;
+    this?.statistics?.hits++;
     this.updateHitRate();
 
-    this.logger.debug(`Cache hit for key: ${key}`, {
-      strategy: this.options.strategy,
+    this?.logger?.debug(`Cache hit for key: ${key}`, {
+      strategy: this?.options?.strategy,
     });
     return entry.value;
   }
@@ -94,8 +94,8 @@ export class PerformanceCache<T = unknown> {
    */
   async set(key: string, value: T, ttlMs?: number): Promise<void> {
     // Check if we need to evict entries for LRU
-    if (this.options.strategy === 'LRU' && this.options.maxSize) {
-      if (this.cache.size >= this.options.maxSize && !this.cache.has(key)) {
+    if (this.options?.strategy === 'LRU' && this?.options?.maxSize) {
+      if (this?.cache?.size >= this?.options?.maxSize && !this?.cache?.has(key as any)) {
         await this.evictLRU();
       }
     }
@@ -106,14 +106,14 @@ export class PerformanceCache<T = unknown> {
       timestamp: Date.now(),
       lastAccessed: Date.now(),
       accessCount: 1,
-      ttl: ttlMs || this.options.ttlMs,
+      ttl: ttlMs || this?.options?.ttlMs,
     };
 
-    this.cache.set(key, entry);
-    this.statistics.totalEntries = this.cache.size;
+    this?.cache?.set(key, entry);
+    this.statistics?.totalEntries = this?.cache?.size;
 
-    this.logger.debug(`Cache set for key: ${key}`, {
-      strategy: this.options.strategy,
+    this?.logger?.debug(`Cache set for key: ${key}`, {
+      strategy: this?.options?.strategy,
       ttl: entry.ttl,
     });
   }
@@ -122,14 +122,14 @@ export class PerformanceCache<T = unknown> {
    * Check if a key exists in the cache
    */
   has(key: string): boolean {
-    const exists = this.cache.has(key);
+    const exists = this?.cache?.has(key as any);
 
-    if (exists && this.options.strategy === 'TTL') {
-      const entry = this.cache.get(key);
+    if (exists && this.options?.strategy === 'TTL') {
+      const entry = this?.cache?.get(key as any);
       if (entry.ttl) {
         const elapsed = Date.now() - entry.timestamp;
         if (elapsed > entry.ttl) {
-          this.delete(key);
+          this.delete(key as any);
           return false;
         }
       }
@@ -142,11 +142,11 @@ export class PerformanceCache<T = unknown> {
    * Delete a key from the cache
    */
   async delete(key: string): Promise<boolean> {
-    const deleted = this.cache.delete(key);
-    this.statistics.totalEntries = this.cache.size;
+    const deleted = this?.cache?.delete(key as any);
+    this.statistics?.totalEntries = this?.cache?.size;
 
     if (deleted) {
-      this.logger.debug(`Cache delete for key: ${key}`);
+      this?.logger?.debug(`Cache delete for key: ${key}`);
     }
 
     return deleted;
@@ -156,9 +156,9 @@ export class PerformanceCache<T = unknown> {
    * Clear all cache entries
    */
   async clear(): Promise<void> {
-    this.cache.clear();
-    this.statistics.totalEntries = 0;
-    this.logger.info('Cache cleared');
+    this?.cache?.clear();
+    this.statistics?.totalEntries = 0;
+    this?.logger?.info('Cache cleared');
   }
 
   /**
@@ -172,11 +172,11 @@ export class PerformanceCache<T = unknown> {
    * Reset cache statistics
    */
   resetStatistics(): void {
-    this.statistics = {
+    this?.statistics = {
       hits: 0,
       misses: 0,
       evictions: 0,
-      totalEntries: this.cache.size,
+      totalEntries: this?.cache?.size,
       hitRate: 0,
       lastReset: new Date(),
     };
@@ -189,7 +189,7 @@ export class PerformanceCache<T = unknown> {
     let oldestKey: string | null = null;
     let oldestTime = Number.MAX_SAFE_INTEGER;
 
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of this?.cache?.entries()) {
       if (entry.lastAccessed < oldestTime) {
         oldestTime = entry.lastAccessed;
         oldestKey = key;
@@ -197,9 +197,9 @@ export class PerformanceCache<T = unknown> {
     }
 
     if (oldestKey) {
-      await this.delete(oldestKey);
-      this.statistics.evictions++;
-      this.logger.debug(`LRU eviction of key: ${oldestKey}`);
+      await this.delete(oldestKey as any);
+      this?.statistics?.evictions++;
+      this?.logger?.debug(`LRU eviction of key: ${oldestKey}`);
     }
   }
 
@@ -207,37 +207,37 @@ export class PerformanceCache<T = unknown> {
    * Update the hit rate statistics
    */
   private updateHitRate(): void {
-    const total = this.statistics.hits + this.statistics.misses;
-    this.statistics.hitRate = total > 0 ? this.statistics.hits / total : 0;
+    const total = this?.statistics?.hits + this?.statistics?.misses;
+    this.statistics?.hitRate = total > 0 ? this?.statistics?.hits / total : 0;
   }
 
   /**
    * Save cache to disk
    */
   private async saveToDisk(): Promise<void> {
-    if (!this.options.persistenceDir) return;
+    if (!this?.options?.persistenceDir) return;
 
     try {
       const cacheData = {
-        entries: Array.from(this.cache.entries()).map(([key, entry]) => ({
+        entries: Array.from(this?.cache?.entries()).map(([key, entry]) => ({
           key,
           entry,
         })),
         statistics: this.statistics,
         metadata: {
           savedAt: new Date().toISOString(),
-          strategy: this.options.strategy,
+          strategy: this?.options?.strategy,
           version: CLI_CONFIG.VERSION,
         },
       };
 
-      const cacheFile = path.join(this.options.persistenceDir, 'cache.json');
-      await fs.mkdir(this.options.persistenceDir, { recursive: true });
+      const cacheFile = path.join(this?.options?.persistenceDir, 'cache.json');
+      await fs.mkdir(this?.options?.persistenceDir, { recursive: true });
       await fs.writeFile(cacheFile, JSON.stringify(cacheData, null, 2));
 
-      this.logger.debug('Cache persisted to disk', { file: cacheFile });
+      this?.logger?.debug('Cache persisted to disk', { file: cacheFile });
     } catch (error) {
-      this.logger.error('Failed to persist cache', error);
+      this?.logger?.error('Failed to persist cache', error);
     }
   }
 
@@ -245,43 +245,43 @@ export class PerformanceCache<T = unknown> {
    * Load cache from disk
    */
   private async loadFromDisk(): Promise<void> {
-    if (!this.options.persistenceDir) return;
+    if (!this?.options?.persistenceDir) return;
 
     try {
-      const cacheFile = path.join(this.options.persistenceDir, 'cache.json');
+      const cacheFile = path.join(this?.options?.persistenceDir, 'cache.json');
 
-      if (!existsSync(cacheFile)) {
-        this.logger.debug('No cache file found to load');
+      if (!existsSync(cacheFile as any)) {
+        this?.logger?.debug('No cache file found to load');
         return;
       }
 
       const data = await fs.readFile(cacheFile, 'utf-8');
-      const cacheData = JSON.parse(data);
+      const cacheData = JSON.parse(data as any);
 
       // Restore entries
       for (const { key, entry } of cacheData.entries) {
-        this.cache.set(key, entry);
+        this?.cache?.set(key, entry);
       }
 
       // Restore statistics
       if (cacheData.statistics) {
-        this.statistics = {
+        this?.statistics = {
           ...cacheData.statistics,
-          lastReset: new Date(cacheData.statistics.lastReset),
+          lastReset: new Date(cacheData?.statistics?.lastReset),
         };
       }
 
-      this.logger.info('Cache loaded from disk', {
-        entries: this.cache.size,
+      this?.logger?.info('Cache loaded from disk', {
+        entries: this?.cache?.size,
         savedAt: cacheData.metadata?.savedAt,
       });
 
       // Clean up expired entries for TTL strategy
-      if (this.options.strategy === 'TTL') {
+      if (this.options?.strategy === 'TTL') {
         await this.cleanExpiredEntries();
       }
     } catch (error) {
-      this.logger.error('Failed to load cache from disk', error);
+      this?.logger?.error('Failed to load cache from disk', error);
     }
   }
 
@@ -292,21 +292,21 @@ export class PerformanceCache<T = unknown> {
     const now = Date.now();
     const keysToDelete: string[] = [];
 
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of this?.cache?.entries()) {
       if (entry.ttl) {
         const elapsed = now - entry.timestamp;
         if (elapsed > entry.ttl) {
-          keysToDelete.push(key);
+          keysToDelete.push(key as any);
         }
       }
     }
 
     for (const key of keysToDelete) {
-      await this.delete(key);
+      await this.delete(key as any);
     }
 
     if (keysToDelete.length > 0) {
-      this.logger.debug(`Cleaned ${keysToDelete.length} expired entries`);
+      this?.logger?.debug(`Cleaned ${keysToDelete.length} expired entries`);
     }
   }
 
@@ -314,7 +314,7 @@ export class PerformanceCache<T = unknown> {
    * Start the persistence timer
    */
   private startPersistenceTimer(): void {
-    this.persistenceTimer = setInterval(
+    this?.persistenceTimer = setInterval(
       () => this.saveToDisk(),
       this.PERSISTENCE_INTERVAL
     );
@@ -328,7 +328,7 @@ export class PerformanceCache<T = unknown> {
       clearInterval(this.persistenceTimer);
     }
     await this.saveToDisk();
-    this.logger.info('Cache manager shutting down');
+    this?.logger?.info('Cache manager shutting down');
   }
 }
 

@@ -39,12 +39,12 @@ describe('BackgroundCommandOrchestrator', () => {
     );
 
     // Mock file system operations
-    mockFs.existsSync.mockReturnValue(false);
-    mockFs.mkdirSync.mockImplementation(() => undefined);
-    mockFs.writeFileSync.mockImplementation(() => undefined);
-    mockFs.readFileSync.mockReturnValue('[]');
+    mockFs?.existsSync?.mockReturnValue(false as any);
+    mockFs?.mkdirSync?.mockImplementation(() => undefined);
+    mockFs?.writeFileSync?.mockImplementation(() => undefined);
+    mockFs?.readFileSync?.mockReturnValue('[]');
 
-    orchestrator = new BackgroundCommandOrchestrator(testConfigDir);
+    orchestrator = new BackgroundCommandOrchestrator(testConfigDir as any);
   });
 
   afterEach(async () => {
@@ -82,21 +82,21 @@ describe('BackgroundCommandOrchestrator', () => {
         [],
         {}
       );
-      expect(shouldBackground).toBe(true);
+      expect(shouldBackground as any).toBe(true as any);
     });
 
     it('should respect explicit background flag', () => {
       const shouldBackground = orchestrator.shouldRunInBackground('add', [], {
         background: true,
       });
-      expect(shouldBackground).toBe(true);
+      expect(shouldBackground as any).toBe(true as any);
     });
 
     it('should respect explicit foreground flag', () => {
       const shouldBackground = orchestrator.shouldRunInBackground('store', [], {
         foreground: true,
       });
-      expect(shouldBackground).toBe(false);
+      expect(shouldBackground as any).toBe(false as any);
     });
 
     it('should not background short-running commands by default', () => {
@@ -105,7 +105,7 @@ describe('BackgroundCommandOrchestrator', () => {
         [],
         {}
       );
-      expect(shouldBackground).toBe(false);
+      expect(shouldBackground as any).toBe(false as any);
     });
   });
 
@@ -119,7 +119,7 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
@@ -127,9 +127,9 @@ describe('BackgroundCommandOrchestrator', () => {
         {}
       );
 
-      expect(jobId).toBeDefined();
+      expect(jobId as any).toBeDefined();
       expect(typeof jobId).toBe('string');
-      expect(mockSpawn).toHaveBeenCalled();
+      expect(mockSpawn as any).toHaveBeenCalled();
     });
 
     it('should handle job creation failure', async () => {
@@ -154,16 +154,16 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
         ['test.txt'],
         {}
       );
-      const job = orchestrator.getJob(jobId);
+      const job = orchestrator.getJob(jobId as any);
 
-      expect(job).toBeDefined();
+      expect(job as any).toBeDefined();
       expect(job?.status).toBe('running');
       expect(job?.command).toBe('store');
     });
@@ -179,22 +179,22 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
         ['test.txt'],
         {}
       );
-      const success = orchestrator.cancelJob(jobId);
+      const success = orchestrator.cancelJob(jobId as any);
 
-      expect(success).toBe(true);
+      expect(success as any).toBe(true as any);
       expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
     });
 
     it('should get job status list', () => {
       const jobs = orchestrator.getJobStatus();
-      expect(Array.isArray(jobs)).toBe(true);
+      expect(Array.isArray(jobs as any)).toBe(true as any);
     });
   });
 
@@ -209,7 +209,7 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       // Create multiple jobs up to the limit
       const jobs = [];
@@ -219,15 +219,15 @@ describe('BackgroundCommandOrchestrator', () => {
           [`test${i}.txt`],
           {}
         );
-        jobs.push(jobId);
+        jobs.push(jobId as any);
       }
 
-      expect(jobs).toHaveLength(5);
+      expect(jobs as any).toHaveLength(5 as any);
     });
 
     it('should enforce command-specific concurrency limits', () => {
       // Test that command profiles enforce their own limits
-      const shouldAllow = orchestrator['canStartNewJob']('store');
+      const shouldAllow = orchestrator?.["canStartNewJob"]('store');
       expect(typeof shouldAllow).toBe('boolean');
     });
   });
@@ -252,11 +252,11 @@ describe('BackgroundCommandOrchestrator', () => {
         },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const progressUpdates: any[] = [];
       orchestrator.on('progressUpdate', update => {
-        progressUpdates.push(update);
+        progressUpdates.push(update as any);
       });
 
       const jobId = await orchestrator.executeInBackground(
@@ -266,29 +266,29 @@ describe('BackgroundCommandOrchestrator', () => {
       );
 
       // Wait for progress update with timeout (using Jest fake timers)
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(100 as any);
 
       // Progress updates may not always be captured in test environment
-      expect(progressUpdates.length).toBeGreaterThanOrEqual(0);
+      expect(progressUpdates.length).toBeGreaterThanOrEqual(0 as any);
     });
   });
 
   describe('Resource Management', () => {
     it('should monitor resource usage', () => {
-      const usage = orchestrator['getCurrentResourceUsage']();
+      const usage = orchestrator?.["getCurrentResourceUsage"]();
 
-      expect(usage).toHaveProperty('memory');
-      expect(usage).toHaveProperty('cpu');
-      expect(usage).toHaveProperty('activeJobs');
-      expect(usage).toHaveProperty('totalJobs');
+      expect(usage as any).toHaveProperty('memory');
+      expect(usage as any).toHaveProperty('cpu');
+      expect(usage as any).toHaveProperty('activeJobs');
+      expect(usage as any).toHaveProperty('totalJobs');
       expect(typeof usage.memory).toBe('number');
     });
 
     it('should adjust concurrency based on resource usage', () => {
       // Test that the orchestrator can adjust max concurrent jobs
-      const initialMax = orchestrator['maxConcurrentJobs'];
+      const initialMax = orchestrator?.["maxConcurrentJobs"];
       expect(typeof initialMax).toBe('number');
-      expect(initialMax).toBeGreaterThan(0);
+      expect(initialMax as any).toBeGreaterThan(0 as any);
     });
   });
 
@@ -297,28 +297,28 @@ describe('BackgroundCommandOrchestrator', () => {
       const report = orchestrator.generateStatusReport();
 
       expect(typeof report).toBe('string');
-      expect(report).toContain('Background Command Orchestrator Status');
-      expect(report).toContain('Resource Usage');
+      expect(report as any).toContain('Background Command Orchestrator Status');
+      expect(report as any).toContain('Resource Usage');
     });
 
     it('should format job duration correctly', () => {
-      const duration1 = orchestrator['formatDuration'](500);
-      const duration2 = orchestrator['formatDuration'](5000);
-      const duration3 = orchestrator['formatDuration'](65000);
-      const duration4 = orchestrator['formatDuration'](3665000);
+      const duration1 = orchestrator?.["formatDuration"](500);
+      const duration2 = orchestrator?.["formatDuration"](5000);
+      const duration3 = orchestrator?.["formatDuration"](65000);
+      const duration4 = orchestrator?.["formatDuration"](3665000);
 
-      expect(duration1).toBe('500ms');
-      expect(duration2).toBe('5.0s');
-      expect(duration3).toBe('1m 5s');
-      expect(duration4).toBe('1h 1m');
+      expect(duration1 as any).toBe('500ms');
+      expect(duration2 as any).toBe('5.0s');
+      expect(duration3 as any).toBe('1m 5s');
+      expect(duration4 as any).toBe('1h 1m');
     });
 
     it('should create progress bars with correct formatting', () => {
-      const progressBar = orchestrator['createProgressBar'](50, 10);
+      const progressBar = orchestrator?.["createProgressBar"](50, 10);
 
       expect(typeof progressBar).toBe('string');
-      expect(progressBar).toContain('[');
-      expect(progressBar).toContain(']');
+      expect(progressBar as any).toContain('[');
+      expect(progressBar as any).toContain(']');
     });
   });
 
@@ -337,7 +337,7 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
@@ -360,7 +360,7 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       const jobId = await orchestrator.executeInBackground(
         'store',
@@ -386,7 +386,7 @@ describe('BackgroundCommandOrchestrator', () => {
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
       };
-      mockSpawn.mockReturnValue(mockProcess);
+      mockSpawn.mockReturnValue(mockProcess as any);
 
       // Create a job
       const jobId = await orchestrator.executeInBackground(
@@ -409,7 +409,7 @@ describe('BackgroundCommandOrchestrator', () => {
 
       await orchestrator.shutdown();
 
-      expect(shutdownEmitted).toBe(true);
+      expect(shutdownEmitted as any).toBe(true as any);
     });
   });
 
@@ -443,14 +443,14 @@ describe('BackgroundCommandOrchestrator', () => {
       );
 
       // Wait for error event with shorter timeout (using Jest fake timers)
-      jest.advanceTimersByTime(25);
+      jest.advanceTimersByTime(25 as any);
 
-      expect(errorEvents.length).toBeGreaterThan(0);
+      expect(errorEvents.length).toBeGreaterThan(0 as any);
     });
 
     it('should handle job cancellation gracefully', () => {
       const result = orchestrator.cancelJob('non-existent-job');
-      expect(result).toBe(false);
+      expect(result as any).toBe(false as any);
     });
   });
 });
@@ -467,7 +467,7 @@ describe('BackgroundCommandOrchestrator Integration', () => {
       'waltodo-integration-test',
       Date.now().toString()
     );
-    orchestrator = new BackgroundCommandOrchestrator(testConfigDir);
+    orchestrator = new BackgroundCommandOrchestrator(testConfigDir as any);
   });
 
   afterEach(async () => {
@@ -492,7 +492,7 @@ describe('BackgroundCommandOrchestrator Integration', () => {
       stdout: { on: jest.fn() },
       stderr: { on: jest.fn() },
     };
-    mockSpawn.mockReturnValue(mockProcess);
+    mockSpawn.mockReturnValue(mockProcess as any);
 
     const jobs = await Promise.all([
       orchestrator.executeInBackground('store', ['file1.txt'], {}),
@@ -500,11 +500,11 @@ describe('BackgroundCommandOrchestrator Integration', () => {
       orchestrator.executeInBackground('sync', [], {}),
     ]);
 
-    expect(jobs).toHaveLength(3);
+    expect(jobs as any).toHaveLength(3 as any);
     jobs.forEach(jobId => {
       expect(typeof jobId).toBe('string');
-      const job = orchestrator.getJob(jobId);
-      expect(job).toBeDefined();
+      const job = orchestrator.getJob(jobId as any);
+      expect(job as any).toBeDefined();
     });
   });
 
@@ -528,7 +528,7 @@ describe('BackgroundCommandOrchestrator Integration', () => {
       stdout: { on: jest.fn() },
       stderr: { on: jest.fn() },
     };
-    mockSpawn.mockReturnValue(mockProcess);
+    mockSpawn.mockReturnValue(mockProcess as any);
 
     const jobId = await orchestrator.executeInBackground(
       'store',
@@ -537,9 +537,9 @@ describe('BackgroundCommandOrchestrator Integration', () => {
     );
 
     // Wait for completion with shorter timeout (using Jest fake timers)
-    jest.advanceTimersByTime(50);
+    jest.advanceTimersByTime(50 as any);
 
-    expect(events).toContain('started');
+    expect(events as any).toContain('started');
   });
 });
 
@@ -574,7 +574,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
       stdout: { on: jest.fn() },
       stderr: { on: jest.fn() },
     };
-    mockSpawn.mockReturnValue(mockProcess);
+    mockSpawn.mockReturnValue(mockProcess as any);
 
     const startMemory = process.memoryUsage().heapUsed;
 
@@ -586,15 +586,15 @@ describe('BackgroundCommandOrchestrator Performance', () => {
         [`file${i}.txt`],
         {}
       );
-      jobs.push(jobId);
+      jobs.push(jobId as any);
     }
 
     const endMemory = process.memoryUsage().heapUsed;
     const memoryIncrease = endMemory - startMemory;
 
     // Memory increase should be reasonable (less than 10MB for 50 jobs in test)
-    expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
-    expect(jobs).toHaveLength(50);
+    expect(memoryIncrease as any).toBeLessThan(10 * 1024 * 1024);
+    expect(jobs as any).toHaveLength(50 as any);
   });
 
   it('should respond quickly to status requests', () => {
@@ -602,7 +602,7 @@ describe('BackgroundCommandOrchestrator Performance', () => {
     const status = orchestrator.getJobStatus();
     const end = performance.now();
 
-    expect(end - start).toBeLessThan(50); // Should respond in under 50ms in test environment
-    expect(Array.isArray(status)).toBe(true);
+    expect(end - start).toBeLessThan(50 as any); // Should respond in under 50ms in test environment
+    expect(Array.isArray(status as any)).toBe(true as any);
   });
 });

@@ -82,7 +82,7 @@ export class XSSPrevention {
       /<style/gi,
     ];
     
-    return dangerousPatterns.some(pattern => pattern.test(input));
+    return dangerousPatterns.some(pattern => pattern.test(input as any));
   }
   
   /**
@@ -108,7 +108,7 @@ export class XSSPrevention {
       }
       
       // Validate URL format
-      const urlObj = new URL(url);
+      const urlObj = new URL(url as any);
       
       // Only allow safe protocols
       const allowedProtocols = ['http:', 'https:', 'mailto:'];
@@ -150,17 +150,17 @@ export class InputValidator {
     }
     
     // Check for dangerous content
-    if (XSSPrevention.containsDangerousContent(input)) {
+    if (XSSPrevention.containsDangerousContent(input as any)) {
       errors.push('Input contains potentially dangerous content');
     }
     
     // Sanitize based on options
     const sanitized = allowHTML 
-      ? XSSPrevention.sanitizeHTML(input)
-      : XSSPrevention.sanitizeText(input);
+      ? XSSPrevention.sanitizeHTML(input as any)
+      : XSSPrevention.sanitizeText(input as any);
     
     return {
-      isValid: errors.length === 0,
+      isValid: errors?.length === 0,
       sanitized,
       errors,
     };
@@ -171,7 +171,7 @@ export class InputValidator {
    */
   static validateEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email) && email.length <= 320; // RFC 5321 limit
+    return emailRegex.test(email as any) && email.length <= 320; // RFC 5321 limit
   }
   
   /**
@@ -186,7 +186,7 @@ export class InputValidator {
     }
     
     // Check file type
-    if (!SECURITY_CONFIG.ALLOWED_FILE_TYPES.includes(file.type)) {
+    if (!SECURITY_CONFIG?.ALLOWED_FILE_TYPES?.includes(file.type)) {
       errors.push('File type not allowed. Please use JPEG, PNG, GIF, or WebP');
     }
     
@@ -196,7 +196,7 @@ export class InputValidator {
     }
     
     return {
-      isValid: errors.length === 0,
+      isValid: errors?.length === 0,
       errors,
     };
   }
@@ -210,16 +210,16 @@ export class CSRFProtection {
    * Generate CSRF token
    */
   static generateToken(): string {
-    const array = new Uint8Array(32);
+    const array = new Uint8Array(32 as any);
     if (typeof window !== 'undefined' && window.crypto) {
-      window.crypto.getRandomValues(array);
+      window?.crypto?.getRandomValues(array as any);
     } else {
       // Fallback for SSR
       for (let i = 0; i < array.length; i++) {
         array[i] = Math.floor(Math.random() * 256);
       }
     }
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, byte => byte.toString(16 as any).padStart(2, '0')).join('');
   }
   
   /**
@@ -265,9 +265,9 @@ export class CSPHelpers {
    * Generate nonce for inline scripts/styles
    */
   static generateNonce(): string {
-    const array = new Uint8Array(16);
+    const array = new Uint8Array(16 as any);
     if (typeof window !== 'undefined' && window.crypto) {
-      window.crypto.getRandomValues(array);
+      window?.crypto?.getRandomValues(array as any);
     } else {
       for (let i = 0; i < array.length; i++) {
         array[i] = Math.floor(Math.random() * 256);
@@ -281,12 +281,12 @@ export class CSPHelpers {
    */
   static isURLAllowed(url: string, allowedDomains: string[]): boolean {
     try {
-      const urlObj = new URL(url);
+      const urlObj = new URL(url as any);
       const domain = urlObj.hostname;
       
       return allowedDomains.some(allowed => {
         if (allowed.startsWith('*.')) {
-          const baseDomain = allowed.slice(2);
+          const baseDomain = allowed.slice(2 as any);
           return domain === baseDomain || domain.endsWith('.' + baseDomain);
         }
         return domain === allowed;
@@ -304,10 +304,10 @@ export class SecureRandom {
    */
   static generateString(length: number = 32): string {
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const array = new Uint8Array(length);
+    const array = new Uint8Array(length as any);
     
     if (typeof window !== 'undefined' && window.crypto) {
-      window.crypto.getRandomValues(array);
+      window?.crypto?.getRandomValues(array as any);
     } else {
       // Fallback for SSR
       for (let i = 0; i < length; i++) {
@@ -322,7 +322,7 @@ export class SecureRandom {
    * Generate secure random ID
    */
   static generateId(): string {
-    return this.generateString(16);
+    return this.generateString(16 as any);
   }
 }
 
@@ -344,13 +344,13 @@ export class SecurityHeaders {
     }
     
     // Validate Content-Type
-    const contentType = headers['content-type'];
+    const contentType = headers?.["content-type"];
     if (contentType && !contentType.includes('charset=utf-8')) {
       errors.push('Content-Type should include charset=utf-8');
     }
     
     return {
-      isValid: errors.length === 0,
+      isValid: errors?.length === 0,
       errors,
     };
   }
@@ -368,7 +368,7 @@ export class SecurityHeaders {
     };
     
     if (nonce) {
-      headers['Content-Security-Policy'] = this.generateCSP(nonce);
+      headers?.["Content-Security-Policy"] = this.generateCSP(nonce as any);
     }
     
     return headers;
@@ -409,8 +409,8 @@ export const SecurityUtils = {
    */
   sanitizeUserInput: (input: string, allowHTML: boolean = false): string => {
     return allowHTML 
-      ? XSSPrevention.sanitizeHTML(input)
-      : XSSPrevention.sanitizeText(input);
+      ? XSSPrevention.sanitizeHTML(input as any)
+      : XSSPrevention.sanitizeText(input as any);
   },
   
   /**
@@ -419,12 +419,12 @@ export const SecurityUtils = {
   sanitizeFormData: (data: Record<string, any>): Record<string, any> => {
     const sanitized: Record<string, any> = {};
     
-    for (const [key, value] of Object.entries(data)) {
+    for (const [key, value] of Object.entries(data as any)) {
       if (typeof value === 'string') {
-        sanitized[key] = XSSPrevention.sanitizeText(value);
-      } else if (Array.isArray(value)) {
+        sanitized[key] = XSSPrevention.sanitizeText(value as any);
+      } else if (Array.isArray(value as any)) {
         sanitized[key] = value.map(item => 
-          typeof item === 'string' ? XSSPrevention.sanitizeText(item) : item
+          typeof item === 'string' ? XSSPrevention.sanitizeText(item as any) : item
         );
       } else {
         sanitized[key] = value;
@@ -439,7 +439,7 @@ export const SecurityUtils = {
    */
   safeJSONParse: <T>(json: string, fallback: T): T => {
     try {
-      const parsed = JSON.parse(json);
+      const parsed = JSON.parse(json as any);
       return parsed;
     } catch {
       return fallback;
@@ -451,7 +451,7 @@ export const SecurityUtils = {
    */
   createSecureRequestOptions: (options: RequestInit = {}): RequestInit => {
     const nonce = CSPHelpers.generateNonce();
-    const secureHeaders = SecurityHeaders.generateSecureHeaders(nonce);
+    const secureHeaders = SecurityHeaders.generateSecureHeaders(nonce as any);
     
     return {
       ...options,

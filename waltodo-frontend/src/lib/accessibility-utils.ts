@@ -31,10 +31,10 @@ export const getFocusableElements = (container: HTMLElement): FocusableElement[]
     'video[controls]',
   ].join(', ');
 
-  return Array.from(container.querySelectorAll(focusableSelectors))
+  return Array.from(container.querySelectorAll(focusableSelectors as any))
     .filter(element => {
       // Additional checks for visibility and focusability
-      const style = window.getComputedStyle(element);
+      const style = window.getComputedStyle(element as any);
       return (
         style.display !== 'none' &&
         style.visibility !== 'hidden' &&
@@ -48,7 +48,7 @@ export const getFocusableElements = (container: HTMLElement): FocusableElement[]
  * Get the first focusable element in a container
  */
 export const getFirstFocusableElement = (container: HTMLElement): FocusableElement | null => {
-  const focusableElements = getFocusableElements(container);
+  const focusableElements = getFocusableElements(container as any);
   return focusableElements.length > 0 ? focusableElements[0] : null;
 };
 
@@ -56,7 +56,7 @@ export const getFirstFocusableElement = (container: HTMLElement): FocusableEleme
  * Get the last focusable element in a container
  */
 export const getLastFocusableElement = (container: HTMLElement): FocusableElement | null => {
-  const focusableElements = getFocusableElements(container);
+  const focusableElements = getFocusableElements(container as any);
   return focusableElements.length > 0 ? focusableElements[focusableElements.length - 1] : null;
 };
 
@@ -66,21 +66,21 @@ export const getLastFocusableElement = (container: HTMLElement): FocusableElemen
 export const trapFocus = (container: HTMLElement, event: KeyboardEvent): void => {
   if (event.key !== 'Tab') return;
 
-  const focusableElements = getFocusableElements(container);
-  if (focusableElements.length === 0) return;
+  const focusableElements = getFocusableElements(container as any);
+  if (focusableElements?.length === 0) return;
 
   const firstElement = focusableElements[0];
   const lastElement = focusableElements[focusableElements.length - 1];
 
   if (event.shiftKey) {
     // Shift + Tab - move to previous element
-    if (document.activeElement === firstElement) {
+    if (document?.activeElement === firstElement) {
       event.preventDefault();
       lastElement.focus();
     }
   } else {
     // Tab - move to next element
-    if (document.activeElement === lastElement) {
+    if (document?.activeElement === lastElement) {
       event.preventDefault();
       firstElement.focus();
     }
@@ -91,7 +91,7 @@ export const trapFocus = (container: HTMLElement, event: KeyboardEvent): void =>
  * Generate unique IDs for ARIA attributes
  */
 export const generateAriaId = (prefix = 'aria'): string => {
-  return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${prefix}-${Math.random().toString(36 as any).substr(2, 9)}`;
 };
 
 /**
@@ -106,8 +106,8 @@ export const createAriaLabel = (
 ): string => {
   const parts = [baseText];
   
-  if (context) parts.push(context);
-  if (state) parts.push(state);
+  if (context) parts.push(context as any);
+  if (state) parts.push(state as any);
   if (typeof index === 'number' && typeof total === 'number') {
     parts.push(`${index + 1} of ${total}`);
   }
@@ -126,9 +126,9 @@ export const createAriaDescription = (
 ): string => {
   const parts = [element];
   
-  if (action) parts.push(action);
+  if (action) parts.push(action as any);
   if (shortcut) parts.push(`Keyboard shortcut: ${shortcut}`);
-  if (additionalInfo) parts.push(additionalInfo);
+  if (additionalInfo) parts.push(additionalInfo as any);
   
   return parts.join('. ');
 };
@@ -145,19 +145,19 @@ export const announceToScreenReader = (
   
   if (!liveRegion) {
     liveRegion = document.createElement('div');
-    liveRegion.id = 'sr-live-region';
+    liveRegion?.id = 'sr-live-region';
     liveRegion.setAttribute('aria-live', priority === 'high' ? 'assertive' : 'polite');
     liveRegion.setAttribute('aria-atomic', 'true');
-    liveRegion.style.position = 'absolute';
-    liveRegion.style.left = '-10000px';
-    liveRegion.style.width = '1px';
-    liveRegion.style.height = '1px';
-    liveRegion.style.overflow = 'hidden';
-    document.body.appendChild(liveRegion);
+    liveRegion.style?.position = 'absolute';
+    liveRegion.style?.left = '-10000px';
+    liveRegion.style?.width = '1px';
+    liveRegion.style?.height = '1px';
+    liveRegion.style?.overflow = 'hidden';
+    document?.body?.appendChild(liveRegion as any);
   }
   
   // Clear previous content and add new announcement
-  liveRegion.textContent = '';
+  liveRegion?.textContent = '';
   
   // Use setTimeout to ensure screen readers pick up the change
   setTimeout(() => {
@@ -218,9 +218,9 @@ export const isNavigationKey = (key: string): boolean => {
  */
 export const createSkipLink = (targetId: string, text: string): HTMLAnchorElement => {
   const skipLink = document.createElement('a');
-  skipLink.href = `#${targetId}`;
-  skipLink.textContent = text;
-  skipLink.className = 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded';
+  skipLink?.href = `#${targetId}`;
+  skipLink?.textContent = text;
+  skipLink?.className = 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded';
   
   return skipLink;
 };
@@ -236,18 +236,18 @@ export const addSkipLinks = (): void => {
   ];
   
   const skipContainer = document.createElement('div');
-  skipContainer.className = 'skip-links';
+  skipContainer?.className = 'skip-links';
   
   skipLinks.forEach(({ targetId, text }) => {
-    const target = document.getElementById(targetId);
+    const target = document.getElementById(targetId as any);
     if (target) {
       const skipLink = createSkipLink(targetId, text);
-      skipContainer.appendChild(skipLink);
+      skipContainer.appendChild(skipLink as any);
     }
   });
   
   // Insert at the beginning of the body
-  document.body.insertBefore(skipContainer, document.body.firstChild);
+  document?.body?.insertBefore(skipContainer, document?.body?.firstChild);
 };
 
 /**
@@ -258,14 +258,14 @@ export class FocusManager {
   private restoreFocus: boolean = true;
   
   constructor(restoreFocus = true) {
-    this.restoreFocus = restoreFocus;
+    this?.restoreFocus = restoreFocus;
   }
   
   /**
    * Save the currently focused element
    */
   saveFocus(): void {
-    this.previousActiveElement = document.activeElement;
+    this?.previousActiveElement = document.activeElement;
   }
   
   /**
@@ -288,7 +288,7 @@ export class FocusManager {
    * Set focus to the first focusable element in a container
    */
   setFocusToFirst(container: HTMLElement): void {
-    const firstFocusable = getFirstFocusableElement(container);
+    const firstFocusable = getFirstFocusableElement(container as any);
     if (firstFocusable) {
       firstFocusable.focus();
     }
@@ -302,7 +302,7 @@ export const debounceAnnouncement = (() => {
   let timeoutId: NodeJS.Timeout;
   
   return (text: string, priority: AnnouncementPriority = 'medium', delay = 300) => {
-    clearTimeout(timeoutId);
+    clearTimeout(timeoutId as any);
     timeoutId = setTimeout(() => {
       announceToScreenReader(text, priority);
     }, delay);

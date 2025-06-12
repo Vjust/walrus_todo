@@ -77,9 +77,9 @@ describe('BatchUploader', () => {
       storeTodoList: jest.fn().mockResolvedValue('list-blob-123'),
 
       // Add other required methods as no-ops for testing
-      init: jest.fn().mockResolvedValue(undefined),
-      connect: jest.fn().mockResolvedValue(undefined),
-      getConnectionStatus: jest.fn().mockReturnValue(true),
+      init: jest.fn().mockResolvedValue(undefined as any),
+      connect: jest.fn().mockResolvedValue(undefined as any),
+      getConnectionStatus: jest.fn().mockReturnValue(true as any),
       retrieveTodo: jest.fn(),
       retrieveList: jest.fn(),
       deleteBlob: jest.fn(),
@@ -91,7 +91,7 @@ describe('BatchUploader', () => {
       getAllocation: jest.fn(),
     } as unknown as jest.Mocked<WalrusStorage>;
 
-    batchUploader = new BatchUploader(mockWalrusStorage);
+    batchUploader = new BatchUploader(mockWalrusStorage as any);
   });
 
   afterEach(() => {
@@ -100,14 +100,14 @@ describe('BatchUploader', () => {
 
   describe('uploadTodos', () => {
     it('should upload a batch of todos successfully', async () => {
-      const results = await batchUploader.uploadTodos(sampleTodos);
+      const results = await batchUploader.uploadTodos(sampleTodos as any);
 
-      expect(mockWalrusStorage.storeTodo).toHaveBeenCalledTimes(3);
-      expect(results.successful).toHaveLength(3);
-      expect(results.failed).toHaveLength(0);
+      expect(mockWalrusStorage.storeTodo).toHaveBeenCalledTimes(3 as any);
+      expect(results.successful).toHaveLength(3 as any);
+      expect(results.failed).toHaveLength(0 as any);
 
       // Check each result
-      results.successful.forEach((result, index) => {
+      results?.successful?.forEach((result, index) => {
         expect(result.id).toBe(sampleTodos[index]?.id);
         expect(result.blobId).toBe(`blob-${sampleTodos[index]?.id}`);
       });
@@ -115,21 +115,21 @@ describe('BatchUploader', () => {
 
     it('should handle partial failures in batch upload', async () => {
       // Make the second todo fail
-      mockWalrusStorage.storeTodo = jest
+      mockWalrusStorage?.storeTodo = jest
         .fn()
         .mockImplementation((todo: Todo) => {
-          if (todo.id === '2') {
+          if (todo?.id === '2') {
             return Promise.reject(new Error('Upload failed'));
           }
           return Promise.resolve(`blob-${todo.id}`);
         });
 
-      const results = await batchUploader.uploadTodos(sampleTodos);
+      const results = await batchUploader.uploadTodos(sampleTodos as any);
 
-      expect(results.successful).toHaveLength(2);
-      expect(results.failed).toHaveLength(1);
-      expect(results.failed[0]?.id).toBe('2');
-      expect(results.failed[0]?.error).toBe('Upload failed');
+      expect(results.successful).toHaveLength(2 as any);
+      expect(results.failed).toHaveLength(1 as any);
+      expect(results?.failed?.[0]?.id).toBe('2');
+      expect(results?.failed?.[0]?.error).toBe('Upload failed');
     });
 
     it('should handle empty batch', async () => {
@@ -143,9 +143,9 @@ describe('BatchUploader', () => {
       const progressCallback = jest.fn();
       await batchUploader.uploadTodos(sampleTodos, { progressCallback });
 
-      expect(progressCallback).toHaveBeenCalledTimes(sampleTodos.length);
+      expect(progressCallback as any).toHaveBeenCalledTimes(sampleTodos.length);
       sampleTodos.forEach((todo, index) => {
-        expect(progressCallback).toHaveBeenCalledWith(
+        expect(progressCallback as any).toHaveBeenCalledWith(
           index + 1,
           sampleTodos.length,
           todo.id
@@ -158,10 +158,10 @@ describe('BatchUploader', () => {
 
   describe('uploadTodoList', () => {
     it('should upload a complete todo list', async () => {
-      const result = await batchUploader.uploadTodoList(sampleTodoList);
+      const result = await batchUploader.uploadTodoList(sampleTodoList as any);
 
       expect(mockWalrusStorage.storeTodo).toHaveBeenCalledTimes(
-        sampleTodoList.todos.length
+        sampleTodoList?.todos?.length
       );
       expect(mockWalrusStorage.storeTodoList).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -170,18 +170,18 @@ describe('BatchUploader', () => {
         })
       );
       expect(result.listBlobId).toBe('list-blob-123');
-      expect(result.todoResults.successful).toHaveLength(
-        sampleTodoList.todos.length
+      expect(result?.todoResults?.successful).toHaveLength(
+        sampleTodoList?.todos?.length
       );
     });
 
     it('should handle list upload failure', async () => {
-      mockWalrusStorage.storeTodoList = jest
+      mockWalrusStorage?.storeTodoList = jest
         .fn()
         .mockRejectedValue(new Error('List upload failed'));
 
       await expect(
-        batchUploader.uploadTodoList(sampleTodoList)
+        batchUploader.uploadTodoList(sampleTodoList as any)
       ).rejects.toThrow('List upload failed');
     });
   });

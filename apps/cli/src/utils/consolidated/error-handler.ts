@@ -50,7 +50,7 @@ export function errorHandler(err: unknown, options: ErrorHandlerOptions = {}): v
 const isRetryableError = (error: unknown): boolean => {
   // Check if it's a network-related error based on the message
   if (error instanceof Error) {
-    const errorMessage = error.message.toLowerCase();
+    const errorMessage = error?.message?.toLowerCase();
     return (
       errorMessage.includes('timeout') ||
       errorMessage.includes('network') ||
@@ -114,7 +114,7 @@ export function handleError(
   } = handlerOptions;
 
   // Normalize the error
-  const baseError = toBaseError(error);
+  const baseError = toBaseError(error as any);
 
   // Get exit code (CLI errors have their own exit code)
   const exitCode =
@@ -138,13 +138,13 @@ export function handleError(
     // Display cause if available and requested
     if (baseError.cause && logStack) {
       getLogger().error(
-        `${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`
+        `${chalk.dim('Caused by:')} ${chalk.red(baseError?.cause?.message)}`
       );
     }
 
     // Display context if available and requested
     const combinedContext = { ...baseError.context, ...additionalContext };
-    if (Object.keys(combinedContext).length > 0) {
+    if (Object.keys(combinedContext as any).length > 0) {
       getLogger().error(
         `${chalk.dim('Context:')} ${JSON.stringify(combinedContext, null, 2)}`
       );
@@ -167,7 +167,7 @@ export function handleError(
 
   // Exit if requested
   if (exit) {
-    process.exit(exitCode);
+    process.exit(exitCode as any);
   }
 }
 
@@ -223,7 +223,7 @@ export async function withRetry<T>(
       lastError = error;
 
       // Don't retry on the last attempt
-      if (attempt > maxRetries || !retryIf(error)) {
+      if (attempt > maxRetries || !retryIf(error as any)) {
         throw error;
       }
 
@@ -254,7 +254,7 @@ export async function withRetry<T>(
 function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
   getLogger().info(
     chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
-    { error: error instanceof Error ? error.message : String(error) }
+    { error: error instanceof Error ? error.message : String(error as any) }
   );
 }
 

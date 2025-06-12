@@ -298,7 +298,7 @@ export interface ErrorContext {
 export function createTodo(input: CreateTodoInput): Todo {
   const now = new Date().toISOString();
   return {
-    id: `todo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `todo-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`,
     title: input.title,
     description: input.description,
     completed: false,
@@ -316,7 +316,7 @@ export function createTodo(input: CreateTodoInput): Todo {
 export function createTodoList(name: string, owner: string): TodoList {
   const now = new Date().toISOString();
   return {
-    id: `list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `list-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`,
     name,
     owner,
     todos: [],
@@ -331,14 +331,14 @@ export function validateTodo(todo: unknown): todo is Todo {
   if (!todo || typeof todo !== 'object') return false;
   const t = todo as Record<string, unknown>;
   return (
-    typeof t.id === 'string' &&
-    typeof t.title === 'string' &&
-    typeof t.completed === 'boolean' &&
+    typeof t?.id === 'string' &&
+    typeof t?.title === 'string' &&
+    typeof t?.completed === 'boolean' &&
     ['high', 'medium', 'low'].includes(t.priority as string) &&
     Array.isArray(t.tags) &&
-    typeof t.createdAt === 'string' &&
-    typeof t.updatedAt === 'string' &&
-    typeof t.private === 'boolean'
+    typeof t?.createdAt === 'string' &&
+    typeof t?.updatedAt === 'string' &&
+    typeof t?.private === 'boolean'
   );
 }
 
@@ -346,23 +346,23 @@ export function validateTodoList(list: unknown): list is TodoList {
   if (!list || typeof list !== 'object') return false;
   const l = list as Record<string, unknown>;
   return (
-    typeof l.id === 'string' &&
-    typeof l.name === 'string' &&
-    typeof l.owner === 'string' &&
+    typeof l?.id === 'string' &&
+    typeof l?.name === 'string' &&
+    typeof l?.owner === 'string' &&
     Array.isArray(l.todos) &&
-    typeof l.version === 'number' &&
-    typeof l.createdAt === 'string' &&
-    typeof l.updatedAt === 'string'
+    typeof l?.version === 'number' &&
+    typeof l?.createdAt === 'string' &&
+    typeof l?.updatedAt === 'string'
   );
 }
 
 export function serializeTodo(todo: Todo): string {
-  return JSON.stringify(todo);
+  return JSON.stringify(todo as any);
 }
 
 export function deserializeTodo(data: string): Todo {
-  const parsed = JSON.parse(data);
-  if (!validateTodo(parsed)) {
+  const parsed = JSON.parse(data as any);
+  if (!validateTodo(parsed as any)) {
     throw new Error('Invalid todo data');
   }
   return parsed;

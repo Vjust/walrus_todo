@@ -26,7 +26,7 @@ const NETWORK_URLS: Record<NetworkType, string> = {
   mainnet: getFullnodeUrl('mainnet'),
   testnet: getFullnodeUrl('testnet'),
   devnet: getFullnodeUrl('devnet'),
-  localnet: 'http://127.0.0.1:9000',
+  localnet: 'http://127?.0?.0.1:9000',
 };
 
 /**
@@ -37,14 +37,14 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
     network: {
       name: 'testnet',
       url: NETWORK_URLS.testnet,
-      faucetUrl: 'https://faucet.testnet.sui.io',
-      explorerUrl: 'https://testnet.suiexplorer.com',
+      faucetUrl: 'https://faucet?.testnet?.sui.io',
+      explorerUrl: 'https://testnet?.suiexplorer?.com',
     },
     walrus: {
-      networkUrl: 'https://wal.testnet.sui.io',
-      publisherUrl: 'https://publisher-testnet.walrus.space',
-      aggregatorUrl: 'https://aggregator-testnet.walrus.space',
-      apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+      networkUrl: 'https://wal?.testnet?.sui.io',
+      publisherUrl: 'https://publisher-testnet?.walrus?.space',
+      aggregatorUrl: 'https://aggregator-testnet?.walrus?.space',
+      apiPrefix: 'https://api-testnet?.walrus?.tech/1.0',
     },
     deployment: {
       packageId: '0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b',
@@ -69,14 +69,14 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
     network: {
       name: 'devnet',
       url: NETWORK_URLS.devnet,
-      faucetUrl: 'https://faucet.devnet.sui.io',
-      explorerUrl: 'https://devnet.suiexplorer.com',
+      faucetUrl: 'https://faucet?.devnet?.sui.io',
+      explorerUrl: 'https://devnet?.suiexplorer?.com',
     },
     walrus: {
-      networkUrl: 'https://wal.devnet.sui.io',
-      publisherUrl: 'https://publisher-devnet.walrus.space',
-      aggregatorUrl: 'https://aggregator-devnet.walrus.space',
-      apiPrefix: 'https://api-devnet.walrus.tech/1.0',
+      networkUrl: 'https://wal?.devnet?.sui.io',
+      publisherUrl: 'https://publisher-devnet?.walrus?.space',
+      aggregatorUrl: 'https://aggregator-devnet?.walrus?.space',
+      apiPrefix: 'https://api-devnet?.walrus?.tech/1.0',
     },
     deployment: {
       packageId: '0x0',
@@ -104,10 +104,10 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
       explorerUrl: 'https://suiexplorer.com',
     },
     walrus: {
-      networkUrl: 'https://wal.mainnet.sui.io',
-      publisherUrl: 'https://publisher.walrus.space',
-      aggregatorUrl: 'https://aggregator.walrus.space',
-      apiPrefix: 'https://api.walrus.tech/1.0',
+      networkUrl: 'https://wal?.mainnet?.sui.io',
+      publisherUrl: 'https://publisher?.walrus?.space',
+      aggregatorUrl: 'https://aggregator?.walrus?.space',
+      apiPrefix: 'https://api?.walrus?.tech/1.0',
     },
     deployment: {
       packageId: '0x0',
@@ -175,12 +175,12 @@ function getCurrentNetwork(): string {
   if (isBrowserEnvironment()) {
     // Browser environment - try to get from window object or default
     return (window as any)?.NEXT_PUBLIC_NETWORK || 
-           process.env.NEXT_PUBLIC_NETWORK || 
+           process?.env?.NEXT_PUBLIC_NETWORK || 
            'testnet';
   } else {
     // Node.js environment
-    return process.env.SUI_NETWORK || 
-           process.env.NEXT_PUBLIC_NETWORK || 
+    return process?.env?.SUI_NETWORK || 
+           process?.env?.NEXT_PUBLIC_NETWORK || 
            'testnet';
   }
 }
@@ -229,10 +229,10 @@ async function loadCliConfig(network: string): Promise<AppConfig | null> {
     const { resolve } = await import('path');
 
     for (const configPath of configPaths) {
-      const fullPath = resolve(configPath);
-      if (existsSync(fullPath)) {
+      const fullPath = resolve(configPath as any);
+      if (existsSync(fullPath as any)) {
         const configData = readFileSync(fullPath, 'utf-8');
-        const config = JSON.parse(configData);
+        const config = JSON.parse(configData as any);
         console.log(`[SuiClient] Loaded CLI configuration from ${fullPath}`);
         return config as AppConfig;
       }
@@ -309,13 +309,13 @@ function getDefaultExplorerUrl(network: string): string {
     case 'mainnet':
       return 'https://suiexplorer.com';
     case 'testnet':
-      return 'https://testnet.suiexplorer.com';
+      return 'https://testnet?.suiexplorer?.com';
     case 'devnet':
-      return 'https://devnet.suiexplorer.com';
+      return 'https://devnet?.suiexplorer?.com';
     case 'localnet':
       return 'http://localhost:9001';
     default:
-      return 'https://testnet.suiexplorer.com';
+      return 'https://testnet?.suiexplorer?.com';
   }
 }
 
@@ -355,19 +355,19 @@ export async function loadAppConfig(networkOverride?: string): Promise<AppConfig
   // Fallback to original loading method if config-loader failed
   if (!config) {
     if (isBrowserEnvironment()) {
-      config = await loadGeneratedConfig(network);
+      config = await loadGeneratedConfig(network as any);
     } else {
-      config = await loadCliConfig(network);
+      config = await loadCliConfig(network as any);
     }
   }
 
   // Fall back to default configuration if still no config
   if (!config) {
-    config = createFallbackConfig(network);
+    config = createFallbackConfig(network as any);
   }
 
   // Validate configuration
-  if (!config.deployment.packageId || config.deployment.packageId === '0x0') {
+  if (!config?.deployment?.packageId || config.deployment?.packageId === '0x0') {
     console.warn('[SuiClient] Package ID not set - some blockchain features may not work');
   }
 
@@ -416,10 +416,10 @@ export function clearConfigCache(): void {
  */
 export function isConfigurationComplete(config: AppConfig): boolean {
   return !!(
-    config.deployment.packageId &&
-    config.deployment.packageId !== '0x0' &&
-    config.deployment.deployerAddress &&
-    config.deployment.deployerAddress !== '0x0'
+    config?.deployment?.packageId &&
+    config?.deployment?.packageId !== '0x0' &&
+    config?.deployment?.deployerAddress &&
+    config?.deployment?.deployerAddress !== '0x0'
   );
 }
 
@@ -427,14 +427,14 @@ export function isConfigurationComplete(config: AppConfig): boolean {
  * Gets the explorer URL for a specific object
  */
 export function getExplorerUrl(config: AppConfig, objectId: string): string {
-  return `${config.network.explorerUrl}/object/${objectId}?network=${config.network.name}`;
+  return `${config?.network?.explorerUrl}/object/${objectId}?network=${config?.network?.name}`;
 }
 
 /**
  * Gets the faucet URL for the current network (if available)
  */
 export function getFaucetUrl(config: AppConfig): string | null {
-  return config.network.faucetUrl || null;
+  return config?.network?.faucetUrl || null;
 }
 
 /**

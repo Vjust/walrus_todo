@@ -14,12 +14,12 @@ const activeEventEmitters = new Set<NodeJS.EventEmitter>();
  * Register a promise for cleanup tracking
  */
 export function trackPromise<T>(promise: Promise<T>): Promise<T> {
-  activePromises.add(promise);
+  activePromises.add(promise as any);
 
   // Remove from tracking when resolved
   promise
     .finally(() => {
-      activePromises.delete(promise);
+      activePromises.delete(promise as any);
     })
     .catch(() => {
       // Ignore errors during cleanup
@@ -34,7 +34,7 @@ export function trackPromise<T>(promise: Promise<T>): Promise<T> {
 export function trackAbortController(
   controller: AbortController
 ): AbortController {
-  activeAbortControllers.add(controller);
+  activeAbortControllers.add(controller as any);
   return controller;
 }
 
@@ -44,7 +44,7 @@ export function trackAbortController(
 export function trackEventEmitter(
   emitter: NodeJS.EventEmitter
 ): NodeJS.EventEmitter {
-  activeEventEmitters.add(emitter);
+  activeEventEmitters.add(emitter as any);
   return emitter;
 }
 
@@ -54,11 +54,11 @@ export function trackEventEmitter(
 export async function waitForActivePromises(
   timeoutMs: number = 5000
 ): Promise<void> {
-  if (activePromises.size === 0) {
+  if (activePromises?.size === 0) {
     return;
   }
 
-  const promises = Array.from(activePromises);
+  const promises = Array.from(activePromises as any);
   const timeoutPromise = new Promise<void>((_, reject) => {
     setTimeout(
       () =>
@@ -68,7 +68,7 @@ export async function waitForActivePromises(
   });
 
   try {
-    await Promise.race([Promise.allSettled(promises), timeoutPromise]);
+    await Promise.race([Promise.allSettled(promises as any), timeoutPromise]);
   } catch (error) {
     console.warn(
       `Failed to wait for ${promises.length} active promises:`,
@@ -83,7 +83,7 @@ export async function waitForActivePromises(
 export function abortAllControllers(): void {
   activeAbortControllers.forEach(controller => {
     try {
-      if (!controller.signal.aborted) {
+      if (!controller?.signal?.aborted) {
         controller.abort();
       }
     } catch (error) {
@@ -118,7 +118,7 @@ export async function cleanupAsyncOperations(): Promise<void> {
   cleanupEventEmitters();
 
   // Wait for active promises with timeout
-  await waitForActivePromises(1000); // Shorter timeout for tests
+  await waitForActivePromises(1000 as any); // Shorter timeout for tests
 
   // Reset background orchestrator
   try {
@@ -138,27 +138,27 @@ export function setupAsyncCleanup(): void {
   // Override Promise constructor to track promises
   const OriginalPromise = global.Promise;
 
-  global.Promise = class TrackedPromise<T> extends OriginalPromise<T> {
+  global?.Promise = class TrackedPromise<T> extends OriginalPromise<T> {
     constructor(
       executor: (
         resolve: (value: T | PromiseLike<T>) => void,
         reject: (reason?: any) => void
       ) => void
     ) {
-      super(executor);
-      trackPromise(this);
+      super(executor as any);
+      trackPromise(this as any);
     }
   } as any;
 
   // Override AbortController to track instances
   const OriginalAbortController = global.AbortController;
   if (OriginalAbortController) {
-    global.AbortController = class TrackedAbortController extends (
+    global?.AbortController = class TrackedAbortController extends (
       OriginalAbortController
     ) {
       constructor() {
         super();
-        trackAbortController(this);
+        trackAbortController(this as any);
       }
     };
   }
@@ -170,9 +170,9 @@ export function setupAsyncCleanup(): void {
 
   afterAll(() => {
     // Restore original constructors
-    global.Promise = OriginalPromise;
+    global?.Promise = OriginalPromise;
     if (OriginalAbortController) {
-      global.AbortController = OriginalAbortController;
+      global?.AbortController = OriginalAbortController;
     }
   });
 }
@@ -190,11 +190,11 @@ export function createCleanupTimeout(ms: number): Promise<void> {
   // Add cleanup method
   (promise as any).cleanup = () => {
     if (timeoutId) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId as any);
     }
   };
 
-  return trackPromise(promise);
+  return trackPromise(promise as any);
 }
 
 /**

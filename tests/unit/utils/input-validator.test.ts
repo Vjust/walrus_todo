@@ -11,8 +11,8 @@ describe('InputValidator', () => {
       const result = InputValidator.validate('test@example.com', [
         CommonValidationRules.email,
       ]);
-      expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.valid).toBe(true as any);
+      expect(result.errors).toHaveLength(0 as any);
     });
 
     it('should validate with failing rules', () => {
@@ -24,15 +24,15 @@ describe('InputValidator', () => {
           throwOnFirstError: false,
         }
       );
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].code).toBe('INVALID_EMAIL');
+      expect(result.valid).toBe(false as any);
+      expect(result.errors).toHaveLength(1 as any);
+      expect(result?.errors?.[0].code).toBe('INVALID_EMAIL');
     });
 
     it('should throw on first error by default', () => {
       expect(() => {
         InputValidator.validate('invalid-email', [CommonValidationRules.email]);
-      }).toThrow(ValidationError);
+      }).toThrow(ValidationError as any);
     });
 
     it('should collect all errors when specified', () => {
@@ -50,8 +50,8 @@ describe('InputValidator', () => {
         collectAllErrors: true,
       });
 
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(2);
+      expect(result.valid).toBe(false as any);
+      expect(result.errors).toHaveLength(2 as any);
     });
 
     it('should throw with combined error message when multiple errors exist', () => {
@@ -86,7 +86,7 @@ describe('InputValidator', () => {
             customErrorClass: CustomError as typeof Error,
           }
         );
-      }).toThrow(CustomError);
+      }).toThrow(CustomError as any);
     });
   });
 
@@ -112,8 +112,8 @@ describe('InputValidator', () => {
       };
 
       const result = InputValidator.validateObject(data, schema);
-      expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.valid).toBe(true as any);
+      expect(result.errors).toHaveLength(0 as any);
     });
 
     it('should validate invalid object', () => {
@@ -124,8 +124,8 @@ describe('InputValidator', () => {
       };
 
       const result = InputValidator.validateObject(data, schema);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(3);
+      expect(result.valid).toBe(false as any);
+      expect(result.errors).toHaveLength(3 as any);
     });
 
     it('should throw on first error when specified', () => {
@@ -139,7 +139,7 @@ describe('InputValidator', () => {
         InputValidator.validateObject(data, schema, {
           throwOnFirstError: true,
         });
-      }).toThrow(ValidationError);
+      }).toThrow(ValidationError as any);
     });
 
     it('should handle missing optional fields', () => {
@@ -149,26 +149,26 @@ describe('InputValidator', () => {
       };
 
       const result = InputValidator.validateObject(data, schema);
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(true as any);
     });
   });
 
   describe('required', () => {
     it('should return true for non-null values', () => {
-      expect(InputValidator.required('text')).toBe(true);
-      expect(InputValidator.required(123)).toBe(true);
-      expect(InputValidator.required([])).toBe(true);
-      expect(InputValidator.required({})).toBe(true);
+      expect(InputValidator.required('text')).toBe(true as any);
+      expect(InputValidator.required(123 as any)).toBe(true as any);
+      expect(InputValidator.required([])).toBe(true as any);
+      expect(InputValidator.required({})).toBe(true as any);
     });
 
     it('should return false for null/undefined', () => {
-      expect(InputValidator.required(null)).toBe(false);
-      expect(InputValidator.required(undefined)).toBe(false);
+      expect(InputValidator.required(null as any)).toBe(false as any);
+      expect(InputValidator.required(undefined as any)).toBe(false as any);
     });
 
     it('should return false for empty strings', () => {
-      expect(InputValidator.required('')).toBe(false);
-      expect(InputValidator.required('   ')).toBe(false);
+      expect(InputValidator.required('')).toBe(false as any);
+      expect(InputValidator.required('   ')).toBe(false as any);
     });
   });
 
@@ -177,8 +177,8 @@ describe('InputValidator', () => {
       const rule = InputValidator.requiredRule('username');
       expect(rule.code).toBe('REQUIRED_FIELD');
       expect(rule.message).toBe('username is required');
-      expect(rule.test('')).toBe(false);
-      expect(rule.test('valid')).toBe(true);
+      expect(rule.test('')).toBe(false as any);
+      expect(rule.test('valid')).toBe(true as any);
     });
   });
 
@@ -189,8 +189,8 @@ describe('InputValidator', () => {
         'Must be numeric',
         'NUMERIC_ONLY'
       );
-      expect(rule.test('123')).toBe(true);
-      expect(rule.test('abc')).toBe(false);
+      expect(rule.test('123')).toBe(true as any);
+      expect(rule.test('abc')).toBe(false as any);
     });
   });
 
@@ -202,11 +202,11 @@ describe('InputValidator', () => {
         'Must be 10-20',
         'OUT_OF_RANGE'
       );
-      expect(rule.test(15)).toBe(true);
-      expect(rule.test(10)).toBe(true);
-      expect(rule.test(20)).toBe(true);
-      expect(rule.test(5)).toBe(false);
-      expect(rule.test(25)).toBe(false);
+      expect(rule.test(15 as any)).toBe(true as any);
+      expect(rule.test(10 as any)).toBe(true as any);
+      expect(rule.test(20 as any)).toBe(true as any);
+      expect(rule.test(5 as any)).toBe(false as any);
+      expect(rule.test(25 as any)).toBe(false as any);
     });
   });
 
@@ -218,10 +218,10 @@ describe('InputValidator', () => {
         'Must have 2-5 items',
         'INVALID_LENGTH'
       );
-      expect(rule.test([1, 2])).toBe(true);
-      expect(rule.test([1, 2, 3, 4, 5])).toBe(true);
-      expect(rule.test([1])).toBe(false);
-      expect(rule.test([1, 2, 3, 4, 5, 6])).toBe(false);
+      expect(rule.test([1, 2])).toBe(true as any);
+      expect(rule.test([1, 2, 3, 4, 5])).toBe(true as any);
+      expect(rule.test([1])).toBe(false as any);
+      expect(rule.test([1, 2, 3, 4, 5, 6])).toBe(false as any);
     });
 
     it('should return false for non-arrays', () => {
@@ -231,7 +231,7 @@ describe('InputValidator', () => {
         'Must have 2-5 items',
         'INVALID_LENGTH'
       );
-      expect(rule.test('not an array' as unknown as unknown[])).toBe(false);
+      expect(rule.test('not an array' as unknown as unknown[])).toBe(false as any);
     });
   });
 
@@ -242,8 +242,8 @@ describe('InputValidator', () => {
         'Invalid color',
         'INVALID_COLOR'
       );
-      expect(rule.test('red')).toBe(true);
-      expect(rule.test('yellow')).toBe(false);
+      expect(rule.test('red')).toBe(true as any);
+      expect(rule.test('yellow')).toBe(false as any);
     });
   });
 
@@ -316,9 +316,9 @@ describe('InputValidator', () => {
         code: 'TOO_SHORT',
       });
 
-      expect(rule.test('test@example.com')).toBe(true);
-      expect(rule.test('a@b.c')).toBe(false); // valid email but too short
-      expect(rule.test('not-an-email-but-long-enough')).toBe(false); // long enough but invalid email
+      expect(rule.test('test@example.com')).toBe(true as any);
+      expect(rule.test('a@b.c')).toBe(false as any); // valid email but too short
+      expect(rule.test('not-an-email-but-long-enough')).toBe(false as any); // long enough but invalid email
     });
   });
 
@@ -329,9 +329,9 @@ describe('InputValidator', () => {
         CommonValidationRules.email
       );
 
-      expect(rule.test('email:test@example.com')).toBe(false); // starts with email: but includes prefix
-      expect(rule.test('test@example.com')).toBe(true); // doesn't start with email:, no validation
-      expect(rule.test('email:invalid')).toBe(false); // starts with email: but invalid
+      expect(rule.test('email:test@example.com')).toBe(false as any); // starts with email: but includes prefix
+      expect(rule.test('test@example.com')).toBe(true as any); // doesn't start with email:, no validation
+      expect(rule.test('email:invalid')).toBe(false as any); // starts with email: but invalid
     });
   });
 
@@ -391,8 +391,8 @@ describe('InputValidator', () => {
         'NOT_EVEN'
       );
 
-      expect(rule.test(4)).toBe(true);
-      expect(rule.test(3)).toBe(false);
+      expect(rule.test(4 as any)).toBe(true as any);
+      expect(rule.test(3 as any)).toBe(false as any);
       expect(rule.code).toBe('NOT_EVEN');
     });
 
@@ -410,24 +410,24 @@ describe('InputValidator', () => {
     const originalEnv = process.env;
 
     beforeEach(() => {
-      process.env = { ...originalEnv };
+      process?.env = { ...originalEnv };
     });
 
     afterEach(() => {
-      process.env = originalEnv;
+      process?.env = originalEnv;
     });
 
     it('should validate required environment variables', () => {
-      process.env.API_KEY = 'test-key';
-      process.env.API_URL = 'https://api.example.com';
+      process.env?.API_KEY = 'test-key';
+      process.env?.API_URL = 'https://api?.example?.com';
 
       const result = InputValidator.validateEnvironment(['API_KEY', 'API_URL']);
       expect(result.API_KEY).toBe('test-key');
-      expect(result.API_URL).toBe('https://api.example.com');
+      expect(result.API_URL).toBe('https://api?.example?.com');
     });
 
     it('should throw for missing required variables', () => {
-      process.env.API_KEY = 'test-key';
+      process.env?.API_KEY = 'test-key';
 
       expect(() => {
         InputValidator.validateEnvironment(['API_KEY', 'API_URL']);
@@ -435,7 +435,7 @@ describe('InputValidator', () => {
     });
 
     it('should handle optional variables with defaults', () => {
-      process.env.API_KEY = 'test-key';
+      process.env?.API_KEY = 'test-key';
 
       const result = InputValidator.validateEnvironment(['API_KEY'], {
         DEBUG: 'false',
@@ -448,8 +448,8 @@ describe('InputValidator', () => {
     });
 
     it('should use environment values over defaults for optional variables', () => {
-      process.env.API_KEY = 'test-key';
-      process.env.DEBUG = 'true';
+      process.env?.API_KEY = 'test-key';
+      process.env?.DEBUG = 'true';
 
       const result = InputValidator.validateEnvironment(['API_KEY'], {
         DEBUG: 'false',
@@ -464,74 +464,74 @@ describe('InputValidator', () => {
   describe('CommonValidationRules', () => {
     describe('dateFormat', () => {
       it('should validate date format', () => {
-        expect(CommonValidationRules.dateFormat.test('2023-12-31')).toBe(true);
-        expect(CommonValidationRules.dateFormat.test('12/31/2023')).toBe(false);
-        expect(CommonValidationRules.dateFormat.test('2023-1-1')).toBe(false);
+        expect(CommonValidationRules?.dateFormat?.test('2023-12-31')).toBe(true as any);
+        expect(CommonValidationRules?.dateFormat?.test('12/31/2023')).toBe(false as any);
+        expect(CommonValidationRules?.dateFormat?.test('2023-1-1')).toBe(false as any);
       });
     });
 
     describe('email', () => {
       it('should validate email addresses', () => {
-        expect(CommonValidationRules.email.test('test@example.com')).toBe(true);
+        expect(CommonValidationRules?.email?.test('test@example.com')).toBe(true as any);
         expect(
-          CommonValidationRules.email.test('user.name+tag@domain.co.uk')
-        ).toBe(true);
-        expect(CommonValidationRules.email.test('invalid.email')).toBe(false);
-        expect(CommonValidationRules.email.test('@example.com')).toBe(false);
-        expect(CommonValidationRules.email.test('test@')).toBe(false);
+          CommonValidationRules?.email?.test('user.name+tag@domain?.co?.uk')
+        ).toBe(true as any);
+        expect(CommonValidationRules?.email?.test('invalid.email')).toBe(false as any);
+        expect(CommonValidationRules?.email?.test('@example.com')).toBe(false as any);
+        expect(CommonValidationRules?.email?.test('test@')).toBe(false as any);
       });
     });
 
     describe('walletAddress', () => {
       it('should validate wallet addresses', () => {
         expect(
-          CommonValidationRules.walletAddress.test('0x' + 'a'.repeat(40))
-        ).toBe(true);
+          CommonValidationRules?.walletAddress?.test('0x' + 'a'.repeat(40 as any))
+        ).toBe(true as any);
         expect(
-          CommonValidationRules.walletAddress.test(
-            '0xABCDEF1234567890' + 'a'.repeat(24)
+          CommonValidationRules?.walletAddress?.test(
+            '0xABCDEF1234567890' + 'a'.repeat(24 as any)
           )
-        ).toBe(true);
+        ).toBe(true as any);
         expect(
-          CommonValidationRules.walletAddress.test('invalid-address')
-        ).toBe(false);
+          CommonValidationRules?.walletAddress?.test('invalid-address')
+        ).toBe(false as any);
         expect(
-          CommonValidationRules.walletAddress.test('0x' + 'g'.repeat(40))
-        ).toBe(false); // invalid hex
+          CommonValidationRules?.walletAddress?.test('0x' + 'g'.repeat(40 as any))
+        ).toBe(false as any); // invalid hex
         expect(
-          CommonValidationRules.walletAddress.test('0x' + 'a'.repeat(39))
-        ).toBe(false); // too short
+          CommonValidationRules?.walletAddress?.test('0x' + 'a'.repeat(39 as any))
+        ).toBe(false as any); // too short
       });
     });
 
     describe('priority', () => {
       it('should validate priority values', () => {
-        expect(CommonValidationRules.priority.test('high')).toBe(true);
-        expect(CommonValidationRules.priority.test('medium')).toBe(true);
-        expect(CommonValidationRules.priority.test('low')).toBe(true);
-        expect(CommonValidationRules.priority.test('urgent')).toBe(false);
-        expect(CommonValidationRules.priority.test('')).toBe(false);
+        expect(CommonValidationRules?.priority?.test('high')).toBe(true as any);
+        expect(CommonValidationRules?.priority?.test('medium')).toBe(true as any);
+        expect(CommonValidationRules?.priority?.test('low')).toBe(true as any);
+        expect(CommonValidationRules?.priority?.test('urgent')).toBe(false as any);
+        expect(CommonValidationRules?.priority?.test('')).toBe(false as any);
       });
     });
 
     describe('network', () => {
       it('should validate network values', () => {
-        expect(CommonValidationRules.network.test('mainnet')).toBe(true);
-        expect(CommonValidationRules.network.test('testnet')).toBe(true);
-        expect(CommonValidationRules.network.test('devnet')).toBe(true);
-        expect(CommonValidationRules.network.test('local')).toBe(true);
-        expect(CommonValidationRules.network.test('production')).toBe(false);
+        expect(CommonValidationRules?.network?.test('mainnet')).toBe(true as any);
+        expect(CommonValidationRules?.network?.test('testnet')).toBe(true as any);
+        expect(CommonValidationRules?.network?.test('devnet')).toBe(true as any);
+        expect(CommonValidationRules?.network?.test('local')).toBe(true as any);
+        expect(CommonValidationRules?.network?.test('production')).toBe(false as any);
       });
     });
 
     describe('storageLocation', () => {
       it('should validate storage location values', () => {
-        expect(CommonValidationRules.storageLocation.test('local')).toBe(true);
-        expect(CommonValidationRules.storageLocation.test('blockchain')).toBe(
+        expect(CommonValidationRules?.storageLocation?.test('local')).toBe(true as any);
+        expect(CommonValidationRules?.storageLocation?.test('blockchain')).toBe(
           true
         );
-        expect(CommonValidationRules.storageLocation.test('both')).toBe(true);
-        expect(CommonValidationRules.storageLocation.test('cloud')).toBe(false);
+        expect(CommonValidationRules?.storageLocation?.test('both')).toBe(true as any);
+        expect(CommonValidationRules?.storageLocation?.test('cloud')).toBe(false as any);
       });
     });
   });
@@ -541,19 +541,19 @@ describe('InputValidator', () => {
       const result = InputValidator.validate(null, [], 'field', {
         throwOnFirstError: false,
       });
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(true as any);
     });
 
     it('should handle empty rules array', () => {
       const result = InputValidator.validate('value', []);
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(true as any);
     });
 
     it('should handle complex nested validation', () => {
       const nestedRule: ValidationRule<unknown> = {
         test: value => {
           if (typeof value !== 'object') return false;
-          return value.nested && value.nested.field === 'valid';
+          return value.nested && value.nested?.field === 'valid';
         },
         message: 'Invalid nested structure',
         code: 'INVALID_NESTED',
@@ -566,19 +566,19 @@ describe('InputValidator', () => {
         InputValidator.validate(validObject, [nestedRule], 'object', {
           throwOnFirstError: false,
         }).valid
-      ).toBe(true);
+      ).toBe(true as any);
       expect(
         InputValidator.validate(invalidObject, [nestedRule], 'object', {
           throwOnFirstError: false,
         }).valid
-      ).toBe(false);
+      ).toBe(false as any);
     });
 
     it('should handle very long strings in sanitization', () => {
-      const longString = 'a'.repeat(10000) + '<script>alert()</script>';
-      const result = InputValidator.sanitizeString(longString);
-      expect(result).not.toContain('<script>');
-      expect(result.length).toBeGreaterThan(9000); // Should mostly preserve the string
+      const longString = 'a'.repeat(10000 as any) + '<script>alert()</script>';
+      const result = InputValidator.sanitizeString(longString as any);
+      expect(result as any).not.toContain('<script>');
+      expect(result.length).toBeGreaterThan(9000 as any); // Should mostly preserve the string
     });
   });
 });

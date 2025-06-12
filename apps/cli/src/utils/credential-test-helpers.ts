@@ -45,7 +45,7 @@ export function createCryptoMocks() {
  * Validate test environment setup
  */
 export function validateTestEnvironment(): boolean {
-  return process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing';
+  return process.env?.NODE_ENV === 'test' || process.env?.NODE_ENV === 'testing';
 }
 
 /**
@@ -59,7 +59,7 @@ export function getTestEncryptionConfig() {
     SALT_SIZE: 32,
     KEY_ITERATIONS: validateTestEnvironment()
       ? 1000
-      : AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
+      : AI_CONFIG?.CREDENTIAL_ENCRYPTION?.KEY_ITERATIONS,
   };
 }
 
@@ -85,26 +85,26 @@ export function createTestCredentialMetadata() {
  * Setup test environment variables
  */
 export function setupTestEnvironment() {
-  process.env.NODE_ENV = 'test';
-  process.env.HOME = '/tmp/test-home';
+  process.env?.NODE_ENV = 'test';
+  process.env?.HOME = '/tmp/test-home';
 
   // Set test-safe defaults for encryption
-  process.env.CREDENTIAL_KEY_ITERATIONS = '1000';
-  process.env.CREDENTIAL_AUTO_ROTATION_DAYS = '90';
-  process.env.CREDENTIAL_ROTATION_WARNING_DAYS = '75';
-  process.env.CREDENTIAL_MAX_FAILED_AUTH = '5';
+  process.env?.CREDENTIAL_KEY_ITERATIONS = '1000';
+  process.env?.CREDENTIAL_AUTO_ROTATION_DAYS = '90';
+  process.env?.CREDENTIAL_ROTATION_WARNING_DAYS = '75';
+  process.env?.CREDENTIAL_MAX_FAILED_AUTH = '5';
 }
 
 /**
  * Cleanup test environment
  */
 export function cleanupTestEnvironment() {
-  delete process.env.NODE_ENV;
-  delete process.env.HOME;
-  delete process.env.CREDENTIAL_KEY_ITERATIONS;
-  delete process.env.CREDENTIAL_AUTO_ROTATION_DAYS;
-  delete process.env.CREDENTIAL_ROTATION_WARNING_DAYS;
-  delete process.env.CREDENTIAL_MAX_FAILED_AUTH;
+  delete process?.env?.NODE_ENV;
+  delete process?.env?.HOME;
+  delete process?.env?.CREDENTIAL_KEY_ITERATIONS;
+  delete process?.env?.CREDENTIAL_AUTO_ROTATION_DAYS;
+  delete process?.env?.CREDENTIAL_ROTATION_WARNING_DAYS;
+  delete process?.env?.CREDENTIAL_MAX_FAILED_AUTH;
 }
 
 /**
@@ -114,9 +114,9 @@ export function createFileSystemMocks() {
   const mockData = new Map<string, Buffer | string>();
 
   return {
-    existsSync: jest.fn((path: string) => mockData.has(path)),
+    existsSync: jest.fn((path: string) => mockData.has(path as any)),
     readFileSync: jest.fn((path: string) => {
-      const data = mockData.get(path);
+      const data = mockData.get(path as any);
       if (!data) throw new Error(`File not found: ${path}`);
       return data;
     }),
@@ -129,13 +129,13 @@ export function createFileSystemMocks() {
     copyFileSync: jest.fn(),
     chmodSync: jest.fn(),
     renameSync: jest.fn(),
-    unlinkSync: jest.fn((path: string) => mockData.delete(path)),
+    unlinkSync: jest.fn((path: string) => mockData.delete(path as any)),
     readdirSync: jest.fn(() => []),
     statSync: jest.fn(() => ({ mtime: { getTime: () => Date.now() } })),
     constants: { COPYFILE_EXCL: 1 },
     setMockData: (path: string, data: Buffer | string) =>
       mockData.set(path, data),
-    getMockData: (path: string) => mockData.get(path),
+    getMockData: (path: string) => mockData.get(path as any),
     clearMockData: () => mockData.clear(),
   };
 }

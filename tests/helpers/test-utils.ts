@@ -7,7 +7,7 @@ import * as path from 'path';
 /**
  * Promisified version of child_process.exec for async/await usage
  */
-const execPromise = promisify(exec);
+const execPromise = promisify(exec as any);
 
 /**
  * Utility type that makes all properties of a type optional and recursive
@@ -135,7 +135,7 @@ export class TestService {
     options: CommandExecutionOptions = {}
   ): Promise<{ stdout: string; stderr: string }> {
     // Mock implementation for Jest tests
-    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) {
+    if (process.env?.NODE_ENV === 'test' || process?.env?.JEST_WORKER_ID) {
       try {
         // Create a mock response for command testing
         const command = args[0];
@@ -193,7 +193,7 @@ Options:
         if (options.expectError) {
           return {
             stdout: '',
-            stderr: error instanceof Error ? error.message : String(error),
+            stderr: error instanceof Error ? error.message : String(error as any),
           };
         }
         throw error;
@@ -215,7 +215,7 @@ Options:
       if (options.expectError) {
         return {
           stdout: error.stdout || '',
-          stderr: error.stderr || error.message || String(error),
+          stderr: error.stderr || error.message || String(error as any),
         };
       }
       throw error;
@@ -247,13 +247,13 @@ export async function executeCommand(
   expectedOutput?: string[]
 ): Promise<{ stdout: string; stderr: string; success: boolean }> {
   try {
-    const result = await runCommand(args);
+    const result = await runCommand(args as any);
     let success = true;
 
     if (expectedOutput) {
       success = expectedOutput.every(
         pattern =>
-          result.stdout.includes(pattern) || result.stderr.includes(pattern)
+          result?.stdout?.includes(pattern as any) || result?.stderr?.includes(pattern as any)
       );
     }
 
@@ -261,7 +261,7 @@ export async function executeCommand(
   } catch (error) {
     return {
       stdout: '',
-      stderr: error instanceof Error ? error.message : String(error),
+      stderr: error instanceof Error ? error.message : String(error as any),
       success: false,
     };
   }
@@ -278,8 +278,8 @@ export async function executeCommandSequence(
   const results: { stdout: string; stderr: string }[] = [];
 
   for (const args of commandSets) {
-    const result = await runCommand(args);
-    results.push(result);
+    const result = await runCommand(args as any);
+    results.push(result as any);
   }
 
   return results;

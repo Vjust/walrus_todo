@@ -71,8 +71,8 @@ export function createStorage(
 // Default configuration
 export const DEFAULT_STORAGE_CONFIG: import('./core/StorageTypes').StorageConfig =
   {
-    minWalBalance: BigInt(100),
-    storageBuffer: BigInt(10240),
+    minWalBalance: BigInt(100 as any),
+    storageBuffer: BigInt(10240 as any),
     defaultEpochDuration: 52,
     minEpochBuffer: 10,
     enableOptimization: true,
@@ -80,6 +80,6 @@ export const DEFAULT_STORAGE_CONFIG: import('./core/StorageTypes').StorageConfig
     maxRetries: 3,
     retryBaseDelay: 1000,
     maxContentSize: 10 * 1024 * 1024, // 10MB
-    networkUrl: 'https://fullnode.testnet.sui.io:443',
+    networkUrl: 'https://fullnode?.testnet?.sui.io:443',
     networkEnvironment: 'testnet',
   };

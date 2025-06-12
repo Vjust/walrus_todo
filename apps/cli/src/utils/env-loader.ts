@@ -17,12 +17,12 @@ import { Logger } from './Logger';
 const logger = new Logger('env-loader');
 
 // Ensure NODE_ENV is set to production by default
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'production';
+if (!process?.env?.NODE_ENV) {
+  process.env?.NODE_ENV = 'production';
 }
 
 // Make sure output is shown by default
-process.env.SHOW_OUTPUT = process.env.SHOW_OUTPUT || 'true';
+process.env?.SHOW_OUTPUT = process?.env?.SHOW_OUTPUT || 'true';
 
 interface EnvLoaderOptions {
   envFile?: string;
@@ -53,7 +53,7 @@ export function loadEnvironment(options: EnvLoaderOptions = {}): void {
     // In development, also try to load from .env.development if it exists
     if (
       loadDefaultEnvInDev &&
-      (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV)
+      (process.env?.NODE_ENV === 'development' || !process?.env?.NODE_ENV)
     ) {
       loadDotEnvFile('.env.development', false, false);
     }
@@ -68,7 +68,7 @@ export function loadEnvironment(options: EnvLoaderOptions = {}): void {
       throw error;
     } else {
       logger.error(
-        `Error loading environment: ${error instanceof Error ? error.message : String(error)}`
+        `Error loading environment: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -86,51 +86,51 @@ function loadDotEnvFile(
     // First check in current directory
     let envPath = path.resolve(process.cwd(), envFile);
 
-    if (!fs.existsSync(envPath)) {
+    if (!fs.existsSync(envPath as any)) {
       // Then check in user's home directory
-      const homeDir = process.env.HOME || process.env.USERPROFILE;
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE;
       if (homeDir) {
         envPath = path.resolve(homeDir, envFile);
       }
     }
 
-    if (fs.existsSync(envPath)) {
+    if (fs.existsSync(envPath as any)) {
       // Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env?.NODE_ENV === 'development') {
         logger.info(`Loading environment variables from ${envPath}`);
       }
 
       const envContent = fs.readFileSync(envPath, 'utf8');
-      const envConfig = dotenv.parse(envContent);
+      const envConfig = dotenv.parse(envContent as any);
 
       // Set environment variables, allowing .env to take precedence
-      Object.entries(envConfig).forEach(([key, value]) => {
+      Object.entries(envConfig as any).forEach(([key, value]) => {
         // Only skip overwriting for certain system variables that should not be changed
         const systemVars = ['NODE_ENV', 'PATH', 'HOME', 'USER', 'SHELL'];
-        if (!systemVars.includes(key)) {
+        if (!systemVars.includes(key as any)) {
           // Only log in development mode
-          if (process.env.NODE_ENV === 'development') {
+          if (process.env?.NODE_ENV === 'development') {
             logger.info(
               `Setting environment variable ${key}=${value.substring(0, 3)}***`
             );
           }
-          process.env[key] = value;
-        } else if (!process.env[key]) {
+          process?.env?.[key] = value;
+        } else if (!process?.env?.[key]) {
           // For system variables, only set if not already present
           // Only log in development mode
-          if (process.env.NODE_ENV === 'development') {
+          if (process.env?.NODE_ENV === 'development') {
             logger.info(
               `Setting system environment variable ${key}=${value.substring(0, 3)}***`
             );
           }
-          process.env[key] = value;
+          process?.env?.[key] = value;
         }
       });
     } else if (required) {
       // Always log errors for required files
       logger.info(`Required .env file not found: ${envFile}`);
       throw new Error(`Required .env file not found: ${envFile}`);
-    } else if (process.env.NODE_ENV === 'development') {
+    } else if (process.env?.NODE_ENV === 'development') {
       // Only log missing optional files in development mode
       logger.info(`.env file not found at ${envPath}`);
     }
@@ -139,7 +139,7 @@ function loadDotEnvFile(
       throw error;
     } else {
       logger.error(
-        `Error loading .env file: ${error instanceof Error ? error.message : String(error)}`
+        `Error loading .env file: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -157,17 +157,17 @@ function loadConfigFile(
     // First check in current directory
     let configPath = path.resolve(process.cwd(), configFile);
 
-    if (!fs.existsSync(configPath)) {
+    if (!fs.existsSync(configPath as any)) {
       // Then check in user's home directory
-      const homeDir = process.env.HOME || process.env.USERPROFILE;
+      const homeDir = process?.env?.HOME || process?.env?.USERPROFILE;
       if (homeDir) {
         configPath = path.resolve(homeDir, configFile);
       }
     }
 
-    if (fs.existsSync(configPath)) {
+    if (fs.existsSync(configPath as any)) {
       const configJson = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      envConfig.loadFromObject(configJson);
+      envConfig.loadFromObject(configJson as any);
     } else if (required) {
       throw new Error(`Required config file not found: ${configFile}`);
     }
@@ -176,7 +176,7 @@ function loadConfigFile(
       throw error;
     } else {
       logger.error(
-        `Error loading config file: ${error instanceof Error ? error.message : String(error)}`
+        `Error loading config file: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -191,7 +191,7 @@ export function saveConfigToFile(configFile: string): void {
 
     // Don't save sensitive values
     const metadata = envConfig.getMetadata();
-    for (const [key, meta] of Object.entries(metadata)) {
+    for (const [key, meta] of Object.entries(metadata as any)) {
       if (meta.sensitive) {
         // If it's sensitive, save an empty string or asterisks to indicate the value exists
         if (key in configData && configData[key]) {
@@ -203,7 +203,7 @@ export function saveConfigToFile(configFile: string): void {
     fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));
   } catch (error) {
     logger.error(
-      `Error saving config file: ${error instanceof Error ? error.message : String(error)}`
+      `Error saving config file: ${error instanceof Error ? error.message : String(error as any)}`
     );
   }
 }
@@ -229,39 +229,39 @@ export function generateEnvTemplate(
       Advanced: [],
     };
 
-    for (const [key, config] of Object.entries(allVars)) {
+    for (const [key, config] of Object.entries(allVars as any)) {
       const line = `${key}=${config.example || ''} # ${config.description || ''}${config.required ? ' (Required)' : ''}`;
 
       if (key.startsWith('AI_') || key.endsWith('_API_KEY')) {
-        categories['AI'].push(line);
+        categories?.["AI"].push(line as any);
       } else if (
         key.includes('STORAGE') ||
         key.includes('FILE') ||
         key.includes('DIR')
       ) {
-        categories['Storage'].push(line);
+        categories?.["Storage"].push(line as any);
       } else if (
         key.includes('NETWORK') ||
         key.includes('BLOCKCHAIN') ||
         key.includes('WALLET')
       ) {
-        categories['Blockchain'].push(line);
+        categories?.["Blockchain"].push(line as any);
       } else if (
         key.includes('SECURITY') ||
         key.includes('VERIFICATION') ||
         key.includes('CRYPTO')
       ) {
-        categories['Security'].push(line);
+        categories?.["Security"].push(line as any);
       } else if (key === 'NODE_ENV' || key === 'LOG_LEVEL') {
-        categories['Common'].push(line);
+        categories?.["Common"].push(line as any);
       } else {
-        categories['Advanced'].push(line);
+        categories?.["Advanced"].push(line as any);
       }
     }
 
     // Add each category to template
-    for (const [category, lines] of Object.entries(categories)) {
-      if (lines.length === 0) continue;
+    for (const [category, lines] of Object.entries(categories as any)) {
+      if (lines?.length === 0) continue;
 
       template += `# ${category}\n`;
       template += lines.join('\n');
@@ -271,7 +271,7 @@ export function generateEnvTemplate(
     fs.writeFileSync(templateFile, template);
   } catch (error) {
     logger.error(
-      `Error generating .env template: ${error instanceof Error ? error.message : String(error)}`
+      `Error generating .env template: ${error instanceof Error ? error.message : String(error as any)}`
     );
   }
 }

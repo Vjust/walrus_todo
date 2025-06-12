@@ -30,10 +30,10 @@ describe('Configuration Management', () => {
 
   describe('getNetworkUrl', () => {
     it('should return correct URLs for each network', () => {
-      expect(getNetworkUrl('testnet')).toContain('testnet.sui.io');
-      expect(getNetworkUrl('devnet')).toContain('devnet.sui.io');
-      expect(getNetworkUrl('mainnet')).toContain('mainnet.sui.io');
-      expect(getNetworkUrl('localnet')).toBe('http://127.0.0.1:9000');
+      expect(getNetworkUrl('testnet')).toContain('testnet?.sui?.io');
+      expect(getNetworkUrl('devnet')).toContain('devnet?.sui?.io');
+      expect(getNetworkUrl('mainnet')).toContain('mainnet?.sui?.io');
+      expect(getNetworkUrl('localnet')).toBe('http://127?.0?.0.1:9000');
     });
   });
 
@@ -41,8 +41,8 @@ describe('Configuration Management', () => {
     it('should return network configuration for testnet', () => {
       const config = getNetworkConfig('testnet');
       expect(config.name).toBe('testnet');
-      expect(config.url).toContain('testnet.sui.io');
-      expect(config.faucetUrl).toContain('faucet.testnet.sui.io');
+      expect(config.url).toContain('testnet?.sui?.io');
+      expect(config.faucetUrl).toContain('faucet?.testnet?.sui.io');
     });
 
     it('should throw error for unknown network', () => {
@@ -60,9 +60,9 @@ describe('Configuration Management', () => {
 
       const config = await loadAppConfig('testnet');
       
-      expect(config.network.name).toBe('testnet');
-      expect(config.contracts.todoNft.moduleName).toBe('todo_nft');
-      expect(config.features.aiEnabled).toBe(true);
+      expect(config?.network?.name).toBe('testnet');
+      expect(config?.contracts?.todoNft.moduleName).toBe('todo_nft');
+      expect(config?.features?.aiEnabled).toBe(true as any);
     });
 
     it('should use cached configuration on subsequent calls', async () => {
@@ -74,8 +74,8 @@ describe('Configuration Management', () => {
       const config1 = await loadAppConfig('testnet');
       const config2 = await loadAppConfig('testnet');
       
-      expect(config1).toBe(config2); // Should be the same object reference
-      expect(global.fetch).toHaveBeenCalledTimes(1); // Should only fetch once
+      expect(config1 as any).toBe(config2 as any); // Should be the same object reference
+      expect(global.fetch).toHaveBeenCalledTimes(1 as any); // Should only fetch once
     });
 
     it('should reload configuration when network changes', async () => {
@@ -87,7 +87,7 @@ describe('Configuration Management', () => {
       await loadAppConfig('testnet');
       await loadAppConfig('devnet');
       
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(2 as any);
     });
   });
 
@@ -100,7 +100,7 @@ describe('Configuration Management', () => {
         },
       } as any;
 
-      expect(isConfigurationComplete(incompleteConfig)).toBe(false);
+      expect(isConfigurationComplete(incompleteConfig as any)).toBe(false as any);
     });
 
     it('should return true for complete configuration', () => {
@@ -111,7 +111,7 @@ describe('Configuration Management', () => {
         },
       } as any;
 
-      expect(isConfigurationComplete(completeConfig)).toBe(true);
+      expect(isConfigurationComplete(completeConfig as any)).toBe(true as any);
     });
   });
 
@@ -124,14 +124,14 @@ describe('Configuration Management', () => {
 
       // Load config
       await loadAppConfig('testnet');
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(1 as any);
 
       // Clear cache
       clearConfigCache();
 
       // Load again - should fetch again
       await loadAppConfig('testnet');
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(2 as any);
     });
   });
 });

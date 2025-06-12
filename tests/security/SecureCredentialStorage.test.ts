@@ -37,7 +37,7 @@ jest.mock('fs', () => {
       ) {
         return true;
       }
-      return mockFileContent.has(path);
+      return mockFileContent.has(path as any);
     }),
     writeFileSync: jest
       .fn()
@@ -60,10 +60,10 @@ jest.mock('fs', () => {
             lastRotated: Date.now(),
             backupLocations: [],
           });
-          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata as any);
         }
-        const content = mockFileContent.get(path) || Buffer.from('');
-        if (encoding === 'utf8' && Buffer.isBuffer(content)) {
+        const content = mockFileContent.get(path as any) || Buffer.from('');
+        if (encoding === 'utf8' && Buffer.isBuffer(content as any)) {
           return content.toString('utf8');
         }
         return content;
@@ -74,7 +74,7 @@ jest.mock('fs', () => {
     chmodSync: jest.fn(),
     unlinkSync: jest.fn(),
     readdirSync: jest.fn().mockReturnValue([]),
-    statSync: jest.fn().mockReturnValue(mockStats),
+    statSync: jest.fn().mockReturnValue(mockStats as any),
     constants: originalModule.constants,
   };
 });
@@ -95,7 +95,7 @@ describe('SecureCredentialStorage', () => {
       ) {
         return true;
       }
-      return mockFileContent.has(path);
+      return mockFileContent.has(path as any);
     });
 
     (fs.readFileSync as jest.Mock).mockImplementation(
@@ -111,10 +111,10 @@ describe('SecureCredentialStorage', () => {
             lastRotated: Date.now(),
             backupLocations: [],
           });
-          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata as any);
         }
-        const content = mockFileContent.get(path) || Buffer.from('');
-        if (encoding === 'utf8' && Buffer.isBuffer(content)) {
+        const content = mockFileContent.get(path as any) || Buffer.from('');
+        if (encoding === 'utf8' && Buffer.isBuffer(content as any)) {
           return content.toString('utf8');
         }
         return content;
@@ -127,7 +127,7 @@ describe('SecureCredentialStorage', () => {
       }
     );
 
-    (fs.statSync as jest.Mock).mockReturnValue(mockStats);
+    (fs.statSync as jest.Mock).mockReturnValue(mockStats as any);
     (fs.readdirSync as jest.Mock).mockReturnValue([]);
   });
 
@@ -146,15 +146,15 @@ describe('SecureCredentialStorage', () => {
     expect(fs.writeFileSync).toHaveBeenCalled();
 
     // Get the saved content
-    const savedContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1];
+    const savedContent = (fs.writeFileSync as jest.Mock).mock?.calls?.[0][1];
 
     // Verify encryption (content should not contain plaintext key)
     const contentString = savedContent.toString();
-    expect(contentString).not.toContain('test-api-key');
+    expect(contentString as any).not.toContain('test-api-key');
 
     // Verify correct file permissions
-    const options = (fs.writeFileSync as jest.Mock).mock.calls[0][2];
-    expect(options.mode).toBe(0o600);
+    const options = (fs.writeFileSync as jest.Mock).mock?.calls?.[0][2];
+    expect(options.mode).toBe(0o600 as any);
   });
 
   it('should retrieve stored credentials and decrypt them', async () => {
@@ -174,10 +174,10 @@ describe('SecureCredentialStorage', () => {
 
     (fs.renameSync as jest.Mock).mockImplementation(
       (oldPath: string, newPath: string) => {
-        const data = mockFileContent.get(oldPath);
+        const data = mockFileContent.get(oldPath as any);
         if (data) {
           mockFileContent.set(newPath, data);
-          mockFileContent.delete(oldPath);
+          mockFileContent.delete(oldPath as any);
         }
       }
     );
@@ -195,10 +195,10 @@ describe('SecureCredentialStorage', () => {
             lastRotated: Date.now(),
             backupLocations: [],
           });
-          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata as any);
         }
         if (path.includes('secure_credentials.enc')) {
-          const content = mockFileContent.get(path) || Buffer.from('');
+          const content = mockFileContent.get(path as any) || Buffer.from('');
           return content;
         }
         return Buffer.from('');
@@ -216,7 +216,7 @@ describe('SecureCredentialStorage', () => {
       }
       if (
         path.includes('secure_credentials.enc') &&
-        mockFileContent.has(path)
+        mockFileContent.has(path as any)
       ) {
         return true;
       }
@@ -237,7 +237,7 @@ describe('SecureCredentialStorage', () => {
     const credentialFilePath = Array.from(mockFileContent.keys()).find(key =>
       key.includes('secure_credentials.enc')
     );
-    expect(credentialFilePath).toBeDefined();
+    expect(credentialFilePath as any).toBeDefined();
 
     // Mimic a restart by creating a new manager instance
     const managerRestarted = new SecureCredentialManager();
@@ -246,7 +246,7 @@ describe('SecureCredentialStorage', () => {
     const credential = await managerRestarted.getCredential('test-provider');
 
     // Verify correct value
-    expect(credential).toBe('test-api-key');
+    expect(credential as any).toBe('test-api-key');
   });
 
   it('should gracefully handle corrupted credential stores', async () => {
@@ -265,7 +265,7 @@ describe('SecureCredentialStorage', () => {
             lastRotated: Date.now(),
             backupLocations: [],
           });
-          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata as any);
         }
         if (path.includes('secure_credentials.enc')) {
           return Buffer.from('corrupted-data');
@@ -294,7 +294,7 @@ describe('SecureCredentialStorage', () => {
 
     // Should start with empty credentials
     const credentials = await manager.listCredentials();
-    expect(credentials).toEqual([]);
+    expect(credentials as any).toEqual([]);
   });
 
   it('should prevent path traversal attacks', async () => {
@@ -308,12 +308,12 @@ describe('SecureCredentialStorage', () => {
     );
 
     // Check that fs.writeFileSync was not called with the traversal path
-    const paths = (fs.writeFileSync as jest.Mock).mock.calls.map(
+    const paths = (fs.writeFileSync as jest.Mock).mock?.calls?.map(
       call => call[0]
     );
     const hasTraversalPath = paths.some(p => p.includes('etc/passwd'));
 
-    expect(hasTraversalPath).toBe(false);
+    expect(hasTraversalPath as any).toBe(false as any);
   });
 
   it('should enforce credential expiration', async () => {
@@ -376,30 +376,30 @@ describe('SecureCredentialStorage', () => {
     );
 
     // Verify credential exists
-    expect(await manager.hasCredential('test-provider')).toBe(true);
+    expect(await manager.hasCredential('test-provider')).toBe(true as any);
 
     // Remove credential
     const result = await manager.removeCredential('test-provider');
-    expect(result).toBe(true);
+    expect(result as any).toBe(true as any);
 
     // Verify credential was removed
-    expect(await manager.hasCredential('test-provider')).toBe(false);
+    expect(await manager.hasCredential('test-provider')).toBe(false as any);
   });
 
   it('should fallback to environment variables when credentials not found', async () => {
     const manager = new SecureCredentialManager();
 
     // Set environment variable
-    process.env.TEST_PROVIDER_API_KEY = 'env-api-key';
+    process.env?.TEST_PROVIDER_API_KEY = 'env-api-key';
 
     // Get credential (should use environment variable)
     const credential = await manager.getCredential('test_provider');
 
     // Verify correct value from environment
-    expect(credential).toBe('env-api-key');
+    expect(credential as any).toBe('env-api-key');
 
     // Clean up
-    delete process.env.TEST_PROVIDER_API_KEY;
+    delete process?.env?.TEST_PROVIDER_API_KEY;
   });
 
   it('should handle blockchain verification securely', async () => {
@@ -414,9 +414,9 @@ describe('SecureCredentialStorage', () => {
       verifyCredential: jest.fn().mockResolvedValue({
         verificationId: 'ver-123',
       }),
-      getSigner: jest.fn().mockReturnValue(mockSigner),
-      checkVerificationStatus: jest.fn().mockResolvedValue(true),
-      revokeVerification: jest.fn().mockResolvedValue(true),
+      getSigner: jest.fn().mockReturnValue(mockSigner as any),
+      checkVerificationStatus: jest.fn().mockResolvedValue(true as any),
+      revokeVerification: jest.fn().mockResolvedValue(true as any),
       generateCredentialProof: jest.fn().mockResolvedValue('proof-123'),
     };
 
@@ -442,7 +442,7 @@ describe('SecureCredentialStorage', () => {
     const credObj = await manager.getCredentialObject('blockchain-provider');
 
     // Verify credential is marked as verified
-    expect(credObj.isVerified).toBe(true);
+    expect(credObj.isVerified).toBe(true as any);
     expect(credObj.verificationProof).toBe('ver-123');
   });
 
@@ -469,7 +469,7 @@ describe('SecureCredentialStorage', () => {
       // Mock credential object as verified
       (
         manager as unknown as { credentials: Record<string, unknown> }
-      ).credentials['test-provider'] = {
+      ).credentials?.["test-provider"] = {
         id: 'cred-123',
         providerName: 'test-provider',
         credentialType: CredentialType.API_KEY,
@@ -483,10 +483,10 @@ describe('SecureCredentialStorage', () => {
 
       await manager.getCredential('test-provider');
     } catch (error) {
-      errorMessage = String(error);
+      errorMessage = String(error as any);
     }
 
     // Error should not contain the API key
-    expect(errorMessage).not.toContain('sensitive-api-key-123');
+    expect(errorMessage as any).not.toContain('sensitive-api-key-123');
   });
 });

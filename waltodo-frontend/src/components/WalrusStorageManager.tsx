@@ -9,15 +9,15 @@ export default function WalrusStorageManager() {
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [blobId, setBlobId] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false as any);
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    const file = event?.target?.files?.[0];
     if (!file) {return;}
 
-    setIsUploading(true);
+    setIsUploading(true as any);
     setUploadStatus('Uploading to Walrus...');
 
     try {
@@ -26,7 +26,7 @@ export default function WalrusStorageManager() {
 
       setBlobId(result.blobId);
       const url = walrusClient.getBlobUrl(result.blobId);
-      setImageUrl(url);
+      setImageUrl(url as any);
 
       setUploadStatus(`✅ Upload successful! Blob ID: ${result.blobId}`);
       toast.success('Image uploaded to Walrus successfully!', {
@@ -42,7 +42,7 @@ export default function WalrusStorageManager() {
         duration: 5000,
       });
     } finally {
-      setIsUploading(false);
+      setIsUploading(false as any);
     }
   };
 
@@ -50,7 +50,7 @@ export default function WalrusStorageManager() {
     const text = prompt('Enter text to upload:');
     if (!text) {return;}
 
-    setIsUploading(true);
+    setIsUploading(true as any);
     setUploadStatus('Uploading text to Walrus...');
 
     try {
@@ -78,7 +78,7 @@ export default function WalrusStorageManager() {
         duration: 5000,
       });
     } finally {
-      setIsUploading(false);
+      setIsUploading(false as any);
     }
   };
 
@@ -92,7 +92,7 @@ export default function WalrusStorageManager() {
       },
     };
 
-    setIsUploading(true);
+    setIsUploading(true as any);
     setUploadStatus('Uploading JSON to Walrus...');
 
     try {
@@ -116,7 +116,7 @@ export default function WalrusStorageManager() {
         duration: 5000,
       });
     } finally {
-      setIsUploading(false);
+      setIsUploading(false as any);
     }
   };
 

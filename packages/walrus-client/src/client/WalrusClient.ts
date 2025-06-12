@@ -57,13 +57,13 @@ export class WalrusClient implements WalrusClientAdapter {
       this.config = config;
     } else {
       const { useMockMode = false, ...configOptions } = config || {};
-      this.config = new WalrusConfig(configOptions);
+      this.config = new WalrusConfig(configOptions as any);
       this.useMockMode = useMockMode || this.shouldUseMock();
     }
 
     this.retryManager = new RetryManager({
-      maxRetries: this.config.getRetries(),
-      timeout: this.config.getTimeout(),
+      maxRetries: this?.config?.getRetries(),
+      timeout: this?.config?.getTimeout(),
       shouldRetry: ErrorHandler.isRetryableError,
     });
 
@@ -88,7 +88,7 @@ export class WalrusClient implements WalrusClientAdapter {
       if (os && path) {
         this.tempDir = path.join(os.tmpdir(), 'walrus-storage');
         this.walrusPath = path.join(os.homedir(), '.local', 'bin', 'walrus');
-        this.configPath = process.env.WALRUS_CONFIG_PATH ||
+        this.configPath = process?.env?.WALRUS_CONFIG_PATH ||
           path.join(os.homedir(), '.config', 'walrus', 'client_config.yaml');
         
         // Create temp directory if it doesn't exist
@@ -114,12 +114,12 @@ export class WalrusClient implements WalrusClientAdapter {
       // Check if Walrus CLI is available in Node.js
       try {
         const { promisify } = await import('util');
-        const execAsync = promisify(exec);
+        const execAsync = promisify(exec as any);
         await execAsync(`${this.walrusPath} --version`);
         this.isConnected = true;
       } catch (error) {
         throw new WalrusClientError(
-          'Walrus CLI not found. Please install it from https://docs.wal.app'
+          'Walrus CLI not found. Please install it from https://docs?.wal?.app'
         );
       }
     } else {
@@ -159,7 +159,7 @@ export class WalrusClient implements WalrusClientAdapter {
   }
 
   async getConfig() {
-    return this.config.get();
+    return this?.config?.get();
   }
 
   /**
@@ -171,17 +171,17 @@ export class WalrusClient implements WalrusClientAdapter {
   ): Promise<WalrusUploadResponse> {
     const mergedOptions = { ...DEFAULT_UPLOAD_OPTIONS, ...options };
     
-    return this.retryManager.execute(async () => {
-      const blobData = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+    return this?.retryManager?.execute(async () => {
+      const blobData = typeof data === 'string' ? new TextEncoder().encode(data as any) : data;
       
-      if (blobData.length === 0) {
+      if (blobData?.length === 0) {
         throw new WalrusValidationError('Cannot upload empty data');
       }
 
-      const url = new URL(`${this.config.getPublisherUrl()}${API_ENDPOINTS.STORE}`);
+      const url = new URL(`${this?.config?.getPublisherUrl()}${API_ENDPOINTS.STORE}`);
       
       if (mergedOptions.epochs) {
-        url.searchParams.append('epochs', mergedOptions.epochs.toString());
+        url?.searchParams?.append('epochs', mergedOptions?.epochs?.toString());
       }
 
       mergedOptions.onProgress?.('Uploading to Walrus...', 0);
@@ -195,8 +195,8 @@ export class WalrusClient implements WalrusClientAdapter {
       });
 
       if (!response.ok) {
-        const errorMessage = await ErrorHandler.extractErrorMessage(response);
-        throw ErrorHandler.createErrorFromResponse(response);
+        const errorMessage = await ErrorHandler.extractErrorMessage(response as any);
+        throw ErrorHandler.createErrorFromResponse(response as any);
       }
 
       mergedOptions.onProgress?.('Processing response...', 90);
@@ -226,28 +226,28 @@ export class WalrusClient implements WalrusClientAdapter {
    * Download data from Walrus storage
    */
   async download(blobId: string): Promise<WalrusBlob> {
-    this.validateBlobId(blobId);
+    this.validateBlobId(blobId as any);
 
-    return this.retryManager.execute(async () => {
-      const url = `${this.config.getAggregatorUrl()}${API_ENDPOINTS.BLOB.replace('{blobId}', blobId)}`;
+    return this?.retryManager?.execute(async () => {
+      const url = `${this?.config?.getAggregatorUrl()}${API_ENDPOINTS?.BLOB?.replace('{blobId}', blobId)}`;
       
       const response = await universalFetch(url, {
         method: 'GET',
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
+        if (response?.status === 404) {
           throw new WalrusStorageError(`Blob not found: ${blobId}`, 'download', blobId);
         }
-        throw ErrorHandler.createErrorFromResponse(response);
+        throw ErrorHandler.createErrorFromResponse(response as any);
       }
 
       const data = await response.arrayBuffer();
-      const contentType = response.headers.get('content-type');
+      const contentType = response?.headers?.get('content-type');
 
       return {
         id: blobId,
-        data: new Uint8Array(data),
+        data: new Uint8Array(data as any),
         ...(contentType && { contentType }),
         size: data.byteLength,
       };
@@ -258,10 +258,10 @@ export class WalrusClient implements WalrusClientAdapter {
    * Check if a blob exists
    */
   async exists(blobId: string): Promise<boolean> {
-    this.validateBlobId(blobId);
+    this.validateBlobId(blobId as any);
 
     try {
-      const url = `${this.config.getAggregatorUrl()}${API_ENDPOINTS.BLOB.replace('{blobId}', blobId)}`;
+      const url = `${this?.config?.getAggregatorUrl()}${API_ENDPOINTS?.BLOB?.replace('{blobId}', blobId)}`;
       
       const response = await universalFetch(url, {
         method: 'HEAD',
@@ -281,10 +281,10 @@ export class WalrusClient implements WalrusClientAdapter {
    * Delete a blob (if deletable)
    */
   async delete(blobId: string, signer?: UniversalSigner): Promise<string> {
-    this.validateBlobId(blobId);
+    this.validateBlobId(blobId as any);
 
-    return this.retryManager.execute(async () => {
-      const url = `${this.config.getPublisherUrl()}${API_ENDPOINTS.DELETE.replace('{blobId}', blobId)}`;
+    return this?.retryManager?.execute(async () => {
+      const url = `${this?.config?.getPublisherUrl()}${API_ENDPOINTS?.DELETE?.replace('{blobId}', blobId)}`;
       
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -294,10 +294,10 @@ export class WalrusClient implements WalrusClientAdapter {
       if (signer) {
         // This would need to be implemented based on Walrus auth requirements
         // For now, we'll just include the address
-        const address = typeof signer.getAddress === 'function' 
+        const address = typeof signer?.getAddress === 'function' 
           ? await signer.getAddress() 
           : signer.toSuiAddress();
-        headers['X-Wallet-Address'] = address;
+        headers["X-Wallet-Address"] = address;
       }
 
       const response = await universalFetch(url, {
@@ -306,13 +306,13 @@ export class WalrusClient implements WalrusClientAdapter {
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
+        if (response?.status === 404) {
           throw new WalrusStorageError(`Blob not found: ${blobId}`, 'delete', blobId);
         }
-        if (response.status === 403) {
+        if (response?.status === 403) {
           throw new WalrusStorageError(`Blob is not deletable: ${blobId}`, 'delete', blobId);
         }
-        throw ErrorHandler.createErrorFromResponse(response);
+        throw ErrorHandler.createErrorFromResponse(response as any);
       }
 
       return blobId;
@@ -323,24 +323,24 @@ export class WalrusClient implements WalrusClientAdapter {
    * Get blob information
    */
   async getBlobInfo(blobId: string): Promise<{ size?: number }> {
-    this.validateBlobId(blobId);
+    this.validateBlobId(blobId as any);
 
     try {
-      const url = `${this.config.getAggregatorUrl()}${API_ENDPOINTS.BLOB.replace('{blobId}', blobId)}`;
+      const url = `${this?.config?.getAggregatorUrl()}${API_ENDPOINTS?.BLOB?.replace('{blobId}', blobId)}`;
       
       const response = await universalFetch(url, {
         method: 'HEAD',
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
+        if (response?.status === 404) {
           throw new WalrusStorageError(`Blob not found: ${blobId}`, 'getBlobInfo', blobId);
         }
-        throw ErrorHandler.createErrorFromResponse(response);
+        throw ErrorHandler.createErrorFromResponse(response as any);
       }
 
-      const contentLength = response.headers.get('content-length');
-      const size = contentLength ? parseInt(contentLength) : undefined;
+      const contentLength = response?.headers?.get('content-length');
+      const size = contentLength ? parseInt(contentLength as any) : undefined;
 
       return size !== undefined ? { size } : {};
     } catch (error) {
@@ -364,7 +364,7 @@ export class WalrusClient implements WalrusClientAdapter {
 
     // Simple cost calculation - would need to be updated based on actual Walrus pricing
     const writeCost = BigInt(Math.ceil(size / 1024)); // Cost per KB
-    const storageCost = BigInt(epochs) * writeCost;
+    const storageCost = BigInt(epochs as any) * writeCost;
     const totalCost = writeCost + storageCost;
 
     return {
@@ -397,7 +397,7 @@ export class WalrusClient implements WalrusClientAdapter {
     data: unknown,
     options?: WalrusUploadOptions
   ): Promise<WalrusUploadResponse> {
-    const jsonString = JSON.stringify(data);
+    const jsonString = JSON.stringify(data as any);
     return this.upload(jsonString, {
       ...options,
       contentType: 'application/json',
@@ -408,11 +408,11 @@ export class WalrusClient implements WalrusClientAdapter {
    * Download and parse JSON data
    */
   async downloadJson<T = unknown>(blobId: string): Promise<T> {
-    const blob = await this.download(blobId);
+    const blob = await this.download(blobId as any);
     const text = new TextDecoder().decode(blob.data);
     
     try {
-      return JSON.parse(text);
+      return JSON.parse(text as any);
     } catch (error) {
       throw new WalrusValidationError(
         `Invalid JSON in blob ${blobId}`,
@@ -434,7 +434,7 @@ export class WalrusClient implements WalrusClientAdapter {
     }
 
     const data = await file.arrayBuffer();
-    return this.upload(new Uint8Array(data), {
+    return this.upload(new Uint8Array(data as any), {
       ...options,
       contentType: file.type,
     });
@@ -444,22 +444,22 @@ export class WalrusClient implements WalrusClientAdapter {
    * Get public URL for a blob
    */
   getBlobUrl(blobId: string): string {
-    this.validateBlobId(blobId);
-    return `${this.config.getAggregatorUrl()}${API_ENDPOINTS.BLOB.replace('{blobId}', blobId)}`;
+    this.validateBlobId(blobId as any);
+    return `${this?.config?.getAggregatorUrl()}${API_ENDPOINTS?.BLOB?.replace('{blobId}', blobId)}`;
   }
 
   /**
    * Get storage information for a blob
    */
   async getStorageInfo(blobId: string): Promise<WalrusStorageInfo> {
-    const exists = await this.exists(blobId);
+    const exists = await this.exists(blobId as any);
     
     if (!exists) {
       return { exists: false };
     }
 
     try {
-      const blobInfo = await this.getBlobInfo(blobId);
+      const blobInfo = await this.getBlobInfo(blobId as any);
       let storageCost;
       
       if (blobInfo.size) {
@@ -560,7 +560,7 @@ export class WalrusClient implements WalrusClientAdapter {
     }
 
     if (RUNTIME.isNode && this.tempDir && fs && path && exec) {
-      return this.retrieveTodoViaCLI(blobId);
+      return this.retrieveTodoViaCLI(blobId as any);
     } else {
       return this.downloadJson<Todo>(blobId);
     }
@@ -585,7 +585,7 @@ export class WalrusClient implements WalrusClientAdapter {
     }
 
     if (RUNTIME.isNode && this.tempDir && fs && path && exec) {
-      return this.retrieveListViaCLI(blobId);
+      return this.retrieveListViaCLI(blobId as any);
     } else {
       return this.downloadJson<TodoList>(blobId);
     }
@@ -612,9 +612,9 @@ export class WalrusClient implements WalrusClientAdapter {
       fs.writeFileSync(tempFile, JSON.stringify(todoData, null, 2));
 
       const { promisify } = await import('util');
-      const execAsync = promisify(exec);
+      const execAsync = promisify(exec as any);
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command);
+      const { stdout } = await execAsync(command as any);
 
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
       if (!blobIdMatch) {
@@ -623,8 +623,8 @@ export class WalrusClient implements WalrusClientAdapter {
 
       return blobIdMatch[1];
     } finally {
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -639,9 +639,9 @@ export class WalrusClient implements WalrusClientAdapter {
       fs.writeFileSync(tempFile, JSON.stringify(list, null, 2));
 
       const { promisify } = await import('util');
-      const execAsync = promisify(exec);
+      const execAsync = promisify(exec as any);
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command);
+      const { stdout } = await execAsync(command as any);
 
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
       if (!blobIdMatch) {
@@ -650,8 +650,8 @@ export class WalrusClient implements WalrusClientAdapter {
 
       return blobIdMatch[1];
     } finally {
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -664,15 +664,15 @@ export class WalrusClient implements WalrusClientAdapter {
 
     try {
       const { promisify } = await import('util');
-      const execAsync = promisify(exec);
+      const execAsync = promisify(exec as any);
       const command = `${this.walrusPath} --config ${this.configPath} get ${blobId} --output ${tempFile}`;
-      await execAsync(command);
+      await execAsync(command as any);
 
       const data = fs.readFileSync(tempFile, 'utf8');
-      return JSON.parse(data);
+      return JSON.parse(data as any);
     } finally {
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -685,15 +685,15 @@ export class WalrusClient implements WalrusClientAdapter {
 
     try {
       const { promisify } = await import('util');
-      const execAsync = promisify(exec);
+      const execAsync = promisify(exec as any);
       const command = `${this.walrusPath} --config ${this.configPath} get ${blobId} --output ${tempFile}`;
-      await execAsync(command);
+      await execAsync(command as any);
 
       const data = fs.readFileSync(tempFile, 'utf8');
-      return JSON.parse(data);
+      return JSON.parse(data as any);
     } finally {
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempFile as any)) {
+        fs.unlinkSync(tempFile as any);
       }
     }
   }
@@ -720,20 +720,20 @@ export class WalrusClient implements WalrusClientAdapter {
         blobId: mockBlobId,
         transactionId: mockTxId,
         explorerUrl: `https://suiscan.xyz/testnet/tx/${mockTxId}`,
-        aggregatorUrl: `https://aggregator-testnet.walrus.space/v1/${mockBlobId}`,
+        aggregatorUrl: `https://aggregator-testnet?.walrus?.space/v1/${mockBlobId}`,
         networkInfo: {
-          network: this.config.getNetwork(),
+          network: this?.config?.getNetwork(),
           epochs
         }
       };
     }
 
     const blobId = await this.storeTodo(todo, epochs);
-    const network = this.config.getNetwork();
+    const network = this?.config?.getNetwork();
     
     return {
       blobId,
-      aggregatorUrl: this.getBlobUrl(blobId),
+      aggregatorUrl: this.getBlobUrl(blobId as any),
       networkInfo: {
         network,
         epochs
@@ -782,7 +782,7 @@ export class WalrusClient implements WalrusClientAdapter {
     if (RUNTIME.isNode && exec) {
       try {
         const { promisify } = await import('util');
-        const execAsync = promisify(exec);
+        const execAsync = promisify(exec as any);
         const { stdout } = await execAsync('sui client active-address');
         return stdout.trim();
       } catch (error) {
@@ -804,7 +804,7 @@ export class WalrusClient implements WalrusClientAdapter {
     if (RUNTIME.isNode && exec) {
       try {
         const { promisify } = await import('util');
-        const execAsync = promisify(exec);
+        const execAsync = promisify(exec as any);
         const { stdout } = await execAsync('sui client balance');
         const walMatch = stdout.match(/WAL Token\s+\d+\s+([\d.]+)\s+WAL/);
         if (walMatch) {

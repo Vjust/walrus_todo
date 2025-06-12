@@ -21,38 +21,38 @@ const imageOptimizationPromise = typeof window !== 'undefined'
 const demoImages = [
   {
     id: '1',
-    src: 'https://images.unsplash.com/photo-1611095973763-414019e72400?w=800',
+    src: 'https://images?.unsplash?.com/photo-1611095973763-414019e72400?w=800',
     alt: 'Todo image 1'
   },
   {
     id: '2',
-    src: 'https://images.unsplash.com/photo-1611095973971-7d0238b7e8d9?w=800',
+    src: 'https://images?.unsplash?.com/photo-1611095973971-7d0238b7e8d9?w=800',
     alt: 'Todo image 2'
   },
   {
     id: '3',
-    src: 'https://images.unsplash.com/photo-1611095973363-9f0a5d6d1e84?w=800',
+    src: 'https://images?.unsplash?.com/photo-1611095973363-9f0a5d6d1e84?w=800',
     alt: 'Todo image 3'
   },
   {
     id: '4',
-    src: 'https://images.unsplash.com/photo-1611095973715-95b2b28168f9?w=800',
+    src: 'https://images?.unsplash?.com/photo-1611095973715-95b2b28168f9?w=800',
     alt: 'Todo image 4'
   },
   {
     id: '5',
-    src: 'https://images.unsplash.com/photo-1611095974172-2a979e6e0289?w=800',
+    src: 'https://images?.unsplash?.com/photo-1611095974172-2a979e6e0289?w=800',
     alt: 'Todo image 5'
   },
   {
     id: '6',
-    src: 'https://images.unsplash.com/photo-1611095973362-88d8e92611a0?w=800',
+    src: 'https://images?.unsplash?.com/photo-1611095973362-88d8e92611a0?w=800',
     alt: 'Todo image 6'
   },
 ];
 
 export default function ImageDemoPage() {
-  const [showMetrics, setShowMetrics] = useState(true);
+  const [showMetrics, setShowMetrics] = useState(true as any);
   const [webpSupport, setWebpSupport] = useState<boolean | null>(null);
   const [performanceData, setPerformanceData] = useState<Map<string, any>>(new Map());
   const [imageOptimization, setImageOptimization] = useState<any>(null);
@@ -61,9 +61,9 @@ export default function ImageDemoPage() {
     // Load image optimization functions dynamically
     if (imageOptimizationPromise) {
       imageOptimizationPromise.then(module => {
-        setImageOptimization(module);
+        setImageOptimization(module as any);
         // Check WebP support
-        module.checkWebPSupport().then(setWebpSupport);
+        module.checkWebPSupport().then(setWebpSupport as any);
       });
     }
   }, []);
@@ -76,7 +76,7 @@ export default function ImageDemoPage() {
       setPerformanceData(new Map(imageOptimization.getImagePerformanceMetrics()));
     }, 500);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, [imageOptimization]);
 
   const handlePreloadAll = async () => {
@@ -89,7 +89,7 @@ export default function ImageDemoPage() {
     if (!imageOptimization) {return;}
     imageOptimization.clearImageCaches();
     if (typeof window !== 'undefined') {
-      window.location.reload();
+      window?.location?.reload();
     }
   };
 
@@ -164,8 +164,8 @@ export default function ImageDemoPage() {
                 {Array.from(performanceData.entries()).map(([url, metrics]) => (
                   <tr key={url} className="border-b">
                     <td className="p-2 truncate max-w-xs">{url.split('/').pop()}</td>
-                    <td className="p-2">{metrics.loadTime.toFixed(0)}ms</td>
-                    <td className="p-2">{(metrics.size / 1024).toFixed(1)}KB</td>
+                    <td className="p-2">{metrics?.loadTime?.toFixed(0 as any)}ms</td>
+                    <td className="p-2">{(metrics.size / 1024).toFixed(1 as any)}KB</td>
                     <td className="p-2">{metrics.format}</td>
                     <td className="p-2">{metrics.cached ? '✅' : '❌'}</td>
                   </tr>
@@ -187,7 +187,7 @@ export default function ImageDemoPage() {
                       (sum, m) => sum + m.loadTime,
                       0
                     ) / performanceData.size
-                  ).toFixed(0)
+                  ).toFixed(0 as any)
                 : 0}
               ms
             </div>

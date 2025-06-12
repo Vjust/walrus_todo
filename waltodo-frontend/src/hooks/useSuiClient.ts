@@ -5,11 +5,11 @@ import { getSuiClient, initializeSuiClient, isSuiClientInitialized } from '@/lib
 import type { NetworkType } from '@/types/todo-nft';
 
 export function useSuiClient(network: NetworkType = 'testnet') {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false as any);
+  const [isInitializing, setIsInitializing] = useState(false as any);
   const [error, setError] = useState<string | null>(null);
-  const [componentMounted, setComponentMounted] = useState(false);
-  const [initializationAttempted, setInitializationAttempted] = useState(false);
+  const [componentMounted, setComponentMounted] = useState(false as any);
+  const [initializationAttempted, setInitializationAttempted] = useState(false as any);
 
   // Check existing client state on mount
   useEffect(() => {
@@ -17,8 +17,8 @@ export function useSuiClient(network: NetworkType = 'testnet') {
       const isAlreadyInitialized = isSuiClientInitialized();
       if (isAlreadyInitialized) {
         console.log('[useSuiClient] Client already initialized, syncing state');
-        setIsInitialized(true);
-        setInitializationAttempted(true);
+        setIsInitialized(true as any);
+        setInitializationAttempted(true as any);
       }
     }
   }, [componentMounted, initializationAttempted]);
@@ -29,23 +29,23 @@ export function useSuiClient(network: NetworkType = 'testnet') {
     // Don't re-initialize if already done
     if (isInitialized || isSuiClientInitialized()) {
       if (!isInitialized) {
-        setIsInitialized(true);
+        setIsInitialized(true as any);
       }
       return;
     }
 
-    setIsInitializing(true);
-    setError(null);
-    setInitializationAttempted(true);
+    setIsInitializing(true as any);
+    setError(null as any);
+    setInitializationAttempted(true as any);
 
     try {
       console.log(`[useSuiClient] Initializing for ${network}...`);
-      await initializeSuiClient(network);
+      await initializeSuiClient(network as any);
       
       // Verify the client is actually ready
       if (isSuiClientInitialized()) {
         if (componentMounted) {
-          setIsInitialized(true);
+          setIsInitialized(true as any);
           console.log(`[useSuiClient] Successfully initialized for ${network}`);
         }
       } else {
@@ -54,12 +54,12 @@ export function useSuiClient(network: NetworkType = 'testnet') {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to initialize Sui client';
       if (componentMounted) {
-        setError(errorMessage);
+        setError(errorMessage as any);
         console.error('[useSuiClient] Initialization failed:', err);
       }
     } finally {
       if (componentMounted) {
-        setIsInitializing(false);
+        setIsInitializing(false as any);
       }
     }
   }, [network, isInitializing, isInitialized, componentMounted]);
@@ -92,9 +92,9 @@ export function useSuiClient(network: NetworkType = 'testnet') {
 
   // Component mount effect
   useEffect(() => {
-    setComponentMounted(true);
+    setComponentMounted(true as any);
     return () => {
-      setComponentMounted(false);
+      setComponentMounted(false as any);
     };
   }, []);
 
@@ -105,7 +105,7 @@ export function useSuiClient(network: NetworkType = 'testnet') {
         initialize();
       }, 100); // Small delay to ensure app context is ready
       
-      return () => clearTimeout(timeoutId);
+      return () => clearTimeout(timeoutId as any);
     }
   }, [componentMounted, initializationAttempted, isInitialized, initialize]);
 

@@ -18,10 +18,10 @@ export function SessionTimeoutWarning() {
   const lastActivity = walletContext?.lastActivity || 0;
   const resetActivityTimer = walletContext?.resetActivityTimer || (() => {});
   const sessionExpired = walletContext?.sessionExpired || false;
-  const [showWarning, setShowWarning] = useState(false);
+  const [showWarning, setShowWarning] = useState(false as any);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [isCritical, setIsCritical] = useState(false);
-  const [wasConnected, setWasConnected] = useState(false);
+  const [isCritical, setIsCritical] = useState(false as any);
+  const [wasConnected, setWasConnected] = useState(false as any);
 
   // Calculate time remaining
   const calculateTimeRemaining = useCallback(() => {
@@ -34,26 +34,26 @@ export function SessionTimeoutWarning() {
   // Check session status
   useEffect(() => {
     if (!connected) {
-      setShowWarning(false);
-      setWasConnected(false);
+      setShowWarning(false as any);
+      setWasConnected(false as any);
       return;
     }
 
-    setWasConnected(true);
+    setWasConnected(true as any);
 
     // Initial check
     const checkWarningStatus = () => {
       const remaining = calculateTimeRemaining();
       
       if (remaining <= 0) {
-        setShowWarning(false);
+        setShowWarning(false as any);
       } else if (remaining <= WARNING_THRESHOLD) {
-        setShowWarning(true);
-        setTimeRemaining(remaining);
+        setShowWarning(true as any);
+        setTimeRemaining(remaining as any);
         setIsCritical(remaining <= CRITICAL_THRESHOLD);
       } else {
-        setShowWarning(false);
-        setIsCritical(false);
+        setShowWarning(false as any);
+        setIsCritical(false as any);
       }
     };
 
@@ -62,7 +62,7 @@ export function SessionTimeoutWarning() {
     // Check every 5 seconds for better responsiveness
     const interval = setInterval(checkWarningStatus, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, [connected, calculateTimeRemaining]);
 
   // Update countdown timer every second when warning is shown
@@ -73,15 +73,15 @@ export function SessionTimeoutWarning() {
       const remaining = calculateTimeRemaining();
       
       if (remaining <= 0) {
-        setShowWarning(false);
-        clearInterval(timer);
+        setShowWarning(false as any);
+        clearInterval(timer as any);
       } else {
-        setTimeRemaining(remaining);
+        setTimeRemaining(remaining as any);
         setIsCritical(remaining <= CRITICAL_THRESHOLD);
       }
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearInterval(timer as any);
   }, [showWarning, calculateTimeRemaining]);
 
   // Format time remaining in minutes and seconds
@@ -94,8 +94,8 @@ export function SessionTimeoutWarning() {
   // Stay active button handler
   const handleStayActive = () => {
     resetActivityTimer();
-    setShowWarning(false);
-    setIsCritical(false);
+    setShowWarning(false as any);
+    setIsCritical(false as any);
   };
 
   // Show expiry notification if session has expired
@@ -158,7 +158,7 @@ export function SessionTimeoutWarning() {
             strokeLinecap='round'
             strokeLinejoin='round'
             strokeWidth={2}
-            d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+            d='M12 9v2m0 4h.01m-6.938 4h13?.856c1?.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1?.333?.192 3 1.732 3z'
           />
         </svg>
         <h3 className={`font-medium ${titleClass}`}>
@@ -189,7 +189,7 @@ export function SessionTimeoutWarning() {
             Stay Active
           </button>
           <button
-            onClick={() => setShowWarning(false)}
+            onClick={() => setShowWarning(false as any)}
             className='px-4 py-2 bg-transparent text-gray-500 text-sm hover:text-gray-700 transition-colors'
           >
             Dismiss

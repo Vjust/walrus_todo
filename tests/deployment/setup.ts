@@ -11,7 +11,7 @@
 import 'jest-extended';
 
 // Global test timeout for deployment operations
-jest.setTimeout(30000);
+jest.setTimeout(30000 as any);
 
 // Mock console methods to reduce noise in tests
 const originalConsole = { ...console };
@@ -23,7 +23,7 @@ beforeEach(() => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   
   // Keep console.error for debugging
-  console.error = originalConsole.error;
+  console?.error = originalConsole.error;
 });
 
 afterEach(() => {
@@ -32,9 +32,9 @@ afterEach(() => {
 });
 
 // Global test utilities
-global.testUtils = {
+global?.testUtils = {
   // Generate random test identifiers
-  generateTestId: () => `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  generateTestId: () => `test-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`,
   
   // Create temporary file paths
   getTempPath: (filename: string) => `/tmp/walrus-test-${Date.now()}-${filename}`,
@@ -44,7 +44,7 @@ global.testUtils = {
   
   // Test data generators
   generateMockConfig: (network: 'testnet' | 'mainnet' = 'testnet') => ({
-    [`waltodo-${global.testUtils.generateTestId()}`]: {
+    [`waltodo-${global?.testUtils?.generateTestId()}`]: {
       source: '/build',
       network,
       headers: {
@@ -58,16 +58,16 @@ global.testUtils = {
     const originalEnv = { ...process.env };
     Object.assign(process.env, env);
     return () => {
-      process.env = originalEnv;
+      process?.env = originalEnv;
     };
   }
 };
 
 // Setup test environment variables
 beforeAll(() => {
-  process.env.NODE_ENV = 'test';
-  process.env.WALRUS_TEST_MODE = 'true';
-  process.env.SUPPRESS_NO_CONFIG_WARNING = 'true';
+  process.env?.NODE_ENV = 'test';
+  process.env?.WALRUS_TEST_MODE = 'true';
+  process.env?.SUPPRESS_NO_CONFIG_WARNING = 'true';
 });
 
 // Global error handler for unhandled promises
@@ -97,7 +97,7 @@ declare global {
 // Custom Jest matchers for deployment testing
 expect.extend({
   toBeValidUrl(received: string) {
-    const pass = /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(received);
+    const pass = /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(received as any);
     return {
       message: () => 
         pass 
@@ -108,7 +108,7 @@ expect.extend({
   },
   
   toBeValidWalrusUrl(received: string) {
-    const pass = /^https:\/\/[a-z0-9]+\.walrus\.site$/i.test(received);
+    const pass = /^https:\/\/[a-z0-9]+\.walrus\.site$/i.test(received as any);
     return {
       message: () =>
         pass

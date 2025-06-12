@@ -47,13 +47,13 @@ export class ResponseParser {
         // If it's already the correct type, return it
         if (
           // Arrays
-          (Array.isArray(defaultValue) && Array.isArray(jsonStringOrObject)) ||
+          (Array.isArray(defaultValue as any) && Array.isArray(jsonStringOrObject as any)) ||
           // Objects
           (typeof defaultValue === 'object' &&
             defaultValue !== null &&
             typeof jsonStringOrObject === 'object' &&
             jsonStringOrObject !== null &&
-            !Array.isArray(jsonStringOrObject))
+            !Array.isArray(jsonStringOrObject as any))
         ) {
           return jsonStringOrObject as T;
         }
@@ -75,12 +75,12 @@ export class ResponseParser {
 
       // Remove markdown code blocks if present
       const codeBlockRegex = /^```(?:json)?\s*([\s\S]*?)```$/;
-      const match = processed.match(codeBlockRegex);
+      const match = processed.match(codeBlockRegex as any);
       if (match && match[1]) {
         processed = match[1].trim();
       }
 
-      const parsed: unknown = JSON.parse(processed);
+      const parsed: unknown = JSON.parse(processed as any);
       return parsed as T;
     } catch (_error) {
       logger.error('Error parsing JSON response:', _error);
@@ -117,13 +117,13 @@ export class ResponseParser {
     try {
       // Try to find JSON-like content in the response
       const jsonRegex = /\{[\s\S]*?\}|\[[\s\S]*?\]/g;
-      const matches = text.match(jsonRegex);
+      const matches = text.match(jsonRegex as any);
 
       if (matches && matches.length > 0) {
         // Try each match until we find valid JSON
         for (const match of matches) {
           try {
-            const parsed: unknown = JSON.parse(match);
+            const parsed: unknown = JSON.parse(match as any);
             return parsed as T;
           } catch (e) {
             // Continue to next match
@@ -184,7 +184,7 @@ export class ResponseParser {
                     : null;
 
         case 'array':
-          if (Array.isArray(response)) {
+          if (Array.isArray(response as any)) {
             return response as unknown as T;
           } else if (typeof response === 'string') {
             return this.parseJson<T>(response, [] as unknown as T);
@@ -192,7 +192,7 @@ export class ResponseParser {
           return null;
 
         case 'object':
-          if (typeof response === 'object' && !Array.isArray(response)) {
+          if (typeof response === 'object' && !Array.isArray(response as any)) {
             return response as T;
           } else if (typeof response === 'string') {
             return this.parseJson<T>(response, {} as T);
@@ -222,7 +222,7 @@ export class ResponseParser {
       return false;
     }
 
-    for (const [key, type] of Object.entries(schema)) {
+    for (const [key, type] of Object.entries(schema as any)) {
       // Skip optional properties (marked with ?)
       if (key.endsWith('?') && !(key.slice(0, -1) in response)) {
         continue;
@@ -247,13 +247,13 @@ export class ResponseParser {
           if (typeof value !== 'boolean') return false;
           break;
         case 'array':
-          if (!Array.isArray(value)) return false;
+          if (!Array.isArray(value as any)) return false;
           break;
         case 'object':
           if (
             typeof value !== 'object' ||
             value === null ||
-            Array.isArray(value)
+            Array.isArray(value as any)
           )
             return false;
           break;

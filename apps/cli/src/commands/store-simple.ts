@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
@@ -8,7 +8,7 @@ import * as path from 'path';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec as any);
 
 /**
  * @class StoreSimpleCommand
@@ -52,18 +52,18 @@ export default class StoreSimpleCommand extends BaseCommand {
   private todoService = new TodoService();
 
   async run() {
-    const { flags } = await this.parse(StoreSimpleCommand);
+    const { flags } = await this.parse(StoreSimpleCommand as any);
 
     try {
       // Step 1: Find the todo
       this.log(chalk.blue(`Loading configuration...`));
-      const list = await this.todoService.getList(flags.list);
+      const list = await this?.todoService?.getList(flags.list);
       if (!list) {
         throw new CLIError(`List "${flags.list}" not found`, 'LIST_NOT_FOUND');
       }
 
-      const todo = list.todos.find(
-        t => t.id === flags.todo || t.title === flags.todo
+      const todo = list?.todos?.find(
+        t => t?.id === flags.todo || t?.title === flags.todo
       );
       if (!todo) {
         throw new CLIError(
@@ -76,7 +76,7 @@ export default class StoreSimpleCommand extends BaseCommand {
 
       // Step 2: Create a temporary JSON file with the todo data
       const tempDir = path.join(process.cwd(), '.walrus-temp');
-      if (!fs.existsSync(tempDir)) {
+      if (!fs.existsSync(tempDir as any)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
@@ -115,7 +115,7 @@ export default class StoreSimpleCommand extends BaseCommand {
       const walrusCommand = `~/.local/bin/walrus --context ${flags.network} store --epochs ${flags.epochs} ${tempFile}`;
 
       try {
-        const { stdout } = await execAsync(walrusCommand);
+        const { stdout } = await execAsync(walrusCommand as any);
 
         // Parse the output to extract blob ID and transaction info
         const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -131,7 +131,7 @@ export default class StoreSimpleCommand extends BaseCommand {
         const cost = costMatch ? costMatch[1] : 'unknown';
 
         // Step 5: Update the todo with the blob ID
-        await this.todoService.updateTodo(flags.list, todo.id, {
+        await this?.todoService?.updateTodo(flags.list, todo.id, {
           walrusBlobId: blobId,
           nftObjectId: suiObjectId,
           updatedAt: new Date().toISOString(),
@@ -139,20 +139,20 @@ export default class StoreSimpleCommand extends BaseCommand {
 
         // Step 6: Display success information
         this.log('');
-        this.log(chalk.green.bold('✅ Todo stored successfully on Walrus!'));
+        this.log(chalk?.green?.bold('✅ Todo stored successfully on Walrus!'));
         this.log('');
-        this.log(chalk.white.bold('Storage Details:'));
+        this.log(chalk?.white?.bold('Storage Details:'));
         this.log(chalk.white(`  Todo: ${chalk.cyan(todo.title)}`));
-        this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId)}`));
-        this.log(chalk.white(`  Sui Object ID: ${chalk.yellow(suiObjectId)}`));
+        this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId as any)}`));
+        this.log(chalk.white(`  Sui Object ID: ${chalk.yellow(suiObjectId as any)}`));
         this.log(chalk.white(`  Network: ${chalk.cyan(flags.network)}`));
         this.log(chalk.white(`  Storage Cost: ${chalk.green(cost + ' WAL')}`));
         this.log(chalk.white(`  Epochs: ${chalk.cyan(flags.epochs)}`));
         this.log('');
-        this.log(chalk.white.bold('Access your todo:'));
+        this.log(chalk?.white?.bold('Access your todo:'));
         this.log(
           chalk.white(
-            `  Walrus URL: ${chalk.cyan(`https://blob.wal.app/${blobId}`)}`
+            `  Walrus URL: ${chalk.cyan(`https://blob?.wal?.app/${blobId}`)}`
           )
         );
 
@@ -172,7 +172,7 @@ export default class StoreSimpleCommand extends BaseCommand {
         }
       } catch (error) {
         // Check if it's a WAL balance issue
-        if (error.message.includes('could not find WAL coins')) {
+        if (error?.message?.includes('could not find WAL coins')) {
           throw new CLIError(
             'Insufficient WAL balance. Run "walrus --context ' +
               flags.network +
@@ -187,13 +187,13 @@ export default class StoreSimpleCommand extends BaseCommand {
       }
 
       // Clean up temp file
-      fs.unlinkSync(tempFile);
+      fs.unlinkSync(tempFile as any);
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Store failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Store failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'STORE_FAILED'
       );
     }

@@ -76,7 +76,7 @@ export function generateSkeletonClasses(
   variant: SkeletonVariant = 'pulse',
   baseClasses = 'bg-gray-200 dark:bg-gray-700 rounded'
 ): string {
-  return `${baseClasses} ${getSkeletonVariant(variant)}`;
+  return `${baseClasses} ${getSkeletonVariant(variant as any)}`;
 }
 
 /**

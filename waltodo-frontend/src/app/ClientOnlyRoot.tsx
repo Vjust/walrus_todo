@@ -20,7 +20,7 @@ const AppInitializationContext = createContext<AppInitializationContextType>(cre
 
 // Hook to use app initialization context
 export const useAppInitialization = () => {
-  const context = useContext(AppInitializationContext);
+  const context = useContext(AppInitializationContext as any);
   if (!context) {
     // Return safe defaults instead of throwing during SSR/initialization phase
     return createSafeDefaultAppContext();
@@ -34,15 +34,15 @@ interface ClientOnlyRootProps {
 
 // Client-only initialization provider
 export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
-  const [isClient, setIsClient] = useState(false);
-  const [isAppReady, setIsAppReady] = useState(false);
-  const [isSuiClientReady, setIsSuiClientReady] = useState(false);
+  const [isClient, setIsClient] = useState(false as any);
+  const [isAppReady, setIsAppReady] = useState(false as any);
+  const [isSuiClientReady, setIsSuiClientReady] = useState(false as any);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
   // Client-side initialization effect
   useEffect(() => {
-    setIsClient(true);
-    setIsAppReady(true);
+    setIsClient(true as any);
+    setIsAppReady(true as any);
     
     // Initialize Sui client
     const initializeApp = async () => {
@@ -50,10 +50,10 @@ export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
         if (!isSuiClientInitialized()) {
           await initializeSuiClient('testnet');
         }
-        setIsSuiClientReady(true);
+        setIsSuiClientReady(true as any);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to initialize Sui client';
-        setInitializationError(errorMessage);
+        setInitializationError(errorMessage as any);
         console.warn('[ClientOnlyRoot] Sui client initialization failed:', error);
       }
     };
@@ -61,7 +61,7 @@ export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
     // Delay initialization to ensure proper hydration
     const timeoutId = setTimeout(initializeApp, 500);
     
-    return () => clearTimeout(timeoutId);
+    return () => clearTimeout(timeoutId as any);
   }, []);
 
   const contextValue: AppInitializationContextType = {

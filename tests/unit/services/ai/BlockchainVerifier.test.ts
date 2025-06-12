@@ -36,7 +36,7 @@ describe('BlockchainVerifier', () => {
       getVerification: jest.fn(),
       listVerifications: jest.fn(),
       getRegistryAddress: jest.fn().mockResolvedValue('0xregistry123'),
-      getSigner: jest.fn().mockReturnValue(mockSigner),
+      getSigner: jest.fn().mockReturnValue(mockSigner as any),
     };
 
     // Create mock credential adapter
@@ -64,15 +64,15 @@ describe('BlockchainVerifier', () => {
 
   describe('constructor', () => {
     it('should create instance with only verifier adapter', () => {
-      const verifier = new BlockchainVerifier(mockVerifierAdapter);
-      expect(verifier).toBeDefined();
-      expect(verifier.getVerifierAdapter()).toBe(mockVerifierAdapter);
+      const verifier = new BlockchainVerifier(mockVerifierAdapter as any);
+      expect(verifier as any).toBeDefined();
+      expect(verifier.getVerifierAdapter()).toBe(mockVerifierAdapter as any);
       expect(verifier.getCredentialAdapter()).toBeUndefined();
     });
 
     it('should create instance with all adapters', () => {
-      expect(blockchainVerifier).toBeDefined();
-      expect(blockchainVerifier.getVerifierAdapter()).toBe(mockVerifierAdapter);
+      expect(blockchainVerifier as any).toBeDefined();
+      expect(blockchainVerifier.getVerifierAdapter()).toBe(mockVerifierAdapter as any);
       expect(blockchainVerifier.getCredentialAdapter()).toBe(
         mockCredentialAdapter
       );
@@ -81,15 +81,15 @@ describe('BlockchainVerifier', () => {
 
   describe('setters', () => {
     it('should set credential adapter', () => {
-      const newVerifier = new BlockchainVerifier(mockVerifierAdapter);
+      const newVerifier = new BlockchainVerifier(mockVerifierAdapter as any);
       expect(newVerifier.getCredentialAdapter()).toBeUndefined();
 
-      newVerifier.setCredentialAdapter(mockCredentialAdapter);
-      expect(newVerifier.getCredentialAdapter()).toBe(mockCredentialAdapter);
+      newVerifier.setCredentialAdapter(mockCredentialAdapter as any);
+      expect(newVerifier.getCredentialAdapter()).toBe(mockCredentialAdapter as any);
     });
 
     it('should set Walrus adapter', async () => {
-      const newVerifier = new BlockchainVerifier(mockVerifierAdapter);
+      const newVerifier = new BlockchainVerifier(mockVerifierAdapter as any);
 
       // Initially no Walrus adapter configured
       await expect(
@@ -105,8 +105,8 @@ describe('BlockchainVerifier', () => {
       ).rejects.toThrow('Walrus adapter not configured');
 
       // After setting adapter, it should be available (tested indirectly)
-      newVerifier.setWalrusAdapter(mockWalrusAdapter);
-      expect(newVerifier).toBeDefined(); // Verifies setter completed successfully
+      newVerifier.setWalrusAdapter(mockWalrusAdapter as any);
+      expect(newVerifier as any).toBeDefined(); // Verifies setter completed successfully
     });
   });
 
@@ -130,25 +130,25 @@ describe('BlockchainVerifier', () => {
     };
 
     it('should verify operation without Walrus storage', async () => {
-      const verifierWithoutWalrus = new BlockchainVerifier(mockVerifierAdapter);
-      mockVerifierAdapter.createVerification.mockResolvedValue(mockRecord);
+      const verifierWithoutWalrus = new BlockchainVerifier(mockVerifierAdapter as any);
+      mockVerifierAdapter?.createVerification?.mockResolvedValue(mockRecord as any);
 
-      const result = await verifierWithoutWalrus.verifyOperation(mockParams);
+      const result = await verifierWithoutWalrus.verifyOperation(mockParams as any);
 
       expect(mockVerifierAdapter.createVerification).toHaveBeenCalledWith(
         mockParams
       );
-      expect(result).toEqual(mockRecord);
+      expect(result as any).toEqual(mockRecord as any);
     });
 
     it('should verify operation with Walrus storage', async () => {
       const blobResult = { blobId: 'blob_123', blobObject: {} };
-      mockWalrusAdapter.writeBlob.mockResolvedValue(blobResult);
-      mockVerifierAdapter.createVerification.mockResolvedValue(mockRecord);
+      mockWalrusAdapter?.writeBlob?.mockResolvedValue(blobResult as any);
+      mockVerifierAdapter?.createVerification?.mockResolvedValue(mockRecord as any);
 
-      const result = await blockchainVerifier.verifyOperation(mockParams);
+      const result = await blockchainVerifier.verifyOperation(mockParams as any);
 
-      expect(mockWalrusAdapter.writeBlob).toHaveBeenCalledTimes(2);
+      expect(mockWalrusAdapter.writeBlob).toHaveBeenCalledTimes(2 as any);
       expect(mockWalrusAdapter.writeBlob).toHaveBeenCalledWith({
         blob: new TextEncoder().encode(mockParams.request),
         signer: mockSigner,
@@ -171,35 +171,35 @@ describe('BlockchainVerifier', () => {
       expect(mockVerifierAdapter.createVerification).toHaveBeenCalledWith(
         expectedParams
       );
-      expect(result).toEqual(mockRecord);
+      expect(result as any).toEqual(mockRecord as any);
     });
 
     it('should continue with hashes if Walrus storage fails', async () => {
-      mockWalrusAdapter.writeBlob.mockRejectedValue(
+      mockWalrusAdapter?.writeBlob?.mockRejectedValue(
         new Error('Storage failed')
       );
-      mockVerifierAdapter.createVerification.mockResolvedValue(mockRecord);
+      mockVerifierAdapter?.createVerification?.mockResolvedValue(mockRecord as any);
 
-      const result = await blockchainVerifier.verifyOperation(mockParams);
+      const result = await blockchainVerifier.verifyOperation(mockParams as any);
 
       expect(mockWalrusAdapter.writeBlob).toHaveBeenCalled();
       expect(mockVerifierAdapter.createVerification).toHaveBeenCalledWith(
         mockParams
       );
-      expect(result).toEqual(mockRecord);
+      expect(result as any).toEqual(mockRecord as any);
     });
 
     it('should not use Walrus for public privacy level', async () => {
       const publicParams = { ...mockParams, privacyLevel: 'public' };
-      mockVerifierAdapter.createVerification.mockResolvedValue(mockRecord);
+      mockVerifierAdapter?.createVerification?.mockResolvedValue(mockRecord as any);
 
-      const result = await blockchainVerifier.verifyOperation(publicParams);
+      const result = await blockchainVerifier.verifyOperation(publicParams as any);
 
       expect(mockWalrusAdapter.writeBlob).not.toHaveBeenCalled();
       expect(mockVerifierAdapter.createVerification).toHaveBeenCalledWith(
         publicParams
       );
-      expect(result).toEqual(mockRecord);
+      expect(result as any).toEqual(mockRecord as any);
     });
   });
 
@@ -219,17 +219,17 @@ describe('BlockchainVerifier', () => {
     };
 
     it('should verify credential successfully', async () => {
-      mockCredentialAdapter.verifyCredential.mockResolvedValue(
+      mockCredentialAdapter?.verifyCredential?.mockResolvedValue(
         mockCredentialResult
       );
 
       const result =
-        await blockchainVerifier.verifyCredential(mockCredentialParams);
+        await blockchainVerifier.verifyCredential(mockCredentialParams as any);
 
       expect(mockCredentialAdapter.verifyCredential).toHaveBeenCalledWith(
         mockCredentialParams
       );
-      expect(result).toEqual(mockCredentialResult);
+      expect(result as any).toEqual(mockCredentialResult as any);
     });
 
     it('should throw error if credential adapter not configured', async () => {
@@ -238,7 +238,7 @@ describe('BlockchainVerifier', () => {
       );
 
       await expect(
-        verifierWithoutCredential.verifyCredential(mockCredentialParams)
+        verifierWithoutCredential.verifyCredential(mockCredentialParams as any)
       ).rejects.toThrow('Credential adapter not configured');
     });
   });
@@ -255,7 +255,7 @@ describe('BlockchainVerifier', () => {
     };
 
     it('should verify record against provided data', async () => {
-      mockVerifierAdapter.verifyRecord.mockResolvedValue(true);
+      mockVerifierAdapter?.verifyRecord?.mockResolvedValue(true as any);
 
       const result = await blockchainVerifier.verifyRecord(
         mockRecord,
@@ -268,7 +268,7 @@ describe('BlockchainVerifier', () => {
         'request',
         'response'
       );
-      expect(result).toBe(true);
+      expect(result as any).toBe(true as any);
     });
   });
 
@@ -284,7 +284,7 @@ describe('BlockchainVerifier', () => {
     };
 
     it('should get verification by ID', async () => {
-      mockVerifierAdapter.getVerification.mockResolvedValue(mockRecord);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(mockRecord as any);
 
       const result =
         await blockchainVerifier.getVerification('verification_123');
@@ -292,7 +292,7 @@ describe('BlockchainVerifier', () => {
       expect(mockVerifierAdapter.getVerification).toHaveBeenCalledWith(
         'verification_123'
       );
-      expect(result).toEqual(mockRecord);
+      expect(result as any).toEqual(mockRecord as any);
     });
   });
 
@@ -319,18 +319,18 @@ describe('BlockchainVerifier', () => {
     ];
 
     it('should list verifications without user address', async () => {
-      mockVerifierAdapter.listVerifications.mockResolvedValue(mockRecords);
+      mockVerifierAdapter?.listVerifications?.mockResolvedValue(mockRecords as any);
 
       const result = await blockchainVerifier.listVerifications();
 
       expect(mockVerifierAdapter.listVerifications).toHaveBeenCalledWith(
         undefined
       );
-      expect(result).toEqual(mockRecords);
+      expect(result as any).toEqual(mockRecords as any);
     });
 
     it('should list verifications with user address', async () => {
-      mockVerifierAdapter.listVerifications.mockResolvedValue(mockRecords);
+      mockVerifierAdapter?.listVerifications?.mockResolvedValue(mockRecords as any);
 
       const result =
         await blockchainVerifier.listVerifications('0x1234567890abcdef');
@@ -338,7 +338,7 @@ describe('BlockchainVerifier', () => {
       expect(mockVerifierAdapter.listVerifications).toHaveBeenCalledWith(
         '0x1234567890abcdef'
       );
-      expect(result).toEqual(mockRecords);
+      expect(result as any).toEqual(mockRecords as any);
     });
   });
 
@@ -361,20 +361,20 @@ describe('BlockchainVerifier', () => {
       const responseBlob = new TextEncoder().encode('original response');
 
       mockWalrusAdapter.readBlob
-        .mockResolvedValueOnce(requestBlob)
-        .mockResolvedValueOnce(responseBlob);
+        .mockResolvedValueOnce(requestBlob as any)
+        .mockResolvedValueOnce(responseBlob as any);
 
       const result =
-        await blockchainVerifier.retrieveVerificationData(mockRecord);
+        await blockchainVerifier.retrieveVerificationData(mockRecord as any);
 
-      expect(mockWalrusAdapter.readBlob).toHaveBeenCalledTimes(2);
+      expect(mockWalrusAdapter.readBlob).toHaveBeenCalledTimes(2 as any);
       expect(mockWalrusAdapter.readBlob).toHaveBeenCalledWith({
         blobId: 'request_blob_123',
       });
       expect(mockWalrusAdapter.readBlob).toHaveBeenCalledWith({
         blobId: 'response_blob_123',
       });
-      expect(result).toEqual({
+      expect(result as any).toEqual({
         request: 'original request',
         response: 'original response',
       });
@@ -387,25 +387,25 @@ describe('BlockchainVerifier', () => {
       };
 
       await expect(
-        blockchainVerifier.retrieveVerificationData(recordWithoutBlobs)
+        blockchainVerifier.retrieveVerificationData(recordWithoutBlobs as any)
       ).rejects.toThrow(
         'Verification does not contain blob IDs for full data retrieval'
       );
     });
 
     it('should throw error if Walrus adapter not configured', async () => {
-      const verifierWithoutWalrus = new BlockchainVerifier(mockVerifierAdapter);
+      const verifierWithoutWalrus = new BlockchainVerifier(mockVerifierAdapter as any);
 
       await expect(
-        verifierWithoutWalrus.retrieveVerificationData(mockRecord)
+        verifierWithoutWalrus.retrieveVerificationData(mockRecord as any)
       ).rejects.toThrow('Walrus adapter not configured');
     });
 
     it('should throw error if blob retrieval fails', async () => {
-      mockWalrusAdapter.readBlob.mockRejectedValue(new Error('Read failed'));
+      mockWalrusAdapter?.readBlob?.mockRejectedValue(new Error('Read failed'));
 
       await expect(
-        blockchainVerifier.retrieveVerificationData(mockRecord)
+        blockchainVerifier.retrieveVerificationData(mockRecord as any)
       ).rejects.toThrow('Failed to retrieve full data:');
     });
   });
@@ -422,7 +422,7 @@ describe('BlockchainVerifier', () => {
     };
 
     it('should generate a base64 encoded proof', async () => {
-      mockVerifierAdapter.getVerification.mockResolvedValue(mockRecord);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(mockRecord as any);
 
       const proof =
         await blockchainVerifier.generateVerificationProof('verification_123');
@@ -434,7 +434,7 @@ describe('BlockchainVerifier', () => {
 
       // Decode and verify the proof
       const decodedProof = JSON.parse(Buffer.from(proof, 'base64').toString());
-      expect(decodedProof).toMatchObject({
+      expect(decodedProof as any).toMatchObject({
         verificationId: 'verification_123',
         verifierAddress: '0xregistry123',
         timestamp: 1234567890,
@@ -447,7 +447,7 @@ describe('BlockchainVerifier', () => {
           objectId: 'verification_123',
           registryId: '0xregistry123',
         },
-        verificationUrl: 'https://explorer.sui.io/objects/verification_123',
+        verificationUrl: 'https://explorer?.sui?.io/objects/verification_123',
       });
     });
   });
@@ -476,21 +476,21 @@ describe('BlockchainVerifier', () => {
         objectId: 'verification_123',
         registryId: '0xregistry123',
       },
-      verificationUrl: 'https://explorer.sui.io/objects/verification_123',
+      verificationUrl: 'https://explorer?.sui?.io/objects/verification_123',
     };
 
     it('should verify a valid proof', async () => {
-      const proofString = Buffer.from(JSON.stringify(validProof)).toString(
+      const proofString = Buffer.from(JSON.stringify(validProof as any)).toString(
         'base64'
       );
-      mockVerifierAdapter.getVerification.mockResolvedValue(mockRecord);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(mockRecord as any);
 
-      const result = await blockchainVerifier.verifyProof(proofString);
+      const result = await blockchainVerifier.verifyProof(proofString as any);
 
       expect(mockVerifierAdapter.getVerification).toHaveBeenCalledWith(
         'verification_123'
       );
-      expect(result).toEqual({
+      expect(result as any).toEqual({
         isValid: true,
         record: mockRecord,
       });
@@ -501,28 +501,28 @@ describe('BlockchainVerifier', () => {
         ...validProof,
         requestHash: 'wrong_hash',
       };
-      const proofString = Buffer.from(JSON.stringify(invalidProof)).toString(
+      const proofString = Buffer.from(JSON.stringify(invalidProof as any)).toString(
         'base64'
       );
-      mockVerifierAdapter.getVerification.mockResolvedValue(mockRecord);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(mockRecord as any);
 
-      const result = await blockchainVerifier.verifyProof(proofString);
+      const result = await blockchainVerifier.verifyProof(proofString as any);
 
-      expect(result).toEqual({
+      expect(result as any).toEqual({
         isValid: false,
         record: undefined,
       });
     });
 
     it('should reject if verification record not found', async () => {
-      const proofString = Buffer.from(JSON.stringify(validProof)).toString(
+      const proofString = Buffer.from(JSON.stringify(validProof as any)).toString(
         'base64'
       );
-      mockVerifierAdapter.getVerification.mockResolvedValue(null);
+      mockVerifierAdapter?.getVerification?.mockResolvedValue(null as any);
 
-      const result = await blockchainVerifier.verifyProof(proofString);
+      const result = await blockchainVerifier.verifyProof(proofString as any);
 
-      expect(result).toEqual({
+      expect(result as any).toEqual({
         isValid: false,
       });
     });
@@ -532,7 +532,7 @@ describe('BlockchainVerifier', () => {
         'invalid_base64_proof'
       );
 
-      expect(result).toEqual({
+      expect(result as any).toEqual({
         isValid: false,
       });
     });
@@ -542,7 +542,7 @@ describe('BlockchainVerifier', () => {
     it('should return the signer from verifier adapter', () => {
       const signer = blockchainVerifier.getSigner();
 
-      expect(signer).toBe(mockSigner);
+      expect(signer as any).toBe(mockSigner as any);
       expect(mockVerifierAdapter.getSigner).toHaveBeenCalled();
     });
   });

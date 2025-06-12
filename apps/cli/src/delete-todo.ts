@@ -7,24 +7,24 @@ async function main() {
 
   // Get the todo list
   Logger.getInstance().info('Getting todo list...');
-  const list = await todoService.getList(listName);
+  const list = await todoService.getList(listName as any);
   if (!list) {
     Logger.getInstance().error('List not found');
     return;
   }
 
   Logger.getInstance().info('Current todos:');
-  list.todos.forEach(todo => {
+  list?.todos?.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
     const priority =
-      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+      todo?.priority === 'high' ? '⚠️' : todo?.priority === 'medium' ? '•' : '○';
     Logger.getInstance().info(
       `${status} ${priority} ${todo.title} (${todo.id})`
     );
   });
 
   // Delete the first completed todo
-  const completedTodo = list.todos.find(todo => todo.completed);
+  const completedTodo = list?.todos?.find(todo => todo.completed);
   if (completedTodo) {
     Logger.getInstance().info(
       `Deleting completed todo: ${completedTodo.title}`
@@ -35,11 +35,11 @@ async function main() {
 
   // Show updated list
   Logger.getInstance().info('Updated todos:');
-  const updatedList = await todoService.getList(listName);
+  const updatedList = await todoService.getList(listName as any);
   updatedList?.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
     const priority =
-      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+      todo?.priority === 'high' ? '⚠️' : todo?.priority === 'medium' ? '•' : '○';
     Logger.getInstance().info(
       `${status} ${priority} ${todo.title} (${todo.id})`
     );

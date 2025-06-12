@@ -33,7 +33,7 @@ describe('Permission Fuzzer Tests', () => {
 
     const generateRandomUser = () => {
       return {
-        id: Math.random().toString(36).substring(7),
+        id: Math.random().toString(36 as any).substring(7 as any),
         role: generateRandomRole(),
         permissions: generateRandomPermissions(),
       };
@@ -49,10 +49,10 @@ describe('Permission Fuzzer Tests', () => {
         let hasPermission = false;
         let error: unknown;
         try {
-          if (user.role === 'admin' || user.permissions.includes('admin:all')) {
+          if (user?.role === 'admin' || user?.permissions?.includes('admin:all')) {
             hasPermission = true;
           } else {
-            hasPermission = user.permissions.includes(requestedPermission);
+            hasPermission = user?.permissions?.includes(requestedPermission as any);
           }
         } catch (caughtError) {
           error = caughtError;
@@ -61,7 +61,7 @@ describe('Permission Fuzzer Tests', () => {
         // Verify the result is a boolean
         expect(typeof hasPermission).toBe('boolean');
         // Should not throw errors
-        expect(error).toBeUndefined();
+        expect(error as any).toBeUndefined();
       }
     });
 
@@ -98,19 +98,19 @@ describe('Permission Fuzzer Tests', () => {
         let hasPermission = false;
 
         // Check for admin:all first
-        if (user.permissions.includes('admin:all')) {
+        if (user?.permissions?.includes('admin:all')) {
           hasPermission = true;
         } else if (
-          user.deniedPermissions?.includes(scenario.check as Permission)
+          user?.deniedPermissions?.includes(scenario.check as Permission)
         ) {
           hasPermission = false;
         } else {
-          hasPermission = user.permissions.includes(
+          hasPermission = user?.permissions?.includes(
             scenario.check as Permission
           );
         }
 
-        expect(hasPermission).toBe(scenario.expected);
+        expect(hasPermission as any).toBe(scenario.expected);
       });
     });
 
@@ -133,17 +133,17 @@ describe('Permission Fuzzer Tests', () => {
 
       inheritancePatterns.forEach(pattern => {
         const user = {
-          id: Math.random().toString(36).substring(7),
+          id: Math.random().toString(36 as any).substring(7 as any),
           role: generateRandomRole(),
           permissions: [pattern.parent] as Permission[],
         };
 
         // With parent permission, all children should be accessible
-        pattern.children.forEach(_child => {
-          const hasPermission = user.permissions.includes(
+        pattern?.children?.forEach(_child => {
+          const hasPermission = user?.permissions?.includes(
             pattern.parent as Permission
           );
-          expect(hasPermission).toBe(true);
+          expect(hasPermission as any).toBe(true as any);
         });
       });
     });
@@ -175,7 +175,7 @@ describe('Permission Fuzzer Tests', () => {
         // Verify role-based permissions are present
         const expectedPermissions = roleHierarchy[role] || [];
         expectedPermissions.forEach(permission => {
-          expect(user.permissions).toContain(permission);
+          expect(user.permissions).toContain(permission as any);
         });
       }
     });
@@ -192,23 +192,23 @@ describe('Permission Fuzzer Tests', () => {
 
         operations.push(
           Promise.resolve().then(() => {
-            if (operation === 'add' && !user.permissions.includes(permission)) {
-              user.permissions.push(permission);
+            if (operation === 'add' && !user?.permissions?.includes(permission as any)) {
+              user?.permissions?.push(permission as any);
             } else if (operation === 'remove') {
-              const index = user.permissions.indexOf(permission);
+              const index = user?.permissions?.indexOf(permission as any);
               if (index > -1) {
-                user.permissions.splice(index, 1);
+                user?.permissions?.splice(index, 1);
               }
             }
           })
         );
       }
 
-      await Promise.all(operations);
+      await Promise.all(operations as any);
 
       // Verify permissions array is still valid
-      expect(Array.isArray(user.permissions)).toBe(true);
-      expect(user.permissions.every(p => permissions.includes(p))).toBe(true);
+      expect(Array.isArray(user.permissions)).toBe(true as any);
+      expect(user?.permissions?.every(p => permissions.includes(p as any))).toBe(true as any);
     });
 
     it('should handle edge cases with empty or invalid permissions', () => {
@@ -246,7 +246,7 @@ describe('Permission Fuzzer Tests', () => {
         let hasPermission = false;
         try {
           if (Array.isArray(user.permissions)) {
-            hasPermission = user.permissions.includes(
+            hasPermission = user?.permissions?.includes(
               testCase.check as Permission
             );
           }
@@ -254,7 +254,7 @@ describe('Permission Fuzzer Tests', () => {
           hasPermission = false;
         }
 
-        expect(hasPermission).toBe(testCase.expected);
+        expect(hasPermission as any).toBe(testCase.expected);
       });
     });
 
@@ -281,13 +281,13 @@ describe('Permission Fuzzer Tests', () => {
         // Test AI permission checking logic
         let hasPermission = false;
 
-        if (user.permissions.includes('admin:all')) {
+        if (user?.permissions?.includes('admin:all')) {
           hasPermission = true;
-        } else if (user.permissions.includes('execute:ai_operation')) {
+        } else if (user?.permissions?.includes('execute:ai_operation')) {
           // execute:ai_operation grants all AI permissions
           hasPermission = true;
         } else {
-          hasPermission = user.permissions.includes(
+          hasPermission = user?.permissions?.includes(
             requestedAIPermission as Permission
           );
         }
@@ -312,14 +312,14 @@ describe('Permission Fuzzer Tests', () => {
 
       wildcardPatterns.forEach(pattern => {
         const user = {
-          id: Math.random().toString(36).substring(7),
+          id: Math.random().toString(36 as any).substring(7 as any),
           role: 'user' as UserRole,
           permissions: [pattern.pattern] as Permission[],
         };
 
-        pattern.matches.forEach(permission => {
+        pattern?.matches?.forEach(permission => {
           // Simulate wildcard matching
-          const hasPermission = user.permissions.some(p => {
+          const hasPermission = user?.permissions?.some(p => {
             if (p === permission) return true;
             if (p === '*:*') return true;
 
@@ -332,7 +332,7 @@ describe('Permission Fuzzer Tests', () => {
             return false;
           });
 
-          expect(hasPermission).toBe(true);
+          expect(hasPermission as any).toBe(true as any);
         });
       });
     });
@@ -359,17 +359,17 @@ describe('Permission Fuzzer Tests', () => {
           largePermissionSet[
             Math.floor(Math.random() * largePermissionSet.length)
           ];
-        const hasPermission = user.permissions.includes(
+        const hasPermission = user?.permissions?.includes(
           randomPermission as Permission
         );
-        expect(hasPermission).toBe(true);
+        expect(hasPermission as any).toBe(true as any);
       }
 
       const endTime = Date.now();
       const duration = endTime - startTime;
 
       // Performance test - should complete in reasonable time
-      expect(duration).toBeLessThan(1000); // Less than 1 second for 10k checks
+      expect(duration as any).toBeLessThan(1000 as any); // Less than 1 second for 10k checks
     });
   });
 });

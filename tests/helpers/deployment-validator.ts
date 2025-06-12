@@ -49,7 +49,7 @@ export interface Asset {
  * Comprehensive validator for Walrus Sites deployment
  */
 export class WalrusDeploymentValidator {
-  private readonly REQUIRED_NODE_VERSION = '18.0.0';
+  private readonly REQUIRED_NODE_VERSION = '18?.0?.0';
   private readonly MAX_BUILD_SIZE_MB = 100;
   private readonly MAX_IMAGE_SIZE_BYTES = 1024 * 1024; // 1MB
   private readonly REQUIRED_FILES = ['index.html', '404.html', '_next'];
@@ -58,7 +58,7 @@ export class WalrusDeploymentValidator {
    * Check network health for deployment
    */
   async checkNetworkHealth(network: 'testnet' | 'mainnet'): Promise<NetworkHealth> {
-    const endpoints = this.getNetworkEndpoints(network);
+    const endpoints = this.getNetworkEndpoints(network as any);
     
     const health: NetworkHealth = {
       publisher: { available: true },
@@ -73,24 +73,24 @@ export class WalrusDeploymentValidator {
     try {
       await this.pingEndpoint(endpoints.publisher);
     } catch (error) {
-      health.publisher.available = false;
-      health.canDeploy = false;
-      health.recommendations.push('Publisher service unavailable - check network connectivity');
+      health.publisher?.available = false;
+      health?.canDeploy = false;
+      health?.recommendations?.push('Publisher service unavailable - check network connectivity');
     }
 
     try {
       await this.pingEndpoint(endpoints.aggregator);
     } catch (error) {
-      health.aggregator.available = false;
-      health.recommendations.push('Aggregator service unavailable - deployment may be slower');
+      health.aggregator?.available = false;
+      health?.recommendations?.push('Aggregator service unavailable - deployment may be slower');
     }
 
     try {
       await this.pingEndpoint(endpoints.sui);
     } catch (error) {
-      health.sui.available = false;
-      health.canDeploy = false;
-      health.recommendations.push('Sui RPC unavailable - blockchain operations will fail');
+      health.sui?.available = false;
+      health?.canDeploy = false;
+      health?.recommendations?.push('Sui RPC unavailable - blockchain operations will fail');
     }
 
     return health;
@@ -107,10 +107,10 @@ export class WalrusDeploymentValidator {
       allEndpointsValid: true
     };
 
-    validation.allEndpointsValid = 
-      validation.publisher.reachable && 
-      validation.aggregator.reachable && 
-      validation.sui.reachable;
+    validation?.allEndpointsValid = 
+      validation?.publisher?.reachable && 
+      validation?.aggregator?.reachable && 
+      validation?.sui?.reachable;
 
     return validation;
   }
@@ -127,22 +127,22 @@ export class WalrusDeploymentValidator {
 
     try {
       // Mock reading config file - in real implementation would use fs.readFile
-      const configContent = await this.readConfigFile(configPath);
+      const configContent = await this.readConfigFile(configPath as any);
       
       // Parse YAML
-      const config = yaml.load(configContent) as any;
+      const config = yaml.load(configContent as any) as any;
       
       if (!config) {
-        validation.isValid = false;
-        validation.errors.push('Empty or invalid configuration file');
+        validation?.isValid = false;
+        validation?.errors?.push('Empty or invalid configuration file');
         return validation;
       }
 
       // Get the first site configuration
-      const siteKeys = Object.keys(config);
-      if (siteKeys.length === 0) {
-        validation.isValid = false;
-        validation.errors.push('No site configurations found');
+      const siteKeys = Object.keys(config as any);
+      if (siteKeys?.length === 0) {
+        validation?.isValid = false;
+        validation?.errors?.push('No site configurations found');
         return validation;
       }
 
@@ -150,40 +150,40 @@ export class WalrusDeploymentValidator {
 
       // Validate required fields
       if (!siteConfig.network) {
-        validation.isValid = false;
-        validation.errors.push('Missing required field: network');
+        validation?.isValid = false;
+        validation?.errors?.push('Missing required field: network');
       }
 
       if (!siteConfig.source) {
-        validation.isValid = false;
-        validation.errors.push('Missing required field: source');
+        validation?.isValid = false;
+        validation?.errors?.push('Missing required field: source');
       }
 
       // Validate network value
       if (siteConfig.network && !['testnet', 'mainnet'].includes(siteConfig.network)) {
-        validation.isValid = false;
-        validation.errors.push(`Invalid network: ${siteConfig.network}. Must be 'testnet' or 'mainnet'`);
+        validation?.isValid = false;
+        validation?.errors?.push(`Invalid network: ${siteConfig.network}. Must be 'testnet' or 'mainnet'`);
       }
 
       // Check for optional but recommended fields
       if (!siteConfig.headers) {
-        validation.warnings.push('No security headers configured');
+        validation?.warnings?.push('No security headers configured');
       }
 
       if (!siteConfig.redirects) {
-        validation.warnings.push('No redirects configured');
+        validation?.warnings?.push('No redirects configured');
       }
 
       if (!siteConfig.error_pages) {
-        validation.warnings.push('No custom error pages configured');
+        validation?.warnings?.push('No custom error pages configured');
       }
 
     } catch (error) {
-      validation.isValid = false;
+      validation?.isValid = false;
       if (error instanceof yaml.YAMLException) {
-        validation.errors.push(`Invalid YAML syntax: ${error.message}`);
+        validation?.errors?.push(`Invalid YAML syntax: ${error.message}`);
       } else {
-        validation.errors.push(`Configuration validation failed: ${error.message}`);
+        validation?.errors?.push(`Configuration validation failed: ${error.message}`);
       }
     }
 
@@ -203,24 +203,24 @@ export class WalrusDeploymentValidator {
     };
 
     try {
-      const config = yaml.load(configContent) as any;
-      const siteConfig = Object.values(config)[0] as any;
+      const config = yaml.load(configContent as any) as any;
+      const siteConfig = Object.values(config as any)[0] as any;
 
-      validation.networkMatch = siteConfig.network === network;
+      validation?.networkMatch = siteConfig?.network === network;
       
       if (!validation.networkMatch) {
-        validation.warnings.push(`Configuration network (${siteConfig.network}) doesn't match deployment network (${network})`);
+        validation?.warnings?.push(`Configuration network (${siteConfig.network}) doesn't match deployment network (${network})`);
       }
 
       // Determine cache policy based on network and headers
       if (network === 'testnet' || (siteConfig.headers && 
           JSON.stringify(siteConfig.headers).includes('max-age=3600'))) {
-        validation.cachePolicy = 'development';
+        validation?.cachePolicy = 'development';
       }
 
     } catch (error) {
-      validation.isValid = false;
-      validation.errors.push(`Network validation failed: ${error.message}`);
+      validation?.isValid = false;
+      validation?.errors?.push(`Network validation failed: ${error.message}`);
     }
 
     return validation;
@@ -241,14 +241,14 @@ export class WalrusDeploymentValidator {
 
     for (const varName of requiredVars) {
       if (!env[varName]) {
-        validation.isValid = false;
-        validation.missingVariables.push(varName);
+        validation?.isValid = false;
+        validation?.missingVariables?.push(varName as any);
       }
     }
 
     for (const varName of recommendedVars) {
       if (!env[varName]) {
-        validation.recommendations.push(`Set ${varName.toLowerCase().replace('_', ' ')} for automated deployment`);
+        validation?.recommendations?.push(`Set ${varName.toLowerCase().replace('_', ' ')} for automated deployment`);
       }
     }
 
@@ -270,32 +270,32 @@ export class WalrusDeploymentValidator {
 
     try {
       // Mock directory listing - in real implementation would use fs.readdir
-      const files = await this.listDirectory(buildDir);
+      const files = await this.listDirectory(buildDir as any);
 
-      validation.hasIndexHtml = files.includes('index.html');
-      validation.has404Page = files.includes('404.html');
-      validation.hasNextAssets = files.includes('_next');
+      validation?.hasIndexHtml = files.includes('index.html');
+      validation?.has404Page = files.includes('404.html');
+      validation?.hasNextAssets = files.includes('_next');
 
       // Check for files that shouldn't be in static build
       if (files.includes('api')) {
-        validation.warnings.push('API directory found in static build - should be excluded');
+        validation?.warnings?.push('API directory found in static build - should be excluded');
       }
 
       if (files.includes('node_modules')) {
-        validation.warnings.push('node_modules directory found in build - should be excluded');
+        validation?.warnings?.push('node_modules directory found in build - should be excluded');
       }
 
       // Check for missing required files
       for (const requiredFile of this.REQUIRED_FILES) {
-        if (!files.includes(requiredFile)) {
-          validation.missingFiles.push(requiredFile);
-          validation.hasRequiredFiles = false;
+        if (!files.includes(requiredFile as any)) {
+          validation?.missingFiles?.push(requiredFile as any);
+          validation?.hasRequiredFiles = false;
         }
       }
 
     } catch (error) {
-      validation.hasRequiredFiles = false;
-      validation.warnings.push(`Build structure validation failed: ${error.message}`);
+      validation?.hasRequiredFiles = false;
+      validation?.warnings?.push(`Build structure validation failed: ${error.message}`);
     }
 
     return validation;
@@ -305,7 +305,7 @@ export class WalrusDeploymentValidator {
    * Verify build output completeness
    */
   async verifyBuildOutput(buildDir: string): Promise<BuildValidation> {
-    return this.validateBuildStructure(buildDir);
+    return this.validateBuildStructure(buildDir as any);
   }
 
   /**
@@ -321,45 +321,45 @@ export class WalrusDeploymentValidator {
 
     try {
       // Mock reading HTML file
-      const htmlContent = await this.readHtmlFile(htmlPath);
+      const htmlContent = await this.readHtmlFile(htmlPath as any);
       
       // Parse HTML
-      const dom = new JSDOM(htmlContent);
-      const document = dom.window.document;
+      const dom = new JSDOM(htmlContent as any);
+      const document = dom?.window?.document;
 
       // Check for DOCTYPE
-      validation.hasDoctype = htmlContent.toLowerCase().includes('<!doctype html>');
+      validation?.hasDoctype = htmlContent.toLowerCase().includes('<!doctype html>');
       if (!validation.hasDoctype) {
-        validation.isValid = false;
-        validation.errors.push('Missing DOCTYPE declaration');
+        validation?.isValid = false;
+        validation?.errors?.push('Missing DOCTYPE declaration');
       }
 
       // Check for Next.js root element
       const nextRoot = document.querySelector('#__next');
-      validation.hasNextRoot = !!nextRoot;
+      validation?.hasNextRoot = !!nextRoot;
       if (!validation.hasNextRoot) {
-        validation.errors.push('Missing Next.js root element (#__next)');
+        validation?.errors?.push('Missing Next.js root element (#__next)');
       }
 
       // Check for basic HTML structure
       if (!document.querySelector('html')) {
-        validation.isValid = false;
-        validation.errors.push('Missing html element');
+        validation?.isValid = false;
+        validation?.errors?.push('Missing html element');
       }
 
       if (!document.querySelector('head')) {
-        validation.isValid = false;
-        validation.errors.push('Missing head element');
+        validation?.isValid = false;
+        validation?.errors?.push('Missing head element');
       }
 
       if (!document.querySelector('body')) {
-        validation.isValid = false;
-        validation.errors.push('Missing body element');
+        validation?.isValid = false;
+        validation?.errors?.push('Missing body element');
       }
 
     } catch (error) {
-      validation.isValid = false;
-      validation.errors.push(`HTML validation failed: ${error.message}`);
+      validation?.isValid = false;
+      validation?.errors?.push(`HTML validation failed: ${error.message}`);
     }
 
     return validation;
@@ -378,19 +378,19 @@ export class WalrusDeploymentValidator {
 
     try {
       // Mock calculating directory size
-      const sizeInBytes = await this.calculateDirectorySize(buildDir);
-      sizeCheck.sizeInMB = sizeInBytes / (1024 * 1024);
-      sizeCheck.isLarge = sizeCheck.sizeInMB > this.MAX_BUILD_SIZE_MB;
+      const sizeInBytes = await this.calculateDirectorySize(buildDir as any);
+      sizeCheck?.sizeInMB = sizeInBytes / (1024 * 1024);
+      sizeCheck?.isLarge = sizeCheck.sizeInMB > this.MAX_BUILD_SIZE_MB;
 
       if (sizeCheck.isLarge) {
-        sizeCheck.warnings.push(`Build size exceeds ${this.MAX_BUILD_SIZE_MB}MB`);
-        sizeCheck.recommendations.push('Consider optimizing assets');
-        sizeCheck.recommendations.push('Use Next.js Image optimization');
-        sizeCheck.recommendations.push('Enable compression in build pipeline');
+        sizeCheck?.warnings?.push(`Build size exceeds ${this.MAX_BUILD_SIZE_MB}MB`);
+        sizeCheck?.recommendations?.push('Consider optimizing assets');
+        sizeCheck?.recommendations?.push('Use Next.js Image optimization');
+        sizeCheck?.recommendations?.push('Enable compression in build pipeline');
       }
 
     } catch (error) {
-      sizeCheck.warnings.push(`Size check failed: ${error.message}`);
+      sizeCheck?.warnings?.push(`Size check failed: ${error.message}`);
     }
 
     return sizeCheck;
@@ -407,23 +407,23 @@ export class WalrusDeploymentValidator {
     };
 
     for (const asset of assets) {
-      if (asset.type === 'image' && asset.size > this.MAX_IMAGE_SIZE_BYTES) {
-        optimization.largeImages.push(asset);
+      if (asset?.type === 'image' && asset.size > this.MAX_IMAGE_SIZE_BYTES) {
+        optimization?.largeImages?.push(asset as any);
       }
 
       if (['javascript', 'css'].includes(asset.type) && asset.size > 100000) {
-        optimization.uncompressedAssets.push(asset);
+        optimization?.uncompressedAssets?.push(asset as any);
       }
     }
 
-    if (optimization.largeImages.length > 0) {
-      optimization.recommendations.push('Compress images over 1MB');
-      optimization.recommendations.push('Use WebP format for better compression');
+    if (optimization?.largeImages?.length > 0) {
+      optimization?.recommendations?.push('Compress images over 1MB');
+      optimization?.recommendations?.push('Use WebP format for better compression');
     }
 
-    if (optimization.uncompressedAssets.length > 0) {
-      optimization.recommendations.push('Enable gzip compression for JS/CSS');
-      optimization.recommendations.push('Use code splitting to reduce bundle size');
+    if (optimization?.uncompressedAssets?.length > 0) {
+      optimization?.recommendations?.push('Enable gzip compression for JS/CSS');
+      optimization?.recommendations?.push('Use code splitting to reduce bundle size');
     }
 
     return optimization;
@@ -440,15 +440,15 @@ export class WalrusDeploymentValidator {
 
     try {
       // Mock checking for manifest files
-      const files = await this.listDirectory(buildDir);
+      const files = await this.listDirectory(buildDir as any);
       
-      artifacts.hasBuildManifest = files.includes('build-manifest.json');
-      artifacts.hasRoutesManifest = files.includes('routes-manifest.json');
+      artifacts?.hasBuildManifest = files.includes('build-manifest.json');
+      artifacts?.hasRoutesManifest = files.includes('routes-manifest.json');
 
       if (artifacts.hasBuildManifest) {
         // Mock reading build manifest to extract version
         const manifestContent = await this.readJsonFile(`${buildDir}/build-manifest.json`);
-        artifacts.buildVersion = manifestContent.version || '3';
+        artifacts?.buildVersion = manifestContent.version || '3';
       }
 
     } catch (error) {
@@ -472,18 +472,18 @@ export class WalrusDeploymentValidator {
     try {
       // Mock version checks - in real implementation would use execSync
       const nodeVersion = await this.getVersion('node --version');
-      prerequisites.node.satisfied = this.compareVersions(nodeVersion, this.REQUIRED_NODE_VERSION) >= 0;
+      prerequisites.node?.satisfied = this.compareVersions(nodeVersion, this.REQUIRED_NODE_VERSION) >= 0;
 
       const pnpmVersion = await this.getVersion('pnpm --version');
-      prerequisites.pnpm.satisfied = !!pnpmVersion;
+      prerequisites.pnpm?.satisfied = !!pnpmVersion;
 
       const curlVersion = await this.getVersion('curl --version');
-      prerequisites.curl.satisfied = !!curlVersion;
+      prerequisites.curl?.satisfied = !!curlVersion;
 
-      prerequisites.allSatisfied = 
-        prerequisites.node.satisfied && 
-        prerequisites.pnpm.satisfied && 
-        prerequisites.curl.satisfied;
+      prerequisites?.allSatisfied = 
+        prerequisites?.node?.satisfied && 
+        prerequisites?.pnpm?.satisfied && 
+        prerequisites?.curl?.satisfied;
 
     } catch (error) {
       // Prerequisites check failed
@@ -507,19 +507,19 @@ export class WalrusDeploymentValidator {
       const startTime = Date.now();
       
       // Mock HTTP request - in real implementation would use fetch
-      const response = await this.fetchSite(siteUrl);
+      const response = await this.fetchSite(siteUrl as any);
       
-      healthCheck.responseTime = Date.now() - startTime;
-      healthCheck.statusCode = response.status;
-      healthCheck.accessible = response.status === 200;
+      healthCheck?.responseTime = Date.now() - startTime;
+      healthCheck?.statusCode = response.status;
+      healthCheck?.accessible = response?.status === 200;
 
       if (healthCheck.accessible) {
         const content = await response.text();
-        healthCheck.hasRequiredContent = content.includes('WalTodo') || content.includes('__next');
+        healthCheck?.hasRequiredContent = content.includes('WalTodo') || content.includes('__next');
       }
 
     } catch (error) {
-      healthCheck.accessible = false;
+      healthCheck?.accessible = false;
     }
 
     return healthCheck;
@@ -530,15 +530,15 @@ export class WalrusDeploymentValidator {
   private getNetworkEndpoints(network: 'testnet' | 'mainnet'): NetworkEndpoints {
     if (network === 'mainnet') {
       return {
-        publisher: 'https://publisher.walrus.space',
-        aggregator: 'https://aggregator.walrus.space',
-        sui: 'https://fullnode.mainnet.sui.io:443'
+        publisher: 'https://publisher?.walrus?.space',
+        aggregator: 'https://aggregator?.walrus?.space',
+        sui: 'https://fullnode?.mainnet?.sui.io:443'
       };
     } else {
       return {
-        publisher: 'https://publisher-devnet.walrus.space',
-        aggregator: 'https://aggregator-devnet.walrus.space',
-        sui: 'https://fullnode.devnet.sui.io:443'
+        publisher: 'https://publisher-devnet?.walrus?.space',
+        aggregator: 'https://aggregator-devnet?.walrus?.space',
+        sui: 'https://fullnode?.devnet?.sui.io:443'
       };
     }
   }
@@ -558,9 +558,9 @@ export class WalrusDeploymentValidator {
     };
 
     try {
-      await this.pingEndpoint(url);
+      await this.pingEndpoint(url as any);
     } catch (error) {
-      endpoint.reachable = false;
+      endpoint?.reachable = false;
     }
 
     return endpoint;
@@ -614,15 +614,15 @@ waltodo-app:
 
   private async getVersion(command: string): Promise<string> {
     // Mock implementation - would use execSync in real code
-    if (command.includes('node')) return '18.15.0';
-    if (command.includes('pnpm')) return '8.6.0';
-    if (command.includes('curl')) return '7.81.0';
+    if (command.includes('node')) return '18?.15?.0';
+    if (command.includes('pnpm')) return '8?.6?.0';
+    if (command.includes('curl')) return '7?.81?.0';
     return '';
   }
 
   private compareVersions(version1: string, version2: string): number {
-    const v1Parts = version1.replace(/^v/, '').split('.').map(Number);
-    const v2Parts = version2.split('.').map(Number);
+    const v1Parts = version1.replace(/^v/, '').split('.').map(Number as any);
+    const v2Parts = version2.split('.').map(Number as any);
 
     for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
       const v1Part = v1Parts[i] || 0;

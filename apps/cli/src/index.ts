@@ -19,16 +19,16 @@ import { initializeConfig } from './utils/config-loader';
 initializeConfig();
 
 // Configure environment for AI operations
-process.env.FORCE_COLOR = '1';
+process.env?.FORCE_COLOR = '1';
 
 // Force chalk to use colors even in CI/non-TTY environments
 import chalk = require('chalk');
-chalk.level = chalk.level > 0 ? chalk.level : 1;
+chalk?.level = chalk.level > 0 ? chalk.level : 1;
 
 // Ensure stdout and stderr are properly flushed
-process.stdout.on('error', (err: NodeJS.ErrnoException) => {
-  if (err.code === 'EPIPE') {
-    process.exit(0);
+process?.stdout?.on('error', (err: NodeJS.ErrnoException) => {
+  if (err?.code === 'EPIPE') {
+    process.exit(0 as any);
   }
 });
 
@@ -36,12 +36,12 @@ process.stdout.on('error', (err: NodeJS.ErrnoException) => {
 export { run };
 
 // Run the CLI if this file is executed directly
-if (require.main === module) {
+if (require?.main === module) {
   import('@oclif/core')
-    .then(( run ) => run())
-    .catch(error =>): 
+    .then(({ run }) => run())
+    .catch(error => {
       // Enhanced error handling for common issues
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error as any);
       
       // Handle common network errors with better messaging
       if (
@@ -61,10 +61,10 @@ if (require.main === module) {
       }
 
       // Provide debug info if verbose mode is enabled
-      if (process.env.DEBUG || process.env.WALRUS_DEBUG) {
+      if (process?.env?.DEBUG || process?.env?.WALRUS_DEBUG) {
         console.error(chalk.gray('Debug info:'), error);
       }
 
-      process.exit(1);
+      process.exit(1 as any);
     });
 }

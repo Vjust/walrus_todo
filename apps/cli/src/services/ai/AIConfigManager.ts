@@ -105,11 +105,11 @@ export class AIConfigManager {
   private operationConfigs: Map<string, AIOperationConfig> = new Map();
 
   private constructor() {
-    this.globalConfig = { ...DEFAULT_GLOBAL_CONFIG };
+    this?.globalConfig = { ...DEFAULT_GLOBAL_CONFIG };
 
     // Initialize operation configs with defaults
-    Object.entries(DEFAULT_OPERATION_CONFIGS).forEach(([operation, config]) => {
-      this.operationConfigs.set(operation, this.createOperationConfig(config));
+    Object.entries(DEFAULT_OPERATION_CONFIGS as any).forEach(([operation, config]) => {
+      this?.operationConfigs?.set(operation, this.createOperationConfig(config as any));
     });
   }
 
@@ -118,7 +118,7 @@ export class AIConfigManager {
    */
   public static getInstance(): AIConfigManager {
     if (!AIConfigManager.instance) {
-      AIConfigManager.instance = new AIConfigManager();
+      AIConfigManager?.instance = new AIConfigManager();
     }
 
     return AIConfigManager.instance;
@@ -128,12 +128,12 @@ export class AIConfigManager {
    * Update the global configuration
    */
   public updateGlobalConfig(config: Partial<AIGlobalConfig>): void {
-    this.globalConfig = { ...this.globalConfig, ...config };
+    this?.globalConfig = { ...this.globalConfig, ...config };
 
     // Update operation configs that use global defaults
-    this.operationConfigs.forEach((opConfig, operation) => {
-      const updatedConfig = this.createOperationConfig(opConfig);
-      this.operationConfigs.set(operation, updatedConfig);
+    this?.operationConfigs?.forEach((opConfig, operation) => {
+      const updatedConfig = this.createOperationConfig(opConfig as any);
+      this?.operationConfigs?.set(operation, updatedConfig);
     });
   }
 
@@ -152,15 +152,15 @@ export class AIConfigManager {
     config: Partial<AIOperationConfig>
   ): void {
     const currentConfig =
-      this.operationConfigs.get(operation) || this.createOperationConfig();
-    this.operationConfigs.set(operation, { ...currentConfig, ...config });
+      this?.operationConfigs?.get(operation as any) || this.createOperationConfig();
+    this?.operationConfigs?.set(operation, { ...currentConfig, ...config });
   }
 
   /**
    * Get configuration for a specific operation
    */
   public getOperationConfig(operation: string): AIOperationConfig {
-    return this.operationConfigs.get(operation) || this.createOperationConfig();
+    return this?.operationConfigs?.get(operation as any) || this.createOperationConfig();
   }
 
   /**
@@ -168,7 +168,7 @@ export class AIConfigManager {
    */
   public getAllOperationConfigs(): Record<string, AIOperationConfig> {
     const configs: Record<string, AIOperationConfig> = {};
-    this.operationConfigs.forEach((config, operation) => {
+    this?.operationConfigs?.forEach((config, operation) => {
       configs[operation] = { ...config };
     });
     return configs;
@@ -178,7 +178,7 @@ export class AIConfigManager {
    * Convert operation config to AIModelOptions
    */
   public getModelOptions(operation: string): AIModelOptions {
-    const config = this.getOperationConfig(operation);
+    const config = this.getOperationConfig(operation as any);
 
     return {
       temperature: config.temperature,
@@ -190,11 +190,11 @@ export class AIConfigManager {
    * Reset all configurations to defaults
    */
   public resetToDefaults(): void {
-    this.globalConfig = { ...DEFAULT_GLOBAL_CONFIG };
-    this.operationConfigs.clear();
+    this?.globalConfig = { ...DEFAULT_GLOBAL_CONFIG };
+    this?.operationConfigs?.clear();
 
-    Object.entries(DEFAULT_OPERATION_CONFIGS).forEach(([operation, config]) => {
-      this.operationConfigs.set(operation, this.createOperationConfig(config));
+    Object.entries(DEFAULT_OPERATION_CONFIGS as any).forEach(([operation, config]) => {
+      this?.operationConfigs?.set(operation, this.createOperationConfig(config as any));
     });
   }
 
@@ -205,14 +205,14 @@ export class AIConfigManager {
     partialConfig: Partial<AIOperationConfig> = {}
   ): AIOperationConfig {
     return {
-      cacheTtl: partialConfig.cacheTtl ?? this.globalConfig.defaultTtl,
+      cacheTtl: partialConfig.cacheTtl ?? this?.globalConfig?.defaultTtl,
       temperature:
-        partialConfig.temperature ?? this.globalConfig.defaultTemperature,
-      maxTokens: partialConfig.maxTokens ?? this.globalConfig.defaultMaxTokens,
-      enhanced: partialConfig.enhanced ?? this.globalConfig.useEnhancedPrompts,
+        partialConfig.temperature ?? this?.globalConfig?.defaultTemperature,
+      maxTokens: partialConfig.maxTokens ?? this?.globalConfig?.defaultMaxTokens,
+      enhanced: partialConfig.enhanced ?? this?.globalConfig?.useEnhancedPrompts,
       retryCount:
-        partialConfig.retryCount ?? this.globalConfig.defaultRetryCount,
-      timeout: partialConfig.timeout ?? this.globalConfig.defaultTimeout,
+        partialConfig.retryCount ?? this?.globalConfig?.defaultRetryCount,
+      timeout: partialConfig.timeout ?? this?.globalConfig?.defaultTimeout,
     };
   }
 }

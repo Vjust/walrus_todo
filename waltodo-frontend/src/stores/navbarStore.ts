@@ -84,7 +84,7 @@ export const useNavbarStore = create<NavbarState>()(
     
     clearNotifications: () => set({ notifications: [] }),
     
-    reset: () => set(initialState),
+    reset: () => set(initialState as any),
   }))
 );
 

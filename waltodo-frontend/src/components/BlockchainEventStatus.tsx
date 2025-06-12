@@ -24,7 +24,7 @@ export function BlockchainEventStatus({
   const { connectionState, statusColor, statusText, canReconnect, reconnect } =
     useEventConnectionStatus();
 
-  const [showDetailsState, setShowDetailsState] = useState(showDetails);
+  const [showDetailsState, setShowDetailsState] = useState(showDetails as any);
 
   const getIndicatorClasses = () => {
     const baseClasses = 'inline-block w-2 h-2 rounded-full mr-2';
@@ -137,7 +137,7 @@ export function BlockchainEventStatus({
                   Error
                 </dt>
                 <dd className='text-red-600 dark:text-red-400 font-mono text-xs'>
-                  {connectionState.error.message}
+                  {connectionState?.error?.message}
                 </dd>
               </div>
             )}

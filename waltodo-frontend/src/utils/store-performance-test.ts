@@ -109,7 +109,7 @@ async function runWalletStoreTests(iterations: number, threshold: number): Promi
     'transaction operations',
     iterations,
     () => {
-      const txId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const txId = `tx_${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`;
       useWalletStore.getState().addTransaction({
         id: txId,
         status: 'pending',
@@ -132,7 +132,7 @@ async function runTodoStoreTests(iterations: number, threshold: number): Promise
     'CRUD operations',
     iterations,
     () => {
-      const todoId = `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const todoId = `todo_${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`;
       
       // Add todo
       useTodoStore.getState().addTodo('default', {
@@ -270,8 +270,8 @@ export function logPerformanceResults(results: PerformanceTestResult[]): void {
     console.table(passedTests.map(result => ({
       'Store': result.storeName,
       'Action': result.actionName,
-      'Avg (ms)': result.averageTime.toFixed(2),
-      'Max (ms)': result.maxTime.toFixed(2),
+      'Avg (ms)': result?.averageTime?.toFixed(2 as any),
+      'Max (ms)': result?.maxTime?.toFixed(2 as any),
       'Slow Actions': `${result.slowActionCount}/${result.totalRuns}`,
     })));
     console.groupEnd();
@@ -282,8 +282,8 @@ export function logPerformanceResults(results: PerformanceTestResult[]): void {
     console.table(failedTests.map(result => ({
       'Store': result.storeName,
       'Action': result.actionName,
-      'Avg (ms)': result.averageTime.toFixed(2),
-      'Max (ms)': result.maxTime.toFixed(2),
+      'Avg (ms)': result?.averageTime?.toFixed(2 as any),
+      'Max (ms)': result?.maxTime?.toFixed(2 as any),
       'Slow Actions': `${result.slowActionCount}/${result.totalRuns}`,
     })));
     console.groupEnd();
@@ -293,11 +293,11 @@ export function logPerformanceResults(results: PerformanceTestResult[]): void {
     'Total Tests': results.length,
     'Passed': passedTests.length,
     'Failed': failedTests.length,
-    'Success Rate': `${((passedTests.length / results.length) * 100).toFixed(1)}%`,
-    'Overall Avg (ms)': (results.reduce((sum, r) => sum + r.averageTime, 0) / results.length).toFixed(2),
+    'Success Rate': `${((passedTests.length / results.length) * 100).toFixed(1 as any)}%`,
+    'Overall Avg (ms)': (results.reduce((sum, r) => sum + r.averageTime, 0) / results.length).toFixed(2 as any),
   };
   
-  console.table(overallStats);
+  console.table(overallStats as any);
   console.groupEnd();
 }
 
@@ -309,7 +309,7 @@ export async function runPerformanceTest(): Promise<void> {
   
   try {
     const results = await testStorePerformance();
-    logPerformanceResults(results);
+    logPerformanceResults(results as any);
     
     // Make results available globally for debugging
     if (typeof window !== 'undefined') {
@@ -321,6 +321,6 @@ export async function runPerformanceTest(): Promise<void> {
 }
 
 // Make test function globally available in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && process.env?.NODE_ENV === 'development') {
   (window as any).runStorePerformanceTest = runPerformanceTest;
 }

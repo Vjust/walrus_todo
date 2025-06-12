@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   // Only allow in development
-  if (process.env.NODE_ENV !== 'development') {
+  if (process?.env?.NODE_ENV !== 'development') {
     return new NextResponse('Not Found', { status: 404 });
   }
 
@@ -38,8 +38,8 @@ export async function GET() {
       margin: 0 auto 1rem;
     }
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% { transform: rotate(0deg as any); }
+      100% { transform: rotate(360deg as any); }
     }
   </style>
 </head>
@@ -55,7 +55,7 @@ export async function GET() {
       try {
         // Unregister service workers
         if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
+          const registrations = await navigator?.serviceWorker?.getRegistrations();
           await Promise.all(registrations.map(r => r.unregister()));
           console.log('✓ Service workers unregistered');
         }
@@ -63,7 +63,7 @@ export async function GET() {
         // Clear caches
         if ('caches' in window) {
           const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(name => caches.delete(name)));
+          await Promise.all(cacheNames.map(name => caches.delete(name as any)));
           console.log('✓ Caches cleared');
         }
         
@@ -79,7 +79,7 @@ export async function GET() {
         // Update UI
         document.querySelector('h2').textContent = '✅ All caches cleared successfully!';
         document.querySelector('p').textContent = 'You can close this window now.';
-        document.querySelector('.spinner').style.display = 'none';
+        document.querySelector('.spinner').style?.display = 'none';
         
         // Try to close window after a delay
         setTimeout(() => {

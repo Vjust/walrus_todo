@@ -156,7 +156,7 @@ export function withHydrationGuard<P extends object>(
     </HydrationGuard>
   );
 
-  GuardedComponent.displayName = `withHydrationGuard(${Component.displayName || Component.name})`;
+  GuardedComponent?.displayName = `withHydrationGuard(${Component.displayName || Component.name})`;
   
   return GuardedComponent;
 }

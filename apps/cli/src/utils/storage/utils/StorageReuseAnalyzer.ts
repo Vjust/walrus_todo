@@ -96,7 +96,7 @@ export class StorageReuseAnalyzer {
     try {
       // Get the current epoch from the Sui blockchain
       const epochResult = await StorageOperationHandler.execute(
-        () => this.suiClient.getLatestSuiSystemState(),
+        () => this?.suiClient?.getLatestSuiSystemState(),
         { operation: 'get epoch for storage analysis' }
       );
 
@@ -108,12 +108,12 @@ export class StorageReuseAnalyzer {
         });
       }
 
-      const currentEpoch = Number(epochResult.data.epoch);
+      const currentEpoch = Number(epochResult?.data?.epoch);
 
       // Fetch all storage objects owned by this address from the blockchain
       const objectsResult = await StorageOperationHandler.execute(
         () =>
-          this.suiClient.getOwnedObjects({
+          this?.suiClient?.getOwnedObjects({
             owner: this.userAddress,
             filter: { StructType: '0x2::storage::Storage' },
             options: { showContent: true },
@@ -137,17 +137,17 @@ export class StorageReuseAnalyzer {
       let inactiveCount = 0;
 
       // Process and extract data from each storage object
-      for (const item of objectsResult.data.data) {
+      for (const item of objectsResult?.data?.data) {
         // Skip if no content or not a move object
         if (
           !item.data?.content ||
-          (item.data.content as { dataType?: string }).dataType !== 'moveObject'
+          (item?.data?.content as { dataType?: string }).dataType !== 'moveObject'
         ) {
           continue;
         }
 
         // Parse storage fields from the move object
-        const content = item.data.content as {
+        const content = item?.data?.content as {
           fields?: {
             storage_size?: string;
             used_size?: string;
@@ -173,7 +173,7 @@ export class StorageReuseAnalyzer {
 
         // Add parsed storage object to our collection
         storageObjects.push({
-          id: item.data.objectId,
+          id: item?.data?.objectId,
           totalSize,
           usedSize,
           endEpoch,
@@ -260,7 +260,7 @@ export class StorageReuseAnalyzer {
       }
 
       throw new ValidationError(
-        `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'storage analysis',
           recoverable: true,
@@ -294,13 +294,13 @@ export class StorageReuseAnalyzer {
   }> {
     try {
       // Find the best storage to reuse based on our best-fit algorithm
-      const analysisResult = await this.findBestStorageForReuse(requiredSize);
+      const analysisResult = await this.findBestStorageForReuse(requiredSize as any);
 
       // Get cost estimate for allocating new storage from Walrus
       // Default to 52 epochs (approximately 6 months)
       const costResult = await StorageOperationHandler.execute(
         async () =>
-          this.walrusClient.storageCost(
+          this?.walrusClient?.storageCost(
             requiredSize,
             52 // Default to 52 epochs (approximately 6 months)
           ),
@@ -323,18 +323,18 @@ export class StorageReuseAnalyzer {
       }
 
       const { storageCost, totalCost } = costResult.data;
-      const newStorageCost = BigInt(totalCost);
+      const newStorageCost = BigInt(totalCost as any);
 
       // Calculate potential savings if we reuse existing storage
-      let reuseExistingSavings = BigInt(0);
+      let reuseExistingSavings = BigInt(0 as any);
       let reuseExistingPercentSaved = 0;
 
       if (analysisResult.hasViableStorage) {
         // When reusing storage, we only pay the write cost, not the storage allocation cost
         // This is where the significant savings come from
-        reuseExistingSavings = BigInt(storageCost);
+        reuseExistingSavings = BigInt(storageCost as any);
         reuseExistingPercentSaved = Number(
-          (BigInt(100) * reuseExistingSavings) / newStorageCost
+          (BigInt(100 as any) * reuseExistingSavings) / newStorageCost
         );
       }
 
@@ -371,7 +371,7 @@ export class StorageReuseAnalyzer {
       }
 
       throw new ValidationError(
-        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'efficiency analysis',
           recoverable: true,

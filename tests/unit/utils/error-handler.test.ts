@@ -39,13 +39,13 @@ describe('Error Handler', () => {
         mockFriendlyError
       );
 
-      handleError(error);
+      handleError(error as any);
 
       expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
         error,
         undefined
       );
-      expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(mockFriendlyError as any);
     });
 
     it('should handle Error instances with context message', () => {
@@ -62,7 +62,7 @@ describe('Error Handler', () => {
       expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(error, {
         operation: context,
       });
-      expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(mockFriendlyError as any);
     });
 
     it('should handle CLIError instances', () => {
@@ -73,13 +73,13 @@ describe('Error Handler', () => {
         mockFriendlyError
       );
 
-      handleError(error);
+      handleError(error as any);
 
       expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
         error,
         undefined
       );
-      expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(mockFriendlyError as any);
     });
 
     it('should handle objects with message property', () => {
@@ -90,14 +90,14 @@ describe('Error Handler', () => {
         mockFriendlyError
       );
 
-      handleError(error);
+      handleError(error as any);
 
       expect(errorMessages.displayFriendlyError).toHaveBeenCalled();
       const calledError = (errorMessages.displayFriendlyError as jest.Mock).mock
         .calls[0][0];
-      expect(calledError).toBeInstanceOf(Error);
+      expect(calledError as any).toBeInstanceOf(Error as any);
       expect(calledError.message).toBe('Error from object');
-      expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(mockFriendlyError as any);
     });
 
     it('should handle string errors', () => {
@@ -108,14 +108,14 @@ describe('Error Handler', () => {
         mockFriendlyError
       );
 
-      handleError(error);
+      handleError(error as any);
 
       expect(errorMessages.displayFriendlyError).toHaveBeenCalled();
       const calledError = (errorMessages.displayFriendlyError as jest.Mock).mock
         .calls[0][0];
-      expect(calledError).toBeInstanceOf(Error);
+      expect(calledError as any).toBeInstanceOf(Error as any);
       expect(calledError.message).toBe('String error');
-      expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(mockFriendlyError as any);
     });
 
     it('should handle null and undefined errors', () => {
@@ -125,11 +125,11 @@ describe('Error Handler', () => {
         mockFriendlyError
       );
 
-      handleError(null);
+      handleError(null as any);
       expect(errorMessages.displayFriendlyError).toHaveBeenCalled();
 
-      handleError(undefined);
-      expect(errorMessages.displayFriendlyError).toHaveBeenCalledTimes(2);
+      handleError(undefined as any);
+      expect(errorMessages.displayFriendlyError).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should handle single parameter correctly when only error is passed', () => {
@@ -140,13 +140,13 @@ describe('Error Handler', () => {
         mockFriendlyError
       );
 
-      handleError(error);
+      handleError(error as any);
 
       expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
         error,
         undefined
       );
-      expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(mockFriendlyError as any);
     });
   });
 
@@ -154,10 +154,10 @@ describe('Error Handler', () => {
     it('should execute function successfully on first try', async () => {
       const fn = jest.fn().mockResolvedValue('success');
 
-      const result = await withRetry(fn);
+      const result = await withRetry(fn as any);
 
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(fn as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should retry on transient error and succeed', async () => {
@@ -171,13 +171,13 @@ describe('Error Handler', () => {
       const retryPromise = withRetry(fn, 3, 100);
 
       // Fast-forward through first retry delay
-      await jest.advanceTimersByTimeAsync(100);
+      await jest.advanceTimersByTimeAsync(100 as any);
 
       const result = await retryPromise;
 
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(2);
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(result as any).toBe('success');
+      expect(fn as any).toHaveBeenCalledTimes(2 as any);
+      expect(mockConsoleError as any).toHaveBeenCalledWith(
         expect.stringContaining('Request failed, retrying (1/3)')
       );
 
@@ -196,43 +196,43 @@ describe('Error Handler', () => {
       const retryPromise = withRetry(fn, 3, 100);
 
       // Fast-forward through delays (100ms for first retry, 200ms for second)
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(200);
+      await jest.advanceTimersByTimeAsync(100 as any);
+      await jest.advanceTimersByTimeAsync(200 as any);
 
       const result = await retryPromise;
 
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(3);
-      expect(mockConsoleError).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('success');
+      expect(fn as any).toHaveBeenCalledTimes(3 as any);
+      expect(mockConsoleError as any).toHaveBeenCalledTimes(2 as any);
 
       jest.useRealTimers();
     });
 
     it('should throw after max retries', async () => {
       const error = new Error('Network error');
-      const fn = jest.fn().mockRejectedValue(error);
+      const fn = jest.fn().mockRejectedValue(error as any);
 
       jest.useFakeTimers();
 
       const retryPromise = withRetry(fn, 2, 100);
 
       // Fast-forward through all retry delays
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(200);
+      await jest.advanceTimersByTimeAsync(100 as any);
+      await jest.advanceTimersByTimeAsync(200 as any);
 
-      await expect(retryPromise).rejects.toThrow(error);
-      expect(fn).toHaveBeenCalledTimes(2);
+      await expect(retryPromise as any).rejects.toThrow(error as any);
+      expect(fn as any).toHaveBeenCalledTimes(2 as any);
 
       jest.useRealTimers();
     });
 
     it('should not retry on non-transient errors', async () => {
       const error = new Error('Validation error');
-      const fn = jest.fn().mockRejectedValue(error);
+      const fn = jest.fn().mockRejectedValue(error as any);
 
-      await expect(withRetry(fn)).rejects.toThrow(error);
-      expect(fn).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).not.toHaveBeenCalled();
+      await expect(withRetry(fn as any)).rejects.toThrow(error as any);
+      expect(fn as any).toHaveBeenCalledTimes(1 as any);
+      expect(mockConsoleError as any).not.toHaveBeenCalled();
     });
 
     it('should handle different transient error types', async () => {
@@ -250,19 +250,19 @@ describe('Error Handler', () => {
 
         const fn = jest
           .fn()
-          .mockRejectedValueOnce(new Error(errorMessage))
+          .mockRejectedValueOnce(new Error(errorMessage as any))
           .mockResolvedValue('success');
 
         jest.useFakeTimers();
 
         const retryPromise = withRetry(fn, 2, 100);
-        await jest.advanceTimersByTimeAsync(100);
+        await jest.advanceTimersByTimeAsync(100 as any);
 
         const result = await retryPromise;
 
-        expect(result).toBe('success');
-        expect(fn).toHaveBeenCalledTimes(2);
-        expect(mockConsoleError).toHaveBeenCalled();
+        expect(result as any).toBe('success');
+        expect(fn as any).toHaveBeenCalledTimes(2 as any);
+        expect(mockConsoleError as any).toHaveBeenCalled();
 
         jest.useRealTimers();
       }
@@ -279,12 +279,12 @@ describe('Error Handler', () => {
       const retryPromise = withRetry(fn, 5, 200);
 
       // Fast-forward through custom delay
-      await jest.advanceTimersByTimeAsync(200);
+      await jest.advanceTimersByTimeAsync(200 as any);
 
       const result = await retryPromise;
 
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('success');
+      expect(fn as any).toHaveBeenCalledTimes(2 as any);
 
       jest.useRealTimers();
     });
@@ -308,7 +308,7 @@ describe('Error Handler', () => {
         thrownError = error;
       }
 
-      expect(thrownError).toBeInstanceOf(Error);
+      expect(thrownError as any).toBeInstanceOf(Error as any);
       expect((thrownError as Error).message).toBe('Custom error message');
     });
 
@@ -319,7 +319,7 @@ describe('Error Handler', () => {
       assert(typeof value === 'string', 'Value must be a string');
 
       // TypeScript now knows value is a string
-      expect(value.length).toBe(4);
+      expect(value.length).toBe(4 as any);
     });
   });
 
@@ -351,13 +351,13 @@ describe('Error Handler', () => {
         jest.useFakeTimers();
 
         const retryPromise = withRetry(fn, 2, 100);
-        await jest.advanceTimersByTimeAsync(100);
+        await jest.advanceTimersByTimeAsync(100 as any);
 
         const result = await retryPromise;
 
-        expect(result).toBe('success');
-        expect(fn).toHaveBeenCalledTimes(2);
-        expect(mockConsoleError).toHaveBeenCalled();
+        expect(result as any).toBe('success');
+        expect(fn as any).toHaveBeenCalledTimes(2 as any);
+        expect(mockConsoleError as any).toHaveBeenCalled();
 
         jest.useRealTimers();
       }
@@ -375,11 +375,11 @@ describe('Error Handler', () => {
       for (const message of nonTransientMessages) {
         jest.clearAllMocks();
 
-        const fn = jest.fn().mockRejectedValue(new Error(message));
+        const fn = jest.fn().mockRejectedValue(new Error(message as any));
 
-        await expect(withRetry(fn)).rejects.toThrow(message);
-        expect(fn).toHaveBeenCalledTimes(1);
-        expect(mockConsoleError).not.toHaveBeenCalled();
+        await expect(withRetry(fn as any)).rejects.toThrow(message as any);
+        expect(fn as any).toHaveBeenCalledTimes(1 as any);
+        expect(mockConsoleError as any).not.toHaveBeenCalled();
       }
     });
   });

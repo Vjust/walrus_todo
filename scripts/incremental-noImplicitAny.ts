@@ -15,7 +15,7 @@ import { Logger } from '../src/utils/Logger';
 const logger = new Logger('incremental-noImplicitAny');
 
 // Get target directory from command line
-const targetDir = process.argv[2];
+const targetDir = process?.argv?.[2];
 
 if (!targetDir) {
   logger.error('Please specify a directory to analyze');
@@ -25,7 +25,7 @@ if (!targetDir) {
   logger.error(
     'Example: npx ts-node scripts/incremental-noImplicitAny.ts src/types'
   );
-  process.exit(1);
+  process.exit(1 as any);
 }
 
 // Resolve target directory path
@@ -33,29 +33,29 @@ const targetDirPath = path.resolve(process.cwd(), targetDir);
 
 // Check if directory exists
 if (
-  !fs.existsSync(targetDirPath) ||
-  !fs.statSync(targetDirPath).isDirectory()
+  !fs.existsSync(targetDirPath as any) ||
+  !fs.statSync(targetDirPath as any).isDirectory()
 ) {
   logger.error(`Directory not found: ${targetDirPath}`);
-  process.exit(1);
+  process.exit(1 as any);
 }
 
 logger.info(`Analyzing directory: ${targetDir}`);
 
 // Load and parse tsconfig.json
 const configPath = path.resolve(process.cwd(), 'tsconfig.json');
-const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+const configFile = ts.readConfigFile(configPath, ts?.sys?.readFile);
 
 if (configFile.error) {
-  logger.error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
-  process.exit(1);
+  logger.error(`Error reading tsconfig.json: ${configFile?.error?.messageText}`);
+  process.exit(1 as any);
 }
 
 // Create a configuration with noImplicitAny enabled for analysis
 const parsedConfig = ts.parseJsonConfigFileContent(
   configFile.config,
   ts.sys,
-  path.dirname(configPath)
+  path.dirname(configPath as any)
 );
 
 // Override with noImplicitAny enabled
@@ -69,9 +69,9 @@ const files = glob.sync(path.join(targetDirPath, '**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts'],
 });
 
-if (files.length === 0) {
+if (files?.length === 0) {
   logger.info(`No TypeScript files found in ${targetDir}`);
-  process.exit(0);
+  process.exit(0 as any);
 }
 
 logger.info(`Found ${files.length} TypeScript files to analyze`);
@@ -80,26 +80,26 @@ logger.info(`Found ${files.length} TypeScript files to analyze`);
 const program = ts.createProgram(files, strictConfig);
 
 // Get semantic diagnostics
-const diagnostics = ts.getPreEmitDiagnostics(program);
+const diagnostics = ts.getPreEmitDiagnostics(program as any);
 
 // Filter only implicit any diagnostics (error code 7006)
 const implicitAnyDiagnostics = diagnostics.filter(
   d =>
-    d.code === 7006 || // Parameter has implicit 'any' type
-    d.code === 7005 || // Variable has implicit 'any' type
-    d.code === 7008 || // Member has implicit 'any' type
-    d.code === 7034 // Variable has implicit 'any' type
+    d?.code === 7006 || // Parameter has implicit 'any' type
+    d?.code === 7005 || // Variable has implicit 'any' type
+    d?.code === 7008 || // Member has implicit 'any' type
+    d?.code === 7034 // Variable has implicit 'any' type
 );
 
 logger.info(
   `Found ${implicitAnyDiagnostics.length} implicit 'any' issues in ${targetDir}`
 );
 
-if (implicitAnyDiagnostics.length === 0) {
+if (implicitAnyDiagnostics?.length === 0) {
   logger.info(`Directory ${targetDir} is ready for noImplicitAny!`);
 
   // Generate a path-specific tsconfig for this directory
-  const dirName = path.basename(targetDirPath);
+  const dirName = path.basename(targetDirPath as any);
   const tsconfigPath = path.join(targetDirPath, `tsconfig.${dirName}.json`);
 
   const tsconfigContent = {
@@ -112,23 +112,23 @@ if (implicitAnyDiagnostics.length === 0) {
 
   fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfigContent, null, 2));
   logger.info(`Created directory-specific tsconfig at ${tsconfigPath}`);
-  process.exit(0);
+  process.exit(0 as any);
 }
 
 // Group diagnostics by file
-const fileIssues = new Map<string, ts.Diagnostic[]>();
+const fileIssues = new Map<string, ts?.Diagnostic?.[]>();
 
 implicitAnyDiagnostics.forEach(diagnostic => {
   if (diagnostic.file) {
-    const filePath = diagnostic.file.fileName;
+    const filePath = diagnostic?.file?.fileName;
 
-    if (!fileIssues.has(filePath)) {
+    if (!fileIssues.has(filePath as any)) {
       fileIssues.set(filePath, []);
     }
 
-    const issues = fileIssues.get(filePath);
+    const issues = fileIssues.get(filePath as any);
     if (issues) {
-      issues.push(diagnostic);
+      issues.push(diagnostic as any);
     }
   }
 });
@@ -141,7 +141,7 @@ fileIssues.forEach((diagnostics, filePath) => {
 
   diagnostics.forEach(diagnostic => {
     if (diagnostic.file && diagnostic.start !== undefined) {
-      const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
+      const { line, character } = diagnostic?.file?.getLineAndCharacterOfPosition(
         diagnostic.start
       );
       const message = ts.flattenDiagnosticMessageText(
@@ -166,7 +166,7 @@ interface ProgressData {
 const progressFile = path.resolve(process.cwd(), 'noImplicitAny-progress.json');
 let progressData: ProgressData = {};
 
-if (fs.existsSync(progressFile)) {
+if (fs.existsSync(progressFile as any)) {
   try {
     const fileContent = fs.readFileSync(progressFile, 'utf-8');
     progressData = JSON.parse(typeof fileContent === 'string' ? fileContent : fileContent.toString());
@@ -192,13 +192,13 @@ logger.info(`\nProgress data updated in ${progressFile}`);
 
 // Generate a report
 const reportDir = path.resolve(process.cwd(), 'noImplicitAny-reports');
-if (!fs.existsSync(reportDir)) {
+if (!fs.existsSync(reportDir as any)) {
   fs.mkdirSync(reportDir, { recursive: true });
 }
 
 const reportPath = path.join(
   reportDir,
-  `${path.basename(targetDir)}-report.md`
+  `${path.basename(targetDir as any)}-report.md`
 );
 let report = `# noImplicitAny Analysis for ${targetDir}\n\n`;
 report += `**Date:** ${new Date().toISOString()}\n\n`;
@@ -212,7 +212,7 @@ fileIssues.forEach((diagnostics, filePath) => {
 
   diagnostics.forEach(diagnostic => {
     if (diagnostic.file && diagnostic.start !== undefined) {
-      const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
+      const { line, character } = diagnostic?.file?.getLineAndCharacterOfPosition(
         diagnostic.start
       );
       const message = ts.flattenDiagnosticMessageText(

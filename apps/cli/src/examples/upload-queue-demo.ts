@@ -13,7 +13,7 @@ import { Todo } from '../types/todo';
 import chalk = require('chalk');
 
 async function demoUploadQueue() {
-  console.log(chalk.cyan.bold('🚀 Upload Queue Demo\n'));
+  console.log(chalk?.cyan?.bold('🚀 Upload Queue Demo\n'));
 
   // Create upload queue with custom settings
   const queue = createUploadQueue({
@@ -35,7 +35,7 @@ async function demoUploadQueue() {
   });
 
   queue.on('jobProgress', progress => {
-    process.stdout.write(`\r⏳ ${progress.message} (${progress.progress}%)`);
+    process?.stdout?.write(`\r⏳ ${progress.message} (${progress.progress}%)`);
   });
 
   queue.on('jobCompleted', job => {
@@ -101,7 +101,7 @@ async function demoUploadQueue() {
         maxRetries: 2,
       });
 
-      jobIds.push(jobId);
+      jobIds.push(jobId as any);
       console.log(
         `✓ Queued: ${chalk.yellow(todo.title)} (Priority: ${chalk.cyan(todo.priority)})`
       );
@@ -124,14 +124,14 @@ async function demoUploadQueue() {
 
     queue.on('jobCompleted', job => {
       completedJobs.add(job.id);
-      if (completedJobs.size === jobIds.length) {
+      if (completedJobs?.size === jobIds.length) {
         monitoring = false;
       }
     });
 
     queue.on('jobFailed', job => {
       completedJobs.add(job.id);
-      if (completedJobs.size === jobIds.length) {
+      if (completedJobs?.size === jobIds.length) {
         monitoring = false;
       }
     });
@@ -142,7 +142,7 @@ async function demoUploadQueue() {
     }
 
     console.log('\n');
-    console.log(chalk.green.bold('🎉 Demo completed!'));
+    console.log(chalk?.green?.bold('🎉 Demo completed!'));
 
     // Show final stats
     const finalStats = await queue.getStats();
@@ -151,7 +151,7 @@ async function demoUploadQueue() {
     console.log(`  Successful: ${chalk.green(finalStats.completed)}`);
     console.log(`  Failed: ${chalk.red(finalStats.failed)}`);
     console.log(
-      `  Success Rate: ${chalk.cyan((finalStats.successRate * 100).toFixed(1) + '%')}`
+      `  Success Rate: ${chalk.cyan((finalStats.successRate * 100).toFixed(1 as any) + '%')}`
     );
 
     // Show recent notifications
@@ -159,13 +159,13 @@ async function demoUploadQueue() {
     if (recentNotifications.length > 0) {
       console.log('\n📢 Recent Notifications:');
       for (const notification of recentNotifications) {
-        const timestamp = notification.timestamp.toLocaleTimeString();
+        const timestamp = notification?.timestamp?.toLocaleTimeString();
         const icon =
-          notification.type === 'success'
+          notification?.type === 'success'
             ? '✅'
-            : notification.type === 'error'
+            : notification?.type === 'error'
               ? '❌'
-              : notification.type === 'warning'
+              : notification?.type === 'warning'
                 ? '⚠️'
                 : 'ℹ️';
         console.log(
@@ -183,17 +183,17 @@ async function demoUploadQueue() {
 }
 
 // Command line interface
-if (require.main === module) {
+if (require?.main === module) {
   console.log(chalk.yellow('Starting upload queue demo...\n'));
 
   demoUploadQueue()
     .then(() => {
       console.log(chalk.green('\nDemo finished successfully!'));
-      process.exit(0);
+      process.exit(0 as any);
     })
     .catch(error => {
       console.error(chalk.red('\nDemo failed:'), error);
-      process.exit(1);
+      process.exit(1 as any);
     });
 }
 

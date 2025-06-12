@@ -91,12 +91,12 @@ export class AuthorizationError extends BaseError {
     });
 
     // Store properties
-    this.resource = resource;
-    this.action = action;
-    this.subject = subject;
-    this.requiredPermissions = requiredPermissions;
-    this.currentPermissions = currentPermissions;
-    this.isLoginRequired = isLoginRequired;
+    this?.resource = resource;
+    this?.action = action;
+    this?.subject = subject;
+    this?.requiredPermissions = requiredPermissions;
+    this?.currentPermissions = currentPermissions;
+    this?.isLoginRequired = isLoginRequired;
   }
 
   /**

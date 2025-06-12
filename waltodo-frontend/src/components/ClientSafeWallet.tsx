@@ -8,11 +8,11 @@ import { useWalletContext, WalletContextType } from '@/contexts/WalletContext';
  * This prevents SSR/hydration mismatches with wallet state
  */
 export function useClientSafeWallet(): WalletContextType | null {
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false as any);
   const walletContext = useWalletContext();
 
   useEffect(() => {
-    setIsClient(true);
+    setIsClient(true as any);
   }, []);
 
   // Only return wallet context after client-side hydration
@@ -43,5 +43,5 @@ export function ClientSafeWallet({ children, fallback }: ClientSafeWalletProps) 
     );
   }
 
-  return <>{children(wallet)}</>;
+  return <>{children(wallet as any)}</>;
 }

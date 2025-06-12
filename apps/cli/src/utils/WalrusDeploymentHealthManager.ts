@@ -103,10 +103,10 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
   constructor(config: DeploymentHealthConfig) {
     super();
     
-    this.logger = new Logger('WalrusDeploymentHealthManager');
-    this.config = config;
+    this?.logger = new Logger('WalrusDeploymentHealthManager');
+    this?.config = config;
 
-    this.logger.info('Initializing Walrus Deployment Health Manager', {
+    this?.logger?.info('Initializing Walrus Deployment Health Manager', {
       network: config.network,
       monitoring: config.enableMonitoring,
       failover: config.enableAutomaticFailover,
@@ -118,7 +118,7 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    * Initialize all health management components
    */
   async initialize(): Promise<void> {
-    this.currentStatus.phase = 'initializing';
+    this.currentStatus?.phase = 'initializing';
     this.emit('status_changed', this.currentStatus);
 
     try {
@@ -126,8 +126,8 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       const networkConfig = this.createNetworkConfig();
 
       // Initialize health checker
-      this.healthChecker = new NetworkHealthChecker(networkConfig, {
-        timeout: this.config.retryConfig.timeoutMs,
+      this?.healthChecker = new NetworkHealthChecker(networkConfig, {
+        timeout: this?.config?.retryConfig.timeoutMs,
         skipWallet: false,
         skipGasCheck: false,
         verbose: false,
@@ -135,42 +135,42 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
 
       // Initialize retry manager
       const endpoints = this.createEndpointList();
-      this.retryManager = new NetworkRetryManager(endpoints, {
-        maxRetries: this.config.retryConfig.maxRetries,
-        initialDelay: this.config.retryConfig.initialDelay,
-        maxDelay: this.config.retryConfig.maxDelay,
-        timeoutMs: this.config.retryConfig.timeoutMs,
+      this?.retryManager = new NetworkRetryManager(endpoints, {
+        maxRetries: this?.config?.retryConfig.maxRetries,
+        initialDelay: this?.config?.retryConfig.initialDelay,
+        maxDelay: this?.config?.retryConfig.maxDelay,
+        timeoutMs: this?.config?.retryConfig.timeoutMs,
         adaptiveDelay: true,
-        failoverEnabled: this.config.enableAutomaticFailover,
+        failoverEnabled: this?.config?.enableAutomaticFailover,
         loadBalancing: 'health',
       });
 
       // Initialize fallback manager if enabled
-      if (this.config.enableAutomaticFailover) {
-        const fallbackConfig = this.createFallbackConfig(endpoints);
-        this.fallbackManager = new EndpointFallbackManager(fallbackConfig);
+      if (this?.config?.enableAutomaticFailover) {
+        const fallbackConfig = this.createFallbackConfig(endpoints as any);
+        this?.fallbackManager = new EndpointFallbackManager(fallbackConfig as any);
         
         // Listen for endpoint switches
-        this.fallbackManager.on('endpoint_switched', () => {
-          this.deploymentMetrics.endpointSwitches++;
+        this?.fallbackManager?.on('endpoint_switched', () => {
+          this?.deploymentMetrics?.endpointSwitches++;
         });
       }
 
       // Initialize validator if enabled
-      if (this.config.enablePreValidation) {
-        this.validator = new PreDeploymentValidator(networkConfig, {
-          strictMode: this.config.strictValidation,
-          timeout: this.config.retryConfig.timeoutMs,
+      if (this?.config?.enablePreValidation) {
+        this?.validator = new PreDeploymentValidator(networkConfig, {
+          strictMode: this?.config?.strictValidation,
+          timeout: this?.config?.retryConfig.timeoutMs,
         });
       }
 
       // Initialize monitor if enabled
-      if (this.config.enableMonitoring) {
-        this.monitor = new NetworkMonitor(
+      if (this?.config?.enableMonitoring) {
+        this?.monitor = new NetworkMonitor(
           this.healthChecker,
           {
-            healthCheckInterval: this.config.monitoringInterval,
-            enableAutomaticRemediation: this.config.enableAutomaticFailover,
+            healthCheckInterval: this?.config?.monitoringInterval,
+            enableAutomaticRemediation: this?.config?.enableAutomaticFailover,
           },
           this.retryManager,
           this.fallbackManager
@@ -180,13 +180,13 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
         this.setupMonitoringEventListeners();
       }
 
-      this.logger.info('Health management components initialized successfully');
+      this?.logger?.info('Health management components initialized successfully');
 
     } catch (error) {
-      this.logger.error('Failed to initialize health management components', {
-        error: error instanceof Error ? error.message : String(error),
+      this?.logger?.error('Failed to initialize health management components', {
+        error: error instanceof Error ? error.message : String(error as any),
       });
-      throw new ValidationError(`Initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ValidationError(`Initialization failed: ${error instanceof Error ? error.message : String(error as any)}`);
     }
   }
 
@@ -198,33 +198,33 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       throw new ValidationError('Validator not initialized. Enable pre-validation in config.');
     }
 
-    this.currentStatus.phase = 'validating';
+    this.currentStatus?.phase = 'validating';
     this.emit('status_changed', this.currentStatus);
 
-    this.logger.info('Starting pre-deployment validation', {
+    this?.logger?.info('Starting pre-deployment validation', {
       network: context.network,
       sitePath: context.sitePath,
     });
 
     try {
-      const validationSummary = await this.validator.validate(context);
-      this.currentStatus.validationSummary = validationSummary;
+      const validationSummary = await this?.validator?.validate(context as any);
+      this.currentStatus?.validationSummary = validationSummary;
       
       // Update deployment readiness
       switch (validationSummary.overallStatus) {
         case 'ready':
-          this.currentStatus.deploymentReadiness = 'ready';
+          this.currentStatus?.deploymentReadiness = 'ready';
           break;
         case 'warnings':
-          this.currentStatus.deploymentReadiness = 'warnings';
+          this.currentStatus?.deploymentReadiness = 'warnings';
           break;
         case 'failed':
-          this.currentStatus.deploymentReadiness = 'not_ready';
+          this.currentStatus?.deploymentReadiness = 'not_ready';
           break;
       }
 
-      this.currentStatus.recommendations = validationSummary.recommendedActions;
-      this.currentStatus.estimatedDeploymentTime = validationSummary.estimatedDeploymentTime;
+      this.currentStatus?.recommendations = validationSummary.recommendedActions;
+      this.currentStatus?.estimatedDeploymentTime = validationSummary.estimatedDeploymentTime;
 
       this.emit('validation_completed', validationSummary);
       this.emit('status_changed', this.currentStatus);
@@ -232,8 +232,8 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       return validationSummary;
 
     } catch (error) {
-      this.logger.error('Pre-deployment validation failed', {
-        error: error instanceof Error ? error.message : String(error),
+      this?.logger?.error('Pre-deployment validation failed', {
+        error: error instanceof Error ? error.message : String(error as any),
       });
       throw error;
     }
@@ -247,18 +247,18 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       throw new ValidationError('Monitor not initialized. Enable monitoring in config.');
     }
 
-    this.currentStatus.phase = 'monitoring';
+    this.currentStatus?.phase = 'monitoring';
     this.emit('status_changed', this.currentStatus);
 
-    this.logger.info('Starting network monitoring');
+    this?.logger?.info('Starting network monitoring');
 
     try {
-      await this.monitor.startMonitoring();
+      await this?.monitor?.startMonitoring();
       this.emit('monitoring_started');
 
     } catch (error) {
-      this.logger.error('Failed to start monitoring', {
-        error: error instanceof Error ? error.message : String(error),
+      this?.logger?.error('Failed to start monitoring', {
+        error: error instanceof Error ? error.message : String(error as any),
       });
       throw error;
     }
@@ -269,7 +269,7 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    */
   stopMonitoring(): void {
     if (this.monitor) {
-      this.monitor.stopMonitoring();
+      this?.monitor?.stopMonitoring();
       this.emit('monitoring_stopped');
     }
   }
@@ -285,28 +285,28 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       throw new ValidationError('Retry manager not initialized');
     }
 
-    this.deploymentMetrics.requestCount++;
+    this?.deploymentMetrics?.requestCount++;
     const startTime = Date.now();
 
     try {
-      const result = await this.retryManager.executeWithFailover(operation, context);
+      const result = await this?.retryManager?.executeWithFailover(operation, context);
       
       // Record metrics
       const responseTime = Date.now() - startTime;
-      this.deploymentMetrics.responseTimeSum += responseTime;
+      this?.deploymentMetrics?.responseTimeSum += responseTime;
       
       if (this.monitor) {
-        this.monitor.recordResponseTime(responseTime);
+        this?.monitor?.recordResponseTime(responseTime as any);
       }
 
       return result;
 
     } catch (error) {
-      this.deploymentMetrics.errorCount++;
+      this?.deploymentMetrics?.errorCount++;
       
-      this.logger.error('Operation failed with health management', {
+      this?.logger?.error('Operation failed with health management', {
         context,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
 
       throw error;
@@ -322,15 +322,15 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
     }
 
     try {
-      const networkHealth = await this.healthChecker.checkHealth();
-      this.currentStatus.networkHealth = networkHealth;
+      const networkHealth = await this?.healthChecker?.checkHealth();
+      this.currentStatus?.networkHealth = networkHealth;
       this.emit('status_changed', this.currentStatus);
       
       return networkHealth;
 
     } catch (error) {
-      this.logger.error('Failed to get network health', {
-        error: error instanceof Error ? error.message : String(error),
+      this?.logger?.error('Failed to get network health', {
+        error: error instanceof Error ? error.message : String(error as any),
       });
       throw error;
     }
@@ -341,12 +341,12 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    */
   generateDiagnosticReport(): DiagnosticReport | undefined {
     if (!this.monitor) {
-      this.logger.warn('Monitor not available for diagnostic report');
+      this?.logger?.warn('Monitor not available for diagnostic report');
       return undefined;
     }
 
-    const report = this.monitor.generateDiagnosticReport();
-    this.currentStatus.diagnosticReport = report;
+    const report = this?.monitor?.generateDiagnosticReport();
+    this.currentStatus?.diagnosticReport = report;
     this.emit('status_changed', this.currentStatus);
 
     return report;
@@ -363,8 +363,8 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    * Start deployment phase
    */
   startDeployment(): void {
-    this.currentStatus.phase = 'deploying';
-    this.deploymentMetrics.startTime = Date.now();
+    this.currentStatus?.phase = 'deploying';
+    this.deploymentMetrics?.startTime = Date.now();
     this.emit('deployment_started');
     this.emit('status_changed', this.currentStatus);
   }
@@ -373,21 +373,21 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    * Complete deployment
    */
   completeDeployment(success: boolean): DeploymentResult {
-    this.deploymentMetrics.endTime = Date.now();
-    this.currentStatus.phase = success ? 'completed' : 'failed';
+    this.deploymentMetrics?.endTime = Date.now();
+    this.currentStatus?.phase = success ? 'completed' : 'failed';
     
     const result: DeploymentResult = {
       success,
-      duration: this.deploymentMetrics.endTime - this.deploymentMetrics.startTime,
+      duration: this?.deploymentMetrics?.endTime - this?.deploymentMetrics?.startTime,
       networkMetrics: {
-        totalRequests: this.deploymentMetrics.requestCount,
-        errorRate: this.deploymentMetrics.requestCount > 0 
-          ? this.deploymentMetrics.errorCount / this.deploymentMetrics.requestCount 
+        totalRequests: this?.deploymentMetrics?.requestCount,
+        errorRate: this?.deploymentMetrics?.requestCount > 0 
+          ? this?.deploymentMetrics?.errorCount / this?.deploymentMetrics?.requestCount 
           : 0,
-        averageResponseTime: this.deploymentMetrics.requestCount > 0 
-          ? this.deploymentMetrics.responseTimeSum / this.deploymentMetrics.requestCount 
+        averageResponseTime: this?.deploymentMetrics?.requestCount > 0 
+          ? this?.deploymentMetrics?.responseTimeSum / this?.deploymentMetrics?.requestCount 
           : 0,
-        endpointSwitches: this.deploymentMetrics.endpointSwitches,
+        endpointSwitches: this?.deploymentMetrics?.endpointSwitches,
       },
       issues: this.collectDeploymentIssues(),
       finalEndpoints: this.getFinalEndpoints(),
@@ -404,17 +404,17 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    */
   private createNetworkConfig(): NetworkConfig {
     return {
-      network: this.config.network,
+      network: this?.config?.network,
       sui: {
-        primaryUrl: this.config.endpoints.sui.primary,
-        fallbackUrls: this.config.endpoints.sui.fallbacks,
-        websocketUrl: this.config.endpoints.sui.websocket,
-        faucetUrl: this.config.endpoints.sui.faucet,
+        primaryUrl: this?.config?.endpoints.sui.primary,
+        fallbackUrls: this?.config?.endpoints.sui.fallbacks,
+        websocketUrl: this?.config?.endpoints.sui.websocket,
+        faucetUrl: this?.config?.endpoints.sui.faucet,
       },
       walrus: {
-        publisherUrl: this.config.endpoints.walrus.publisher,
-        aggregatorUrl: this.config.endpoints.walrus.aggregator,
-        fallbackPublisherUrls: this.config.endpoints.walrus.fallbackPublishers,
+        publisherUrl: this?.config?.endpoints.walrus.publisher,
+        aggregatorUrl: this?.config?.endpoints.walrus.aggregator,
+        fallbackPublisherUrls: this?.config?.endpoints.walrus.fallbackPublishers,
       },
       thresholds: {
         maxResponseTime: 5000,
@@ -433,13 +433,13 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
 
     // Sui endpoints
     endpoints.push({
-      url: this.config.endpoints.sui.primary,
+      url: this?.config?.endpoints.sui.primary,
       type: 'sui-rpc',
       priority: 1,
       isBackup: false,
     });
 
-    this.config.endpoints.sui.fallbacks.forEach((url, index) => {
+    this?.config?.endpoints.sui?.fallbacks?.forEach((url, index) => {
       endpoints.push({
         url,
         type: 'sui-rpc',
@@ -450,20 +450,20 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
 
     // Walrus endpoints
     endpoints.push({
-      url: this.config.endpoints.walrus.publisher,
+      url: this?.config?.endpoints.walrus.publisher,
       type: 'walrus-publisher',
       priority: 1,
       isBackup: false,
     });
 
     endpoints.push({
-      url: this.config.endpoints.walrus.aggregator,
+      url: this?.config?.endpoints.walrus.aggregator,
       type: 'walrus-aggregator',
       priority: 1,
       isBackup: false,
     });
 
-    this.config.endpoints.walrus.fallbackPublishers.forEach((url, index) => {
+    this?.config?.endpoints.walrus?.fallbackPublishers?.forEach((url, index) => {
       endpoints.push({
         url,
         type: 'walrus-publisher',
@@ -479,7 +479,7 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    * Create fallback configuration
    */
   private createFallbackConfig(endpoints: NetworkEndpoint[]): FallbackConfig {
-    const primary = endpoints.find(e => e.priority === 1 && !e.isBackup);
+    const primary = endpoints.find(e => e?.priority === 1 && !e.isBackup);
     const fallbacks = endpoints.filter(e => e.isBackup);
 
     if (!primary) {
@@ -492,7 +492,7 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       strategy: 'adaptive',
       healthCheckInterval: 30000,
       failoverThreshold: 3,
-      fallbackTimeout: this.config.retryConfig.timeoutMs,
+      fallbackTimeout: this?.config?.retryConfig.timeoutMs,
       enableAutomaticRecovery: true,
       maxConcurrentFallbacks: 3,
     };
@@ -504,18 +504,18 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
   private setupMonitoringEventListeners(): void {
     if (!this.monitor) return;
 
-    this.monitor.on('network_event', (event) => {
+    this?.monitor?.on('network_event', (event) => {
       this.emit('network_event', event);
       
       // Update status based on event severity
-      if (event.severity === 'error' || event.severity === 'critical') {
-        this.currentStatus.deploymentReadiness = 'not_ready';
-      } else if (event.severity === 'warning' && this.currentStatus.deploymentReadiness === 'ready') {
-        this.currentStatus.deploymentReadiness = 'warnings';
+      if (event?.severity === 'error' || event?.severity === 'critical') {
+        this.currentStatus?.deploymentReadiness = 'not_ready';
+      } else if (event?.severity === 'warning' && this.currentStatus?.deploymentReadiness === 'ready') {
+        this.currentStatus?.deploymentReadiness = 'warnings';
       }
     });
 
-    this.monitor.on('metrics_updated', (metrics) => {
+    this?.monitor?.on('metrics_updated', (metrics) => {
       this.emit('metrics_updated', metrics);
     });
   }
@@ -523,14 +523,14 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
   /**
    * Collect deployment issues from monitoring
    */
-  private collectDeploymentIssues(): DeploymentResult['issues'] {
-    const issues: DeploymentResult['issues'] = [];
+  private collectDeploymentIssues(): DeploymentResult?.["issues"] {
+    const issues: DeploymentResult?.["issues"] = [];
 
     if (this.monitor) {
-      const recentEvents = this.monitor.getRecentEvents(20);
+      const recentEvents = this?.monitor?.getRecentEvents(20 as any);
       
       for (const event of recentEvents) {
-        if (event.severity === 'error' || event.severity === 'warning') {
+        if (event?.severity === 'error' || event?.severity === 'warning') {
           issues.push({
             severity: event.severity,
             message: event.message,
@@ -546,22 +546,22 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
   /**
    * Get final endpoints after deployment
    */
-  private getFinalEndpoints(): DeploymentResult['finalEndpoints'] {
-    let sui = this.config.endpoints.sui.primary;
-    let walrusPublisher = this.config.endpoints.walrus.publisher;
-    let walrusAggregator = this.config.endpoints.walrus.aggregator;
+  private getFinalEndpoints(): DeploymentResult?.["finalEndpoints"] {
+    let sui = this?.config?.endpoints.sui.primary;
+    let walrusPublisher = this?.config?.endpoints.walrus.publisher;
+    let walrusAggregator = this?.config?.endpoints.walrus.aggregator;
 
     // Get current endpoints from fallback manager if available
     if (this.fallbackManager) {
-      const status = this.fallbackManager.getStatus();
+      const status = this?.fallbackManager?.getStatus();
       const currentEndpoint = status.currentEndpoint;
       
       // Determine which service the current endpoint belongs to
-      if (this.config.endpoints.sui.fallbacks.includes(currentEndpoint) || 
-          currentEndpoint === this.config.endpoints.sui.primary) {
+      if (this?.config?.endpoints.sui?.fallbacks?.includes(currentEndpoint as any) || 
+          currentEndpoint === this?.config?.endpoints.sui.primary) {
         sui = currentEndpoint;
-      } else if (this.config.endpoints.walrus.fallbackPublishers.includes(currentEndpoint) || 
-                 currentEndpoint === this.config.endpoints.walrus.publisher) {
+      } else if (this?.config?.endpoints.walrus?.fallbackPublishers?.includes(currentEndpoint as any) || 
+                 currentEndpoint === this?.config?.endpoints.walrus.publisher) {
         walrusPublisher = currentEndpoint;
       }
     }
@@ -577,20 +577,20 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
    * Cleanup resources
    */
   destroy(): void {
-    this.logger.info('Destroying health management components');
+    this?.logger?.info('Destroying health management components');
 
     this.stopMonitoring();
 
     if (this.retryManager) {
-      this.retryManager.destroy();
+      this?.retryManager?.destroy();
     }
 
     if (this.fallbackManager) {
-      this.fallbackManager.destroy();
+      this?.fallbackManager?.destroy();
     }
 
     if (this.monitor) {
-      this.monitor.destroy();
+      this?.monitor?.destroy();
     }
 
     this.removeAllListeners();
@@ -615,28 +615,28 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       },
       endpoints: {
         sui: {
-          primary: 'https://fullnode.testnet.sui.io:443',
+          primary: 'https://fullnode?.testnet?.sui.io:443',
           fallbacks: [
-            'https://sui-testnet-endpoint.blockvision.org/v1',
-            'https://sui-testnet.publicnode.com',
-            'https://testnet.sui.rpcpool.com',
+            'https://sui-testnet-endpoint?.blockvision?.org/v1',
+            'https://sui-testnet?.publicnode?.com',
+            'https://testnet?.sui?.rpcpool.com',
           ],
-          websocket: 'wss://fullnode.testnet.sui.io:443',
-          faucet: 'https://faucet.testnet.sui.io',
+          websocket: 'wss://fullnode?.testnet?.sui.io:443',
+          faucet: 'https://faucet?.testnet?.sui.io',
         },
         walrus: {
-          publisher: 'https://publisher-testnet.walrus.site',
-          aggregator: 'https://aggregator-testnet.walrus.site',
+          publisher: 'https://publisher-testnet?.walrus?.site',
+          aggregator: 'https://aggregator-testnet?.walrus?.site',
           fallbackPublishers: [
-            'https://walrus-testnet-publisher.nodes.guru',
-            'https://walrus-testnet-publisher.blockscope.net',
+            'https://walrus-testnet-publisher?.nodes?.guru',
+            'https://walrus-testnet-publisher?.blockscope?.net',
           ],
         },
       },
       ...overrides,
     };
 
-    return new WalrusDeploymentHealthManager(config);
+    return new WalrusDeploymentHealthManager(config as any);
   }
 
   static forMainnet(overrides: Partial<DeploymentHealthConfig> = {}): WalrusDeploymentHealthManager {
@@ -655,23 +655,23 @@ export class WalrusDeploymentHealthManager extends EventEmitter {
       },
       endpoints: {
         sui: {
-          primary: 'https://fullnode.mainnet.sui.io:443',
+          primary: 'https://fullnode?.mainnet?.sui.io:443',
           fallbacks: [
-            'https://sui-mainnet-endpoint.blockvision.org/v1',
-            'https://sui-mainnet.publicnode.com',
-            'https://mainnet.sui.rpcpool.com',
+            'https://sui-mainnet-endpoint?.blockvision?.org/v1',
+            'https://sui-mainnet?.publicnode?.com',
+            'https://mainnet?.sui?.rpcpool.com',
           ],
-          websocket: 'wss://fullnode.mainnet.sui.io:443',
+          websocket: 'wss://fullnode?.mainnet?.sui.io:443',
         },
         walrus: {
-          publisher: 'https://publisher.walrus.space',
-          aggregator: 'https://aggregator.walrus.space',
+          publisher: 'https://publisher?.walrus?.space',
+          aggregator: 'https://aggregator?.walrus?.space',
           fallbackPublishers: [],
         },
       },
       ...overrides,
     };
 
-    return new WalrusDeploymentHealthManager(config);
+    return new WalrusDeploymentHealthManager(config as any);
   }
 }

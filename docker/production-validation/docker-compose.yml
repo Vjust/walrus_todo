@@ -1,0 +1,40 @@
+# Docker Compose for Production Validation
+version: '3.8'
+
+services:
+  production-validator:
+    build:
+      context: ../../
+      dockerfile: docker/production-validation/Dockerfile
+    container_name: waltodo-production-validator
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/cli/node_modules
+      - /app/waltodo-frontend/node_modules
+      - validation-reports:/app/reports
+    environment:
+      - NODE_ENV=production
+      - CI=true
+      - FORCE_COLOR=1
+    working_dir: /app
+    command: ["validate-production"]
+    
+  # Lightweight validation for quick checks
+  quick-validator:
+    build:
+      context: ../../
+      dockerfile: docker/production-validation/Dockerfile
+    container_name: waltodo-quick-validator
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CI=true
+    working_dir: /app
+    command: ["sh", "-c", "pnpm run typecheck && pnpm build:dev"]
+
+volumes:
+  validation-reports:
+    driver: local

@@ -99,7 +99,7 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
       }),
     }),
 
-    revokeVerification: jest.fn().mockResolvedValue(true),
+    revokeVerification: jest.fn().mockResolvedValue(true as any),
 
     generateCredentialProof: jest.fn().mockResolvedValue('proof-123'),
   };
@@ -145,16 +145,16 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
           if (service.blockchainAdapter) {
             try {
               const verificationResult =
-                await service.blockchainAdapter.verifyCredential({
+                await service?.blockchainAdapter?.verifyCredential({
                   providerName: sanitizedProvider,
                   publicKey: 'dummy', // Would be real in production
                 });
-              credentialObj.isVerified = true;
-              credentialObj.verificationProof =
+              credentialObj?.isVerified = true;
+              credentialObj?.verificationProof =
                 verificationResult.verificationId;
             } catch (error) {
               // Handle verification errors gracefully
-              credentialObj.isVerified = false;
+              credentialObj?.isVerified = false;
             }
           }
 
@@ -162,7 +162,7 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
 
           // Audit log
           if (service.auditLogger) {
-            service.auditLogger.log('credential_created', {
+            service?.auditLogger?.log('credential_created', {
               provider: sanitizedProvider,
               type,
               hasCredential: !!credential,
@@ -184,7 +184,7 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
       if (!credential) {
         // Try environment variable fallback
         const envKey = `${provider.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_API_KEY`;
-        const envValue = process.env[envKey];
+        const envValue = process?.env?.[envKey];
         if (envValue) {
           return envValue;
         }
@@ -203,7 +203,7 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
         credential.verificationProof
       ) {
         const isStillValid =
-          await service.blockchainAdapter.checkVerificationStatus(
+          await service?.blockchainAdapter?.checkVerificationStatus(
             credential.verificationProof
           );
         if (!isStillValid) {
@@ -213,7 +213,7 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
 
       // Audit log
       if (service.auditLogger) {
-        service.auditLogger.log('credential_accessed', {
+        service?.auditLogger?.log('credential_accessed', {
           provider: sanitizedProvider,
           timestamp: Date.now(),
         });
@@ -265,7 +265,7 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
         throw new Error('Blockchain adapter not configured');
       }
 
-      return service.blockchainAdapter.verifyCredential({ provider });
+      return service?.blockchainAdapter?.verifyCredential({ provider });
     }),
 
     updatePermissions: jest
@@ -286,12 +286,12 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
             throw new Error('Unauthorized permission escalation attempt');
           }
 
-          credential.permissionLevel = permissionLevel;
+          credential?.permissionLevel = permissionLevel;
           mockCredentials[sanitizedProvider] = credential;
 
           // Audit log
           if (service.auditLogger) {
-            service.auditLogger.log('permission_updated', {
+            service?.auditLogger?.log('permission_updated', {
               provider: sanitizedProvider,
               newLevel: permissionLevel,
               timestamp: Date.now(),
@@ -314,15 +314,15 @@ export function createMockSecureCredentialManager(): MockSecureCredentialManager
           throw new Error(`No credential found for provider "${provider}"`);
         }
 
-        return service.blockchainAdapter.generateCredentialProof(credential);
+        return service?.blockchainAdapter?.generateCredentialProof(credential as any);
       }),
 
     listCredentials: jest.fn().mockImplementation(async () => {
-      return Object.values(mockCredentials);
+      return Object.values(mockCredentials as any);
     }),
 
     setBlockchainAdapter: jest.fn().mockImplementation((adapter: any) => {
-      service.blockchainAdapter = adapter;
+      service?.blockchainAdapter = adapter;
     }),
 
     // Internal properties

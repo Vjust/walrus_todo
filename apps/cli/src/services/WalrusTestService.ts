@@ -19,18 +19,18 @@ export class WalrusTestService implements IWalrusService {
   async storeTodo(todo: Todo): Promise<string> {
     try {
       const blobId = `mock_todo_${todo.id}`;
-      this.todos.set(blobId, { ...todo, walrusBlobId: blobId });
+      this?.todos?.set(blobId, { ...todo, walrusBlobId: blobId });
       return blobId;
     } catch (error) {
       throw new CLIError(
-        `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to store todo: ${error instanceof Error ? error.message : String(error as any)}`,
         'STORE_TODO_FAILED'
       );
     }
   }
 
   async retrieveTodo(blobId: string): Promise<Todo> {
-    const todo = this.todos.get(blobId);
+    const todo = this?.todos?.get(blobId as any);
     if (!todo) {
       throw new CLIError(
         `Todo with blob ID "${blobId}" not found`,
@@ -43,18 +43,18 @@ export class WalrusTestService implements IWalrusService {
   async storeTodoList(list: TodoList): Promise<string> {
     try {
       const blobId = `mock_list_${list.id}`;
-      this.lists.set(blobId, { ...list, walrusBlobId: blobId });
+      this?.lists?.set(blobId, { ...list, walrusBlobId: blobId });
       return blobId;
     } catch (error) {
       throw new CLIError(
-        `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to store todo list: ${error instanceof Error ? error.message : String(error as any)}`,
         'STORE_LIST_FAILED'
       );
     }
   }
 
   async retrieveTodoList(blobId: string): Promise<TodoList> {
-    const list = this.lists.get(blobId);
+    const list = this?.lists?.get(blobId as any);
     if (!list) {
       throw new CLIError(
         `Todo list with blob ID "${blobId}" not found`,

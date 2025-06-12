@@ -63,8 +63,8 @@ export class RetryManager {
     healthThreshold: Number(RETRY_CONFIG.HEALTH_THRESHOLD),
     adaptiveDelay: Boolean(RETRY_CONFIG.ADAPTIVE_DELAY),
     circuitBreaker: {
-      failureThreshold: Number(RETRY_CONFIG.CIRCUIT_BREAKER.FAILURE_THRESHOLD),
-      resetTimeout: Number(RETRY_CONFIG.CIRCUIT_BREAKER.RESET_TIMEOUT_MS),
+      failureThreshold: Number(RETRY_CONFIG?.CIRCUIT_BREAKER?.FAILURE_THRESHOLD),
+      resetTimeout: Number(RETRY_CONFIG?.CIRCUIT_BREAKER?.RESET_TIMEOUT_MS),
     },
     loadBalancing: RETRY_CONFIG.LOAD_BALANCING,
   };
@@ -80,11 +80,11 @@ export class RetryManager {
     private baseUrls: string[],
     private options: RetryOptions = {}
   ) {
-    this.logger = new Logger('RetryManager');
+    this?.logger = new Logger('RetryManager');
 
     // Initialize nodes with base URLs
     baseUrls.forEach((url, index) => {
-      this.nodes.set(url, {
+      this?.nodes?.set(url, {
         url,
         priority: index,
         consecutiveFailures: 0,
@@ -101,17 +101,17 @@ export class RetryManager {
     success: boolean,
     responseTime?: number
   ): void {
-    const node = this.nodes.get(nodeUrl);
+    const node = this?.nodes?.get(nodeUrl as any);
     if (!node) return;
 
     if (success) {
-      node.lastSuccess = Date.now();
-      node.consecutiveFailures = 0;
-      node.healthScore = Math.min(node.healthScore + 0.2, this.MAX_HEALTH);
+      node?.lastSuccess = Date.now();
+      node?.consecutiveFailures = 0;
+      node?.healthScore = Math.min(node.healthScore + 0.2, this.MAX_HEALTH);
     } else {
-      node.lastFailure = Date.now();
+      node?.lastFailure = Date.now();
       node.consecutiveFailures++;
-      node.healthScore = Math.max(
+      node?.healthScore = Math.max(
         node.healthScore - 0.3 * node.consecutiveFailures,
         this.MIN_HEALTH
       );
@@ -120,12 +120,12 @@ export class RetryManager {
     // Adjust for response time if available
     if (responseTime) {
       const timeScore = Math.max(0, 1 - responseTime / 1000);
-      node.healthScore = node.healthScore * 0.7 + timeScore * 0.3;
+      node?.healthScore = node.healthScore * 0.7 + timeScore * 0.3;
     }
 
     // Apply natural decay
     node.healthScore *= 1 - this.HEALTH_DECAY;
-    node.healthScore = Math.max(node.healthScore, this.MIN_HEALTH);
+    node?.healthScore = Math.max(node.healthScore, this.MIN_HEALTH);
   }
 
   /**
@@ -151,7 +151,7 @@ export class RetryManager {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
     if (!options.circuitBreaker) return false;
 
-    const breaker = this.circuitBreakers.get(node.url);
+    const breaker = this?.circuitBreakers?.get(node.url);
     if (!breaker) return false;
 
     if (!breaker.isOpen) return false;
@@ -159,11 +159,11 @@ export class RetryManager {
     // Check if it's time to try reset (half-open state)
     if (
       Date.now() - breaker.lastFailure >=
-      options.circuitBreaker.resetTimeout
+      options?.circuitBreaker?.resetTimeout
     ) {
       // Move to half-open state - allow one attempt
-      breaker.isOpen = false;
-      breaker.lastReset = Date.now();
+      breaker?.isOpen = false;
+      breaker?.lastReset = Date.now();
       // Don't reset failure count yet - wait for successful operation
       return false;
     }
@@ -178,7 +178,7 @@ export class RetryManager {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
     if (!options.circuitBreaker) return;
 
-    let breaker = this.circuitBreakers.get(node.url);
+    let breaker = this?.circuitBreakers?.get(node.url);
     if (!breaker) {
       breaker = {
         isOpen: false,
@@ -186,17 +186,17 @@ export class RetryManager {
         lastFailure: 0,
         lastReset: Date.now(),
       };
-      this.circuitBreakers.set(node.url, breaker);
+      this?.circuitBreakers?.set(node.url, breaker);
     }
 
     if (success) {
-      breaker.failureCount = 0;
-      breaker.isOpen = false;
+      breaker?.failureCount = 0;
+      breaker?.isOpen = false;
     } else {
       breaker.failureCount++;
-      breaker.lastFailure = Date.now();
-      if (breaker.failureCount >= options.circuitBreaker.failureThreshold) {
-        breaker.isOpen = true;
+      breaker?.lastFailure = Date.now();
+      if (breaker.failureCount >= options?.circuitBreaker?.failureThreshold) {
+        breaker?.isOpen = true;
       }
     }
   }
@@ -228,7 +228,7 @@ export class RetryManager {
     }
 
     // Circuit breaker penalty
-    if (this.isCircuitOpen(node)) {
+    if (this.isCircuitOpen(node as any)) {
       score *= 0.1;
     }
 
@@ -240,10 +240,10 @@ export class RetryManager {
    */
   private getNextNode(): NetworkNode {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
-    const nodes = Array.from(this.nodes.values());
+    const nodes = Array.from(this?.nodes?.values());
 
     // Filter out nodes with open circuits
-    const availableNodes = nodes.filter(node => !this.isCircuitOpen(node));
+    const availableNodes = nodes.filter(node => !this.isCircuitOpen(node as any));
 
     // Check if we have enough healthy nodes BEFORE filtering by health threshold
     if (availableNodes.length < options.minNodes) {
@@ -266,7 +266,7 @@ export class RetryManager {
         // Simple round-robin
         const node =
           candidateNodes[this.roundRobinIndex % candidateNodes.length];
-        this.roundRobinIndex =
+        this?.roundRobinIndex =
           (this.roundRobinIndex + 1) % candidateNodes.length;
         return node;
       }
@@ -279,8 +279,8 @@ export class RetryManager {
       default:
         // Use weighted scoring
         return candidateNodes.sort((a, b) => {
-          const scoreA = this.getNodeScore(a);
-          const scoreB = this.getNodeScore(b);
+          const scoreA = this.getNodeScore(a as any);
+          const scoreB = this.getNodeScore(b as any);
           return scoreB - scoreA;
         })[0];
     }
@@ -301,16 +301,16 @@ export class RetryManager {
       const status =
         (error as { status?: number; statusCode?: number }).status ||
         (error as { status?: number; statusCode?: number }).statusCode;
-      if (status && options.retryableStatuses.includes(status)) {
+      if (status && options?.retryableStatuses?.includes(status as any)) {
         return true;
       }
     }
 
     // Check error message against patterns
-    const errorString = error instanceof Error ? error.message : String(error);
-    return options.retryableErrors.some(pattern => {
+    const errorString = error instanceof Error ? error.message : String(error as any);
+    return options?.retryableErrors?.some(pattern => {
       if (pattern instanceof RegExp) {
-        return pattern.test(errorString);
+        return pattern.test(errorString as any);
       }
       return errorString.toLowerCase().includes(pattern.toLowerCase());
     });
@@ -323,13 +323,13 @@ export class RetryManager {
    * Calculates network conditions score based on recent errors
    */
   private getNetworkScore(context: RetryContext): number {
-    if (context.errors.length === 0) return 1.0;
+    if (context.errors?.length === 0) return 1.0;
 
-    const recentErrors = context.errors.filter(
+    const recentErrors = context?.errors?.filter(
       e => Date.now() - e.timestamp < 60000 // Look at last minute
     );
 
-    if (recentErrors.length === 0) return 0.8;
+    if (recentErrors?.length === 0) return 0.8;
 
     // More errors = worse conditions
     return Math.max(0.2, 1 - recentErrors.length * 0.2);
@@ -339,7 +339,7 @@ export class RetryManager {
    * Gets delay multiplier based on error type
    */
   private getErrorMultiplier(error: Error): number {
-    const errorStr = error.message.toLowerCase();
+    const errorStr = error?.message?.toLowerCase();
 
     // Adjust delay based on error type
     if (errorStr.includes('timeout')) return 1.5;
@@ -387,14 +387,14 @@ export class RetryManager {
 
     if (options.adaptiveDelay) {
       // Apply network condition multiplier (capped)
-      const networkScore = this.getNetworkScore(context);
+      const networkScore = this.getNetworkScore(context as any);
       const networkMultiplier = Math.min(2.0, 2 - networkScore);
       delay *= networkMultiplier;
 
       // Apply error-specific multiplier if available
-      if (context.errors.length > 0) {
-        const lastError = context.errors[context.errors.length - 1].error;
-        const errorMultiplier = this.getErrorMultiplier(lastError);
+      if (context?.errors?.length > 0) {
+        const lastError = context?.errors?.[context?.errors?.length - 1].error;
+        const errorMultiplier = this.getErrorMultiplier(lastError as any);
         delay *= Math.min(2.0, errorMultiplier); // Cap multiplier
       }
     }
@@ -443,7 +443,7 @@ export class RetryManager {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       // Check if all circuits are open BEFORE incrementing attempt - prevent infinite loops
-      const availableNodes = Array.from(this.nodes.values()).filter(node => !this.isCircuitOpen(node));
+      const availableNodes = Array.from(this?.nodes?.values()).filter(node => !this.isCircuitOpen(node as any));
       if (availableNodes.length < options.minNodes) {
         throw new CLIError(
           `Insufficient healthy nodes (found ${availableNodes.length}, need ${options.minNodes})`,
@@ -480,21 +480,21 @@ export class RetryManager {
             attempts++;
             
             // Break if we've tried too many times or only have one node
-            if (attempts >= maxNodeSelectionAttempts || this.nodes.size <= 1) {
+            if (attempts >= maxNodeSelectionAttempts || this?.nodes?.size <= 1) {
               break;
             }
           } while (
             lastNode &&
-            node.url === lastNode.url &&
+            node?.url === lastNode.url &&
             retryContext.attempt <= 3
           );
         } catch (error) {
           // Handle node selection errors (insufficient healthy nodes, etc.)
-          if (error instanceof CLIError && error.code === 'RETRY_INSUFFICIENT_NODES') {
+          if (error instanceof CLIError && error?.code === 'RETRY_INSUFFICIENT_NODES') {
             throw error; // Re-throw immediately, don't retry
           }
           // For other node selection errors, use the first available node
-          node = Array.from(this.nodes.values())[0];
+          node = Array.from(this?.nodes?.values())[0];
           if (!node) {
             throw new CLIError(
               `No nodes available during ${context}`,
@@ -507,8 +507,8 @@ export class RetryManager {
         lastNode = node;
         
         // Skip closed circuits early to avoid unnecessary operations
-        if (this.isCircuitOpen(node)) {
-          const circuit = this.circuitBreakers.get(node.url);
+        if (this.isCircuitOpen(node as any)) {
+          const circuit = this?.circuitBreakers?.get(node.url);
           throw new Error(`Circuit breaker is open for node ${node.url} (${circuit?.failureCount} failures)`);
         }
 
@@ -518,7 +518,7 @@ export class RetryManager {
         // Execute with timeout and network quality monitoring
         try {
           const result = await Promise.race([
-            operation(node),
+            operation(node as any),
             // Timeout promise
             new Promise<never>((_, reject) => {
               timeoutId = setTimeout(() => {
@@ -526,7 +526,7 @@ export class RetryManager {
                   `Operation timed out after ${options.timeout}ms during ${context} on node ${node.url}`
                 );
                 this.updateNodeHealth(node.url, false, options.timeout);
-                reject(timeoutError);
+                reject(timeoutError as any);
               }, options.timeout);
             }),
           ]);
@@ -551,7 +551,7 @@ export class RetryManager {
         }
       } catch (error) {
         const errorObj =
-          error instanceof Error ? error : new Error(String(error));
+          error instanceof Error ? error : new Error(String(error as any));
         const node = lastNode || { url: 'unknown', priority: 1 };
 
         // Update node health and circuit breaker
@@ -564,17 +564,17 @@ export class RetryManager {
           error: errorObj,
           timestamp: Date.now(),
           node: node.url,
-          type: this.categorizeError(errorObj),
+          type: this.categorizeError(errorObj as any),
         };
-        retryContext.errors.push(errorInfo);
+        retryContext?.errors?.push(errorInfo as any);
 
         // Handle specific error types that should not be retried
-        if (errorObj instanceof CLIError && errorObj.code === 'RETRY_INSUFFICIENT_NODES') {
+        if (errorObj instanceof CLIError && errorObj?.code === 'RETRY_INSUFFICIENT_NODES') {
           throw errorObj; // Re-throw immediately
         }
 
         // Check if error is retryable
-        if (!this.isRetryableError(error)) {
+        if (!this.isRetryableError(error as any)) {
           throw new CLIError(
             `Non-retryable error during ${context} with node ${node.url}: ${errorObj.message}`,
             'RETRY_NON_RETRYABLE'
@@ -582,15 +582,15 @@ export class RetryManager {
         }
 
         // Calculate next delay with adaptivity FIRST
-        const delay = this.getNextDelay(retryContext);
-        retryContext.lastDelay = delay;
+        const delay = this.getNextDelay(retryContext as any);
+        retryContext?.lastDelay = delay;
 
         // Check for circuit breaker conditions and log appropriately
-        const circuit = this.circuitBreakers.get(node.url);
+        const circuit = this?.circuitBreakers?.get(node.url);
         if (circuit?.isOpen) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Circuit breaker open for node ${node.url}. ` +
-              `Will retry after ${options.circuitBreaker.resetTimeout}ms`,
+              `Will retry after ${options?.circuitBreaker?.resetTimeout}ms`,
             {
               context,
               node: node.url,
@@ -605,12 +605,12 @@ export class RetryManager {
 
         // Wait before next attempt, logging if delay is significant
         if (delay > 5000) {
-          this.logger.info(
+          this?.logger?.info(
             `Long delay of ${delay}ms before retry ${retryContext.attempt}/${options.maxRetries}`,
             {
               context,
               error: errorObj.message,
-              networkScore: this.getNetworkScore(retryContext),
+              networkScore: this.getNetworkScore(retryContext as any),
             }
           );
         }
@@ -623,7 +623,7 @@ export class RetryManager {
    * Categorizes error for better handling
    */
   private categorizeError(error: Error): string {
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
 
     if (message.includes('timeout')) return 'timeout';
     if (message.includes('network')) return 'network';
@@ -640,7 +640,7 @@ export class RetryManager {
    * Gets a summary of retry attempts and errors
    */
   getErrorSummary(context: RetryContext): string {
-    if (!context.errors.length) {
+    if (!context?.errors?.length) {
       return 'No errors recorded';
     }
 
@@ -648,8 +648,8 @@ export class RetryManager {
       .map(e => {
         // Format timestamps consistently and include error type if available
         const timestamp = new Date(e.timestamp).toISOString();
-        const errorType = e.error.name || this.categorizeError(e.error);
-        return `Attempt ${e.attempt} failed at ${timestamp}: [${errorType}] ${e.error.message}`;
+        const errorType = e?.error?.name || this.categorizeError(e.error);
+        return `Attempt ${e.attempt} failed at ${timestamp}: [${errorType}] ${e?.error?.message}`;
       })
       .join('\n');
   }
@@ -664,7 +664,7 @@ export class RetryManager {
     lastSuccess?: Date;
     lastFailure?: Date;
   }> {
-    return Array.from(this.nodes.values()).map(node => ({
+    return Array.from(this?.nodes?.values()).map(node => ({
       url: node.url,
       health: node.healthScore,
       consecutiveFailures: node.consecutiveFailures,

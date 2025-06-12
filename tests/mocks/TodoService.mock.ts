@@ -89,7 +89,7 @@ export function createTodoServiceClassMock() {
   >;
 
   // Add prototype methods for cases where tests access methods via prototype
-  MockTodoServiceClass.prototype = {
+  MockTodoServiceClass?.prototype = {
     getAllLists: jest.fn(),
     getAllListsSync: jest.fn(),
     listTodos: jest.fn(),

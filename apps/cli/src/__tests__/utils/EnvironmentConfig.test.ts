@@ -9,39 +9,39 @@ describe('EnvironmentConfigManager', () => {
 
   beforeEach(() => {
     // Reset the environment variables before each test
-    process.env = { ...originalEnv };
+    process?.env = { ...originalEnv };
 
     // Reset the singleton instance
     // @ts-expect-error: Accessing private property for testing
-    EnvironmentConfigManager.instance = undefined;
+    EnvironmentConfigManager?.instance = undefined;
   });
 
   afterAll(() => {
     // Restore original env vars after all tests
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   describe('getEnvironment', () => {
     it('should return DEVELOPMENT by default', () => {
-      delete process.env.NODE_ENV;
+      delete process?.env?.NODE_ENV;
       expect(getEnvironment()).toBe(Environment.DEVELOPMENT);
     });
 
     it('should return PRODUCTION when NODE_ENV is production', () => {
-      process.env.NODE_ENV = 'production';
+      process.env?.NODE_ENV = 'production';
       expect(getEnvironment()).toBe(Environment.PRODUCTION);
     });
 
     it('should return STAGING when NODE_ENV is staging', () => {
-      process.env.NODE_ENV = 'staging';
+      process.env?.NODE_ENV = 'staging';
       expect(getEnvironment()).toBe(Environment.STAGING);
     });
 
     it('should return TESTING when NODE_ENV is test or testing', () => {
-      process.env.NODE_ENV = 'test';
+      process.env?.NODE_ENV = 'test';
       expect(getEnvironment()).toBe(Environment.TESTING);
 
-      process.env.NODE_ENV = 'testing';
+      process.env?.NODE_ENV = 'testing';
       expect(getEnvironment()).toBe(Environment.TESTING);
     });
   });
@@ -51,7 +51,7 @@ describe('EnvironmentConfigManager', () => {
       const instance1 = EnvironmentConfigManager.getInstance();
       const instance2 = EnvironmentConfigManager.getInstance();
 
-      expect(instance1).toBe(instance2);
+      expect(instance1 as any).toBe(instance2 as any);
     });
   });
 
@@ -62,14 +62,14 @@ describe('EnvironmentConfigManager', () => {
       expect(manager.get('LOG_LEVEL')).toBe('info');
       expect(manager.get('NETWORK')).toBe('testnet');
       expect(manager.get('AI_TEMPERATURE')).toBe(0.7);
-      expect(manager.get('AI_CACHE_ENABLED')).toBe(true);
+      expect(manager.get('AI_CACHE_ENABLED')).toBe(true as any);
     });
 
     it('should get values from environment variables when they are set', () => {
-      process.env.LOG_LEVEL = 'debug';
-      process.env.NETWORK = 'mainnet';
-      process.env.AI_TEMPERATURE = '0.9';
-      process.env.AI_CACHE_ENABLED = 'false';
+      process.env?.LOG_LEVEL = 'debug';
+      process.env?.NETWORK = 'mainnet';
+      process.env?.AI_TEMPERATURE = '0.9';
+      process.env?.AI_CACHE_ENABLED = 'false';
 
       const manager = EnvironmentConfigManager.getInstance();
       manager.loadFromEnvironment();
@@ -77,19 +77,19 @@ describe('EnvironmentConfigManager', () => {
       expect(manager.get('LOG_LEVEL')).toBe('debug');
       expect(manager.get('NETWORK')).toBe('mainnet');
       expect(manager.get('AI_TEMPERATURE')).toBe(0.9);
-      expect(manager.get('AI_CACHE_ENABLED')).toBe(false);
+      expect(manager.get('AI_CACHE_ENABLED')).toBe(false as any);
     });
 
     it('should check if a configuration value exists', () => {
       const manager = EnvironmentConfigManager.getInstance();
 
-      expect(manager.has('LOG_LEVEL')).toBe(true);
-      expect(manager.has('XAI_API_KEY')).toBe(false); // Default is empty string
+      expect(manager.has('LOG_LEVEL')).toBe(true as any);
+      expect(manager.has('XAI_API_KEY')).toBe(false as any); // Default is empty string
 
-      process.env.XAI_API_KEY = 'test-key';
+      process.env?.XAI_API_KEY = 'test-key';
       manager.loadFromEnvironment();
 
-      expect(manager.has('XAI_API_KEY')).toBe(true);
+      expect(manager.has('XAI_API_KEY')).toBe(true as any);
     });
   });
 
@@ -110,7 +110,7 @@ describe('EnvironmentConfigManager', () => {
         manager.validate();
       }).toThrow(/Missing required environment variables/);
 
-      process.env.XAI_API_KEY = 'test-key';
+      process.env?.XAI_API_KEY = 'test-key';
       manager.loadFromEnvironment();
 
       expect(() => {
@@ -149,24 +149,24 @@ describe('EnvironmentConfigManager', () => {
 
   describe('getEnvSpecificConfig', () => {
     it('should set appropriate config for PRODUCTION environment', () => {
-      process.env.NODE_ENV = 'production';
+      process.env?.NODE_ENV = 'production';
       const manager = EnvironmentConfigManager.getInstance();
       manager.loadFromEnvironment();
       manager.getEnvSpecificConfig();
 
-      expect(manager.get('REQUIRE_SIGNATURE_VERIFICATION')).toBe(true);
-      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(true);
+      expect(manager.get('REQUIRE_SIGNATURE_VERIFICATION')).toBe(true as any);
+      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(true as any);
       expect(manager.get('LOG_LEVEL')).toBe('info');
     });
 
     it('should set appropriate config for DEVELOPMENT environment', () => {
-      process.env.NODE_ENV = 'development';
+      process.env?.NODE_ENV = 'development';
       const manager = EnvironmentConfigManager.getInstance();
       manager.loadFromEnvironment();
       manager.getEnvSpecificConfig();
 
       expect(manager.get('LOG_LEVEL')).toBe('debug');
-      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(false);
+      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(false as any);
     });
   });
 
@@ -175,9 +175,9 @@ describe('EnvironmentConfigManager', () => {
       const manager = EnvironmentConfigManager.getInstance();
       const json = manager.toJSON();
 
-      expect(json).toHaveProperty('LOG_LEVEL');
-      expect(json).toHaveProperty('NETWORK');
-      expect(json).toHaveProperty('AI_TEMPERATURE');
+      expect(json as any).toHaveProperty('LOG_LEVEL');
+      expect(json as any).toHaveProperty('NETWORK');
+      expect(json as any).toHaveProperty('AI_TEMPERATURE');
     });
 
     it('should return metadata about configuration variables', () => {
@@ -186,9 +186,9 @@ describe('EnvironmentConfigManager', () => {
 
       const metadata = manager.getMetadata();
 
-      expect(metadata).toHaveProperty('XAI_API_KEY');
-      expect(metadata.XAI_API_KEY?.required).toBe(true);
-      expect(metadata.LOG_LEVEL?.required).toBe(false);
+      expect(metadata as any).toHaveProperty('XAI_API_KEY');
+      expect(metadata.XAI_API_KEY?.required).toBe(true as any);
+      expect(metadata.LOG_LEVEL?.required).toBe(false as any);
     });
   });
 });

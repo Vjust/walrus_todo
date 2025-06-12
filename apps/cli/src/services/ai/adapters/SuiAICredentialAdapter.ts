@@ -60,11 +60,11 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     registryId: string,
     walrusAdapter?: WalrusClientAdapter
   ) {
-    this.client = client;
-    this.signer = signer;
-    this.packageId = packageId;
-    this.registryId = registryId;
-    this.walrusAdapter = walrusAdapter;
+    this?.client = client;
+    this?.signer = signer;
+    this?.packageId = packageId;
+    this?.registryId = registryId;
+    this?.walrusAdapter = walrusAdapter;
   }
 
   /**
@@ -78,13 +78,13 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert metadata to strings
       const metadataEntries = Object.entries(credential.metadata || {}).map(
         ([key, value]) => {
-          return { key, value: String(value) };
+          return { key, value: String(value as any) };
         }
       );
 
       // Calculate expiry timestamp
       const expiry = credential.expiresAt
-        ? credential.expiresAt.toString()
+        ? credential?.expiresAt?.toString()
         : '0';
 
       // Call the store_credential function
@@ -97,16 +97,16 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           tx.pure(credential.credentialType), // credential_type
           tx.pure(this.hashData(credential.credentialValue)), // credential_hash (store hash, not actual value)
           tx.pure(credential.permissionLevel), // permission_level
-          tx.pure(expiry), // expires_at
-          tx.pure(JSON.stringify(metadataEntries)), // metadata
+          tx.pure(expiry as any), // expires_at
+          tx.pure(JSON.stringify(metadataEntries as any)), // metadata
         ],
       });
 
       // Execute the transaction
-      const result = await this.signer.signAndExecuteTransaction(tx);
+      const result = await this?.signer?.signAndExecuteTransaction(tx as any);
 
       // Extract the credential object ID from the transaction results
-      const credentialObjectId = this.extractCreatedObjectId(result);
+      const credentialObjectId = this.extractCreatedObjectId(result as any);
 
       return credentialObjectId;
     } catch (_error) {
@@ -121,17 +121,17 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async getCredential(credentialId: string): Promise<AIProviderCredential> {
     try {
       // Get credential object data from the blockchain
-      const credential = await this.client.getObject({
+      const credential = await this?.client?.getObject({
         id: credentialId,
         options: { showContent: true },
       });
 
-      if (!credential.data || !credential.data.content) {
+      if (!credential.data || !credential?.data?.content) {
         throw new Error(`Credential object not found: ${credentialId}`);
       }
 
       // Extract credential data from the object
-      const content = credential.data.content;
+      const content = credential?.data?.content;
 
       // Parse metadata if available
       const metadata: Record<string, unknown> = {};
@@ -140,7 +140,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       if (credentialFields.metadata) {
         try {
           const metadataStr = credentialFields.metadata;
-          const metadataEntries = JSON.parse(metadataStr) as Array<{
+          const metadataEntries = JSON.parse(metadataStr as any) as Array<{
             key: string;
             value: string;
           }>;
@@ -192,7 +192,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // For now, we'll simply list all credentials and filter by provider name
       const credentials = await this.listCredentials();
 
-      const credential = credentials.find(c => c.providerName === providerName);
+      const credential = credentials.find(c => c?.providerName === providerName);
 
       if (!credential) {
         throw new Error(`No credential found for provider: ${providerName}`);
@@ -211,10 +211,10 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async listCredentials(): Promise<AIProviderCredential[]> {
     try {
       // Get the user address from the signer
-      const userAddress = this.signer.toSuiAddress();
+      const userAddress = this?.signer?.toSuiAddress();
 
       // Query the blockchain for credentials owned by the user
-      const objects = await this.client.getOwnedObjects({
+      const objects = await this?.client?.getOwnedObjects({
         owner: userAddress,
         filter: {
           StructType: `${this.packageId}::ai_credential::Credential`,
@@ -226,9 +226,9 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const credentials: AIProviderCredential[] = [];
 
       for (const obj of objects.data) {
-        if (!obj.data || !obj.data.content) continue;
+        if (!obj.data || !obj?.data?.content) continue;
 
-        const content = obj.data.content;
+        const content = obj?.data?.content;
 
         // Parse metadata if available
         const metadata: Record<string, unknown> = {};
@@ -237,7 +237,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         if (credentialFields.metadata) {
           try {
             const metadataStr = credentialFields.metadata;
-            const metadataEntries = JSON.parse(metadataStr) as Array<{
+            const metadataEntries = JSON.parse(metadataStr as any) as Array<{
               key: string;
               value: string;
             }>;
@@ -253,7 +253,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
         // Create a credential object
         const credential: AIProviderCredential = {
-          id: credentialFields.credential_id || obj.data.objectId,
+          id: credentialFields.credential_id || obj?.data?.objectId,
           providerName: credentialFields.provider_name || 'unknown',
           credentialType:
             (credentialFields.credential_type as CredentialType) ||
@@ -268,7 +268,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           permissionLevel: parseInt(credentialFields.permission_level || '0'),
         };
 
-        credentials.push(credential);
+        credentials.push(credential as any);
       }
 
       return credentials;
@@ -284,7 +284,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async hasCredential(providerName: string): Promise<boolean> {
     try {
       const credentials = await this.listCredentials();
-      return credentials.some(c => c.providerName === providerName);
+      return credentials.some(c => c?.providerName === providerName);
     } catch (_error) {
       logger.error('Failed to check credential existence:', _error as Error);
       return false;
@@ -304,12 +304,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         target: `${this.packageId}::ai_credential::delete_credential`,
         arguments: [
           tx.object(this.registryId), // registry
-          tx.object(credentialId), // credential
+          tx.object(credentialId as any), // credential
         ],
       });
 
       // Execute the transaction
-      await this.signer.signAndExecuteTransaction(tx);
+      await this?.signer?.signAndExecuteTransaction(tx as any);
 
       return true;
     } catch (_error) {
@@ -331,7 +331,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert metadata to strings
       const metadataEntries = Object.entries(params.metadata || {}).map(
         ([key, value]) => {
-          return { key, value: String(value) };
+          return { key, value: String(value as any) };
         }
       );
 
@@ -343,16 +343,16 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           tx.pure(params.credentialId), // credential_id
           tx.pure(params.providerName), // provider_name
           tx.pure(params.publicKey), // public_key
-          tx.pure(params.timestamp.toString()), // timestamp
-          tx.pure(JSON.stringify(metadataEntries)), // metadata
+          tx.pure(params?.timestamp?.toString()), // timestamp
+          tx.pure(JSON.stringify(metadataEntries as any)), // metadata
         ],
       });
 
       // Execute the transaction
-      const result = await this.signer.signAndExecuteTransaction(tx);
+      const result = await this?.signer?.signAndExecuteTransaction(tx as any);
 
       // Extract the verification ID from the transaction results
-      const verificationId = this.extractCreatedObjectId(result);
+      const verificationId = this.extractCreatedObjectId(result as any);
 
       // Create a verification result
       const verificationResult: CredentialVerificationResult = {
@@ -362,7 +362,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         verifierAddress: params.verifierAddress,
         metadata: params.metadata || {},
         expiryTimestamp: params.metadata?.expiryTimestamp
-          ? parseInt(params.metadata.expiryTimestamp)
+          ? parseInt(params?.metadata?.expiryTimestamp)
           : undefined,
       };
 
@@ -379,17 +379,17 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async checkVerificationStatus(verificationId: string): Promise<boolean> {
     try {
       // Get verification object data from the blockchain
-      const verification = await this.client.getObject({
+      const verification = await this?.client?.getObject({
         id: verificationId,
         options: { showContent: true },
       });
 
-      if (!verification.data || !verification.data.content) {
+      if (!verification.data || !verification?.data?.content) {
         return false;
       }
 
       // Extract verification data
-      const content = verification.data.content;
+      const content = verification?.data?.content;
 
       // Check if verification is still valid
       const fields = (content as SuiObjectContent)
@@ -415,24 +415,24 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async generateCredentialProof(credentialId: string): Promise<string> {
     try {
       // Get credential data
-      const credential = await this.getCredential(credentialId);
+      const credential = await this.getCredential(credentialId as any);
 
       if (!credential.verificationProof) {
         throw new Error('Credential is not verified');
       }
 
       // Get verification data
-      const verification = await this.client.getObject({
+      const verification = await this?.client?.getObject({
         id: credential.verificationProof,
         options: { showContent: true },
       });
 
-      if (!verification.data || !verification.data.content) {
+      if (!verification.data || !verification?.data?.content) {
         throw new Error('Verification not found');
       }
 
       // Extract verification data
-      const content = verification.data.content;
+      const content = verification?.data?.content;
 
       // Create a proof object
       const proof = {
@@ -456,7 +456,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       };
 
       // Convert to a shareable string
-      return Buffer.from(JSON.stringify(proof)).toString('base64');
+      return Buffer.from(JSON.stringify(proof as any)).toString('base64');
     } catch (_error) {
       logger.error('Failed to generate credential proof:', _error as Error);
       throw new Error(`${_error}`);
@@ -476,12 +476,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         target: `${this.packageId}::ai_credential::revoke_verification`,
         arguments: [
           tx.object(this.registryId), // registry
-          tx.object(verificationId), // verification
+          tx.object(verificationId as any), // verification
         ],
       });
 
       // Execute the transaction
-      await this.signer.signAndExecuteTransaction(tx);
+      await this?.signer?.signAndExecuteTransaction(tx as any);
 
       return true;
     } catch (_error) {
@@ -494,7 +494,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
    * Hash data for blockchain storage
    */
   private hashData(data: string): string {
-    return createHash('sha256').update(data).digest('hex');
+    return createHash('sha256').update(data as any).digest('hex');
   }
 
   /**
@@ -509,7 +509,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       | undefined;
     const created = effects?.created;
 
-    if (!created || created.length === 0) {
+    if (!created || created?.length === 0) {
       throw new Error('No objects created in transaction');
     }
 

@@ -32,7 +32,7 @@ export function getMemoryUsage(): NodeJS.MemoryUsage {
  * Log memory usage with label
  */
 export function logMemoryUsage(label: string): void {
-  if (process.env.LOG_MEMORY === 'true') {
+  if (process.env?.LOG_MEMORY === 'true') {
     const usage = getMemoryUsage();
     console.log(`[${label}] Memory:`, {
       rss: `${Math.round(usage.rss / 1024 / 1024)}MB`,
@@ -61,7 +61,7 @@ export function safeStringify(
     }
 
     // Check size limit
-    const serialized = JSON.stringify(value);
+    const serialized = JSON.stringify(value as any);
     if (serialized && currentSize + serialized.length > maxSize) {
       return '[SIZE_LIMIT_EXCEEDED]';
     }
@@ -77,35 +77,35 @@ export function safeStringify(
 
     // Handle circular references
     if (typeof value === 'object') {
-      if (seen.has(value)) {
+      if (seen.has(value as any)) {
         return '[CIRCULAR_REFERENCE]';
       }
-      seen.add(value);
+      seen.add(value as any);
 
       // Truncate large arrays
-      if (Array.isArray(value) && value.length > 50) {
+      if (Array.isArray(value as any) && value.length > 50) {
         const truncated = value.slice(0, 50);
         truncated.push('[ARRAY_TRUNCATED]');
         return truncated;
       }
 
       // Truncate objects with many properties
-      if (value.constructor === Object && Object.keys(value).length > 50) {
-        const keys = Object.keys(value).slice(0, 50);
+      if (value?.constructor === Object && Object.keys(value as any).length > 50) {
+        const keys = Object.keys(value as any).slice(0, 50);
         const truncated: any = {};
         keys.forEach(k => {
-          truncated[k] = replacer(String(k), value[k], depth + 1);
+          truncated[k] = replacer(String(k as any), value[k], depth + 1);
         });
-        truncated['[OBJECT_TRUNCATED]'] = true;
+        truncated?.["[OBJECT_TRUNCATED]"] = true;
         return truncated;
       }
     }
 
     // Recursively process with depth tracking
     if (typeof value === 'object') {
-      const processed: any = Array.isArray(value) ? [] : {};
-      for (const [k, v] of Object.entries(value)) {
-        processed[k] = replacer(String(k), v, depth + 1);
+      const processed: any = Array.isArray(value as any) ? [] : {};
+      for (const [k, v] of Object.entries(value as any)) {
+        processed[k] = replacer(String(k as any), v, depth + 1);
       }
       return processed;
     }
@@ -116,7 +116,7 @@ export function safeStringify(
   try {
     return JSON.stringify(obj, (key, value) => replacer(key, value));
   } catch (error) {
-    return `[STRINGIFY_ERROR: ${error instanceof Error ? error.message : String(error)}]`;
+    return `[STRINGIFY_ERROR: ${error instanceof Error ? error.message : String(error as any)}]`;
   }
 }
 
@@ -137,7 +137,7 @@ export function createMemoryEfficientMock<T = any>(
   if (typeof mockValue === 'string' && mockValue.length > maxReturnSize) {
     processedMockValue = '[MOCK_VALUE_TOO_LARGE]' as T;
   } else if (typeof mockValue === 'object' && mockValue !== null) {
-    const stringified = safeStringify(mockValue);
+    const stringified = safeStringify(mockValue as any);
     if (stringified.length > maxReturnSize) {
       processedMockValue = '[MOCK_VALUE_TOO_LARGE]' as T;
     }
@@ -147,16 +147,16 @@ export function createMemoryEfficientMock<T = any>(
 
   // Override mockImplementation to limit call history
   const originalMockImplementation = mockFn.mockImplementation;
-  mockFn.mockImplementation = function (impl: any) {
+  mockFn?.mockImplementation = function (impl: any) {
     const result = originalMockImplementation.call(this, impl);
 
     // Limit call history to prevent memory buildup
-    if (mockFn.mock.calls.length > maxCallHistory) {
-      const excess = mockFn.mock.calls.length - maxCallHistory;
-      mockFn.mock.calls.splice(0, excess);
-      mockFn.mock.results.splice(0, excess);
-      if (mockFn.mock.instances.length > excess) {
-        mockFn.mock.instances.splice(0, excess);
+    if (mockFn?.mock?.calls.length > maxCallHistory) {
+      const excess = mockFn?.mock?.calls.length - maxCallHistory;
+      mockFn?.mock?.calls.splice(0, excess);
+      mockFn?.mock?.results.splice(0, excess);
+      if (mockFn?.mock?.instances.length > excess) {
+        mockFn?.mock?.instances.splice(0, excess);
       }
     }
 
@@ -193,10 +193,10 @@ export function cleanupLargeObject(obj: any): void {
   }
 
   try {
-    Object.keys(obj).forEach(key => {
+    Object.keys(obj as any).forEach(key => {
       const value = obj[key];
       if (typeof value === 'object' && value !== null) {
-        cleanupLargeObject(value);
+        cleanupLargeObject(value as any);
       }
       delete obj[key];
     });
@@ -222,7 +222,7 @@ export async function monitorMemoryUsage<T>(
     const afterMemory = getMemoryUsage();
     const memoryGrowth = afterMemory.heapUsed - beforeMemory.heapUsed;
 
-    if (process.env.LOG_MEMORY === 'true') {
+    if (process.env?.LOG_MEMORY === 'true') {
       console.log(
         `[${label}] Memory growth: ${Math.round(memoryGrowth / 1024)}KB`
       );
@@ -241,14 +241,14 @@ export async function monitorMemoryUsage<T>(
 export function cleanupMocks(
   mocks: Record<string, jest.MockedFunction<any>>
 ): void {
-  Object.values(mocks).forEach(mock => {
-    if (mock && typeof mock.mockClear === 'function') {
+  Object.values(mocks as any).forEach(mock => {
+    if (mock && typeof mock?.mockClear === 'function') {
       mock.mockClear();
     }
-    if (mock && typeof mock.mockReset === 'function') {
+    if (mock && typeof mock?.mockReset === 'function') {
       mock.mockReset();
     }
-    if (mock && typeof mock.mockRestore === 'function') {
+    if (mock && typeof mock?.mockRestore === 'function') {
       mock.mockRestore();
     }
   });
@@ -265,7 +265,7 @@ export function createSafeTimeout(ms: number): Promise<void> {
 
     // Ensure cleanup
     const cleanup = () => {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId as any);
     };
 
     // Add cleanup to the promise
@@ -288,7 +288,7 @@ export async function retryWithMemoryCleanup<T>(
       const result = await operation();
       return result;
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error instanceof Error ? error : new Error(String(error as any));
 
       // Force cleanup between retries
       forceGC();

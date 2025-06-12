@@ -86,7 +86,7 @@ export const NFTImageSkeleton: React.FC<NFTImageSkeletonProps> = ({
     displayMode === 'thumbnail' ? 'rounded-md' : 'rounded-lg',
     aspectRatioClass,
     className
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean as any).join(' ');
 
   const skeletonStyle = aspectRatio ? undefined : dimensions;
 
@@ -110,7 +110,7 @@ export const NFTImageSkeleton: React.FC<NFTImageSkeletonProps> = ({
             className="w-full h-full" 
             fill="currentColor" 
             viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+            xmlns="http://www?.w3?.org/2000/svg"
           >
             <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -182,9 +182,9 @@ export interface NFTImageGallerySkeletonProps {
   /** Gap between images */
   gap?: 'sm' | 'md' | 'lg';
   /** Display mode for individual images */
-  displayMode?: NFTImageSkeletonProps['displayMode'];
+  displayMode?: NFTImageSkeletonProps?.["displayMode"];
   /** Animation speed */
-  animationSpeed?: NFTImageSkeletonProps['animationSpeed'];
+  animationSpeed?: NFTImageSkeletonProps?.["animationSpeed"];
   /** Additional CSS classes for container */
   containerClassName?: string;
 }
@@ -233,7 +233,7 @@ export const NFTImageGallerySkeleton: React.FC<NFTImageGallerySkeletonProps> = (
  * Large hero-style image skeleton with additional elements
  */
 export const NFTHeroImageSkeleton: React.FC<{
-  animationSpeed?: NFTImageSkeletonProps['animationSpeed'];
+  animationSpeed?: NFTImageSkeletonProps?.["animationSpeed"];
   className?: string;
 }> = ({
   animationSpeed = 'normal',

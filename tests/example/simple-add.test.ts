@@ -31,8 +31,8 @@ describe('Add Command', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(addTestTodo);
-    (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
+    (TodoService?.prototype?.addTodo as jest.Mock).mockResolvedValue(addTestTodo as any);
+    (TodoService?.prototype?.getList as jest.Mock).mockResolvedValue({
       id: 'default',
       name: 'default',
       owner: 'default-owner',
@@ -56,14 +56,14 @@ describe('Add Command', () => {
 
   it('should execute add command successfully', () => {
     const result = execSync('node bin/run.js add "Test Todo"').toString();
-    expect(result).toContain('Todo added successfully');
+    expect(result as any).toContain('Todo added successfully');
   });
 
   it('should add todo with priority', () => {
     const result = execSync(
       'node bin/run.js add "High Priority" -p high'
     ).toString();
-    expect(result).toContain('HIGH priority');
+    expect(result as any).toContain('HIGH priority');
   });
 
   it('should handle add command with TodoService', async () => {
@@ -77,10 +77,10 @@ describe('Add Command', () => {
 
     const result = await todoService.addTodo('default', newTodo);
 
-    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+    expect(TodoService?.prototype?.addTodo).toHaveBeenCalledWith(
       'default',
       newTodo
     );
-    expect(result).toEqual(addTestTodo); // Returns our mocked todo
+    expect(result as any).toEqual(addTestTodo as any); // Returns our mocked todo
   });
 });

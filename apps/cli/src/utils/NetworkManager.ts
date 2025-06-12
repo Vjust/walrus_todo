@@ -105,11 +105,11 @@ export class NetworkManager {
 
     // If there's an existing signal, propagate its aborted state
     if (options.signal) {
-      if (options.signal.aborted) {
-        controller.abort(options.signal.reason);
+      if (options?.signal?.aborted) {
+        controller.abort(options?.signal?.reason);
       }
-      options.signal.addEventListener('abort', () => {
-        controller.abort(options.signal.reason);
+      options?.signal?.addEventListener('abort', () => {
+        controller.abort(options?.signal?.reason);
       });
     }
 
@@ -137,7 +137,7 @@ export class NetworkManager {
 
         // Clear timeout if it was set
         if (timeoutId) {
-          clearTimeout(timeoutId);
+          clearTimeout(timeoutId as any);
         }
 
         // Check if we should retry based on status code
@@ -160,7 +160,7 @@ export class NetworkManager {
           } catch (parseError) {
             if (throwErrors) {
               throw new Error(
-                `Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+                `Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError as any)}`
               );
             }
           }
@@ -179,11 +179,11 @@ export class NetworkManager {
       } catch (error) {
         // Clear timeout if it was set
         if (timeoutId) {
-          clearTimeout(timeoutId);
+          clearTimeout(timeoutId as any);
         }
 
         // Check if operation was aborted due to timeout
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (error instanceof Error && error?.name === 'AbortError') {
           throw new NetworkError(`Request aborted: ${error.message}`, {
             operation: operationName || 'fetch',
             recoverable: true,
@@ -238,7 +238,7 @@ export class NetworkManager {
       // This will only be reached if AsyncOperationHandler has an internal error
       const errorResponse: EnhancedFetchResponse<T> = {
         ok: false,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: error instanceof Error ? error : new Error(String(error as any)),
         attempts: 1,
         timeTaken: 0,
       };
@@ -339,13 +339,13 @@ export class NetworkManager {
         }
       } else {
         // Execute all in parallel
-        results = (await Promise.all(promises)) as EnhancedFetchResponse<T>[];
+        results = (await Promise.all(promises as any)) as EnhancedFetchResponse<T>[];
       }
 
       // Add total time information
       const timeTaken = Date.now() - startTime;
       results.forEach(result => {
-        result.timeTaken = timeTaken;
+        result?.timeTaken = timeTaken;
       });
 
       // Check if any operation failed
@@ -364,14 +364,14 @@ export class NetworkManager {
       // Return error responses if not throwing
       return operations.map(() => ({
         ok: false,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: error instanceof Error ? error : new Error(String(error as any)),
         attempts: 0,
         timeTaken: 0,
       }));
     } finally {
       // Clear timeout if it was set
       if (timeoutId) {
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId as any);
       }
 
       // Ensure we abort the controller to clean up resources
@@ -396,7 +396,7 @@ export class NetworkManager {
     return {
       execute: () =>
         this.fetch<T>(url, { ...options, signal: controller.signal }),
-      abort: (reason?: unknown) => controller.abort(reason),
+      abort: (reason?: unknown) => controller.abort(reason as any),
     };
   }
 }

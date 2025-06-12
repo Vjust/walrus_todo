@@ -53,16 +53,16 @@ describe('Cleanup Utility', () => {
       // Verify files still exist (dry run)
       expect(
         await fs
-          .access(testFile1)
+          .access(testFile1 as any)
           .then(() => true)
           .catch(() => false)
-      ).toBe(true);
+      ).toBe(true as any);
       expect(
         await fs
-          .access(testFile2)
+          .access(testFile2 as any)
           .then(() => true)
           .catch(() => false)
-      ).toBe(true);
+      ).toBe(true as any);
     });
 
     it('should remove test files in actual mode', async () => {
@@ -81,16 +81,16 @@ describe('Cleanup Utility', () => {
       // Verify files are removed
       expect(
         await fs
-          .access(testFile1)
+          .access(testFile1 as any)
           .then(() => true)
           .catch(() => false)
-      ).toBe(false);
+      ).toBe(false as any);
       expect(
         await fs
-          .access(testFile2)
+          .access(testFile2 as any)
           .then(() => true)
           .catch(() => false)
-      ).toBe(false);
+      ).toBe(false as any);
     });
 
     it('should handle non-existent files gracefully', async () => {
@@ -100,7 +100,7 @@ describe('Cleanup Utility', () => {
           paths: ['non-existent-file.json'],
           dryRun: false,
         })
-      ).resolves.not.toThrow();
+      ).resolves?.not?.toThrow();
     });
   });
 
@@ -115,18 +115,18 @@ describe('Cleanup Utility', () => {
 
       // Create temporary todos file
       const todosFile = path.join(testDir, 'todos.json');
-      await fs.writeFile(todosFile, JSON.stringify(mockTodos));
+      await fs.writeFile(todosFile, JSON.stringify(mockTodos as any));
 
       // Mock the storage directory
-      const originalHome = process.env.HOME;
-      process.env.HOME = testDir;
+      const originalHome = process?.env?.HOME;
+      process.env?.HOME = testDir;
 
       // Create storage directory structure
       const storageDir = path.join(testDir, '.walrus-todos');
       await fs.mkdir(storageDir, { recursive: true });
       await fs.writeFile(
         path.join(storageDir, 'todos.json'),
-        JSON.stringify(mockTodos)
+        JSON.stringify(mockTodos as any)
       );
 
       // Run cleanup
@@ -137,15 +137,15 @@ describe('Cleanup Utility', () => {
         path.join(storageDir, 'todos.json'),
         'utf-8'
       );
-      const filteredTodos = JSON.parse(filteredData);
+      const filteredTodos = JSON.parse(filteredData as any);
 
       // Verify only real todos remain
-      expect(filteredTodos).toHaveLength(2);
+      expect(filteredTodos as any).toHaveLength(2 as any);
       expect(filteredTodos[0].id).toBe('real-todo-1');
       expect(filteredTodos[1].id).toBe('real-todo-2');
 
       // Restore original HOME
-      process.env.HOME = originalHome;
+      process.env?.HOME = originalHome;
     });
   });
 
@@ -153,7 +153,7 @@ describe('Cleanup Utility', () => {
     it('should attempt to clean up network data', async () => {
       // This test just verifies the function runs without errors
       // In a real test, we'd mock the Walrus and Sui interactions
-      await expect(cleanupNetworkTestData()).resolves.not.toThrow();
+      await expect(cleanupNetworkTestData()).resolves?.not?.toThrow();
     });
   });
 
@@ -167,7 +167,7 @@ describe('Cleanup Utility', () => {
         });
       };
 
-      await expect(cleanup()).resolves.not.toThrow();
+      await expect(cleanup()).resolves?.not?.toThrow();
     });
   });
 });
@@ -178,7 +178,7 @@ describe('Cleanup Utility', () => {
  * afterAll(async () => {
  *   // Clean up test data after all tests complete
  *   await cleanupTestFiles({
- *     cleanNetwork: process.env.CLEANUP_NETWORK === 'true'
+ *     cleanNetwork: process.env?.CLEANUP_NETWORK === 'true'
  *   });
  * });
  */

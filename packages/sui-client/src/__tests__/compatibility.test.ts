@@ -17,20 +17,20 @@ import {
 describe('Version Compatibility', () => {
   describe('parseVersion', () => {
     it('should parse valid version strings', () => {
-      const version = parseVersion('1.30.1');
-      expect(version).toEqual({
+      const version = parseVersion('1?.30?.1');
+      expect(version as any).toEqual({
         major: 1,
         minor: 30,
         patch: 1,
-        full: '1.30.1',
+        full: '1?.30?.1',
       });
     });
 
     it('should handle version strings with pre-release tags', () => {
-      const version = parseVersion('1.30.1-beta.1');
-      expect(version.major).toBe(1);
-      expect(version.minor).toBe(30);
-      expect(version.patch).toBe(1);
+      const version = parseVersion('1?.30?.1-beta.1');
+      expect(version.major).toBe(1 as any);
+      expect(version.minor).toBe(30 as any);
+      expect(version.patch).toBe(1 as any);
     });
 
     it('should throw error for invalid version strings', () => {
@@ -40,42 +40,42 @@ describe('Version Compatibility', () => {
 
   describe('isVersionAtLeast', () => {
     it('should return true when current version is higher', () => {
-      const current = { major: 1, minor: 30, patch: 1, full: '1.30.1' };
-      const required = { major: 1, minor: 30, patch: 0, full: '1.30.0' };
-      expect(isVersionAtLeast(current, required)).toBe(true);
+      const current = { major: 1, minor: 30, patch: 1, full: '1?.30?.1' };
+      const required = { major: 1, minor: 30, patch: 0, full: '1?.30?.0' };
+      expect(isVersionAtLeast(current, required)).toBe(true as any);
     });
 
     it('should return false when current version is lower', () => {
-      const current = { major: 1, minor: 29, patch: 1, full: '1.29.1' };
-      const required = { major: 1, minor: 30, patch: 0, full: '1.30.0' };
-      expect(isVersionAtLeast(current, required)).toBe(false);
+      const current = { major: 1, minor: 29, patch: 1, full: '1?.29?.1' };
+      const required = { major: 1, minor: 30, patch: 0, full: '1?.30?.0' };
+      expect(isVersionAtLeast(current, required)).toBe(false as any);
     });
 
     it('should return true when versions are equal', () => {
-      const current = { major: 1, minor: 30, patch: 0, full: '1.30.0' };
-      const required = { major: 1, minor: 30, patch: 0, full: '1.30.0' };
-      expect(isVersionAtLeast(current, required)).toBe(true);
+      const current = { major: 1, minor: 30, patch: 0, full: '1?.30?.0' };
+      const required = { major: 1, minor: 30, patch: 0, full: '1?.30?.0' };
+      expect(isVersionAtLeast(current, required)).toBe(true as any);
     });
   });
 
   describe('createCompatibleSuiClientOptions', () => {
     it('should create compatible options with required fields', () => {
-      const options = { url: 'https://fullnode.testnet.sui.io:443' };
-      const compatOptions = createCompatibleSuiClientOptions(options);
+      const options = { url: 'https://fullnode?.testnet?.sui.io:443' };
+      const compatOptions = createCompatibleSuiClientOptions(options as any);
       
       expect(compatOptions.url).toBe(options.url);
-      expect(compatOptions.rpcTimeout).toBe(30000);
-      expect(compatOptions.websocketTimeout).toBe(30000);
+      expect(compatOptions.rpcTimeout).toBe(30000 as any);
+      expect(compatOptions.websocketTimeout).toBe(30000 as any);
     });
 
     it('should preserve custom timeout values', () => {
       const options = { 
-        url: 'https://fullnode.testnet.sui.io:443',
+        url: 'https://fullnode?.testnet?.sui.io:443',
         rpcTimeout: 60000 
       };
-      const compatOptions = createCompatibleSuiClientOptions(options);
+      const compatOptions = createCompatibleSuiClientOptions(options as any);
       
-      expect(compatOptions.rpcTimeout).toBe(60000);
+      expect(compatOptions.rpcTimeout).toBe(60000 as any);
     });
   });
 
@@ -89,7 +89,7 @@ describe('Version Compatibility', () => {
         balanceChanges: [{ amount: '1000' }],
       };
 
-      const normalized = normalizeTransactionResult(result);
+      const normalized = normalizeTransactionResult(result as any);
       expect(normalized.digest).toBe('test-digest');
       expect(normalized.events).toEqual([{ type: 'test' }]);
       expect(normalized.objectChanges).toEqual([{ type: 'created' }]);
@@ -102,7 +102,7 @@ describe('Version Compatibility', () => {
         effects: { status: { status: 'success' } },
       };
 
-      const normalized = normalizeTransactionResult(result);
+      const normalized = normalizeTransactionResult(result as any);
       expect(normalized.digest).toBe('test-digest');
       expect(normalized.events).toEqual([]);
       expect(normalized.objectChanges).toEqual([]);
@@ -110,7 +110,7 @@ describe('Version Compatibility', () => {
     });
 
     it('should return null for null input', () => {
-      expect(normalizeTransactionResult(null)).toBeNull();
+      expect(normalizeTransactionResult(null as any)).toBeNull();
     });
   });
 
@@ -122,22 +122,22 @@ describe('Version Compatibility', () => {
         hasNextPage: true,
       };
 
-      const normalized = normalizeOwnedObjectsResponse(response);
+      const normalized = normalizeOwnedObjectsResponse(response as any);
       expect(normalized.data).toEqual([{ objectId: 'test' }]);
       expect(normalized.nextCursor).toBe('cursor');
-      expect(normalized.hasNextPage).toBe(true);
+      expect(normalized.hasNextPage).toBe(true as any);
     });
 
     it('should handle missing data', () => {
       const response = {};
-      const normalized = normalizeOwnedObjectsResponse(response);
+      const normalized = normalizeOwnedObjectsResponse(response as any);
       
       expect(normalized.data).toEqual([]);
-      expect(normalized.hasNextPage).toBe(false);
+      expect(normalized.hasNextPage).toBe(false as any);
     });
 
     it('should handle null response', () => {
-      const normalized = normalizeOwnedObjectsResponse(null);
+      const normalized = normalizeOwnedObjectsResponse(null as any);
       expect(normalized.data).toEqual([]);
     });
   });
@@ -145,11 +145,11 @@ describe('Version Compatibility', () => {
   describe('normalizeObjectResponse', () => {
     it('should return response as-is when valid', () => {
       const response = { data: { objectId: 'test' } };
-      expect(normalizeObjectResponse(response)).toBe(response);
+      expect(normalizeObjectResponse(response as any)).toBe(response as any);
     });
 
     it('should return null for null input', () => {
-      expect(normalizeObjectResponse(null)).toBeNull();
+      expect(normalizeObjectResponse(null as any)).toBeNull();
     });
   });
 
@@ -162,42 +162,42 @@ describe('Version Compatibility', () => {
       }));
 
       const capabilities = detectSDKCapabilities();
-      expect(capabilities.hasObjectChanges).toBe(false);
-      expect(capabilities.hasBalanceChanges).toBe(false);
-      expect(capabilities.hasEvents).toBe(true);
+      expect(capabilities.hasObjectChanges).toBe(false as any);
+      expect(capabilities.hasBalanceChanges).toBe(false as any);
+      expect(capabilities.hasEvents).toBe(true as any);
     });
   });
 
   describe('safeAccess', () => {
     it('should access nested properties safely', () => {
       const obj = { a: { b: { c: 'value' } } };
-      expect(safeAccess(obj, 'a.b.c', 'default')).toBe('value');
+      expect(safeAccess(obj, 'a?.b?.c', 'default')).toBe('value');
     });
 
     it('should return fallback for missing properties', () => {
       const obj = { a: { b: {} } };
-      expect(safeAccess(obj, 'a.b.c', 'default')).toBe('default');
+      expect(safeAccess(obj, 'a?.b?.c', 'default')).toBe('default');
     });
 
     it('should handle null objects', () => {
-      expect(safeAccess(null, 'a.b.c', 'default')).toBe('default');
+      expect(safeAccess(null, 'a?.b?.c', 'default')).toBe('default');
     });
 
     it('should handle undefined values', () => {
       const obj = { a: { b: { c: undefined } } };
-      expect(safeAccess(obj, 'a.b.c', 'default')).toBe('default');
+      expect(safeAccess(obj, 'a?.b?.c', 'default')).toBe('default');
     });
   });
 
   describe('Environment', () => {
     it('should detect Node.js environment', () => {
-      expect(Environment.isNode()).toBe(true);
-      expect(Environment.isBrowser()).toBe(false);
+      expect(Environment.isNode()).toBe(true as any);
+      expect(Environment.isBrowser()).toBe(false as any);
     });
 
     it('should check localStorage support', () => {
       // In Node.js, localStorage is not available
-      expect(Environment.supportsLocalStorage()).toBe(false);
+      expect(Environment.supportsLocalStorage()).toBe(false as any);
     });
 
     it('should check WebSocket support', () => {

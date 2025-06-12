@@ -28,7 +28,7 @@ export class LazyLoader {
 
   constructor(private options: LazyLoadOptions = {}) {
     if (options.cacheModules) {
-      this.persistentCache = createCache<ModuleInfo>('lazy-modules', {
+      this?.persistentCache = createCache<ModuleInfo>('lazy-modules', {
         strategy: 'LRU',
         maxSize: 50,
         ttlMs: 86400000, // 24 hours
@@ -36,7 +36,7 @@ export class LazyLoader {
     }
 
     // Schedule preloading of hinted modules
-    if (options.preloadHints && options.preloadHints.length > 0) {
+    if (options.preloadHints && options?.preloadHints?.length > 0) {
       this.schedulePreload(options.preloadHints);
     }
   }
@@ -48,10 +48,10 @@ export class LazyLoader {
     const startTime = Date.now();
 
     // Check memory cache first
-    const cached = this.moduleCache.get(modulePath);
+    const cached = this?.moduleCache?.get(modulePath as any);
     if (cached) {
-      cached.lastAccessed = Date.now();
-      this.logger.debug(`Module loaded from memory cache: ${modulePath}`, {
+      cached?.lastAccessed = Date.now();
+      this?.logger?.debug(`Module loaded from memory cache: ${modulePath}`, {
         loadTime: `${Date.now() - startTime}ms`,
       });
       return cached.module as T;
@@ -59,10 +59,10 @@ export class LazyLoader {
 
     // Check persistent cache if enabled
     if (this.persistentCache) {
-      const persistentCached = await this.persistentCache.get(modulePath);
+      const persistentCached = await this?.persistentCache?.get(modulePath as any);
       if (persistentCached) {
-        this.moduleCache.set(modulePath, persistentCached);
-        this.logger.debug(
+        this?.moduleCache?.set(modulePath, persistentCached);
+        this?.logger?.debug(
           `Module loaded from persistent cache: ${modulePath}`,
           {
             loadTime: `${Date.now() - startTime}ms`,
@@ -73,24 +73,24 @@ export class LazyLoader {
     }
 
     // Check if already loading
-    const existingPromise = this.loadingPromises.get(modulePath);
+    const existingPromise = this?.loadingPromises?.get(modulePath as any);
     if (existingPromise) {
-      this.logger.debug(`Waiting for existing load: ${modulePath}`);
+      this?.logger?.debug(`Waiting for existing load: ${modulePath}`);
       return existingPromise as Promise<T>;
     }
 
     // Load the module
     const loadPromise = this.loadModule<T>(modulePath, startTime);
-    this.loadingPromises.set(modulePath, loadPromise);
+    this?.loadingPromises?.set(modulePath, loadPromise);
 
     try {
       const module = await loadPromise;
-      this.loadingPromises.delete(modulePath);
+      this?.loadingPromises?.delete(modulePath as any);
       return module;
     } catch (error: unknown) {
-      this.loadingPromises.delete(modulePath);
+      this?.loadingPromises?.delete(modulePath as any);
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       throw typedError;
     }
   }
@@ -102,10 +102,10 @@ export class LazyLoader {
     modulePath: string,
     startTime: number
   ): Promise<T> {
-    const timeout = this.options.loadTimeout || 5000;
+    const timeout = this?.options?.loadTimeout || 5000;
 
     try {
-      const loadPromise = import(modulePath);
+      const loadPromise = import(modulePath as any);
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(
           () => reject(new Error(`Module load timeout: ${modulePath}`)),
@@ -125,22 +125,22 @@ export class LazyLoader {
       };
 
       // Cache the module
-      this.moduleCache.set(modulePath, moduleInfo);
+      this?.moduleCache?.set(modulePath, moduleInfo);
 
       if (this.persistentCache) {
-        await this.persistentCache.set(modulePath, moduleInfo);
+        await this?.persistentCache?.set(modulePath, moduleInfo);
       }
 
-      this.logger.info(`Module loaded: ${modulePath}`, {
+      this?.logger?.info(`Module loaded: ${modulePath}`, {
         loadTime: `${loadTime}ms`,
-        cacheSize: this.moduleCache.size,
+        cacheSize: this?.moduleCache?.size,
       });
 
       return module;
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
-      this.logger.error(`Failed to load module: ${modulePath}`, typedError);
+        error instanceof Error ? error : new Error(String(error as any));
+      this?.logger?.error(`Failed to load module: ${modulePath}`, typedError);
       throw typedError;
     }
   }
@@ -150,7 +150,7 @@ export class LazyLoader {
    */
   async preload(modulePaths: string[]): Promise<void> {
     for (const path of modulePaths) {
-      this.preloadQueue.add(path);
+      this?.preloadQueue?.add(path as any);
     }
 
     if (!this.preloadTimer) {
@@ -164,7 +164,7 @@ export class LazyLoader {
   private schedulePreload(hints: string[]): void {
     // Add to preload queue
     for (const hint of hints) {
-      this.preloadQueue.add(hint);
+      this?.preloadQueue?.add(hint as any);
     }
 
     // Start preloading after a delay
@@ -175,18 +175,18 @@ export class LazyLoader {
    * Schedule the next preload operation
    */
   private scheduleNextPreload(): void {
-    if (this.preloadQueue.size === 0) {
-      this.preloadTimer = undefined;
+    if (this.preloadQueue?.size === 0) {
+      this?.preloadTimer = undefined;
       return;
     }
 
-    const modulePath = this.preloadQueue.values().next().value;
-    this.preloadQueue.delete(modulePath);
+    const modulePath = this?.preloadQueue?.values().next().value;
+    this?.preloadQueue?.delete(modulePath as any);
 
     // Preload in background
-    void this.loadModuleInBackground(modulePath).finally(() => {
+    void this.loadModuleInBackground(modulePath as any).finally(() => {
       // Schedule next preload
-      this.preloadTimer = setTimeout(
+      this?.preloadTimer = setTimeout(
         () => this.scheduleNextPreload(),
         this.PRELOAD_DELAY
       );
@@ -199,7 +199,7 @@ export class LazyLoader {
   private async loadModuleInBackground(modulePath: string): Promise<void> {
     try {
       const startTime = Date.now();
-      const module = await import(modulePath);
+      const module = await import(modulePath as any);
       const loadTime = Date.now() - startTime;
 
       const moduleInfo: ModuleInfo = {
@@ -210,19 +210,19 @@ export class LazyLoader {
         preloaded: true,
       };
 
-      this.moduleCache.set(modulePath, moduleInfo);
+      this?.moduleCache?.set(modulePath, moduleInfo);
 
       if (this.persistentCache) {
-        await this.persistentCache.set(modulePath, moduleInfo);
+        await this?.persistentCache?.set(modulePath, moduleInfo);
       }
 
-      this.logger.debug(`Module preloaded: ${modulePath}`, {
+      this?.logger?.debug(`Module preloaded: ${modulePath}`, {
         loadTime: `${loadTime}ms`,
       });
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
-      this.logger.warn(`Failed to preload module: ${modulePath}`, typedError);
+        error instanceof Error ? error : new Error(String(error as any));
+      this?.logger?.warn(`Failed to preload module: ${modulePath}`, typedError);
     }
   }
 
@@ -230,26 +230,26 @@ export class LazyLoader {
    * Clear module from cache
    */
   async clear(modulePath: string): Promise<void> {
-    this.moduleCache.delete(modulePath);
+    this?.moduleCache?.delete(modulePath as any);
 
     if (this.persistentCache) {
-      await this.persistentCache.delete(modulePath);
+      await this?.persistentCache?.delete(modulePath as any);
     }
 
-    this.logger.debug(`Module cleared from cache: ${modulePath}`);
+    this?.logger?.debug(`Module cleared from cache: ${modulePath}`);
   }
 
   /**
    * Clear all cached modules
    */
   async clearAll(): Promise<void> {
-    this.moduleCache.clear();
+    this?.moduleCache?.clear();
 
     if (this.persistentCache) {
-      await this.persistentCache.clear();
+      await this?.persistentCache?.clear();
     }
 
-    this.logger.info('All modules cleared from cache');
+    this?.logger?.info('All modules cleared from cache');
   }
 
   /**
@@ -266,14 +266,14 @@ export class LazyLoader {
       lastAccessed: Date;
     }>;
   } {
-    const modules = Array.from(this.moduleCache.values());
+    const modules = Array.from(this?.moduleCache?.values());
     const preloadedCount = modules.filter(m => m.preloaded).length;
     const totalLoadTime = modules.reduce((sum, m) => sum + m.loadTime, 0);
     const averageLoadTime =
       modules.length > 0 ? totalLoadTime / modules.length : 0;
 
     return {
-      memoryCacheSize: this.moduleCache.size,
+      memoryCacheSize: this?.moduleCache?.size,
       preloadedCount,
       averageLoadTime,
       modules: modules.map(m => ({
@@ -294,10 +294,10 @@ export class LazyLoader {
     }
 
     if (this.persistentCache) {
-      await this.persistentCache.shutdown();
+      await this?.persistentCache?.shutdown();
     }
 
-    this.logger.info('Lazy loader shutting down');
+    this?.logger?.info('Lazy loader shutting down');
   }
 }
 
@@ -324,7 +324,7 @@ export async function lazyLoad<T = unknown>(modulePath: string): Promise<T> {
 
 export async function preloadModules(modulePaths: string[]): Promise<void> {
   const loader = getGlobalLazyLoader();
-  return loader.preload(modulePaths);
+  return loader.preload(modulePaths as any);
 }
 
 // Shutdown hook

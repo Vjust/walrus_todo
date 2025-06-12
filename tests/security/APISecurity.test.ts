@@ -10,9 +10,9 @@ jest.mock('fs', () => ({
   unlinkSync: jest.fn(),
   renameSync: jest.fn(),
   promises: {
-    access: jest.fn().mockResolvedValue(undefined),
-    mkdir: jest.fn().mockResolvedValue(undefined),
-    writeFile: jest.fn().mockResolvedValue(undefined),
+    access: jest.fn().mockResolvedValue(undefined as any),
+    mkdir: jest.fn().mockResolvedValue(undefined as any),
+    writeFile: jest.fn().mockResolvedValue(undefined as any),
     readFile: jest.fn().mockResolvedValue('{}'),
   },
 }));
@@ -45,25 +45,25 @@ jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
 // Create a mock AIService class that can be properly spied on
 class MockAIService {
   constructor(apiKey, provider, model, options) {
-    this.apiKey = apiKey;
-    this.provider = provider;
-    this.model = model;
-    this.options = options;
+    this?.apiKey = apiKey;
+    this?.provider = provider;
+    this?.model = model;
+    this?.options = options;
   }
   
-  async summarize(todos) {
+  async summarize(todos as any) {
     return 'Test result';
   }
   
-  async categorize(todos) {
+  async categorize(todos as any) {
     return {};
   }
   
-  async analyze(todos) {
+  async analyze(todos as any) {
     return {};
   }
   
-  async suggest(todos) {
+  async suggest(todos as any) {
     return [];
   }
 }
@@ -136,12 +136,12 @@ describe('API Security Tests', () => {
 
     // Default permission manager
     (initializePermissionManager as jest.Mock).mockReturnValue({
-      checkPermission: jest.fn().mockReturnValue(true),
+      checkPermission: jest.fn().mockReturnValue(true as any),
       verifyOperationPermission: jest.fn(),
     });
 
     // Restore environment variables before each test
-    process.env.XAI_API_KEY = 'test-api-key';
+    process.env?.XAI_API_KEY = 'test-api-key';
   });
 
   describe('API Key Security', () => {
@@ -162,7 +162,7 @@ describe('API Security Tests', () => {
 
       // Create service with API key
       const sensitiveKey = 'very-sensitive-key-12345';
-      const aiService = new AIService(sensitiveKey);
+      const aiService = new AIService(sensitiveKey as any);
 
       // Force error that might leak API key by mocking the summarize method
       jest
@@ -172,20 +172,20 @@ describe('API Security Tests', () => {
         );
 
       // Attempt to use the service, which should throw
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow();
 
       // Check that no console method logged the API key
       const allLogs = [
-        ...consoleLogSpy.mock.calls.flat(),
-        ...consoleErrorSpy.mock.calls.flat(),
-        ...consoleWarnSpy.mock.calls.flat(),
-        ...consoleInfoSpy.mock.calls.flat(),
+        ...consoleLogSpy?.mock?.calls.flat(),
+        ...consoleErrorSpy?.mock?.calls.flat(),
+        ...consoleWarnSpy?.mock?.calls.flat(),
+        ...consoleInfoSpy?.mock?.calls.flat(),
       ];
 
       const stringLogs = allLogs.filter(log => typeof log === 'string');
       // Check each log for sensitive key
       stringLogs.forEach(log => {
-        expect(log).not.toContain(sensitiveKey);
+        expect(log as any).not.toContain(sensitiveKey as any);
       });
 
       consoleLogSpy.mockRestore();
@@ -203,7 +203,7 @@ describe('API Security Tests', () => {
         // Check API key format if present
         const hasApiKey = !!apiKey;
         const isTooShort = hasApiKey && apiKey.length < 10;
-        const hasInvalidChars = hasApiKey && !/^[a-zA-Z0-9_-]+$/.test(apiKey);
+        const hasInvalidChars = hasApiKey && !/^[a-zA-Z0-9_-]+$/.test(apiKey as any);
 
         // Throw errors based on validation
         if (isTooShort) {
@@ -234,21 +234,21 @@ describe('API Security Tests', () => {
 
       // Valid API key should work
       const validService = new AIService('valid_api_key_12345');
-      await expect(validService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(validService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Too short API key should fail
       const shortKeyService = new AIService('short');
       jest.spyOn(shortKeyService, 'summarize').mockRejectedValue(
         new Error('API key is too short')
       );
-      await expect(shortKeyService.summarize(sampleTodos)).rejects.toThrow('API key is too short');
+      await expect(shortKeyService.summarize(sampleTodos as any)).rejects.toThrow('API key is too short');
 
       // Invalid characters in API key should fail
       const invalidCharsService = new AIService('invalid!@#$%^&*()');
       jest.spyOn(invalidCharsService, 'summarize').mockRejectedValue(
         new Error('API key contains invalid characters')
       );
-      await expect(invalidCharsService.summarize(sampleTodos)).rejects.toThrow('API key contains invalid characters');
+      await expect(invalidCharsService.summarize(sampleTodos as any)).rejects.toThrow('API key contains invalid characters');
     });
 
     it('should implement rate limiting for API requests', async () => {
@@ -273,16 +273,16 @@ describe('API Security Tests', () => {
                 const now = Date.now();
 
                 // Initialize or update rate limit tracking
-                if (!requestCounts.has(provider)) {
+                if (!requestCounts.has(provider as any)) {
                   requestCounts.set(provider, { count: 0, lastReset: now });
                 }
 
-                const rateLimitInfo = requestCounts.get(provider)!;
+                const rateLimitInfo = requestCounts.get(provider as any)!;
 
                 // Reset count if window has passed
                 if (now - rateLimitInfo.lastReset > RATE_WINDOW) {
-                  rateLimitInfo.count = 0;
-                  rateLimitInfo.lastReset = now;
+                  rateLimitInfo?.count = 0;
+                  rateLimitInfo?.lastReset = now;
                 }
 
                 // Increment count
@@ -316,11 +316,11 @@ describe('API Security Tests', () => {
 
       // Make requests up to the limit
       for (let i = 0; i < RATE_LIMIT; i++) {
-        await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+        await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
       }
 
       // Next request should fail due to rate limit
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow(
         'Rate limit exceeded'
       );
     });
@@ -371,11 +371,11 @@ describe('API Security Tests', () => {
       });
 
       // Should eventually succeed after retries
-      const result = await aiService.summarize(sampleTodos);
-      expect(result).toBe('Test result');
+      const result = await aiService.summarize(sampleTodos as any);
+      expect(result as any).toBe('Test result');
 
       // Should have attempted exactly 3 times
-      expect(attemptCount).toBe(3);
+      expect(attemptCount as any).toBe(3 as any);
     });
   });
 
@@ -396,12 +396,12 @@ describe('API Security Tests', () => {
                 const todoStr = context.todos;
 
                 // Should not contain raw script tags
-                expect(todoStr).not.toContain('<script>');
-                expect(todoStr).not.toContain('javascript:');
+                expect(todoStr as any).not.toContain('<script>');
+                expect(todoStr as any).not.toContain('javascript:');
 
                 // Should escape HTML entities
-                expect(todoStr).not.toContain('<img');
-                expect(todoStr).not.toContain('onerror=');
+                expect(todoStr as any).not.toContain('<img');
+                expect(todoStr as any).not.toContain('onerror=');
 
                 return {
                   result: 'Test result',
@@ -451,7 +451,7 @@ describe('API Security Tests', () => {
       ];
 
       // Should sanitize the content before sending to API
-      await expect(aiService.summarize(maliciousTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(maliciousTodos as any)).resolves?.not?.toThrow();
     });
 
     it('should sanitize todo content against SQL injection', async () => {
@@ -470,10 +470,10 @@ describe('API Security Tests', () => {
                 const todoStr = context.todos;
 
                 // Should not contain SQL injection patterns
-                expect(todoStr).not.toContain('DROP TABLE');
-                expect(todoStr).not.toContain('DELETE FROM');
-                expect(todoStr).not.toContain('UPDATE users SET');
-                expect(todoStr).not.toContain('OR 1=1');
+                expect(todoStr as any).not.toContain('DROP TABLE');
+                expect(todoStr as any).not.toContain('DELETE FROM');
+                expect(todoStr as any).not.toContain('UPDATE users SET');
+                expect(todoStr as any).not.toContain('OR 1=1');
 
                 return {
                   result: 'Test result',
@@ -523,7 +523,7 @@ describe('API Security Tests', () => {
       ];
 
       // Should sanitize the content before sending to API
-      await expect(aiService.summarize(maliciousTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(maliciousTodos as any)).resolves?.not?.toThrow();
     });
 
     it('should protect against prototype pollution', async () => {
@@ -557,7 +557,7 @@ describe('API Security Tests', () => {
       ];
 
       // Should not pollute the prototype
-      await aiService.summarize(maliciousTodos);
+      await aiService.summarize(maliciousTodos as any);
 
       // Verify prototype isn't polluted
       expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -613,7 +613,7 @@ describe('API Security Tests', () => {
         largeTodos.push({
           id: `todo-large-${i}`,
           title: `Todo ${i}`,
-          description: 'X'.repeat(2000), // 2KB per todo
+          description: 'X'.repeat(2000 as any), // 2KB per todo
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -621,7 +621,7 @@ describe('API Security Tests', () => {
       }
 
       // Should reject due to size limit
-      await expect(aiService.summarize(largeTodos)).rejects.toThrow(
+      await expect(aiService.summarize(largeTodos as any)).rejects.toThrow(
         'Input size exceeds maximum'
       );
     });
@@ -657,7 +657,7 @@ describe('API Security Tests', () => {
       const aiService = new AIService('test-api-key');
 
       // Should sanitize the response
-      const result = await aiService.categorize(sampleTodos);
+      const result = await aiService.categorize(sampleTodos as any);
 
       // Should have sanitized/removed the malicious properties
       expect(result.__proto__).toBeUndefined();
@@ -742,7 +742,7 @@ describe('API Security Tests', () => {
       ];
 
       // Should detect prompt injection attempts
-      await expect(aiService.summarize(injectionTodos)).rejects.toThrow(
+      await expect(aiService.summarize(injectionTodos as any)).rejects.toThrow(
         'Potential prompt injection detected'
       );
     });
@@ -765,7 +765,7 @@ describe('API Security Tests', () => {
                 const options = params.options || {};
                 if (
                   options.baseUrl &&
-                  !options.baseUrl.startsWith('https://')
+                  !options?.baseUrl?.startsWith('https://')
                 ) {
                   throw new Error(
                     'Insecure protocol detected. HTTPS is required for all API requests.'
@@ -789,12 +789,12 @@ describe('API Security Tests', () => {
         AIProvider.XAI,
         'model',
         {
-          baseUrl: 'https://api.example.com',
+          baseUrl: 'https://api?.example?.com',
         }
       );
 
       // Should succeed with HTTPS
-      await expect(secureService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(secureService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Create AI service with HTTP URL
       const insecureService = new AIService(
@@ -802,12 +802,12 @@ describe('API Security Tests', () => {
         AIProvider.XAI,
         'model',
         {
-          baseUrl: 'http://api.example.com',
+          baseUrl: 'http://api?.example?.com',
         }
       );
 
       // Should fail with HTTP
-      await expect(insecureService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(insecureService.summarize(sampleTodos as any)).rejects.toThrow(
         'Insecure protocol detected'
       );
     });
@@ -870,7 +870,7 @@ describe('API Security Tests', () => {
       );
 
       // Should succeed with secure headers
-      await expect(secureService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(secureService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Create AI service without secure headers
       const insecureService = new AIService(
@@ -883,7 +883,7 @@ describe('API Security Tests', () => {
       );
 
       // Should fail without secure headers
-      await expect(insecureService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(insecureService.summarize(sampleTodos as any)).rejects.toThrow(
         'Missing required security header'
       );
     });
@@ -907,7 +907,7 @@ describe('API Security Tests', () => {
       ).rejects.toThrow();
 
       // Valid todos should be accepted
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
     });
 
     it('should enforce proper TLS configuration', async () => {
@@ -926,7 +926,7 @@ describe('API Security Tests', () => {
                 const options = params.options || {};
 
                 // Should not disable certificate validation
-                if (options.rejectUnauthorized === false) {
+                if (options?.rejectUnauthorized === false) {
                   throw new Error(
                     'Insecure TLS configuration: certificate validation disabled'
                   );
@@ -962,7 +962,7 @@ describe('API Security Tests', () => {
       );
 
       // Should succeed with secure TLS config
-      await expect(secureService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(secureService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Create AI service with insecure TLS config (disabled cert validation)
       const insecureCertService = new AIService(
@@ -975,7 +975,7 @@ describe('API Security Tests', () => {
       );
 
       // Should fail with insecure TLS config
-      await expect(insecureCertService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(insecureCertService.summarize(sampleTodos as any)).rejects.toThrow(
         'certificate validation disabled'
       );
 
@@ -991,7 +991,7 @@ describe('API Security Tests', () => {
 
       // Should fail with insecure TLS version
       await expect(
-        insecureVersionService.summarize(sampleTodos)
+        insecureVersionService.summarize(sampleTodos as any)
       ).rejects.toThrow('minimum version too low');
     });
 
@@ -1033,7 +1033,7 @@ describe('API Security Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Call an API that returns potentially sensitive debug info
-      const result = await aiService.categorize(sampleTodos);
+      const result = await aiService.categorize(sampleTodos as any);
 
       // Debug information should not be exposed in the result
       expect(result.debug).toBeUndefined();
@@ -1041,9 +1041,9 @@ describe('API Security Tests', () => {
       expect((result as Record<string, unknown>).response).toBeUndefined();
 
       // Sensitive data should not be in the result
-      const resultStr = JSON.stringify(result);
-      expect(resultStr).not.toContain('test-api-key');
-      expect(resultStr).not.toContain('Authorization');
+      const resultStr = JSON.stringify(result as any);
+      expect(resultStr as any).not.toContain('test-api-key');
+      expect(resultStr as any).not.toContain('Authorization');
     });
   });
 });

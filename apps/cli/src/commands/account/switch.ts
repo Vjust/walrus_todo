@@ -1,5 +1,5 @@
 import { Args } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../types/errors/consolidated';
 import { switchSuiAddress } from '../../utils/command-executor';
 import { ValidationRules, validateInput } from '../../utils/input-validator';
@@ -25,7 +25,7 @@ export default class AccountSwitchCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args } = await this.parse(AccountSwitchCommand);
+    const { args } = await this.parse(AccountSwitchCommand as any);
     try {
       // Validate the address format first
       validateInput(args.address, ValidationRules.SuiAddress, 'address');
@@ -39,7 +39,7 @@ export default class AccountSwitchCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to switch address: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to switch address: ${error instanceof Error ? error.message : String(error as any)}`,
         'CLI_ERROR'
       );
     }

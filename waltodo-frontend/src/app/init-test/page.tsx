@@ -24,7 +24,7 @@ export default function InitTestPage() {
     
     updateState();
     const interval = setInterval(updateState, 1000);
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, []);
 
   return (
@@ -35,8 +35,8 @@ export default function InitTestPage() {
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="font-semibold mb-2">App Initialization</h2>
           <div className="space-y-1 text-sm">
-            <div>App Ready: <span className={isAppReady ? 'text-green-600' : 'text-red-600'}>{String(isAppReady)}</span></div>
-            <div>Sui Client Ready: <span className={isSuiClientReady ? 'text-green-600' : 'text-red-600'}>{String(isSuiClientReady)}</span></div>
+            <div>App Ready: <span className={isAppReady ? 'text-green-600' : 'text-red-600'}>{String(isAppReady as any)}</span></div>
+            <div>Sui Client Ready: <span className={isSuiClientReady ? 'text-green-600' : 'text-red-600'}>{String(isSuiClientReady as any)}</span></div>
             <div>Error: <span className="text-red-600">{initializationError || 'None'}</span></div>
           </div>
         </div>
@@ -44,8 +44,8 @@ export default function InitTestPage() {
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="font-semibold mb-2">Sui Client Hook</h2>
           <div className="space-y-1 text-sm">
-            <div>Initialized: <span className={isInitialized ? 'text-green-600' : 'text-red-600'}>{String(isInitialized)}</span></div>
-            <div>Initializing: <span className={isInitializing ? 'text-yellow-600' : 'text-gray-600'}>{String(isInitializing)}</span></div>
+            <div>Initialized: <span className={isInitialized ? 'text-green-600' : 'text-red-600'}>{String(isInitialized as any)}</span></div>
+            <div>Initializing: <span className={isInitializing ? 'text-yellow-600' : 'text-gray-600'}>{String(isInitializing as any)}</span></div>
             <div>Error: <span className="text-red-600">{error || 'None'}</span></div>
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function InitTestPage() {
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="font-semibold mb-2">Wallet Context</h2>
           <div className="space-y-1 text-sm">
-            <div>Connected: <span className={connected ? 'text-green-600' : 'text-red-600'}>{String(connected)}</span></div>
+            <div>Connected: <span className={connected ? 'text-green-600' : 'text-red-600'}>{String(connected as any)}</span></div>
             <div>Address: <span className="font-mono text-xs">{address || 'None'}</span></div>
           </div>
         </div>
@@ -61,8 +61,8 @@ export default function InitTestPage() {
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="font-semibold mb-2">Client State</h2>
           <div className="space-y-1 text-sm">
-            {clientState && Object.entries(clientState).map(([key, value]) => (
-              <div key={key}>{key}: <span className="font-mono">{String(value)}</span></div>
+            {clientState && Object.entries(clientState as any).map(([key, value]) => (
+              <div key={key}>{key}: <span className="font-mono">{String(value as any)}</span></div>
             ))}
           </div>
         </div>

@@ -45,4 +45,4 @@ declare const _default: {
   getCompatibleFullnodeUrl: typeof getCompatibleFullnodeUrl;
 };
 export default _default;
-//# sourceMappingURL=sui-client-compatibility.d.ts.map
+//# sourceMappingURL=sui-client-compatibility?.d?.ts.map

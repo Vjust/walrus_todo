@@ -90,9 +90,9 @@ export class WalrusTodoManager {
   private network: WalrusNetwork;
 
   constructor(network: WalrusNetwork = 'testnet') {
-    this.network = network;
-    this.walrusStorage = new WalrusTodoStorage(network);
-    this.walrusClient = this.walrusStorage.getClient();
+    this?.network = network;
+    this?.walrusStorage = new WalrusTodoStorage(network as any);
+    this?.walrusClient = this?.walrusStorage?.getClient();
   }
 
   /**
@@ -116,7 +116,7 @@ export class WalrusTodoManager {
     } = options;
 
     // Generate unique ID
-    const todoId = `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const todoId = `todo_${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`;
 
     // Create complete todo object
     const completeTodo: WalrusTodo = {
@@ -133,7 +133,7 @@ export class WalrusTodoManager {
       // Step 1: Upload to Walrus
       onProgress?.('Uploading to Walrus storage...', 25);
 
-      const walrusResult = await this.walrusStorage.storeTodo(
+      const walrusResult = await this?.walrusStorage?.storeTodo(
         completeTodo,
         signer,
         {
@@ -143,7 +143,7 @@ export class WalrusTodoManager {
             type: 'todo',
             title: completeTodo.title,
             priority: completeTodo.priority,
-            private: String(isPrivate),
+            private: String(isPrivate as any),
             created: new Date().toISOString(),
           },
           // Transform progress callback to match WalrusUploadOptions interface
@@ -154,9 +154,9 @@ export class WalrusTodoManager {
       );
 
       // Update todo with Walrus information
-      completeTodo.walrusBlobId = walrusResult.blobId;
-      completeTodo.storageSize = walrusResult.metadata.size;
-      completeTodo.blockchainStored = true;
+      completeTodo?.walrusBlobId = walrusResult.blobId;
+      completeTodo?.storageSize = walrusResult?.metadata?.size;
+      completeTodo?.blockchainStored = true;
 
       onProgress?.('Upload to Walrus complete', 75);
 
@@ -187,12 +187,12 @@ export class WalrusTodoManager {
           let walletAddress = '';
           if (
             'getAddress' in signer &&
-            typeof signer.getAddress === 'function'
+            typeof signer?.getAddress === 'function'
           ) {
             walletAddress = await signer.getAddress();
           } else if (
             'toSuiAddress' in signer &&
-            typeof signer.toSuiAddress === 'function'
+            typeof signer?.toSuiAddress === 'function'
           ) {
             walletAddress = signer.toSuiAddress();
           }
@@ -204,7 +204,7 @@ export class WalrusTodoManager {
           );
 
           if (suiResult.success) {
-            completeTodo.suiObjectId = suiResult.objectId;
+            completeTodo?.suiObjectId = suiResult.objectId;
             onProgress?.('NFT creation complete', 100);
           } else {
             console.warn('Failed to create NFT:', suiResult.error);
@@ -225,15 +225,15 @@ export class WalrusTodoManager {
       }
 
       // Calculate storage metadata
-      const costInfo = await this.walrusClient.calculateStorageCost(
-        walrusResult.metadata.size,
+      const costInfo = await this?.walrusClient?.calculateStorageCost(
+        walrusResult?.metadata?.size,
         epochs
       );
 
       const metadata: TodoStorageMetadata = {
         walrusBlobId: walrusResult.blobId,
         suiObjectId: completeTodo.suiObjectId,
-        storageSize: walrusResult.metadata.size,
+        storageSize: walrusResult?.metadata?.size,
         storageEpochs: epochs,
         storageCost: {
           total: costInfo.totalCost,
@@ -241,9 +241,9 @@ export class WalrusTodoManager {
           write: costInfo.writeCost,
         },
         uploadTimestamp: new Date().toISOString(),
-        expiresAt: walrusResult.metadata.expiresAt && 
-          (typeof walrusResult.metadata.expiresAt === 'string' || typeof walrusResult.metadata.expiresAt === 'number')
-          ? new Date(walrusResult.metadata.expiresAt).toISOString() 
+        expiresAt: walrusResult?.metadata?.expiresAt && 
+          (typeof walrusResult.metadata?.expiresAt === 'string' || typeof walrusResult.metadata?.expiresAt === 'number')
+          ? new Date(walrusResult?.metadata?.expiresAt).toISOString() 
           : undefined,
       };
 
@@ -270,7 +270,7 @@ export class WalrusTodoManager {
    */
   async retrieveTodo(walrusBlobId: string): Promise<WalrusTodo> {
     try {
-      const todoData = await this.walrusStorage.retrieveTodo(walrusBlobId);
+      const todoData = await this?.walrusStorage?.retrieveTodo(walrusBlobId as any);
 
       // Ensure the retrieved data is a valid todo
       if (!todoData || typeof todoData !== 'object') {
@@ -317,7 +317,7 @@ export class WalrusTodoManager {
         }),
       };
 
-      return await this.walrusStorage.storeTodo(updatedTodo, signer, {
+      return await this?.walrusStorage?.storeTodo(updatedTodo, signer, {
         epochs: todo.storageEpochs || 5,
         deletable: true,
         attributes: {
@@ -349,7 +349,7 @@ export class WalrusTodoManager {
     signer: Signer | Ed25519Keypair
   ): Promise<string> {
     try {
-      return await this.walrusClient.deleteBlob(walrusBlobId, signer);
+      return await this?.walrusClient?.deleteBlob(walrusBlobId, signer);
     } catch (error) {
       if (error instanceof WalrusClientError) {
         throw error;
@@ -371,19 +371,19 @@ export class WalrusTodoManager {
     storageCost?: { total: bigint; storage: bigint; write: bigint };
   }> {
     try {
-      const exists = await this.walrusClient.blobExists(walrusBlobId);
+      const exists = await this?.walrusClient?.blobExists(walrusBlobId as any);
 
       if (!exists) {
         return { exists: false };
       }
 
-      const blobInfo = await this.walrusClient.getBlobInfo(walrusBlobId);
+      const blobInfo = await this?.walrusClient?.getBlobInfo(walrusBlobId as any);
 
       // Estimate storage cost based on blob size
       let storageCost;
       try {
         const size = blobInfo.size || 1024; // Default size estimate
-        const cost = await this.walrusClient.calculateStorageCost(size, 5);
+        const cost = await this?.walrusClient?.calculateStorageCost(size, 5);
         storageCost = {
           total: cost.totalCost,
           storage: cost.storageCost,
@@ -435,7 +435,7 @@ export class WalrusTodoManager {
             onProgress: undefined, // Avoid nested progress callbacks
           }
         );
-        results.push(result);
+        results.push(result as any);
       } catch (error) {
         console.error(`Failed to create todo ${i + 1}:`, error);
         // Continue with other todos even if one fails
@@ -459,12 +459,12 @@ export class WalrusTodoManager {
     totalSize: number;
     perTodoCost: Array<{ totalCost: bigint; size: number }>;
   }> {
-    let totalCost = BigInt(0);
+    let totalCost = BigInt(0 as any);
     let totalSize = 0;
     const perTodoCost: Array<{ totalCost: bigint; size: number }> = [];
 
     for (const todo of todos) {
-      const estimate = await this.walrusStorage.estimateTodoStorageCost(
+      const estimate = await this?.walrusStorage?.estimateTodoStorageCost(
         todo,
         epochs
       );
@@ -487,14 +487,14 @@ export class WalrusTodoManager {
    * Get current WAL balance
    */
   async getWalBalance(): Promise<string> {
-    return this.walrusClient.getWalBalance();
+    return this?.walrusClient?.getWalBalance();
   }
 
   /**
    * Get storage usage information
    */
   async getStorageUsage(): Promise<{ used: string; total: string }> {
-    return this.walrusClient.getStorageUsage();
+    return this?.walrusClient?.getStorageUsage();
   }
 }
 

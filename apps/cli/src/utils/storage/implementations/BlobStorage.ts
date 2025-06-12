@@ -32,8 +32,8 @@ const logger = new Logger('BlobStorage');
  * Default configuration for blob storage
  */
 const DEFAULT_BLOB_STORAGE_CONFIG: StorageConfig = {
-  minWalBalance: BigInt(100),
-  storageBuffer: BigInt(10240),
+  minWalBalance: BigInt(100 as any),
+  storageBuffer: BigInt(10240 as any),
   defaultEpochDuration: 52,
   minEpochBuffer: 10,
   enableOptimization: true,
@@ -41,7 +41,7 @@ const DEFAULT_BLOB_STORAGE_CONFIG: StorageConfig = {
   maxRetries: 3,
   retryBaseDelay: 1000,
   maxContentSize: 10 * 1024 * 1024, // 10MB
-  networkUrl: 'https://fullnode.testnet.sui.io:443',
+  networkUrl: 'https://fullnode?.testnet?.sui.io:443',
   networkEnvironment: 'testnet',
 };
 
@@ -77,13 +77,13 @@ export class BlobStorage extends AbstractStorage {
       ...configOverrides,
     });
 
-    this.address = address;
+    this?.address = address;
 
     // Initialize client
-    this.client = new StorageClient({
-      suiUrl: this.config.networkUrl,
-      network: this.config.networkEnvironment,
-      useMockMode: this.config.useMockMode,
+    this?.client = new StorageClient({
+      suiUrl: this?.config?.networkUrl,
+      network: this?.config?.networkEnvironment,
+      useMockMode: this?.config?.useMockMode,
       address: address,
       validateEnvironment: true,
     });
@@ -95,12 +95,12 @@ export class BlobStorage extends AbstractStorage {
    * @param signer - The signer for transactions
    */
   public setSigner(signer: TransactionSigner): void {
-    this.signer = signer;
+    this?.signer = signer;
 
     // Initialize transaction manager if client is ready
-    if (this.connectionState === 'connected' && this.signer) {
-      this.transaction = new StorageTransaction(
-        this.client.getSuiClient(),
+    if (this?.connectionState === 'connected' && this.signer) {
+      this?.transaction = new StorageTransaction(
+        this?.client?.getSuiClient(),
         this.signer
       );
     }
@@ -113,46 +113,46 @@ export class BlobStorage extends AbstractStorage {
    * @throws {NetworkError} if initialization fails
    */
   public async connect(): Promise<void> {
-    if (this.connectionState === 'connected') {
+    if (this?.connectionState === 'connected') {
       return;
     }
 
-    this.connectionState = 'connecting';
+    this?.connectionState = 'connecting';
 
     try {
       // Create a fresh abort controller
-      this.abortController = this.createFreshAbortController();
+      this?.abortController = this.createFreshAbortController();
 
       // Initialize client
-      await this.client.init();
+      await this?.client?.init();
 
       // Initialize transaction manager if signer is available
       if (this.signer) {
-        this.transaction = new StorageTransaction(
-          this.client.getSuiClient(),
+        this?.transaction = new StorageTransaction(
+          this?.client?.getSuiClient(),
           this.signer
         );
       }
 
       // Initialize storage reuse analyzer
-      this.storageReuseAnalyzer = new StorageReuseAnalyzer(
-        this.client.getSuiClient(),
-        this.client.getWalrusClient(),
+      this?.storageReuseAnalyzer = new StorageReuseAnalyzer(
+        this?.client?.getSuiClient(),
+        this?.client?.getWalrusClient(),
         this.address
       );
 
       // Update connection state and timestamp
-      this.connectionState = 'connected';
-      this.lastHealthCheck = Date.now();
+      this?.connectionState = 'connected';
+      this?.lastHealthCheck = Date.now();
     } catch (error) {
-      this.connectionState = 'failed';
+      this?.connectionState = 'failed';
 
       if (error instanceof NetworkError) {
         throw error;
       }
 
       throw new NetworkError(
-        `Failed to connect to storage: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to connect to storage: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'connect',
           recoverable: true,
@@ -170,7 +170,7 @@ export class BlobStorage extends AbstractStorage {
   protected async checkConnectionHealth(): Promise<boolean> {
     try {
       // Perform a lightweight operation to check health
-      const suiClient = this.client.getSuiClient();
+      const suiClient = this?.client?.getSuiClient();
       const systemState = await suiClient.getLatestSuiSystemState();
 
       // If we got a valid response, connection is healthy
@@ -178,7 +178,7 @@ export class BlobStorage extends AbstractStorage {
 
       // Update health check timestamp on success
       if (isHealthy) {
-        this.lastHealthCheck = Date.now();
+        this?.lastHealthCheck = Date.now();
       }
 
       return isHealthy;
@@ -209,13 +209,13 @@ export class BlobStorage extends AbstractStorage {
       this.validateSigner('store blob');
 
       // Validate content size
-      if (content.length > this.config.maxContentSize) {
+      if (content.length > this?.config?.maxContentSize) {
         throw new ValidationError(
-          `Content size exceeds maximum allowed (${this.config.maxContentSize} bytes)`,
+          `Content size exceeds maximum allowed (${this?.config?.maxContentSize} bytes)`,
           {
             operation: 'validate content',
             field: 'content.length',
-            value: content.length.toString(),
+            value: content?.length?.toString(),
           }
         );
       }
@@ -229,7 +229,7 @@ export class BlobStorage extends AbstractStorage {
       // Upload content
       const result = await StorageOperationHandler.execute(
         async () => {
-          const walrusClient = this.client.getWalrusClient();
+          const walrusClient = this?.client?.getWalrusClient();
 
           // We know signer is valid because validateSigner was called above
           if (!this.signer) {
@@ -239,16 +239,16 @@ export class BlobStorage extends AbstractStorage {
           return walrusClient.writeBlob({
             blob: content,
             deletable: false,
-            epochs: this.config.defaultEpochDuration,
+            epochs: this?.config?.defaultEpochDuration,
             signer: this.signer,
             attributes: fullMetadata,
           });
         },
         {
           operation: 'upload blob',
-          maxRetries: this.config.maxRetries,
-          baseDelay: this.config.retryBaseDelay,
-          signal: this.abortController.signal,
+          maxRetries: this?.config?.maxRetries,
+          baseDelay: this?.config?.retryBaseDelay,
+          signal: this?.abortController?.signal,
         }
       );
 
@@ -298,7 +298,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to store content: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to store content: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'store content',
           recoverable: false,
@@ -332,7 +332,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       // Check cache first
-      const cached = this.getCachedContent(id);
+      const cached = this.getCachedContent(id as any);
       if (cached) {
         logger.info('Retrieved content from cache');
         return cached;
@@ -345,8 +345,8 @@ export class BlobStorage extends AbstractStorage {
         // Retrieve content
         const contentResult = await StorageOperationHandler.execute(
           () =>
-            this.client.retrieveBlob(id, {
-              maxRetries: this.config.maxRetries,
+            this?.client?.retrieveBlob(id, {
+              maxRetries: this?.config?.maxRetries,
               timeout: 15000,
               signal: retrievalAbortController.signal,
             }),
@@ -371,12 +371,12 @@ export class BlobStorage extends AbstractStorage {
         // Retrieve metadata
         const metadataResult = await StorageOperationHandler.execute(
           async () => {
-            const walrusClient = this.client.getWalrusClient();
+            const walrusClient = this?.client?.getWalrusClient();
             return walrusClient.getBlobMetadata({ blobId: id });
           },
           {
             operation: 'retrieve blob metadata',
-            maxRetries: this.config.maxRetries,
+            maxRetries: this?.config?.maxRetries,
             signal: retrievalAbortController.signal,
           }
         );
@@ -428,7 +428,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to retrieve content: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to retrieve content: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'retrieve content',
           blobId: id,
@@ -482,7 +482,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to update content: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to update content: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'update content',
           blobId: id,
@@ -509,7 +509,7 @@ export class BlobStorage extends AbstractStorage {
       this.validateSigner('allocate storage');
 
       // Check storage optimization is enabled
-      if (this.config.enableOptimization && this.storageReuseAnalyzer) {
+      if (this?.config?.enableOptimization && this.storageReuseAnalyzer) {
         // Try to optimize by reusing existing storage
         const analysis = await this.optimizeStorage();
 
@@ -521,7 +521,7 @@ export class BlobStorage extends AbstractStorage {
 
       // Get current epoch for validation
       const epochResult = await StorageOperationHandler.execute(
-        () => this.client.getSuiClient().getLatestSuiSystemState(),
+        () => this?.client?.getSuiClient().getLatestSuiSystemState(),
         { operation: 'get epoch' }
       );
 
@@ -541,11 +541,11 @@ export class BlobStorage extends AbstractStorage {
       );
 
       // Check WAL balance
-      const walBalance = await this.client.getWalBalance();
+      const walBalance = await this?.client?.getWalBalance();
 
-      if (walBalance < this.config.minWalBalance) {
+      if (walBalance < this?.config?.minWalBalance) {
         throw new BlockchainError(
-          `Insufficient WAL tokens. Minimum ${this.config.minWalBalance} WAL required, but only ${walBalance} WAL available.`,
+          `Insufficient WAL tokens. Minimum ${this?.config?.minWalBalance} WAL required, but only ${walBalance} WAL available.`,
           {
             operation: 'check balance',
             recoverable: false,
@@ -556,10 +556,10 @@ export class BlobStorage extends AbstractStorage {
       // Calculate storage cost
       const costResult = await StorageOperationHandler.execute(
         async () => {
-          const walrusClient = this.client.getWalrusClient();
+          const walrusClient = this?.client?.getWalrusClient();
           return walrusClient.storageCost(
-            Number(BigInt(sizeBytes) + this.config.storageBuffer),
-            this.config.defaultEpochDuration
+            Number(BigInt(sizeBytes as any) + this?.config?.storageBuffer),
+            this?.config?.defaultEpochDuration
           );
         },
         { operation: 'calculate storage cost' }
@@ -576,8 +576,8 @@ export class BlobStorage extends AbstractStorage {
       // Calculate required balance with 10% buffer
       const requiredBalance =
         (BigInt((costResult.data as { totalCost: number }).totalCost) *
-          BigInt(110)) /
-        BigInt(100);
+          BigInt(110 as any)) /
+        BigInt(100 as any);
 
       if (walBalance < requiredBalance) {
         throw new BlockchainError(
@@ -597,18 +597,18 @@ export class BlobStorage extends AbstractStorage {
       }
 
       // Create and execute storage allocation transaction
-      const tx = await this.transaction.createStorageAllocationTransaction(
-        Number(BigInt(sizeBytes) + this.config.storageBuffer),
-        this.config.defaultEpochDuration
+      const tx = await this?.transaction?.createStorageAllocationTransaction(
+        Number(BigInt(sizeBytes as any) + this?.config?.storageBuffer),
+        this?.config?.defaultEpochDuration
       );
 
-      const txResult = await this.transaction.executeTransaction(
+      const txResult = await this?.transaction?.executeTransaction(
         tx,
         'create-storage',
         {
-          maxRetries: this.config.maxRetries,
-          baseDelay: this.config.retryBaseDelay,
-          signal: this.abortController.signal,
+          maxRetries: this?.config?.maxRetries,
+          baseDelay: this?.config?.retryBaseDelay,
+          signal: this?.abortController?.signal,
         }
       );
 
@@ -623,14 +623,14 @@ export class BlobStorage extends AbstractStorage {
       }
 
       // Get created storage object ID
-      if (!txResult.createdObjects || txResult.createdObjects.length === 0) {
+      if (!txResult.createdObjects || txResult.createdObjects?.length === 0) {
         throw new StorageError('No storage object was created', {
           operation: 'storage allocation',
           recoverable: false,
         });
       }
 
-      const storageId = txResult.createdObjects[0];
+      const storageId = txResult?.createdObjects?.[0];
       if (!storageId) {
         throw new StorageError('Invalid storage object ID', {
           operation: 'storage allocation',
@@ -641,7 +641,7 @@ export class BlobStorage extends AbstractStorage {
       // Verify the created storage
       const objectResult = await StorageOperationHandler.execute(
         () =>
-          this.client.getSuiClient().getObject({
+          this?.client?.getSuiClient().getObject({
             id: storageId,
             options: {
               showContent: true,
@@ -663,7 +663,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       // Extract storage details
-      const content = objectResult.data.data.content as {
+      const content = objectResult?.data?.data.content as {
         dataType: string;
         fields?: Record<string, unknown>;
       };
@@ -698,7 +698,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to allocate storage: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to allocate storage: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'allocate storage',
           recoverable: false,
@@ -722,7 +722,7 @@ export class BlobStorage extends AbstractStorage {
 
       // Get current epoch for validation
       const epochResult = await StorageOperationHandler.execute(
-        () => this.client.getSuiClient().getLatestSuiSystemState(),
+        () => this?.client?.getSuiClient().getLatestSuiSystemState(),
         { operation: 'get epoch' }
       );
 
@@ -744,7 +744,7 @@ export class BlobStorage extends AbstractStorage {
       // Get owned storage objects
       const objectsResult = await StorageOperationHandler.execute(
         () =>
-          this.client.getSuiClient().getOwnedObjects({
+          this?.client?.getSuiClient().getOwnedObjects({
             owner: this.address,
             filter: { StructType: '0x2::storage::Storage' },
             options: { showContent: true },
@@ -767,7 +767,7 @@ export class BlobStorage extends AbstractStorage {
       let activeCount = 0;
       let inactiveCount = 0;
 
-      for (const item of objectsResult.data.data) {
+      for (const item of objectsResult?.data?.data) {
         const content = item.data?.content as {
           dataType: string;
           fields?: Record<string, unknown>;
@@ -792,7 +792,7 @@ export class BlobStorage extends AbstractStorage {
         }
 
         storageObjects.push({
-          id: item.data.objectId,
+          id: item?.data?.objectId,
           totalSize,
           usedSize,
           endEpoch,
@@ -826,7 +826,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error as any)}`,
         {
           operation: 'get storage usage',
           recoverable: true,
@@ -854,7 +854,7 @@ export class BlobStorage extends AbstractStorage {
           success: false,
           recommendedStorage: null,
           recommendation: 'allocate-new',
-          potentialSavings: BigInt(0),
+          potentialSavings: BigInt(0 as any),
           savingsPercentage: 0,
           recommendationDetails: 'Storage optimization not available',
         };
@@ -862,16 +862,16 @@ export class BlobStorage extends AbstractStorage {
 
       // Analyze with a small required size to get general inventory
       const analysis =
-        await this.storageReuseAnalyzer.analyzeStorageEfficiency(1024);
+        await this?.storageReuseAnalyzer?.analyzeStorageEfficiency(1024 as any);
 
       return {
-        success: analysis.analysisResult.hasViableStorage,
-        recommendedStorage: analysis.analysisResult.bestMatch
-          ? this.convertToStorageInfo(analysis.analysisResult.bestMatch)
+        success: analysis?.analysisResult?.hasViableStorage,
+        recommendedStorage: analysis?.analysisResult?.bestMatch
+          ? this.convertToStorageInfo(analysis?.analysisResult?.bestMatch)
           : null,
-        recommendation: analysis.analysisResult.recommendation,
-        potentialSavings: analysis.costComparison.reuseExistingSavings,
-        savingsPercentage: analysis.costComparison.reuseExistingPercentSaved,
+        recommendation: analysis?.analysisResult?.recommendation,
+        potentialSavings: analysis?.costComparison?.reuseExistingSavings,
+        savingsPercentage: analysis?.costComparison?.reuseExistingPercentSaved,
         recommendationDetails: analysis.detailedRecommendation,
       };
     } catch (error) {
@@ -882,9 +882,9 @@ export class BlobStorage extends AbstractStorage {
         success: false,
         recommendedStorage: null,
         recommendation: 'allocate-new',
-        potentialSavings: BigInt(0),
+        potentialSavings: BigInt(0 as any),
         savingsPercentage: 0,
-        recommendationDetails: `Optimization failed: ${error instanceof Error ? error.message : String(error)}`,
+        recommendationDetails: `Optimization failed: ${error instanceof Error ? error.message : String(error as any)}`,
       };
     }
   }
@@ -919,7 +919,7 @@ export class BlobStorage extends AbstractStorage {
     metadata: Record<string, string>
   ): Record<string, string> {
     // Calculate checksum if not provided
-    const checksum = metadata.checksum || this.calculateChecksum(content);
+    const checksum = metadata.checksum || this.calculateChecksum(content as any);
 
     // Required fields with defaults
     const requiredFields = {
@@ -927,7 +927,7 @@ export class BlobStorage extends AbstractStorage {
       contentCategory: 'blob',
       checksumAlgorithm: 'sha256',
       checksum,
-      size: content.length.toString(),
+      size: content?.length?.toString(),
       schemaVersion: '1',
       encoding: 'binary',
       createdAt: new Date().toISOString(),
@@ -959,7 +959,7 @@ export class BlobStorage extends AbstractStorage {
     if (typeof response === 'object' && response !== null) {
       const obj = response as Record<string, unknown>;
 
-      if (obj.blobId && typeof obj.blobId === 'string') {
+      if (obj.blobId && typeof obj?.blobId === 'string') {
         return obj.blobId;
       }
 
@@ -973,16 +973,16 @@ export class BlobStorage extends AbstractStorage {
         if (blobObject && typeof blobObject === 'object') {
           const blobObj = blobObject as Record<string, unknown>;
 
-          if (blobObj.blob_id && typeof blobObj.blob_id === 'string') {
+          if (blobObj.blob_id && typeof blobObj?.blob_id === 'string') {
             return blobObj.blob_id;
           }
 
           if (blobObj.id) {
-            if (typeof blobObj.id === 'string') {
+            if (typeof blobObj?.id === 'string') {
               return blobObj.id;
             }
 
-            if (typeof blobObj.id === 'object' && blobObj.id !== null) {
+            if (typeof blobObj?.id === 'object' && blobObj.id !== null) {
               const idObj = blobObj.id as Record<string, unknown>;
               return (idObj.id as string) || null;
             }
@@ -1008,22 +1008,22 @@ export class BlobStorage extends AbstractStorage {
     const obj = metadata as Record<string, unknown>;
 
     // Try different possible formats
-    if (obj.attributes && typeof obj.attributes === 'object') {
+    if (obj.attributes && typeof obj?.attributes === 'object') {
       return obj.attributes as Record<string, string>;
     }
 
-    if (obj.V1 && typeof obj.V1 === 'object') {
+    if (obj.V1 && typeof obj?.V1 === 'object') {
       const v1 = obj.V1 as Record<string, unknown>;
-      if (v1.attributes && typeof v1.attributes === 'object') {
+      if (v1.attributes && typeof v1?.attributes === 'object') {
         return v1.attributes as Record<string, string>;
       }
     }
 
-    if (obj.metadata && typeof obj.metadata === 'object') {
+    if (obj.metadata && typeof obj?.metadata === 'object') {
       const metadataObj = obj.metadata as Record<string, unknown>;
-      if (metadataObj.V1 && typeof metadataObj.V1 === 'object') {
+      if (metadataObj.V1 && typeof metadataObj?.V1 === 'object') {
         const v1 = metadataObj.V1 as Record<string, unknown>;
-        if (v1.attributes && typeof v1.attributes === 'object') {
+        if (v1.attributes && typeof v1?.attributes === 'object') {
           return v1.attributes as Record<string, string>;
         }
       }

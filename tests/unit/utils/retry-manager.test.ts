@@ -3,9 +3,9 @@ import '../../../apps/cli/src/utils/polyfills/aggregate-error';
 
 describe('RetryManager', () => {
   const testNodes = [
-    'https://test1.example.com',
-    'https://test2.example.com',
-    'https://test3.example.com',
+    'https://test1?.example?.com',
+    'https://test2?.example?.com',
+    'https://test3?.example?.com',
   ];
 
   let retryManager: RetryManager;
@@ -26,8 +26,8 @@ describe('RetryManager', () => {
 
       const result = await retryManager.execute(operation, 'test');
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should retry and succeed after initial failure', async () => {
@@ -38,8 +38,8 @@ describe('RetryManager', () => {
 
       const result = await retryManager.execute(operation, 'test');
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should succeed on last retry attempt', async () => {
@@ -51,8 +51,8 @@ describe('RetryManager', () => {
 
       const result = await retryManager.execute(operation, 'test');
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
     });
   });
 
@@ -64,7 +64,7 @@ describe('RetryManager', () => {
         'Maximum retries'
       );
 
-      expect(operation).toHaveBeenCalledTimes(3); // initial + 2 retries
+      expect(operation as any).toHaveBeenCalledTimes(3 as any); // initial + 2 retries
     });
 
     it('should fail immediately on non-retryable errors', async () => {
@@ -76,7 +76,7 @@ describe('RetryManager', () => {
         'Non-retryable error'
       );
 
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should respect max duration', async () => {
@@ -95,7 +95,7 @@ describe('RetryManager', () => {
   describe('node management', () => {
     it('should track node health', async () => {
       const operation = jest.fn().mockImplementation(node => {
-        if (node.url === testNodes[0]) {
+        if (node?.url === testNodes[0]) {
           throw new Error('network error');
         }
         return Promise.resolve('success');
@@ -104,14 +104,14 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
       const health = retryManager.getNodesHealth();
 
-      const node0Health = health.find(n => n.url === testNodes[0])?.health || 0;
-      const node1Health = health.find(n => n.url === testNodes[1])?.health || 0;
-      expect(node0Health).toBeLessThan(node1Health);
+      const node0Health = health.find(n => n?.url === testNodes[0])?.health || 0;
+      const node1Health = health.find(n => n?.url === testNodes[1])?.health || 0;
+      expect(node0Health as any).toBeLessThan(node1Health as any);
     });
 
     it('should prefer healthier nodes', async () => {
       const operation = jest.fn().mockImplementation(node => {
-        if (node.url === testNodes[0]) {
+        if (node?.url === testNodes[0]) {
           throw new Error('network error');
         }
         return Promise.resolve('success');
@@ -123,7 +123,7 @@ describe('RetryManager', () => {
 
       // Second call should prefer testNodes[1] due to health scores
       await retryManager.execute(operation, 'test');
-      expect(operation.mock.calls[0][0].url).toBe(testNodes[1]);
+      expect(operation.mock?.calls?.[0][0].url).toBe(testNodes[1]);
     });
 
     it('should track consecutive failures', async () => {
@@ -132,7 +132,7 @@ describe('RetryManager', () => {
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
 
       const health = retryManager.getNodesHealth();
-      expect(health[0]?.consecutiveFailures).toBeGreaterThan(0);
+      expect(health[0]?.consecutiveFailures).toBeGreaterThan(0 as any);
     });
   });
 
@@ -145,8 +145,8 @@ describe('RetryManager', () => {
         .mockResolvedValue('success');
 
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
     });
 
     it('should handle retryable error patterns', async () => {
@@ -157,8 +157,8 @@ describe('RetryManager', () => {
         .mockResolvedValue('success');
 
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(3);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
     });
 
     it('should not retry validation errors', async () => {
@@ -168,14 +168,14 @@ describe('RetryManager', () => {
         'Non-retryable error'
       );
 
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
   });
 
   describe('circuit breaker', () => {
     it('should open circuit after threshold failures', async () => {
       // Create a single-node manager to ensure we test the same node
-      retryManager = new RetryManager(['https://test1.example.com'], {
+      retryManager = new RetryManager(['https://test1?.example?.com'], {
         initialDelay: 10,
         maxRetries: 3,
         minNodes: 0, // Allow circuit breaker to work with 0 available nodes
@@ -189,14 +189,14 @@ describe('RetryManager', () => {
 
       // First execution - should try 2 times before opening circuit
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
-      expect(operation).toHaveBeenCalledTimes(2);
+      expect(operation as any).toHaveBeenCalledTimes(2 as any);
 
       // Second execution - should fail due to insufficient healthy nodes (circuit open)
       operation.mockClear();
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
         'Insufficient healthy nodes'
       );
-      expect(operation).toHaveBeenCalledTimes(0);
+      expect(operation as any).toHaveBeenCalledTimes(0 as any);
 
       // Wait for circuit reset
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -205,7 +205,7 @@ describe('RetryManager', () => {
       operation.mockClear();
       operation.mockResolvedValueOnce('success');
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
+      expect(result as any).toBe('success');
     });
 
     it('should reset circuit after successful operation', async () => {
@@ -222,7 +222,7 @@ describe('RetryManager', () => {
 
       // First try - circuit opens after 2 failures
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
-      expect(operation).toHaveBeenCalledTimes(2);
+      expect(operation as any).toHaveBeenCalledTimes(2 as any);
 
       // Wait for reset timeout
       await new Promise(resolve => setTimeout(resolve, 60));
@@ -236,8 +236,8 @@ describe('RetryManager', () => {
       operation.mockClear();
       operation.mockResolvedValue('success');
       const result = await retryManager.execute(operation, 'test');
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
     });
   });
 
@@ -254,7 +254,7 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
       await retryManager.execute(operation, 'test');
 
-      const calls = operation.mock.calls;
+      const calls = operation?.mock?.calls;
       expect(calls[0][0].url).not.toBe(calls[1][0].url);
       expect(calls[1][0].url).not.toBe(calls[2][0].url);
     });
@@ -314,10 +314,10 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
 
       // Check that onRetry was called
-      expect(onRetry).toHaveBeenCalledTimes(2);
+      expect(onRetry as any).toHaveBeenCalledTimes(2 as any);
       // Check that delays increased for specific error types
-      expect(onRetry.mock.calls[1][2]).toBeGreaterThan(
-        onRetry.mock.calls[0][2]
+      expect(onRetry.mock?.calls?.[1][2]).toBeGreaterThan(
+        onRetry.mock?.calls?.[0][2]
       );
     });
 
@@ -339,9 +339,9 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
 
       // Delays should increase as network conditions worsen
-      const firstDelay = onRetry.mock.calls[0][2];
-      const secondDelay = onRetry.mock.calls[1][2];
-      expect(secondDelay).toBeGreaterThan(firstDelay);
+      const firstDelay = onRetry.mock?.calls?.[0][2];
+      const secondDelay = onRetry.mock?.calls?.[1][2];
+      expect(secondDelay as any).toBeGreaterThan(firstDelay as any);
     });
   });
 
@@ -360,14 +360,14 @@ describe('RetryManager', () => {
 
       // Basic timestamp tracking
       expect(node?.lastFailure).toBeDefined();
-      expect(node?.lastFailure).toBeInstanceOf(Date);
-      expect(node?.consecutiveFailures).toBeGreaterThan(0);
+      expect(node?.lastFailure).toBeInstanceOf(Date as any);
+      expect(node?.consecutiveFailures).toBeGreaterThan(0 as any);
     });
 
     it('should provide node health information', async () => {
       const health = retryManager.getNodesHealth();
 
-      expect(health).toHaveLength(testNodes.length);
+      expect(health as any).toHaveLength(testNodes.length);
       expect(health[0]).toHaveProperty('url');
       expect(health[0]).toHaveProperty('health');
       expect(health[0]).toHaveProperty('consecutiveFailures');
@@ -382,29 +382,29 @@ describe('RetryManager', () => {
 
       // Test initial delay (attempt 1)
       let delay = RetryManager.computeDelay(1, 1000, 60000);
-      expect(delay).toBeGreaterThanOrEqual(1000); // Base delay (no exponentiation yet)
-      expect(delay).toBeLessThanOrEqual(1200); // With a bit of jitter
+      expect(delay as any).toBeGreaterThanOrEqual(1000 as any); // Base delay (no exponentiation yet)
+      expect(delay as any).toBeLessThanOrEqual(1200 as any); // With a bit of jitter
 
       // Test second attempt (delay should double)
       delay = RetryManager.computeDelay(2, 1000, 60000);
-      expect(delay).toBeGreaterThanOrEqual(2000); // 1000 * 2^1
-      expect(delay).toBeLessThanOrEqual(2400); // With a bit of jitter
+      expect(delay as any).toBeGreaterThanOrEqual(2000 as any); // 1000 * 2^1
+      expect(delay as any).toBeLessThanOrEqual(2400 as any); // With a bit of jitter
 
       // Test third attempt (delay should double again)
       delay = RetryManager.computeDelay(3, 1000, 60000);
-      expect(delay).toBeGreaterThanOrEqual(4000); // 1000 * 2^2
-      expect(delay).toBeLessThanOrEqual(4800); // With a bit of jitter
+      expect(delay as any).toBeGreaterThanOrEqual(4000 as any); // 1000 * 2^2
+      expect(delay as any).toBeLessThanOrEqual(4800 as any); // With a bit of jitter
 
       // Test max delay capping
       delay = RetryManager.computeDelay(10, 1000, 10000);
-      expect(delay).toBeLessThanOrEqual(10000); // Capped at maxDelay
+      expect(delay as any).toBeLessThanOrEqual(10000 as any); // Capped at maxDelay
 
       randomSpy.mockRestore();
     });
 
     it('should never return a delay less than the initial delay', () => {
       const delay = RetryManager.computeDelay(1, 500, 10000);
-      expect(delay).toBeGreaterThanOrEqual(500);
+      expect(delay as any).toBeGreaterThanOrEqual(500 as any);
     });
 
     it('should never return a delay greater than the max delay', () => {
@@ -412,7 +412,7 @@ describe('RetryManager', () => {
       const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
       
       const delay = RetryManager.computeDelay(10, 500, 5000);
-      expect(delay).toBeLessThanOrEqual(5000);
+      expect(delay as any).toBeLessThanOrEqual(5000 as any);
       
       randomSpy.mockRestore();
     });
@@ -422,25 +422,25 @@ describe('RetryManager', () => {
       const mockRandom = jest.spyOn(Math, 'random');
 
       // Random value of 0 (minimum jitter)
-      mockRandom.mockReturnValueOnce(0);
+      mockRandom.mockReturnValueOnce(0 as any);
       let delay = RetryManager.computeDelay(2, 1000, 60000);
       let baseDelay = 2000; // 1000 * 2^1
       const minExpectedDelay = baseDelay - baseDelay * 0.2; // -20% jitter
-      expect(delay).toBeCloseTo(minExpectedDelay, 0);
+      expect(delay as any).toBeCloseTo(minExpectedDelay, 0);
 
       // Random value of 1 (maximum jitter)
-      mockRandom.mockReturnValueOnce(1);
+      mockRandom.mockReturnValueOnce(1 as any);
       delay = RetryManager.computeDelay(2, 1000, 60000);
       baseDelay = 2000; // 1000 * 2^1
       const maxExpectedDelay = baseDelay + baseDelay * 0.2; // +20% jitter
-      expect(delay).toBeCloseTo(maxExpectedDelay, 0);
+      expect(delay as any).toBeCloseTo(maxExpectedDelay, 0);
 
       // Random value of 0.5 (middle jitter)
       mockRandom.mockReturnValueOnce(0.5);
       delay = RetryManager.computeDelay(2, 1000, 60000);
       baseDelay = 2000; // 1000 * 2^1
       // With 0.5 random, we should get exactly the baseDelay (no jitter)
-      expect(delay).toBeCloseTo(baseDelay, 0);
+      expect(delay as any).toBeCloseTo(baseDelay, 0);
 
       mockRandom.mockRestore();
     });
@@ -457,9 +457,9 @@ describe('RetryManager', () => {
         onRetry,
       });
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(1);
-      expect(onRetry).not.toHaveBeenCalled();
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(1 as any);
+      expect(onRetry as any).not.toHaveBeenCalled();
     });
 
     it('should handle errors correctly with the static API', async () => {
@@ -476,14 +476,14 @@ describe('RetryManager', () => {
         onRetry,
       });
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(2);
-      expect(onRetry).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(2 as any);
+      expect(onRetry as any).toHaveBeenCalledTimes(1 as any);
       // Check that parameters are in the correct order (attempt, error)
-      expect(onRetry).toHaveBeenCalledWith(
-        expect.any(Number),
-        expect.any(Error),
-        expect.any(Number)
+      expect(onRetry as any).toHaveBeenCalledWith(
+        expect.any(Number as any),
+        expect.any(Error as any),
+        expect.any(Number as any)
       );
     });
   });

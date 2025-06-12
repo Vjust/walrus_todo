@@ -37,8 +37,8 @@ const mockConfig: MockConfig = {
 
 // Create getter function with proper type
 const getConfigMock = jest.fn<() => Promise<MockConfig>>();
-getConfigMock.mockResolvedValue(mockConfig);
-jest.spyOn(configService, 'getConfig').mockImplementation(getConfigMock);
+getConfigMock.mockResolvedValue(mockConfig as any);
+jest.spyOn(configService, 'getConfig').mockImplementation(getConfigMock as any);
 
 describe('complete', () => {
   const defaultTodo = createMockTodo({
@@ -59,11 +59,11 @@ describe('complete', () => {
     jest.clearAllMocks();
 
     // Setup default mocks
-    mockTodoService.getList.mockResolvedValue(defaultList);
-    mockTodoService.getTodo.mockResolvedValue(defaultTodo);
-    mockTodoService.toggleItemStatus.mockImplementation(async () => {});
+    mockTodoService?.getList?.mockResolvedValue(defaultList as any);
+    mockTodoService?.getTodo?.mockResolvedValue(defaultTodo as any);
+    mockTodoService?.toggleItemStatus?.mockImplementation(async () => {});
 
-    mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
+    mockSuiClient?.getLatestSuiSystemState?.mockResolvedValue({
       activeValidators: [],
       safeMode: false,
       epoch: '0',
@@ -100,7 +100,7 @@ describe('complete', () => {
       nftObjectId: 'test-nft-id',
     };
 
-    mockTodoService.getTodo.mockResolvedValue(todoWithNft);
+    mockTodoService?.getTodo?.mockResolvedValue(todoWithNft as any);
 
     await mockTodoService.toggleItemStatus('default', 'todo123', true);
 
@@ -120,8 +120,8 @@ describe('complete', () => {
       nftObjectId: 'test-nft-id',
     };
 
-    mockTodoService.getTodo.mockResolvedValue(todoWithNft);
-    mockSuiNftStorage.updateTodoNftCompletionStatus.mockRejectedValue(
+    mockTodoService?.getTodo?.mockResolvedValue(todoWithNft as any);
+    mockSuiNftStorage?.updateTodoNftCompletionStatus?.mockRejectedValue(
       new Error('Failed to update NFT')
     );
 
@@ -149,7 +149,7 @@ describe('complete', () => {
       completed: true,
     };
 
-    mockTodoService.getTodo.mockResolvedValue(completedTodo);
+    mockTodoService?.getTodo?.mockResolvedValue(completedTodo as any);
 
     await expect(
       mockTodoService.toggleItemStatus('default', 'todo123', true)

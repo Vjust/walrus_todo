@@ -51,7 +51,7 @@ describe('ExpiryMonitor', () => {
       }),
       toSuiAddress: jest.fn().mockReturnValue('mockAddress'),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
-      connect: jest.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined as any),
     },
     network: {
       environment: 'testnet' as const,
@@ -62,7 +62,7 @@ describe('ExpiryMonitor', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     mockDate = new Date('2025-01-01T00:00:00Z');
-    jest.setSystemTime(mockDate);
+    jest.setSystemTime(mockDate as any);
 
     mockVaultManager = {
       getExpiringBlobs: jest.fn().mockReturnValue([]),
@@ -73,23 +73,23 @@ describe('ExpiryMonitor', () => {
     mockWalrusClient = getMockWalrusClient();
 
     // Override specific methods for this test
-    mockWalrusClient.getConfig.mockResolvedValue({
+    mockWalrusClient?.getConfig?.mockResolvedValue({
       network: 'testnet',
-      version: '1.0.0',
+      version: '1?.0?.0',
       maxSize: 1000000,
     });
-    mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({
+    mockWalrusClient?.getWalBalance?.mockResolvedValue('2000');
+    mockWalrusClient?.getStorageUsage?.mockResolvedValue({
       used: '500',
       total: '2000',
     });
-    mockWalrusClient.getBlobSize.mockResolvedValue(1024);
-    mockWalrusClient.getBlobMetadata.mockResolvedValue({
+    mockWalrusClient?.getBlobSize?.mockResolvedValue(1024 as any);
+    mockWalrusClient?.getBlobMetadata?.mockResolvedValue({
       size: 1024,
       type: 'text/plain',
       created: new Date().toISOString(),
     });
-    mockWalrusClient.getBlobInfo.mockResolvedValue({
+    mockWalrusClient?.getBlobInfo?.mockResolvedValue({
       id: 'blob1',
       size: 1024,
       type: 'text/plain',
@@ -113,8 +113,8 @@ describe('ExpiryMonitor', () => {
       },
     });
 
-    mockWarningHandler = jest.fn().mockResolvedValue(undefined);
-    mockRenewalHandler = jest.fn().mockResolvedValue(undefined);
+    mockWarningHandler = jest.fn().mockResolvedValue(undefined as any);
+    mockRenewalHandler = jest.fn().mockResolvedValue(undefined as any);
 
     // Monitor will be created in individual tests as needed
   });
@@ -132,6 +132,6 @@ describe('ExpiryMonitor', () => {
       mockConfig
     );
 
-    expect(monitor).toBeInstanceOf(ExpiryMonitor);
+    expect(monitor as any).toBeInstanceOf(ExpiryMonitor as any);
   });
 });

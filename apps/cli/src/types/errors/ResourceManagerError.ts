@@ -87,6 +87,6 @@ export class ResourceManagerError extends BaseError {
     });
 
     // Set error name
-    this.name = 'ResourceManagerError';
+    this?.name = 'ResourceManagerError';
   }
 }

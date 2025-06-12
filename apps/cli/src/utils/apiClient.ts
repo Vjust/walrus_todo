@@ -49,9 +49,9 @@ export class ApiClient extends EventEmitter {
 
   constructor(config: ApiClientConfig) {
     super();
-    this.logger = new Logger('ApiClient');
+    this?.logger = new Logger('ApiClient');
 
-    this.config = {
+    this?.config = {
       baseURL: config.baseURL || 'http://localhost:3001',
       timeout: config.timeout || 30000,
       retryAttempts: config.retryAttempts || 3,
@@ -61,23 +61,23 @@ export class ApiClient extends EventEmitter {
         config.websocketURL || config.baseURL || 'http://localhost:3001',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'WalTodo-CLI/1.0.0',
+        'User-Agent': 'WalTodo-CLI/1?.0?.0',
         ...config.headers,
       },
     };
 
-    this.retryManager = new RetryManager({
-      maxAttempts: this.config.retryAttempts,
-      baseDelay: this.config.retryDelay,
+    this?.retryManager = new RetryManager({
+      maxAttempts: this?.config?.retryAttempts,
+      baseDelay: this?.config?.retryDelay,
       maxDelay: 30000,
       backoffFactor: 2,
     });
 
     this.setupHttpClient();
 
-    this.logger.info('ApiClient initialized', {
-      baseURL: this.config.baseURL,
-      websocketEnabled: this.config.enableWebSocket,
+    this?.logger?.info('ApiClient initialized', {
+      baseURL: this?.config?.baseURL,
+      websocketEnabled: this?.config?.enableWebSocket,
     });
   }
 
@@ -85,23 +85,23 @@ export class ApiClient extends EventEmitter {
    * Setup HTTP client with interceptors
    */
   private setupHttpClient(): void {
-    this.httpClient = axios.create({
-      baseURL: this.config.baseURL,
-      timeout: this.config.timeout,
-      headers: this.config.headers,
+    this?.httpClient = axios.create({
+      baseURL: this?.config?.baseURL,
+      timeout: this?.config?.timeout,
+      headers: this?.config?.headers,
     });
 
     // Request interceptor
-    this.httpClient.interceptors.request.use(
+    this?.httpClient?.interceptors.request.use(
       config => {
         const requestId = Date.now().toString();
-        config.headers['X-Request-ID'] = requestId;
+        config?.headers?.['X-Request-ID'] = requestId;
 
         if (this.wallet) {
-          config.headers['X-Wallet-Address'] = this.wallet;
+          config?.headers?.['X-Wallet-Address'] = this.wallet;
         }
 
-        this.logger.debug('HTTP Request', {
+        this?.logger?.debug('HTTP Request', {
           method: config.method?.toUpperCase(),
           url: config.url,
           requestId,
@@ -110,20 +110,20 @@ export class ApiClient extends EventEmitter {
         return config;
       },
       error => {
-        this.logger.error('HTTP Request Error', error);
-        return Promise.reject(error);
+        this?.logger?.error('HTTP Request Error', error);
+        return Promise.reject(error as any);
       }
     );
 
     // Response interceptor
-    this.httpClient.interceptors.response.use(
+    this?.httpClient?.interceptors.response.use(
       (response: AxiosResponse) => {
-        const requestId = response.config.headers['X-Request-ID'];
+        const requestId = response.config?.headers?.['X-Request-ID'];
 
-        this.logger.debug('HTTP Response', {
+        this?.logger?.debug('HTTP Response', {
           status: response.status,
           requestId,
-          responseTime: response.headers['x-response-time'],
+          responseTime: response?.headers?.['x-response-time'],
         });
 
         return response;
@@ -131,14 +131,14 @@ export class ApiClient extends EventEmitter {
       (error: AxiosError) => {
         const requestId = error.config?.headers?.['X-Request-ID'];
 
-        this.logger.error('HTTP Response Error', {
+        this?.logger?.error('HTTP Response Error', {
           status: error.response?.status,
           message: error.message,
           requestId,
           url: error.config?.url,
         });
 
-        return Promise.reject(this.normalizeError(error));
+        return Promise.reject(this.normalizeError(error as any));
       }
     );
   }
@@ -148,23 +148,23 @@ export class ApiClient extends EventEmitter {
    */
   async connect(wallet?: string): Promise<void> {
     if (wallet) {
-      this.wallet = wallet;
+      this?.wallet = wallet;
     }
 
     try {
       // Test HTTP connection
       await this.healthCheck();
-      this.isConnected = true;
+      this?.isConnected = true;
 
       // Setup WebSocket if enabled
-      if (this.config.enableWebSocket) {
+      if (this?.config?.enableWebSocket) {
         await this.connectWebSocket();
       }
 
       this.emit('connected');
-      this.logger.info('Connected to API server', { wallet: this.wallet });
+      this?.logger?.info('Connected to API server', { wallet: this.wallet });
     } catch (error) {
-      this.logger.error('Failed to connect to API server:', error);
+      this?.logger?.error('Failed to connect to API server:', error);
       throw error;
     }
   }
@@ -173,15 +173,15 @@ export class ApiClient extends EventEmitter {
    * Disconnect from the API server
    */
   async disconnect(): Promise<void> {
-    this.isConnected = false;
+    this?.isConnected = false;
 
     if (this.websocket) {
-      this.websocket.disconnect();
-      this.websocket = null;
+      this?.websocket?.disconnect();
+      this?.websocket = null;
     }
 
     this.emit('disconnected');
-    this.logger.info('Disconnected from API server');
+    this?.logger?.info('Disconnected from API server');
   }
 
   /**
@@ -189,10 +189,10 @@ export class ApiClient extends EventEmitter {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.httpClient.get('/healthz');
-      return response.data.status === 'ok' || response.status === 200;
+      const response = await this?.httpClient?.get('/healthz');
+      return response.data?.status === 'ok' || response?.status === 200;
     } catch (error) {
-      this.logger.error('Health check failed:', error);
+      this?.logger?.error('Health check failed:', error);
       return false;
     }
   }
@@ -206,7 +206,7 @@ export class ApiClient extends EventEmitter {
     }
 
     return new Promise((resolve, reject) => {
-      this.websocket = io(this.config.websocketURL, {
+      this?.websocket = io(this?.config?.websocketURL, {
         timeout: 10000,
         reconnection: true,
         reconnectionAttempts: 5,
@@ -214,8 +214,8 @@ export class ApiClient extends EventEmitter {
         forceNew: true,
       });
 
-      this.websocket.on('connect', () => {
-        this.logger.info('WebSocket connected');
+      this?.websocket?.on('connect', () => {
+        this?.logger?.info('WebSocket connected');
 
         // Authenticate with wallet if available
         if (this.wallet) {
@@ -226,18 +226,18 @@ export class ApiClient extends EventEmitter {
         resolve();
       });
 
-      this.websocket.on('connect_error', error => {
-        this.logger.error('WebSocket connection error:', error);
-        reject(error);
+      this?.websocket?.on('connect_error', error => {
+        this?.logger?.error('WebSocket connection error:', error);
+        reject(error as any);
       });
 
-      this.websocket.on('disconnect', reason => {
-        this.logger.warn('WebSocket disconnected:', reason);
+      this?.websocket?.on('disconnect', reason => {
+        this?.logger?.warn('WebSocket disconnected:', reason);
         this.emit('websocket-disconnected', { reason });
       });
 
-      this.websocket.on('reconnect', attemptNumber => {
-        this.logger.info('WebSocket reconnected', { attempt: attemptNumber });
+      this?.websocket?.on('reconnect', attemptNumber => {
+        this?.logger?.info('WebSocket reconnected', { attempt: attemptNumber });
         this.emit('websocket-reconnected');
       });
 
@@ -253,17 +253,17 @@ export class ApiClient extends EventEmitter {
     if (!this.websocket) return;
 
     // Authentication events
-    this.websocket.on('auth-success', data => {
-      this.logger.info('WebSocket authenticated', { wallet: data.wallet });
+    this?.websocket?.on('auth-success', data => {
+      this?.logger?.info('WebSocket authenticated', { wallet: data.wallet });
     });
 
-    this.websocket.on('auth-error', data => {
-      this.logger.error('WebSocket authentication failed:', data.message);
+    this?.websocket?.on('auth-error', data => {
+      this?.logger?.error('WebSocket authentication failed:', data.message);
     });
 
     // Todo events
-    this.websocket.on('todo-created', (todo: Todo) => {
-      this.logger.debug('Todo created event received', { id: todo.id });
+    this?.websocket?.on('todo-created', (todo: Todo) => {
+      this?.logger?.debug('Todo created event received', { id: todo.id });
       this.emit('remote-change', {
         type: 'todo-created',
         data: todo,
@@ -271,8 +271,8 @@ export class ApiClient extends EventEmitter {
       } as ApiSyncEvent);
     });
 
-    this.websocket.on('todo-updated', (todo: Todo) => {
-      this.logger.debug('Todo updated event received', { id: todo.id });
+    this?.websocket?.on('todo-updated', (todo: Todo) => {
+      this?.logger?.debug('Todo updated event received', { id: todo.id });
       this.emit('remote-change', {
         type: 'todo-updated',
         data: todo,
@@ -280,10 +280,10 @@ export class ApiClient extends EventEmitter {
       } as ApiSyncEvent);
     });
 
-    this.websocket.on(
+    this?.websocket?.on(
       'todo-deleted',
       (data: { id: string; wallet: string }) => {
-        this.logger.debug('Todo deleted event received', { id: data.id });
+        this?.logger?.debug('Todo deleted event received', { id: data.id });
         this.emit('remote-change', {
           type: 'todo-deleted',
           data,
@@ -292,8 +292,8 @@ export class ApiClient extends EventEmitter {
       }
     );
 
-    this.websocket.on('todo-completed', (todo: Todo) => {
-      this.logger.debug('Todo completed event received', { id: todo.id });
+    this?.websocket?.on('todo-completed', (todo: Todo) => {
+      this?.logger?.debug('Todo completed event received', { id: todo.id });
       this.emit('remote-change', {
         type: 'todo-completed',
         data: todo,
@@ -301,16 +301,16 @@ export class ApiClient extends EventEmitter {
       } as ApiSyncEvent);
     });
 
-    this.websocket.on('sync-requested', (data: { wallet: string }) => {
-      this.logger.debug('Sync requested event received', {
+    this?.websocket?.on('sync-requested', (data: { wallet: string }) => {
+      this?.logger?.debug('Sync requested event received', {
         wallet: data.wallet,
       });
       this.emit('sync-requested', data);
     });
 
     // Error handling
-    this.websocket.on('error', error => {
-      this.logger.error('WebSocket error:', error);
+    this?.websocket?.on('error', error => {
+      this?.logger?.error('WebSocket error:', error);
       this.emit('error', error);
     });
   }
@@ -319,14 +319,14 @@ export class ApiClient extends EventEmitter {
    * Send a todo to the server
    */
   async pushTodo(todo: Todo, listName: string): Promise<SyncResponse> {
-    return this.retryManager.executeWithRetry(async () => {
-      const response = await this.httpClient.post('/api/v1/todos', {
+    return this?.retryManager?.executeWithRetry(async () => {
+      const response = await this?.httpClient?.post('/api/v1/todos', {
         ...todo,
         listName,
         wallet: this.wallet,
       });
 
-      this.logger.debug('Todo pushed to server', { id: todo.id, listName });
+      this?.logger?.debug('Todo pushed to server', { id: todo.id, listName });
 
       return {
         success: true,
@@ -340,15 +340,15 @@ export class ApiClient extends EventEmitter {
    * Pull todos from the server
    */
   async pullTodos(wallet: string, listName?: string): Promise<SyncResponse> {
-    return this.retryManager.executeWithRetry(async () => {
+    return this?.retryManager?.executeWithRetry(async () => {
       const params: any = { wallet };
       if (listName) {
-        params.listName = listName;
+        params?.listName = listName;
       }
 
-      const response = await this.httpClient.get('/api/v1/todos', { params });
+      const response = await this?.httpClient?.get('/api/v1/todos', { params });
 
-      this.logger.debug('Todos pulled from server', {
+      this?.logger?.debug('Todos pulled from server', {
         wallet,
         listName,
         count: response.data?.length || 0,
@@ -366,12 +366,12 @@ export class ApiClient extends EventEmitter {
    * Delete a todo on the server
    */
   async deleteTodo(todoId: string, listName: string): Promise<SyncResponse> {
-    return this.retryManager.executeWithRetry(async () => {
-      await this.httpClient.delete(`/api/v1/todos/${todoId}`, {
+    return this?.retryManager?.executeWithRetry(async () => {
+      await this?.httpClient?.delete(`/api/v1/todos/${todoId}`, {
         data: { listName, wallet: this.wallet },
       });
 
-      this.logger.debug('Todo deleted on server', { id: todoId, listName });
+      this?.logger?.debug('Todo deleted on server', { id: todoId, listName });
 
       return {
         success: true,
@@ -384,14 +384,14 @@ export class ApiClient extends EventEmitter {
    * Update a todo on the server
    */
   async updateTodo(todo: Todo, listName: string): Promise<SyncResponse> {
-    return this.retryManager.executeWithRetry(async () => {
-      const response = await this.httpClient.put(`/api/v1/todos/${todo.id}`, {
+    return this?.retryManager?.executeWithRetry(async () => {
+      const response = await this?.httpClient?.put(`/api/v1/todos/${todo.id}`, {
         ...todo,
         listName,
         wallet: this.wallet,
       });
 
-      this.logger.debug('Todo updated on server', { id: todo.id, listName });
+      this?.logger?.debug('Todo updated on server', { id: todo.id, listName });
 
       return {
         success: true,
@@ -406,10 +406,10 @@ export class ApiClient extends EventEmitter {
    */
   async requestSync(wallet: string): Promise<void> {
     if (this.websocket?.connected) {
-      this.websocket.emit('sync-request', { wallet });
-      this.logger.debug('Sync requested via WebSocket', { wallet });
+      this?.websocket?.emit('sync-request', { wallet });
+      this?.logger?.debug('Sync requested via WebSocket', { wallet });
     } else {
-      this.logger.warn('Cannot request sync: WebSocket not connected');
+      this?.logger?.warn('Cannot request sync: WebSocket not connected');
     }
   }
 
@@ -418,7 +418,7 @@ export class ApiClient extends EventEmitter {
    */
   async getSyncStatus(wallet: string): Promise<SyncResponse> {
     try {
-      const response = await this.httpClient.get(`/api/v1/todos/stats`, {
+      const response = await this?.httpClient?.get(`/api/v1/todos/stats`, {
         params: { wallet },
       });
 
@@ -428,7 +428,7 @@ export class ApiClient extends EventEmitter {
         timestamp: Date.now(),
       };
     } catch (error) {
-      this.logger.error('Failed to get sync status:', error);
+      this?.logger?.error('Failed to get sync status:', error);
       throw error;
     }
   }
@@ -439,10 +439,10 @@ export class ApiClient extends EventEmitter {
   private normalizeError(error: AxiosError): Error {
     if (error.response) {
       // Server responded with error status
-      const message = error.response.data?.message || error.message;
+      const message = error?.response?.data?.message || error.message;
       const enhancedError = new Error(`API Error: ${message}`);
-      (enhancedError as any).status = error.response.status;
-      (enhancedError as any).code = error.response.data?.code;
+      (enhancedError as any).status = error?.response?.status;
+      (enhancedError as any).code = error?.response?.data?.code;
       return enhancedError;
     } else if (error.request) {
       // Network error
@@ -480,7 +480,7 @@ export class ApiClient extends EventEmitter {
       connected: this.isConnected,
       websocketConnected: this.isWebSocketConnected(),
       wallet: this.wallet,
-      baseURL: this.config.baseURL,
+      baseURL: this?.config?.baseURL,
     };
   }
 
@@ -490,6 +490,6 @@ export class ApiClient extends EventEmitter {
   async destroy(): Promise<void> {
     await this.disconnect();
     this.removeAllListeners();
-    this.logger.info('ApiClient destroyed');
+    this?.logger?.info('ApiClient destroyed');
   }
 }

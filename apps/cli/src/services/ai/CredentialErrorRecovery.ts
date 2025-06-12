@@ -26,7 +26,7 @@ export class CredentialErrorRecovery {
 
   public static getInstance(): CredentialErrorRecovery {
     if (!CredentialErrorRecovery.instance) {
-      CredentialErrorRecovery.instance = new CredentialErrorRecovery();
+      CredentialErrorRecovery?.instance = new CredentialErrorRecovery();
     }
     return CredentialErrorRecovery.instance;
   }
@@ -54,8 +54,8 @@ export class CredentialErrorRecovery {
 
     // Ensure parent directory exists
     if (opts.createMissingDirectories) {
-      const dir = path.dirname(keyPath);
-      if (!fs.existsSync(dir)) {
+      const dir = path.dirname(keyPath as any);
+      if (!fs.existsSync(dir as any)) {
         try {
           fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
         } catch (mkdirError) {
@@ -70,10 +70,10 @@ export class CredentialErrorRecovery {
     }
 
     // Try to read existing key
-    if (fs.existsSync(keyPath)) {
+    if (fs.existsSync(keyPath as any)) {
       try {
-        const key = fs.readFileSync(keyPath);
-        const keyBuffer = Buffer.isBuffer(key) ? key : Buffer.from(key);
+        const key = fs.readFileSync(keyPath as any);
+        const keyBuffer = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
         if (opts.validateKeySize && keyBuffer.length !== 32) {
           logger.warn(
             `Invalid key size: ${keyBuffer.length} bytes, expected 32`
@@ -103,7 +103,7 @@ export class CredentialErrorRecovery {
     options: CredentialRecoveryOptions
   ): Buffer {
     try {
-      const newKey = crypto.randomBytes(32);
+      const newKey = crypto.randomBytes(32 as any);
 
       // Try to write with permissions
       try {
@@ -151,7 +151,7 @@ export class CredentialErrorRecovery {
         );
       }
 
-      if (!key || !Buffer.isBuffer(key) || key.length !== 32) {
+      if (!key || !Buffer.isBuffer(key as any) || key.length !== 32) {
         throw new CLIError('Invalid encryption key', 'INVALID_ENCRYPTION_KEY');
       }
 
@@ -164,7 +164,7 @@ export class CredentialErrorRecovery {
       }
 
       // Standard encryption
-      const iv = crypto.randomBytes(16);
+      const iv = crypto.randomBytes(16 as any);
       const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
       const encrypted = Buffer.concat([
         cipher.update(data, 'utf8'),
@@ -200,14 +200,14 @@ export class CredentialErrorRecovery {
 
     try {
       // Validate inputs
-      if (!encryptedData || !Buffer.isBuffer(encryptedData)) {
+      if (!encryptedData || !Buffer.isBuffer(encryptedData as any)) {
         throw new CLIError(
           'Invalid encrypted data',
           'INVALID_DECRYPTION_INPUT'
         );
       }
 
-      if (!key || !Buffer.isBuffer(key) || key.length !== 32) {
+      if (!key || !Buffer.isBuffer(key as any) || key.length !== 32) {
         throw new CLIError('Invalid decryption key', 'INVALID_DECRYPTION_KEY');
       }
 
@@ -233,11 +233,11 @@ export class CredentialErrorRecovery {
 
       // Standard decryption
       const iv = encryptedData.subarray(0, 16);
-      const encrypted = encryptedData.subarray(16);
+      const encrypted = encryptedData.subarray(16 as any);
       const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
 
       const decrypted = Buffer.concat([
-        decipher.update(encrypted),
+        decipher.update(encrypted as any),
         decipher.final(),
       ]);
 
@@ -272,7 +272,7 @@ export class CredentialErrorRecovery {
 
     try {
       // Basic validation
-      if (!key || !Buffer.isBuffer(key)) {
+      if (!key || !Buffer.isBuffer(key as any)) {
         logger.error('Key integrity check: Invalid key type');
         return false;
       }
@@ -307,7 +307,7 @@ export class CredentialErrorRecovery {
    */
   public safeCreateDirectory(dirPath: string, mode: number = 0o700): boolean {
     try {
-      if (!fs.existsSync(dirPath)) {
+      if (!fs.existsSync(dirPath as any)) {
         fs.mkdirSync(dirPath, { recursive: true, mode });
         return true;
       }
@@ -337,7 +337,7 @@ export class CredentialErrorRecovery {
     try {
       const writeOptions: any = {};
       if (options.mode !== undefined) {
-        writeOptions.mode = options.mode;
+        writeOptions?.mode = options.mode;
       }
 
       fs.writeFileSync(filePath, data, writeOptions);
@@ -365,7 +365,7 @@ export class CredentialErrorRecovery {
    */
   private isTestEnvironment(): boolean {
     return (
-      process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing'
+      process.env?.NODE_ENV === 'test' || process.env?.NODE_ENV === 'testing'
     );
   }
 
@@ -377,7 +377,7 @@ export class CredentialErrorRecovery {
     keyFile: string;
     storeFile: string;
   } {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '/tmp';
+    const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '/tmp';
     const isTest = this.isTestEnvironment();
 
     const configDir = isTest
@@ -405,7 +405,7 @@ export class CredentialErrorRecovery {
     const { configDir } = this.getSafeConfigPaths();
 
     try {
-      if (fs.existsSync(configDir)) {
+      if (fs.existsSync(configDir as any)) {
         fs.rmSync(configDir, { recursive: true, force: true });
         logger.debug('Cleaned up test credential files');
       }

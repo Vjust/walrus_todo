@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../types/errors/consolidated';
 import { TodoService } from '../../services/todoService';
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
@@ -71,7 +71,7 @@ export default class CreateNftCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const config = await configService.getConfig();
-    const { flags } = await this.parse(CreateNftCommand);
+    const { flags } = await this.parse(CreateNftCommand as any);
     const todoService = new TodoService();
 
     try {
@@ -91,7 +91,7 @@ export default class CreateNftCommand extends BaseCommand {
         );
       }
 
-      const blobId = todoItem.imageUrl.split('/').pop() || '';
+      const blobId = todoItem?.imageUrl?.split('/').pop() || '';
 
       if (!config.lastDeployment?.packageId) {
         throw new CLIError(
@@ -117,8 +117,8 @@ export default class CreateNftCommand extends BaseCommand {
 
       // Initialize Sui NFT storage
       const suiNftStorage = new SuiNftStorage(suiClient, {} as Ed25519Keypair, {
-        address: config.lastDeployment.packageId,
-        packageId: config.lastDeployment.packageId,
+        address: config?.lastDeployment?.packageId,
+        packageId: config?.lastDeployment?.packageId,
       });
 
       // Create NFT with performance tracking
@@ -130,7 +130,7 @@ export default class CreateNftCommand extends BaseCommand {
           todoId: flags.todo,
           listName: flags.list,
           blobId,
-          gasBudget: flags['gas-budget'],
+          gasBudget: flags?.["gas-budget"],
         }
       );
 
@@ -140,7 +140,7 @@ export default class CreateNftCommand extends BaseCommand {
       this.log(`   - Title: ${todoItem.title}`);
       this.log(`   - Image URL: ${todoItem.imageUrl}`);
       this.log(`   - Walrus Blob ID: ${blobId}`);
-      this.log(`   - Gas Budget: ${flags['gas-budget']} MIST`);
+      this.log(`   - Gas Budget: ${flags?.["gas-budget"]} MIST`);
       this.log(
         '\nYou can view this NFT in your wallet with the embedded image from Walrus.'
       );
@@ -149,7 +149,7 @@ export default class CreateNftCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to create NFT: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create NFT: ${error instanceof Error ? error.message : String(error as any)}`,
         'NFT_CREATE_FAILED'
       );
     }
@@ -163,19 +163,19 @@ export default class CreateNftCommand extends BaseCommand {
     config: any
   ): Promise<void> {
     const jobId =
-      flags['job-id'] ||
+      flags?.["job-id"] ||
       jobManager.createJob('image', ['create-nft'], {
         todo: flags.todo,
         list: flags.list,
         priority: flags.priority,
-        gasBudget: flags['gas-budget'],
+        gasBudget: flags?.["gas-budget"],
       }).id;
 
     this.log(chalk.blue(`🔄 Starting background NFT creation...`));
     this.log(chalk.gray(`📝 Job ID: ${jobId}`));
     this.log(chalk.gray(`💡 Use 'waltodo status ${jobId}' to check progress`));
     this.log(chalk.gray(`💡 Use 'waltodo jobs' to list all background jobs`));
-    this.log(chalk.gray(`💰 Gas Budget: ${flags['gas-budget']} MIST`));
+    this.log(chalk.gray(`💰 Gas Budget: ${flags?.["gas-budget"]} MIST`));
 
     // Start background process
     setImmediate(async () => {
@@ -187,7 +187,7 @@ export default class CreateNftCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `Blob ID: ${blobId}`);
         jobManager.writeJobLog(
           jobId,
-          `Gas Budget: ${flags['gas-budget']} MIST`
+          `Gas Budget: ${flags?.["gas-budget"]} MIST`
         );
 
         let progress = 0;
@@ -198,8 +198,8 @@ export default class CreateNftCommand extends BaseCommand {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
-          if (flags['progress-file']) {
-            this.writeProgressFile(flags['progress-file'], progress, message);
+          if (flags?.["progress-file"]) {
+            this.writeProgressFile(flags?.["progress-file"], progress, message);
           }
         };
 
@@ -210,8 +210,8 @@ export default class CreateNftCommand extends BaseCommand {
           suiClient,
           {} as Ed25519Keypair,
           {
-            address: config.lastDeployment.packageId,
-            packageId: config.lastDeployment.packageId,
+            address: config?.lastDeployment?.packageId,
+            packageId: config?.lastDeployment?.packageId,
           }
         );
 
@@ -229,7 +229,7 @@ export default class CreateNftCommand extends BaseCommand {
           todoTitle: todoItem.title,
           imageUrl: todoItem.imageUrl,
           blobId,
-          gasBudget: flags['gas-budget'],
+          gasBudget: flags?.["gas-budget"],
           network: config.network,
         });
 
@@ -245,11 +245,11 @@ export default class CreateNftCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `   - Walrus Blob ID: ${blobId}`);
         jobManager.writeJobLog(
           jobId,
-          `   - Gas Used: ${flags['gas-budget']} MIST`
+          `   - Gas Used: ${flags?.["gas-budget"]} MIST`
         );
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(error as any);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(
           jobId,

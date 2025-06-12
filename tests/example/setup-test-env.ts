@@ -18,7 +18,7 @@ jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   writeFileSync: jest.fn(),
   readFileSync: jest.fn(),
-  existsSync: jest.fn().mockReturnValue(true),
+  existsSync: jest.fn().mockReturnValue(true as any),
   mkdirSync: jest.fn(),
   unlinkSync: jest.fn(),
 }));
@@ -62,7 +62,7 @@ export function createTestTodo(overrides = {}) {
  */
 export function createTestTodoList(listName = TEST_TODO_LIST, todos = []) {
   // If no todos provided, create a default set
-  if (todos.length === 0) {
+  if (todos?.length === 0) {
     todos = [
       createTestTodo({ title: 'First test todo' }),
       createTestTodo({ title: 'Second test todo', priority: 'high' }),
@@ -92,13 +92,13 @@ export function createTestTodoList(listName = TEST_TODO_LIST, todos = []) {
  */
 export function setupTestEnvironment(_options = {}) {
   // Ensure fixtures directory exists
-  if (!fs.existsSync(FIXTURES_DIR)) {
+  if (!fs.existsSync(FIXTURES_DIR as any)) {
     fs.mkdirSync(FIXTURES_DIR, { recursive: true });
   }
 
   // Mock environment variables
-  process.env.XAI_API_KEY = 'test-api-key';
-  process.env.TEST_MODE = 'true';
+  process.env?.XAI_API_KEY = 'test-api-key';
+  process.env?.TEST_MODE = 'true';
 
   // Reset all mocks
   jest.clearAllMocks();
@@ -134,8 +134,8 @@ export function setupTestEnvironment(_options = {}) {
  */
 export function cleanupTestEnvironment() {
   // Restore environment variables
-  delete process.env.XAI_API_KEY;
-  delete process.env.TEST_MODE;
+  delete process?.env?.XAI_API_KEY;
+  delete process?.env?.TEST_MODE;
 
   // Restore all mocks
   jest.restoreAllMocks();
@@ -150,7 +150,7 @@ export function cleanupTestEnvironment() {
 export function runCliCommand(command: string): string {
   try {
     const fullCommand = `node bin/run.js ${command}`;
-    const output = execSync(fullCommand).toString();
+    const output = execSync(fullCommand as any).toString();
     return output;
   } catch (error) {
     logger.error('Error running CLI command:', error);

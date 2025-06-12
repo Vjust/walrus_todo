@@ -5,7 +5,7 @@
  */
 
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
@@ -57,7 +57,7 @@ export default class CheckCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(CheckCommand);
+    const { args, flags } = await this.parse(CheckCommand as any);
     const todoService = new TodoService();
 
     try {
@@ -66,7 +66,7 @@ export default class CheckCommand extends BaseCommand {
         throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
       }
 
-      const todo = list.todos.find(t => t.id === flags.id);
+      const todo = list?.todos?.find(t => t?.id === flags.id);
       if (!todo) {
         throw new CLIError(
           `Todo with ID "${flags.id}" not found in list "${args.listName}"`,
@@ -74,8 +74,8 @@ export default class CheckCommand extends BaseCommand {
         );
       }
 
-      todo.completed = !flags.uncheck;
-      todo.updatedAt = new Date().toISOString();
+      todo?.completed = !flags.uncheck;
+      todo?.updatedAt = new Date().toISOString();
 
       await todoService.saveList(args.listName, list);
 
@@ -90,7 +90,7 @@ export default class CheckCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to check todo: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to check todo: ${error instanceof Error ? error.message : String(error as any)}`,
         'CHECK_FAILED'
       );
     }

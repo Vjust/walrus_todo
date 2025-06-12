@@ -23,8 +23,8 @@ interface ProviderErrorBoundaryState {
  */
 export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps, ProviderErrorBoundaryState> {
   constructor(props: ProviderErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
+    super(props as any);
+    this?.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ProviderErrorBoundaryState {
@@ -32,13 +32,13 @@ export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps,
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`${this.props.providerName} provider error:`, error, errorInfo);
+    console.error(`${this?.props?.providerName} provider error:`, error, errorInfo);
   }
 
   render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
+    if (this?.state?.hasError) {
+      if (this?.props?.fallback) {
+        return this?.props?.fallback;
       }
 
       return (
@@ -50,10 +50,10 @@ export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps,
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              {this.props.providerName} Initialization Failed
+              {this?.props?.providerName} Initialization Failed
             </h2>
             <p className="text-gray-600 mb-4">
-              There was an issue setting up the {this.props.providerName.toLowerCase()}. 
+              There was an issue setting up the {this?.props?.providerName.toLowerCase()}. 
               This might be due to network connectivity or browser compatibility.
             </p>
             
@@ -69,7 +69,7 @@ export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps,
 
             <div className="space-y-2">
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => window?.location?.reload()}
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Refresh Page
@@ -82,12 +82,12 @@ export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps,
               </button>
             </div>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env?.NODE_ENV === 'development' && this?.state?.error && (
               <details className="mt-4 text-left">
                 <summary className="text-sm text-gray-500 cursor-pointer">Technical details</summary>
                 <pre className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded overflow-auto max-h-32">
-                  {this.state.error.message}
-                  {this.state.error.stack && `\n\n${  this.state.error.stack}`}
+                  {this?.state?.error.message}
+                  {this?.state?.error.stack && `\n\n${  this?.state?.error.stack}`}
                 </pre>
               </details>
             )}
@@ -96,6 +96,6 @@ export class ProviderErrorBoundary extends Component<ProviderErrorBoundaryProps,
       );
     }
 
-    return this.props.children;
+    return this?.props?.children;
   }
 }

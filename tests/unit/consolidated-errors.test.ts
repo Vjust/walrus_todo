@@ -5,7 +5,7 @@ describe('Consolidated Error Types', () => {
   // Create a TestError class to expose protected methods for testing
   class TestError extends BaseError {
     public testRedactIdentifier(identifier: string): string {
-      return this.redactIdentifier(identifier);
+      return this.redactIdentifier(identifier as any);
     }
   }
 
@@ -134,7 +134,7 @@ describe('Consolidated Error Types', () => {
       // Check that even non-blockchain IDs might be redacted
       const customData = logEntry.context?.customData as Record<string, string>;
       const nonAddressValue = customData?.nonAddress;
-      expect(nonAddressValue).toBeTruthy();
+      expect(nonAddressValue as any).toBeTruthy();
     });
 
     it('should sanitize transaction hashes in factory methods', () => {

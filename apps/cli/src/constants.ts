@@ -6,32 +6,32 @@ import { getEnv, initializeConfig } from './utils/environment-config';
 import { SHARED_STORAGE_CONFIG } from '@waltodo/shared-constants';
 
 // Initialize environment configuration if not already initialized, but skip in test environment
-if (typeof process.env.ENV_CONFIG_INITIALIZED === 'undefined' && process.env.NODE_ENV !== 'test') {
+if (typeof process.env?.ENV_CONFIG_INITIALIZED === 'undefined' && process?.env?.NODE_ENV !== 'test') {
   try {
     initializeConfig();
-    process.env.ENV_CONFIG_INITIALIZED = 'true';
+    process.env?.ENV_CONFIG_INITIALIZED = 'true';
   } catch (error) {
     // If environment configuration fails, continue with defaults
     // eslint-disable-next-line no-console
     console.warn('Failed to initialize environment configuration, using defaults:', error);
-    process.env.ENV_CONFIG_INITIALIZED = 'true';
+    process.env?.ENV_CONFIG_INITIALIZED = 'true';
   }
-} else if (process.env.NODE_ENV === 'test') {
+} else if (process.env?.NODE_ENV === 'test') {
   // In test environment, mark as initialized to prevent any attempts to initialize
-  process.env.ENV_CONFIG_INITIALIZED = 'true';
+  process.env?.ENV_CONFIG_INITIALIZED = 'true';
 }
 
 export const CLI_CONFIG = {
   APP_NAME: 'waltodo',
   CONFIG_FILE: '.waltodo.json',
-  VERSION: '1.0.0',
+  VERSION: '1?.0?.0',
   DEFAULT_LIST: 'default',
 } as const;
 
 // Safe getEnv wrapper for test environments
 const safeGetEnv = (key: string, defaultValue: unknown = '') => {
   try {
-    return getEnv(key);
+    return getEnv(key as any);
   } catch {
     return defaultValue;
   }
@@ -46,16 +46,16 @@ export const STORAGE_CONFIG = {
 } as const;
 
 export const NETWORK_URLS: Record<string, string> = {
-  mainnet: 'https://fullnode.mainnet.sui.io:443',
-  testnet: 'https://fullnode.testnet.sui.io:443',
-  devnet: 'https://fullnode.devnet.sui.io:443',
-  local: 'http://127.0.0.1:9000',
-  localnet: 'http://127.0.0.1:9000',
+  mainnet: 'https://fullnode?.mainnet?.sui.io:443',
+  testnet: 'https://fullnode?.testnet?.sui.io:443',
+  devnet: 'https://fullnode?.devnet?.sui.io:443',
+  local: 'http://127?.0?.0.1:9000',
+  localnet: 'http://127?.0?.0.1:9000',
 };
 
 export const WALRUS_CONFIG = {
   DEFAULT_IMAGE: 'QmeYxwj4CwYbQGAZqGLENhDmxGGWnYwKkBaZvxDFAEGPVR',
-  API_PREFIX: 'https://api.walrus.tech/1.0',
+  API_PREFIX: 'https://api?.walrus?.tech/1.0',
 } as const;
 
 export const TODO_NFT_CONFIG = {

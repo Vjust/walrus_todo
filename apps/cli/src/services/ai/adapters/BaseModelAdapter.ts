@@ -44,10 +44,10 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     modelName: string,
     defaultOptions: AIModelOptions = {}
   ) {
-    this.provider = provider;
-    this.apiKey = apiKey;
-    this.modelName = modelName;
-    this.defaultOptions = {
+    this?.provider = provider;
+    this?.apiKey = apiKey;
+    this?.modelName = modelName;
+    this?.defaultOptions = {
       temperature: 0.7,
       maxTokens: 1000,
       timeout: this.defaultTimeout,
@@ -74,7 +74,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
    * Set the model name
    */
   public setModelName(modelName: string): void {
-    this.modelName = modelName;
+    this?.modelName = modelName;
   }
 
   /**
@@ -101,14 +101,14 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
    * Cancel all pending requests
    */
   public cancelAllRequests(reason: string = 'User cancelled operation'): void {
-    this.activeRequests.forEach(controller => {
-      if (!controller.signal.aborted) {
-        controller.abort(reason);
+    this?.activeRequests?.forEach(controller => {
+      if (!controller?.signal?.aborted) {
+        controller.abort(reason as any);
       }
     });
 
     // Clear the list of active requests
-    this.activeRequests = [];
+    this?.activeRequests = [];
   }
 
   /**
@@ -138,15 +138,15 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
 
     // Check for AbortError (timeout or cancellation)
     if (
-      errorWithName.name === 'AbortError' ||
-      (errorWithName.cause && errorWithName.cause.name === 'AbortError')
+      errorWithName?.name === 'AbortError' ||
+      (errorWithName.cause && errorWithName.cause?.name === 'AbortError')
     ) {
       throw new Error(`Operation ${operation} was cancelled or timed out`);
     }
 
     if (
-      errorWithStatus.status === 429 ||
-      (errorWithStatus.response && errorWithStatus.response.status === 429)
+      errorWithStatus?.status === 429 ||
+      (errorWithStatus.response && errorWithStatus.response?.status === 429)
     ) {
       throw new Error(
         `Rate limit exceeded for ${this.provider} during ${operation}`
@@ -154,8 +154,8 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     }
 
     if (
-      errorWithStatus.status === 401 ||
-      (errorWithStatus.response && errorWithStatus.response.status === 401)
+      errorWithStatus?.status === 401 ||
+      (errorWithStatus.response && errorWithStatus.response?.status === 401)
     ) {
       throw new Error(
         `Authentication failed for ${this.provider}: Invalid API key`
@@ -182,7 +182,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       await new Promise(resolve => setTimeout(resolve, delay));
     }
 
-    this.lastRequestTime = Date.now();
+    this?.lastRequestTime = Date.now();
   }
 
   /**
@@ -203,16 +203,16 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     await this.enforceRateLimit();
 
     const controller = new AbortController();
-    this.activeRequests.push(controller);
+    this?.activeRequests?.push(controller as any);
 
     try {
       const fetchOptions: EnhancedFetchOptions = {
         ...requestOptions,
         signal: controller.signal,
         timeout:
-          options.timeout || this.defaultOptions.timeout || this.defaultTimeout,
+          options.timeout || this?.defaultOptions?.timeout || this.defaultTimeout,
         retries:
-          options.retries || this.defaultOptions.retries || this.defaultRetries,
+          options.retries || this?.defaultOptions?.retries || this.defaultRetries,
         operationName: options.operation || 'AI model request',
         parseJson: options.parseJson !== false,
         headers: {
@@ -222,8 +222,8 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       };
 
       // If body is an object, stringify it
-      if (requestOptions.body && typeof requestOptions.body === 'object') {
-        fetchOptions.body = JSON.stringify(requestOptions.body);
+      if (requestOptions.body && typeof requestOptions?.body === 'object') {
+        fetchOptions?.body = JSON.stringify(requestOptions.body);
       }
 
       const response = await NetworkManager.fetch<T>(url, fetchOptions);
@@ -237,13 +237,13 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       return response.data as T;
     } finally {
       // Remove this controller from active requests
-      const index = this.activeRequests.indexOf(controller);
+      const index = this?.activeRequests?.indexOf(controller as any);
       if (index !== -1) {
-        this.activeRequests.splice(index, 1);
+        this?.activeRequests?.splice(index, 1);
       }
 
       // Ensure controller is aborted to free resources
-      if (!controller.signal.aborted) {
+      if (!controller?.signal?.aborted) {
         controller.abort('Request completed');
       }
     }
@@ -268,7 +268,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     }
 
     try {
-      return await promptInput.format(input);
+      return await promptInput.format(input as any);
     } catch (_error) {
       throw new Error(
         `Error formatting prompt template: ${_error instanceof Error ? _error.message : 'Unknown error'}`

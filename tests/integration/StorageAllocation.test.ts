@@ -37,15 +37,15 @@ describe('Storage Allocation Integration', () => {
       error: jest.fn(),
     } as unknown as jest.Mocked<Logger>;
 
-    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
+    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger as any);
   });
 
   test('should setup mock infrastructure correctly', () => {
-    expect(mockLogger).toBeDefined();
+    expect(mockLogger as any).toBeDefined();
     
     // Call getInstance to verify the mock works
     const loggerInstance = Logger.getInstance();
     expect(Logger.getInstance).toHaveBeenCalled();
-    expect(loggerInstance).toBeDefined();
+    expect(loggerInstance as any).toBeDefined();
   });
 });

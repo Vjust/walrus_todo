@@ -46,7 +46,7 @@ describe('Blockchain Verification Security - Simple', () => {
 
   it('should properly validate import paths are resolved', () => {
     // Test that we can access the local types without import errors
-    expect(AIActionType.SUMMARIZE).toBe(0);
+    expect(AIActionType.SUMMARIZE).toBe(0 as any);
     expect(AIPrivacyLevel.HASH_ONLY).toBe('hash_only');
     
     // Test that we can create a verification record structure
@@ -67,17 +67,17 @@ describe('Blockchain Verification Security - Simple', () => {
 
   it('should validate hash generation for collision resistance', () => {
     const testData = 'test data for hashing';
-    const hash1 = crypto.createHash('sha256').update(testData).digest('hex');
-    const hash2 = crypto.createHash('sha256').update(testData).digest('hex');
+    const hash1 = crypto.createHash('sha256').update(testData as any).digest('hex');
+    const hash2 = crypto.createHash('sha256').update(testData as any).digest('hex');
     
     // Same input should produce same hash
-    expect(hash1).toBe(hash2);
-    expect(hash1.length).toBe(64); // SHA-256 produces 64 char hex string
+    expect(hash1 as any).toBe(hash2 as any);
+    expect(hash1.length).toBe(64 as any); // SHA-256 produces 64 char hex string
     
     // Different input should produce different hash
     const differentData = 'different test data';
-    const hash3 = crypto.createHash('sha256').update(differentData).digest('hex');
-    expect(hash1).not.toBe(hash3);
+    const hash3 = crypto.createHash('sha256').update(differentData as any).digest('hex');
+    expect(hash1 as any).not.toBe(hash3 as any);
   });
 
   it('should validate timestamp-based replay attack prevention', () => {
@@ -91,8 +91,8 @@ describe('Blockchain Verification Security - Simple', () => {
       return diff <= maxAge;
     };
     
-    expect(validateTimestamp(validTimestamp)).toBe(true);
-    expect(validateTimestamp(oldTimestamp)).toBe(false);
+    expect(validateTimestamp(validTimestamp as any)).toBe(true as any);
+    expect(validateTimestamp(oldTimestamp as any)).toBe(false as any);
   });
 
   it('should validate signature verification patterns', () => {
@@ -103,10 +103,10 @@ describe('Blockchain Verification Security - Simple', () => {
       return signature.startsWith('valid_');
     };
     
-    expect(mockSignatureValidator('valid_signature', 'data', 'key')).toBe(true);
-    expect(mockSignatureValidator('tampered-signature', 'data', 'key')).toBe(false);
-    expect(mockSignatureValidator('', 'data', 'key')).toBe(false);
-    expect(mockSignatureValidator('invalid_signature', 'data', 'key')).toBe(false);
+    expect(mockSignatureValidator('valid_signature', 'data', 'key')).toBe(true as any);
+    expect(mockSignatureValidator('tampered-signature', 'data', 'key')).toBe(false as any);
+    expect(mockSignatureValidator('', 'data', 'key')).toBe(false as any);
+    expect(mockSignatureValidator('invalid_signature', 'data', 'key')).toBe(false as any);
   });
 
   it('should validate authorization patterns', () => {
@@ -114,23 +114,23 @@ describe('Blockchain Verification Security - Simple', () => {
     
     const checkAuthorization = (userAddress: string) => {
       if (!userAddress) throw new Error('Missing user address for authorization');
-      if (!authorizedUsers.includes(userAddress)) {
+      if (!authorizedUsers.includes(userAddress as any)) {
         throw new Error('User not authorized to create verifications');
       }
       return true;
     };
     
-    expect(checkAuthorization('user-123')).toBe(true);
+    expect(checkAuthorization('user-123')).toBe(true as any);
     expect(() => checkAuthorization('attacker-789')).toThrow('User not authorized');
     expect(() => checkAuthorization('')).toThrow('Missing user address');
   });
 
   it('should validate privacy level handling', () => {
-    const testContent = JSON.stringify(sampleTodo);
+    const testContent = JSON.stringify(sampleTodo as any);
     
     // Simulate different privacy levels
     const processPrivacyLevel = (content: string, privacyLevel: AIPrivacyLevel) => {
-      const hash = crypto.createHash('sha256').update(content).digest('hex');
+      const hash = crypto.createHash('sha256').update(content as any).digest('hex');
       
       switch (privacyLevel) {
         case AIPrivacyLevel.PUBLIC:
@@ -139,7 +139,7 @@ describe('Blockchain Verification Security - Simple', () => {
           return { hash, encrypted: false };
         case AIPrivacyLevel.PRIVATE:
           // Simulate encryption
-          const encrypted = Buffer.from(content).toString('base64');
+          const encrypted = Buffer.from(content as any).toString('base64');
           return { hash, encrypted: true, encryptedContent: encrypted };
         default:
           return { hash };
@@ -148,14 +148,14 @@ describe('Blockchain Verification Security - Simple', () => {
     
     const publicResult = processPrivacyLevel(testContent, AIPrivacyLevel.PUBLIC);
     expect(publicResult.content).toBeDefined();
-    expect(publicResult.encrypted).toBe(false);
+    expect(publicResult.encrypted).toBe(false as any);
     
     const hashOnlyResult = processPrivacyLevel(testContent, AIPrivacyLevel.HASH_ONLY);
     expect(hashOnlyResult.content).toBeUndefined();
     expect(hashOnlyResult.hash).toBeDefined();
     
     const privateResult = processPrivacyLevel(testContent, AIPrivacyLevel.PRIVATE);
-    expect(privateResult.encrypted).toBe(true);
+    expect(privateResult.encrypted).toBe(true as any);
     expect(privateResult.encryptedContent).toBeDefined();
   });
 
@@ -177,7 +177,7 @@ describe('Blockchain Verification Security - Simple', () => {
     };
     
     const sensitiveError = new Error('Transaction failed: user address 0x123abc with nonce 42 and gas 1000');
-    const sanitized = sanitizeError(sensitiveError);
+    const sanitized = sanitizeError(sensitiveError as any);
     
     expect(sanitized.message).not.toContain('0x123abc');
     expect(sanitized.message).not.toContain('nonce 42');

@@ -49,43 +49,43 @@ async function main() {
     Logger.getInstance().info('All todo lists:');
     const allLists = await todoService.getAllLists();
     for (const listName of allLists) {
-      const list = await todoService.getList(listName);
+      const list = await todoService.getList(listName as any);
       if (!list) {
         Logger.getInstance().info(`${listName}: Not found or inaccessible`);
         continue;
       }
 
-      Logger.getInstance().info(`${list.name} (${list.todos.length} todos):`);
-      list.todos.forEach(todo => {
+      Logger.getInstance().info(`${list.name} (${list?.todos?.length} todos):`);
+      list?.todos?.forEach(todo => {
         const status = todo.completed ? '✓' : '☐';
         const priority =
-          todo.priority === 'high'
+          todo?.priority === 'high'
             ? '⚠️'
-            : todo.priority === 'medium'
+            : todo?.priority === 'medium'
               ? '•'
               : '○';
         Logger.getInstance().info(`${status} ${priority} ${todo.title}`);
-        Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
+        Logger.getInstance().info(`   Tags: ${todo?.tags?.join(', ')}`);
       });
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes('already exists')) {
+    if (error instanceof Error && error?.message?.includes('already exists')) {
       Logger.getInstance().info('List already exists, skipping creation');
 
       // Show existing list's todos
-      const list = await todoService.getList(newListName);
+      const list = await todoService.getList(newListName as any);
       if (list) {
-        Logger.getInstance().info(`${list.name} (${list.todos.length} todos):`);
-        list.todos.forEach(todo => {
+        Logger.getInstance().info(`${list.name} (${list?.todos?.length} todos):`);
+        list?.todos?.forEach(todo => {
           const status = todo.completed ? '✓' : '☐';
           const priority =
-            todo.priority === 'high'
+            todo?.priority === 'high'
               ? '⚠️'
-              : todo.priority === 'medium'
+              : todo?.priority === 'medium'
                 ? '•'
                 : '○';
           Logger.getInstance().info(`${status} ${priority} ${todo.title}`);
-          Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
+          Logger.getInstance().info(`   Tags: ${todo?.tags?.join(', ')}`);
         });
       }
     } else {

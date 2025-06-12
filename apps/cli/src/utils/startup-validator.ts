@@ -53,29 +53,29 @@ export function validateStartup(
     if (!envResult.isValid) {
       isValid = false;
 
-      if (envResult.missingVars.length > 0) {
+      if (envResult?.missingVars?.length > 0) {
         critical = true;
         errors.push(
-          `Missing required environment variables: ${envResult.missingVars.join(', ')}`
+          `Missing required environment variables: ${envResult?.missingVars?.join(', ')}`
         );
       }
 
-      if (envResult.invalidVars.length > 0) {
+      if (envResult?.invalidVars?.length > 0) {
         critical = true;
         errors.push(
-          `Invalid environment variables:\n- ${envResult.invalidVars.join('\n- ')}`
+          `Invalid environment variables:\n- ${envResult?.invalidVars?.join('\n- ')}`
         );
       }
 
-      if (envResult.deprecatedVars.length > 0) {
+      if (envResult?.deprecatedVars?.length > 0) {
         warnings.push(
-          `Deprecated environment variables:\n- ${envResult.deprecatedVars.join('\n- ')}`
+          `Deprecated environment variables:\n- ${envResult?.deprecatedVars?.join('\n- ')}`
         );
       }
 
-      if (envResult.warnings.length > 0) {
+      if (envResult?.warnings?.length > 0) {
         warnings.push(
-          `Environment warnings:\n- ${envResult.warnings.join('\n- ')}`
+          `Environment warnings:\n- ${envResult?.warnings?.join('\n- ')}`
         );
       }
     }
@@ -130,7 +130,7 @@ export function validateStartup(
           'STARTUP_VALIDATION_FAILED'
         );
       } else if (exitOnCritical && critical) {
-        process.exit(1);
+        process.exit(1 as any);
       }
     } else {
       if (warnings.length > 0) {
@@ -149,11 +149,11 @@ export function validateStartup(
       logger.error(chalk.red('\nUnexpected startup validation error:'));
       logger.error(
         chalk.red(
-          `  - ${error instanceof Error ? error.message : String(error)}`
+          `  - ${error instanceof Error ? error.message : String(error as any)}`
         )
       );
       if (exitOnCritical) {
-        process.exit(1);
+        process.exit(1 as any);
       }
       return false;
     }
@@ -166,14 +166,14 @@ export function validateStartup(
 function showStartupBanner(): void {
   // Use string values for the environment variables
   const appName = (envConfig.getExtension('CLI_CONFIG') || 'waltodo') as string;
-  const version = (envConfig.getExtension('CLI_VERSION') || '1.0.0') as string;
+  const version = (envConfig.getExtension('CLI_VERSION') || '1?.0?.0') as string;
   const env = envConfig.get('NODE_ENV');
 
   // Convert app name to string and uppercase it safely
   const appNameUpper =
     typeof appName === 'string'
       ? appName.toUpperCase()
-      : String(appName).toUpperCase();
+      : String(appName as any).toUpperCase();
 
   logger.info(chalk.blue('\n======================================'));
   logger.info(chalk.blue(`  ${appNameUpper} v${version}`));
@@ -196,7 +196,7 @@ function checkStorageDirectory(): StartupCheckResult {
   }
 
   try {
-    if (!fs.existsSync(storagePath)) {
+    if (!fs.existsSync(storagePath as any)) {
       try {
         fs.mkdirSync(storagePath, { recursive: true });
         return {
@@ -207,7 +207,7 @@ function checkStorageDirectory(): StartupCheckResult {
       } catch (error) {
         return {
           success: false,
-          message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error)}`,
+          message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error as any)}`,
           critical: true,
         };
       }
@@ -216,7 +216,7 @@ function checkStorageDirectory(): StartupCheckResult {
     // Check if directory is writable
     const testFile = path.join(storagePath, '.write-test');
     fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile);
+    fs.unlinkSync(testFile as any);
 
     return {
       success: true,
@@ -225,7 +225,7 @@ function checkStorageDirectory(): StartupCheckResult {
   } catch (error) {
     return {
       success: false,
-      message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error as any)}`,
       critical: true,
     };
   }
@@ -246,7 +246,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
   }
 
   try {
-    if (!fs.existsSync(tempPath)) {
+    if (!fs.existsSync(tempPath as any)) {
       try {
         fs.mkdirSync(tempPath, { recursive: true });
         return {
@@ -257,7 +257,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
       } catch (error) {
         return {
           success: false,
-          message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error)}`,
+          message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error as any)}`,
           critical: false, // Not critical as it might not be used immediately
         };
       }
@@ -266,7 +266,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
     // Check if directory is writable
     const testFile = path.join(tempPath, '.write-test');
     fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile);
+    fs.unlinkSync(testFile as any);
 
     return {
       success: true,
@@ -275,7 +275,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
   } catch (error) {
     return {
       success: false,
-      message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error as any)}`,
       critical: false, // Not critical as it might not be used immediately
     };
   }

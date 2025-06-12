@@ -104,11 +104,11 @@ export class StorageReuseAnalyzer {
   ): Promise<StorageAnalysis> {
     try {
       // Get the current epoch from the Sui blockchain
-      const { epoch } = await this.suiClient.getLatestSuiSystemState();
-      const currentEpoch = Number(epoch);
+      const { epoch } = await this?.suiClient?.getLatestSuiSystemState();
+      const currentEpoch = Number(epoch as any);
 
       // Fetch all storage objects owned by this address from the blockchain
-      const response = await this.suiClient.getOwnedObjects({
+      const response = await this?.suiClient?.getOwnedObjects({
         owner: this.userAddress,
         filter: { StructType: '0x2::storage::Storage' },
         options: { showContent: true },
@@ -126,13 +126,13 @@ export class StorageReuseAnalyzer {
         // Skip if no content or not a move object
         if (
           !item.data?.content ||
-          item.data.content.dataType !== 'moveObject'
+          item?.data?.content.dataType !== 'moveObject'
         ) {
           continue;
         }
 
         // Parse storage fields from the move object
-        const content = item.data.content as {
+        const content = item?.data?.content as {
           fields?: {
             storage_size?: string | number;
             used_size?: string | number;
@@ -158,7 +158,7 @@ export class StorageReuseAnalyzer {
 
         // Add parsed storage object to our collection
         storageObjects.push({
-          id: item.data.objectId,
+          id: item?.data?.objectId,
           totalSize,
           usedSize,
           endEpoch,
@@ -241,7 +241,7 @@ export class StorageReuseAnalyzer {
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_STORAGE_ANALYSIS_FAILED'
       );
     }
@@ -280,26 +280,26 @@ export class StorageReuseAnalyzer {
   }> {
     try {
       // Find the best storage to reuse based on our best-fit algorithm
-      const analysisResult = await this.findBestStorageForReuse(requiredSize);
+      const analysisResult = await this.findBestStorageForReuse(requiredSize as any);
 
       // Get cost estimate for allocating new storage from Walrus
       // Default to 52 epochs (approximately 6 months)
-      const { storageCost, totalCost } = await this.walrusClient.storageCost(
+      const { storageCost, totalCost } = await this?.walrusClient?.storageCost(
         requiredSize,
         52 // Default to 52 epochs (approximately 6 months)
       );
-      const newStorageCost = BigInt(totalCost);
+      const newStorageCost = BigInt(totalCost as any);
 
       // Calculate potential savings if we reuse existing storage
-      let reuseExistingSavings = BigInt(0);
+      let reuseExistingSavings = BigInt(0 as any);
       let reuseExistingPercentSaved = 0;
 
       if (analysisResult.hasViableStorage) {
         // When reusing storage, we only pay the write cost, not the storage allocation cost
         // This is where the significant savings come from
-        reuseExistingSavings = BigInt(storageCost);
+        reuseExistingSavings = BigInt(storageCost as any);
         reuseExistingPercentSaved = Number(
-          (BigInt(100) * reuseExistingSavings) / newStorageCost
+          (BigInt(100 as any) * reuseExistingSavings) / newStorageCost
         );
       }
 
@@ -332,7 +332,7 @@ export class StorageReuseAnalyzer {
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALRUS_EFFICIENCY_ANALYSIS_FAILED'
       );
     }
@@ -373,7 +373,7 @@ export class StorageReuseAnalyzer {
   } {
     // Calculate size for each todo (JSON serialization + metadata)
     const todoSizes = todos.map(todo => {
-      const serialized = JSON.stringify(todo);
+      const serialized = JSON.stringify(todo as any);
       const baseSize = Buffer.byteLength(serialized, 'utf8');
       // Add overhead for metadata, timestamps, etc.
       const overhead = 100; // bytes
@@ -411,12 +411,12 @@ export class StorageReuseAnalyzer {
           used: 0,
           todos: [],
         };
-        allocations.push(currentBlock);
+        allocations.push(currentBlock as any);
       }
 
       // Add todo to current block
       currentBlock.used += todo.size;
-      currentBlock.todos.push(todo.id);
+      currentBlock?.todos?.push(todo.id);
     }
 
     // Calculate usage metrics

@@ -25,7 +25,7 @@ jest.mock('../../../apps/cli/src/services/ai/AIProviderFactory', () => ({
         .fn()
         .mockImplementation((_prompt, _input) => {
           // Mock responses based on operation type
-          if (prompt.template.includes('Summarize')) {
+          if (prompt?.template?.includes('Summarize')) {
             return Promise.resolve({
               result: 'Your todos focus on financial and project work.',
             });
@@ -98,14 +98,14 @@ describe('AI Command E2E Tests', () => {
     originalEnv = { ...process.env };
 
     // Setup test environment
-    process.env.XAI_API_KEY = 'test-api-key';
-    process.env.AI_DEFAULT_PROVIDER = 'xai';
-    process.env.AI_DEFAULT_MODEL = 'grok-beta';
-    process.env.NODE_ENV = 'test';
+    process.env?.XAI_API_KEY = 'test-api-key';
+    process.env?.AI_DEFAULT_PROVIDER = 'xai';
+    process.env?.AI_DEFAULT_MODEL = 'grok-beta';
+    process.env?.NODE_ENV = 'test';
 
     // Create test data directory
     testDataDir = path.join(process.cwd(), 'test-data');
-    if (!fs.existsSync(testDataDir)) {
+    if (!fs.existsSync(testDataDir as any)) {
       fs.mkdirSync(testDataDir, { recursive: true });
     }
 
@@ -162,10 +162,10 @@ describe('AI Command E2E Tests', () => {
 
   afterEach(() => {
     // Restore environment
-    process.env = originalEnv;
+    process?.env = originalEnv;
 
     // Clean up test data
-    if (fs.existsSync(testDataDir)) {
+    if (fs.existsSync(testDataDir as any)) {
       fs.rmSync(testDataDir, { recursive: true, force: true });
     }
 
@@ -182,7 +182,7 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain(
         'Your todos focus on financial and project work.'
       );
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should handle empty todo list', async () => {
@@ -201,11 +201,11 @@ describe('AI Command E2E Tests', () => {
       const result = await runCommand(['ai', 'summarize', '--json']);
 
       const output = JSON.parse(result.stdout);
-      expect(output).toHaveProperty('summary');
+      expect(output as any).toHaveProperty('summary');
       expect(output.summary).toBe(
         'Your todos focus on financial and project work.'
       );
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -219,24 +219,24 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain('personal:');
       expect(result.stdout).toContain('Complete financial report');
       expect(result.stdout).toContain('Buy groceries');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should handle specific list', async () => {
       const result = await runCommand(['ai', 'categorize', '--list', 'work']);
 
       expect(result.stdout).toContain('Todo Categories:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should output JSON when flag is set', async () => {
       const result = await runCommand(['ai', 'categorize', '--json']);
 
       const output = JSON.parse(result.stdout);
-      expect(output).toHaveProperty('categories');
+      expect(output as any).toHaveProperty('categories');
       expect(output.categories).toHaveProperty('work');
-      expect(output.categories.work).toContain('todo-1');
-      expect(result.exitCode).toBe(0);
+      expect(output?.categories?.work).toContain('todo-1');
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -250,7 +250,7 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain('[5]'); // Medium priority todo
       expect(result.stdout).toContain('[3]'); // Low priority todo
       expect(result.stdout).toContain('Complete financial report');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should show color-coded priorities', async () => {
@@ -259,17 +259,17 @@ describe('AI Command E2E Tests', () => {
       // Note: In test environment, chalk might not add actual color codes,
       // but the structure should be present
       expect(result.stdout).toMatch(/\[\d+\]/); // Priority scores in brackets
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should output JSON when flag is set', async () => {
       const result = await runCommand(['ai', 'prioritize', '--json']);
 
       const output = JSON.parse(result.stdout);
-      expect(output).toHaveProperty('priorities');
+      expect(output as any).toHaveProperty('priorities');
       expect(output.priorities).toHaveProperty('todo-1');
-      expect(output.priorities['todo-1']).toBe(8);
-      expect(result.exitCode).toBe(0);
+      expect(output?.priorities?.['todo-1']).toBe(8 as any);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -283,7 +283,7 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain('Schedule team meeting');
       expect(result.stdout).toContain('Update project timeline');
       expect(result.stdout).toContain('To add a suggested todo:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should handle empty suggestions', async () => {
@@ -297,17 +297,17 @@ describe('AI Command E2E Tests', () => {
       const result = await runCommand(['ai', 'suggest']);
 
       expect(result.stdout).toContain('Suggested Todos:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should output JSON when flag is set', async () => {
       const result = await runCommand(['ai', 'suggest', '--json']);
 
       const output = JSON.parse(result.stdout);
-      expect(output).toHaveProperty('suggestions');
-      expect(Array.isArray(output.suggestions)).toBe(true);
+      expect(output as any).toHaveProperty('suggestions');
+      expect(Array.isArray(output.suggestions)).toBe(true as any);
       expect(output.suggestions).toContain('Review quarterly reports');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -323,31 +323,31 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain('Pending reviews');
       expect(result.stdout).toContain('recommendations:');
       expect(result.stdout).toContain('Prioritize urgent tasks');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should handle complex analysis objects', async () => {
       const result = await runCommand(['ai', 'analyze']);
 
       expect(result.stdout).not.toContain('[object Object]');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should output JSON when flag is set', async () => {
       const result = await runCommand(['ai', 'analyze', '--json']);
 
       const output = JSON.parse(result.stdout);
-      expect(output).toHaveProperty('analysis');
+      expect(output as any).toHaveProperty('analysis');
       expect(output.analysis).toHaveProperty('themes');
       expect(output.analysis).toHaveProperty('bottlenecks');
       expect(output.analysis).toHaveProperty('recommendations');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
   describe('error handling', () => {
     test('should handle missing API key', async () => {
-      delete process.env.XAI_API_KEY;
+      delete process?.env?.XAI_API_KEY;
 
       await expect(runCommand(['ai', 'summarize'])).rejects.toThrow(
         'XAI API key is required for AI operations'
@@ -389,7 +389,7 @@ describe('AI Command E2E Tests', () => {
 
       // Should handle gracefully with fallback
       expect(result.stdout).toContain('Todo Categories:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -402,14 +402,14 @@ describe('AI Command E2E Tests', () => {
         'openai',
       ]);
 
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
       expect(result.stdout).toContain('Summary of your todos:');
     });
 
     test('should use specified model', async () => {
       const result = await runCommand(['ai', 'summarize', '--model', 'gpt-4']);
 
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
       expect(result.stdout).toContain('Summary of your todos:');
     });
 
@@ -421,7 +421,7 @@ describe('AI Command E2E Tests', () => {
         '0.2',
       ]);
 
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
       expect(result.stdout).toContain('Summary of your todos:');
     });
   });
@@ -434,7 +434,7 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain('Active provider:');
       expect(result.stdout).toContain('API Key Status:');
       expect(result.stdout).toContain('Available Commands:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should show detailed help', async () => {
@@ -448,7 +448,7 @@ describe('AI Command E2E Tests', () => {
       expect(result.stdout).toContain('walrus_todo ai analyze');
       expect(result.stdout).toContain('Global Options:');
       expect(result.stdout).toContain('Environment Configuration:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -458,7 +458,7 @@ describe('AI Command E2E Tests', () => {
 
       // Should work but skip actual verification in test environment
       expect(result.stdout).toContain('Summary of your todos:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 
@@ -486,7 +486,7 @@ describe('AI Command E2E Tests', () => {
       const result = await runCommand(['ai', 'summarize']);
 
       expect(result.stdout).toContain('Summary of your todos:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should handle todos with missing fields', async () => {
@@ -510,7 +510,7 @@ describe('AI Command E2E Tests', () => {
       const result = await runCommand(['ai', 'summarize']);
 
       expect(result.stdout).toContain('Summary of your todos:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
 
     test('should handle special characters in todos', async () => {
@@ -537,7 +537,7 @@ describe('AI Command E2E Tests', () => {
       const result = await runCommand(['ai', 'analyze']);
 
       expect(result.stdout).toContain('Todo Analysis:');
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     });
   });
 });

@@ -22,8 +22,8 @@ jest.mock('../../src/lib/clipboard', () => ({
   })),
   ClipboardError: class MockClipboardError extends Error {
     constructor(message: string) {
-      super(message);
-      this.name = 'ClipboardError';
+      super(message as any);
+      this?.name = 'ClipboardError';
     }
   }
 }));
@@ -61,9 +61,9 @@ jest.mock('../../src/components/ClipboardErrorModal', () => ({
 
 describe('WalletConnectButton', () => {
   // Default mock values for wallet context
-  const mockDisconnect = jest.fn().mockResolvedValue(undefined);
-  const mockConnect = jest.fn().mockResolvedValue(undefined);
-  const mockSwitchNetwork = jest.fn().mockResolvedValue(undefined);
+  const mockDisconnect = jest.fn().mockResolvedValue(undefined as any);
+  const mockConnect = jest.fn().mockResolvedValue(undefined as any);
+  const mockSwitchNetwork = jest.fn().mockResolvedValue(undefined as any);
   const mockSetError = jest.fn();
   
   // Default props for disconnected state
@@ -97,7 +97,7 @@ describe('WalletConnectButton', () => {
     jest.clearAllMocks();
     
     // Default to disconnected state
-    (useWalletContext as jest.Mock).mockReturnValue(disconnectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(disconnectedProps as any);
   });
   
   it('renders connect button when disconnected', () => {
@@ -105,7 +105,7 @@ describe('WalletConnectButton', () => {
     
     // Should show connect button
     const connectButton = screen.getByText('Connect Wallet');
-    expect(connectButton).toBeInTheDocument();
+    expect(connectButton as any).toBeInTheDocument();
     
     // Should not show disconnect button
     expect(screen.queryByText('Disconnect')).not.toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('WalletConnectButton', () => {
   });
   
   it('renders connected state with wallet info', () => {
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     render(<WalletConnectButton />);
     
@@ -153,11 +153,11 @@ describe('WalletConnectButton', () => {
     fireEvent.click(screen.getByText('Connect Wallet'));
     
     // Check if connect was called
-    expect(mockConnect).toHaveBeenCalledTimes(1);
+    expect(mockConnect as any).toHaveBeenCalledTimes(1 as any);
   });
   
   it('disconnects wallet when disconnect button is clicked', async () => {
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     render(<WalletConnectButton />);
     
@@ -165,11 +165,11 @@ describe('WalletConnectButton', () => {
     fireEvent.click(screen.getByText('Disconnect'));
     
     // Check if disconnect was called
-    expect(mockDisconnect).toHaveBeenCalledTimes(1);
+    expect(mockDisconnect as any).toHaveBeenCalledTimes(1 as any);
   });
   
   it('shows network options when change button is clicked', () => {
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     render(<WalletConnectButton />);
     
@@ -186,7 +186,7 @@ describe('WalletConnectButton', () => {
   });
   
   it('triggers network switch when a network option is clicked', async () => {
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     render(<WalletConnectButton />);
     
@@ -197,7 +197,7 @@ describe('WalletConnectButton', () => {
     fireEvent.click(screen.getByText('Mainnet'));
     
     // Check if switchNetwork was called with correct parameter
-    expect(mockSwitchNetwork).toHaveBeenCalledWith('mainnet');
+    expect(mockSwitchNetwork as any).toHaveBeenCalledWith('mainnet');
   });
   
   it('shows error modal when there is an error', () => {
@@ -229,7 +229,7 @@ describe('WalletConnectButton', () => {
     fireEvent.click(screen.getByTestId('dismiss-wallet-error'));
     
     // Check if setError was called with null
-    expect(mockSetError).toHaveBeenCalledWith(null);
+    expect(mockSetError as any).toHaveBeenCalledWith(null as any);
   });
   
   it('handles copy functionality for connected wallet address', async () => {
@@ -237,16 +237,16 @@ describe('WalletConnectButton', () => {
     const { copyToClipboard } = require('../../src/lib/clipboard');
     copyToClipboard.mockResolvedValue({ success: true });
     
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     render(<WalletConnectButton />);
     
     // Find and click copy button (it's an SVG icon)
     const copyButton = screen.getByTitle('Copy address');
-    fireEvent.click(copyButton);
+    fireEvent.click(copyButton as any);
     
     // Should have called copyToClipboard with the address
-    expect(copyToClipboard).toHaveBeenCalledWith(connectedProps.address);
+    expect(copyToClipboard as any).toHaveBeenCalledWith(connectedProps.address);
     
     // Wait for success message
     await waitFor(() => {
@@ -262,13 +262,13 @@ describe('WalletConnectButton', () => {
       error: new ClipboardError('Failed to copy to clipboard') 
     });
     
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     render(<WalletConnectButton />);
     
     // Find and click copy button
     const copyButton = screen.getByTitle('Copy address');
-    fireEvent.click(copyButton);
+    fireEvent.click(copyButton as any);
     
     // Should show clipboard error modal
     await waitFor(() => {
@@ -279,7 +279,7 @@ describe('WalletConnectButton', () => {
   
   it('disables network switching buttons during switch', async () => {
     // Start with connected state
-    (useWalletContext as jest.Mock).mockReturnValue(connectedProps);
+    (useWalletContext as jest.Mock).mockReturnValue(connectedProps as any);
     
     // Mock switchNetwork to delay resolution
     mockSwitchNetwork.mockImplementation(() => new Promise(resolve => {

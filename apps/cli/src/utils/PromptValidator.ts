@@ -35,7 +35,7 @@ export class PromptValidator {
         if (error instanceof CLIError) {
           return error.message;
         }
-        return error instanceof Error ? error.message : String(error);
+        return error instanceof Error ? error.message : String(error as any);
       }
     };
   }
@@ -47,7 +47,7 @@ export class PromptValidator {
   static dateValidator(): (input: string) => boolean | string {
     return this.createInquirerValidator([
       {
-        test: value => !value || /^\d{4}-\d{2}-\d{2}$/.test(value),
+        test: value => !value || /^\d{4}-\d{2}-\d{2}$/.test(value as any),
         message: 'Invalid date format. Use YYYY-MM-DD',
         code: 'INVALID_DATE_FORMAT',
       },
@@ -61,7 +61,7 @@ export class PromptValidator {
   static walletAddressValidator(): (input: string) => boolean | string {
     return this.createInquirerValidator([
       {
-        test: value => /^0x[a-fA-F0-9]{40,}$/.test(value),
+        test: value => /^0x[a-fA-F0-9]{40,}$/.test(value as any),
         message:
           'Invalid wallet address format. Must be a valid hex address starting with 0x',
         code: 'INVALID_WALLET_ADDRESS',
@@ -95,7 +95,7 @@ export class PromptValidator {
         code: 'EMPTY_LIST_NAME',
       },
       {
-        test: value => /^[a-zA-Z0-9_-]+$/.test(value),
+        test: value => /^[a-zA-Z0-9_-]+$/.test(value as any),
         message:
           'List name can only contain letters, numbers, underscores, and hyphens',
         code: 'INVALID_LIST_NAME',
@@ -112,7 +112,7 @@ export class PromptValidator {
       {
         test: value => {
           try {
-            new URL(value);
+            new URL(value as any);
             return true;
           } catch (error: unknown) {
             return false;
@@ -150,14 +150,14 @@ export class PromptValidator {
   ): (input: string) => boolean | string {
     return this.createInquirerValidator([
       {
-        test: value => !isNaN(Number(value)),
+        test: value => !isNaN(Number(value as any)),
         message: 'Input must be a number',
         code: 'INVALID_NUMBER',
       },
       ...(min !== undefined
         ? [
             {
-              test: value => Number(value) >= min,
+              test: value => Number(value as any) >= min,
               message: `Value must be at least ${min}`,
               code: 'BELOW_MINIMUM',
             },
@@ -166,7 +166,7 @@ export class PromptValidator {
       ...(max !== undefined
         ? [
             {
-              test: value => Number(value) <= max,
+              test: value => Number(value as any) <= max,
               message: `Value must be at most ${max}`,
               code: 'ABOVE_MAXIMUM',
             },

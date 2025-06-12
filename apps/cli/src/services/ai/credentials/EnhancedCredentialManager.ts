@@ -87,9 +87,9 @@ export class EnhancedCredentialManager {
   private readonly CREDENTIAL_PREFIX = 'credential:';
 
   constructor() {
-    this.vault = new VaultManager('ai-credentials');
-    this.verifier = new CredentialVerifier();
-    this.logger = Logger.getInstance();
+    this?.vault = new VaultManager('ai-credentials');
+    this?.verifier = new CredentialVerifier();
+    this?.logger = Logger.getInstance();
     this.initializeCache();
   }
 
@@ -98,28 +98,28 @@ export class EnhancedCredentialManager {
    */
   private async initializeCache(): Promise<void> {
     try {
-      const allKeys = await this.vault.listSecrets();
+      const allKeys = await this?.vault?.listSecrets();
       const metadataKeys = allKeys.filter(key =>
         key.startsWith(this.METADATA_PREFIX)
       );
 
       for (const key of metadataKeys) {
         try {
-          const metadataJson = await this.vault.getSecret(key);
-          const metadata = JSON.parse(metadataJson) as CredentialMetadata;
-          this.metadataCache.set(metadata.provider, metadata);
+          const metadataJson = await this?.vault?.getSecret(key as any);
+          const metadata = JSON.parse(metadataJson as any) as CredentialMetadata;
+          this?.metadataCache?.set(metadata.provider, metadata);
         } catch (error) {
-          this.logger.warn(
-            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error)}`
+          this?.logger?.warn(
+            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error as any)}`
           );
         }
       }
 
-      this.logger.debug(
-        `Loaded ${this.metadataCache.size} credential metadata records`
+      this?.logger?.debug(
+        `Loaded ${this?.metadataCache?.size} credential metadata records`
       );
     } catch (error) {
-      this.logger.error(
+      this?.logger?.error(
         `Failed to initialize metadata cache: ${error.message}`
       );
     }
@@ -163,63 +163,63 @@ export class EnhancedCredentialManager {
     if (options?.expiryDays) {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + options.expiryDays);
-      metadata.expiresAt = expiryDate.toISOString();
+      metadata?.expiresAt = expiryDate.toISOString();
     }
 
     // Store rotation reminder if specified
     if (options?.rotationReminder) {
-      metadata.metadata = {
+      metadata?.metadata = {
         ...metadata.metadata,
         rotationReminder: options.rotationReminder,
       };
     }
 
     // First store the credential securely
-    await this.vault.storeSecret(
+    await this?.vault?.storeSecret(
       `${this.CREDENTIAL_PREFIX}${provider}`,
       apiKey
     );
 
     // Store metadata separately
-    await this.vault.storeSecret(
+    await this?.vault?.storeSecret(
       `${this.METADATA_PREFIX}${provider}`,
-      JSON.stringify(metadata)
+      JSON.stringify(metadata as any)
     );
 
     // Update in-memory cache
-    this.metadataCache.set(provider, metadata);
+    this?.metadataCache?.set(provider, metadata);
 
-    this.logger.info(`Stored API key for ${provider}`);
+    this?.logger?.info(`Stored API key for ${provider}`);
 
     // Optionally verify the credential on-chain
     if (options?.verify) {
       try {
         // Create a hash of the API key for verification without exposing the key
-        const verificationId = await this.verifier.registerCredential(
+        const verificationId = await this?.verifier?.registerCredential(
           provider,
           apiKey
         );
 
         // Update metadata with verification info
-        metadata.verified = true;
-        metadata.verificationId = verificationId;
-        metadata.updatedAt = new Date().toISOString();
+        metadata?.verified = true;
+        metadata?.verificationId = verificationId;
+        metadata?.updatedAt = new Date().toISOString();
 
         // Update stored metadata with verification info
-        await this.vault.storeSecret(
+        await this?.vault?.storeSecret(
           `${this.METADATA_PREFIX}${provider}`,
-          JSON.stringify(metadata)
+          JSON.stringify(metadata as any)
         );
 
         // Update in-memory cache
-        this.metadataCache.set(provider, metadata);
+        this?.metadataCache?.set(provider, metadata);
 
-        this.logger.info(
+        this?.logger?.info(
           `Verified API key for ${provider} on blockchain with ID: ${verificationId}`
         );
       } catch (error) {
         // We still keep the credential even if verification fails
-        this.logger.error(
+        this?.logger?.error(
           `Failed to verify credential on blockchain: ${error.message}`
         );
         throw new CLIError(
@@ -245,7 +245,7 @@ export class EnhancedCredentialManager {
   ): Promise<string> {
     try {
       // First check for expired credentials
-      const metadata = await this.getCredentialMetadata(provider);
+      const metadata = await this.getCredentialMetadata(provider as any);
       if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
         throw new CLIError(
           `API key for ${provider} has expired. Please generate a new one.`,
@@ -272,8 +272,8 @@ export class EnhancedCredentialManager {
           (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        if (daysSinceCreation >= metadata.metadata.rotationReminder) {
-          this.logger.warn(
+        if (daysSinceCreation >= metadata?.metadata?.rotationReminder) {
+          this?.logger?.warn(
             `API key for ${provider} should be rotated. It has been ${daysSinceCreation} days since creation.`
           );
           // We don't block access but log a warning
@@ -281,7 +281,7 @@ export class EnhancedCredentialManager {
       }
 
       // Retrieve from secure storage
-      const apiKey = await this.vault.getSecret(
+      const apiKey = await this?.vault?.getSecret(
         `${this.CREDENTIAL_PREFIX}${provider}`
       );
 
@@ -291,7 +291,7 @@ export class EnhancedCredentialManager {
         metadata.verified &&
         metadata.verificationId
       ) {
-        const isValid = await this.verifier.verifyCredential(provider, apiKey);
+        const isValid = await this?.verifier?.verifyCredential(provider, apiKey);
         if (!isValid) {
           throw new CLIError(
             `API key for ${provider} failed blockchain verification. It may have been revoked.`,
@@ -301,25 +301,25 @@ export class EnhancedCredentialManager {
       }
 
       // Update last used timestamp
-      metadata.lastUsed = new Date().toISOString();
-      await this.vault.storeSecret(
+      metadata?.lastUsed = new Date().toISOString();
+      await this?.vault?.storeSecret(
         `${this.METADATA_PREFIX}${provider}`,
-        JSON.stringify(metadata)
+        JSON.stringify(metadata as any)
       );
 
       // Update in-memory cache
-      this.metadataCache.set(provider, metadata);
+      this?.metadataCache?.set(provider, metadata);
 
       return apiKey;
     } catch (error) {
       // Special handling for credential not found
-      if (error.code === 'SECRET_NOT_FOUND') {
+      if (error?.code === 'SECRET_NOT_FOUND') {
         // Check environment variables as fallback
         const envKey = `${provider.toUpperCase()}_API_KEY`;
-        const envValue = process.env[envKey];
+        const envValue = process?.env?.[envKey];
 
         if (envValue) {
-          this.logger.debug(
+          this?.logger?.debug(
             `Using API key from environment variable ${envKey}`
           );
           return envValue;
@@ -342,27 +342,27 @@ export class EnhancedCredentialManager {
     provider: AIProvider
   ): Promise<CredentialMetadata> {
     // Try first from cache
-    if (this.metadataCache.has(provider)) {
-      return this.metadataCache.get(provider)!;
+    if (this?.metadataCache?.has(provider as any)) {
+      return this?.metadataCache?.get(provider as any)!;
     }
 
     // If not in cache, try to get from storage
     try {
-      const metadataJson = await this.vault.getSecret(
+      const metadataJson = await this?.vault?.getSecret(
         `${this.METADATA_PREFIX}${provider}`
       );
-      const metadata = JSON.parse(metadataJson) as CredentialMetadata;
+      const metadata = JSON.parse(metadataJson as any) as CredentialMetadata;
 
       // Update cache
-      this.metadataCache.set(provider, metadata);
+      this?.metadataCache?.set(provider, metadata);
 
       return metadata;
     } catch (error) {
       // Handle environment variables as fallback
-      if (error.code === 'SECRET_NOT_FOUND') {
+      if (error?.code === 'SECRET_NOT_FOUND') {
         const envKey = `${provider.toUpperCase()}_API_KEY`;
 
-        if (process.env[envKey]) {
+        if (process?.env?.[envKey]) {
           // Create temporary metadata for environment variable
           const metadata: CredentialMetadata = {
             id: `env-${randomUUID()}`,
@@ -394,32 +394,32 @@ export class EnhancedCredentialManager {
       // Get metadata first to check if it's blockchain verified
       let metadata: CredentialMetadata | null = null;
       try {
-        metadata = await this.getCredentialMetadata(provider);
+        metadata = await this.getCredentialMetadata(provider as any);
       } catch (error) {
         // If metadata doesn't exist, still try to remove the credential
-        this.logger.debug(`No metadata found for ${provider} during removal`);
+        this?.logger?.debug(`No metadata found for ${provider} during removal`);
       }
 
       // If credential is verified, revoke on blockchain
       if (metadata?.verified && metadata?.verificationId) {
         try {
-          await this.verifier.revokeCredential(provider);
-          this.logger.info(`Revoked ${provider} credential on blockchain`);
+          await this?.verifier?.revokeCredential(provider as any);
+          this?.logger?.info(`Revoked ${provider} credential on blockchain`);
         } catch (error) {
-          this.logger.warn(
+          this?.logger?.warn(
             `Could not revoke credential on blockchain: ${error.message}`
           );
         }
       }
 
       // Remove credential and metadata
-      await this.vault.removeSecret(`${this.CREDENTIAL_PREFIX}${provider}`);
-      await this.vault.removeSecret(`${this.METADATA_PREFIX}${provider}`);
+      await this?.vault?.removeSecret(`${this.CREDENTIAL_PREFIX}${provider}`);
+      await this?.vault?.removeSecret(`${this.METADATA_PREFIX}${provider}`);
 
       // Remove from cache
-      this.metadataCache.delete(provider);
+      this?.metadataCache?.delete(provider as any);
 
-      this.logger.info(`Removed API key for ${provider}`);
+      this?.logger?.info(`Removed API key for ${provider}`);
     } catch (error) {
       // If the error is not "credential not found", propagate it
       if (error.code !== 'SECRET_NOT_FOUND') {
@@ -440,22 +440,22 @@ export class EnhancedCredentialManager {
     provider: AIProvider,
     permissionLevel: AIPermissionLevel
   ): Promise<CredentialMetadata> {
-    const metadata = await this.getCredentialMetadata(provider);
+    const metadata = await this.getCredentialMetadata(provider as any);
 
     // Update permission level
-    metadata.permissionLevel = permissionLevel;
-    metadata.updatedAt = new Date().toISOString();
+    metadata?.permissionLevel = permissionLevel;
+    metadata?.updatedAt = new Date().toISOString();
 
     // Save updated metadata
-    await this.vault.storeSecret(
+    await this?.vault?.storeSecret(
       `${this.METADATA_PREFIX}${provider}`,
-      JSON.stringify(metadata)
+      JSON.stringify(metadata as any)
     );
 
     // Update cache
-    this.metadataCache.set(provider, metadata);
+    this?.metadataCache?.set(provider, metadata);
 
-    this.logger.info(
+    this?.logger?.info(
       `Updated permission level for ${provider} to ${permissionLevel}`
     );
 
@@ -468,7 +468,7 @@ export class EnhancedCredentialManager {
   async listCredentials(): Promise<CredentialMetadata[]> {
     try {
       // Get all keys from vault
-      const allKeys = await this.vault.listSecrets();
+      const allKeys = await this?.vault?.listSecrets();
       const metadataKeys = allKeys.filter(key =>
         key.startsWith(this.METADATA_PREFIX)
       );
@@ -478,18 +478,18 @@ export class EnhancedCredentialManager {
       // Get metadata for each credential
       for (const key of metadataKeys) {
         try {
-          const metadataJson = await this.vault.getSecret(key);
-          const metadata = JSON.parse(metadataJson) as CredentialMetadata;
+          const metadataJson = await this?.vault?.getSecret(key as any);
+          const metadata = JSON.parse(metadataJson as any) as CredentialMetadata;
 
           // Filter out expired credentials
           if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
             continue;
           }
 
-          results.push(metadata);
+          results.push(metadata as any);
         } catch (error) {
-          this.logger.warn(
-            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error)}`
+          this?.logger?.warn(
+            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error as any)}`
           );
         }
       }
@@ -501,8 +501,8 @@ export class EnhancedCredentialManager {
         const envKey = `${provider.toUpperCase()}_API_KEY`;
 
         if (
-          process.env[envKey] &&
-          !results.some(r => r.provider === provider)
+          process?.env?.[envKey] &&
+          !results.some(r => r?.provider === provider)
         ) {
           results.push({
             id: `env-${randomUUID()}`,
@@ -519,7 +519,7 @@ export class EnhancedCredentialManager {
 
       return results;
     } catch (error) {
-      this.logger.error(`Failed to list credentials: ${error.message}`);
+      this?.logger?.error(`Failed to list credentials: ${error.message}`);
       return [];
     }
   }
@@ -530,8 +530,8 @@ export class EnhancedCredentialManager {
   async hasCredential(provider: AIProvider): Promise<boolean> {
     try {
       // Check in-memory cache first
-      if (this.metadataCache.has(provider)) {
-        const metadata = this.metadataCache.get(provider)!;
+      if (this?.metadataCache?.has(provider as any)) {
+        const metadata = this?.metadataCache?.get(provider as any)!;
 
         // Check if credential has expired
         if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
@@ -542,13 +542,13 @@ export class EnhancedCredentialManager {
       }
 
       // Then check storage
-      await this.vault.getSecret(`${this.CREDENTIAL_PREFIX}${provider}`);
+      await this?.vault?.getSecret(`${this.CREDENTIAL_PREFIX}${provider}`);
       return true;
     } catch (error) {
-      if (error.code === 'SECRET_NOT_FOUND') {
+      if (error?.code === 'SECRET_NOT_FOUND') {
         // Check environment variables as fallback
         const envKey = `${provider.toUpperCase()}_API_KEY`;
-        return !!process.env[envKey];
+        return !!process?.env?.[envKey];
       }
 
       return false;
@@ -570,10 +570,10 @@ export class EnhancedCredentialManager {
     let existingMetadata: CredentialMetadata | null = null;
 
     try {
-      existingMetadata = await this.getCredentialMetadata(provider);
+      existingMetadata = await this.getCredentialMetadata(provider as any);
     } catch (error) {
       // If no existing metadata, that's fine for rotation
-      this.logger.debug(`No existing metadata for ${provider} during rotation`);
+      this?.logger?.debug(`No existing metadata for ${provider} during rotation`);
     }
 
     // Validate new API key
@@ -582,12 +582,12 @@ export class EnhancedCredentialManager {
     // If existing and verified, try to revoke on blockchain first
     if (existingMetadata?.verified && existingMetadata?.verificationId) {
       try {
-        await this.verifier.revokeCredential(provider);
-        this.logger.info(
+        await this?.verifier?.revokeCredential(provider as any);
+        this?.logger?.info(
           `Revoked previous ${provider} credential on blockchain`
         );
       } catch (error) {
-        this.logger.warn(
+        this?.logger?.warn(
           `Could not revoke previous credential on blockchain: ${error.message}`
         );
       }
@@ -612,53 +612,53 @@ export class EnhancedCredentialManager {
 
     // Preserve expiry settings if they exist
     if (options?.preserveMetadata && existingMetadata?.expiresAt) {
-      newMetadata.expiresAt = existingMetadata.expiresAt;
+      newMetadata?.expiresAt = existingMetadata.expiresAt;
     }
 
     // Store new credential
-    await this.vault.storeSecret(
+    await this?.vault?.storeSecret(
       `${this.CREDENTIAL_PREFIX}${provider}`,
       newApiKey
     );
 
     // Store metadata
-    await this.vault.storeSecret(
+    await this?.vault?.storeSecret(
       `${this.METADATA_PREFIX}${provider}`,
-      JSON.stringify(newMetadata)
+      JSON.stringify(newMetadata as any)
     );
 
     // Update cache
-    this.metadataCache.set(provider, newMetadata);
+    this?.metadataCache?.set(provider, newMetadata);
 
-    this.logger.info(`Rotated API key for ${provider}`);
+    this?.logger?.info(`Rotated API key for ${provider}`);
 
     // Optionally verify the new credential on blockchain
     if (options?.verify) {
       try {
-        const verificationId = await this.verifier.registerCredential(
+        const verificationId = await this?.verifier?.registerCredential(
           provider,
           newApiKey
         );
 
         // Update metadata with verification info
-        newMetadata.verified = true;
-        newMetadata.verificationId = verificationId;
-        newMetadata.updatedAt = new Date().toISOString();
+        newMetadata?.verified = true;
+        newMetadata?.verificationId = verificationId;
+        newMetadata?.updatedAt = new Date().toISOString();
 
         // Update stored metadata
-        await this.vault.storeSecret(
+        await this?.vault?.storeSecret(
           `${this.METADATA_PREFIX}${provider}`,
-          JSON.stringify(newMetadata)
+          JSON.stringify(newMetadata as any)
         );
 
         // Update cache
-        this.metadataCache.set(provider, newMetadata);
+        this?.metadataCache?.set(provider, newMetadata);
 
-        this.logger.info(
+        this?.logger?.info(
           `Verified new API key for ${provider} on blockchain with ID: ${verificationId}`
         );
       } catch (error) {
-        this.logger.error(
+        this?.logger?.error(
           `Failed to verify new credential on blockchain: ${error.message}`
         );
         throw new CLIError(
@@ -699,7 +699,7 @@ export class EnhancedCredentialManager {
     }
 
     // Pattern check
-    if (!rules.pattern.test(apiKey)) {
+    if (!rules?.pattern?.test(apiKey as any)) {
       throw new CLIError(
         `Invalid API key format for ${provider}. ${rules.description}`,
         'INVALID_API_KEY_FORMAT'

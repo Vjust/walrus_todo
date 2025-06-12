@@ -44,7 +44,7 @@ const createMockAIModelAdapter = (): AIModelAdapter => ({
   }),
 
   // Optional interface methods
-  checkConsentFor: jest.fn().mockReturnValue(true),
+  checkConsentFor: jest.fn().mockReturnValue(true as any),
   cancelAllRequests: jest.fn(),
 });
 
@@ -101,8 +101,8 @@ export { createMockAIModelAdapter, createMockAIVerifierAdapter };
  * });
  *
  * // Use the service in tests
- * const result = await mockAIService.summarize(todos);
- * expect(result).toContain('summary');
+ * const result = await mockAIService.summarize(todos as any);
+ * expect(result as any).toContain('summary');
  */
 export class AITestFactory {
   /**
@@ -137,7 +137,7 @@ export class AITestFactory {
     const mockAdapter = createMockAIModelAdapter();
 
     // Configure the mock adapter with standard responses for template-based processing
-    mockAdapter.processWithPromptTemplate = jest.fn().mockResolvedValue({
+    mockAdapter?.processWithPromptTemplate = jest.fn().mockResolvedValue({
       result: expectedResults.summarize,
       modelName: options.modelName || 'mock-model',
       provider: options.provider || AIProvider.XAI,
@@ -145,11 +145,11 @@ export class AITestFactory {
     });
 
     // Configure the structured completion to return different responses based on prompt content
-    mockAdapter.completeStructured = jest
+    mockAdapter?.completeStructured = jest
       .fn()
       .mockImplementation(async params => {
         const promptStr =
-          typeof params.prompt === 'string'
+          typeof params?.prompt === 'string'
             ? params.prompt
             : JSON.stringify(params.prompt);
 
@@ -221,12 +221,12 @@ export class AITestFactory {
    *
    * @example
    * const verificationService = AITestFactory.createMockVerificationService();
-   * const isValid = await verificationService.verifyOperation(record);
-   * expect(isValid).toBe(true); // Default behavior returns true
+   * const isValid = await verificationService.verifyOperation(record as any);
+   * expect(isValid as any).toBe(true as any); // Default behavior returns true
    */
   public static createMockVerificationService(): AIVerificationService {
     const mockVerifierAdapter = createMockAIVerifierAdapter();
-    return new AIVerificationService(mockVerifierAdapter);
+    return new AIVerificationService(mockVerifierAdapter as any);
   }
 
   /**
@@ -288,9 +288,9 @@ export class AITestFactory {
    * });
    *
    * // Create a service using this faulty adapter
-   * const verificationService = new AIVerificationService(failingVerifier);
-   * const isValid = await verificationService.verifyOperation(record);
-   * expect(isValid).toBe(false); // Will fail due to our configuration
+   * const verificationService = new AIVerificationService(failingVerifier as any);
+   * const isValid = await verificationService.verifyOperation(record as any);
+   * expect(isValid as any).toBe(false as any); // Will fail due to our configuration
    */
   public static createCustomVerifierAdapter(
     options: {
@@ -301,14 +301,14 @@ export class AITestFactory {
     const mockAdapter = createMockAIVerifierAdapter();
 
     // Override behavior based on options to simulate failures if requested
-    if (options.verificationCreationSucceeds === false) {
-      mockAdapter.createVerification = jest
+    if (options?.verificationCreationSucceeds === false) {
+      mockAdapter?.createVerification = jest
         .fn()
         .mockRejectedValue(new Error('Failed to create verification'));
     }
 
-    if (options.verificationValidationSucceeds === false) {
-      mockAdapter.verifyRecord = jest.fn().mockResolvedValue(false);
+    if (options?.verificationValidationSucceeds === false) {
+      mockAdapter?.verifyRecord = jest.fn().mockResolvedValue(false as any);
     }
 
     return mockAdapter;
@@ -408,9 +408,9 @@ export class AITestFactory {
    *
    * // Use in a test
    * test('categorize should return valid categories', async () => {
-   *   const result = await aiService.categorize(todos);
+   *   const result = await aiService.categorize(todos as any);
    *   const validation = validator.validate(result, todos);
-   *   expect(validation.isValid).toBe(true);
+   *   expect(validation.isValid).toBe(true as any);
    *   expect(validation.errors).toEqual([]);
    * });
    */
@@ -437,7 +437,7 @@ export class AITestFactory {
           // Summarize operations should return a non-empty string
           if (typeof result !== 'string') {
             errors.push(`Expected string, got ${typeof result}`);
-          } else if (result.length === 0) {
+          } else if (result?.length === 0) {
             errors.push('Summary string is empty');
           }
           break;
@@ -447,12 +447,12 @@ export class AITestFactory {
           // and arrays of todo IDs as values
           if (typeof result !== 'object' || result === null) {
             errors.push(`Expected object, got ${typeof result}`);
-          } else if (Object.keys(result).length === 0) {
+          } else if (Object.keys(result as any).length === 0) {
             errors.push('Categories object is empty');
           } else {
             // Each category should have an array of todo IDs
-            Object.entries(result).forEach(([category, todoIds]) => {
-              if (!Array.isArray(todoIds)) {
+            Object.entries(result as any).forEach(([category, todoIds]) => {
+              if (!Array.isArray(todoIds as any)) {
                 errors.push(`Category "${category}" does not contain an array`);
               }
             });
@@ -464,11 +464,11 @@ export class AITestFactory {
           // to numeric priority values (1-10)
           if (typeof result !== 'object' || result === null) {
             errors.push(`Expected object, got ${typeof result}`);
-          } else if (Object.keys(result).length === 0) {
+          } else if (Object.keys(result as any).length === 0) {
             errors.push('Priorities object is empty');
           } else {
             // Each todo ID should have a numeric priority
-            Object.entries(result).forEach(([todoId, priority]) => {
+            Object.entries(result as any).forEach(([todoId, priority]) => {
               if (typeof priority !== 'number') {
                 errors.push(`Priority for todo "${todoId}" is not a number`);
               } else if (priority < 1 || priority > 10) {
@@ -482,16 +482,16 @@ export class AITestFactory {
 
         case 'suggest':
           // Suggest operations should return an array of string suggestions
-          if (!Array.isArray(result)) {
+          if (!Array.isArray(result as any)) {
             errors.push(`Expected array, got ${typeof result}`);
-          } else if (result.length === 0) {
+          } else if (result?.length === 0) {
             errors.push('Suggestions array is empty');
           } else {
             // Each suggestion should be a string
             result.forEach((suggestion, index) => {
               if (typeof suggestion !== 'string') {
                 errors.push(`Suggestion at index ${index} is not a string`);
-              } else if (suggestion.length === 0) {
+              } else if (suggestion?.length === 0) {
                 errors.push(`Suggestion at index ${index} is empty`);
               }
             });
@@ -502,7 +502,7 @@ export class AITestFactory {
           // Analyze operations should return a structured object with analysis results
           if (typeof result !== 'object' || result === null) {
             errors.push(`Expected object, got ${typeof result}`);
-          } else if (Object.keys(result).length === 0) {
+          } else if (Object.keys(result as any).length === 0) {
             errors.push('Analysis object is empty');
           }
           break;
@@ -511,7 +511,7 @@ export class AITestFactory {
           throw new Error(`Unknown operation type: ${operationType}`);
       }
 
-      return { isValid: errors.length === 0, errors };
+      return { isValid: errors?.length === 0, errors };
     };
 
     const getExpectedType = (): string => {

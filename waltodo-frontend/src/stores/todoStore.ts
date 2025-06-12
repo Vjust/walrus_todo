@@ -63,13 +63,13 @@ export const useTodoStore = create<TodoState>()(
       })),
       
       updateTodo: (id, updates) => set((state) => ({
-        todos: state.todos.map(todo => 
-          todo.id === id ? { ...todo, ...updates } : todo
+        todos: state?.todos?.map(todo => 
+          todo?.id === id ? { ...todo, ...updates } : todo
         )
       })),
       
       deleteTodo: (id) => set((state) => ({
-        todos: state.todos.filter(todo => todo.id !== id)
+        todos: state?.todos?.filter(todo => todo.id !== id)
       })),
       
       setLoading: (isLoading) => set({ isLoading }),
@@ -100,8 +100,8 @@ export const useTodoStore = create<TodoState>()(
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
           filtered = filtered.filter(todo => 
-            todo.title.toLowerCase().includes(query) ||
-            (todo.description && todo.description.toLowerCase().includes(query))
+            todo?.title?.toLowerCase().includes(query as any) ||
+            (todo.description && todo?.description?.toLowerCase().includes(query as any))
           );
         }
         

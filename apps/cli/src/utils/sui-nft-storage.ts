@@ -65,9 +65,9 @@ export class SuiNftStorage {
     signer: Ed25519Keypair,
     config: SuiNFTStorageConfig
   ) {
-    this.client = client;
-    this.signer = signer;
-    this.config = config;
+    this?.client = client;
+    this?.signer = signer;
+    this?.config = config;
   }
 
   private async checkConnectionHealth(): Promise<boolean> {
@@ -115,12 +115,12 @@ export class SuiNftStorage {
     for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
       try {
         const response = await operation();
-        if (!validateResponse(response)) {
+        if (!validateResponse(response as any)) {
           throw new Error('Invalid response from network');
         }
         return response;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
         if (attempt < this.retryAttempts) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);
           logger.warn(
@@ -150,7 +150,7 @@ export class SuiNftStorage {
       );
     }
 
-    if (todo.title.length > 100) {
+    if (todo?.title?.length > 100) {
       throw new CLIError(
         'Todo title must be less than 100 characters',
         'INVALID_TITLE'
@@ -165,7 +165,7 @@ export class SuiNftStorage {
       // Create a transaction block instance
       const tx = new Transaction();
       tx.moveCall({
-        target: `${this.config.packageId}::todo_nft::create_todo_nft`,
+        target: `${this?.config?.packageId}::todo_nft::create_todo_nft`,
         arguments: [
           tx.pure(bcs.string().serialize(todo.title).toBytes()),
           tx.pure(
@@ -174,9 +174,9 @@ export class SuiNftStorage {
               .serialize(todo.description || '')
               .toBytes()
           ),
-          tx.pure(bcs.string().serialize(walrusBlobId).toBytes()),
-          tx.pure(bcs.bool().serialize(false).toBytes()),
-          tx.object(this.config.collectionId || ''),
+          tx.pure(bcs.string().serialize(walrusBlobId as any).toBytes()),
+          tx.pure(bcs.bool().serialize(false as any).toBytes()),
+          tx.object(this?.config?.collectionId || ''),
         ],
       });
 
@@ -208,7 +208,7 @@ export class SuiNftStorage {
 
             if (
               !response.effects?.status?.status ||
-              response.effects.status.status !== 'success'
+              response?.effects?.status.status !== 'success'
             ) {
               throw new Error(
                 (response.effects?.status as { error?: string })?.error ||
@@ -216,14 +216,14 @@ export class SuiNftStorage {
               );
             }
 
-            if (!response.effects.created?.length) {
+            if (!response?.effects?.created?.length) {
               throw new Error('NFT creation failed: no NFT was created');
             }
 
             return response.digest || '';
           } catch (error) {
             throw new CLIError(
-              `Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`,
+              `Failed to execute transaction: ${error instanceof Error ? error.message : String(error as any)}`,
               'TRANSACTION_EXECUTION_ERROR'
             );
           }
@@ -233,7 +233,7 @@ export class SuiNftStorage {
       );
     } catch (error) {
       throw new CLIError(
-        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
         'SUI_CREATION_FAILED'
       );
     }
@@ -250,7 +250,7 @@ export class SuiNftStorage {
       throw new CLIError('NFT object ID is required', 'INVALID_NFT_ID');
     }
 
-    const objectId = await this.normalizeObjectId(nftId);
+    const objectId = await this.normalizeObjectId(nftId as any);
     logger.info('Retrieving Todo NFT with object ID:', { objectId });
     logger.info('Retrieving NFT object data...');
 
@@ -286,7 +286,7 @@ export class SuiNftStorage {
           );
         }
 
-        const content = response.data.content as TodoNftContent;
+        const content = response?.data?.content as TodoNftContent;
         if (!content || !content.fields || content.dataType !== 'moveObject') {
           throw new CLIError('Invalid NFT data format', 'SUI_INVALID_DATA');
         }
@@ -313,10 +313,10 @@ export class SuiNftStorage {
     // Create a transaction block instance
     const tx = new Transaction();
     tx.moveCall({
-      target: `${this.config.packageId}::todo_nft::update_completion_status`,
+      target: `${this?.config?.packageId}::todo_nft::update_completion_status`,
       arguments: [
-        tx.object(nftId),
-        tx.pure(bcs.bool().serialize(true).toBytes()),
+        tx.object(nftId as any),
+        tx.pure(bcs.bool().serialize(true as any).toBytes()),
       ],
     });
 
@@ -347,7 +347,7 @@ export class SuiNftStorage {
 
           if (
             !response.effects?.status?.status ||
-            response.effects.status.status !== 'success'
+            response?.effects?.status.status !== 'success'
           ) {
             throw new Error(
               (response.effects?.status as { error?: string })?.error ||
@@ -358,7 +358,7 @@ export class SuiNftStorage {
           return response.digest || '';
         } catch (error) {
           throw new CLIError(
-            `Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to execute transaction: ${error instanceof Error ? error.message : String(error as any)}`,
             'TRANSACTION_EXECUTION_ERROR'
           );
         }
@@ -369,7 +369,7 @@ export class SuiNftStorage {
   }
 
   private async normalizeObjectId(idOrDigest: string): Promise<string> {
-    if (idOrDigest.length === 44) {
+    if (idOrDigest?.length === 44) {
       logger.info(
         `Object ID ${idOrDigest} appears to be a transaction digest, not an object ID`
       );
@@ -402,12 +402,12 @@ export class SuiNftStorage {
         );
       }
 
-      const nftObject = effects.created.find((obj: Record<string, unknown>) => {
+      const nftObject = effects?.created?.find((obj: Record<string, unknown>) => {
         return (
           obj &&
           'reference' in obj &&
           obj.reference &&
-          typeof obj.reference === 'object' &&
+          typeof obj?.reference === 'object' &&
           obj.reference !== null &&
           'objectId' in obj.reference &&
           typeof (obj.reference as Record<string, unknown>).objectId ===
@@ -420,7 +420,7 @@ export class SuiNftStorage {
         !('reference' in nftObject) ||
         !nftObject.reference ||
         typeof nftObject.reference !== 'object' ||
-        nftObject.reference === null ||
+        nftObject?.reference === null ||
         !('objectId' in (nftObject.reference as Record<string, unknown>))
       ) {
         throw new CLIError(

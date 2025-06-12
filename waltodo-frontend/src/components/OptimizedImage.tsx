@@ -39,7 +39,7 @@ export function OptimizedImage({
   fallbackSrc = '/images/nft-placeholder.png'
 }: OptimizedImageComponentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [showFallback, setShowFallback] = useState(false);
+  const [showFallback, setShowFallback] = useState(false as any);
   
   // Determine if this is a Walrus image
   const isWalrusImage = src && (src.includes('walrus') || src.includes('blob'));
@@ -75,7 +75,7 @@ export function OptimizedImage({
   } : lazy ? lazyImageState : progressiveImageState;
   
   const handleImageError = useCallback(() => {
-    setShowFallback(true);
+    setShowFallback(true as any);
     onError?.();
   }, [onError]);
   
@@ -155,7 +155,7 @@ export function OptimizedImage({
           priority={priority === 'high' || priority === true}
           sizes={sizes}
           quality={quality}
-          unoptimized={Boolean(isWalrusImage)}
+          unoptimized={Boolean(isWalrusImage as any)}
         />
       )}
     </div>
@@ -183,19 +183,19 @@ export function OptimizedImageGallery({
     // Preload images in the background
     imagesToPreload.forEach((src, index) => {
       const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = src;
+      link?.rel = 'preload';
+      link?.as = 'image';
+      link?.href = src;
       // Higher priority for first row
       if (index < columns) {
-        link.fetchPriority = 'high';
+        link?.fetchPriority = 'high';
       }
-      document.head.appendChild(link);
+      document?.head?.appendChild(link as any);
       
       // Clean up
       return () => {
         if (link.parentNode) {
-          link.parentNode.removeChild(link);
+          link?.parentNode?.removeChild(link as any);
         }
       };
     });
@@ -243,7 +243,7 @@ export function ProgressiveImage({
   thumbnail?: string;
   onLoad?: () => void;
 }) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false as any);
   const [currentSrc, setCurrentSrc] = useState(thumbnail || '');
   
   useEffect(() => {
@@ -252,16 +252,16 @@ export function ProgressiveImage({
     // Load thumbnail first if provided
     if (thumbnail && !isLoaded) {
       const img = new window.Image();
-      img.src = thumbnail;
-      img.onload = () => setCurrentSrc(thumbnail);
+      img?.src = thumbnail;
+      img?.onload = () => setCurrentSrc(thumbnail as any);
     }
     
     // Load full image
     const fullImage = new window.Image();
-    fullImage.src = src;
-    fullImage.onload = () => {
-      setCurrentSrc(src);
-      setIsLoaded(true);
+    fullImage?.src = src;
+    fullImage?.onload = () => {
+      setCurrentSrc(src as any);
+      setIsLoaded(true as any);
       onLoad?.();
     };
   }, [src, thumbnail, isLoaded, onLoad]);

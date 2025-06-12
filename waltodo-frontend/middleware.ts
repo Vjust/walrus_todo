@@ -15,22 +15,22 @@ export function middleware(request: NextRequest) {
     '/images/',
   ];
 
-  if (skipPaths.some(path => pathname.startsWith(path))) {
+  if (skipPaths.some(path => pathname.startsWith(path as any))) {
     return NextResponse.next();
   }
 
   const response = NextResponse.next();
 
   // Add basic security headers
-  response.headers.set('X-DNS-Prefetch-Control', 'on');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response?.headers?.set('X-DNS-Prefetch-Control', 'on');
+  response?.headers?.set('X-XSS-Protection', '1; mode=block');
+  response?.headers?.set('X-Frame-Options', 'DENY');
+  response?.headers?.set('X-Content-Type-Options', 'nosniff');
+  response?.headers?.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Simple CSP for development
-  if (process.env.NODE_ENV === 'development') {
-    response.headers.set(
+  if (process.env?.NODE_ENV === 'development') {
+    response?.headers?.set(
       'Content-Security-Policy',
       "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: wss: data: blob:; object-src 'none';"
     );

@@ -111,7 +111,7 @@ export function TodoEventHandlers() {
         <div>
           <h4 className='font-medium mb-2'>Live Notifications</h4>
           <div className='space-y-1 max-h-40 overflow-y-auto'>
-            {notifications.length === 0 ? (
+            {notifications?.length === 0 ? (
               <p className='text-gray-500 text-sm'>No notifications yet</p>
             ) : (
               notifications.map((notification, index) => (
@@ -170,7 +170,7 @@ export function TodoStateSync() {
     todos: localTodos,
     onTodoChange: updatedTodos => {
       console.log('Todos synchronized from blockchain:', updatedTodos);
-      setLocalTodos(updatedTodos);
+      setLocalTodos(updatedTodos as any);
     },
     owner: address || undefined,
     autoStart: true,
@@ -298,7 +298,7 @@ export function CompleteRealtimeTodoApp() {
     // Update local state immediately for optimistic UI
     setTodos(prev =>
       prev.map(t =>
-        t.id === todo.id
+        t?.id === todo.id
           ? { ...t, completed: true, completedAt: new Date().toISOString() }
           : t
       )
@@ -314,16 +314,16 @@ export function CompleteRealtimeTodoApp() {
   };
 
   const handleTodoUpdate = (updatedTodos: Todo[]) => {
-    setTodos(updatedTodos);
+    setTodos(updatedTodos as any);
     // Optionally save to local storage
-    localStorage.setItem('realtimeTodos', JSON.stringify(updatedTodos));
+    localStorage.setItem('realtimeTodos', JSON.stringify(updatedTodos as any));
   };
 
   // Load todos from local storage on mount
   useEffect(() => {
     const savedTodos = localStorage.getItem('realtimeTodos');
     if (savedTodos) {
-      setTodos(JSON.parse(savedTodos));
+      setTodos(JSON.parse(savedTodos as any));
     }
   }, []);
 
@@ -408,10 +408,10 @@ export default function BlockchainEventsDemo() {
         </p>
 
         <div className='flex space-x-2 mb-6'>
-          {Object.entries(examples).map(([key, { title }]) => (
+          {Object.entries(examples as any).map(([key, { title }]) => (
             <button
               key={key}
-              onClick={() => setSelectedExample(key)}
+              onClick={() => setSelectedExample(key as any)}
               className={`px-4 py-2 rounded ${
                 selectedExample === key
                   ? 'bg-blue-600 text-white'
@@ -465,13 +465,13 @@ export function SimpleEventSetup() {
 
 // Todo creation with real-time feedback
 export function TodoCreationWithFeedback() {
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false as any);
   const { addEventListener } = useBlockchainEvents({ autoStart: true });
 
   useEffect(() => {
     const unsubscribe = addEventListener('created', event => {
       if (isCreating) {
-        setIsCreating(false);
+        setIsCreating(false as any);
         alert(`Todo created successfully`);
       }
     });
@@ -480,7 +480,7 @@ export function TodoCreationWithFeedback() {
   }, [addEventListener, isCreating]);
 
   const createTodo = async () => {
-    setIsCreating(true);
+    setIsCreating(true as any);
     // Trigger blockchain transaction to create todo
     // Event listener will handle success notification
   };

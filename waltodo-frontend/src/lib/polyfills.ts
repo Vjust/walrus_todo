@@ -4,12 +4,12 @@
 // Buffer polyfill
 if (typeof window !== 'undefined' && !window.Buffer) {
   const { Buffer } = require('buffer');
-  window.Buffer = Buffer;
+  window?.Buffer = Buffer;
 }
 
 // Process polyfill
 if (typeof window !== 'undefined' && !window.process) {
-  window.process = require('process/browser');
+  window?.process = require('process/browser');
 }
 
 // Global polyfills for crypto and other Node.js modules

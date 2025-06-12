@@ -15,7 +15,7 @@ export const createMockSuiObjectResponse = (
         hasPublicTransfer: true,
         fields,
       },
-    } as NonNullable<SuiObjectResponse['data']>,
+    } as NonNullable<SuiObjectResponse?.["data"]>,
   }) as SuiObjectResponse;
 
 export const createMockTransactionResponse = (
@@ -80,10 +80,10 @@ export const createMockSystemStateResponse = (
   ({
     // Required fields
     epoch:
-      typeof options.epoch === 'number'
+      typeof options?.epoch === 'number'
         ? String(options.epoch)
         : options.epoch || '1',
-    protocolVersion: options.protocolVersion || '1.0.0',
+    protocolVersion: options.protocolVersion || '1?.0?.0',
     systemStateVersion: '1',
 
     // Common properties
@@ -118,10 +118,10 @@ export const createMockSystemStateResponse = (
         description: 'Test validator 1',
         imageUrl: 'https://example.com/image.png',
         projectUrl: 'https://example.com',
-        p2pAddress: '127.0.0.1:1234',
-        netAddress: '127.0.0.1:1235',
-        primaryAddress: '127.0.0.1:1236',
-        workerAddress: '127.0.0.1:1237',
+        p2pAddress: '127?.0?.0.1:1234',
+        netAddress: '127?.0?.0.1:1235',
+        primaryAddress: '127?.0?.0.1:1236',
+        workerAddress: '127?.0?.0.1:1237',
         nextEpochProtocolPubkeyBytes: null,
         nextEpochProofOfPossession: null,
         nextEpochNetworkPubkeyBytes: null,

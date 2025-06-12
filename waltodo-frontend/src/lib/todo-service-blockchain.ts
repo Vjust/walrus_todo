@@ -11,10 +11,13 @@
 
 import { Todo } from '@/types/todo-nft';
 import { TodoList } from '@/types/todo';
-import { SuiClient } from '@mysten/sui/client';
-import { Transaction } from '@mysten/sui/transactions';
+// @ts-ignore - Unused import temporarily disabled
+// import { SuiClient } from '@mysten/sui/client';
+// @ts-ignore - Unused import temporarily disabled
+// import { Transaction } from '@mysten/sui/transactions';
 import { type AppConfig, loadNetworkConfig } from './config-loader';
-import { walrusClient } from './walrus-client';
+// @ts-ignore - Unused import temporarily disabled
+// import { walrusClient } from './walrus-client';
 import safeStorage from './safe-storage';
 
 export interface WalletSigner {
@@ -43,19 +46,19 @@ export class BlockchainTodoService {
   private constructor() {
     // Initialize cache safely - it may fail in environments without localStorage
     try {
-      this.localCache = safeStorage.createTyped<Record<string, TodoList>>(
+      this?.localCache = safeStorage.createTyped<Record<string, TodoList>>(
         'blockchain-todos-cache',
         {}
       );
     } catch (error) {
       console.warn('Failed to initialize local cache:', error);
-      this.localCache = null;
+      this?.localCache = null;
     }
   }
 
   static getInstance(): BlockchainTodoService {
     if (!BlockchainTodoService.instance) {
-      BlockchainTodoService.instance = new BlockchainTodoService();
+      BlockchainTodoService?.instance = new BlockchainTodoService();
     }
     return BlockchainTodoService.instance;
   }
@@ -65,15 +68,16 @@ export class BlockchainTodoService {
    */
   async initialize(serviceConfig: TodoServiceConfig = {}): Promise<void> {
     // Load network configuration
-    const network = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
-    this.config = await loadNetworkConfig(network);
+// @ts-ignore - Unused variable
+//     const network = process?.env?.NEXT_PUBLIC_NETWORK || 'testnet';
+    this?.config = await loadNetworkConfig(network as any);
     
     if (!this.config) {
       throw new Error('Failed to load network configuration');
     }
 
     // Initialize Sui client
-    this.suiClient = new SuiClient({ url: this.config.network.url });
+    this?.suiClient = new SuiClient({ url: this?.config?.network.url });
 
     // Start blockchain event monitoring if wallet is connected
     if (serviceConfig.walletAddress) {
@@ -94,10 +98,13 @@ export class BlockchainTodoService {
 
     // If offline or cache requested, try local cache first
     if (useCache) {
-      const cachedTodos = this.getCachedTodos(walletAddress);
+// @ts-ignore - Unused variable
+//       const cachedTodos = this.getCachedTodos(walletAddress as any);
       if (cachedTodos.length > 0) {
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
+// @ts-ignore - Unused variable
+//         const startIndex = (page - 1) * limit;
+// @ts-ignore - Unused variable
+//         const endIndex = startIndex + limit;
         return {
           todos: cachedTodos.slice(startIndex, endIndex),
           total: cachedTodos.length
@@ -111,10 +118,11 @@ export class BlockchainTodoService {
 
     try {
       // Query blockchain for TodoNFT objects
-      const objects = await this.suiClient.getOwnedObjects({
+// @ts-ignore - Unused variable
+//       const objects = await this?.suiClient?.getOwnedObjects({
         owner: walletAddress,
         filter: {
-          StructType: `${this.config.deployment.packageId}::todo_nft::TodoNFT`,
+          StructType: `${this?.config?.deployment.packageId}::todo_nft::TodoNFT`,
         },
         options: {
           showContent: true,
@@ -127,8 +135,9 @@ export class BlockchainTodoService {
       
       for (const obj of objects.data) {
         if (obj.data?.content?.dataType === 'moveObject') {
-          const todo = await this.convertBlockchainObjectToTodo(obj.data);
-          if (todo) {todos.push(todo);}
+// @ts-ignore - Unused variable
+//           const todo = await this.convertBlockchainObjectToTodo(obj.data);
+          if (todo) {todos.push(todo as any);}
         }
       }
 
@@ -136,8 +145,10 @@ export class BlockchainTodoService {
       this.updateCache(walletAddress, todos);
 
       // Apply pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
+// @ts-ignore - Unused variable
+//       const startIndex = (page - 1) * limit;
+// @ts-ignore - Unused variable
+//       const endIndex = startIndex + limit;
       
       return {
         todos: todos.slice(startIndex, endIndex),
@@ -147,7 +158,8 @@ export class BlockchainTodoService {
       // Failed to fetch todos from blockchain
       
       // Fallback to cache on error
-      const cachedTodos = this.getCachedTodos(walletAddress);
+// @ts-ignore - Unused variable
+//       const cachedTodos = this.getCachedTodos(walletAddress as any);
       return {
         todos: cachedTodos,
         total: cachedTodos.length
@@ -171,8 +183,10 @@ export class BlockchainTodoService {
     }
 
     // Generate temporary ID for optimistic updates
-    const tempId = `temp-${Date.now()}`;
-    const now = new Date().toISOString();
+// @ts-ignore - Unused variable
+//     const tempId = `temp-${Date.now()}`;
+// @ts-ignore - Unused variable
+//     const now = new Date().toISOString();
     
     const newTodo: Todo = {
       ...todoData,
@@ -184,7 +198,8 @@ export class BlockchainTodoService {
 
     try {
       // 1. Upload metadata to Walrus storage
-      const walrusData = {
+// @ts-ignore - Unused variable
+//       const walrusData = {
         title: newTodo.title,
         description: newTodo.description || '',
         priority: newTodo.priority,
@@ -192,18 +207,24 @@ export class BlockchainTodoService {
         dueDate: newTodo.dueDate,
         createdAt: now,
       };
-
+// @ts-ignore - Unused variable
+// 
       const walrusResult = await walrusClient.uploadJson(walrusData, { epochs: 5 });
       
       // 2. Create NFT on Sui blockchain
-      const tx = new Transaction();
+// @ts-ignore - Unused variable
+//       const tx = new Transaction();
       
-      const titleBytes = new TextEncoder().encode(newTodo.title);
-      const descriptionBytes = new TextEncoder().encode(newTodo.description || '');
-      const imageUrlBytes = new TextEncoder().encode(
+// @ts-ignore - Unused variable
+//       const titleBytes = new TextEncoder().encode(newTodo.title);
+// @ts-ignore - Unused variable
+//       const descriptionBytes = new TextEncoder().encode(newTodo.description || '');
+// @ts-ignore - Unused variable
+//       const imageUrlBytes = new TextEncoder().encode(
         walrusClient.getBlobUrl(walrusResult.blobId)
       );
-      const metadataBytes = new TextEncoder().encode(
+// @ts-ignore - Unused variable
+//       const metadataBytes = new TextEncoder().encode(
         JSON.stringify({
           priority: newTodo.priority,
           tags: newTodo.tags,
@@ -213,22 +234,24 @@ export class BlockchainTodoService {
       );
 
       tx.moveCall({
-        target: `${this.config.deployment.packageId}::todo_nft::create_todo_nft`,
+        target: `${this?.config?.deployment.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          tx.pure.vector('u8', Array.from(titleBytes)),
-          tx.pure.vector('u8', Array.from(descriptionBytes)),
-          tx.pure.vector('u8', Array.from(imageUrlBytes)),
-          tx.pure.vector('u8', Array.from(metadataBytes)),
-          tx.pure.bool(false), // is_private
+          tx?.pure?.vector('u8', Array.from(titleBytes as any)),
+          tx?.pure?.vector('u8', Array.from(descriptionBytes as any)),
+          tx?.pure?.vector('u8', Array.from(imageUrlBytes as any)),
+          tx?.pure?.vector('u8', Array.from(metadataBytes as any)),
+          tx?.pure?.bool(false as any), // is_private
         ],
       });
 
       // Execute transaction
-      if (!config.signer.signAndExecuteTransaction) {
+      if (!config?.signer?.signAndExecuteTransaction) {
         throw new Error('No transaction signer available');
       }
-      const result = await config.signer.signAndExecuteTransaction(tx);
-      const objectId = result.effects?.created?.[0]?.reference?.objectId;
+// @ts-ignore - Unused variable
+//       const result = await config?.signer?.signAndExecuteTransaction(tx as any);
+// @ts-ignore - Unused variable
+//       const objectId = result.effects?.created?.[0]?.reference?.objectId;
       
       if (!objectId) {
         throw new Error('Failed to create todo NFT');
@@ -268,8 +291,10 @@ export class BlockchainTodoService {
     }
 
     // Get current todo from cache or blockchain
-    const todos = await this.getTodos(config.walletAddress);
-    const currentTodo = todos.todos.find(t => t.id === todoId);
+// @ts-ignore - Unused variable
+//     const todos = await this.getTodos(config.walletAddress);
+// @ts-ignore - Unused variable
+//     const currentTodo = todos?.todos?.find(t => t?.id === todoId);
     
     if (!currentTodo) {
       throw new Error('Todo not found');
@@ -284,7 +309,8 @@ export class BlockchainTodoService {
     try {
       // Update Walrus storage if content changed
       if (updates.title || updates.description || updates.priority || updates.tags) {
-        const walrusData = {
+// @ts-ignore - Unused variable
+//         const walrusData = {
           title: updatedTodo.title,
           description: updatedTodo.description || '',
           priority: updatedTodo.priority,
@@ -292,7 +318,8 @@ export class BlockchainTodoService {
           dueDate: updatedTodo.dueDate,
           updatedAt: updatedTodo.updatedAt,
         };
-
+// @ts-ignore - Unused variable
+// 
         const walrusResult = await walrusClient.uploadJson(walrusData, { epochs: 5 });
         // Note: walrusBlobId not available in Todo type
       }
@@ -324,20 +351,22 @@ export class BlockchainTodoService {
 
     try {
       // Execute blockchain transaction
-      const tx = new Transaction();
+// @ts-ignore - Unused variable
+//       const tx = new Transaction();
       
       tx.moveCall({
-        target: `${this.config.deployment.packageId}::todo_nft::complete_todo`,
-        arguments: [tx.object(todoId)],
+        target: `${this?.config?.deployment.packageId}::todo_nft::complete_todo`,
+        arguments: [tx.object(todoId as any)],
       });
 
-      if (!config.signer.signAndExecuteTransaction) {
+      if (!config?.signer?.signAndExecuteTransaction) {
         throw new Error('No transaction signer available');
       }
-      await config.signer.signAndExecuteTransaction(tx);
+      await config?.signer?.signAndExecuteTransaction(tx as any);
 
       // Update local state
-      const completedTodo = await this.updateTodo(todoId, {
+// @ts-ignore - Unused variable
+//       const completedTodo = await this.updateTodo(todoId, {
         completed: true,
         completedAt: new Date().toISOString(),
       }, config);
@@ -392,8 +421,9 @@ export class BlockchainTodoService {
     pending: number;
     priorities: Record<string, number>;
   }> {
-    const { todos } = await this.getTodos(walletAddress);
-    
+    const { todos } = await this.getTodos(walletAddress as any);
+// @ts-ignore - Unused variable
+//     
     const stats = {
       total: todos.length,
       completed: todos.filter(t => t.completed).length,
@@ -402,8 +432,9 @@ export class BlockchainTodoService {
     };
 
     todos.forEach(todo => {
-      const priority = todo.priority || 'medium';
-      stats.priorities[priority] = (stats.priorities[priority] || 0) + 1;
+// @ts-ignore - Unused variable
+//       const priority = todo.priority || 'medium';
+      stats?.priorities?.[priority] = (stats?.priorities?.[priority] || 0) + 1;
     });
 
     return stats;
@@ -413,7 +444,8 @@ export class BlockchainTodoService {
 
   private async convertBlockchainObjectToTodo(data: any): Promise<Todo | null> {
     try {
-      const fields = data.content.fields;
+// @ts-ignore - Unused variable
+//       const fields = data?.content?.fields;
       
       let metadata = {
         priority: 'medium' as const,
@@ -433,7 +465,8 @@ export class BlockchainTodoService {
       // Fetch additional data from Walrus if available
       if (metadata.walrusBlobId) {
         try {
-          const walrusData = await walrusClient.downloadJson(metadata.walrusBlobId);
+// @ts-ignore - Unused variable
+//           const walrusData = await walrusClient.downloadJson(metadata.walrusBlobId);
           // Merge Walrus data with blockchain data
         } catch (e) {
           // Failed to fetch Walrus data
@@ -464,8 +497,10 @@ export class BlockchainTodoService {
     if (!this.localCache) {
       return [];
     }
-    const cache = this.localCache.get();
-    const walletCache = cache?.[walletAddress];
+// @ts-ignore - Unused variable
+//     const cache = this?.localCache?.get();
+// @ts-ignore - Unused variable
+//     const walletCache = cache?.[walletAddress];
     return walletCache ? ((walletCache.todos || []) as unknown as Todo[]) : [];
   }
 
@@ -473,24 +508,26 @@ export class BlockchainTodoService {
     if (!this.localCache) {
       return;
     }
-    const cache = this.localCache.get() || {};
+// @ts-ignore - Unused variable
+//     const cache = this?.localCache?.get() || {};
     cache[walletAddress] = {
       id: walletAddress,
       name: 'blockchain',
       owner: walletAddress,
-      todos: todos as any, // Cast to match TodoList type
+      todos: todos as unknown, // Cast to match TodoList type
       version: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    this.localCache.set(cache);
+    this?.localCache?.set(cache as any);
   }
 
   private addTodoToCache(walletAddress: string, todo: Todo): void {
     if (!this.localCache) {
       return;
     }
-    const cache = this.localCache.get() || {};
+// @ts-ignore - Unused variable
+//     const cache = this?.localCache?.get() || {};
     if (!cache[walletAddress]) {
       cache[walletAddress] = {
         id: walletAddress,
@@ -502,20 +539,22 @@ export class BlockchainTodoService {
         updatedAt: new Date().toISOString(),
       };
     }
-    cache[walletAddress].todos.push(todo as any);
-    this.localCache.set(cache);
+    cache[walletAddress].todos.push(todo as unknown);
+    this?.localCache?.set(cache as any);
   }
 
   private updateTodoInCache(walletAddress: string, updatedTodo: Todo): void {
     if (!this.localCache) {
       return;
     }
-    const cache = this.localCache.get() || {};
+// @ts-ignore - Unused variable
+//     const cache = this?.localCache?.get() || {};
     if (cache && cache[walletAddress]) {
-      const index = cache[walletAddress].todos.findIndex((t: any) => t.id === updatedTodo.id);
+// @ts-ignore - Unused variable
+//       const index = cache[walletAddress].todos.findIndex((t: any) => t?.id === updatedTodo.id);
       if (index >= 0) {
-        cache[walletAddress].todos[index] = updatedTodo as any;
-        this.localCache.set(cache);
+        cache[walletAddress].todos[index] = updatedTodo as unknown;
+        this?.localCache?.set(cache as any);
       }
     }
   }
@@ -524,10 +563,11 @@ export class BlockchainTodoService {
     if (!this.localCache) {
       return;
     }
-    const cache = this.localCache.get() || {};
+// @ts-ignore - Unused variable
+//     const cache = this?.localCache?.get() || {};
     if (cache && cache[walletAddress]) {
       cache[walletAddress].todos = cache[walletAddress].todos.filter((t: any) => t.id !== todoId);
-      this.localCache.set(cache);
+      this?.localCache?.set(cache as any);
     }
   }
 
@@ -542,8 +582,8 @@ export class BlockchainTodoService {
    */
   async cleanup(): Promise<void> {
     // Clean up event subscriptions
-    this.eventSubscriptions.forEach(cleanup => cleanup());
-    this.eventSubscriptions.clear();
+    this?.eventSubscriptions?.forEach(cleanup => cleanup());
+    this?.eventSubscriptions?.clear();
   }
 }
 

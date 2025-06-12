@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Main WalTodo CLI testing service
+  waltodo-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: waltodo-cli-test
+    environment:
+      - NODE_ENV=test
+      - WALTODO_TEST_MODE=true
+      - WALTODO_SUPPRESS_WARNINGS=true
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - PNPM_HOME=/home/testuser/.local/share/pnpm
+      - PATH=/home/testuser/.local/share/pnpm:$PATH
+    volumes:
+      # Mount test scripts
+      - ./docker-test-scripts:/home/testuser/test-scripts:ro
+      # Mount test results directory for persistence
+      - ./test-results-docker:/home/testuser/waltodo/test-results
+      # Mount logs directory for persistence
+      - ./logs-docker:/home/testuser/waltodo/logs
+      # Mount a local test data directory
+      - ./test-data-docker:/home/testuser/test-data
+    working_dir: /home/testuser/waltodo
+    command: bash /home/testuser/test-scripts/run-comprehensive-tests.sh
+    networks:
+      - waltodo-test-network
+
+  # Mock Sui network service for testing (optional)
+  sui-mock:
+    image: nginx:alpine
+    container_name: sui-mock-server
+    ports:
+      - "9000:80"
+    volumes:
+      - ./docker-test-scripts/mock-responses:/usr/share/nginx/html:ro
+    networks:
+      - waltodo-test-network
+
+  # Mock Walrus service for testing (optional)
+  walrus-mock:
+    image: nginx:alpine
+    container_name: walrus-mock-server
+    ports:
+      - "9001:80"
+    volumes:
+      - ./docker-test-scripts/mock-responses:/usr/share/nginx/html:ro
+    networks:
+      - waltodo-test-network
+
+  # PostgreSQL for API testing (if needed)
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: postgres-test-db
+    environment:
+      POSTGRES_DB: waltodo_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./docker-test-scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - waltodo-test-network
+
+  # Redis for caching tests (if needed)
+  redis-test:
+    image: redis:7-alpine
+    container_name: redis-test-cache
+    ports:
+      - "6380:6379"
+    networks:
+      - waltodo-test-network
+
+volumes:
+  postgres_test_data:
+
+networks:
+  waltodo-test-network:
+    driver: bridge

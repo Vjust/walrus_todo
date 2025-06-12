@@ -20,7 +20,7 @@ describe('Transaction Fuzzing Tests', () => {
     suiService = new SuiTestService({
       activeNetwork: { 
         name: 'testnet',
-        fullnode: 'https://fullnode.testnet.sui.io'
+        fullnode: 'https://fullnode?.testnet?.sui.io'
       },
       activeAccount: { address: fuzzer.blockchainData().address() },
       encryptedStorage: false,
@@ -51,7 +51,7 @@ describe('Transaction Fuzzing Tests', () => {
               break;
 
             case 'update': {
-              const todos = await suiService.getTodos(listId);
+              const todos = await suiService.getTodos(listId as any);
               if (todos.length > 0) {
                 const randomTodo =
                   todos[Math.floor(Math.random() * todos.length)];
@@ -64,7 +64,7 @@ describe('Transaction Fuzzing Tests', () => {
             }
 
             case 'delete':
-              await suiService.deleteTodoList(listId);
+              await suiService.deleteTodoList(listId as any);
               break;
           }
         })
@@ -92,7 +92,7 @@ describe('Transaction Fuzzing Tests', () => {
 
       // Check that errors are properly handled
       const rejectedResults = results.filter(
-        r => r.status === 'rejected'
+        r => r?.status === 'rejected'
       ) as PromiseRejectedResult[];
       for (const rejectedResult of rejectedResults) {
         expect(rejectedResult.reason).toHaveProperty('message');
@@ -120,7 +120,7 @@ describe('Transaction Fuzzing Tests', () => {
       const specialCharResult = await suiService
         .addTodo(listId, specialChars)
         .catch(error => error);
-      expect(specialCharResult).toBeDefined();
+      expect(specialCharResult as any).toBeDefined();
     });
   });
 
@@ -156,12 +156,12 @@ describe('Transaction Fuzzing Tests', () => {
       );
 
       // Verify all operations completed (either successfully or with proper errors)
-      expect(results).toHaveLength(operations.length);
+      expect(results as any).toHaveLength(operations.length);
       const rejectedResults = results.filter(
-        r => r.status === 'rejected'
+        r => r?.status === 'rejected'
       ) as PromiseRejectedResult[];
       const fulfilledResults = results.filter(
-        r => r.status === 'fulfilled'
+        r => r?.status === 'fulfilled'
       ) as PromiseFulfilledResult<unknown>[];
 
       rejectedResults.forEach(result => {
@@ -202,8 +202,8 @@ describe('Transaction Fuzzing Tests', () => {
       );
 
       // Ensure proper error handling for gas-related issues
-      const rejectedResults = results.filter(r => r.status === 'rejected');
-      const fulfilledResults = results.filter(r => r.status === 'fulfilled');
+      const rejectedResults = results.filter(r => r?.status === 'rejected');
+      const fulfilledResults = results.filter(r => r?.status === 'fulfilled');
 
       expect(rejectedResults.length + fulfilledResults.length).toBe(
         highGasOperations.length
@@ -296,8 +296,8 @@ describe('Transaction Fuzzing Tests', () => {
       );
 
       // Verify operations completed without memory issues
-      const successful = results.filter(r => r.status === 'fulfilled');
-      expect(successful.length).toBeGreaterThan(0);
+      const successful = results.filter(r => r?.status === 'fulfilled');
+      expect(successful.length).toBeGreaterThan(0 as any);
     });
   });
 });

@@ -61,7 +61,7 @@ class MockChatXAI
   lc_serializable: boolean = true;
 
   constructor(options: ChatXAIOptions) {
-    this.options = options;
+    this?.options = options;
   }
 
   getName(): string {
@@ -181,14 +181,14 @@ class MockChatXAI
         options?: Record<string, unknown>
       ): Promise<NewOutput> => {
         const output = await this.invoke(input, options);
-        return await transformer(output);
+        return await transformer(output as any);
       },
       batch: async (
         inputs: (string | StringPromptValueInterface)[],
         options?: Record<string, unknown>
       ): Promise<NewOutput[]> => {
         const outputs = await this.batch(inputs, options);
-        return await Promise.all(outputs.map(output => transformer(output)));
+        return await Promise.all(outputs.map(output => transformer(output as any)));
       },
       stream: async (
         input: string | StringPromptValueInterface,
@@ -199,7 +199,7 @@ class MockChatXAI
         // This is a simplified mock version
         async function* generate() {
           for await (const chunk of outputStream) {
-            yield (await transformer(chunk)) as NewOutput;
+            yield (await transformer(chunk as any)) as NewOutput;
           }
         }
         return generate();
@@ -212,7 +212,7 @@ class MockChatXAI
         Record<string, unknown>
       > => {
         return this.transform(async output =>
-          nextTransformer(await transformer(output))
+          nextTransformer(await transformer(output as any))
         );
       },
       pipe: <T>(
@@ -222,7 +222,7 @@ class MockChatXAI
         T,
         Record<string, unknown>
       > => {
-        const transformed = this.transform(transformer);
+        const transformed = this.transform(transformer as any);
         return {
           lc_serializable: true,
           getName: () => `${transformed.getName()}_pipe_${runnable.getName()}`,
@@ -254,7 +254,7 @@ class MockChatXAI
             U,
             Record<string, unknown>
           > => {
-            return transformed.pipe(runnable.transform(nextTransformer));
+            return transformed.pipe(runnable.transform(nextTransformer as any));
           },
           pipe: <U>(
             nextRunnable: RunnableInterface<T, U, Record<string, unknown>>
@@ -263,7 +263,7 @@ class MockChatXAI
             U,
             Record<string, unknown>
           > => {
-            return transformed.pipe(runnable.pipe(nextRunnable));
+            return transformed.pipe(runnable.pipe(nextRunnable as any));
           },
         };
       },
@@ -308,7 +308,7 @@ class MockChatXAI
         T,
         Record<string, unknown>
       > => {
-        return this.pipe(runnable.transform(transformer));
+        return this.pipe(runnable.transform(transformer as any));
       },
       pipe: <T>(
         nextRunnable: RunnableInterface<NewOutput, T, Record<string, unknown>>
@@ -317,7 +317,7 @@ class MockChatXAI
         T,
         Record<string, unknown>
       > => {
-        return this.pipe(runnable.pipe(nextRunnable));
+        return this.pipe(runnable.pipe(nextRunnable as any));
       },
     };
   }
@@ -370,7 +370,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
       isTestKey;
 
     // Log detected key status for debugging only in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       logger.info(
         `XAIModelAdapter initialized with apiKey length: ${apiKey ? apiKey.length : 0}`
       );
@@ -388,27 +388,27 @@ export class XAIModelAdapter extends BaseModelAdapter {
       // Special handling for test keys - always use mock but don't show mock warnings
       if (isTestKey) {
         // Only log in development mode
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env?.NODE_ENV === 'development') {
           logger.info(`Using mock XAI implementation with test key: ${apiKey}`);
         }
-        this.client = new MockChatXAI({
+        this?.client = new MockChatXAI({
           apiKey,
           modelName: this.modelName,
           temperature: options.temperature ?? 0.7,
           maxTokens: options.maxTokens,
         });
         // Still set useMock to false so we don't show mock warnings in the response
-        this.useMock = false;
+        this?.useMock = false;
       }
       // Real API key and implementation available
       else if (isValidKey && typeof RealChatXAI !== 'undefined') {
         // Only log in development mode
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env?.NODE_ENV === 'development') {
           logger.info(`Attempting to use real XAI implementation with API key`);
         }
         // Use proper type assertion for the real implementation
         // The real ChatXAI implements the required interface
-        this.client = new RealChatXAI({
+        this?.client = new RealChatXAI({
           apiKey,
           model: this.modelName, // Changed from modelName to model as expected by ChatXAI
           temperature: options.temperature ?? 0.7,
@@ -418,7 +418,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
           string,
           Record<string, unknown>
         >;
-        this.useMock = false;
+        this?.useMock = false;
       } else {
         // Fall back to mock implementation with clear logging about the reason
         const reason = !isValidKey
@@ -426,17 +426,17 @@ export class XAIModelAdapter extends BaseModelAdapter {
           : 'RealChatXAI implementation unavailable';
 
         // Only log in development mode
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env?.NODE_ENV === 'development') {
           logger.info(`Using mock XAI implementation due to ${reason}`);
         }
 
-        this.client = new MockChatXAI({
+        this?.client = new MockChatXAI({
           apiKey,
           modelName: this.modelName,
           temperature: options.temperature ?? 0.7,
           maxTokens: options.maxTokens,
         });
-        this.useMock = true;
+        this?.useMock = true;
 
         // Only log warning when we're falling back with what should be a valid key
         if (isValidKey) {
@@ -451,13 +451,13 @@ export class XAIModelAdapter extends BaseModelAdapter {
         'Error initializing real XAI client, falling back to mock:',
         _error
       );
-      this.client = new MockChatXAI({
+      this?.client = new MockChatXAI({
         apiKey,
         modelName: this.modelName,
         temperature: options.temperature ?? 0.7,
         maxTokens: options.maxTokens,
       });
-      this.useMock = true;
+      this?.useMock = true;
     }
   }
 
@@ -472,22 +472,22 @@ export class XAIModelAdapter extends BaseModelAdapter {
       const resolvedPrompt = await this.resolvePrompt(params.prompt);
 
       // Log when using mock implementation, but only in development mode
-      if (this.useMock && process.env.NODE_ENV === 'development') {
+      if (this.useMock && process.env?.NODE_ENV === 'development') {
         logger.info(
           `Using mock XAI implementation for completion (real API key not available)`
         );
       }
 
-      const response = await this.client.invoke(resolvedPrompt, {
+      const response = await this?.client?.invoke(resolvedPrompt, {
         temperature: options.temperature,
         maxTokens: options.maxTokens,
       });
 
-      const baseResponse = this.createBaseResponse(response);
+      const baseResponse = this.createBaseResponse(response as any);
 
       // Add indicator in metadata when using mock
       if (this.useMock) {
-        baseResponse.metadata = {
+        baseResponse?.metadata = {
           ...(baseResponse.metadata || {}),
           isMocked: true,
           mockReason: 'No valid API key available',
@@ -517,7 +517,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
       );
 
       // Log when using mock implementation, but only in development mode
-      if (this.useMock && process.env.NODE_ENV === 'development') {
+      if (this.useMock && process.env?.NODE_ENV === 'development') {
         logger.info(
           `Using mock XAI implementation for structured completion (real API key not available)`
         );
@@ -526,17 +526,17 @@ export class XAIModelAdapter extends BaseModelAdapter {
       // For structured responses, we modify the prompt to request JSON format
       const jsonPrompt = `${resolvedPrompt}\n\nPlease provide your response as a valid JSON object.`;
 
-      const response = await this.client.invoke(jsonPrompt, {
+      const response = await this?.client?.invoke(jsonPrompt, {
         temperature: options.temperature,
         maxTokens: options.maxTokens,
       });
 
       const parsedResult = ResponseParser.parseJson<T>(response, {} as T);
-      const baseResponse = this.createBaseResponse(parsedResult);
+      const baseResponse = this.createBaseResponse(parsedResult as any);
 
       // Add indicator in metadata when using mock
       if (this.useMock) {
-        baseResponse.metadata = {
+        baseResponse?.metadata = {
           ...(baseResponse.metadata || {}),
           isMocked: true,
           mockReason: 'No valid API key available',
@@ -562,24 +562,24 @@ export class XAIModelAdapter extends BaseModelAdapter {
       // Work around TypeScript pipe interface incompatibilities by using a manual approach
 
       // Log when using mock implementation, but only in development mode
-      if (this.useMock && process.env.NODE_ENV === 'development') {
+      if (this.useMock && process.env?.NODE_ENV === 'development') {
         logger.info(
           `Using mock XAI implementation for prompt template processing (real API key not available)`
         );
       }
 
       // First format the prompt template with input values
-      const formattedPrompt = await promptTemplate.format(input);
+      const formattedPrompt = await promptTemplate.format(input as any);
 
       // Then send the formatted prompt to our model
-      const response = await this.client.invoke(formattedPrompt);
+      const response = await this?.client?.invoke(formattedPrompt as any);
 
       // Convert to standard response format
-      const baseResponse = this.createBaseResponse(response);
+      const baseResponse = this.createBaseResponse(response as any);
 
       // Add indicator in metadata when using mock
       if (this.useMock) {
-        baseResponse.metadata = {
+        baseResponse?.metadata = {
           ...(baseResponse.metadata || {}),
           isMocked: true,
           mockReason: 'No valid API key available',

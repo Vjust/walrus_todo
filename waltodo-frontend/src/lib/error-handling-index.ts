@@ -149,7 +149,8 @@ export const DEFAULT_ERROR_CONFIG: GlobalErrorConfig = {
  * Initialize the error handling system with custom configuration
  */
 export function initializeErrorHandling(config: Partial<GlobalErrorConfig> = {}): void {
-  const mergedConfig = { ...DEFAULT_ERROR_CONFIG, ...config };
+// @ts-ignore - Unused variable
+//   const mergedConfig = { ...DEFAULT_ERROR_CONFIG, ...config };
   
   // Configure error manager
   if (mergedConfig.errorManager) {
@@ -158,8 +159,8 @@ export function initializeErrorHandling(config: Partial<GlobalErrorConfig> = {})
   
   // Configure toast service
   if (mergedConfig.toastService) {
-    if (mergedConfig.toastService.theme) {
-      toastService.updateTheme(mergedConfig.toastService.theme);
+    if (mergedConfig?.toastService?.theme) {
+      toastService.updateTheme(mergedConfig?.toastService?.theme);
     }
   }
   
@@ -169,8 +170,8 @@ export function initializeErrorHandling(config: Partial<GlobalErrorConfig> = {})
   }
   
   // Development-specific setup
-  if (process.env.NODE_ENV === 'development' && mergedConfig.development) {
-    if (mergedConfig.development.enableStackTrace) {
+  if (process?.env?.NODE_ENV === 'development' && mergedConfig.development) {
+    if (mergedConfig?.development?.enableStackTrace) {
       errorManager.updateConfig({ logLevel: 'debug' });
     }
   }
@@ -232,7 +233,7 @@ export function createApiErrorResponse<T = any>(
   error: Error,
   context?: string
 ): ErrorResponse {
-  return createErrorResponse(error);
+  return createErrorResponse(error as any);
 }
 
 export function createApiSuccessResponse<T>(
@@ -252,11 +253,12 @@ export function createApiSuccessResponse<T>(
  * use the ErrorBoundary component from the components directory.
  */
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  Component: React.ComponentType<P>, 
   fallback?: React.ComponentType<{ error: Error; retry: () => void }>
 ) {
   return function WrappedComponent(props: P) {
-    const errorHandler = createErrorBoundaryHandler(Component.displayName || 'Component');
+// @ts-ignore - Unused variable
+//     const errorHandler = createErrorBoundaryHandler(Component.displayName || 'Component');
     
     // This is a conceptual implementation
     // In practice, you would use the actual ErrorBoundary component

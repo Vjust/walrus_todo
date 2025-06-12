@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from '../services/todoService';
@@ -128,9 +128,9 @@ export default class RetrieveCommand extends BaseCommand {
 
   protected startSpinner(text: string) {
     if (this.spinner) {
-      this.spinner.text = text;
+      this.spinner?.text = text;
     } else {
-      this.log(chalk.blue(text));
+      this.log(chalk.blue(text as any));
     }
   }
 
@@ -154,7 +154,7 @@ export default class RetrieveCommand extends BaseCommand {
     if (
       identifier.startsWith('Qm') ||
       identifier.startsWith('bafy') ||
-      (identifier.length > 32 && /^[A-Za-z0-9+/=_-]+$/.test(identifier))
+      (identifier.length > 32 && /^[A-Za-z0-9+/=_-]+$/.test(identifier as any))
     ) {
       return 'blob';
     }
@@ -169,9 +169,9 @@ export default class RetrieveCommand extends BaseCommand {
   private async retrieveAllFromList(listName: string): Promise<void> {
     this.startSpinner(`Retrieving all todos from list "${listName}"...`);
 
-    const list = await this.todoService.getList(listName);
-    if (!list || !list.todos || list.todos.length === 0) {
-      this.stopSpinner(false);
+    const list = await this?.todoService?.getList(listName as any);
+    if (!list || !list.todos || list.todos?.length === 0) {
+      this.stopSpinner(false as any);
       throw new CLIError(
         `No todos found in list "${listName}". Use "waltodo list" to see available lists.`,
         'EMPTY_LIST'
@@ -182,7 +182,7 @@ export default class RetrieveCommand extends BaseCommand {
 
     this.stopSpinner(
       true,
-      `Found ${todos.length} todo(s) in list "${listName}"`
+      `Found ${todos.length} todo(s as any) in list "${listName}"`
     );
 
     // Display the todos
@@ -214,7 +214,7 @@ export default class RetrieveCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(RetrieveCommand);
+      const { args, flags } = await this.parse(RetrieveCommand as any);
 
       // Handle background operation
       if (flags.background) {
@@ -229,7 +229,7 @@ export default class RetrieveCommand extends BaseCommand {
       // Validate network configuration
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
         throw new CLIError(
-          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS as any).join(', ')}`,
           'INVALID_NETWORK'
         );
       }
@@ -281,44 +281,44 @@ export default class RetrieveCommand extends BaseCommand {
       } else if (flags.todo) {
         // Legacy flag syntax
         todoTitle = flags.todo;
-      } else if (flags['blob-id']) {
+      } else if (flags?.["blob-id"]) {
         // Legacy flag syntax
-        blobId = flags['blob-id'];
-      } else if (flags['object-id']) {
+        blobId = flags?.["blob-id"];
+      } else if (flags?.["object-id"]) {
         // Legacy flag syntax
-        objectId = flags['object-id'];
+        objectId = flags?.["object-id"];
       }
 
       // Handle retrieve all case
       if (retrieveAll) {
-        await this.retrieveAllFromList(sourceList);
+        await this.retrieveAllFromList(sourceList as any);
         return;
       }
 
       // Look up IDs from local todo if title/id provided
       this.startSpinner('Looking up todo information...');
       if (todoTitle) {
-        const localTodo = await this.todoService.getTodoByTitleOrId(
+        const localTodo = await this?.todoService?.getTodoByTitleOrId(
           todoTitle,
           sourceList
         );
         if (!localTodo) {
-          this.stopSpinner(false);
+          this.stopSpinner(false as any);
 
           // Provide helpful suggestions
-          const list = await this.todoService.getList(sourceList);
-          if (list && list.todos && list.todos.length > 0) {
+          const list = await this?.todoService?.getList(sourceList as any);
+          if (list && list.todos && list?.todos?.length > 0) {
             this.log(
               chalk.yellow(
                 `\n⚠️  Todo "${todoTitle}" not found in list "${sourceList}"`
               )
             );
             this.log(chalk.dim('\nAvailable todos in this list:'));
-            list.todos.slice(0, 5).forEach(todo => {
+            list?.todos?.slice(0, 5).forEach(todo => {
               this.log(`  • ${todo.title}`);
             });
-            if (list.todos.length > 5) {
-              this.log(chalk.dim(`  ... and ${list.todos.length - 5} more`));
+            if (list?.todos?.length > 5) {
+              this.log(chalk.dim(`  ... and ${list?.todos?.length - 5} more`));
             }
             this.log(
               chalk.dim(
@@ -349,39 +349,39 @@ export default class RetrieveCommand extends BaseCommand {
           this.log(chalk.dim('\nPositional syntax (recommended):'));
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve mylist                    # Retrieve all from list`
+              `  ${this?.config?.bin} retrieve mylist                    # Retrieve all from list`
             )
           );
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve mylist "Task Title"      # Retrieve specific todo`
+              `  ${this?.config?.bin} retrieve mylist "Task Title"      # Retrieve specific todo`
             )
           );
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve <blob-id>               # Retrieve by blob ID`
+              `  ${this?.config?.bin} retrieve <blob-id>               # Retrieve by blob ID`
             )
           );
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve <object-id>             # Retrieve by object ID`
+              `  ${this?.config?.bin} retrieve <object-id>             # Retrieve by object ID`
             )
           );
 
           this.log(chalk.dim('\nLegacy flag syntax:'));
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve --todo "My Task" --list ${flags.list}`
+              `  ${this?.config?.bin} retrieve --todo "My Task" --list ${flags.list}`
             )
           );
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve --blob-id <id> --list ${flags.list}`
+              `  ${this?.config?.bin} retrieve --blob-id <id> --list ${flags.list}`
             )
           );
           this.log(
             chalk.dim(
-              `  ${this.config.bin} retrieve --object-id <id> --list ${flags.list}`
+              `  ${this?.config?.bin} retrieve --object-id <id> --list ${flags.list}`
             )
           );
 
@@ -392,9 +392,9 @@ export default class RetrieveCommand extends BaseCommand {
                 '\nSince you specified --mock, you can use these test IDs:'
               )
             );
-            this.log(chalk.dim(`  ${this.config.bin} retrieve mock-blob-123`));
+            this.log(chalk.dim(`  ${this?.config?.bin} retrieve mock-blob-123`));
             this.log(
-              chalk.dim(`  ${this.config.bin} retrieve mock-object-456`)
+              chalk.dim(`  ${this?.config?.bin} retrieve mock-object-456`)
             );
           }
 
@@ -426,9 +426,9 @@ export default class RetrieveCommand extends BaseCommand {
           await suiClient.getLatestCheckpointSequenceNumber();
           this.stopSpinner(true, 'Network connection verified');
         } catch (_error) {
-          this.stopSpinner(false);
+          this.stopSpinner(false as any);
           throw new CLIError(
-            `Unable to connect to network ${network}: ${_error instanceof Error ? _error.message : String(_error)}`,
+            `Unable to connect to network ${network}: ${_error instanceof Error ? _error.message : String(_error as any)}`,
             'NETWORK_ERROR'
           );
         }
@@ -447,9 +447,9 @@ export default class RetrieveCommand extends BaseCommand {
         }
         this.stopSpinner(true, 'Connected to Walrus storage');
       } catch (connectError) {
-        this.stopSpinner(false);
+        this.stopSpinner(false as any);
         throw new CLIError(
-          `Failed to connect to Walrus storage: ${connectError instanceof Error ? connectError.message : String(connectError)}`,
+          `Failed to connect to Walrus storage: ${connectError instanceof Error ? connectError.message : String(connectError as any)}`,
           'WALRUS_CONNECTION_FAILED'
         );
       }
@@ -463,12 +463,12 @@ export default class RetrieveCommand extends BaseCommand {
           );
 
           try {
-            const todo = await walrusStorage.retrieveTodo(blobId);
+            const todo = await walrusStorage.retrieveTodo(blobId as any);
 
             // Save to local list (use sourceList for positional, flags.list for legacy)
             const targetList =
               args.identifier && !flags.todo ? 'default' : flags.list;
-            await this.todoService.addTodo(targetList, {
+            await this?.todoService?.addTodo(targetList, {
               ...todo,
               walrusBlobId: blobId,
             });
@@ -480,17 +480,17 @@ export default class RetrieveCommand extends BaseCommand {
               `  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
             );
             this.log(`  Priority: ${getColoredPriority(todo.priority)}`);
-            this.log(`  List: ${chalk.cyan(targetList)}`);
-            this.log(`  Walrus Blob ID: ${chalk.dim(blobId)}`);
+            this.log(`  List: ${chalk.cyan(targetList as any)}`);
+            this.log(`  Walrus Blob ID: ${chalk.dim(blobId as any)}`);
 
             if (todo.tags?.length) {
               this.log(
-                `  Tags: ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`
+                `  Tags: ${todo?.tags?.map(tag => chalk.blue(tag as any)).join(', ')}`
               );
             }
           } catch (blobError) {
             throw new CLIError(
-              `Failed to retrieve todo from Walrus with blob ID ${blobId}: ${blobError instanceof Error ? blobError.message : String(blobError)}`,
+              `Failed to retrieve todo from Walrus with blob ID ${blobId}: ${blobError instanceof Error ? blobError.message : String(blobError as any)}`,
               'WALRUS_RETRIEVAL_FAILED'
             );
           }
@@ -509,7 +509,7 @@ export default class RetrieveCommand extends BaseCommand {
           );
 
           try {
-            const nftData = await suiNftStorage.getTodoNft(objectId);
+            const nftData = await suiNftStorage.getTodoNft(objectId as any);
 
             if (!nftData.walrusBlobId) {
               throw new CLIError(
@@ -525,7 +525,7 @@ export default class RetrieveCommand extends BaseCommand {
             const todo = await walrusStorage
               .retrieveTodo(nftData.walrusBlobId)
               .catch(_error => {
-                if (_error.message.includes('not found')) {
+                if (_error?.message?.includes('not found')) {
                   throw new CLIError(
                     `Todo data not found in Walrus storage. The data may have expired or been deleted.`,
                     'DATA_NOT_FOUND'
@@ -537,7 +537,7 @@ export default class RetrieveCommand extends BaseCommand {
             // Save to local list (use sourceList for positional, flags.list for legacy)
             const targetList =
               args.identifier && !flags.todo ? 'default' : flags.list;
-            await this.todoService.addTodo(targetList, {
+            await this?.todoService?.addTodo(targetList, {
               ...todo,
               nftObjectId: objectId,
               walrusBlobId: nftData.walrusBlobId,
@@ -553,8 +553,8 @@ export default class RetrieveCommand extends BaseCommand {
               `  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
             );
             this.log(`  Priority: ${getColoredPriority(todo.priority)}`);
-            this.log(`  List: ${chalk.cyan(targetList)}`);
-            this.log(`  NFT Object ID: ${chalk.cyan(objectId)}`);
+            this.log(`  List: ${chalk.cyan(targetList as any)}`);
+            this.log(`  NFT Object ID: ${chalk.cyan(objectId as any)}`);
             this.log(`  Walrus Blob ID: ${chalk.dim(nftData.walrusBlobId)}`);
 
             if (todo.dueDate) {
@@ -563,7 +563,7 @@ export default class RetrieveCommand extends BaseCommand {
 
             if (todo.tags?.length) {
               this.log(
-                `  Tags: ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`
+                `  Tags: ${todo?.tags?.map(tag => chalk.blue(tag as any)).join(', ')}`
               );
             }
 
@@ -572,7 +572,7 @@ export default class RetrieveCommand extends BaseCommand {
               this.log(chalk.blue('\nView your NFT on Sui Explorer:'));
               this.log(
                 chalk.cyan(
-                  `  https://explorer.sui.io/object/${objectId}?network=${network}`
+                  `  https://explorer?.sui?.io/object/${objectId}?network=${network}`
                 )
               );
             }
@@ -581,7 +581,7 @@ export default class RetrieveCommand extends BaseCommand {
               throw nftError;
             }
             throw new CLIError(
-              `Failed to retrieve NFT with object ID ${objectId}: ${nftError instanceof Error ? nftError.message : String(nftError)}`,
+              `Failed to retrieve NFT with object ID ${objectId}: ${nftError instanceof Error ? nftError.message : String(nftError as any)}`,
               'NFT_RETRIEVAL_FAILED'
             );
           }
@@ -595,7 +595,7 @@ export default class RetrieveCommand extends BaseCommand {
         } catch (cleanupError) {
           this.stopSpinner(false, 'Resource cleanup encountered issues');
           Logger.getInstance().warn(
-            `Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`
+            `Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError as any)}`
           );
         }
       }
@@ -604,7 +604,7 @@ export default class RetrieveCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error as any)}`,
         'RETRIEVE_FAILED'
       );
     }
@@ -614,16 +614,16 @@ export default class RetrieveCommand extends BaseCommand {
    * Run retrieval operation in background
    */
   private async runInBackground(args: any, flags: any): Promise<void> {
-    const jobId = flags['job-id'] || uuidv4();
+    const jobId = flags?.["job-id"] || uuidv4();
     const timeoutMs = flags.timeout * 1000;
 
     // Initialize background operations manager
-    this.backgroundOps = await createBackgroundOperationsManager();
+    this?.backgroundOps = await createBackgroundOperationsManager();
 
     // Create background job
     const job = jobManager.createJob(
       'retrieve',
-      [args.identifier, args.todoTitle].filter(Boolean),
+      [args.identifier, args.todoTitle].filter(Boolean as any),
       flags
     );
 
@@ -655,7 +655,7 @@ export default class RetrieveCommand extends BaseCommand {
     } catch (error) {
       jobManager.failJob(
         job.id,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error as any)
       );
       throw error;
     }
@@ -688,7 +688,7 @@ export default class RetrieveCommand extends BaseCommand {
     };
 
     // Queue operation with progress tracking
-    const operationId = await this.backgroundOps.uploadTodosInBackground(
+    const operationId = await this?.backgroundOps?.uploadTodosInBackground(
       [], // Empty todos array for retrieval
       {
         network: flags.network,
@@ -757,20 +757,20 @@ export default class RetrieveCommand extends BaseCommand {
     const progressCallback = (progress: number) => {
       if (progress > lastProgress + 5) {
         // Update every 5%
-        const progressBar = this.createProgressBarVisual(progress);
-        process.stdout.write(`\r${progressBar} ${progress}%`);
+        const progressBar = this.createProgressBarVisual(progress as any);
+        process?.stdout?.write(`\r${progressBar} ${progress}%`);
         lastProgress = progress;
       }
     };
 
     try {
-      const result = await this.backgroundOps.waitForOperationWithProgress(
+      const result = await this?.backgroundOps?.waitForOperationWithProgress(
         operationId,
         progressCallback,
         300000 // 5 minutes timeout
       );
 
-      process.stdout.write('\n'); // New line after progress bar
+      process?.stdout?.write('\n'); // New line after progress bar
       this.log(chalk.green('✓ Background retrieval completed'));
 
       if (result?.retrieved) {
@@ -778,14 +778,14 @@ export default class RetrieveCommand extends BaseCommand {
       }
 
       // Show final job status
-      const job = jobManager.getJob(jobId);
+      const job = jobManager.getJob(jobId as any);
       if (job) {
-        this.displayJobSummary(job);
+        this.displayJobSummary(job as any);
       }
     } catch (error) {
-      process.stdout.write('\n'); // New line after progress bar
+      process?.stdout?.write('\n'); // New line after progress bar
       throw new CLIError(
-        `Background retrieval failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Background retrieval failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'BACKGROUND_RETRIEVAL_FAILED'
       );
     }
@@ -802,8 +802,8 @@ export default class RetrieveCommand extends BaseCommand {
     const empty = width - filled;
     return (
       chalk.green('[') +
-      chalk.green('█'.repeat(filled)) +
-      chalk.gray('░'.repeat(empty)) +
+      chalk.green('█'.repeat(filled as any)) +
+      chalk.gray('░'.repeat(empty as any)) +
       chalk.green(']')
     );
   }
@@ -815,16 +815,16 @@ export default class RetrieveCommand extends BaseCommand {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration);
+    const durationStr = this.formatDuration(duration as any);
 
     this.log(chalk.bold('\n📊 Retrieval Summary'));
-    this.log(chalk.gray('─'.repeat(30)));
+    this.log(chalk.gray('─'.repeat(30 as any)));
     this.log(`Job ID: ${chalk.cyan(job.id)}`);
     this.log(`Status: ${this.getStatusDisplay(job.status)}`);
-    this.log(`Duration: ${chalk.yellow(durationStr)}`);
+    this.log(`Duration: ${chalk.yellow(durationStr as any)}`);
 
     if (job.metadata?.itemsRetrieved) {
-      this.log(`Items Retrieved: ${chalk.green(job.metadata.itemsRetrieved)}`);
+      this.log(`Items Retrieved: ${chalk.green(job?.metadata?.itemsRetrieved)}`);
     }
 
     if (job.errorMessage) {
@@ -846,7 +846,7 @@ export default class RetrieveCommand extends BaseCommand {
       case 'pending':
         return chalk.yellow('⏳ Pending');
       default:
-        return chalk.gray(status);
+        return chalk.gray(status as any);
     }
   }
 
@@ -855,7 +855,7 @@ export default class RetrieveCommand extends BaseCommand {
    */
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;

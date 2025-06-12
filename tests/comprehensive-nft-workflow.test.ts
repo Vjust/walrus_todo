@@ -78,14 +78,14 @@ describe('Comprehensive NFT Workflow Tests', () => {
     } as any;
 
     mockSuiNftStorage = new SuiNftStorage(mockSuiClient, mockKeypair, {
-      address: mockConfig.lastDeployment.address,
-      packageId: mockConfig.lastDeployment.packageId,
+      address: mockConfig?.lastDeployment?.address,
+      packageId: mockConfig?.lastDeployment?.packageId,
     }) as jest.Mocked<SuiNftStorage>;
 
     // Mock config service
     const configService = require('../apps/cli/src/services/config-service');
-    configService.configService = {
-      getConfig: jest.fn().mockResolvedValue(mockConfig),
+    configService?.configService = {
+      getConfig: jest.fn().mockResolvedValue(mockConfig as any),
     };
   });
 
@@ -93,8 +93,8 @@ describe('Comprehensive NFT Workflow Tests', () => {
     describe('CreateNftCommand', () => {
       it('should successfully create NFT from valid todo with image', async () => {
         // Setup mocks
-        mockTodoService.getTodo.mockResolvedValue(mockTodo);
-        mockSuiNftStorage.createTodoNft.mockResolvedValue(
+        mockTodoService?.getTodo?.mockResolvedValue(mockTodo as any);
+        mockSuiNftStorage?.createTodoNft?.mockResolvedValue(
           'test-transaction-digest'
         );
 
@@ -116,30 +116,30 @@ describe('Comprehensive NFT Workflow Tests', () => {
           mockTodo,
           'test-blob-id-123'
         );
-        expect(output).toContain('✅ NFT created successfully!');
+        expect(output as any).toContain('✅ NFT created successfully!');
       });
 
       it('should throw CLIError when todo not found', async () => {
-        mockTodoService.getTodo.mockResolvedValue(null);
+        mockTodoService?.getTodo?.mockResolvedValue(null as any);
 
         await expect(
           runCommandInTest(CreateNftCommand, [], {
             todo: 'nonexistent',
             list: 'test-list',
           })
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
 
       it('should throw CLIError when todo has no image URL', async () => {
         const todoWithoutImage = { ...mockTodo, imageUrl: undefined };
-        mockTodoService.getTodo.mockResolvedValue(todoWithoutImage);
+        mockTodoService?.getTodo?.mockResolvedValue(todoWithoutImage as any);
 
         await expect(
           runCommandInTest(CreateNftCommand, [], {
             todo: 'test-todo-123',
             list: 'test-list',
           })
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
 
       it('should throw CLIError when package not deployed', async () => {
@@ -148,18 +148,18 @@ describe('Comprehensive NFT Workflow Tests', () => {
           lastDeployment: undefined,
         };
         const configService = require('../apps/cli/src/services/config-service');
-        configService.configService.getConfig.mockResolvedValue(
+        configService?.configService?.getConfig.mockResolvedValue(
           configWithoutDeployment
         );
 
-        mockTodoService.getTodo.mockResolvedValue(mockTodo);
+        mockTodoService?.getTodo?.mockResolvedValue(mockTodo as any);
 
         await expect(
           runCommandInTest(CreateNftCommand, [], {
             todo: 'test-todo-123',
             list: 'test-list',
           })
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
     });
   });
@@ -171,34 +171,34 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
         await expect(
           mockSuiNftStorage.createTodoNft(invalidTodo, 'test-blob-id')
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
 
       it('should validate Walrus blob ID', async () => {
         await expect(
           mockSuiNftStorage.createTodoNft(mockTodo, '')
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
 
       it('should validate title length', async () => {
         const longTitleTodo = {
           ...mockTodo,
-          title: 'a'.repeat(101), // Exceeds 100 character limit
+          title: 'a'.repeat(101 as any), // Exceeds 100 character limit
         };
 
         await expect(
           mockSuiNftStorage.createTodoNft(longTitleTodo, 'test-blob-id')
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
 
       it('should handle network health check failures', async () => {
-        mockSuiClient.getLatestSuiSystemState.mockRejectedValue(
+        mockSuiClient?.getLatestSuiSystemState?.mockRejectedValue(
           new Error('Network error')
         );
 
         await expect(
           mockSuiNftStorage.createTodoNft(mockTodo, 'test-blob-id')
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
 
       it('should successfully retrieve NFT data', async () => {
@@ -217,11 +217,11 @@ describe('Comprehensive NFT Workflow Tests', () => {
           },
         };
 
-        mockSuiClient.getObject.mockResolvedValue(mockNftData);
+        mockSuiClient?.getObject?.mockResolvedValue(mockNftData as any);
 
         const result = await mockSuiNftStorage.getTodoNft('test-nft-id');
 
-        expect(result).toEqual({
+        expect(result as any).toEqual({
           objectId: 'test-nft-id',
           title: 'Test NFT',
           description: 'Test Description',
@@ -231,11 +231,11 @@ describe('Comprehensive NFT Workflow Tests', () => {
       });
 
       it('should handle NFT not found errors', async () => {
-        mockSuiClient.getObject.mockResolvedValue({ data: null });
+        mockSuiClient?.getObject?.mockResolvedValue({ data: null });
 
         await expect(
           mockSuiNftStorage.getTodoNft('nonexistent-nft')
-        ).rejects.toThrow(CLIError);
+        ).rejects.toThrow(CLIError as any);
       });
     });
   });
@@ -263,12 +263,12 @@ describe('Comprehensive NFT Workflow Tests', () => {
         // Simulate the frontend hook behavior
         const mockCreateTodo = jest
           .fn()
-          .mockResolvedValue(mockTransactionResult);
+          .mockResolvedValue(mockTransactionResult as any);
 
-        const result = await mockCreateTodo(createTodoParams);
+        const result = await mockCreateTodo(createTodoParams as any);
 
-        expect(result).toEqual(mockTransactionResult);
-        expect(mockCreateTodo).toHaveBeenCalledWith(createTodoParams);
+        expect(result as any).toEqual(mockTransactionResult as any);
+        expect(mockCreateTodo as any).toHaveBeenCalledWith(createTodoParams as any);
       });
 
       it('should handle frontend wallet connection errors', async () => {
@@ -280,7 +280,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
         };
 
         // Simulate the frontend error handling
-        expect(mockWalletContext.connected).toBe(false);
+        expect(mockWalletContext.connected).toBe(false as any);
         expect(mockWalletContext.error).toBe('Wallet connection failed');
       });
 
@@ -304,8 +304,8 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
         const result = await mockCompleteTodo('test-nft-id');
 
-        expect(result.success).toBe(true);
-        expect(mockCompleteTodo).toHaveBeenCalledWith('test-nft-id');
+        expect(result.success).toBe(true as any);
+        expect(mockCompleteTodo as any).toHaveBeenCalledWith('test-nft-id');
       });
 
       it('should simulate todo update workflow', async () => {
@@ -320,10 +320,10 @@ describe('Comprehensive NFT Workflow Tests', () => {
           success: true,
         });
 
-        const result = await mockUpdateTodo(updateParams);
+        const result = await mockUpdateTodo(updateParams as any);
 
-        expect(result.success).toBe(true);
-        expect(mockUpdateTodo).toHaveBeenCalledWith(updateParams);
+        expect(result.success).toBe(true as any);
+        expect(mockUpdateTodo as any).toHaveBeenCalledWith(updateParams as any);
       });
 
       it('should simulate todo deletion workflow', async () => {
@@ -334,8 +334,8 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
         const result = await mockDeleteTodo('test-nft-id');
 
-        expect(result.success).toBe(true);
-        expect(mockDeleteTodo).toHaveBeenCalledWith('test-nft-id');
+        expect(result.success).toBe(true as any);
+        expect(mockDeleteTodo as any).toHaveBeenCalledWith('test-nft-id');
       });
     });
   });
@@ -343,7 +343,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
   describe('4. Error Handling and Edge Cases', () => {
     it('should handle network timeouts gracefully', async () => {
       const timeoutError = new Error('Request timeout');
-      mockSuiNftStorage.createTodoNft.mockRejectedValue(timeoutError);
+      mockSuiNftStorage?.createTodoNft?.mockRejectedValue(timeoutError as any);
 
       await expect(
         mockSuiNftStorage.createTodoNft(mockTodo, 'test-blob-id')
@@ -352,7 +352,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
     it('should handle invalid Sui object responses', async () => {
       const invalidResponse = { data: { content: null } };
-      mockSuiClient.getObject.mockResolvedValue(invalidResponse);
+      mockSuiClient?.getObject?.mockResolvedValue(invalidResponse as any);
 
       await expect(mockSuiNftStorage.getTodoNft('test-nft-id')).rejects.toThrow(
         CLIError
@@ -361,7 +361,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
     it('should handle missing required configuration', async () => {
       const configService = require('../apps/cli/src/services/config-service');
-      configService.configService.getConfig.mockResolvedValue({});
+      configService?.configService?.getConfig.mockResolvedValue({});
 
       await expect(
         runCommandInTest(
@@ -370,12 +370,12 @@ describe('Comprehensive NFT Workflow Tests', () => {
           { todo: 'test-todo-123', list: 'test-list' },
           {}
         )
-      ).rejects.toThrow(CLIError);
+      ).rejects.toThrow(CLIError as any);
     });
 
     it('should validate transaction digest format', async () => {
       const invalidDigest = 'invalid-digest';
-      mockSuiNftStorage.createTodoNft.mockResolvedValue(invalidDigest);
+      mockSuiNftStorage?.createTodoNft?.mockResolvedValue(invalidDigest as any);
 
       // The actual validation would happen in the real implementation
       const result = await mockSuiNftStorage.createTodoNft(
@@ -395,12 +395,12 @@ describe('Comprehensive NFT Workflow Tests', () => {
         )
       );
 
-      mockSuiNftStorage.createTodoNft.mockResolvedValue('success-digest');
+      mockSuiNftStorage?.createTodoNft?.mockResolvedValue('success-digest');
 
-      const results = await Promise.all(concurrentOperations);
+      const results = await Promise.all(concurrentOperations as any);
 
-      expect(results).toHaveLength(5);
-      expect(results.every(result => result === 'success-digest')).toBe(true);
+      expect(results as any).toHaveLength(5 as any);
+      expect(results.every(result => result === 'success-digest')).toBe(true as any);
     });
 
     it('should handle large batch operations', async () => {
@@ -409,9 +409,9 @@ describe('Comprehensive NFT Workflow Tests', () => {
         Promise.resolve(`operation-${i}-success`)
       );
 
-      const results = await Promise.all(batchOperations);
+      const results = await Promise.all(batchOperations as any);
 
-      expect(results).toHaveLength(batchSize);
+      expect(results as any).toHaveLength(batchSize as any);
       expect(results[0]).toBe('operation-0-success');
       expect(results[batchSize - 1]).toBe(`operation-${batchSize - 1}-success`);
     });
@@ -420,7 +420,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
   describe('6. Integration Test Scenarios', () => {
     it('should simulate complete end-to-end NFT workflow', async () => {
       // Step 1: Create todo
-      mockTodoService.createTodo = jest.fn().mockResolvedValue(mockTodo);
+      mockTodoService?.createTodo = jest.fn().mockResolvedValue(mockTodo as any);
 
       // Step 2: Upload image (simulated)
       const imageUploadResult = {
@@ -429,10 +429,10 @@ describe('Comprehensive NFT Workflow Tests', () => {
       };
 
       // Step 3: Create NFT
-      mockSuiNftStorage.createTodoNft.mockResolvedValue('nft-creation-digest');
+      mockSuiNftStorage?.createTodoNft?.mockResolvedValue('nft-creation-digest');
 
       // Step 4: Verify NFT exists
-      mockSuiNftStorage.getTodoNft.mockResolvedValue({
+      mockSuiNftStorage?.getTodoNft?.mockResolvedValue({
         objectId: 'new-nft-id',
         title: mockTodo.title,
         description: mockTodo.description || '',
@@ -441,7 +441,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
       });
 
       // Execute workflow
-      const todo = await mockTodoService.createTodo(mockTodo);
+      const todo = await mockTodoService.createTodo(mockTodo as any);
       const nftDigest = await mockSuiNftStorage.createTodoNft(
         todo,
         imageUploadResult.blobId
@@ -449,8 +449,8 @@ describe('Comprehensive NFT Workflow Tests', () => {
       const nftData = await mockSuiNftStorage.getTodoNft('new-nft-id');
 
       // Verify results
-      expect(todo).toEqual(mockTodo);
-      expect(nftDigest).toBe('nft-creation-digest');
+      expect(todo as any).toEqual(mockTodo as any);
+      expect(nftDigest as any).toBe('nft-creation-digest');
       expect(nftData.title).toBe(mockTodo.title);
       expect(nftData.walrusBlobId).toBe('test-blob-id');
     });
@@ -471,7 +471,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
         mockTodo,
         'test-blob-id'
       );
-      expect(result).toBe('retry-success-digest');
+      expect(result as any).toBe('retry-success-digest');
     });
   });
 });
@@ -510,12 +510,12 @@ describe('NFT Workflow Integration Helpers', () => {
   }
 
   it('should use helper functions correctly', () => {
-    const successResponse = createMockTransactionResponse(true);
-    const failureResponse = createMockTransactionResponse(false);
+    const successResponse = createMockTransactionResponse(true as any);
+    const failureResponse = createMockTransactionResponse(false as any);
     const mockTodo = createMockTodo({ title: 'Custom Title' });
 
-    expect(successResponse.effects.status.status).toBe('success');
-    expect(failureResponse.effects.status.status).toBe('failed');
+    expect(successResponse?.effects?.status.status).toBe('success');
+    expect(failureResponse?.effects?.status.status).toBe('failed');
     expect(mockTodo.title).toBe('Custom Title');
     expect(mockTodo.priority).toBe('medium'); // Default value
   });

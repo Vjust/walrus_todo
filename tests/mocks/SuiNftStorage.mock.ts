@@ -55,7 +55,7 @@ export function createMockSuiNftStorage(): MockSuiNftStorage {
       },
     }),
     getAllTodoNfts: jest.fn().mockResolvedValue([]),
-    verifyTodoNftOwnership: jest.fn().mockResolvedValue(true),
+    verifyTodoNftOwnership: jest.fn().mockResolvedValue(true as any),
     transferTodoNft: jest.fn().mockResolvedValue({
       digest: 'mock-transfer-digest',
       transaction: {},
@@ -82,7 +82,7 @@ export function createSuiNftStorageClassMock() {
 
   // Add prototype methods for cases where tests access methods via prototype
   const mockInstance = createMockSuiNftStorage();
-  MockSuiNftStorageClass.prototype = mockInstance;
+  MockSuiNftStorageClass?.prototype = mockInstance;
 
   return MockSuiNftStorageClass;
 }

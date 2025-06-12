@@ -26,20 +26,20 @@ interface AnalysisResults {
 
 // Load and parse tsconfig.json
 const configPath = path.resolve(__dirname, '../tsconfig.json');
-const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+const configFile = ts.readConfigFile(configPath, ts?.sys?.readFile);
 
 if (configFile.error) {
-  process.stderr.write(
-    `Error reading tsconfig.json: ${configFile.error.messageText}\n`
+  process?.stderr?.write(
+    `Error reading tsconfig.json: ${configFile?.error?.messageText}\n`
   );
-  process.exit(1);
+  process.exit(1 as any);
 }
 
 // Create a configuration with noImplicitAny enabled for analysis
 const parsedConfig = ts.parseJsonConfigFileContent(
   configFile.config,
   ts.sys,
-  path.dirname(configPath)
+  path.dirname(configPath as any)
 );
 
 // Override with noImplicitAny enabled
@@ -49,12 +49,12 @@ const strictConfig = {
 };
 
 // Create a new program with the strict configuration
-const host = ts.createCompilerHost(strictConfig);
+const host = ts.createCompilerHost(strictConfig as any);
 const files = globSync(path.join(__dirname, '../src/**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts'],
 });
 
-process.stdout.write(
+process?.stdout?.write(
   `Analyzing ${files.length} TypeScript files for implicit 'any' issues...\n`
 );
 
@@ -62,15 +62,15 @@ process.stdout.write(
 const program = ts.createProgram(files, strictConfig, host);
 
 // Get semantic diagnostics
-const diagnostics = ts.getPreEmitDiagnostics(program);
+const diagnostics = ts.getPreEmitDiagnostics(program as any);
 
 // Filter only implicit any diagnostics (error code 7006)
 const implicitAnyDiagnostics = diagnostics.filter(
   d =>
-    d.code === 7006 || // Parameter has implicit 'any' type
-    d.code === 7005 || // Variable has implicit 'any' type
-    d.code === 7008 || // Member has implicit 'any' type
-    d.code === 7034 // Variable has implicit 'any' type
+    d?.code === 7006 || // Parameter has implicit 'any' type
+    d?.code === 7005 || // Variable has implicit 'any' type
+    d?.code === 7008 || // Member has implicit 'any' type
+    d?.code === 7034 // Variable has implicit 'any' type
 );
 
 // Categorize issues
@@ -83,10 +83,10 @@ implicitAnyDiagnostics.forEach(diagnostic => {
       return;
     }
     const { line, character } =
-      diagnostic.file.getLineAndCharacterOfPosition(start);
+      diagnostic?.file?.getLineAndCharacterOfPosition(start as any);
     const relativePath = path.relative(
       path.resolve(__dirname, '..'),
-      diagnostic.file.fileName
+      diagnostic?.file?.fileName
     );
     const message = ts.flattenDiagnosticMessageText(
       diagnostic.messageText,
@@ -131,41 +131,41 @@ const results: AnalysisResults = {
 
 // Group by file
 issues.forEach(issue => {
-  if (!results.issuesByFile[issue.file]) {
-    results.issuesByFile[issue.file] = [];
+  if (!results?.issuesByFile?.[issue.file]) {
+    results?.issuesByFile?.[issue.file] = [];
   }
-  results.issuesByFile[issue.file]?.push(issue);
+  results?.issuesByFile?.[issue.file]?.push(issue as any);
 });
 
 // Group by category
 issues.forEach(issue => {
-  if (!results.issuesByCategory[issue.category]) {
-    results.issuesByCategory[issue.category] = [];
+  if (!results?.issuesByCategory?.[issue.category]) {
+    results?.issuesByCategory?.[issue.category] = [];
   }
-  results.issuesByCategory[issue.category]?.push(issue);
+  results?.issuesByCategory?.[issue.category]?.push(issue as any);
 });
 
 // Get top files with most issues
-results.topFiles = Object.entries(results.issuesByFile)
+results?.topFiles = Object.entries(results.issuesByFile)
   .map(([file, issues]) => ({ file, count: issues.length }))
   .sort((a, b) => b.count - a.count)
   .slice(0, 20);
 
 // Print summary to console
-process.stdout.write(
+process?.stdout?.write(
   `\nAnalysis complete. Found ${results.totalIssues} implicit 'any' issues in ${Object.keys(results.issuesByFile).length} files.\n`
 );
 
-process.stdout.write('\nTop 20 files with most issues:\n');
-results.topFiles.forEach(({ file, count }) => {
-  process.stdout.write(`${file}: ${count} issues\n`);
+process?.stdout?.write('\nTop 20 files with most issues:\n');
+results?.topFiles?.forEach(({ file, count }) => {
+  process?.stdout?.write(`${file}: ${count} issues\n`);
 });
 
-process.stdout.write('\nIssues by category:\n');
+process?.stdout?.write('\nIssues by category:\n');
 Object.entries(results.issuesByCategory)
   .sort((a, b) => b[1].length - a[1].length)
   .forEach(([category, issues]) => {
-    process.stdout.write(`${category}: ${issues.length} issues\n`);
+    process?.stdout?.write(`${category}: ${issues.length} issues\n`);
   });
 
 // Write detailed report to file
@@ -174,11 +174,11 @@ fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
 
 // Write a more readable markdown report
 const markdownPath = path.resolve(__dirname, '../implicit-any-report.md');
-const markdownContent = generateMarkdownReport(results);
+const markdownContent = generateMarkdownReport(results as any);
 fs.writeFileSync(markdownPath, markdownContent);
 
-process.stdout.write(`\nDetailed report written to ${reportPath}\n`);
-process.stdout.write(`Markdown report written to ${markdownPath}\n`);
+process?.stdout?.write(`\nDetailed report written to ${reportPath}\n`);
+process?.stdout?.write(`Markdown report written to ${markdownPath}\n`);
 
 /**
  * Generates a markdown report from analysis results
@@ -205,7 +205,7 @@ function generateMarkdownReport(results: AnalysisResults): string {
   markdown += `| File | Issues |\n`;
   markdown += `| ---- | ------ |\n`;
 
-  results.topFiles.forEach(({ file, count }) => {
+  results?.topFiles?.forEach(({ file, count }) => {
     markdown += `| ${file} | ${count} |\n`;
   });
 
@@ -219,7 +219,7 @@ function generateMarkdownReport(results: AnalysisResults): string {
       markdown += `| ----------- | -------- | ------- |\n`;
 
       issues.forEach(issue => {
-        markdown += `| ${issue.line}:${issue.column} | ${issue.category} | ${issue.message.replace(/\|/g, '\\|')} |\n`;
+        markdown += `| ${issue.line}:${issue.column} | ${issue.category} | ${issue?.message?.replace(/\|/g, '\\|')} |\n`;
       });
 
       markdown += `\n`;

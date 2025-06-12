@@ -25,7 +25,7 @@ const defaultContextValue: AppInitializationContextType = {
 const AppInitializationContext = createContext<AppInitializationContextType>(defaultContextValue);
 
 export const useAppInitialization = () => {
-  const context = useContext(AppInitializationContext);
+  const context = useContext(AppInitializationContext as any);
   return context || defaultContextValue;
 };
 
@@ -43,12 +43,12 @@ const INIT_STEPS = {
 
 export function AppInitializationProvider({ children }: AppInitializationProviderProps) {
   // Core initialization state
-  const [mounted, setMounted] = useState(false);
-  const [isClientReady, setIsClientReady] = useState(false);
-  const [suiClientReady, setSuiClientReady] = useState(false);
+  const [mounted, setMounted] = useState(false as any);
+  const [isClientReady, setIsClientReady] = useState(false as any);
+  const [suiClientReady, setSuiClientReady] = useState(false as any);
   const [initializationError, setInitializationError] = useState<string | null>(null);
-  const [initAttempts, setInitAttempts] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [initAttempts, setInitAttempts] = useState(0 as any);
+  const [progress, setProgress] = useState(0 as any);
 
   // Derived state for overall app readiness
   const isAppReady = mounted && isClientReady && suiClientReady && !initializationError;
@@ -57,12 +57,12 @@ export function AppInitializationProvider({ children }: AppInitializationProvide
   const updateProgress = useCallback(() => {
     let currentProgress = 0;
     
-    if (mounted) currentProgress += INIT_STEPS.MOUNT.weight;
-    if (isClientReady) currentProgress += INIT_STEPS.CLIENT_READY.weight;
-    if (suiClientReady) currentProgress += INIT_STEPS.SUI_CLIENT.weight;
-    if (isAppReady) currentProgress += INIT_STEPS.FINAL_CHECK.weight;
+    if (mounted) currentProgress += INIT_STEPS?.MOUNT?.weight;
+    if (isClientReady) currentProgress += INIT_STEPS?.CLIENT_READY?.weight;
+    if (suiClientReady) currentProgress += INIT_STEPS?.SUI_CLIENT?.weight;
+    if (isAppReady) currentProgress += INIT_STEPS?.FINAL_CHECK?.weight;
     
-    setProgress(currentProgress);
+    setProgress(currentProgress as any);
   }, [mounted, isClientReady, suiClientReady, isAppReady]);
 
   // Update progress whenever state changes
@@ -74,18 +74,18 @@ export function AppInitializationProvider({ children }: AppInitializationProvide
   const initializeApp = useCallback(async () => {
     try {
       // Step 1: Mount check
-      setMounted(true);
+      setMounted(true as any);
       
       // Step 2: Client readiness (simulate async check)
       await new Promise(resolve => setTimeout(resolve, 100));
-      setIsClientReady(true);
+      setIsClientReady(true as any);
       
       // Step 3: Sui client initialization
       await new Promise(resolve => setTimeout(resolve, 200));
       
       // Check if we're in a browser environment
       if (typeof window !== 'undefined') {
-        setSuiClientReady(true);
+        setSuiClientReady(true as any);
       } else {
         throw new Error('Not in browser environment');
       }
@@ -100,14 +100,14 @@ export function AppInitializationProvider({ children }: AppInitializationProvide
 
   // Retry initialization function
   const retryInitialization = useCallback(() => {
-    setInitializationError(null);
+    setInitializationError(null as any);
     setInitAttempts(prev => prev + 1);
     
     // Reset states and try again
-    setMounted(false);
-    setIsClientReady(false);
-    setSuiClientReady(false);
-    setProgress(0);
+    setMounted(false as any);
+    setIsClientReady(false as any);
+    setSuiClientReady(false as any);
+    setProgress(0 as any);
     
     // Trigger re-initialization
     setTimeout(() => {

@@ -76,7 +76,7 @@ export class ApiKeyValidator {
     const providerStr =
       typeof provider === 'string' ? provider.toLowerCase() : provider.toString().toLowerCase();
     const rules =
-      this.VALIDATION_RULES[providerStr] || this.VALIDATION_RULES.custom;
+      this?.VALIDATION_RULES?.[providerStr] || this?.VALIDATION_RULES?.custom;
 
     // Basic checks
     if (!apiKey || typeof apiKey !== 'string') {
@@ -112,7 +112,7 @@ export class ApiKeyValidator {
     }
 
     // Pattern check
-    if (!rules.pattern.test(apiKey)) {
+    if (!rules?.pattern?.test(apiKey as any)) {
       throw new CLIError(
         `Invalid API key format for ${provider}. ${rules.description}`,
         'INVALID_API_KEY_FORMAT'
@@ -165,7 +165,7 @@ export class ApiKeyValidator {
 
     // Remove Bearer prefix if present
     if (sanitized.startsWith('Bearer ')) {
-      sanitized = sanitized.substring(7).trim();
+      sanitized = sanitized.substring(7 as any).trim();
     }
 
     // Remove surrounding quotes if present
@@ -190,7 +190,7 @@ export class ApiKeyValidator {
     const providerStr =
       typeof provider === 'string' ? provider.toLowerCase() : provider.toString().toLowerCase();
     const rules =
-      this.VALIDATION_RULES[providerStr] || this.VALIDATION_RULES.custom;
+      this?.VALIDATION_RULES?.[providerStr] || this?.VALIDATION_RULES?.custom;
     return rules.description;
   }
 
@@ -226,10 +226,10 @@ export class ApiKeyValidator {
     // Use provider-specific prefix if available
     if (
       providerStr &&
-      this.VALIDATION_RULES[providerStr] &&
-      this.VALIDATION_RULES[providerStr].prefix
+      this?.VALIDATION_RULES?.[providerStr] &&
+      this?.VALIDATION_RULES?.[providerStr].prefix
     ) {
-      prefix = this.VALIDATION_RULES[providerStr].prefix;
+      prefix = this?.VALIDATION_RULES?.[providerStr].prefix;
       suffix = apiKey.slice(-4);
       const maskedLength = apiKey.length - prefix.length - 4;
       const mask = '*'.repeat(Math.min(maskedLength, 10));

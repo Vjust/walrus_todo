@@ -55,7 +55,7 @@ export class CacheManager<K extends PropertyKey, V> {
   };
 
   constructor(options: CacheOptions<K, V> = {}) {
-    this.options = {
+    this?.options = {
       ...CacheManager.DEFAULT_OPTIONS,
       ...options,
     } as Required<CacheOptions<K, V>>;
@@ -63,9 +63,9 @@ export class CacheManager<K extends PropertyKey, V> {
 
     // Debug log on creation
     logger.debug(`Cache created with options:`, {
-      maxSize: this.options.maxSize,
-      ttl: this.options.ttl,
-      strategy: this.options.evictionStrategy,
+      maxSize: this?.options?.maxSize,
+      ttl: this?.options?.ttl,
+      strategy: this?.options?.evictionStrategy,
     });
   }
 
@@ -79,10 +79,10 @@ export class CacheManager<K extends PropertyKey, V> {
    */
   set(key: K, value: V, ttl?: number): boolean {
     // Calculate item size
-    const size = this.options.sizeCalculator(value);
+    const size = this?.options?.sizeCalculator(value as any);
 
     // Check if we're replacing an existing item
-    const existing = this.cache.get(key);
+    const existing = this?.cache?.get(key as any);
     if (existing) {
       // Update total size delta
       this.totalSize -= existing.size;
@@ -90,13 +90,13 @@ export class CacheManager<K extends PropertyKey, V> {
     } else {
       // New item, check if we need to make room
       if (
-        this.cache.size >= this.options.maxSize ||
+        this?.cache?.size >= this?.options?.maxSize ||
         this.isMemoryPressureHigh()
       ) {
         const evicted = this.evictItems();
-        if (!evicted && this.cache.size >= this.options.maxSize) {
+        if (!evicted && this?.cache?.size >= this?.options?.maxSize) {
           logger.warn(
-            `Cache full, couldn't evict items for key: ${String(key)}`
+            `Cache full, couldn't evict items for key: ${String(key as any)}`
           );
           return false;
         }
@@ -107,10 +107,10 @@ export class CacheManager<K extends PropertyKey, V> {
     }
 
     // Calculate expiration time
-    const expires = Date.now() + (ttl ?? this.options.ttl);
+    const expires = Date.now() + (ttl ?? this?.options?.ttl);
 
     // Store the entry
-    this.cache.set(key, {
+    this?.cache?.set(key, {
       value,
       expires,
       lastAccessed: Date.now(),
@@ -128,7 +128,7 @@ export class CacheManager<K extends PropertyKey, V> {
    * @returns Cached value or undefined if not found or expired
    */
   get(key: K): V | undefined {
-    const entry = this.cache.get(key);
+    const entry = this?.cache?.get(key as any);
     if (!entry) return undefined;
 
     const now = Date.now();
@@ -136,19 +136,19 @@ export class CacheManager<K extends PropertyKey, V> {
     // Check if expired
     if (entry.expires < now) {
       // If using stale-while-revalidate, mark as stale but return
-      if (this.options.staleWhileRevalidate) {
-        entry.isStale = true;
-        logger.debug(`Returning stale value for key: ${String(key)}`);
+      if (this?.options?.staleWhileRevalidate) {
+        entry?.isStale = true;
+        logger.debug(`Returning stale value for key: ${String(key as any)}`);
         return entry.value;
       }
 
       // Otherwise remove and return undefined
-      this.delete(key);
+      this.delete(key as any);
       return undefined;
     }
 
     // Update last accessed time for LRU
-    entry.lastAccessed = now;
+    entry?.lastAccessed = now;
     return entry.value;
   }
 
@@ -156,22 +156,22 @@ export class CacheManager<K extends PropertyKey, V> {
    * Check if a key exists in the cache (doesn't update lastAccessed)
    */
   has(key: K): boolean {
-    return this.cache.has(key);
+    return this?.cache?.has(key as any);
   }
 
   /**
    * Delete a key from the cache
    */
   delete(key: K): boolean {
-    const entry = this.cache.get(key);
+    const entry = this?.cache?.get(key as any);
     if (!entry) return false;
 
     // Call eviction callback
     try {
-      this.options.onEviction(key, entry.value);
+      this?.options?.onEviction(key, entry.value);
     } catch (error) {
       logger.error(
-        `Error in eviction callback for key ${String(key)}`,
+        `Error in eviction callback for key ${String(key as any)}`,
         error as Error
       );
     }
@@ -180,7 +180,7 @@ export class CacheManager<K extends PropertyKey, V> {
     this.totalSize -= entry.size;
 
     // Remove from cache
-    return this.cache.delete(key);
+    return this?.cache?.delete(key as any);
   }
 
   /**
@@ -188,20 +188,20 @@ export class CacheManager<K extends PropertyKey, V> {
    */
   clear(): void {
     // Call eviction callback for each item
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of this?.cache?.entries()) {
       try {
-        this.options.onEviction(key, entry.value);
+        this?.options?.onEviction(key, entry.value);
       } catch (error) {
         logger.error(
-          `Error in eviction callback for key ${String(key)}`,
+          `Error in eviction callback for key ${String(key as any)}`,
           error as Error
         );
       }
     }
 
     // Clear the cache and reset size
-    this.cache.clear();
-    this.totalSize = 0;
+    this?.cache?.clear();
+    this?.totalSize = 0;
     logger.debug('Cache cleared');
   }
 
@@ -218,14 +218,14 @@ export class CacheManager<K extends PropertyKey, V> {
     let oldestEntry = Date.now();
     let newestEntry = 0;
 
-    for (const entry of this.cache.values()) {
+    for (const entry of this?.cache?.values()) {
       oldestEntry = Math.min(oldestEntry, entry.lastAccessed);
       newestEntry = Math.max(newestEntry, entry.lastAccessed);
     }
 
     return {
-      size: this.cache.size,
-      maxSize: this.options.maxSize,
+      size: this?.cache?.size,
+      maxSize: this?.options?.maxSize,
       totalSize: this.totalSize,
       oldestEntry,
       newestEntry,
@@ -240,9 +240,9 @@ export class CacheManager<K extends PropertyKey, V> {
       clearInterval(this.gcTimer);
     }
 
-    this.gcTimer = setInterval(() => {
+    this?.gcTimer = setInterval(() => {
       this.collectGarbage();
-    }, this.options.gcInterval);
+    }, this?.options?.gcInterval);
 
     // Ensure cleanup on process exit
     process.on('exit', () => {
@@ -258,9 +258,9 @@ export class CacheManager<K extends PropertyKey, V> {
     const expired: K[] = [];
 
     // Find expired entries
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of this?.cache?.entries()) {
       if (entry.expires < now) {
-        expired.push(key);
+        expired.push(key as any);
       }
     }
 
@@ -270,7 +270,7 @@ export class CacheManager<K extends PropertyKey, V> {
         `Garbage collection removing ${expired.length} expired items`
       );
       for (const key of expired) {
-        this.delete(key);
+        this.delete(key as any);
       }
     }
 
@@ -290,13 +290,13 @@ export class CacheManager<K extends PropertyKey, V> {
       const memoryUsage = process.memoryUsage();
       const memoryRatio = memoryUsage.heapUsed / memoryUsage.heapTotal;
 
-      return memoryRatio > this.options.memoryThreshold;
+      return memoryRatio > this?.options?.memoryThreshold;
     } catch (error) {
       logger.warn('Failed to check memory pressure', {
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
       // Fall back to cache size check
-      return this.cache.size >= this.options.maxSize;
+      return this?.cache?.size >= this?.options?.maxSize;
     }
   }
 
@@ -305,24 +305,24 @@ export class CacheManager<K extends PropertyKey, V> {
    * @returns true if items were evicted, false otherwise
    */
   private evictItems(): boolean {
-    if (this.cache.size === 0) return false;
+    if (this.cache?.size === 0) return false;
 
     // Calculate how many items to evict (10% of cache or at least 1)
-    const evictionCount = Math.max(1, Math.floor(this.cache.size * 0.1));
+    const evictionCount = Math.max(1, Math.floor(this?.cache?.size * 0.1));
     let evicted = 0;
 
-    switch (this.options.evictionStrategy) {
+    switch (this?.options?.evictionStrategy) {
       case 'lru':
-        evicted = this.evictLRU(evictionCount);
+        evicted = this.evictLRU(evictionCount as any);
         break;
       case 'ttl':
-        evicted = this.evictTTL(evictionCount);
+        evicted = this.evictTTL(evictionCount as any);
         break;
       case 'memory-pressure':
         // Start with TTL, then fallback to LRU if needed
-        evicted = this.evictTTL(evictionCount);
+        evicted = this.evictTTL(evictionCount as any);
         if (evicted === 0) {
-          evicted = this.evictLRU(evictionCount);
+          evicted = this.evictLRU(evictionCount as any);
         }
         break;
     }
@@ -335,7 +335,7 @@ export class CacheManager<K extends PropertyKey, V> {
    */
   private evictLRU(count: number): number {
     // Sort all entries by last accessed time
-    const entries = Array.from(this.cache.entries()).sort(
+    const entries = Array.from(this?.cache?.entries()).sort(
       ([, a], [, b]) => a.lastAccessed - b.lastAccessed
     );
 
@@ -345,7 +345,7 @@ export class CacheManager<K extends PropertyKey, V> {
     // Delete each entry
     let evicted = 0;
     for (const [key] of toEvict) {
-      if (this.delete(key)) {
+      if (this.delete(key as any)) {
         evicted++;
       }
     }
@@ -364,7 +364,7 @@ export class CacheManager<K extends PropertyKey, V> {
     const now = Date.now();
 
     // Sort all entries by time remaining until expiration
-    const entries = Array.from(this.cache.entries())
+    const entries = Array.from(this?.cache?.entries())
       .sort(([, a], [, b]) => a.expires - b.expires)
       // Filter out already expired entries which will be cleared by GC
       .filter(([, entry]) => entry.expires > now);
@@ -375,7 +375,7 @@ export class CacheManager<K extends PropertyKey, V> {
     // Delete each entry
     let evicted = 0;
     for (const [key] of toEvict) {
-      if (this.delete(key)) {
+      if (this.delete(key as any)) {
         evicted++;
       }
     }
@@ -393,7 +393,7 @@ export class CacheManager<K extends PropertyKey, V> {
   cleanup(): void {
     if (this.gcTimer !== null) {
       clearInterval(this.gcTimer);
-      this.gcTimer = null;
+      this?.gcTimer = null;
     }
 
     // Clear the cache

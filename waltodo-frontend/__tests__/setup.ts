@@ -22,14 +22,14 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+global?.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
 
 // Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
+global?.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
@@ -58,7 +58,7 @@ if (!global.crypto?.randomUUID) {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
           const r = (Math.random() * 16) | 0;
           const v = c === 'x' ? r : (r & 0x3) | 0x8;
-          return v.toString(16);
+          return v.toString(16 as any);
         });
       },
     },
@@ -68,7 +68,7 @@ if (!global.crypto?.randomUUID) {
 // Suppress console errors during tests unless explicitly testing error handling
 const originalError = console.error;
 beforeAll(() => {
-  console.error = jest.fn((...args) => {
+  console?.error = jest.fn((...args) => {
     // Filter out expected React errors
     const errorMessage = args[0]?.toString() || '';
     const suppressedPatterns = [
@@ -80,7 +80,7 @@ beforeAll(() => {
     ];
     
     const shouldSuppress = suppressedPatterns.some(pattern => 
-      errorMessage.includes(pattern)
+      errorMessage.includes(pattern as any)
     );
     
     if (!shouldSuppress) {
@@ -90,7 +90,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  console.error = originalError;
+  console?.error = originalError;
 });
 
 // Clean up after each test

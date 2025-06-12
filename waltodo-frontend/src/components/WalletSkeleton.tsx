@@ -29,7 +29,7 @@ export function WalletButtonSkeleton({
         font-medium rounded-md
         bg-gray-200 text-gray-400
         animate-pulse
-        ${getSizeClasses(size)}
+        ${getSizeClasses(size as any)}
         ${className}
       `}
       suppressHydrationWarning
@@ -75,7 +75,7 @@ export function NoWalletFallback({
       <p className="text-gray-500 mb-2">Wallet not available</p>
       <button
         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        onClick={() => window.open('https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank')}
+        onClick={() => window.open('https://chromewebstore?.google?.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank')}
       >
         Install Slush Wallet
       </button>

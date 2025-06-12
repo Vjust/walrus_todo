@@ -64,96 +64,96 @@ export const useWalletStore = create<WalletState & WalletActions>()(
             // Connection actions
             connect: () => {
               set((state) => {
-                state.connection.status = 'connecting';
-                state.error = null;
+                state.connection?.status = 'connecting';
+                state?.error = null;
               });
             },
 
             disconnect: () => {
               set((state) => {
-                state.connection = {
+                state?.connection = {
                   status: 'disconnected',
                   address: null,
-                  network: state.connection.network, // Keep network preference
+                  network: state?.connection?.network, // Keep network preference
                   chainId: null,
                   name: null,
                 };
-                state.session = {
+                state?.session = {
                   ...initialWalletState.session,
                   lastActivity: Date.now(),
                 };
-                state.transactions.pending = {};
-                state.capabilities = { ...initialWalletState.capabilities };
-                state.error = null;
-                state.modalOpen = false;
+                state.transactions?.pending = {};
+                state?.capabilities = { ...initialWalletState.capabilities };
+                state?.error = null;
+                state?.modalOpen = false;
               });
             },
 
             setConnectionStatus: (status) => {
               set((state) => {
-                state.connection.status = status;
+                state.connection?.status = status;
                 if (status === 'connected') {
-                  state.session.lastActivity = Date.now();
-                  state.session.expired = false;
-                  state.session.timeoutWarning = false;
-                  state.error = null;
+                  state.session?.lastActivity = Date.now();
+                  state.session?.expired = false;
+                  state.session?.timeoutWarning = false;
+                  state?.error = null;
                 } else if (status === 'error') {
-                  state.connection.address = null;
-                  state.connection.name = null;
-                  state.connection.chainId = null;
+                  state.connection?.address = null;
+                  state.connection?.name = null;
+                  state.connection?.chainId = null;
                 }
               });
             },
 
             setAccount: (address, name) => {
               set((state) => {
-                state.connection.address = address;
-                state.connection.name = name || null;
+                state.connection?.address = address;
+                state.connection?.name = name || null;
                 if (address) {
-                  state.connection.status = 'connected';
-                  state.session.lastActivity = Date.now();
-                  state.session.expired = false;
+                  state.connection?.status = 'connected';
+                  state.session?.lastActivity = Date.now();
+                  state.session?.expired = false;
                 }
               });
             },
 
             setNetwork: (network, chainId) => {
               set((state) => {
-                state.connection.network = network;
-                state.connection.chainId = chainId || null;
+                state.connection?.network = network;
+                state.connection?.chainId = chainId || null;
               });
             },
 
             // Session actions
             updateActivity: () => {
               set((state) => {
-                state.session.lastActivity = Date.now();
-                state.session.expired = false;
-                state.session.timeoutWarning = false;
+                state.session?.lastActivity = Date.now();
+                state.session?.expired = false;
+                state.session?.timeoutWarning = false;
               });
             },
 
             setSessionExpired: (expired) => {
               set((state) => {
-                state.session.expired = expired;
+                state.session?.expired = expired;
                 if (expired) {
-                  state.connection.status = 'disconnected';
-                  state.connection.address = null;
-                  state.connection.name = null;
-                  state.connection.chainId = null;
+                  state.connection?.status = 'disconnected';
+                  state.connection?.address = null;
+                  state.connection?.name = null;
+                  state.connection?.chainId = null;
                 }
               });
             },
 
             setTimeoutWarning: (warning) => {
               set((state) => {
-                state.session.timeoutWarning = warning;
+                state.session?.timeoutWarning = warning;
               });
             },
 
             resetSession: () => {
               set((state) => {
-                state.session = {
+                state?.session = {
                   ...initialWalletState.session,
                   lastActivity: Date.now(),
                 };
@@ -169,23 +169,23 @@ export const useWalletStore = create<WalletState & WalletActions>()(
 
               set((state) => {
                 // Pre-check to avoid unnecessary operations
-                const history = state.transactions.history;
+                const history = state?.transactions?.history;
                 
                 // Add to history with more efficient array management
-                history.unshift(fullTransaction);
+                history.unshift(fullTransaction as any);
                 
                 // Efficient array truncation
                 if (history.length > 100) {
-                  history.length = 100; // More efficient than slice
+                  history?.length = 100; // More efficient than slice
                 }
 
                 // Add to pending if status is pending
-                if (fullTransaction.status === 'pending') {
-                  state.transactions.pending[fullTransaction.id] = fullTransaction;
+                if (fullTransaction?.status === 'pending') {
+                  state.transactions?.pending?.[fullTransaction.id] = fullTransaction;
                 }
 
                 // Update last transaction
-                state.transactions.lastTransaction = fullTransaction;
+                state.transactions?.lastTransaction = fullTransaction;
               });
             }),
 
@@ -223,49 +223,49 @@ export const useWalletStore = create<WalletState & WalletActions>()(
             removeTransaction: (id) => {
               set((state) => {
                 // Remove from history
-                state.transactions.history = state.transactions.history.filter(tx => tx.id !== id);
+                state.transactions?.history = state?.transactions?.history.filter(tx => tx.id !== id);
                 
                 // Remove from pending
-                delete state.transactions.pending[id];
+                delete state.transactions?.pending?.[id];
 
                 // Clear last transaction if it's the same
-                if (state.transactions.lastTransaction?.id === id) {
-                  delete state.transactions.lastTransaction;
+                if (state?.transactions?.lastTransaction?.id === id) {
+                  delete state?.transactions?.lastTransaction;
                 }
               });
             },
 
             clearTransactionHistory: () => {
               set((state) => {
-                state.transactions.history = [];
-                state.transactions.pending = {};
-                delete state.transactions.lastTransaction;
+                state.transactions?.history = [];
+                state.transactions?.pending = {};
+                delete state?.transactions?.lastTransaction;
               });
             },
 
             // Error actions
             setError: (error) => {
               set((state) => {
-                state.error = error;
+                state?.error = error;
               });
             },
 
             clearError: () => {
               set((state) => {
-                state.error = null;
+                state?.error = null;
               });
             },
 
             // Modal actions
             openModal: () => {
               set((state) => {
-                state.modalOpen = true;
+                state?.modalOpen = true;
               });
             },
 
             closeModal: () => {
               set((state) => {
-                state.modalOpen = false;
+                state?.modalOpen = false;
               });
             },
 
@@ -287,44 +287,44 @@ export const useWalletStore = create<WalletState & WalletActions>()(
     ),
     {
       name: 'WalTodo Wallet Store',
-      enabled: process.env.NODE_ENV === 'development',
+      enabled: process.env?.NODE_ENV === 'development',
     }
   )
 );
 
 // Performance-optimized connection selectors
 export const useWalletConnection = () => useWalletStore((state) => state.connection);
-export const useWalletAddress = () => useWalletStore((state) => state.connection.address);
-export const useWalletStatus = () => useWalletStore((state) => state.connection.status);
-export const useWalletNetwork = () => useWalletStore((state) => state.connection.network);
-export const useWalletName = () => useWalletStore((state) => state.connection.name);
+export const useWalletAddress = () => useWalletStore((state) => state?.connection?.address);
+export const useWalletStatus = () => useWalletStore((state) => state?.connection?.status);
+export const useWalletNetwork = () => useWalletStore((state) => state?.connection?.network);
+export const useWalletName = () => useWalletStore((state) => state?.connection?.name);
 
 // Session selectors
 export const useWalletSession = () => useWalletStore((state) => state.session);
-export const useSessionExpired = () => useWalletStore((state) => state.session.expired);
-export const useTimeoutWarning = () => useWalletStore((state) => state.session.timeoutWarning);
+export const useSessionExpired = () => useWalletStore((state) => state?.session?.expired);
+export const useTimeoutWarning = () => useWalletStore((state) => state?.session?.timeoutWarning);
 
 // Transaction selectors
-export const useTransactionHistory = () => useWalletStore((state) => state.transactions.history);
-export const usePendingTransactions = () => useWalletStore((state) => state.transactions.pending);
-export const useLastTransaction = () => useWalletStore((state) => state.transactions.lastTransaction);
+export const useTransactionHistory = () => useWalletStore((state) => state?.transactions?.history);
+export const usePendingTransactions = () => useWalletStore((state) => state?.transactions?.pending);
+export const useLastTransaction = () => useWalletStore((state) => state?.transactions?.lastTransaction);
 export const usePendingTransactionCount = () => 
-  useWalletStore((state) => Object.keys(state.transactions.pending).length);
+  useWalletStore((state) => Object.keys(state?.transactions?.pending).length);
 
 // Capability selectors
 export const useWalletCapabilities = () => useWalletStore((state) => state.capabilities);
-export const useCanSignAndExecute = () => useWalletStore((state) => state.capabilities.signAndExecute);
-export const useNFTSupport = () => useWalletStore((state) => state.capabilities.nftSupport);
-export const useWalrusSupport = () => useWalletStore((state) => state.capabilities.walrusSupport);
+export const useCanSignAndExecute = () => useWalletStore((state) => state?.capabilities?.signAndExecute);
+export const useNFTSupport = () => useWalletStore((state) => state?.capabilities?.nftSupport);
+export const useWalrusSupport = () => useWalletStore((state) => state?.capabilities?.walrusSupport);
 
 // Error and modal selectors
 export const useWalletError = () => useWalletStore((state) => state.error);
 export const useWalletModal = () => useWalletStore((state) => state.modalOpen);
 
 // Connection state helpers
-export const useIsConnected = () => useWalletStore((state) => state.connection.status === 'connected');
-export const useIsConnecting = () => useWalletStore((state) => state.connection.status === 'connecting');
-export const useIsDisconnected = () => useWalletStore((state) => state.connection.status === 'disconnected');
+export const useIsConnected = () => useWalletStore((state) => state.connection?.status === 'connected');
+export const useIsConnecting = () => useWalletStore((state) => state.connection?.status === 'connecting');
+export const useIsDisconnected = () => useWalletStore((state) => state.connection?.status === 'disconnected');
 
 // Action selectors
 export const useWalletActions = () => useWalletStore((state) => ({
@@ -350,13 +350,13 @@ export const useWalletActions = () => useWalletStore((state) => ({
 
 // Computed selectors
 export const useWalletSummary = () => useWalletStore((state) => ({
-  isConnected: state.connection.status === 'connected',
-  address: state.connection.address,
-  network: state.connection.network,
-  name: state.connection.name,
-  pendingTransactions: Object.keys(state.transactions.pending).length,
+  isConnected: state.connection?.status === 'connected',
+  address: state?.connection?.address,
+  network: state?.connection?.network,
+  name: state?.connection?.name,
+  pendingTransactions: Object.keys(state?.transactions?.pending).length,
   hasError: !!state.error,
-  sessionValid: !state.session.expired,
+  sessionValid: !state?.session?.expired,
 }));
 
 /**
@@ -374,9 +374,9 @@ export const useSessionTimeout = () => {
     const warningTime = autoDisconnectTime! - 5 * 60 * 1000; // 5 minutes before timeout
 
     if (timeSinceActivity >= autoDisconnectTime!) {
-      setSessionExpired(true);
+      setSessionExpired(true as any);
     } else if (timeSinceActivity >= warningTime && !timeoutWarning) {
-      setTimeoutWarning(true);
+      setTimeoutWarning(true as any);
     }
   };
 
@@ -392,6 +392,6 @@ export const useSessionTimeout = () => {
  */
 export const hydrateWalletStore = () => {
   if (typeof window !== 'undefined') {
-    useWalletStore.persist.rehydrate();
+    useWalletStore?.persist?.rehydrate();
   }
 };

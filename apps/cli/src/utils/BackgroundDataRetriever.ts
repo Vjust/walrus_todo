@@ -71,7 +71,7 @@ export class BackgroundDataRetriever extends EventEmitter {
       mock: options.mock,
     }).id;
 
-    this.logger.info(`Starting background Walrus blob retrieval: ${blobId}`, {
+    this?.logger?.info(`Starting background Walrus blob retrieval: ${blobId}`, {
       operationId,
       jobId,
     });
@@ -98,7 +98,7 @@ export class BackgroundDataRetriever extends EventEmitter {
       contractAddress: contractConfig.address,
     }).id;
 
-    this.logger.info(`Starting background Sui NFT retrieval: ${objectId}`, {
+    this?.logger?.info(`Starting background Sui NFT retrieval: ${objectId}`, {
       operationId,
       jobId,
     });
@@ -134,7 +134,7 @@ export class BackgroundDataRetriever extends EventEmitter {
       }
     ).id;
 
-    this.logger.info(
+    this?.logger?.info(
       `Starting background batch retrieval: ${items.length} items`,
       {
         operationId,
@@ -156,7 +156,7 @@ export class BackgroundDataRetriever extends EventEmitter {
   async getRetrievalStatus(
     operationId: string
   ): Promise<RetrievalProgress | null> {
-    return await this.cache.get(`status:${operationId}`);
+    return await this?.cache?.get(`status:${operationId}`);
   }
 
   /**
@@ -165,15 +165,15 @@ export class BackgroundDataRetriever extends EventEmitter {
   async getRetrievalResult(
     operationId: string
   ): Promise<RetrievalResult | null> {
-    return await this.cache.get(`result:${operationId}`);
+    return await this?.cache?.get(`result:${operationId}`);
   }
 
   /**
    * Cancel a background retrieval operation
    */
   async cancelRetrieval(operationId: string): Promise<boolean> {
-    const status = await this.getRetrievalStatus(operationId);
-    if (!status || status.phase === 'complete') {
+    const status = await this.getRetrievalStatus(operationId as any);
+    if (!status || status?.phase === 'complete') {
       return false;
     }
 
@@ -185,7 +185,7 @@ export class BackgroundDataRetriever extends EventEmitter {
     });
 
     // Cancel the job
-    const jobData = await this.cache.get(`job:${operationId}`);
+    const jobData = await this?.cache?.get(`job:${operationId}`);
     if (jobData?.jobId) {
       jobManager.cancelJob(jobData.jobId);
     }
@@ -208,7 +208,7 @@ export class BackgroundDataRetriever extends EventEmitter {
 
     try {
       // Store job reference
-      await this.cache.set(`job:${operationId}`, { jobId });
+      await this?.cache?.set(`job:${operationId}`, { jobId });
 
       // Initialize progress
       await this.updateProgress(operationId, {
@@ -219,11 +219,11 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 0,
       });
 
-      jobManager.startJob(jobId);
+      jobManager.startJob(jobId as any);
       jobManager.updateProgress(jobId, 0);
 
       // Connect to Walrus
-      this.logger.debug(`Connecting to Walrus storage for ${blobId}`);
+      this?.logger?.debug(`Connecting to Walrus storage for ${blobId}`);
       const walrusStorage = createWalrusStorage(
         options.network || 'testnet',
         options.mock || false
@@ -263,7 +263,7 @@ export class BackgroundDataRetriever extends EventEmitter {
               processedItems: 0,
             });
 
-            const result = await walrusStorage.retrieveTodo(blobId);
+            const result = await walrusStorage.retrieveTodo(blobId as any);
 
             await this.updateProgress(operationId, {
               phase: 'processing',
@@ -279,7 +279,7 @@ export class BackgroundDataRetriever extends EventEmitter {
             maxRetries: options.retries || RETRY_CONFIG.ATTEMPTS,
             retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/, /TIMEOUT/],
             onRetry: (error, attempt) => {
-              this.logger.warn(
+              this?.logger?.warn(
                 `Retry attempt ${attempt} for blob ${blobId}:`,
                 error
               );
@@ -306,7 +306,7 @@ export class BackgroundDataRetriever extends EventEmitter {
           data: todo,
           metadata: {
             totalItems: 1,
-            bytesTransferred: JSON.stringify(todo).length,
+            bytesTransferred: JSON.stringify(todo as any).length,
             duration,
             chunks: 1,
             errors: [],
@@ -322,29 +322,29 @@ export class BackgroundDataRetriever extends EventEmitter {
           processedItems: 1,
         });
 
-        await this.cache.set(`result:${operationId}`, result);
+        await this?.cache?.set(`result:${operationId}`, result);
 
         jobManager.completeJob(jobId, {
           blobId,
           itemsRetrieved: 1,
-          bytesTransferred: result.metadata.bytesTransferred,
+          bytesTransferred: result?.metadata?.bytesTransferred,
           duration,
         });
 
         performanceMonitor.endOperation(perfId, 'walrus-blob-retrieval', true, {
           blobId,
           duration,
-          bytesTransferred: result.metadata.bytesTransferred,
+          bytesTransferred: result?.metadata?.bytesTransferred,
         });
 
         this.emit('retrievalComplete', operationId, result);
-        this.logger.info(`Walrus blob retrieval completed: ${blobId}`, {
+        this?.logger?.info(`Walrus blob retrieval completed: ${blobId}`, {
           operationId,
           duration,
         });
       } catch (retrievalError) {
         throw new CLIError(
-          `Failed to retrieve blob ${blobId}: ${retrievalError instanceof Error ? retrievalError.message : String(retrievalError)}`,
+          `Failed to retrieve blob ${blobId}: ${retrievalError instanceof Error ? retrievalError.message : String(retrievalError as any)}`,
           'WALRUS_RETRIEVAL_FAILED'
         );
       } finally {
@@ -352,16 +352,16 @@ export class BackgroundDataRetriever extends EventEmitter {
         try {
           await walrusStorage.disconnect();
         } catch (disconnectError) {
-          this.logger.warn('Error disconnecting from Walrus:', disconnectError);
+          this?.logger?.warn('Error disconnecting from Walrus:', disconnectError);
         }
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error ? error.message : String(error as any);
 
       const result: RetrievalResult = {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage),
+        error: error instanceof Error ? error : new Error(errorMessage as any),
         metadata: {
           totalItems: 1,
           bytesTransferred: 0,
@@ -371,7 +371,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         },
       };
 
-      await this.cache.set(`result:${operationId}`, result);
+      await this?.cache?.set(`result:${operationId}`, result);
       jobManager.failJob(jobId, errorMessage);
 
       performanceMonitor.endOperation(perfId, 'walrus-blob-retrieval', false, {
@@ -379,7 +379,7 @@ export class BackgroundDataRetriever extends EventEmitter {
       });
 
       this.emit('retrievalFailed', operationId, error);
-      this.logger.error(`Walrus blob retrieval failed: ${blobId}`, error);
+      this?.logger?.error(`Walrus blob retrieval failed: ${blobId}`, error);
     }
   }
 
@@ -398,7 +398,7 @@ export class BackgroundDataRetriever extends EventEmitter {
 
     try {
       // Store job reference
-      await this.cache.set(`job:${operationId}`, { jobId });
+      await this?.cache?.set(`job:${operationId}`, { jobId });
 
       // Initialize progress
       await this.updateProgress(operationId, {
@@ -409,7 +409,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 0,
       });
 
-      jobManager.startJob(jobId);
+      jobManager.startJob(jobId as any);
 
       // Connect to Sui and Walrus
       const suiClient = new SuiClient({ url: options.network || 'testnet' });
@@ -430,11 +430,11 @@ export class BackgroundDataRetriever extends EventEmitter {
 
       // Get NFT data
       const nftData = await RetryManager.retry(
-        () => suiNftStorage.getTodoNft(objectId),
+        () => suiNftStorage.getTodoNft(objectId as any),
         {
           maxRetries: options.retries || RETRY_CONFIG.ATTEMPTS,
           onRetry: (error, attempt) => {
-            this.logger.warn(
+            this?.logger?.warn(
               `Retry attempt ${attempt} for NFT ${objectId}:`,
               error
             );
@@ -473,7 +473,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         {
           maxRetries: options.retries || RETRY_CONFIG.ATTEMPTS,
           onRetry: (error, attempt) => {
-            this.logger.warn(
+            this?.logger?.warn(
               `Retry attempt ${attempt} for Walrus blob ${nftData.walrusBlobId}:`,
               error
             );
@@ -505,7 +505,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         data: combinedData,
         metadata: {
           totalItems: 1,
-          bytesTransferred: JSON.stringify(combinedData).length,
+          bytesTransferred: JSON.stringify(combinedData as any).length,
           duration: Date.now() - Date.now(),
           chunks: 1,
           errors: [],
@@ -520,23 +520,23 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 1,
       });
 
-      await this.cache.set(`result:${operationId}`, result);
+      await this?.cache?.set(`result:${operationId}`, result);
 
       jobManager.completeJob(jobId, {
         objectId,
         walrusBlobId: nftData.walrusBlobId,
         itemsRetrieved: 1,
-        bytesTransferred: result.metadata.bytesTransferred,
+        bytesTransferred: result?.metadata?.bytesTransferred,
       });
 
       performanceMonitor.endOperation(perfId, 'sui-nft-retrieval', true, {
         objectId,
         walrusBlobId: nftData.walrusBlobId,
-        bytesTransferred: result.metadata.bytesTransferred,
+        bytesTransferred: result?.metadata?.bytesTransferred,
       });
 
       this.emit('retrievalComplete', operationId, result);
-      this.logger.info(`Sui NFT retrieval completed: ${objectId}`, {
+      this?.logger?.info(`Sui NFT retrieval completed: ${objectId}`, {
         operationId,
       });
 
@@ -544,11 +544,11 @@ export class BackgroundDataRetriever extends EventEmitter {
       await walrusStorage.disconnect();
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error ? error.message : String(error as any);
 
       const result: RetrievalResult = {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage),
+        error: error instanceof Error ? error : new Error(errorMessage as any),
         metadata: {
           totalItems: 1,
           bytesTransferred: 0,
@@ -558,7 +558,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         },
       };
 
-      await this.cache.set(`result:${operationId}`, result);
+      await this?.cache?.set(`result:${operationId}`, result);
       jobManager.failJob(jobId, errorMessage);
 
       performanceMonitor.endOperation(perfId, 'sui-nft-retrieval', false, {
@@ -566,7 +566,7 @@ export class BackgroundDataRetriever extends EventEmitter {
       });
 
       this.emit('retrievalFailed', operationId, error);
-      this.logger.error(`Sui NFT retrieval failed: ${objectId}`, error);
+      this?.logger?.error(`Sui NFT retrieval failed: ${objectId}`, error);
     }
   }
 
@@ -583,7 +583,7 @@ export class BackgroundDataRetriever extends EventEmitter {
     performanceMonitor.startOperation(perfId, 'batch-retrieval');
 
     try {
-      await this.cache.set(`job:${operationId}`, { jobId });
+      await this?.cache?.set(`job:${operationId}`, { jobId });
 
       await this.updateProgress(operationId, {
         phase: 'connecting',
@@ -592,7 +592,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 0,
       });
 
-      jobManager.startJob(jobId);
+      jobManager.startJob(jobId as any);
 
       const batchSize = options.chunkSize || 5;
       const results: any[] = [];
@@ -611,7 +611,7 @@ export class BackgroundDataRetriever extends EventEmitter {
               currentItem: item.id,
             });
 
-            if (item.type === 'blob') {
+            if (item?.type === 'blob') {
               const subOperationId = await this.retrieveFromWalrusBlob(
                 item.id,
                 {
@@ -641,7 +641,7 @@ export class BackgroundDataRetriever extends EventEmitter {
             }
           } catch (error) {
             const errorMessage =
-              error instanceof Error ? error.message : String(error);
+              error instanceof Error ? error.message : String(error as any);
             errors.push(`Item ${itemIndex} (${item.id}): ${errorMessage}`);
             jobManager.writeJobLog(
               jobId,
@@ -651,7 +651,7 @@ export class BackgroundDataRetriever extends EventEmitter {
           }
         });
 
-        const batchResults = await Promise.allSettled(batchPromises);
+        const batchResults = await Promise.allSettled(batchPromises as any);
         results.push(...batchResults);
 
         // Small delay between batches
@@ -668,21 +668,21 @@ export class BackgroundDataRetriever extends EventEmitter {
       });
 
       const successfulResults = results.filter(
-        r => r.status === 'fulfilled' && r.value?.result?.success
+        r => r?.status === 'fulfilled' && r.value?.result?.success
       );
 
       const finalResult: RetrievalResult = {
         success: errors.length < items.length / 2, // Success if less than half failed
         data: successfulResults.map(r =>
-          r.status === 'fulfilled' ? r.value.result.data : null
+          r?.status === 'fulfilled' ? r?.value?.result.data : null
         ),
         metadata: {
           totalItems: items.length,
           bytesTransferred: successfulResults.reduce((sum, r) => {
             return (
               sum +
-              (r.status === 'fulfilled'
-                ? r.value.result?.metadata?.bytesTransferred || 0
+              (r?.status === 'fulfilled'
+                ? r?.value?.result?.metadata?.bytesTransferred || 0
                 : 0)
             );
           }, 0),
@@ -699,13 +699,13 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: items.length,
       });
 
-      await this.cache.set(`result:${operationId}`, finalResult);
+      await this?.cache?.set(`result:${operationId}`, finalResult);
 
       jobManager.completeJob(jobId, {
         totalItems: items.length,
         successfulItems: successfulResults.length,
         failedItems: errors.length,
-        bytesTransferred: finalResult.metadata.bytesTransferred,
+        bytesTransferred: finalResult?.metadata?.bytesTransferred,
       });
 
       performanceMonitor.endOperation(
@@ -715,22 +715,22 @@ export class BackgroundDataRetriever extends EventEmitter {
         {
           totalItems: items.length,
           successfulItems: successfulResults.length,
-          bytesTransferred: finalResult.metadata.bytesTransferred,
+          bytesTransferred: finalResult?.metadata?.bytesTransferred,
         }
       );
 
       this.emit('retrievalComplete', operationId, finalResult);
-      this.logger.info(
+      this?.logger?.info(
         `Batch retrieval completed: ${successfulResults.length}/${items.length} successful`,
         { operationId }
       );
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error ? error.message : String(error as any);
 
       const result: RetrievalResult = {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage),
+        error: error instanceof Error ? error : new Error(errorMessage as any),
         metadata: {
           totalItems: items.length,
           bytesTransferred: 0,
@@ -740,7 +740,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         },
       };
 
-      await this.cache.set(`result:${operationId}`, result);
+      await this?.cache?.set(`result:${operationId}`, result);
       jobManager.failJob(jobId, errorMessage);
 
       performanceMonitor.endOperation(perfId, 'batch-retrieval', false, {
@@ -748,7 +748,7 @@ export class BackgroundDataRetriever extends EventEmitter {
       });
 
       this.emit('retrievalFailed', operationId, error);
-      this.logger.error(`Batch retrieval failed`, error);
+      this?.logger?.error(`Batch retrieval failed`, error);
     }
   }
 
@@ -759,7 +759,7 @@ export class BackgroundDataRetriever extends EventEmitter {
     operationId: string,
     progress: RetrievalProgress
   ): Promise<void> {
-    await this.cache.set(`status:${operationId}`, progress);
+    await this?.cache?.set(`status:${operationId}`, progress);
     this.emit('retrievalProgress', operationId, progress);
 
     if (progress.onProgress) {
@@ -782,13 +782,13 @@ export class BackgroundDataRetriever extends EventEmitter {
       }, timeoutMs);
 
       const checkCompletion = async () => {
-        const status = await this.getRetrievalStatus(operationId);
+        const status = await this.getRetrievalStatus(operationId as any);
 
         if (status?.phase === 'complete') {
-          clearTimeout(timeoutId);
-          const result = await this.getRetrievalResult(operationId);
+          clearTimeout(timeoutId as any);
+          const result = await this.getRetrievalResult(operationId as any);
           if (result) {
-            resolve(result);
+            resolve(result as any);
           } else {
             reject(new Error(`No result found for operation ${operationId}`));
           }

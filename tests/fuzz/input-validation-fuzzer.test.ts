@@ -94,7 +94,7 @@ describe('Input Validation Fuzzer', () => {
       new Date(),
       () => {},
       Symbol('test'),
-      BigInt(9007199254740991),
+      BigInt(9007199254740991 as any),
     ];
 
     return types[Math.floor(Math.random() * types.length)];
@@ -103,7 +103,7 @@ describe('Input Validation Fuzzer', () => {
   const generateExtremeString = (): string => {
     const patterns = [
       // Extremely long strings
-      'A'.repeat(10000),
+      'A'.repeat(10000 as any),
 
       // Empty and whitespace
       '',
@@ -138,19 +138,19 @@ describe('Input Validation Fuzzer', () => {
     it('should handle random string inputs', () => {
       for (let i = 0; i < iterations; i++) {
         const length = Math.floor(Math.random() * 1000);
-        const input = generateRandomString(length);
+        const input = generateRandomString(length as any);
 
         try {
-          const result = validator.validateTodoInput(input);
+          const result = validator.validateTodoInput(input as any);
           // Valid inputs should be sanitized
-          expect(result).toBeDefined();
+          expect(result as any).toBeDefined();
           expect(typeof result).toBe('string');
           // Should not contain dangerous patterns
-          expect(result).not.toContain('<script>');
-          expect(result).not.toContain('javascript:');
+          expect(result as any).not.toContain('<script>');
+          expect(result as any).not.toContain('javascript:');
         } catch (error) {
           // Invalid inputs should throw ValidationError
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -160,17 +160,17 @@ describe('Input Validation Fuzzer', () => {
         const input = generateMaliciousString();
 
         try {
-          const result = validator.validateTodoInput(input);
+          const result = validator.validateTodoInput(input as any);
           // If it passes, ensure dangerous content is sanitized
-          expect(result).not.toContain('DROP TABLE');
-          expect(result).not.toContain('DELETE FROM');
-          expect(result).not.toContain('<script>');
-          expect(result).not.toContain('javascript:');
-          expect(result).not.toContain('../');
-          expect(result).not.toContain('rm -rf');
+          expect(result as any).not.toContain('DROP TABLE');
+          expect(result as any).not.toContain('DELETE FROM');
+          expect(result as any).not.toContain('<script>');
+          expect(result as any).not.toContain('javascript:');
+          expect(result as any).not.toContain('../');
+          expect(result as any).not.toContain('rm -rf');
         } catch (error) {
           // Many malicious inputs should be rejected
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -180,15 +180,15 @@ describe('Input Validation Fuzzer', () => {
         const input = generateExtremeString();
 
         try {
-          const result = validator.validateTodoInput(input);
-          expect(result).toBeDefined();
+          const result = validator.validateTodoInput(input as any);
+          expect(result as any).toBeDefined();
           expect(typeof result).toBe('string');
           // Should handle unicode properly
           if (input.includes('🚀')) {
-            expect(result).toContain('🚀');
+            expect(result as any).toContain('🚀');
           }
         } catch (error) {
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -198,7 +198,7 @@ describe('Input Validation Fuzzer', () => {
         const input = generateRandomType();
 
         if (typeof input !== 'string') {
-          expect(() => validator.validateTodoInput(input)).toThrow(
+          expect(() => validator.validateTodoInput(input as any)).toThrow(
             ValidationError
           );
         }
@@ -213,16 +213,16 @@ describe('Input Validation Fuzzer', () => {
           Math.floor(Math.random() * 4)
         ];
         const length = Math.floor(Math.random() * 100);
-        const key = prefix + generateRandomString(length);
+        const key = prefix + generateRandomString(length as any);
 
         try {
-          const result = validator.validateApiKey(key);
-          expect(result).toBeDefined();
+          const result = validator.validateApiKey(key as any);
+          expect(result as any).toBeDefined();
           expect(typeof result).toBe('string');
           // Valid keys should match specific patterns
-          expect(result).toMatch(/^(xai-|sk-)[A-Za-z0-9]{32,}$/);
+          expect(result as any).toMatch(/^(xai-|sk-)[A-Za-z0-9]{32,}$/);
         } catch (error) {
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -231,7 +231,7 @@ describe('Input Validation Fuzzer', () => {
       for (let i = 0; i < iterations; i++) {
         const maliciousKey = 'xai-' + generateMaliciousString();
 
-        expect(() => validator.validateApiKey(maliciousKey)).toThrow(
+        expect(() => validator.validateApiKey(maliciousKey as any)).toThrow(
           ValidationError
         );
       }
@@ -252,19 +252,19 @@ describe('Input Validation Fuzzer', () => {
 
         let path = '';
         for (let j = 0; j < depth; j++) {
-          path += generateRandomString(10) + separator;
+          path += generateRandomString(10 as any) + separator;
         }
-        path += generateRandomString(10) + extension;
+        path += generateRandomString(10 as any) + extension;
 
         try {
-          const result = validator.validateFilePath(path);
-          expect(result).toBeDefined();
+          const result = validator.validateFilePath(path as any);
+          expect(result as any).toBeDefined();
           expect(typeof result).toBe('string');
           // Should not contain path traversal
-          expect(result).not.toContain('..');
-          expect(result).not.toContain('~');
+          expect(result as any).not.toContain('..');
+          expect(result as any).not.toContain('~');
         } catch (error) {
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -281,7 +281,7 @@ describe('Input Validation Fuzzer', () => {
       ];
 
       for (const pattern of traversalPatterns) {
-        expect(() => validator.validateFilePath(pattern)).toThrow(
+        expect(() => validator.validateFilePath(pattern as any)).toThrow(
           ValidationError
         );
       }
@@ -294,17 +294,17 @@ describe('Input Validation Fuzzer', () => {
         const query = generateRandomString(Math.floor(Math.random() * 200));
 
         try {
-          const result = validator.validateSearchQuery(query);
-          expect(result).toBeDefined();
+          const result = validator.validateSearchQuery(query as any);
+          expect(result as any).toBeDefined();
           expect(typeof result).toBe('string');
           // Should sanitize special regex characters
           const hasSpecialChars =
             query.includes('*') || query.includes('?') || query.includes('[');
           if (hasSpecialChars) {
-            expect(result).not.toMatch(/[*?[\]]/);
+            expect(result as any).not.toMatch(/[*?[\]]/);
           }
         } catch (error) {
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -322,11 +322,11 @@ describe('Input Validation Fuzzer', () => {
       ];
 
       for (const pattern of regexPatterns) {
-        const result = validator.validateSearchQuery(pattern);
+        const result = validator.validateSearchQuery(pattern as any);
         // Should escape regex special characters
-        expect(result).not.toContain('.*');
-        expect(result).not.toContain('.+');
-        expect(result).not.toContain('(?');
+        expect(result as any).not.toContain('.*');
+        expect(result as any).not.toContain('.+');
+        expect(result as any).not.toContain('(?');
       }
     });
   });
@@ -337,12 +337,12 @@ describe('Input Validation Fuzzer', () => {
         const value = Math.random() * 10000 - 5000; // Random between -5000 and 5000
 
         try {
-          const result = validator.validateBatchSize(value);
-          expect(result).toBeGreaterThan(0);
-          expect(result).toBeLessThanOrEqual(1000); // Assuming max batch size
-          expect(Number.isInteger(result)).toBe(true);
+          const result = validator.validateBatchSize(value as any);
+          expect(result as any).toBeGreaterThan(0 as any);
+          expect(result as any).toBeLessThanOrEqual(1000 as any); // Assuming max batch size
+          expect(Number.isInteger(result as any)).toBe(true as any);
         } catch (error) {
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -364,7 +364,7 @@ describe('Input Validation Fuzzer', () => {
       for (const value of invalidValues) {
         expect(() =>
           validator.validateBatchSize(value as unknown as number)
-        ).toThrow(ValidationError);
+        ).toThrow(ValidationError as any);
       }
     });
   });
@@ -377,19 +377,19 @@ describe('Input Validation Fuzzer', () => {
       for (let i = 0; i < iterations; i++) {
         const protocol =
           protocols[Math.floor(Math.random() * protocols.length)];
-        const domain = generateRandomString(10);
+        const domain = generateRandomString(10 as any);
         const tld = tlds[Math.floor(Math.random() * tlds.length)];
-        const path = '/' + generateRandomString(20);
+        const path = '/' + generateRandomString(20 as any);
         const url = protocol + domain + tld + path;
 
         try {
-          const result = validator.validateUrl(url);
-          expect(result).toBeDefined();
+          const result = validator.validateUrl(url as any);
+          expect(result as any).toBeDefined();
           expect(typeof result).toBe('string');
           // Should be a valid URL format
-          expect(() => new URL(result)).not.toThrow();
+          expect(() => new URL(result as any)).not.toThrow();
         } catch (error) {
-          expect(error).toBeInstanceOf(ValidationError);
+          expect(error as any).toBeInstanceOf(ValidationError as any);
         }
       }
     });
@@ -407,7 +407,7 @@ describe('Input Validation Fuzzer', () => {
       ];
 
       for (const url of maliciousUrls) {
-        expect(() => validator.validateUrl(url)).toThrow(ValidationError);
+        expect(() => validator.validateUrl(url as any)).toThrow(ValidationError as any);
       }
     });
   });
@@ -420,23 +420,23 @@ describe('Input Validation Fuzzer', () => {
         // Create different types of validations
         validations.push(
           Promise.resolve()
-            .then(() => validator.validateTodoInput(generateRandomString(100)))
+            .then(() => validator.validateTodoInput(generateRandomString(100 as any)))
             .catch(() => null),
 
           Promise.resolve()
             .then(() =>
-              validator.validateApiKey('xai-' + generateRandomString(40))
+              validator.validateApiKey('xai-' + generateRandomString(40 as any))
             )
             .catch(() => null),
 
           Promise.resolve()
             .then(() =>
-              validator.validateFilePath('/tmp/' + generateRandomString(20))
+              validator.validateFilePath('/tmp/' + generateRandomString(20 as any))
             )
             .catch(() => null),
 
           Promise.resolve()
-            .then(() => validator.validateSearchQuery(generateRandomString(50)))
+            .then(() => validator.validateSearchQuery(generateRandomString(50 as any)))
             .catch(() => null),
 
           Promise.resolve()
@@ -448,10 +448,10 @@ describe('Input Validation Fuzzer', () => {
       }
 
       // Run all validations concurrently
-      const results = await Promise.all(validations);
+      const results = await Promise.all(validations as any);
 
       // Should complete without crashing
-      expect(results).toHaveLength(500);
+      expect(results as any).toHaveLength(500 as any);
     });
   });
 });

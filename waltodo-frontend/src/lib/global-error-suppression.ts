@@ -14,7 +14,7 @@ export function setupGlobalErrorSuppression() {
   const originalLog = console.log;
 
   // Debug flag for wallet-related logging
-  const WALLET_DEBUG = process.env.NODE_ENV === 'development' || window.localStorage?.getItem('wallet-debug') === 'true';
+  const WALLET_DEBUG = process.env?.NODE_ENV === 'development' || window.localStorage?.getItem('wallet-debug') === 'true';
 
   // Reduced list - only suppress the most critical spam
   const criticalSuppressionPatterns = [
@@ -45,12 +45,12 @@ export function setupGlobalErrorSuppression() {
   ];
 
   // Enhanced console.error with wallet debugging
-  console.error = (...args: any[]) => {
+  console?.error = (...args: any[]) => {
     const errorString = args.join(' ');
 
     // Check if this is critical spam that should be suppressed
     const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
-      errorString.includes(pattern)
+      errorString.includes(pattern as any)
     );
 
     if (isCriticalSpam) {
@@ -73,12 +73,12 @@ export function setupGlobalErrorSuppression() {
   };
 
   // Enhanced console.warn with wallet debugging
-  console.warn = (...args: any[]) => {
+  console?.warn = (...args: any[]) => {
     const warnString = args.join(' ');
 
     // Check if this is critical spam that should be suppressed
     const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
-      warnString.includes(pattern)
+      warnString.includes(pattern as any)
     );
 
     if (isCriticalSpam) {
@@ -101,12 +101,12 @@ export function setupGlobalErrorSuppression() {
   };
 
   // Reduced console.log filtering - only suppress critical spam
-  console.log = (...args: any[]) => {
+  console?.log = (...args: any[]) => {
     const logString = args.join(' ');
 
     // Check if this is critical spam that should be suppressed
     const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
-      logString.includes(pattern)
+      logString.includes(pattern as any)
     );
 
     if (isCriticalSpam) {
@@ -134,7 +134,7 @@ export function setupGlobalErrorSuppression() {
 
     // Check if this is critical spam that should be suppressed
     const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
-      errorMessage.includes(pattern)
+      errorMessage.includes(pattern as any)
     );
 
     if (isCriticalSpam) {
@@ -162,7 +162,7 @@ export function setupGlobalErrorSuppression() {
 
     // Check if this is critical spam that should be suppressed
     const isCriticalSpam = criticalSuppressionPatterns.some(pattern =>
-      rejectionMessage.includes(pattern)
+      rejectionMessage.includes(pattern as any)
     );
 
     if (isCriticalSpam) {
@@ -196,9 +196,9 @@ export function setupGlobalErrorSuppression() {
   // Return cleanup function
   return () => {
     // Restore original console methods
-    console.error = originalError;
-    console.warn = originalWarn;
-    console.log = originalLog;
+    console?.error = originalError;
+    console?.warn = originalWarn;
+    console?.log = originalLog;
 
     // Remove event listeners
     window.removeEventListener('error', globalErrorHandler);

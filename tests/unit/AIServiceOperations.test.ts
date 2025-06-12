@@ -27,14 +27,14 @@ jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
     getProviderName: () => 'XAI',
     getModelName: () => 'grok-beta',
     generateCompletion: jest.fn().mockResolvedValue('Mock AI response'),
-    isAvailable: () => Promise.resolve(true),
+    isAvailable: () => Promise.resolve(true as any),
   };
 
   return {
     AIProviderFactory: {
-      createProvider: jest.fn().mockResolvedValue(mockAdapter),
-      createDefaultAdapter: jest.fn().mockReturnValue(mockAdapter),
-      createFallbackAdapter: jest.fn().mockReturnValue(mockAdapter),
+      createProvider: jest.fn().mockResolvedValue(mockAdapter as any),
+      createDefaultAdapter: jest.fn().mockReturnValue(mockAdapter as any),
+      createFallbackAdapter: jest.fn().mockReturnValue(mockAdapter as any),
       getDefaultProvider: jest.fn().mockReturnValue({
         provider: 'XAI',
         modelName: 'grok-beta',
@@ -48,23 +48,23 @@ describe('AIService Operations', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    process.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
+    process?.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   // Test samples
-  const sampleTodos = createSampleTodos(3);
+  const sampleTodos = createSampleTodos(3 as any);
 
   // SECTION: Basic initialization and configuration tests
 
   describe('Initialization', () => {
     it('should initialize with API key and default provider', () => {
       const aiService = createTestAIService();
-      expect(aiService).toBeDefined();
+      expect(aiService as any).toBeDefined();
       expect(aiService.getProvider()).toBeDefined();
       expect(aiService.getProvider().getProviderName()).toBe(AIProvider.XAI);
     });
@@ -75,7 +75,7 @@ describe('AIService Operations', () => {
         AIProvider.OPENAI,
         'gpt-4'
       );
-      expect(aiService).toBeDefined();
+      expect(aiService as any).toBeDefined();
       expect(aiService.getProvider()).toBeDefined();
       expect(aiService.getProvider().getModelName()).toBe('mock-model');
     });
@@ -139,10 +139,10 @@ describe('AIService Operations', () => {
         timestamp: Date.now(),
       });
 
-      const result = await aiService.summarize(sampleTodos);
+      const result = await aiService.summarize(sampleTodos as any);
 
-      expect(result).toBe(expectedResults.summarize);
-      expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledTimes(1);
+      expect(result as any).toBe(expectedResults.summarize);
+      expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should categorize todos', async () => {
@@ -157,10 +157,10 @@ describe('AIService Operations', () => {
         timestamp: Date.now(),
       });
 
-      const result = await aiService.categorize(sampleTodos);
+      const result = await aiService.categorize(sampleTodos as any);
 
-      expect(result).toEqual(expectedResults.categorize);
-      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1);
+      expect(result as any).toEqual(expectedResults.categorize);
+      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should prioritize todos', async () => {
@@ -175,10 +175,10 @@ describe('AIService Operations', () => {
         timestamp: Date.now(),
       });
 
-      const result = await aiService.prioritize(sampleTodos);
+      const result = await aiService.prioritize(sampleTodos as any);
 
-      expect(result).toEqual(expectedResults.prioritize);
-      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1);
+      expect(result as any).toEqual(expectedResults.prioritize);
+      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should suggest new todos', async () => {
@@ -193,10 +193,10 @@ describe('AIService Operations', () => {
         timestamp: Date.now(),
       });
 
-      const result = await aiService.suggest(sampleTodos);
+      const result = await aiService.suggest(sampleTodos as any);
 
-      expect(result).toEqual(expectedResults.suggest);
-      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1);
+      expect(result as any).toEqual(expectedResults.suggest);
+      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should analyze todos', async () => {
@@ -211,10 +211,10 @@ describe('AIService Operations', () => {
         timestamp: Date.now(),
       });
 
-      const result = await aiService.analyze(sampleTodos);
+      const result = await aiService.analyze(sampleTodos as any);
 
-      expect(result).toEqual(expectedResults.analyze);
-      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1);
+      expect(result as any).toEqual(expectedResults.analyze);
+      expect(mockAdapter.completeStructured).toHaveBeenCalledTimes(1 as any);
     });
   });
 
@@ -225,14 +225,14 @@ describe('AIService Operations', () => {
 
     beforeEach(() => {
       const mockVerifierAdapter = createMockAIVerifierAdapter();
-      mockVerificationService = new AIVerificationService(mockVerifierAdapter);
+      mockVerificationService = new AIVerificationService(mockVerifierAdapter as any);
     });
 
     it('should throw error when verification service is not initialized', async () => {
       const aiService = createTestAIService();
 
       await expect(
-        aiService.summarizeWithVerification(sampleTodos)
+        aiService.summarizeWithVerification(sampleTodos as any)
       ).rejects.toThrow('Verification service not initialized');
     });
 
@@ -284,8 +284,8 @@ describe('AIService Operations', () => {
 
       // Assertions
       expect(result.result).toBe(expectedResults.summarize);
-      expect(createVerifiedSummarySpy).toHaveBeenCalledTimes(1);
-      expect(createVerifiedSummarySpy).toHaveBeenCalledWith(
+      expect(createVerifiedSummarySpy as any).toHaveBeenCalledTimes(1 as any);
+      expect(createVerifiedSummarySpy as any).toHaveBeenCalledWith(
         sampleTodos,
         expectedResults.summarize,
         AIPrivacyLevel.HASH_ONLY
@@ -347,7 +347,7 @@ describe('AIService Operations', () => {
 
       // Assertions
       expect(result.result).toEqual(expectedResults.categorize);
-      expect(createVerifiedCategorizationSpy).toHaveBeenCalledTimes(1);
+      expect(createVerifiedCategorizationSpy as any).toHaveBeenCalledTimes(1 as any);
 
       verificationHelper.validateVerificationRecord(
         'categorize',
@@ -404,7 +404,7 @@ describe('AIService Operations', () => {
       );
 
       expect(result.result).toEqual(expectedResults.prioritize);
-      expect(createVerifiedPrioritizationSpy).toHaveBeenCalledTimes(1);
+      expect(createVerifiedPrioritizationSpy as any).toHaveBeenCalledTimes(1 as any);
 
       verificationHelper.validateVerificationRecord(
         'prioritize',
@@ -461,7 +461,7 @@ describe('AIService Operations', () => {
       );
 
       expect(result.result).toEqual(expectedResults.suggest);
-      expect(createVerifiedSuggestionSpy).toHaveBeenCalledTimes(1);
+      expect(createVerifiedSuggestionSpy as any).toHaveBeenCalledTimes(1 as any);
 
       verificationHelper.validateVerificationRecord(
         'suggest',
@@ -521,7 +521,7 @@ describe('AIService Operations', () => {
       );
 
       expect(result.result).toEqual(expectedResults.analyze);
-      expect(createVerifiedAnalysisSpy).toHaveBeenCalledTimes(1);
+      expect(createVerifiedAnalysisSpy as any).toHaveBeenCalledTimes(1 as any);
 
       verificationHelper.validateVerificationRecord(
         'analyze',
@@ -546,7 +546,7 @@ describe('AIService Operations', () => {
         new Error('API connection error')
       );
 
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+      await expect(aiService.summarize(sampleTodos as any)).rejects.toThrow(
         'API connection error'
       );
     });
@@ -564,8 +564,8 @@ describe('AIService Operations', () => {
       });
 
       // Should return empty object rather than throwing
-      const result = await aiService.categorize(sampleTodos);
-      expect(result).toEqual({});
+      const result = await aiService.categorize(sampleTodos as any);
+      expect(result as any).toEqual({});
     });
   });
 });

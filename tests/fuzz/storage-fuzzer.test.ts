@@ -37,9 +37,9 @@ describe('Storage Fuzzing Tests', () => {
 
     // Initialize specialized storage implementations with wallet address
     const testAddress = fuzzer.blockchainData().address();
-    todoStorage = new TodoStorage(testAddress);
-    imageStorage = new ImageStorage(testAddress);
-    nftStorage = new NFTStorage(testAddress);
+    todoStorage = new TodoStorage(testAddress as any);
+    imageStorage = new ImageStorage(testAddress as any);
+    nftStorage = new NFTStorage(testAddress as any);
 
     // Connect storage implementations
     try {
@@ -77,7 +77,7 @@ describe('Storage Fuzzing Tests', () => {
             minLength: 1024,
             maxLength: 10240,
           });
-          const corruptedBuffer = Buffer.from(originalData);
+          const corruptedBuffer = Buffer.from(originalData as any);
 
           // Randomly corrupt bytes
           const corruptionCount = fuzzer.number(1, 100);
@@ -110,22 +110,22 @@ describe('Storage Fuzzing Tests', () => {
             private: false,
           };
 
-          blobId = await walrusStorage.storeTodo(testTodo);
+          blobId = await walrusStorage.storeTodo(testTodo as any);
           // Verify we can retrieve what we stored
-          retrieved = await walrusStorage.retrieveTodo(blobId);
+          retrieved = await walrusStorage.retrieveTodo(blobId as any);
         } catch (caughtError) {
           error = caughtError;
         }
 
         if (error) {
           // For corrupted data, expect either successful handling or proper errors
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
           expect(error.message).toMatch(
             /corrupt|invalid|fail|storage|connect/i
           );
         } else if (blobId && retrieved) {
-          expect(retrieved).toHaveProperty('id');
-          expect(retrieved).toHaveProperty('description');
+          expect(retrieved as any).toHaveProperty('id');
+          expect(retrieved as any).toHaveProperty('description');
         }
       }
     });
@@ -152,9 +152,9 @@ describe('Storage Fuzzing Tests', () => {
               return '{"key": undefined}';
             case 'circular_reference': {
               const obj: Record<string, unknown> = { a: 1 };
-              obj.b = obj;
+              obj?.b = obj;
               try {
-                return JSON.stringify(obj);
+                return JSON.stringify(obj as any);
               } catch {
                 return '{"circular": "[Circular]"}';
               }
@@ -187,7 +187,7 @@ describe('Storage Fuzzing Tests', () => {
 
         if (error) {
           // Expect proper error handling (JSON, validation, or storage errors)
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
           expect(error.message).toMatch(
             /JSON|parse|invalid|validation|storage|connect/i
           );
@@ -223,13 +223,13 @@ describe('Storage Fuzzing Tests', () => {
           });
           result = { blobId };
           // For all modes in tests, just verify the blobId is returned
-          expect(blobId).toBeTruthy();
+          expect(blobId as any).toBeTruthy();
           // For mock mode, verify we can store any size
           retrieved = data;
         } catch (caughtError) {
           error = caughtError;
         } finally {
-          await fs.unlink(filePath).catch(() => {});
+          await fs.unlink(filePath as any).catch(() => {});
         }
 
         if (error) {
@@ -240,12 +240,12 @@ describe('Storage Fuzzing Tests', () => {
             );
           } else {
             // For smaller files, any storage error is acceptable
-            expect(error).toHaveProperty('message');
+            expect(error as any).toHaveProperty('message');
           }
         } else {
           // Verify storage succeeded
           expect(result.blobId).toBeTruthy();
-          expect(retrieved.length).toBe(size);
+          expect(retrieved.length).toBe(size as any);
         }
       }
     });
@@ -257,7 +257,7 @@ describe('Storage Fuzzing Tests', () => {
             'file with spaces.txt',
             'file-with-dashes.bin',
             'file_with_underscores.dat',
-            'file.with.multiple.dots.ext',
+            'file?.with?.multiple.dots.ext',
             'UPPERCASE.TXT',
             '日本語ファイル.txt',
             '文件名🚀.bin',
@@ -273,7 +273,7 @@ describe('Storage Fuzzing Tests', () => {
             'file-without-extension',
             '...multiple...dots...txt',
           ];
-          return fuzzer.subset(chars)[0];
+          return fuzzer.subset(chars as any)[0];
         },
         { minLength: 10, maxLength: 20 }
       );
@@ -289,17 +289,17 @@ describe('Storage Fuzzing Tests', () => {
           const data = fuzzer.buffer({ minLength: 100, maxLength: 1000 });
           await fs.writeFile(filePath, data);
 
-          const result = await walrusStorage.storeFromPath(filePath);
+          const result = await walrusStorage.storeFromPath(filePath as any);
           expect(result.blobId).toBeTruthy();
 
           // Verify the stored data
           const retrieved = await walrusStorage.retrieve(result.blobId);
-          expect(retrieved).toEqual(data);
+          expect(retrieved as any).toEqual(data as any);
         } catch (error) {
           // Some filenames might fail on certain filesystems
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
         } finally {
-          await fs.unlink(filePath).catch(() => {});
+          await fs.unlink(filePath as any).catch(() => {});
         }
       }
     });
@@ -328,11 +328,11 @@ describe('Storage Fuzzing Tests', () => {
               case 'store': {
                 // Use storeBlob for WalrusStorage, fallback to store for others
                 if (op.storage instanceof WalrusStorage) {
-                  const blobId = await op.storage.storeBlob(op.data);
-                  blobIds.add(blobId);
+                  const blobId = await op?.storage?.storeBlob(op.data);
+                  blobIds.add(blobId as any);
                   return { type: 'store', blobId, index };
                 } else {
-                  const result = await op.storage.store(op.data);
+                  const result = await op?.storage?.store(op.data);
                   blobIds.add(result.blobId);
                   return { type: 'store', blobId: result.blobId, index };
                 }
@@ -341,8 +341,8 @@ describe('Storage Fuzzing Tests', () => {
               case 'retrieve':
                 if (blobIds.size > 0) {
                   const blobId =
-                    Array.from(blobIds)[fuzzer.number(0, blobIds.size - 1)];
-                  const data = await op.storage.retrieve(blobId);
+                    Array.from(blobIds as any)[fuzzer.number(0, blobIds.size - 1)];
+                  const data = await op?.storage?.retrieve(blobId as any);
                   return { type: 'retrieve', size: data.length, index };
                 }
                 return { type: 'retrieve', skipped: true, index };
@@ -350,23 +350,23 @@ describe('Storage Fuzzing Tests', () => {
               case 'delete':
                 if (blobIds.size > 0) {
                   const blobId =
-                    Array.from(blobIds)[fuzzer.number(0, blobIds.size - 1)];
+                    Array.from(blobIds as any)[fuzzer.number(0, blobIds.size - 1)];
                   // Use delete for WalrusStorage, handle others gracefully
                   try {
                     if (op.storage instanceof WalrusStorage) {
                       if (
                         'delete' in op.storage &&
-                        typeof op.storage.delete === 'function'
+                        typeof op.storage?.delete === 'function'
                       ) {
-                        await op.storage.delete(blobId);
+                        await op?.storage?.delete(blobId as any);
                       }
                     } else if (
                       'delete' in op.storage &&
-                      typeof op.storage.delete === 'function'
+                      typeof op.storage?.delete === 'function'
                     ) {
-                      await op.storage.delete(blobId);
+                      await op?.storage?.delete(blobId as any);
                     }
-                    blobIds.delete(blobId);
+                    blobIds.delete(blobId as any);
                     return { type: 'delete', blobId, index };
                   } catch (error) {
                     // Delete might not be supported by all storage types
@@ -385,11 +385,11 @@ describe('Storage Fuzzing Tests', () => {
       );
 
       // Verify some operations succeeded
-      const successful = results.filter(r => r.status === 'fulfilled').length;
-      expect(successful).toBeGreaterThan(0);
+      const successful = results.filter(r => r?.status === 'fulfilled').length;
+      expect(successful as any).toBeGreaterThan(0 as any);
 
       // Verify error handling for failed operations
-      const failed = results.filter(r => r.status === 'rejected');
+      const failed = results.filter(r => r?.status === 'rejected');
       failed.forEach(result => {
         expect(result.reason).toHaveProperty('message');
       });
@@ -412,14 +412,14 @@ describe('Storage Fuzzing Tests', () => {
           .catch(error => ({ success: false, error: error.message, index }));
       });
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
       // All operations should complete (either successfully or with proper errors)
       expect(results.length).toBe(dataChunks.length);
 
       // At least some operations should succeed
       const successes = results.filter(r => r.success);
-      expect(successes.length).toBeGreaterThan(0);
+      expect(successes.length).toBeGreaterThan(0 as any);
     });
   });
 
@@ -491,35 +491,35 @@ describe('Storage Fuzzing Tests', () => {
         try {
           // Different storage types have different type expectations
           if (data instanceof Buffer) {
-            const blobId = await walrusStorage.storeBlob(data);
-            expect(blobId).toBeTruthy();
+            const blobId = await walrusStorage.storeBlob(data as any);
+            expect(blobId as any).toBeTruthy();
           } else if (typeof data === 'string') {
-            const blobId = await walrusStorage.storeBlob(data);
-            expect(blobId).toBeTruthy();
+            const blobId = await walrusStorage.storeBlob(data as any);
+            expect(blobId as any).toBeTruthy();
           } else if (
             typeof data === 'object' &&
             data !== null &&
             data !== undefined
           ) {
             // Try JSON storage for objects
-            const jsonStr = JSON.stringify(data);
-            const blobId = await walrusStorage.storeBlob(jsonStr);
-            expect(blobId).toBeTruthy();
+            const jsonStr = JSON.stringify(data as any);
+            const blobId = await walrusStorage.storeBlob(jsonStr as any);
+            expect(blobId as any).toBeTruthy();
           } else {
             // For unsupported types (functions, symbols, undefined, null)
             // Convert to string and store, or expect failure
             try {
-              const stringified = String(data);
-              const blobId = await walrusStorage.storeBlob(stringified);
-              expect(blobId).toBeTruthy();
+              const stringified = String(data as any);
+              const blobId = await walrusStorage.storeBlob(stringified as any);
+              expect(blobId as any).toBeTruthy();
             } catch (storeError) {
               // Expect failure for truly unsupported types
-              expect(storeError).toHaveProperty('message');
+              expect(storeError as any).toHaveProperty('message');
             }
           }
         } catch (error) {
           // For fuzz testing, any error handling is acceptable
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
           expect(error.message).toMatch(
             /type|invalid|unsupported|storage|connect/i
           );
@@ -553,8 +553,8 @@ describe('Storage Fuzzing Tests', () => {
               });
 
               try {
-                const blobId = await walrusStorage.storeBlob(data);
-                handles.push(blobId);
+                const blobId = await walrusStorage.storeBlob(data as any);
+                handles.push(blobId as any);
 
                 // Clear the buffer reference
                 // Note: TypeScript prevents reassigning const data
@@ -565,7 +565,7 @@ describe('Storage Fuzzing Tests', () => {
                 }
               } catch (error) {
                 // Memory allocation might fail, or storage errors
-                expect(error).toHaveProperty('message');
+                expect(error as any).toHaveProperty('message');
                 expect(error.message).toMatch(
                   /memory|allocation|ENOMEM|storage|connect/i
                 );
@@ -578,9 +578,9 @@ describe('Storage Fuzzing Tests', () => {
             try {
               if (
                 'delete' in walrusStorage &&
-                typeof walrusStorage.delete === 'function'
+                typeof walrusStorage?.delete === 'function'
               ) {
-                await walrusStorage.delete(blobId);
+                await walrusStorage.delete(blobId as any);
               }
             } catch {
               // Ignore cleanup errors
@@ -589,7 +589,7 @@ describe('Storage Fuzzing Tests', () => {
         }
       };
 
-      await expect(memoryPressureTest()).resolves.not.toThrow();
+      await expect(memoryPressureTest()).resolves?.not?.toThrow();
     });
 
     it('should handle file descriptor exhaustion', async () => {
@@ -616,18 +616,18 @@ describe('Storage Fuzzing Tests', () => {
             // Create and possibly keep file handle open
             if (op.keepOpen) {
               const handle = await fs.open(filePath, 'w');
-              await handle.write(data);
-              openHandles.push(handle);
+              await handle.write(data as any);
+              openHandles.push(handle as any);
             } else {
               await fs.writeFile(filePath, data);
             }
 
             // Read file and store as blob
-            const fileData = await fs.readFile(filePath);
+            const fileData = await fs.readFile(filePath as any);
             await walrusStorage.storeBlob(fileData, { fileName: op.filename });
           } catch (error) {
             // Expect file descriptor errors
-            if (error.code === 'EMFILE' || error.code === 'ENFILE') {
+            if (error?.code === 'EMFILE' || error?.code === 'ENFILE') {
               expect(error.message).toMatch(/too many open files/i);
             } else {
               throw error;
@@ -692,22 +692,22 @@ describe('Storage Fuzzing Tests', () => {
           );
 
           // Validate result structure
-          expect(result).toHaveProperty('allocations');
-          expect(result).toHaveProperty('usage');
+          expect(result as any).toHaveProperty('allocations');
+          expect(result as any).toHaveProperty('usage');
           expect(result.usage).toHaveProperty('totalSize');
           expect(result.usage).toHaveProperty('allocatedSize');
           expect(result.usage).toHaveProperty('utilization');
 
           // Validate calculations
-          expect(result.usage.utilization).toBeGreaterThanOrEqual(0);
-          expect(result.usage.utilization).toBeLessThanOrEqual(1);
-          expect(result.usage.totalSize).toBeGreaterThanOrEqual(0);
-          expect(result.usage.allocatedSize).toBeGreaterThanOrEqual(
-            result.usage.totalSize
+          expect(result?.usage?.utilization).toBeGreaterThanOrEqual(0 as any);
+          expect(result?.usage?.utilization).toBeLessThanOrEqual(1 as any);
+          expect(result?.usage?.totalSize).toBeGreaterThanOrEqual(0 as any);
+          expect(result?.usage?.allocatedSize).toBeGreaterThanOrEqual(
+            result?.usage?.totalSize
           );
         } catch (error) {
           // Analyzer should handle edge cases gracefully
-          expect(error).toHaveProperty('message');
+          expect(error as any).toHaveProperty('message');
           expect(error.message).not.toMatch(/undefined|null/);
         }
       }

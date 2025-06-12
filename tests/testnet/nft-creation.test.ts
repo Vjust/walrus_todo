@@ -28,8 +28,8 @@ interface NFTContent {
 dotenv.config();
 
 // Load test wallet from environment
-const TEST_PRIVATE_KEY = process.env.TEST_WALLET_PRIVATE_KEY;
-const PACKAGE_ID = process.env.PACKAGE_ID;
+const TEST_PRIVATE_KEY = process?.env?.TEST_WALLET_PRIVATE_KEY;
+const PACKAGE_ID = process?.env?.PACKAGE_ID;
 
 if (!TEST_PRIVATE_KEY || !PACKAGE_ID) {
   throw new Error(
@@ -40,8 +40,8 @@ if (!TEST_PRIVATE_KEY || !PACKAGE_ID) {
 describe('Sui Testnet NFT Creation', () => {
   let suiClient: SuiClient;
   const testWallet: Ed25519Keypair = (() => {
-    const { secretKey } = decodeSuiPrivateKey(TEST_PRIVATE_KEY);
-    return Ed25519Keypair.fromSecretKey(secretKey);
+    const { secretKey } = decodeSuiPrivateKey(TEST_PRIVATE_KEY as any);
+    return Ed25519Keypair.fromSecretKey(secretKey as any);
   })();
 
   beforeAll(() => {
@@ -58,27 +58,27 @@ describe('Sui Testnet NFT Creation', () => {
       target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
       arguments: [
         // title
-        txb.pure.string('Test Todo NFT'),
+        txb?.pure?.string('Test Todo NFT'),
         // description
-        txb.pure.string('This is a test NFT created on testnet'),
+        txb?.pure?.string('This is a test NFT created on testnet'),
         // category
-        txb.pure.string('test'),
+        txb?.pure?.string('test'),
         // priority
-        txb.pure.u8(1),
+        txb?.pure?.u8(1 as any),
         // creator
-        txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
+        txb?.pure?.address(testWallet.getPublicKey().toSuiAddress()),
         // walrus_blob_id
-        txb.pure.string('test-blob-id-12345'),
+        txb?.pure?.string('test-blob-id-12345'),
         // walrus_url
-        txb.pure.string('https://walrus.testnet/test-blob-id-12345'),
+        txb?.pure?.string('https://walrus.testnet/test-blob-id-12345'),
         // image_url
-        txb.pure.string('https://walrus.testnet/assets/test-image.jpg'),
+        txb?.pure?.string('https://walrus.testnet/assets/test-image.jpg'),
         // ai_enhanced
-        txb.pure.bool(false),
+        txb?.pure?.bool(false as any),
         // completed
-        txb.pure.bool(false),
+        txb?.pure?.bool(false as any),
         // metadata (empty JSON object)
-        txb.pure.string('{}'),
+        txb?.pure?.string('{}'),
       ],
     });
 
@@ -94,22 +94,22 @@ describe('Sui Testnet NFT Creation', () => {
 
     // Validate the transaction was successful
     expect(response.effects).toBeDefined();
-    expect(response.effects!.status.status).toBe('success');
-    expect(response.effects!.created).toBeDefined();
-    expect(response.effects!.created!.length).toBeGreaterThan(0);
+    expect(response.effects?.status.status).toBe('success');
+    expect(response.effects?.created).toBeDefined();
+    expect(response?.effects?.created.length).toBeGreaterThan(0 as any);
 
     // Find the created NFT object
-    const createdNft = response.effects?.created?.find(
-      obj => obj.objectType && obj.objectType.includes('TodoNFT')
+    const createdNft = response?.effects?.created?.find(
+      obj => obj.objectType && obj?.objectType?.includes('TodoNFT')
     );
 
-    expect(createdNft).toBeDefined();
+    expect(createdNft as any).toBeDefined();
     // console.log('Created NFT ID:', createdNft?.reference.objectId); // Removed console statement
     // console.log('Transaction digest:', response.digest); // Removed console statement
 
     // Store the NFT ID for later tests
     if (createdNft) {
-      // storageContractId = createdNft.reference.objectId; // Not used in tests
+      // storageContractId = createdNft?.reference?.objectId; // Not used in tests
     }
   }, 30000); // 30 second timeout
 
@@ -120,17 +120,17 @@ describe('Sui Testnet NFT Creation', () => {
     const [nft] = txb.moveCall({
       target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
       arguments: [
-        txb.pure.string('NFT with Metadata'),
-        txb.pure.string('This NFT will have metadata set'),
-        txb.pure.string('test'),
-        txb.pure.u8(2),
-        txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
-        txb.pure.string('test-blob-id-metadata'),
-        txb.pure.string('https://walrus.testnet/test-blob-id-metadata'),
-        txb.pure.string('https://walrus.testnet/assets/metadata-image.jpg'),
-        txb.pure.bool(false),
-        txb.pure.bool(false),
-        txb.pure.string('{"custom": "initial"}'),
+        txb?.pure?.string('NFT with Metadata'),
+        txb?.pure?.string('This NFT will have metadata set'),
+        txb?.pure?.string('test'),
+        txb?.pure?.u8(2 as any),
+        txb?.pure?.address(testWallet.getPublicKey().toSuiAddress()),
+        txb?.pure?.string('test-blob-id-metadata'),
+        txb?.pure?.string('https://walrus.testnet/test-blob-id-metadata'),
+        txb?.pure?.string('https://walrus.testnet/assets/metadata-image.jpg'),
+        txb?.pure?.bool(false as any),
+        txb?.pure?.bool(false as any),
+        txb?.pure?.string('{"custom": "initial"}'),
       ],
     });
 
@@ -139,7 +139,7 @@ describe('Sui Testnet NFT Creation', () => {
       target: `${PACKAGE_ID}::todo_nft::update_metadata`,
       arguments: [
         nft,
-        txb.pure.string('{"custom": "updated", "tags": ["important", "test"]}'),
+        txb?.pure?.string('{"custom": "updated", "tags": ["important", "test"]}'),
       ],
     });
 
@@ -153,26 +153,26 @@ describe('Sui Testnet NFT Creation', () => {
       },
     });
 
-    expect(response.effects?.status.status).toBe('success');
+    expect(response?.effects?.status.status).toBe('success');
 
     // Find the created NFT
-    const createdNft = response.effects?.created?.find(
-      obj => obj.objectType && obj.objectType.includes('TodoNFT')
+    const createdNft = response?.effects?.created?.find(
+      obj => obj.objectType && obj?.objectType?.includes('TodoNFT')
     );
 
-    expect(createdNft).toBeDefined();
+    expect(createdNft as any).toBeDefined();
 
     // Ensure NFT was created before proceeding
-    expect(createdNft).toBeDefined();
+    expect(createdNft as any).toBeDefined();
 
     // Fetch the NFT object to verify metadata
     const nftObject = await suiClient.getObject({
-      id: createdNft!.reference.objectId,
+      id: createdNft?.reference.objectId,
       options: { showContent: true },
     });
 
-    expect(nftObject.data?.content).toBeDefined();
-    // console.log('NFT with metadata created:', createdNft.reference.objectId); // Removed console statement
+    expect(nftObject?.data?.content).toBeDefined();
+    // console.log('NFT with metadata created:', createdNft?.reference?.objectId); // Removed console statement
   }, 30000);
 
   test('should create and transfer an NFT', async () => {
@@ -186,17 +186,17 @@ describe('Sui Testnet NFT Creation', () => {
     const [nft] = txb.moveCall({
       target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
       arguments: [
-        txb.pure.string('Transferable NFT'),
-        txb.pure.string('This NFT will be transferred'),
-        txb.pure.string('transfer'),
-        txb.pure.u8(3),
-        txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
-        txb.pure.string('test-blob-id-transfer'),
-        txb.pure.string('https://walrus.testnet/test-blob-id-transfer'),
-        txb.pure.string('https://walrus.testnet/assets/transfer-image.jpg'),
-        txb.pure.bool(false),
-        txb.pure.bool(false),
-        txb.pure.string('{}'),
+        txb?.pure?.string('Transferable NFT'),
+        txb?.pure?.string('This NFT will be transferred'),
+        txb?.pure?.string('transfer'),
+        txb?.pure?.u8(3 as any),
+        txb?.pure?.address(testWallet.getPublicKey().toSuiAddress()),
+        txb?.pure?.string('test-blob-id-transfer'),
+        txb?.pure?.string('https://walrus.testnet/test-blob-id-transfer'),
+        txb?.pure?.string('https://walrus.testnet/assets/transfer-image.jpg'),
+        txb?.pure?.bool(false as any),
+        txb?.pure?.bool(false as any),
+        txb?.pure?.string('{}'),
       ],
     });
 
@@ -213,24 +213,24 @@ describe('Sui Testnet NFT Creation', () => {
       },
     });
 
-    expect(response.effects?.status.status).toBe('success');
+    expect(response?.effects?.status.status).toBe('success');
 
     // Verify the NFT was transferred
-    const mutatedObject = response.effects?.mutatedObjects?.find(
-      obj => obj.objectType && obj.objectType.includes('TodoNFT')
+    const mutatedObject = response?.effects?.mutatedObjects?.find(
+      obj => obj.objectType && obj?.objectType?.includes('TodoNFT')
     );
 
     // Ensure NFT was mutated before proceeding
-    expect(mutatedObject).toBeDefined();
+    expect(mutatedObject as any).toBeDefined();
 
     // Verify ownership changed
     const nftObject = await suiClient.getObject({
-      id: mutatedObject!.reference.objectId,
+      id: mutatedObject?.reference.objectId,
       options: { showOwner: true },
     });
 
-    expect(nftObject.data?.owner).toBeDefined();
-    // console.log('NFT transferred to:', nftObject.data?.owner); // Removed console statement
+    expect(nftObject?.data?.owner).toBeDefined();
+    // console.log('NFT transferred to:', nftObject?.data?.owner); // Removed console statement
   }, 30000);
 
   test('should create multiple NFTs in batch', async () => {
@@ -242,19 +242,19 @@ describe('Sui Testnet NFT Creation', () => {
       txb.moveCall({
         target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
         arguments: [
-          txb.pure.string(`Batch NFT ${i + 1}`),
-          txb.pure.string(`This is batch NFT number ${i + 1}`),
-          txb.pure.string('batch'),
-          txb.pure.u8(i + 1),
-          txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
-          txb.pure.string(`test-blob-id-batch-${i + 1}`),
-          txb.pure.string(`https://walrus.testnet/test-blob-id-batch-${i + 1}`),
-          txb.pure.string(
+          txb?.pure?.string(`Batch NFT ${i + 1}`),
+          txb?.pure?.string(`This is batch NFT number ${i + 1}`),
+          txb?.pure?.string('batch'),
+          txb?.pure?.u8(i + 1),
+          txb?.pure?.address(testWallet.getPublicKey().toSuiAddress()),
+          txb?.pure?.string(`test-blob-id-batch-${i + 1}`),
+          txb?.pure?.string(`https://walrus.testnet/test-blob-id-batch-${i + 1}`),
+          txb?.pure?.string(
             `https://walrus.testnet/assets/batch-image-${i + 1}.jpg`
           ),
-          txb.pure.bool(false),
-          txb.pure.bool(false),
-          txb.pure.string('{}'),
+          txb?.pure?.bool(false as any),
+          txb?.pure?.bool(false as any),
+          txb?.pure?.string('{}'),
         ],
       });
     }
@@ -269,18 +269,18 @@ describe('Sui Testnet NFT Creation', () => {
       },
     });
 
-    expect(response.effects?.status.status).toBe('success');
+    expect(response?.effects?.status.status).toBe('success');
 
     // Count created NFTs
-    const createdNfts = response.effects?.created?.filter(
-      obj => obj.objectType && obj.objectType.includes('TodoNFT')
+    const createdNfts = response?.effects?.created?.filter(
+      obj => obj.objectType && obj?.objectType?.includes('TodoNFT')
     );
 
-    expect(createdNfts?.length).toBe(nftCount);
+    expect(createdNfts?.length).toBe(nftCount as any);
     // console.log(`Created ${createdNfts?.length} NFTs in batch`); // Removed console statement
 
     createdNfts?.forEach((_nft, _index) => {
-      // console.log(`NFT ${index + 1} ID:`, nft.reference.objectId); // Removed console statement
+      // console.log(`NFT ${index + 1} ID:`, nft?.reference?.objectId); // Removed console statement
     });
   }, 30000);
 
@@ -298,17 +298,17 @@ describe('Sui Testnet NFT Creation', () => {
     txb.moveCall({
       target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
       arguments: [
-        txb.pure.string('AI-Enhanced Todo NFT'),
-        txb.pure.string('This NFT has been enhanced with AI features'),
-        txb.pure.string('ai-enhanced'),
-        txb.pure.u8(5), // High priority
-        txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
-        txb.pure.string('test-blob-id-ai-enhanced'),
-        txb.pure.string('https://walrus.testnet/test-blob-id-ai-enhanced'),
-        txb.pure.string('https://walrus.testnet/assets/ai-enhanced-image.jpg'),
-        txb.pure.bool(true), // AI enhanced
-        txb.pure.bool(false),
-        txb.pure.string(JSON.stringify(aiMetadata)),
+        txb?.pure?.string('AI-Enhanced Todo NFT'),
+        txb?.pure?.string('This NFT has been enhanced with AI features'),
+        txb?.pure?.string('ai-enhanced'),
+        txb?.pure?.u8(5 as any), // High priority
+        txb?.pure?.address(testWallet.getPublicKey().toSuiAddress()),
+        txb?.pure?.string('test-blob-id-ai-enhanced'),
+        txb?.pure?.string('https://walrus.testnet/test-blob-id-ai-enhanced'),
+        txb?.pure?.string('https://walrus.testnet/assets/ai-enhanced-image.jpg'),
+        txb?.pure?.bool(true as any), // AI enhanced
+        txb?.pure?.bool(false as any),
+        txb?.pure?.string(JSON.stringify(aiMetadata as any)),
       ],
     });
 
@@ -322,27 +322,27 @@ describe('Sui Testnet NFT Creation', () => {
       },
     });
 
-    expect(response.effects?.status.status).toBe('success');
+    expect(response?.effects?.status.status).toBe('success');
 
-    const createdNft = response.effects?.created?.find(
-      obj => obj.objectType && obj.objectType.includes('TodoNFT')
+    const createdNft = response?.effects?.created?.find(
+      obj => obj.objectType && obj?.objectType?.includes('TodoNFT')
     );
 
-    expect(createdNft).toBeDefined();
+    expect(createdNft as any).toBeDefined();
 
     // Ensure NFT was created before proceeding
-    expect(createdNft).toBeDefined();
+    expect(createdNft as any).toBeDefined();
 
     // Fetch the NFT to verify AI enhancement flag
     const nftObject = await suiClient.getObject({
-      id: createdNft!.reference.objectId,
+      id: createdNft?.reference.objectId,
       options: { showContent: true },
     });
 
-    const content = nftObject.data?.content as NFTContent;
-    expect(content).toBeDefined();
-    expect(content).toHaveProperty('fields');
-    expect(content.fields.ai_enhanced).toBe(true);
-    // console.log('AI-enhanced NFT created:', createdNft.reference.objectId); // Removed console statement
+    const content = nftObject?.data?.content as NFTContent;
+    expect(content as any).toBeDefined();
+    expect(content as any).toHaveProperty('fields');
+    expect(content?.fields?.ai_enhanced).toBe(true as any);
+    // console.log('AI-enhanced NFT created:', createdNft?.reference?.objectId); // Removed console statement
   }, 30000);
 });

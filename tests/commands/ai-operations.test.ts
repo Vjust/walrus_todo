@@ -4,7 +4,7 @@ import { Config } from '@oclif/core';
 // Mock WASM and Walrus modules early to prevent loading errors
 jest.mock('@mysten/walrus-wasm', () => ({
   WalrusClient: class MockWalrusClient {},
-  init: jest.fn().mockResolvedValue(true),
+  init: jest.fn().mockResolvedValue(true as any),
   default: jest.fn(),
 }));
 
@@ -16,24 +16,24 @@ jest.mock('@mysten/walrus', () => ({
 // Mock vault and credential services
 jest.mock('../../apps/cli/src/utils/EnhancedVaultManager', () => ({
   EnhancedVaultManager: jest.fn().mockImplementation(() => ({
-    initializeVault: jest.fn().mockResolvedValue(true),
-    isVaultLocked: jest.fn().mockReturnValue(false),
-    unlockVault: jest.fn().mockResolvedValue(true),
+    initializeVault: jest.fn().mockResolvedValue(true as any),
+    isVaultLocked: jest.fn().mockReturnValue(false as any),
+    unlockVault: jest.fn().mockResolvedValue(true as any),
     getCredential: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
-    storeCredential: jest.fn().mockResolvedValue(true),
+    storeCredential: jest.fn().mockResolvedValue(true as any),
   })),
 }));
 
 jest.mock('../../apps/cli/src/services/ai/SecureCredentialService', () => ({
   SecureCredentialService: jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(true),
+    initialize: jest.fn().mockResolvedValue(true as any),
     getCredentials: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
-    storeCredentials: jest.fn().mockResolvedValue(true),
+    storeCredentials: jest.fn().mockResolvedValue(true as any),
   })),
   secureCredentialService: {
-    initialize: jest.fn().mockResolvedValue(true),
+    initialize: jest.fn().mockResolvedValue(true as any),
     getCredentials: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
-    storeCredentials: jest.fn().mockResolvedValue(true),
+    storeCredentials: jest.fn().mockResolvedValue(true as any),
   },
 }));
 
@@ -48,12 +48,12 @@ function createValidConfig(): Partial<Config> {
   return {
     root: '/test',
     name: 'test',
-    version: '1.0.0',
+    version: '1?.0?.0',
     userAgent: 'test-cli',
     channel: 'stable',
     pjson: {
       name: 'test',
-      version: '1.0.0',
+      version: '1?.0?.0',
       oclif: {},
       dependencies: {},
     } as any,
@@ -62,7 +62,7 @@ function createValidConfig(): Partial<Config> {
     shell: 'bash',
     home: '/home/test',
     debug: 0,
-    npmRegistry: 'https://registry.npmjs.org',
+    npmRegistry: 'https://registry?.npmjs?.org',
   };
 }
 
@@ -98,9 +98,9 @@ jest.mock('../../apps/cli/src/services/ai', () => {
         },
       },
     }),
-    setProvider: jest.fn().mockResolvedValue(true),
+    setProvider: jest.fn().mockResolvedValue(true as any),
     getProvider: jest.fn().mockReturnValue('xai'),
-    isAvailable: jest.fn().mockReturnValue(true),
+    isAvailable: jest.fn().mockReturnValue(true as any),
     suggestTags: jest.fn().mockResolvedValue(['work', 'project']),
     suggestPriority: jest.fn().mockResolvedValue('medium'),
     cancelAllOperations: jest.fn(),
@@ -109,9 +109,9 @@ jest.mock('../../apps/cli/src/services/ai', () => {
   return {
     aiService: mockAIService,
     secureCredentialService: {
-      initialize: jest.fn().mockResolvedValue(true),
+      initialize: jest.fn().mockResolvedValue(true as any),
       getCredentials: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
-      storeCredentials: jest.fn().mockResolvedValue(true),
+      storeCredentials: jest.fn().mockResolvedValue(true as any),
     },
     AIService: jest.fn().mockImplementation(() => mockAIService),
   };
@@ -122,9 +122,9 @@ jest.mock('../../apps/cli/src/services/ai/aiService', () => {
   return {
     AIService: jest.fn().mockImplementation(() => ({
       summarize: jest.fn().mockResolvedValue('Mock summary of your todos'),
-      setProvider: jest.fn().mockResolvedValue(true),
+      setProvider: jest.fn().mockResolvedValue(true as any),
       getProvider: jest.fn().mockReturnValue('xai'),
-      isAvailable: jest.fn().mockReturnValue(true),
+      isAvailable: jest.fn().mockReturnValue(true as any),
       cancelAllOperations: jest.fn(),
     })),
   };
@@ -203,8 +203,8 @@ jest.mock('../../apps/cli/src/services/todoService', () => {
 
   return {
     TodoService: jest.fn().mockImplementation(() => ({
-      getAllTodos: jest.fn().mockResolvedValue(mockSampleTodos),
-      listTodos: jest.fn().mockResolvedValue(mockSampleTodos),
+      getAllTodos: jest.fn().mockResolvedValue(mockSampleTodos as any),
+      listTodos: jest.fn().mockResolvedValue(mockSampleTodos as any),
       createTodo: jest.fn().mockImplementation(todo => {
         return Promise.resolve({
           id: 'new-todo-' + Date.now(),
@@ -225,7 +225,7 @@ jest.mock('fs', () => {
   const actualFs = jest.requireActual('fs');
   return {
     ...actualFs,
-    existsSync: jest.fn().mockReturnValue(true),
+    existsSync: jest.fn().mockReturnValue(true as any),
     readFileSync: jest.fn().mockImplementation(path => {
       if (path.includes('config.json')) {
         return JSON.stringify({
@@ -259,7 +259,7 @@ describe('AI Command Integration Tests', () => {
       );
 
       expect(output.join(' ')).toContain('Mock summary of your todos');
-      expect(TodoService).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
 
     it('should handle API key from flag', async () => {
@@ -282,7 +282,7 @@ describe('AI Command Integration Tests', () => {
       );
 
       expect(output.join(' ')).toContain('Mock summary of your todos');
-      expect(AIService).toHaveBeenCalled();
+      expect(AIService as any).toHaveBeenCalled();
     });
   });
 
@@ -298,8 +298,8 @@ describe('AI Command Integration Tests', () => {
 
       expect(output.join(' ')).toContain('work');
       expect(output.join(' ')).toContain('personal');
-      expect(AIService).toHaveBeenCalled();
-      expect(TodoService).toHaveBeenCalled();
+      expect(AIService as any).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
 
     it('should output in JSON format when specified', async () => {
@@ -327,8 +327,8 @@ describe('AI Command Integration Tests', () => {
 
       expect(output.join(' ')).toContain('Priority');
       expect(output.join(' ')).toContain('todo-1');
-      expect(AIService).toHaveBeenCalled();
-      expect(TodoService).toHaveBeenCalled();
+      expect(AIService as any).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
 
     it('should output only high priority todos when specified', async () => {
@@ -356,8 +356,8 @@ describe('AI Command Integration Tests', () => {
       expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('Schedule weekly team meeting')
       );
-      expect(AIService).toHaveBeenCalled();
-      expect(TodoService).toHaveBeenCalled();
+      expect(AIService as any).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
 
     it('should create suggested todos when requested', async () => {
@@ -372,7 +372,7 @@ describe('AI Command Integration Tests', () => {
       );
       const mockTodoService = (
         TodoService as jest.MockedClass<typeof TodoService>
-      ).mock.results[0]?.value;
+      ).mock?.results?.[0]?.value;
       expect(mockTodoService?.createTodo).toHaveBeenCalled();
     });
 
@@ -384,7 +384,7 @@ describe('AI Command Integration Tests', () => {
       await command.run();
 
       expect(console.log).toHaveBeenCalled();
-      expect(AIService).toHaveBeenCalled();
+      expect(AIService as any).toHaveBeenCalled();
     });
   });
 
@@ -403,8 +403,8 @@ describe('AI Command Integration Tests', () => {
       expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('Time Estimates')
       );
-      expect(AIService).toHaveBeenCalled();
-      expect(TodoService).toHaveBeenCalled();
+      expect(AIService as any).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
 
     it('should focus on specific analysis when specified', async () => {
@@ -438,8 +438,8 @@ describe('AI Command Integration Tests', () => {
       expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('First')
       );
-      expect(TaskSuggestionService).toHaveBeenCalled();
-      expect(TodoService).toHaveBeenCalled();
+      expect(TaskSuggestionService as any).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
   });
 
@@ -458,8 +458,8 @@ describe('AI Command Integration Tests', () => {
       expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('waiting for approvals')
       );
-      expect(TaskSuggestionService).toHaveBeenCalled();
-      expect(TodoService).toHaveBeenCalled();
+      expect(TaskSuggestionService as any).toHaveBeenCalled();
+      expect(TodoService as any).toHaveBeenCalled();
     });
   });
 

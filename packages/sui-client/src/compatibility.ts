@@ -80,7 +80,7 @@ export function createCompatibleSuiClientOptions(options: any): any {
   const suiVersion = getSuiVersion();
   
   // For newer versions, ensure proper option format
-  if (suiVersion && isVersionAtLeast(suiVersion, { major: 1, minor: 30, patch: 0, full: '1.30.0' })) {
+  if (suiVersion && isVersionAtLeast(suiVersion, { major: 1, minor: 30, patch: 0, full: '1?.30?.0' })) {
     return {
       url: options.url,
       transport: options.transport,
@@ -172,7 +172,7 @@ export function detectSDKCapabilities(): SDKCapabilities {
   }
   
   // Check for specific version features
-  const hasModernFeatures = isVersionAtLeast(suiVersion, { major: 1, minor: 30, patch: 0, full: '1.30.0' });
+  const hasModernFeatures = isVersionAtLeast(suiVersion, { major: 1, minor: 30, patch: 0, full: '1?.30?.0' });
   
   return {
     hasObjectChanges: hasModernFeatures,
@@ -254,7 +254,7 @@ export const ReactCompatibility = {
 export const Environment = {
   isBrowser: () => typeof window !== 'undefined' && typeof document !== 'undefined',
   isNode: () => typeof window === 'undefined' && typeof process !== 'undefined',
-  isReactNative: () => typeof navigator !== 'undefined' && navigator.product === 'ReactNative',
+  isReactNative: () => typeof navigator !== 'undefined' && navigator?.product === 'ReactNative',
   
   supportsLocalStorage: () => {
     try {
@@ -281,8 +281,8 @@ export function checkVersionCompatibility(): void {
   const dappKitVersion = getDappKitVersion();
   
   // Known incompatible versions
-  const minSuiVersion = { major: 1, minor: 28, patch: 0, full: '1.28.0' };
-  const minDappKitVersion = { major: 0, minor: 14, patch: 0, full: '0.14.0' };
+  const minSuiVersion = { major: 1, minor: 28, patch: 0, full: '1?.28?.0' };
+  const minDappKitVersion = { major: 0, minor: 14, patch: 0, full: '0?.14?.0' };
   
   if (suiVersion && !isVersionAtLeast(suiVersion, minSuiVersion)) {
     // eslint-disable-next-line no-console

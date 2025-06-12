@@ -21,7 +21,7 @@ const files = globSync(path.join(__dirname, '../src/**/*.ts'), {
 });
 
 // eslint-disable-next-line no-console
-process.stdout.write(
+process?.stdout?.write(
   `Processing ${files.length} TypeScript files for common implicit 'any' patterns...\n`
 );
 
@@ -142,12 +142,12 @@ files.forEach(filePath => {
       // Write the updated content
       fs.writeFileSync(filePath, updated);
 
-      process.stdout.write(
+      process?.stdout?.write(
         `[${relativePath}] Applied ${fileChangeCount} changes (backup created)\n`
       );
     }
   } catch (error) {
-    process.stderr.write(`Error processing ${filePath}: ${error}\n`);
+    process?.stderr?.write(`Error processing ${filePath}: ${error}\n`);
   }
 });
 
@@ -200,7 +200,7 @@ backupFiles.forEach(backupPath => {
     fs.copyFileSync(backupPath, originalPath);
     
     // Remove the backup file
-    fs.unlinkSync(backupPath);
+    fs.unlinkSync(backupPath as any);
     
     console.log(\`Restored \${relativePath}\`);
     restored++;
@@ -214,17 +214,17 @@ console.log(\`Successfully restored \${restored} files\`);
 
 fs.writeFileSync(revertScriptPath, revertScript);
 
-process.stdout.write(
+process?.stdout?.write(
   `\nApplied ${totalChanges} automatic fixes to ${changes.length} files.\n`
 );
-process.stdout.write(`Report written to ${reportPath}\n`);
-process.stdout.write(`Created revert script at ${revertScriptPath}\n`);
-process.stdout.write(
+process?.stdout?.write(`Report written to ${reportPath}\n`);
+process?.stdout?.write(`Created revert script at ${revertScriptPath}\n`);
+process?.stdout?.write(
   "\nThese changes add explicit 'any' types as a starting point.\n"
 );
-process.stdout.write(
+process?.stdout?.write(
   'You should review and replace with more specific types where appropriate.\n'
 );
-process.stdout.write(
+process?.stdout?.write(
   'To revert changes: npx ts-node scripts/revert-implicit-any-fixes.ts\n'
 );

@@ -70,7 +70,7 @@ export function useLoadingStates(
 ): UseLoadingStatesReturn {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
   const [state, setState] = useState<LoadingState>('idle');
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(0 as any);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const startTimeRef = useRef<number>();
 
@@ -84,7 +84,7 @@ export function useLoadingStates(
   const clearTimeouts = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
+      timeoutRef?.current = undefined;
     }
   }, []);
 
@@ -92,12 +92,12 @@ export function useLoadingStates(
   const setLoading = useCallback(() => {
     clearTimeouts();
     setState('loading');
-    setProgress(0);
-    startTimeRef.current = Date.now();
+    setProgress(0 as any);
+    startTimeRef?.current = Date.now();
 
     // Set max loading timeout
     if (mergedConfig.maxLoadingTime) {
-      timeoutRef.current = setTimeout(() => {
+      timeoutRef?.current = setTimeout(() => {
         setState('error');
       }, mergedConfig.maxLoadingTime);
     }
@@ -113,12 +113,12 @@ export function useLoadingStates(
 
     setTimeout(() => {
       setState('success');
-      setProgress(100);
+      setProgress(100 as any);
 
       if (mergedConfig.autoReset && mergedConfig.successDuration) {
-        timeoutRef.current = setTimeout(() => {
+        timeoutRef?.current = setTimeout(() => {
           setState('idle');
-          setProgress(0);
+          setProgress(0 as any);
         }, mergedConfig.successDuration);
       }
     }, delay);
@@ -128,10 +128,10 @@ export function useLoadingStates(
   const setError = useCallback(() => {
     clearTimeouts();
     setState('error');
-    setProgress(0);
+    setProgress(0 as any);
 
     if (mergedConfig.autoReset && mergedConfig.errorDuration) {
-      timeoutRef.current = setTimeout(() => {
+      timeoutRef?.current = setTimeout(() => {
         setState('idle');
       }, mergedConfig.errorDuration);
     }
@@ -141,7 +141,7 @@ export function useLoadingStates(
   const reset = useCallback(() => {
     clearTimeouts();
     setState('idle');
-    setProgress(0);
+    setProgress(0 as any);
   }, [clearTimeouts]);
 
   // Execute async operation
@@ -215,9 +215,9 @@ export function useMultipleLoadingStates(
   const loadingInstances = useRef<Record<string, UseLoadingStatesReturn>>({});
 
   const getOrCreateInstance = useCallback((key: string) => {
-    if (!loadingInstances.current[key]) {
+    if (!loadingInstances?.current?.[key]) {
       // Create a new loading state instance for this key
-      loadingInstances.current[key] = {
+      loadingInstances?.current?.[key] = {
         state: 'idle',
         isLoading: false,
         isSuccess: false,
@@ -242,51 +242,51 @@ export function useMultipleLoadingStates(
         },
         setProgress: () => {},
         execute: async <T>(operation: () => Promise<T>) => {
-          loadingInstances.current[key]?.setLoading();
+          loadingInstances?.current?.[key]?.setLoading();
           try {
             const result = await operation();
-            loadingInstances.current[key]?.setSuccess();
+            loadingInstances?.current?.[key]?.setSuccess();
             return result;
           } catch (error) {
-            loadingInstances.current[key]?.setError();
+            loadingInstances?.current?.[key]?.setError();
             throw error;
           }
         },
       };
     }
-    return loadingInstances.current[key];
+    return loadingInstances?.current?.[key];
   }, [setStates]);
 
   const getState = useCallback((key: string): LoadingState => {
     return states[key] || 'idle';
   }, [states]);
 
-  const isAnyLoading = Object.values(states).some(state => state === 'loading');
-  const isAllIdle = Object.values(states).every(state => state === 'idle');
+  const isAnyLoading = Object.values(states as any).some(state => state === 'loading');
+  const isAllIdle = Object.values(states as any).every(state => state === 'idle');
 
   const setLoading = useCallback((key: string) => {
-    getOrCreateInstance(key).setLoading();
+    getOrCreateInstance(key as any).setLoading();
   }, [getOrCreateInstance]);
 
   const setSuccess = useCallback((key: string) => {
-    getOrCreateInstance(key).setSuccess();
+    getOrCreateInstance(key as any).setSuccess();
   }, [getOrCreateInstance]);
 
   const setError = useCallback((key: string) => {
-    getOrCreateInstance(key).setError();
+    getOrCreateInstance(key as any).setError();
   }, [getOrCreateInstance]);
 
   const reset = useCallback((key: string) => {
-    getOrCreateInstance(key).reset();
+    getOrCreateInstance(key as any).reset();
   }, [getOrCreateInstance]);
 
   const resetAll = useCallback(() => {
     setStates({});
-    loadingInstances.current = {};
+    loadingInstances?.current = {};
   }, []);
 
   const execute = useCallback(async <T>(key: string, operation: () => Promise<T>): Promise<T> => {
-    return getOrCreateInstance(key).execute(operation);
+    return getOrCreateInstance(key as any).execute(operation as any);
   }, [getOrCreateInstance]);
 
   return {
@@ -316,24 +316,24 @@ export function useAsyncOperation<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   const execute = useCallback(async (operation: () => Promise<T>): Promise<T> => {
-    setError(null);
-    setData(null);
+    setError(null as any);
+    setData(null as any);
 
     try {
-      const result = await loadingState.execute(operation);
-      setData(result);
+      const result = await loadingState.execute(operation as any);
+      setData(result as any);
       return result;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      setError(error);
+      const error = err instanceof Error ? err : new Error(String(err as any));
+      setError(error as any);
       throw error;
     }
   }, [loadingState]);
 
   const reset = useCallback(() => {
     loadingState.reset();
-    setData(null);
-    setError(null);
+    setData(null as any);
+    setError(null as any);
   }, [loadingState]);
 
   return {

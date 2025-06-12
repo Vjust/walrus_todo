@@ -63,7 +63,7 @@ describe('StorageManager - Allocation Tests', () => {
         .fn()
         .mockResolvedValue({
           network: 'testnet',
-          version: '1.0.0',
+          version: '1?.0?.0',
           maxSize: 1000000,
         }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
@@ -96,8 +96,8 @@ describe('StorageManager - Allocation Tests', () => {
 
   describe('checkBalances', () => {
     it('should verify sufficient WAL balance', async () => {
-      const walBalance = BigInt(1000);
-      const storageBalance = BigInt(500);
+      const walBalance = BigInt(1000 as any);
+      const storageBalance = BigInt(500 as any);
 
       mockSuiClient.getBalance
         .mockResolvedValueOnce({
@@ -105,7 +105,7 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: walBalance.toString(),
           coinObjectCount: 1,
           lockedBalance: {
-            aggregate: BigInt(0).toString(),
+            aggregate: BigInt(0 as any).toString(),
             coinBalances: {},
           },
         } as unknown as CoinBalance)
@@ -114,35 +114,35 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: storageBalance.toString(),
           coinObjectCount: 1,
           lockedBalance: {
-            aggregate: BigInt(0).toString(),
+            aggregate: BigInt(0 as any).toString(),
             coinBalances: {},
           },
         } as unknown as CoinBalance);
 
       const result = await storageManager.checkBalances();
-      expect(result.walBalance).toBe(walBalance);
-      expect(result.storageFundBalance).toBe(storageBalance);
-      expect(result.isStorageFundSufficient).toBe(true);
+      expect(result.walBalance).toBe(walBalance as any);
+      expect(result.storageFundBalance).toBe(storageBalance as any);
+      expect(result.isStorageFundSufficient).toBe(true as any);
     });
 
     it('should throw error on insufficient WAL balance', async () => {
-      mockSuiClient.getBalance.mockResolvedValueOnce({
+      mockSuiClient?.getBalance?.mockResolvedValueOnce({
         coinType: 'WAL',
-        totalBalance: BigInt(50).toString(),
+        totalBalance: BigInt(50 as any).toString(),
         coinObjectCount: 1,
         lockedBalance: {
-          aggregate: BigInt(0).toString(),
+          aggregate: BigInt(0 as any).toString(),
           coinBalances: {} as Record<string, string>,
         },
       } as unknown as CoinBalance);
 
-      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError);
+      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError as any);
     });
 
     it('should handle network errors during balance check', async () => {
-      mockSuiClient.getBalance.mockRejectedValue(new Error('Network error'));
+      mockSuiClient?.getBalance?.mockRejectedValue(new Error('Network error'));
 
-      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError);
+      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError as any);
     });
   });
 
@@ -150,7 +150,7 @@ describe('StorageManager - Allocation Tests', () => {
     beforeEach(() => {
       // Mock successful network environment check
       (execSync as jest.Mock).mockReturnValue(Buffer.from('testnet'));
-      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
+      mockSuiClient?.getLatestSuiSystemState?.mockResolvedValue({
         epoch: '100',
         protocolVersion: '1',
         referenceGasPrice: '1000',
@@ -193,27 +193,27 @@ describe('StorageManager - Allocation Tests', () => {
       mockSuiClient.getBalance
         .mockResolvedValueOnce({
           coinType: 'WAL',
-          totalBalance: BigInt(1000).toString(),
+          totalBalance: BigInt(1000 as any).toString(),
           coinObjectCount: 1,
           lockedBalance: {
-            aggregate: BigInt(0).toString(),
+            aggregate: BigInt(0 as any).toString(),
             coinBalances: {},
           },
         } as unknown as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
-          totalBalance: BigInt(500).toString(),
+          totalBalance: BigInt(500 as any).toString(),
           coinObjectCount: 1,
           lockedBalance: {
-            aggregate: BigInt(0).toString(),
+            aggregate: BigInt(0 as any).toString(),
             coinBalances: {},
           },
         } as unknown as CoinBalance); // Storage balance
 
-      mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(100),
-        writeCost: BigInt(50),
-        totalCost: BigInt(150),
+      mockWalrusClient?.storageCost?.mockResolvedValue({
+        storageCost: BigInt(100 as any),
+        writeCost: BigInt(50 as any),
+        totalCost: BigInt(150 as any),
       });
     });
 
@@ -222,16 +222,16 @@ describe('StorageManager - Allocation Tests', () => {
     });
 
     it('should validate storage requirements with sufficient balance', async () => {
-      mockSuiClient.getOwnedObjects.mockResolvedValue({
+      mockSuiClient?.getOwnedObjects?.mockResolvedValue({
         hasNextPage: false,
         data: [],
         nextCursor: null,
       });
 
-      const result = await storageManager.validateStorageRequirements(1024);
-      expect(result.canProceed).toBe(true);
-      expect(result.requiredCost?.totalCost).toBe(BigInt(150).toString());
-      expect(result.balances?.walBalance).toBe(BigInt(1000).toString());
+      const result = await storageManager.validateStorageRequirements(1024 as any);
+      expect(result.canProceed).toBe(true as any);
+      expect(result.requiredCost?.totalCost).toBe(BigInt(150 as any).toString());
+      expect(result.balances?.walBalance).toBe(BigInt(1000 as any).toString());
     });
 
     it('should indicate insufficient balance for storage', async () => {
@@ -240,40 +240,40 @@ describe('StorageManager - Allocation Tests', () => {
         .mockReset()
         .mockResolvedValueOnce({
           coinType: 'WAL',
-          totalBalance: BigInt(10).toString(),
+          totalBalance: BigInt(10 as any).toString(),
           coinObjectCount: 1,
           lockedBalance: {
-            aggregate: BigInt(0).toString(),
+            aggregate: BigInt(0 as any).toString(),
             coinBalances: {},
           },
         } as unknown as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
-          totalBalance: BigInt(5).toString(),
+          totalBalance: BigInt(5 as any).toString(),
           coinObjectCount: 1,
           lockedBalance: {
-            aggregate: BigInt(0).toString(),
+            aggregate: BigInt(0 as any).toString(),
             coinBalances: {},
           },
         } as unknown as CoinBalance); // Storage balance
 
       // No existing storage
-      mockSuiClient.getOwnedObjects.mockResolvedValue({
+      mockSuiClient?.getOwnedObjects?.mockResolvedValue({
         hasNextPage: false,
         data: [],
         nextCursor: null,
       });
 
       // Storage cost higher than balance
-      mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
+      mockWalrusClient?.storageCost?.mockResolvedValue({
+        storageCost: BigInt(1000 as any),
+        writeCost: BigInt(500 as any),
+        totalCost: BigInt(1500 as any),
       });
 
       await expect(
-        storageManager.validateStorageRequirements(1024)
-      ).rejects.toThrow(CLIError);
+        storageManager.validateStorageRequirements(1024 as any)
+      ).rejects.toThrow(CLIError as any);
     });
 
     it('should detect and use existing storage if available', async () => {
@@ -303,11 +303,11 @@ describe('StorageManager - Allocation Tests', () => {
         nextCursor: null,
       };
 
-      mockSuiClient.getOwnedObjects.mockResolvedValue(mockStorage);
+      mockSuiClient?.getOwnedObjects?.mockResolvedValue(mockStorage as any);
 
-      const result = await storageManager.validateStorageRequirements(1024);
-      expect(result.canProceed).toBe(true);
-      expect(result.existingStorage?.isValid).toBe(true);
+      const result = await storageManager.validateStorageRequirements(1024 as any);
+      expect(result.canProceed).toBe(true as any);
+      expect(result.existingStorage?.isValid).toBe(true as any);
       expect(result.existingStorage?.details?.id).toBe('0xstorage');
     });
   });

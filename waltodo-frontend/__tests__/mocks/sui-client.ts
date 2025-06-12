@@ -4,7 +4,7 @@
  */
 
 // Mock Sui client functions
-export const mockInitializeSuiClient = jest.fn().mockResolvedValue(true);
+export const mockInitializeSuiClient = jest.fn().mockResolvedValue(true as any);
 export const mockIsSuiClientInitialized = jest.fn(() => false);
 export const mockGetSuiClient = jest.fn(() => ({
   getObject: jest.fn(),
@@ -31,10 +31,10 @@ jest.mock('@/lib/sui-client-utils', () => ({
 // Helper to reset Sui client mocks
 export const resetSuiClientMocks = () => {
   mockInitializeSuiClient.mockClear();
-  mockInitializeSuiClient.mockResolvedValue(true);
+  mockInitializeSuiClient.mockResolvedValue(true as any);
   
   mockIsSuiClientInitialized.mockClear();
-  mockIsSuiClientInitialized.mockReturnValue(false);
+  mockIsSuiClientInitialized.mockReturnValue(false as any);
   
   mockGetSuiClient.mockClear();
 };

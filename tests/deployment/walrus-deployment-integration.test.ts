@@ -22,8 +22,8 @@ import { WalrusDeploymentValidator } from '../helpers/deployment-validator';
 jest.mock('child_process');
 jest.mock('fs/promises');
 
-const mockedExecSync = jest.mocked(execSync);
-const mockedFs = jest.mocked(fs);
+const mockedExecSync = jest.mocked(execSync as any);
+const mockedFs = jest.mocked(fs as any);
 
 describe('Walrus Sites Deployment Integration', () => {
   let mockEnvironment: ReturnType<typeof createMockDeploymentEnvironment>;
@@ -39,12 +39,12 @@ describe('Walrus Sites Deployment Integration', () => {
     validator = new WalrusDeploymentValidator();
     
     // Setup default successful responses
-    mockedFs.access.mockResolvedValue(undefined);
-    mockedFs.mkdir.mockResolvedValue(undefined);
-    mockedFs.writeFile.mockResolvedValue(undefined);
-    mockedFs.readFile.mockResolvedValue('mock file content');
-    mockedFs.readdir.mockResolvedValue(['index.html', '404.html', '_next'] as any);
-    mockedFs.stat.mockResolvedValue({ size: 1024, mtime: new Date() } as any);
+    mockedFs?.access?.mockResolvedValue(undefined as any);
+    mockedFs?.mkdir?.mockResolvedValue(undefined as any);
+    mockedFs?.writeFile?.mockResolvedValue(undefined as any);
+    mockedFs?.readFile?.mockResolvedValue('mock file content');
+    mockedFs?.readdir?.mockResolvedValue(['index.html', '404.html', '_next'] as any);
+    mockedFs?.stat?.mockResolvedValue({ size: 1024, mtime: new Date() } as any);
     
     mockedExecSync.mockReturnValue(Buffer.from('success'));
   });
@@ -70,16 +70,16 @@ describe('Walrus Sites Deployment Integration', () => {
           return Buffer.from('Build completed successfully');
         }
         if (command.includes('site-builder')) {
-          return Buffer.from('Site deployed at: https://test123.walrus.site');
+          return Buffer.from('Site deployed at: https://test123?.walrus?.site');
         }
         return Buffer.from('success');
       });
 
       // Act
-      const result = await runFullDeploymentPipeline(deploymentConfig);
+      const result = await runFullDeploymentPipeline(deploymentConfig as any);
 
       // Assert
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
       expect(result.steps).toEqual({
         prerequisiteCheck: { completed: true },
         dependencyInstall: { completed: true },
@@ -113,7 +113,7 @@ describe('Walrus Sites Deployment Integration', () => {
       // Arrange
       mockedExecSync.mockImplementation((command: string) => {
         if (command.includes('node --version')) {
-          return Buffer.from('v16.0.0'); // Below required version
+          return Buffer.from('v16?.0?.0'); // Below required version
         }
         if (command.includes('site-builder --version')) {
           throw new Error('command not found');
@@ -132,7 +132,7 @@ describe('Walrus Sites Deployment Integration', () => {
     test('should generate valid configuration automatically', async () => {
       // Arrange
       let generatedConfig = '';
-      mockedFs.writeFile.mockImplementation(async (filePath: string, content: string) => {
+      mockedFs?.writeFile?.mockImplementation(async (filePath: string, content: string) => {
         if (filePath.toString().includes('sites-config.yaml')) {
           generatedConfig = content;
         }
@@ -147,11 +147,11 @@ describe('Walrus Sites Deployment Integration', () => {
       });
 
       // Assert
-      expect(generatedConfig).toContain('auto-config-test:');
-      expect(generatedConfig).toContain('network: "testnet"');
-      expect(generatedConfig).toContain('source:');
-      expect(generatedConfig).toContain('headers:');
-      expect(generatedConfig).toContain('Cache-Control');
+      expect(generatedConfig as any).toContain('auto-config-test:');
+      expect(generatedConfig as any).toContain('network: "testnet"');
+      expect(generatedConfig as any).toContain('source:');
+      expect(generatedConfig as any).toContain('headers:');
+      expect(generatedConfig as any).toContain('Cache-Control');
     });
   });
 
@@ -179,9 +179,9 @@ describe('Walrus Sites Deployment Integration', () => {
       });
 
       // Assert
-      expect(result.success).toBe(true);
-      expect(attemptCount).toBe(3);
-      expect(result.retryCount).toBe(2);
+      expect(result.success).toBe(true as any);
+      expect(attemptCount as any).toBe(3 as any);
+      expect(result.retryCount).toBe(2 as any);
     });
 
     test('should validate network connectivity before deployment', async () => {
@@ -197,8 +197,8 @@ describe('Walrus Sites Deployment Integration', () => {
       const healthCheck = await validator.checkNetworkHealth('testnet');
 
       // Assert
-      expect(healthCheck.canDeploy).toBe(false);
-      expect(healthCheck.publisher.available).toBe(false);
+      expect(healthCheck.canDeploy).toBe(false as any);
+      expect(healthCheck?.publisher?.available).toBe(false as any);
       expect(healthCheck.recommendations).toContain('Publisher service unavailable');
     });
 
@@ -206,7 +206,7 @@ describe('Walrus Sites Deployment Integration', () => {
       // Arrange
       mockedExecSync.mockImplementation((command: string) => {
         if (command.includes('site-builder')) {
-          throw new Error('getaddrinfo ENOTFOUND publisher-devnet.walrus.space');
+          throw new Error('getaddrinfo ENOTFOUND publisher-devnet?.walrus?.space');
         }
         return Buffer.from('success');
       });
@@ -223,15 +223,15 @@ describe('Walrus Sites Deployment Integration', () => {
   describe('Build Process Integration', () => {
     test('should validate build output before deployment', async () => {
       // Arrange
-      mockedFs.readdir.mockResolvedValue(['index.html'] as any); // Missing 404.html
+      mockedFs?.readdir?.mockResolvedValue(['index.html'] as any); // Missing 404.html
 
       // Act
-      const buildValidation = await validator.verifyBuildOutput(testBuildDir);
+      const buildValidation = await validator.verifyBuildOutput(testBuildDir as any);
 
       // Assert
-      expect(buildValidation.hasIndexHtml).toBe(true);
-      expect(buildValidation.has404Page).toBe(false);
-      expect(buildValidation.hasRequiredFiles).toBe(false);
+      expect(buildValidation.hasIndexHtml).toBe(true as any);
+      expect(buildValidation.has404Page).toBe(false as any);
+      expect(buildValidation.hasRequiredFiles).toBe(false as any);
       expect(buildValidation.missingFiles).toContain('404.html');
     });
 
@@ -243,43 +243,43 @@ describe('Walrus Sites Deployment Integration', () => {
       ];
 
       // Act
-      const optimization = await validator.checkAssetOptimization(assets);
+      const optimization = await validator.checkAssetOptimization(assets as any);
 
       // Assert
-      expect(optimization.largeImages).toHaveLength(1);
-      expect(optimization.uncompressedAssets).toHaveLength(1);
+      expect(optimization.largeImages).toHaveLength(1 as any);
+      expect(optimization.uncompressedAssets).toHaveLength(1 as any);
       expect(optimization.recommendations).toContain('Compress images over 1MB');
     });
 
     test('should verify Next.js specific build artifacts', async () => {
       // Arrange
-      mockedFs.readdir.mockResolvedValue([
+      mockedFs?.readdir?.mockResolvedValue([
         'build-manifest.json',
         'routes-manifest.json',
         'prerender-manifest.json'
       ] as any);
 
       // Act
-      const artifacts = await validator.verifyNextjsArtifacts(testBuildDir);
+      const artifacts = await validator.verifyNextjsArtifacts(testBuildDir as any);
 
       // Assert
-      expect(artifacts.hasBuildManifest).toBe(true);
-      expect(artifacts.hasRoutesManifest).toBe(true);
+      expect(artifacts.hasBuildManifest).toBe(true as any);
+      expect(artifacts.hasRoutesManifest).toBe(true as any);
       expect(artifacts.buildVersion).toBeDefined();
     });
 
     test('should handle build size warnings', async () => {
       // Arrange
-      mockedFs.stat.mockResolvedValue({
+      mockedFs?.stat?.mockResolvedValue({
         size: 150 * 1024 * 1024, // 150MB
         mtime: new Date()
       } as any);
 
       // Act
-      const sizeCheck = await validator.checkBuildSize(testBuildDir);
+      const sizeCheck = await validator.checkBuildSize(testBuildDir as any);
 
       // Assert
-      expect(sizeCheck.isLarge).toBe(true);
+      expect(sizeCheck.isLarge).toBe(true as any);
       expect(sizeCheck.warnings).toContain('Build size exceeds 100MB');
       expect(sizeCheck.recommendations).toContain('Consider optimizing assets');
     });
@@ -293,13 +293,13 @@ waltodo-app:
   source: "/build"
   # missing network field
 `;
-      mockedFs.readFile.mockResolvedValue(invalidConfig);
+      mockedFs?.readFile?.mockResolvedValue(invalidConfig as any);
 
       // Act
-      const validation = await validator.validateSitesConfig(testConfigFile);
+      const validation = await validator.validateSitesConfig(testConfigFile as any);
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.errors).toContain('Missing required field: network');
     });
 
@@ -313,9 +313,9 @@ waltodo-app:
       const mainnetValidation = await validator.validateConfigForNetwork(mainnetConfig, 'mainnet');
 
       // Assert
-      expect(testnetValidation.networkMatch).toBe(true);
+      expect(testnetValidation.networkMatch).toBe(true as any);
       expect(testnetValidation.cachePolicy).toBe('development');
-      expect(mainnetValidation.networkMatch).toBe(true);
+      expect(mainnetValidation.networkMatch).toBe(true as any);
       expect(mainnetValidation.cachePolicy).toBe('production');
     });
 
@@ -327,10 +327,10 @@ waltodo-app:
       };
 
       // Act
-      const validation = await validator.validateEnvironmentVariables(incompleteEnv);
+      const validation = await validator.validateEnvironmentVariables(incompleteEnv as any);
 
       // Assert
-      expect(validation.isValid).toBe(false);
+      expect(validation.isValid).toBe(false as any);
       expect(validation.missingVariables).toContain('SITE_BUILDER_PATH');
       expect(validation.recommendations).toContain('Set wallet path for automated deployment');
     });
@@ -360,21 +360,21 @@ waltodo-app:
       });
 
       // Assert
-      expect(result.success).toBe(true);
-      expect(result.recoveryAttempted).toBe(true);
-      expect(result.finalAttempt).toBe(2);
+      expect(result.success).toBe(true as any);
+      expect(result.recoveryAttempted).toBe(true as any);
+      expect(result.finalAttempt).toBe(2 as any);
     });
 
     test('should cleanup temporary files on failure', async () => {
       // Arrange
       const tempFiles: string[] = [];
-      mockedFs.writeFile.mockImplementation(async (filePath: string) => {
+      mockedFs?.writeFile?.mockImplementation(async (filePath: string) => {
         if (filePath.toString().includes('temp')) {
           tempFiles.push(filePath.toString());
         }
       });
 
-      mockedFs.rm.mockImplementation(async (filePath: string) => {
+      mockedFs?.rm?.mockImplementation(async (filePath: string) => {
         const index = tempFiles.indexOf(filePath.toString());
         if (index > -1) {
           tempFiles.splice(index, 1);
@@ -401,7 +401,7 @@ waltodo-app:
       }
 
       // Assert
-      expect(tempFiles).toHaveLength(0); // All temp files should be cleaned up
+      expect(tempFiles as any).toHaveLength(0 as any); // All temp files should be cleaned up
       expect(mockedFs.rm).toHaveBeenCalled();
     });
 
@@ -418,8 +418,8 @@ waltodo-app:
       const errorReport = await generateDeploymentErrorReport(error, context);
 
       // Assert
-      expect(errorReport.error.message).toContain('insufficient balance');
-      expect(errorReport.context.network).toBe('testnet');
+      expect(errorReport?.error?.message).toContain('insufficient balance');
+      expect(errorReport?.context?.network).toBe('testnet');
       expect(errorReport.possibleCauses).toContain('Insufficient wallet balance');
       expect(errorReport.recommendations).toContain('Check wallet balance');
     });
@@ -428,7 +428,7 @@ waltodo-app:
   describe('Post-Deployment Verification', () => {
     test('should verify deployed site accessibility', async () => {
       // Arrange
-      const siteUrl = 'https://test123.walrus.site';
+      const siteUrl = 'https://test123?.walrus?.site';
       
       // Mock successful deployment
       mockedExecSync.mockReturnValue(Buffer.from(`Site deployed at: ${siteUrl}`));
@@ -443,24 +443,24 @@ waltodo-app:
       const healthCheck = await validator.validateDeployedSite(deploymentResult.siteUrl!);
 
       // Assert
-      expect(deploymentResult.success).toBe(true);
-      expect(healthCheck.accessible).toBe(true);
-      expect(healthCheck.statusCode).toBe(200);
-      expect(healthCheck.hasRequiredContent).toBe(true);
+      expect(deploymentResult.success).toBe(true as any);
+      expect(healthCheck.accessible).toBe(true as any);
+      expect(healthCheck.statusCode).toBe(200 as any);
+      expect(healthCheck.hasRequiredContent).toBe(true as any);
     });
 
     test('should validate site content after deployment', async () => {
       // Arrange
-      const siteUrl = 'https://test123.walrus.site';
+      const siteUrl = 'https://test123?.walrus?.site';
 
       // Act
-      const contentValidation = await validateSiteContent(siteUrl);
+      const contentValidation = await validateSiteContent(siteUrl as any);
 
       // Assert
-      expect(contentValidation.hasWalTodoContent).toBe(true);
-      expect(contentValidation.hasNextJsMarkup).toBe(true);
-      expect(contentValidation.responsiveDesign).toBe(true);
-      expect(contentValidation.assetLoading).toBe(true);
+      expect(contentValidation.hasWalTodoContent).toBe(true as any);
+      expect(contentValidation.hasNextJsMarkup).toBe(true as any);
+      expect(contentValidation.responsiveDesign).toBe(true as any);
+      expect(contentValidation.assetLoading).toBe(true as any);
     });
   });
 
@@ -494,22 +494,22 @@ waltodo-app:
       if (!prerequisites.allSatisfied) {
         throw new Error('Prerequisites not met');
       }
-      steps.prerequisiteCheck.completed = true;
+      steps.prerequisiteCheck?.completed = true;
 
       // Step 2: Install dependencies
       mockedExecSync('pnpm install --frozen-lockfile');
-      steps.dependencyInstall.completed = true;
+      steps.dependencyInstall?.completed = true;
 
       // Step 3: Build process
       mockedExecSync('pnpm run build:export');
-      steps.buildProcess.completed = true;
+      steps.buildProcess?.completed = true;
 
       // Step 4: Validate build
       const buildValidation = await validator.verifyBuildOutput(config.buildDir);
       if (!buildValidation.hasRequiredFiles) {
         throw new Error('Build validation failed');
       }
-      steps.buildValidation.completed = true;
+      steps.buildValidation?.completed = true;
 
       // Step 5: Generate configuration
       if (config.createTempFiles) {
@@ -518,13 +518,13 @@ waltodo-app:
       
       const configContent = await generateSitesConfig(config.network, config.siteName || 'waltodo-app');
       await mockedFs.writeFile(config.configFile || 'sites-config.yaml', configContent);
-      steps.configGeneration.completed = true;
+      steps.configGeneration?.completed = true;
 
       // Step 6: Deploy
       const deployResult = mockedExecSync('site-builder publish --epochs 5');
       const output = deployResult.toString();
       const siteUrlMatch = output.match(/https:\/\/[a-z0-9]+\.walrus\.site/);
-      steps.deployment.completed = true;
+      steps.deployment?.completed = true;
 
       // Step 7: Verify deployment
       if (siteUrlMatch) {
@@ -533,7 +533,7 @@ waltodo-app:
           throw new Error('Deployed site not accessible');
         }
       }
-      steps.verification.completed = true;
+      steps.verification?.completed = true;
 
       // Cleanup temp files
       if (config.createTempFiles) {
@@ -627,7 +627,7 @@ ${siteName}:
       - "X-Frame-Options: DENY"
   redirects:
     - from: "/api/*"
-      to: "https://api.waltodo.com/api/*"
+      to: "https://api?.waltodo?.com/api/*"
       status: 307
   error_pages:
     404: "/404.html"
@@ -638,10 +638,10 @@ ${siteName}:
     return {
       error: { message: error.message },
       context,
-      possibleCauses: error.message.includes('balance') 
+      possibleCauses: error?.message?.includes('balance') 
         ? ['Insufficient wallet balance'] 
         : ['Network connectivity issue'],
-      recommendations: error.message.includes('balance')
+      recommendations: error?.message?.includes('balance')
         ? ['Check wallet balance']
         : ['Verify network connectivity']
     };

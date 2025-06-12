@@ -38,8 +38,8 @@ export class EnvironmentValidator {
    * Run all validation checks
    */
   async validate(): Promise<ValidationResult> {
-    this.errors = [];
-    this.warnings = [];
+    this?.errors = [];
+    this?.warnings = [];
 
     await this.validateSuiCLI();
     await this.validateWalrusCLI();
@@ -52,11 +52,11 @@ export class EnvironmentValidator {
     await this.validateGasBudget();
 
     return {
-      isValid: this.errors.length === 0,
+      isValid: this.errors?.length === 0,
       errors: this.errors,
       warnings: this.warnings,
       config:
-        this.errors.length === 0 ? (this.config as TestnetConfig) : undefined,
+        this.errors?.length === 0 ? (this.config as TestnetConfig) : undefined,
     };
   }
 
@@ -67,10 +67,10 @@ export class EnvironmentValidator {
     try {
       const version = execSync('sui --version', { encoding: 'utf8' }).trim();
       logger.info(`✓ Sui CLI found: ${version}`);
-      this.config.suiPath = execSync('which sui', { encoding: 'utf8' }).trim();
+      this.config?.suiPath = execSync('which sui', { encoding: 'utf8' }).trim();
     } catch (error) {
-      this.errors.push(
-        'Sui CLI not found. Please install it from https://docs.sui.io/guides/developer/getting-started'
+      this?.errors?.push(
+        'Sui CLI not found. Please install it from https://docs?.sui?.io/guides/developer/getting-started'
       );
     }
   }
@@ -83,8 +83,8 @@ export class EnvironmentValidator {
       const version = execSync('walrus --version', { encoding: 'utf8' }).trim();
       logger.info(`✓ Walrus CLI found: ${version}`);
     } catch (error) {
-      this.errors.push(
-        'Walrus CLI not found. Please install it from https://docs.wal.app'
+      this?.errors?.push(
+        'Walrus CLI not found. Please install it from https://docs?.wal?.app'
       );
     }
   }
@@ -93,20 +93,20 @@ export class EnvironmentValidator {
    * Validate Sui address
    */
   private async validateSuiAddress(): Promise<void> {
-    const address = process.env.SUI_ADDRESS;
+    const address = process?.env?.SUI_ADDRESS;
     if (!address) {
-      this.errors.push('SUI_ADDRESS environment variable not set');
+      this?.errors?.push('SUI_ADDRESS environment variable not set');
       return;
     }
 
     if (!address.startsWith('0x') || address.length !== 66) {
-      this.errors.push(
+      this?.errors?.push(
         'Invalid SUI_ADDRESS format. Must be a 66-character hex string starting with 0x'
       );
       return;
     }
 
-    this.config.suiAddress = address;
+    this.config?.suiAddress = address;
     logger.info(`✓ Sui address configured: ${address}`);
   }
 
@@ -114,29 +114,29 @@ export class EnvironmentValidator {
    * Validate Sui balance
    */
   private async validateSuiBalance(): Promise<void> {
-    if (!this.config.suiAddress) return;
+    if (!this?.config?.suiAddress) return;
 
     try {
       const gasObj = execSync(`sui client gas --json`, { encoding: 'utf8' });
-      const gasData = JSON.parse(gasObj);
+      const gasData = JSON.parse(gasObj as any);
 
-      let totalBalance = BigInt(0);
+      let totalBalance = BigInt(0 as any);
       for (const coin of gasData) {
         totalBalance += BigInt(coin.gasBalance);
       }
 
-      this.config.suiBalance = totalBalance;
-      const balanceInSui = Number(totalBalance) / 1e9;
+      this.config?.suiBalance = totalBalance;
+      const balanceInSui = Number(totalBalance as any) / 1e9;
 
       logger.info(`✓ Sui balance: ${balanceInSui} SUI`);
 
       if (balanceInSui < 0.1) {
-        this.warnings.push(
+        this?.warnings?.push(
           `Low Sui balance: ${balanceInSui} SUI. Consider getting more from the faucet.`
         );
       }
     } catch (error) {
-      this.errors.push(
+      this?.errors?.push(
         'Failed to check Sui balance. Make sure you have active Sui client.'
       );
     }
@@ -146,22 +146,22 @@ export class EnvironmentValidator {
    * Validate private key availability
    */
   private async validatePrivateKey(): Promise<void> {
-    const privateKey = process.env.SUI_PRIVATE_KEY;
+    const privateKey = process?.env?.SUI_PRIVATE_KEY;
 
     if (!privateKey) {
       // Try to load from keystore
       const keystorePath = path.join(
-        process.env.HOME || '',
+        process?.env?.HOME || '',
         '.sui',
         'keystore'
       );
 
-      if (existsSync(keystorePath)) {
+      if (existsSync(keystorePath as any)) {
         try {
           const keystore = JSON.parse(readFileSync(keystorePath, 'utf8'));
           if (keystore.length > 0) {
             logger.info('✓ Private key found in Sui keystore');
-            this.config.privateKey = 'keystore';
+            this.config?.privateKey = 'keystore';
             return;
           }
         } catch (error) {
@@ -169,12 +169,12 @@ export class EnvironmentValidator {
         }
       }
 
-      this.errors.push(
+      this?.errors?.push(
         'No private key found. Set SUI_PRIVATE_KEY or configure Sui keystore'
       );
     } else {
       logger.info('✓ Private key configured via environment variable');
-      this.config.privateKey = privateKey;
+      this.config?.privateKey = privateKey;
     }
   }
 
@@ -183,20 +183,20 @@ export class EnvironmentValidator {
    */
   private async validateWalrusConfig(): Promise<void> {
     const configPath = path.join(
-      process.env.HOME || '',
+      process?.env?.HOME || '',
       '.config',
       'walrus',
       'client_config.yaml'
     );
 
-    if (!existsSync(configPath)) {
-      this.errors.push(
+    if (!existsSync(configPath as any)) {
+      this?.errors?.push(
         `Walrus config not found at ${configPath}. Run 'walrus --context testnet config'`
       );
       return;
     }
 
-    this.config.walrusConfig = configPath;
+    this.config?.walrusConfig = configPath;
     logger.info(`✓ Walrus config found: ${configPath}`);
 
     // Check Walrus tokens
@@ -207,17 +207,17 @@ export class EnvironmentValidator {
       const tokenMatch = output.match(/Balance:\s*(\d+)/);
 
       if (tokenMatch) {
-        this.config.walrusTokens = parseInt(tokenMatch[1]);
-        logger.info(`✓ Walrus balance: ${this.config.walrusTokens} tokens`);
+        this.config?.walrusTokens = parseInt(tokenMatch[1]);
+        logger.info(`✓ Walrus balance: ${this?.config?.walrusTokens} tokens`);
 
-        if (this.config.walrusTokens < 10) {
-          this.warnings.push(
-            `Low Walrus token balance: ${this.config.walrusTokens}. Run 'walrus --context testnet get-wal'`
+        if (this?.config?.walrusTokens < 10) {
+          this?.warnings?.push(
+            `Low Walrus token balance: ${this?.config?.walrusTokens}. Run 'walrus --context testnet get-wal'`
           );
         }
       }
     } catch (error) {
-      this.warnings.push(
+      this?.warnings?.push(
         'Failed to check Walrus balance. Make sure Walrus CLI is configured.'
       );
     }
@@ -228,18 +228,18 @@ export class EnvironmentValidator {
    */
   private async validateNetworkConnectivity(): Promise<void> {
     const networkUrl =
-      process.env.SUI_NETWORK_URL || 'https://fullnode.testnet.sui.io:443';
+      process?.env?.SUI_NETWORK_URL || 'https://fullnode?.testnet?.sui.io:443';
 
     try {
       // Simple check using curl
       execSync(`curl -s -f ${networkUrl}`, { encoding: 'utf8' });
       logger.info(`✓ Network connectivity confirmed: ${networkUrl}`);
-      this.config.networkUrl = networkUrl;
+      this.config?.networkUrl = networkUrl;
     } catch (error) {
-      this.warnings.push(
+      this?.warnings?.push(
         `Failed to connect to ${networkUrl}. Network may be slow or unavailable.`
       );
-      this.config.networkUrl = networkUrl;
+      this.config?.networkUrl = networkUrl;
     }
   }
 
@@ -249,20 +249,20 @@ export class EnvironmentValidator {
   private async validateMovePackage(): Promise<void> {
     const movePath = path.join(process.cwd(), 'src', 'move', 'Move.toml');
 
-    if (!existsSync(movePath)) {
-      this.errors.push('Move package not found at src/move/Move.toml');
+    if (!existsSync(movePath as any)) {
+      this?.errors?.push('Move package not found at src/move/Move.toml');
       return;
     }
 
     logger.info('✓ Move package found');
 
     // Check if package is already deployed
-    const deployedId = process.env.TODO_PACKAGE_ID;
+    const deployedId = process?.env?.TODO_PACKAGE_ID;
     if (deployedId) {
       logger.info(`✓ Deployed package ID: ${deployedId}`);
-      this.config.movePackageId = deployedId;
+      this.config?.movePackageId = deployedId;
     } else {
-      this.warnings.push(
+      this?.warnings?.push(
         'TODO_PACKAGE_ID not set. Package may need to be deployed.'
       );
     }
@@ -272,20 +272,20 @@ export class EnvironmentValidator {
    * Validate gas budget configuration
    */
   private async validateGasBudget(): Promise<void> {
-    const gasBudget = process.env.GAS_BUDGET || '100000000'; // 0.1 SUI default
+    const gasBudget = process?.env?.GAS_BUDGET || '100000000'; // 0.1 SUI default
 
     try {
-      this.config.gasBudget = BigInt(gasBudget);
-      const gasInSui = Number(this.config.gasBudget) / 1e9;
+      this.config?.gasBudget = BigInt(gasBudget as any);
+      const gasInSui = Number(this?.config?.gasBudget) / 1e9;
       logger.info(`✓ Gas budget configured: ${gasInSui} SUI`);
 
       if (gasInSui > 1) {
-        this.warnings.push(
+        this?.warnings?.push(
           `High gas budget: ${gasInSui} SUI. Consider reducing to save costs.`
         );
       }
     } catch (error) {
-      this.errors.push('Invalid GAS_BUDGET format. Must be a numeric string.');
+      this?.errors?.push('Invalid GAS_BUDGET format. Must be a numeric string.');
     }
   }
 
@@ -298,7 +298,7 @@ export class EnvironmentValidator {
 # Sui Configuration
 SUI_ADDRESS=0x... # Your Sui testnet address
 SUI_PRIVATE_KEY=... # Optional: Your private key (alternatively use keystore)
-SUI_NETWORK_URL=https://fullnode.testnet.sui.io:443
+SUI_NETWORK_URL=https://fullnode?.testnet?.sui.io:443
 GAS_BUDGET=100000000 # 0.1 SUI
 
 # Deployed Contract IDs (set after deployment)
@@ -320,15 +320,15 @@ XAI_API_KEY=... # For AI features
   static printReport(result: ValidationResult): void {
     logger.info('\n=== Testnet Environment Validation Report ===\n');
 
-    if (result.errors.length > 0) {
+    if (result?.errors?.length > 0) {
       logger.info('❌ ERRORS:');
-      result.errors.forEach(error => logger.info(`   - ${error}`));
+      result?.errors?.forEach(error => logger.info(`   - ${error}`));
       logger.info('');
     }
 
-    if (result.warnings.length > 0) {
+    if (result?.warnings?.length > 0) {
       logger.info('⚠️  WARNINGS:');
-      result.warnings.forEach(warning => logger.info(`   - ${warning}`));
+      result?.warnings?.forEach(warning => logger.info(`   - ${warning}`));
       logger.info('');
     }
 
@@ -353,13 +353,13 @@ export async function validateTestnetEnvironment(): Promise<ValidationResult> {
 }
 
 // If running directly, perform validation
-if (require.main === module) {
+if (require?.main === module) {
   (async () => {
     const result = await validateTestnetEnvironment();
-    EnvironmentValidator.printReport(result);
+    EnvironmentValidator.printReport(result as any);
 
     if (!result.isValid) {
-      process.exit(1);
+      process.exit(1 as any);
     }
   })();
 }

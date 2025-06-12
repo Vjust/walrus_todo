@@ -106,34 +106,34 @@ export default class DeployEnhanced extends BaseCommand {
   private troubleshooting!: DeploymentTroubleshooting;
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(DeployEnhanced);
+    const { flags } = await this.parse(DeployEnhanced as any);
 
     // Initialize systems
-    this.logger = new Logger('EnhancedDeploy');
-    this.diagnostics = new DeploymentDiagnostics();
-    this.troubleshooting = new DeploymentTroubleshooting();
+    this?.logger = new Logger('EnhancedDeploy');
+    this?.diagnostics = new DeploymentDiagnostics();
+    this?.troubleshooting = new DeploymentTroubleshooting();
 
     // Build configuration
     const config: DeploymentConfig = {
       network: flags.network as 'testnet' | 'mainnet',
-      buildDir: flags['build-dir'],
-      siteName: flags['site-name'],
-      siteConfigFile: flags['config-file'],
-      walletPath: flags['wallet-path'],
-      configDir: join(process.env.HOME || '~', '.walrus'),
+      buildDir: flags?.["build-dir"],
+      siteName: flags?.["site-name"],
+      siteConfigFile: flags?.["config-file"],
+      walletPath: flags?.["wallet-path"],
+      configDir: join(process?.env?.HOME || '~', '.walrus'),
     };
 
     // Initialize deployment logger
-    this.deploymentLogger = new DeploymentLogger({
+    this?.deploymentLogger = new DeploymentLogger({
       network: config.network,
       siteName: config.siteName,
       buildDir: config.buildDir,
-      logDir: flags['log-dir']
+      logDir: flags?.["log-dir"]
     });
 
-    this.recovery = new DeploymentRecoverySystem(this.deploymentLogger);
+    this?.recovery = new DeploymentRecoverySystem(this.deploymentLogger);
 
-    this.log(chalk.blue.bold('🚀 Enhanced Walrus Sites Deployment'));
+    this.log(chalk?.blue?.bold('🚀 Enhanced Walrus Sites Deployment'));
     this.log(chalk.gray('=========================================='));
     this.log();
 
@@ -142,7 +142,7 @@ export default class DeployEnhanced extends BaseCommand {
       await this.runPreDeploymentDiagnostics(config, flags.verbose);
 
       // If diagnostics-only flag is set, stop here
-      if (flags['diagnostics-only']) {
+      if (flags?.["diagnostics-only"]) {
         this.log(chalk.green('✅ Diagnostics completed. Use --no-diagnostics-only to proceed with deployment.'));
         return;
       }
@@ -152,7 +152,7 @@ export default class DeployEnhanced extends BaseCommand {
         network: config.network,
         siteName: config.siteName,
         buildDir: config.buildDir,
-        logDir: flags['log-dir']
+        logDir: flags?.["log-dir"]
       });
 
       const report = await deployment.execute(async (logger) => {
@@ -160,14 +160,14 @@ export default class DeployEnhanced extends BaseCommand {
       });
 
       // Save logs if requested
-      if (flags['save-logs']) {
-        const logPath = join(flags['log-dir'], `deployment-${Date.now()}.json`);
+      if (flags?.["save-logs"]) {
+        const logPath = join(flags?.["log-dir"], `deployment-${Date.now()}.json`);
         await fs.writeFile(logPath, JSON.stringify(report, null, 2));
         this.log(chalk.green(`📄 Deployment logs saved to: ${logPath}`));
       }
 
       // Display final summary
-      this.displayDeploymentSummary(report);
+      this.displayDeploymentSummary(report as any);
 
     } catch (error) {
       await this.handleDeploymentFailure(error, config, flags);
@@ -179,15 +179,15 @@ export default class DeployEnhanced extends BaseCommand {
    */
   private async runPreDeploymentDiagnostics(config: DeploymentConfig, verbose: boolean): Promise<void> {
     this.log(chalk.cyan('🔍 Running Pre-Deployment Diagnostics...'));
-    this.deploymentLogger.startTiming('diagnostics');
+    this?.deploymentLogger?.startTiming('diagnostics');
 
-    const results = await this.diagnostics.runDiagnostics(config);
-    this.deploymentLogger.endTiming('diagnostics');
+    const results = await this?.diagnostics?.runDiagnostics(config as any);
+    this?.deploymentLogger?.endTiming('diagnostics');
 
-    const critical = results.filter(r => r.severity === 'critical');
-    const warnings = results.filter(r => r.severity === 'warning');
+    const critical = results.filter(r => r?.severity === 'critical');
+    const warnings = results.filter(r => r?.severity === 'warning');
 
-    if (critical.length === 0 && warnings.length === 0) {
+    if (critical?.length === 0 && warnings?.length === 0) {
       this.log(chalk.green('✅ All pre-deployment checks passed!'));
       return;
     }
@@ -196,7 +196,7 @@ export default class DeployEnhanced extends BaseCommand {
 
     if (verbose) {
       for (const result of [...critical, ...warnings]) {
-        this.displayDiagnosticResult(result);
+        this.displayDiagnosticResult(result as any);
       }
     }
 
@@ -220,14 +220,14 @@ export default class DeployEnhanced extends BaseCommand {
     logger: DeploymentLogger
   ): Promise<void> {
     let retryCount = 0;
-    const maxRetries = flags['max-retries'];
+    const maxRetries = flags?.["max-retries"];
 
     while (retryCount <= maxRetries) {
       try {
         if (retryCount > 0) {
           logger.incrementRetryCount();
           this.log(chalk.yellow(`🔄 Retry attempt ${retryCount}/${maxRetries}`));
-          await this.delay(flags['retry-delay'] * 1000);
+          await this.delay(flags?.["retry-delay"] * 1000);
         }
 
         await this.executeDeploymentSteps(config, flags, logger);
@@ -241,7 +241,7 @@ export default class DeployEnhanced extends BaseCommand {
         }
 
         // Attempt recovery if auto-recover is enabled
-        if (flags['auto-recover']) {
+        if (flags?.["auto-recover"]) {
           const recoverySuccess = await this.attemptErrorRecovery(error, config, logger);
           if (!recoverySuccess && retryCount === maxRetries - 1) {
             throw error; // Recovery failed and this was the last retry
@@ -262,7 +262,7 @@ export default class DeployEnhanced extends BaseCommand {
     logger: DeploymentLogger
   ): Promise<void> {
     // Step 1: Build Application
-    if (!flags['skip-build']) {
+    if (!flags?.["skip-build"]) {
       await this.buildApplication(config, flags, logger);
     } else {
       logger.info(DeploymentLogCategory.BUILD, 'Skipping build as requested');
@@ -289,7 +289,7 @@ export default class DeployEnhanced extends BaseCommand {
     logger.logStep('build', 'started');
 
     try {
-      if (flags['force-rebuild']) {
+      if (flags?.["force-rebuild"]) {
         logger.info(DeploymentLogCategory.BUILD, 'Cleaning previous build');
         execSync('pnpm run clean', { stdio: 'pipe' });
       }
@@ -305,7 +305,7 @@ export default class DeployEnhanced extends BaseCommand {
       logger.logStep('build', 'completed');
     } catch (error) {
       logger.logStep('build', 'failed', error);
-      throw new Error(`Build failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Build failed: ${error instanceof Error ? error.message : String(error as any)}`);
     } finally {
       logger.endTiming('build');
     }
@@ -351,13 +351,13 @@ export default class DeployEnhanced extends BaseCommand {
         await fs.access(config.siteConfigFile);
       } catch {
         logger.info(DeploymentLogCategory.CONFIGURATION, 'Creating default configuration');
-        const defaultConfig = this.generateDefaultConfig(config);
+        const defaultConfig = this.generateDefaultConfig(config as any);
         await fs.writeFile(config.siteConfigFile, defaultConfig);
       }
 
       logger.info(DeploymentLogCategory.CONFIGURATION, 'Configuration setup completed');
     } catch (error) {
-      throw new Error(`Configuration setup failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Configuration setup failed: ${error instanceof Error ? error.message : String(error as any)}`);
     }
   }
 
@@ -370,7 +370,7 @@ export default class DeployEnhanced extends BaseCommand {
 
     try {
       // Build Walrus CLI command
-      const command = this.buildWalrusCommand(config);
+      const command = this.buildWalrusCommand(config as any);
       logger.info(DeploymentLogCategory.PUBLISH, 'Executing Walrus deployment', { command });
 
       // Execute with timeout
@@ -381,7 +381,7 @@ export default class DeployEnhanced extends BaseCommand {
       logger.logStep('publish', 'completed');
     } catch (error) {
       logger.logStep('publish', 'failed', error);
-      throw new Error(`Walrus deployment failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Walrus deployment failed: ${error instanceof Error ? error.message : String(error as any)}`);
     } finally {
       logger.endTiming('publish');
     }
@@ -416,11 +416,11 @@ export default class DeployEnhanced extends BaseCommand {
 
     try {
       // Analyze error and find recovery strategy
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const diagnosticResults = this.diagnostics.analyzeDeploymentError(errorMessage, config);
+      const errorMessage = error instanceof Error ? error.message : String(error as any);
+      const diagnosticResults = this?.diagnostics?.analyzeDeploymentError(errorMessage, config);
 
       for (const diagnostic of diagnosticResults) {
-        const recoveryResult = await this.recovery.attemptRecovery(diagnostic, config, true);
+        const recoveryResult = await this?.recovery?.attemptRecovery(diagnostic, config, true);
         
         if (recoveryResult.success) {
           this.log(chalk.green(`✅ Recovery successful: ${recoveryResult.strategy}`));
@@ -443,26 +443,26 @@ export default class DeployEnhanced extends BaseCommand {
    * Handle deployment failure
    */
   private async handleDeploymentFailure(error: any, config: DeploymentConfig, flags: any): Promise<void> {
-    this.log(chalk.red.bold('❌ Deployment Failed'));
+    this.log(chalk?.red?.bold('❌ Deployment Failed'));
     this.log(chalk.red('===================='));
     this.log();
 
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
     this.log(chalk.red(`Error: ${errorMessage}`));
     this.log();
 
     // Provide troubleshooting guidance
-    const guide = this.troubleshooting.getGuideForError(errorMessage);
+    const guide = this?.troubleshooting?.getGuideForError(errorMessage as any);
     if (guide) {
-      this.log(chalk.cyan.bold('🔧 Troubleshooting Guide'));
+      this.log(chalk?.cyan?.bold('🔧 Troubleshooting Guide'));
       this.log(chalk.cyan('======================'));
       this.log(chalk.white(guide.description));
       this.log();
 
-      if (guide.solutions.length > 0) {
+      if (guide?.solutions?.length > 0) {
         this.log(chalk.yellow('Recommended Solutions:'));
-        for (let i = 0; i < Math.min(3, guide.solutions.length); i++) {
-          const solution = guide.solutions[i];
+        for (let i = 0; i < Math.min(3, guide?.solutions?.length); i++) {
+          const solution = guide?.solutions?.[i];
           this.log(chalk.yellow(`${i + 1}. ${solution.title}`));
           this.log(chalk.gray(`   ${solution.description}`));
         }
@@ -471,14 +471,14 @@ export default class DeployEnhanced extends BaseCommand {
     }
 
     // Suggest next steps
-    this.log(chalk.blue.bold('📋 Next Steps'));
+    this.log(chalk?.blue?.bold('📋 Next Steps'));
     this.log(chalk.blue('============='));
     this.log(chalk.white('1. Run diagnostics: waltodo deploy:diagnostics'));
     this.log(chalk.white('2. Try auto-recovery: waltodo deploy:enhanced --auto-recover'));
     this.log(chalk.white('3. Check logs for details'));
     this.log(chalk.white('4. Review troubleshooting guide above'));
 
-    this.deploymentLogger.completeSession('failed', errorMessage);
+    this?.deploymentLogger?.completeSession('failed', errorMessage);
     this.error(errorMessage, { exit: 1 });
   }
 
@@ -487,9 +487,9 @@ export default class DeployEnhanced extends BaseCommand {
     let size = 0;
     let fileCount = 0;
 
-    const files = await this.getAllFiles(buildDir);
+    const files = await this.getAllFiles(buildDir as any);
     for (const file of files) {
-      const stats = await fs.stat(file);
+      const stats = await fs.stat(file as any);
       size += stats.size;
       fileCount++;
     }
@@ -504,9 +504,9 @@ export default class DeployEnhanced extends BaseCommand {
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
-        files.push(...await this.getAllFiles(fullPath));
+        files.push(...await this.getAllFiles(fullPath as any));
       } else {
-        files.push(fullPath);
+        files.push(fullPath as any);
       }
     }
 
@@ -517,7 +517,7 @@ export default class DeployEnhanced extends BaseCommand {
     const command = ['site-builder'];
 
     // Add context for testnet
-    if (config.network === 'testnet') {
+    if (config?.network === 'testnet') {
       command.push('--context', 'testnet');
     }
 
@@ -552,11 +552,11 @@ ${config.siteName}:
 
       try {
         const output = execSync(command, { stdio: 'pipe' }).toString();
-        clearTimeout(timer);
-        resolve(output);
+        clearTimeout(timer as any);
+        resolve(output as any);
       } catch (error) {
-        clearTimeout(timer);
-        reject(error);
+        clearTimeout(timer as any);
+        reject(error as any);
       }
     });
   }
@@ -566,8 +566,8 @@ ${config.siteName}:
   }
 
   private displayDiagnosticResult(result: any): void {
-    const icon = result.severity === 'critical' ? '🚨' : '⚠️';
-    const color = result.severity === 'critical' ? chalk.red : chalk.yellow;
+    const icon = result?.severity === 'critical' ? '🚨' : '⚠️';
+    const color = result?.severity === 'critical' ? chalk.red : chalk.yellow;
     
     this.log(color(`${icon} ${result.message}`));
     if (result.suggestion) {
@@ -577,7 +577,7 @@ ${config.siteName}:
 
   private displayDeploymentSummary(report: any): void {
     this.log();
-    this.log(chalk.green.bold('🎉 Deployment Summary'));
+    this.log(chalk?.green?.bold('🎉 Deployment Summary'));
     this.log(chalk.green('===================='));
     this.log(report.summary);
   }

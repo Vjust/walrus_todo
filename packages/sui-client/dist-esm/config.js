@@ -23,7 +23,7 @@ const NETWORK_URLS = {
     mainnet: getFullnodeUrl('mainnet'),
     testnet: getFullnodeUrl('testnet'),
     devnet: getFullnodeUrl('devnet'),
-    localnet: 'http://127.0.0.1:9000',
+    localnet: 'http://127?.0?.0.1:9000',
 };
 /**
  * Fallback configurations when auto-generated configs are not available
@@ -33,14 +33,14 @@ const FALLBACK_CONFIGS = {
         network: {
             name: 'testnet',
             url: NETWORK_URLS.testnet,
-            faucetUrl: 'https://faucet.testnet.sui.io',
-            explorerUrl: 'https://testnet.suiexplorer.com',
+            faucetUrl: 'https://faucet?.testnet?.sui.io',
+            explorerUrl: 'https://testnet?.suiexplorer?.com',
         },
         walrus: {
-            networkUrl: 'https://wal.testnet.sui.io',
-            publisherUrl: 'https://publisher-testnet.walrus.space',
-            aggregatorUrl: 'https://aggregator-testnet.walrus.space',
-            apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+            networkUrl: 'https://wal?.testnet?.sui.io',
+            publisherUrl: 'https://publisher-testnet?.walrus?.space',
+            aggregatorUrl: 'https://aggregator-testnet?.walrus?.space',
+            apiPrefix: 'https://api-testnet?.walrus?.tech/1.0',
         },
         deployment: {
             packageId: '0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b',
@@ -65,14 +65,14 @@ const FALLBACK_CONFIGS = {
         network: {
             name: 'devnet',
             url: NETWORK_URLS.devnet,
-            faucetUrl: 'https://faucet.devnet.sui.io',
-            explorerUrl: 'https://devnet.suiexplorer.com',
+            faucetUrl: 'https://faucet?.devnet?.sui.io',
+            explorerUrl: 'https://devnet?.suiexplorer?.com',
         },
         walrus: {
-            networkUrl: 'https://wal.devnet.sui.io',
-            publisherUrl: 'https://publisher-devnet.walrus.space',
-            aggregatorUrl: 'https://aggregator-devnet.walrus.space',
-            apiPrefix: 'https://api-devnet.walrus.tech/1.0',
+            networkUrl: 'https://wal?.devnet?.sui.io',
+            publisherUrl: 'https://publisher-devnet?.walrus?.space',
+            aggregatorUrl: 'https://aggregator-devnet?.walrus?.space',
+            apiPrefix: 'https://api-devnet?.walrus?.tech/1.0',
         },
         deployment: {
             packageId: '0x0',
@@ -100,10 +100,10 @@ const FALLBACK_CONFIGS = {
             explorerUrl: 'https://suiexplorer.com',
         },
         walrus: {
-            networkUrl: 'https://wal.mainnet.sui.io',
-            publisherUrl: 'https://publisher.walrus.space',
-            aggregatorUrl: 'https://aggregator.walrus.space',
-            apiPrefix: 'https://api.walrus.tech/1.0',
+            networkUrl: 'https://wal?.mainnet?.sui.io',
+            publisherUrl: 'https://publisher?.walrus?.space',
+            aggregatorUrl: 'https://aggregator?.walrus?.space',
+            apiPrefix: 'https://api?.walrus?.tech/1.0',
         },
         deployment: {
             packageId: '0x0',
@@ -169,13 +169,13 @@ function getCurrentNetwork() {
     if (isBrowserEnvironment()) {
         // Browser environment - try to get from window object or default
         return window?.NEXT_PUBLIC_NETWORK ||
-            process.env.NEXT_PUBLIC_NETWORK ||
+            process?.env?.NEXT_PUBLIC_NETWORK ||
             'testnet';
     }
     else {
         // Node.js environment
-        return process.env.SUI_NETWORK ||
-            process.env.NEXT_PUBLIC_NETWORK ||
+        return process?.env?.SUI_NETWORK ||
+            process?.env?.NEXT_PUBLIC_NETWORK ||
             'testnet';
     }
 }
@@ -290,13 +290,13 @@ function getDefaultExplorerUrl(network) {
         case 'mainnet':
             return 'https://suiexplorer.com';
         case 'testnet':
-            return 'https://testnet.suiexplorer.com';
+            return 'https://testnet?.suiexplorer?.com';
         case 'devnet':
-            return 'https://devnet.suiexplorer.com';
+            return 'https://devnet?.suiexplorer?.com';
         case 'localnet':
             return 'http://localhost:9001';
         default:
-            return 'https://testnet.suiexplorer.com';
+            return 'https://testnet?.suiexplorer?.com';
     }
 }
 /**
@@ -341,7 +341,7 @@ export async function loadAppConfig(networkOverride) {
         config = createFallbackConfig(network);
     }
     // Validate configuration
-    if (!config.deployment.packageId || config.deployment.packageId === '0x0') {
+    if (!config?.deployment?.packageId || config.deployment?.packageId === '0x0') {
         console.warn('[SuiClient] Package ID not set - some blockchain features may not work');
     }
     // Cache the configuration
@@ -382,22 +382,22 @@ export function clearConfigCache() {
  * Validates that the configuration has required deployment information
  */
 export function isConfigurationComplete(config) {
-    return !!(config.deployment.packageId &&
-        config.deployment.packageId !== '0x0' &&
-        config.deployment.deployerAddress &&
-        config.deployment.deployerAddress !== '0x0');
+    return !!(config?.deployment?.packageId &&
+        config?.deployment?.packageId !== '0x0' &&
+        config?.deployment?.deployerAddress &&
+        config?.deployment?.deployerAddress !== '0x0');
 }
 /**
  * Gets the explorer URL for a specific object
  */
 export function getExplorerUrl(config, objectId) {
-    return `${config.network.explorerUrl}/object/${objectId}?network=${config.network.name}`;
+    return `${config?.network?.explorerUrl}/object/${objectId}?network=${config?.network?.name}`;
 }
 /**
  * Gets the faucet URL for the current network (if available)
  */
 export function getFaucetUrl(config) {
-    return config.network.faucetUrl || null;
+    return config?.network?.faucetUrl || null;
 }
 /**
  * Gets the network URL for a specific network type

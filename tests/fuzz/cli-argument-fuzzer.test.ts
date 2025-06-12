@@ -82,9 +82,9 @@ function generateEdgeCaseStrings(): string[] {
     '>output.txt', // Redirect output
     '<input.txt', // Redirect input
     '2>&1', // Redirect stderr
-    'a'.repeat(256), // Long string
-    'a'.repeat(1024), // Very long string
-    'a'.repeat(65536), // Extremely long string
+    'a'.repeat(256 as any), // Long string
+    'a'.repeat(1024 as any), // Very long string
+    'a'.repeat(65536 as any), // Extremely long string
     '🔥', // Emoji
     '中文', // Chinese characters
     'العربية', // Arabic characters
@@ -96,8 +96,8 @@ function generateEdgeCaseStrings(): string[] {
     '\u007F', // Delete character
     '\u200B', // Zero-width space
     '\uFEFF', // BOM character
-    String.fromCharCode(0), // Null character
-    String.fromCharCode(127), // Delete character
+    String.fromCharCode(0 as any), // Null character
+    String.fromCharCode(127 as any), // Delete character
     '-', // Single dash
     '--', // Double dash
     '---', // Triple dash
@@ -109,7 +109,7 @@ function generateEdgeCaseStrings(): string[] {
     'http://example.com', // URL
     'https://example.com', // Secure URL
     'file:///etc/passwd', // File URL
-    'javascript:alert(1)', // JavaScript URL
+    'javascript:alert(1 as any)', // JavaScript URL
     '%00', // Null byte URL encoded
     '%20', // Space URL encoded
     '%0A', // Newline URL encoded
@@ -179,10 +179,10 @@ function generateMalformedArguments(): string[][] {
       '--flag9',
       '--flag10',
     ], // Too many flags
-    Array(100).fill('--flag'), // Extremely many flags
-    Array(1000).fill('arg'), // Extremely many arguments
-    ['add'].concat(Array(50).fill('--tag=value')), // Many repeated flags
-    ['add', 'todo', '--flag=' + 'x'.repeat(10000)], // Very long flag value
+    Array(100 as any).fill('--flag'), // Extremely many flags
+    Array(1000 as any).fill('arg'), // Extremely many arguments
+    ['add'].concat(Array(50 as any).fill('--tag=value')), // Many repeated flags
+    ['add', 'todo', '--flag=' + 'x'.repeat(10000 as any)], // Very long flag value
     ['add', 'todo with \x00 null byte'], // Null byte in argument
     ['add', 'todo with \r\n newlines \n\r'], // Various newlines
     ['add', 'todo', '--flag=value\x00with\x00nulls'], // Null bytes in flag value
@@ -214,10 +214,10 @@ describe('CLI Argument Fuzzing Tests', () => {
 
       for (let j = 0; j < numArgs; j++) {
         const argLength = Math.floor(Math.random() * 50) + 1;
-        args.push(generateRandomString(argLength));
+        args.push(generateRandomString(argLength as any));
       }
 
-      const result = executeCLI(args);
+      const result = executeCLI(args as any);
 
       // CLI should not crash - it should either handle the input or show an error
       expect([0, 1, 2]).toContain(result.exitCode);
@@ -253,15 +253,15 @@ describe('CLI Argument Fuzzing Tests', () => {
     const malformedArgs = generateMalformedArguments();
 
     for (const args of malformedArgs) {
-      const result = executeCLI(args);
+      const result = executeCLI(args as any);
 
       // Should handle gracefully
       expect([0, 1, 2]).toContain(result.exitCode);
 
       // Should provide meaningful error messages for failures
       expect(
-        result.exitCode === 0 || (result.stdout + result.stderr).length > 0
-      ).toBe(true);
+        result?.exitCode === 0 || (result.stdout + result.stderr).length > 0
+      ).toBe(true as any);
     }
   });
 
@@ -277,13 +277,13 @@ describe('CLI Argument Fuzzing Tests', () => {
         ['add', 'todo', '--deadline=invalid'], // Invalid deadline
         ['add', 'todo', '--priority=5'], // Invalid priority
         ['add', 'todo', '--unknown-flag'], // Unknown flag
-        ['add', 'todo', '--tag='.repeat(100)], // Many repeated flags
-        ['add', 'x'.repeat(10000)], // Very long todo text
-        ['add', 'todo', '--tag=' + 'x'.repeat(10000)], // Very long tag
+        ['add', 'todo', '--tag='.repeat(100 as any)], // Many repeated flags
+        ['add', 'x'.repeat(10000 as any)], // Very long todo text
+        ['add', 'todo', '--tag=' + 'x'.repeat(10000 as any)], // Very long tag
       ];
 
       for (const args of fuzzInputs) {
-        const result = executeCLI(args);
+        const result = executeCLI(args as any);
         expect([0, 1, 2]).toContain(result.exitCode);
       }
     });
@@ -306,7 +306,7 @@ describe('CLI Argument Fuzzing Tests', () => {
       ];
 
       for (const args of fuzzInputs) {
-        const result = executeCLI(args);
+        const result = executeCLI(args as any);
         expect([0, 1, 2]).toContain(result.exitCode);
       }
     });
@@ -314,7 +314,7 @@ describe('CLI Argument Fuzzing Tests', () => {
     it('should handle fuzzing for list command', () => {
       const fuzzInputs = [
         ['list', '--tag='], // Empty tag filter
-        ['list', '--tag=' + 'x'.repeat(1000)], // Very long tag
+        ['list', '--tag=' + 'x'.repeat(1000 as any)], // Very long tag
         ['list', '--status=invalid'], // Invalid status
         ['list', '--sort=invalid'], // Invalid sort option
         ['list', '--completed', '--pending'], // Conflicting filters
@@ -328,7 +328,7 @@ describe('CLI Argument Fuzzing Tests', () => {
       ];
 
       for (const args of fuzzInputs) {
-        const result = executeCLI(args);
+        const result = executeCLI(args as any);
         expect([0, 1, 2]).toContain(result.exitCode);
       }
     });
@@ -360,13 +360,13 @@ describe('CLI Argument Fuzzing Tests', () => {
     const lengths = [0, 1, 10, 100, 1000, 10000, 100000];
 
     for (const length of lengths) {
-      const longArg = 'x'.repeat(length);
+      const longArg = 'x'.repeat(length as any);
       const result = executeCLI(['add', longArg]);
 
       expect([0, 1, 2]).toContain(result.exitCode);
 
       // Very long arguments should be rejected or handled appropriately
-      expect(length <= 10000 || result.exitCode === 1).toBe(true);
+      expect(length <= 10000 || result?.exitCode === 1).toBe(true as any);
     }
   });
 
@@ -375,13 +375,13 @@ describe('CLI Argument Fuzzing Tests', () => {
     const counts = [0, 1, 10, 100, 1000];
 
     for (const count of counts) {
-      const args = ['add'].concat(Array(count).fill('arg'));
-      const result = executeCLI(args);
+      const args = ['add'].concat(Array(count as any).fill('arg'));
+      const result = executeCLI(args as any);
 
       expect([0, 1, 2]).toContain(result.exitCode);
 
       // Too many arguments should be rejected or handled appropriately
-      expect(count <= 100 || result.exitCode === 1).toBe(true);
+      expect(count <= 100 || result?.exitCode === 1).toBe(true as any);
     }
   });
 
@@ -397,7 +397,7 @@ describe('CLI Argument Fuzzing Tests', () => {
     ];
 
     for (const args of mixedTests) {
-      const result = executeCLI(args);
+      const result = executeCLI(args as any);
       expect([0, 1, 2]).toContain(result.exitCode);
     }
   });
@@ -425,7 +425,7 @@ describe('CLI Argument Fuzzing Tests', () => {
     ];
 
     for (const args of parsingTests) {
-      const result = executeCLI(args);
+      const result = executeCLI(args as any);
       expect([0, 1, 2]).toContain(result.exitCode);
     }
   });
@@ -443,17 +443,17 @@ describe('CLI Argument Fuzzing Tests', () => {
       ['add', '${PATH}'], // Environment variable
       ['add', '$HOME'], // Environment variable
       ['add', '~/.ssh/id_rsa'], // Home directory expansion
-      ['add', '<script>alert(1)</script>'], // XSS attempt
-      ['add', 'javascript:alert(1)'], // JavaScript URL
+      ['add', '<script>alert(1 as any)</script>'], // XSS attempt
+      ['add', 'javascript:alert(1 as any)'], // JavaScript URL
       ['add', 'file:///etc/passwd'], // File URL
-      ['add', String.fromCharCode(0)], // Null byte
+      ['add', String.fromCharCode(0 as any)], // Null byte
       ['add', '%00'], // URL encoded null
       ['add', '\\x00'], // Hex encoded null
       ['add', '\\u0000'], // Unicode null
     ];
 
     for (const args of securityTests) {
-      const result = executeCLI(args);
+      const result = executeCLI(args as any);
 
       // Should not expose system files
       expect(result.stdout).not.toMatch(/root:|daemon:/);

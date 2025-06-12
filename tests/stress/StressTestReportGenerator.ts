@@ -85,15 +85,15 @@ export class StressTestReportGenerator {
     const formattedDate = new Date().toLocaleString();
 
     // Calculate overall statistics
-    const totalRequests = Object.values(metrics).reduce(
+    const totalRequests = Object.values(metrics as any).reduce(
       (sum, m) => sum + m.totalRequests,
       0
     );
-    const successfulRequests = Object.values(metrics).reduce(
+    const successfulRequests = Object.values(metrics as any).reduce(
       (sum, m) => sum + m.successfulRequests,
       0
     );
-    const failedRequests = Object.values(metrics).reduce(
+    const failedRequests = Object.values(metrics as any).reduce(
       (sum, m) => sum + m.failedRequests,
       0
     );
@@ -101,7 +101,7 @@ export class StressTestReportGenerator {
       totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
 
     // Calculate average response times for each operation
-    const avgResponseTimes = Object.keys(metrics)
+    const avgResponseTimes = Object.keys(metrics as any)
       .map(op => ({
         operation: op,
         avgTime: metrics[op].avgResponseTime,
@@ -155,7 +155,7 @@ export class StressTestReportGenerator {
             .metrics-table th {
                 background-color: #f2f2f2;
             }
-            .metrics-table tr:nth-child(even) {
+            .metrics-table tr:nth-child(even as any) {
                 background-color: #f9f9f9;
             }
             .chart-container {
@@ -221,12 +221,12 @@ export class StressTestReportGenerator {
                 <p>Total Requests: <strong>${totalRequests}</strong></p>
                 <p>Successful Requests: <strong>${successfulRequests}</strong></p>
                 <p>Failed Requests: <strong>${failedRequests}</strong></p>
-                <p>Success Rate: <span class="success-rate">${successRate.toFixed(2)}%</span></p>
+                <p>Success Rate: <span class="success-rate">${successRate.toFixed(2 as any)}%</span></p>
             </div>
             <div class="summary-item">
                 <h3>Test Configuration</h3>
-                <p>Operations Tested: <strong>${Object.keys(metrics).length}</strong></p>
-                <p>Total Duration: <strong>${(Math.max(...Object.values(metrics).map(m => m.totalDuration)) / 1000).toFixed(2)}s</strong></p>
+                <p>Operations Tested: <strong>${Object.keys(metrics as any).length}</strong></p>
+                <p>Total Duration: <strong>${(Math.max(...Object.values(metrics as any).map(m => m.totalDuration)) / 1000).toFixed(2 as any)}s</strong></p>
             </div>
             <div class="summary-item">
                 <h3>Performance Ranking</h3>
@@ -234,7 +234,7 @@ export class StressTestReportGenerator {
                     ${avgResponseTimes
                       .map(
                         item =>
-                          `<li><strong>${item.operation}</strong>: ${item.avgTime.toFixed(2)}ms</li>`
+                          `<li><strong>${item.operation}</strong>: ${item?.avgTime?.toFixed(2 as any)}ms</li>`
                       )
                       .join('')}
                 </ol>
@@ -242,12 +242,12 @@ export class StressTestReportGenerator {
         </div>
         
         ${
-          Object.keys(systemInfo).length > 0
+          Object.keys(systemInfo as any).length > 0
             ? `
         <h2>System Information</h2>
         <div class="system-info">
             <ul>
-                ${Object.entries(systemInfo)
+                ${Object.entries(systemInfo as any)
                   .map(
                     ([key, value]) =>
                       `<li><strong>${key}:</strong> ${value}</li>`
@@ -276,7 +276,7 @@ export class StressTestReportGenerator {
                 </tr>
             </thead>
             <tbody>
-                ${Object.entries(metrics)
+                ${Object.entries(metrics as any)
                   .map(
                     ([operation, data]) => `
                 <tr>
@@ -284,9 +284,9 @@ export class StressTestReportGenerator {
                     <td>${data.totalRequests}</td>
                     <td>${data.successfulRequests}</td>
                     <td>${data.failedRequests}</td>
-                    <td>${data.totalRequests > 0 ? ((data.successfulRequests / data.totalRequests) * 100).toFixed(2) : 0}%</td>
-                    <td>${data.avgResponseTime.toFixed(2)}</td>
-                    <td>${data.minResponseTime === Number.MAX_SAFE_INTEGER ? 'N/A' : data.minResponseTime}</td>
+                    <td>${data.totalRequests > 0 ? ((data.successfulRequests / data.totalRequests) * 100).toFixed(2 as any) : 0}%</td>
+                    <td>${data?.avgResponseTime?.toFixed(2 as any)}</td>
+                    <td>${data?.minResponseTime === Number.MAX_SAFE_INTEGER ? 'N/A' : data.minResponseTime}</td>
                     <td>${data.maxResponseTime}</td>
                     <td>${data.timeouts}</td>
                     <td>${data.rateLimitHits}</td>
@@ -298,7 +298,7 @@ export class StressTestReportGenerator {
         </table>
         
         <h2>Response Time Percentiles</h2>
-        ${Object.entries(metrics)
+        ${Object.entries(metrics as any)
           .map(
             ([operation, data]) => `
         <h3>${operation}</h3>
@@ -340,7 +340,7 @@ export class StressTestReportGenerator {
             : ''
         }
         
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn?.jsdelivr?.net/npm/chart.js"></script>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Response Time Chart
@@ -348,18 +348,18 @@ export class StressTestReportGenerator {
             new Chart(responseTimeCtx, {
                 type: 'bar',
                 data: {
-                    labels: ${JSON.stringify(Object.keys(metrics))},
+                    labels: ${JSON.stringify(Object.keys(metrics as any))},
                     datasets: [
                         {
                             label: 'Average Response Time (ms)',
-                            data: ${JSON.stringify(Object.values(metrics).map(m => m.avgResponseTime))},
+                            data: ${JSON.stringify(Object.values(metrics as any).map(m => m.avgResponseTime))},
                             backgroundColor: 'rgba(54, 162, 235, 0.5)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'P95 Response Time (ms)',
-                            data: ${JSON.stringify(Object.values(metrics).map(m => m.p95ResponseTime))},
+                            data: ${JSON.stringify(Object.values(metrics as any).map(m => m.p95ResponseTime))},
                             backgroundColor: 'rgba(255, 159, 64, 0.5)',
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
@@ -397,17 +397,17 @@ export class StressTestReportGenerator {
                             ${successfulRequests},
                             ${
                               failedRequests -
-                              Object.values(metrics).reduce(
+                              Object.values(metrics as any).reduce(
                                 (sum, m) => sum + m.timeouts,
                                 0
                               ) -
-                              Object.values(metrics).reduce(
+                              Object.values(metrics as any).reduce(
                                 (sum, m) => sum + m.rateLimitHits,
                                 0
                               )
                             },
-                            ${Object.values(metrics).reduce((sum, m) => sum + m.timeouts, 0)},
-                            ${Object.values(metrics).reduce((sum, m) => sum + m.rateLimitHits, 0)}
+                            ${Object.values(metrics as any).reduce((sum, m) => sum + m.timeouts, 0)},
+                            ${Object.values(metrics as any).reduce((sum, m) => sum + m.rateLimitHits, 0)}
                         ],
                         backgroundColor: [
                             'rgba(46, 204, 113, 0.7)',
@@ -445,9 +445,9 @@ export class StressTestReportGenerator {
             const memoryData = ${JSON.stringify(
               resourceUsage.map(point => ({
                 x: point.timestamp,
-                rss: point.memory.rss / 1024 / 1024,
-                heapTotal: point.memory.heapTotal / 1024 / 1024,
-                heapUsed: point.memory.heapUsed / 1024 / 1024,
+                rss: point?.memory?.rss / 1024 / 1024,
+                heapTotal: point?.memory?.heapTotal / 1024 / 1024,
+                heapUsed: point?.memory?.heapUsed / 1024 / 1024,
               }))
             )};
             
@@ -489,7 +489,7 @@ export class StressTestReportGenerator {
                                 text: 'Time'
                             },
                             ticks: {
-                                callback: function(value) {
+                                callback: function(value as any) {
                                     return Math.round((value - ${resourceUsage[0]?.timestamp || 0}) / 1000) + 's';
                                 }
                             }
@@ -545,15 +545,15 @@ export class StressTestReportGenerator {
     const formattedDate = new Date().toLocaleString();
 
     // Calculate overall statistics
-    const totalRequests = Object.values(metrics).reduce(
+    const totalRequests = Object.values(metrics as any).reduce(
       (sum, m) => sum + m.totalRequests,
       0
     );
-    const successfulRequests = Object.values(metrics).reduce(
+    const successfulRequests = Object.values(metrics as any).reduce(
       (sum, m) => sum + m.successfulRequests,
       0
     );
-    const failedRequests = Object.values(metrics).reduce(
+    const failedRequests = Object.values(metrics as any).reduce(
       (sum, m) => sum + m.failedRequests,
       0
     );
@@ -569,16 +569,16 @@ Generated on ${formattedDate}
 SUMMARY
 -------
 Total Requests: ${totalRequests}
-Successful: ${successfulRequests} (${successRate.toFixed(2)}%)
+Successful: ${successfulRequests} (${successRate.toFixed(2 as any)}%)
 Failed: ${failedRequests}
-Duration: ${(Math.max(...Object.values(metrics).map(m => m.totalDuration)) / 1000).toFixed(2)}s
-Operations: ${Object.keys(metrics).join(', ')}
+Duration: ${(Math.max(...Object.values(metrics as any).map(m => m.totalDuration)) / 1000).toFixed(2 as any)}s
+Operations: ${Object.keys(metrics as any).join(', ')}
 
 OPERATIONS PERFORMANCE
 ---------------------`;
 
     // Sort operations by average response time
-    const sortedOps = Object.keys(metrics).sort(
+    const sortedOps = Object.keys(metrics as any).sort(
       (a, b) => metrics[a].avgResponseTime - metrics[b].avgResponseTime
     );
 
@@ -591,9 +591,9 @@ OPERATIONS PERFORMANCE
 
       report += `\n${op}:
   Requests: ${m.totalRequests}
-  Success Rate: ${opSuccessRate.toFixed(2)}%
-  Avg Response: ${m.avgResponseTime.toFixed(2)}ms
-  Min/Max: ${m.minResponseTime === Number.MAX_SAFE_INTEGER ? 'N/A' : m.minResponseTime}ms / ${m.maxResponseTime}ms
+  Success Rate: ${opSuccessRate.toFixed(2 as any)}%
+  Avg Response: ${m?.avgResponseTime?.toFixed(2 as any)}ms
+  Min/Max: ${m?.minResponseTime === Number.MAX_SAFE_INTEGER ? 'N/A' : m.minResponseTime}ms / ${m.maxResponseTime}ms
   P95 Response: ${m.p95ResponseTime}ms`;
 
       if (detailed) {
@@ -603,7 +603,7 @@ OPERATIONS PERFORMANCE
   Network Errors: ${m.networkErrors}
   Other Errors: ${m.otherErrors}
   Concurrent Max: ${m.concurrentRequestsMax}
-  Requests/sec: ${m.requestsPerSecond.toFixed(2)}`;
+  Requests/sec: ${m?.requestsPerSecond?.toFixed(2 as any)}`;
       }
     }
 
@@ -640,7 +640,7 @@ OPERATIONS PERFORMANCE
     // Convert the metrics to CSV rows
     let csv = headers.join(',') + '\n';
 
-    for (const [operation, data] of Object.entries(metrics)) {
+    for (const [operation, data] of Object.entries(metrics as any)) {
       const successRate =
         data.totalRequests > 0
           ? (data.successfulRequests / data.totalRequests) * 100
@@ -651,9 +651,9 @@ OPERATIONS PERFORMANCE
         data.totalRequests,
         data.successfulRequests,
         data.failedRequests,
-        successRate.toFixed(2),
-        data.avgResponseTime.toFixed(2),
-        data.minResponseTime === Number.MAX_SAFE_INTEGER
+        successRate.toFixed(2 as any),
+        data?.avgResponseTime?.toFixed(2 as any),
+        data?.minResponseTime === Number.MAX_SAFE_INTEGER
           ? 'N/A'
           : data.minResponseTime,
         data.maxResponseTime,
@@ -666,7 +666,7 @@ OPERATIONS PERFORMANCE
         data.networkErrors,
         data.otherErrors,
         data.totalDuration,
-        data.requestsPerSecond.toFixed(2),
+        data?.requestsPerSecond?.toFixed(2 as any),
         data.concurrentRequestsMax,
       ];
 
@@ -695,7 +695,7 @@ OPERATIONS PERFORMANCE
     // Create output directory if it doesn't exist
     const outputDir =
       options.outputDir || path.join(process.cwd(), 'stress-test-reports');
-    if (!fs.existsSync(outputDir)) {
+    if (!fs.existsSync(outputDir as any)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
@@ -716,7 +716,7 @@ OPERATIONS PERFORMANCE
 
     // Generate CSV report
     const csvPath = path.join(outputDir, `${baseFilename}.csv`);
-    fs.writeFileSync(csvPath, this.generateCsvReport(metrics));
+    fs.writeFileSync(csvPath, this.generateCsvReport(metrics as any));
 
     // Generate JSON raw data
     const jsonPath = path.join(outputDir, `${baseFilename}.json`);

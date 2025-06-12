@@ -54,14 +54,14 @@ export class WalrusErrorAnalyzer {
    */
   static analyzeError(error: unknown): UserErrorInfo {
     if (error instanceof WalrusClientError) {
-      return this.analyzeWalrusClientError(error);
+      return this.analyzeWalrusClientError(error as any);
     }
 
     if (error instanceof Error) {
-      return this.analyzeGenericError(error);
+      return this.analyzeGenericError(error as any);
     }
 
-    return this.createUnknownErrorInfo(String(error));
+    return this.createUnknownErrorInfo(String(error as any));
   }
 
   /**
@@ -71,7 +71,7 @@ export class WalrusErrorAnalyzer {
     error: WalrusClientError
   ): UserErrorInfo {
     const code = error.code?.toLowerCase() || '';
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
 
     // Network-related errors
     if (
@@ -89,7 +89,7 @@ export class WalrusErrorAnalyzer {
         severity: ErrorSeverity.MEDIUM,
         category: WalrusErrorCategory.NETWORK,
         technicalDetails: error.message,
-        helpUrl: 'https://docs.walrus.site/troubleshooting/network',
+        helpUrl: 'https://docs?.walrus?.site/troubleshooting/network',
       };
     }
 
@@ -110,7 +110,7 @@ export class WalrusErrorAnalyzer {
         severity: ErrorSeverity.HIGH,
         category: WalrusErrorCategory.QUOTA,
         technicalDetails: error.message,
-        helpUrl: 'https://docs.walrus.site/usage/web-api#testnet-wal-faucet',
+        helpUrl: 'https://docs?.walrus?.site/usage/web-api#testnet-wal-faucet',
       };
     }
 
@@ -205,7 +205,7 @@ export class WalrusErrorAnalyzer {
    * Analyze generic JavaScript errors
    */
   private static analyzeGenericError(error: Error): UserErrorInfo {
-    const message = error.message.toLowerCase();
+    const message = error?.message?.toLowerCase();
 
     // Network errors
     if (
@@ -275,7 +275,7 @@ export class WalrusErrorAnalyzer {
    * Check if error is retryable
    */
   static isRetryable(error: unknown): boolean {
-    const errorInfo = this.analyzeError(error);
+    const errorInfo = this.analyzeError(error as any);
     return errorInfo.canRetry;
   }
 
@@ -283,7 +283,7 @@ export class WalrusErrorAnalyzer {
    * Get suggested retry delay based on error type
    */
   static getRetryDelay(error: unknown, attempt: number): number {
-    const errorInfo = this.analyzeError(error);
+    const errorInfo = this.analyzeError(error as any);
 
     // Base delays by category (in milliseconds)
     const baseDelays = {
@@ -319,7 +319,7 @@ export class WalrusErrorRecovery {
       switchNetwork?: () => Promise<void>;
     }
   ): RecoveryAction[] {
-    const errorInfo = WalrusErrorAnalyzer.analyzeError(error);
+    const errorInfo = WalrusErrorAnalyzer.analyzeError(error as any);
     const actions: RecoveryAction[] = [];
 
     switch (errorInfo.category) {
@@ -361,7 +361,7 @@ export class WalrusErrorRecovery {
           label: 'Get Test Tokens',
           action: () => {
             window.open(
-              'https://docs.walrus.site/usage/web-api#testnet-wal-faucet',
+              'https://docs?.walrus?.site/usage/web-api#testnet-wal-faucet',
               '_blank'
             );
           },
@@ -413,12 +413,12 @@ export class WalrusErrorRecovery {
       retryOperation?: () => Promise<void>;
     }
   ): Promise<boolean> {
-    const errorInfo = WalrusErrorAnalyzer.analyzeError(error);
+    const errorInfo = WalrusErrorAnalyzer.analyzeError(error as any);
 
     // Don't auto-recover from high severity errors
     if (
-      errorInfo.severity === ErrorSeverity.HIGH ||
-      errorInfo.severity === ErrorSeverity.CRITICAL
+      errorInfo?.severity === ErrorSeverity.HIGH ||
+      errorInfo?.severity === ErrorSeverity.CRITICAL
     ) {
       return false;
     }
@@ -466,16 +466,16 @@ export class WalrusErrorLogger {
    * Log an error occurrence
    */
   static logError(error: unknown, context?: any): void {
-    const errorInfo = WalrusErrorAnalyzer.analyzeError(error);
+    const errorInfo = WalrusErrorAnalyzer.analyzeError(error as any);
 
-    this.logs.push({
+    this?.logs?.push({
       timestamp: Date.now(),
       error: errorInfo,
       context,
     });
 
     // Console log for development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env?.NODE_ENV === 'development') {
       console.group(`🔴 Walrus Error: ${errorInfo.title}`);
       console.error('Message:', errorInfo.message);
       console.warn('Suggestion:', errorInfo.suggestion);
@@ -506,24 +506,24 @@ export class WalrusErrorLogger {
     const now = Date.now();
     const oneHourAgo = now - 60 * 60 * 1000;
 
-    const recentErrors = this.logs.filter(
+    const recentErrors = this?.logs?.filter(
       log => log.timestamp > oneHourAgo
     ).length;
 
-    const errorsByCategory = Object.values(WalrusErrorCategory).reduce(
+    const errorsByCategory = Object.values(WalrusErrorCategory as any).reduce(
       (acc, category) => {
-        acc[category] = this.logs.filter(
-          log => log.error.category === category
+        acc[category] = this?.logs?.filter(
+          log => log.error?.category === category
         ).length;
         return acc;
       },
       {} as Record<WalrusErrorCategory, number>
     );
 
-    const errorsBySeverity = Object.values(ErrorSeverity).reduce(
+    const errorsBySeverity = Object.values(ErrorSeverity as any).reduce(
       (acc, severity) => {
-        acc[severity] = this.logs.filter(
-          log => log.error.severity === severity
+        acc[severity] = this?.logs?.filter(
+          log => log.error?.severity === severity
         ).length;
         return acc;
       },
@@ -531,7 +531,7 @@ export class WalrusErrorLogger {
     );
 
     return {
-      totalErrors: this.logs.length,
+      totalErrors: this?.logs?.length,
       errorsByCategory,
       errorsBySeverity,
       recentErrors,
@@ -542,7 +542,7 @@ export class WalrusErrorLogger {
    * Clear error logs
    */
   static clearLogs(): void {
-    this.logs = [];
+    this?.logs = [];
   }
 }
 
@@ -552,7 +552,7 @@ export function handleWalrusError(
   context?: any
 ): UserErrorInfo {
   WalrusErrorLogger.logError(error, context);
-  return WalrusErrorAnalyzer.analyzeError(error);
+  return WalrusErrorAnalyzer.analyzeError(error as any);
 }
 
 // Classes and types are already exported above

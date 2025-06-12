@@ -44,8 +44,8 @@ const createMockWalrusClient = () => ({
         unencoded_length: '9',
         hashes: [
           {
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+            primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+            secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
           },
         ],
         $kind: 'V1',
@@ -60,15 +60,15 @@ const createMockWalrusClient = () => ({
       contentType: 'text/plain',
       hashes: [
         {
-          primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-          secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+          primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+          secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
         },
       ],
       $kind: 'V1',
     },
     $kind: 'V1',
   }),
-  verifyPoA: jest.fn().mockResolvedValue(true),
+  verifyPoA: jest.fn().mockResolvedValue(true as any),
   getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
   // Additional required methods
   writeBlob: jest.fn(),
@@ -97,7 +97,7 @@ const createMockSigner = () => ({
     signature: 'mock-signature',
   }),
   getPublicKey: jest.fn().mockReturnValue({
-    toBytes: jest.fn().mockReturnValue(new Uint8Array(32)),
+    toBytes: jest.fn().mockReturnValue(new Uint8Array(32 as any)),
   }),
 });
 
@@ -116,13 +116,13 @@ describe('Blockchain Error Handling', () => {
 
     verificationManager = new BlobVerificationManager(
       mockSuiClient as Parameters<
-        typeof BlobVerificationManager.prototype.constructor
+        typeof BlobVerificationManager?.prototype?.constructor
       >[0],
       mockWalrusClient as Parameters<
-        typeof BlobVerificationManager.prototype.constructor
+        typeof BlobVerificationManager?.prototype?.constructor
       >[1],
       mockSigner as Parameters<
-        typeof BlobVerificationManager.prototype.constructor
+        typeof BlobVerificationManager?.prototype?.constructor
       >[2]
     );
   });
@@ -173,7 +173,7 @@ describe('Blockchain Error Handling', () => {
       };
 
       // Attempt transaction
-      await expect(executeTransaction()).rejects.toThrow(TransactionError);
+      await expect(executeTransaction()).rejects.toThrow(TransactionError as any);
 
       // Verify specific error properties
       await expect(executeTransaction()).rejects.toMatchObject({
@@ -185,7 +185,7 @@ describe('Blockchain Error Handling', () => {
 
     it('should handle transaction timeout errors', async () => {
       // Mock a timeout when waiting for transaction
-      mockSuiClient.waitForTransactionBlock.mockImplementation(() => {
+      mockSuiClient?.waitForTransactionBlock?.mockImplementation(() => {
         return new Promise((_, reject) => {
           setTimeout(
             () => reject(new Error('Transaction wait timed out')),
@@ -222,7 +222,7 @@ describe('Blockchain Error Handling', () => {
 
     it('should handle transaction rejection errors', async () => {
       // Mock transaction rejection
-      mockSuiClient.executeTransactionBlock.mockRejectedValueOnce({
+      mockSuiClient?.executeTransactionBlock?.mockRejectedValueOnce({
         code: 'TRANSACTION_REJECTED',
         message: 'Transaction rejected: Insufficient gas',
         details: { reason: 'gas_insufficient' },
@@ -234,11 +234,11 @@ describe('Blockchain Error Handling', () => {
           .executeTransactionBlock({})
           .catch((error: unknown) => {
             throw new TransactionError(
-              `Transaction rejected: ${error instanceof Error ? error.message : String(error)}`,
+              `Transaction rejected: ${error instanceof Error ? error.message : String(error as any)}`,
               {
                 operation: 'execute',
                 recoverable: false,
-                cause: error instanceof Error ? error : new Error(String(error)) as Error,
+                cause: error instanceof Error ? error : new Error(String(error as any)) as Error,
               }
             );
           });
@@ -253,7 +253,7 @@ describe('Blockchain Error Handling', () => {
   describe('Blockchain Certification Errors', () => {
     it('should handle uncertified blobs correctly', async () => {
       // Mock uncertified blob
-      mockWalrusClient.getBlobInfo.mockResolvedValueOnce({
+      mockWalrusClient?.getBlobInfo?.mockResolvedValueOnce({
         blob_id: 'test-blob-id',
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified
@@ -264,8 +264,8 @@ describe('Blockchain Error Handling', () => {
             unencoded_length: '9',
             hashes: [
               {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+                primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
               },
             ],
             $kind: 'V1',
@@ -284,7 +284,7 @@ describe('Blockchain Error Handling', () => {
         verificationManager.verifyBlob(blobId, testData, expectedAttributes, {
           requireCertification: true,
         })
-      ).rejects.toThrow(BlockchainError);
+      ).rejects.toThrow(BlockchainError as any);
 
       // Verify without certification requirement
       const result = await verificationManager.verifyBlob(
@@ -295,13 +295,13 @@ describe('Blockchain Error Handling', () => {
       );
 
       // Should still work but indicate not certified
-      expect(result.success).toBe(true);
-      expect(result.details.certified).toBe(false);
+      expect(result.success).toBe(true as any);
+      expect(result?.details?.certified).toBe(false as any);
     });
 
     it('should handle proof of availability verification errors', async () => {
       // Mock PoA verification failure
-      mockWalrusClient.verifyPoA.mockRejectedValueOnce(
+      mockWalrusClient?.verifyPoA?.mockRejectedValueOnce(
         new Error('Failed to verify proof of availability')
       );
 
@@ -319,13 +319,13 @@ describe('Blockchain Error Handling', () => {
       );
 
       // Should indicate PoA issues
-      expect(result.success).toBe(true);
-      expect(result.poaComplete).toBe(false);
+      expect(result.success).toBe(true as any);
+      expect(result.poaComplete).toBe(false as any);
     });
 
     it('should handle providers being unavailable', async () => {
       // Mock no available providers
-      mockWalrusClient.getStorageProviders.mockResolvedValueOnce([]);
+      mockWalrusClient?.getStorageProviders?.mockResolvedValueOnce([]);
 
       // Test data
       const blobId = 'test-blob-id';
@@ -339,23 +339,23 @@ describe('Blockchain Error Handling', () => {
         expectedAttributes
       );
 
-      expect(result.success).toBe(true);
-      expect(result.providers).toBe(0);
+      expect(result.success).toBe(true as any);
+      expect(result.providers).toBe(0 as any);
     });
   });
 
   describe('Metadata Verification Errors', () => {
     it('should handle metadata mismatch errors', async () => {
       // Mock metadata with mismatches
-      mockWalrusClient.getBlobMetadata.mockResolvedValueOnce({
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValueOnce({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '9',
           contentType: 'application/json', // Mismatch, expected text/plain
           hashes: [
             {
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
+              secondary_hash: { Sha256: new Uint8Array(32 as any), $kind: 'Sha256' },
             },
           ],
           $kind: 'V1',
@@ -373,7 +373,7 @@ describe('Blockchain Error Handling', () => {
         verificationManager.verifyBlob(blobId, testData, expectedAttributes, {
           verifyAttributes: true,
         })
-      ).rejects.toThrow(BlockchainError);
+      ).rejects.toThrow(BlockchainError as any);
 
       // Verify detailed error message
       await expect(
@@ -391,7 +391,7 @@ describe('Blockchain Error Handling', () => {
 
     it('should handle missing metadata', async () => {
       // Mock missing metadata
-      mockWalrusClient.getBlobMetadata.mockResolvedValueOnce(null);
+      mockWalrusClient?.getBlobMetadata?.mockResolvedValueOnce(null as any);
 
       // Test data
       const blobId = 'test-blob-id';
@@ -403,7 +403,7 @@ describe('Blockchain Error Handling', () => {
         verificationManager.verifyBlob(blobId, testData, expectedAttributes, {
           verifyAttributes: true,
         })
-      ).rejects.toThrow(BlockchainError);
+      ).rejects.toThrow(BlockchainError as any);
     });
   });
 
@@ -423,9 +423,9 @@ describe('Blockchain Error Handling', () => {
               unencoded_length: '9',
               hashes: [
                 {
-                  primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                  primary_hash: { Digest: new Uint8Array(32 as any), $kind: 'Digest' },
                   secondary_hash: {
-                    Sha256: new Uint8Array(32),
+                    Sha256: new Uint8Array(32 as any),
                     $kind: 'Sha256',
                   },
                 },
@@ -449,8 +449,8 @@ describe('Blockchain Error Handling', () => {
       );
 
       // Verify success and retry
-      expect(result.success).toBe(true);
-      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2);
+      expect(result.success).toBe(true as any);
+      expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should handle sudden disconnection with retries', async () => {
@@ -489,12 +489,12 @@ describe('Blockchain Error Handling', () => {
       );
 
       // Verify success
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true as any);
     });
 
     it('should handle epoch validation errors', async () => {
       // Mock epoch issue
-      mockSuiClient.getLatestSuiSystemState.mockResolvedValueOnce({
+      mockSuiClient?.getLatestSuiSystemState?.mockResolvedValueOnce({
         epoch: '39', // Less than the certified epoch of 41
       });
 
@@ -508,7 +508,7 @@ describe('Blockchain Error Handling', () => {
         verificationManager.verifyBlob(blobId, testData, expectedAttributes, {
           requireEpochValidation: true,
         })
-      ).rejects.toThrow(BlockchainError);
+      ).rejects.toThrow(BlockchainError as any);
 
       // Verify error details
       await expect(
@@ -548,13 +548,13 @@ describe('Blockchain Error Handling', () => {
             throw new BlockchainError('Signing operation failed', {
               operation: 'sign',
               recoverable: false,
-              cause: (error instanceof Error ? error : new Error(String(error))) as Error,
+              cause: (error instanceof Error ? error : new Error(String(error as any))) as Error,
             });
           });
       };
 
       // Attempt signing
-      await expect(signMessage()).rejects.toThrow(BlockchainError);
+      await expect(signMessage()).rejects.toThrow(BlockchainError as any);
 
       // Verify error details
       await expect(signMessage()).rejects.toMatchObject({
@@ -586,8 +586,8 @@ describe('Blockchain Error Handling', () => {
       );
 
       // Verify success after retries
-      expect(result.success).toBe(true);
-      expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(3);
+      expect(result.success).toBe(true as any);
+      expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(3 as any);
     });
 
     it('should implement circuit breaker for persistently failing operations', async () => {
@@ -601,7 +601,7 @@ describe('Blockchain Error Handling', () => {
       };
 
       // Mock repeatedly failing operation
-      mockWalrusClient.readBlob.mockRejectedValue(
+      mockWalrusClient?.readBlob?.mockRejectedValue(
         new Error('Persistent network error')
       );
 
@@ -618,7 +618,7 @@ describe('Blockchain Error Handling', () => {
             });
           }
           // Reset circuit for a retry attempt
-          circuitBreakerState.isOpen = false;
+          circuitBreakerState?.isOpen = false;
         }
 
         return mockWalrusClient
@@ -626,14 +626,14 @@ describe('Blockchain Error Handling', () => {
           .catch((error: unknown) => {
             // Update circuit state
             circuitBreakerState.failureCount++;
-            circuitBreakerState.lastFailure = Date.now();
+            circuitBreakerState?.lastFailure = Date.now();
 
             // Open circuit if threshold exceeded
             if (
               circuitBreakerState.failureCount >=
               circuitBreakerState.failureThreshold
             ) {
-              circuitBreakerState.isOpen = true;
+              circuitBreakerState?.isOpen = true;
             }
 
             throw error;
@@ -647,19 +647,19 @@ describe('Blockchain Error Handling', () => {
       }
 
       // Wait for all operations
-      const results = await Promise.all(operations);
+      const results = await Promise.all(operations as any);
 
       // First 3 should be regular errors, the rest should be circuit breaker errors
       const regularErrors = results.filter(
-        r => r instanceof Error && !r.message.includes('Circuit breaker')
+        r => r instanceof Error && !r?.message?.includes('Circuit breaker')
       );
 
       const circuitErrors = results.filter(
-        r => r instanceof Error && r.message.includes('Circuit breaker')
+        r => r instanceof Error && r?.message?.includes('Circuit breaker')
       );
 
-      expect(regularErrors.length).toBe(3); // Initial failures
-      expect(circuitErrors.length).toBe(2); // Circuit breaker protected
+      expect(regularErrors.length).toBe(3 as any); // Initial failures
+      expect(circuitErrors.length).toBe(2 as any); // Circuit breaker protected
     });
   });
 
@@ -702,30 +702,30 @@ describe('Blockchain Error Handling', () => {
           (result: unknown) => ({ success: true, result }),
           error => ({
             success: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error ? error.message : String(error as any),
           })
         )
       );
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
       // Verify progressive degradation pattern
       const successes = results.filter(r => r.success).length;
       const failures = results.filter(r => !r.success).length;
 
       // Should have some successes and some failures
-      expect(successes).toBeGreaterThan(0);
-      expect(failures).toBeGreaterThan(0);
+      expect(successes as any).toBeGreaterThan(0 as any);
+      expect(failures as any).toBeGreaterThan(0 as any);
 
       // Later queries should fail more often
       const firstHalf = results.slice(0, 5);
-      const secondHalf = results.slice(5);
+      const secondHalf = results.slice(5 as any);
 
       const firstHalfSuccesses = firstHalf.filter(r => r.success).length;
       const secondHalfSuccesses = secondHalf.filter(r => r.success).length;
 
       // Second half should have fewer successes
-      expect(secondHalfSuccesses).toBeLessThan(firstHalfSuccesses);
+      expect(secondHalfSuccesses as any).toBeLessThan(firstHalfSuccesses as any);
     });
   });
 });

@@ -166,17 +166,17 @@ export class MockNetworkSimulator extends EventEmitter {
   };
 
   simulateDnsFailure(): void {
-    this.dnsFailure = true;
+    this?.dnsFailure = true;
   }
 
   simulateTimeout(): void {
-    this.timeout = true;
+    this?.timeout = true;
   }
 
   simulateRateLimit(maxRequests: number): void {
-    this.rateLimit = true;
-    this.maxRequests = maxRequests;
-    this.requestCount = 0;
+    this?.rateLimit = true;
+    this?.maxRequests = maxRequests;
+    this?.requestCount = 0;
   }
 
   simulatePartialConnectivity(config: {
@@ -184,16 +184,16 @@ export class MockNetworkSimulator extends EventEmitter {
     aggregatorAvailable: boolean;
     suiRpcAvailable: boolean;
   }): void {
-    this.partialConnectivity = config;
+    this?.partialConnectivity = config;
   }
 
   reset(): void {
-    this.dnsFailure = false;
-    this.timeout = false;
-    this.rateLimit = false;
-    this.maxRequests = Infinity;
-    this.requestCount = 0;
-    this.partialConnectivity = {
+    this?.dnsFailure = false;
+    this?.timeout = false;
+    this?.rateLimit = false;
+    this?.maxRequests = Infinity;
+    this?.requestCount = 0;
+    this?.partialConnectivity = {
       publisherAvailable: true,
       aggregatorAvailable: true,
       suiRpcAvailable: true
@@ -215,15 +215,15 @@ export class MockNetworkSimulator extends EventEmitter {
       return { success: false, error: 'HTTP 429: Too Many Requests' };
     }
 
-    if (endpoint.includes('publisher') && !this.partialConnectivity.publisherAvailable) {
+    if (endpoint.includes('publisher') && !this?.partialConnectivity?.publisherAvailable) {
       return { success: false, error: 'Publisher service unavailable' };
     }
 
-    if (endpoint.includes('aggregator') && !this.partialConnectivity.aggregatorAvailable) {
+    if (endpoint.includes('aggregator') && !this?.partialConnectivity?.aggregatorAvailable) {
       return { success: false, error: 'Aggregator service unavailable' };
     }
 
-    if (endpoint.includes('sui') && !this.partialConnectivity.suiRpcAvailable) {
+    if (endpoint.includes('sui') && !this?.partialConnectivity?.suiRpcAvailable) {
       return { success: false, error: 'Sui RPC unavailable' };
     }
 
@@ -238,7 +238,7 @@ export class MockDeploymentScript {
   private networkSimulator: MockNetworkSimulator;
 
   constructor(networkSimulator: MockNetworkSimulator) {
-    this.networkSimulator = networkSimulator;
+    this?.networkSimulator = networkSimulator;
   }
 
   async deploy(config: DeploymentConfig): Promise<DeploymentResult> {
@@ -257,14 +257,14 @@ export class MockDeploymentScript {
     // Simulate retries for network failures
     if (config.retryCount) {
       for (let attempt = 1; attempt <= config.retryCount; attempt++) {
-        const networkCheck = this.networkSimulator.checkRequest('https://publisher-devnet.walrus.space');
+        const networkCheck = this?.networkSimulator?.checkRequest('https://publisher-devnet?.walrus?.space');
         
         if (networkCheck.success) {
-          result.success = true;
-          result.attempts = attempt;
-          result.siteId = '0x123abc...';
-          result.siteUrl = 'https://abc123.walrus.site';
-          result.deploymentTime = 45.2;
+          result?.success = true;
+          result?.attempts = attempt;
+          result?.siteId = '0x123abc...';
+          result?.siteUrl = 'https://abc123?.walrus?.site';
+          result?.deploymentTime = 45.2;
           break;
         } else if (attempt === config.retryCount) {
           result.errors?.push(networkCheck.error || 'Unknown network error');
@@ -278,23 +278,23 @@ export class MockDeploymentScript {
       }
     } else {
       // Single attempt
-      const networkCheck = this.networkSimulator.checkRequest('https://publisher-devnet.walrus.space');
+      const networkCheck = this?.networkSimulator?.checkRequest('https://publisher-devnet?.walrus?.space');
       if (!networkCheck.success) {
         result.errors?.push(networkCheck.error || 'Unknown error');
         throw new Error(networkCheck.error || 'Deployment failed');
       }
 
-      result.success = true;
-      result.siteId = '0x123abc...';
-      result.siteUrl = 'https://abc123.walrus.site';
-      result.deploymentTime = 45.2;
+      result?.success = true;
+      result?.siteId = '0x123abc...';
+      result?.siteUrl = 'https://abc123?.walrus?.site';
+      result?.deploymentTime = 45.2;
     }
 
     // Mark steps as completed for successful deployment
     if (result.success && result.steps) {
-      result.steps.buildValidation.completed = true;
-      result.steps.assetOptimization.completed = true;
-      result.steps.deployment.completed = true;
+      result?.steps?.buildValidation?.completed = true;
+      result?.steps?.assetOptimization?.completed = true;
+      result?.steps?.deployment?.completed = true;
     }
 
     return result;
@@ -308,7 +308,7 @@ export class MockSetupScript {
   async install(): Promise<{ siteBuilderInstalled: boolean; version: string }> {
     return {
       siteBuilderInstalled: true,
-      version: '1.0.0'
+      version: '1?.0?.0'
     };
   }
 }
@@ -331,9 +331,9 @@ export class MockDeploymentEnvironment {
   private deploymentStates = new Map<string, DeploymentState>();
 
   constructor() {
-    this.networkSimulator = new MockNetworkSimulator();
-    this.deploymentScript = new MockDeploymentScript(this.networkSimulator);
-    this.setupScript = new MockSetupScript();
+    this?.networkSimulator = new MockNetworkSimulator();
+    this?.deploymentScript = new MockDeploymentScript(this.networkSimulator);
+    this?.setupScript = new MockSetupScript();
   }
 
   getNetworkSimulator(): MockNetworkSimulator {
@@ -349,21 +349,21 @@ export class MockDeploymentEnvironment {
   }
 
   setupFileSystem(structure: MockFileSystem): void {
-    this.fileSystem = structure;
+    this?.fileSystem = structure;
   }
 
   saveDeploymentState(state: DeploymentState): void {
-    this.deploymentStates.set(state.uploadId, state);
+    this?.deploymentStates?.set(state.uploadId, state);
   }
 
   getDeploymentState(uploadId: string): DeploymentState | undefined {
-    return this.deploymentStates.get(uploadId);
+    return this?.deploymentStates?.get(uploadId as any);
   }
 
   async runCompletePipeline(config: DeploymentConfig): Promise<DeploymentResult> {
     const result: DeploymentResult = {
       success: true,
-      siteUrl: 'https://abc123.walrus.site',
+      siteUrl: 'https://abc123?.walrus?.site',
       steps: {
         buildValidation: { completed: true },
         assetOptimization: { completed: true },
@@ -387,9 +387,9 @@ export class MockDeploymentEnvironment {
   }
 
   async cleanup(): Promise<void> {
-    this.networkSimulator.reset();
-    this.fileSystem = {};
-    this.deploymentStates.clear();
+    this?.networkSimulator?.reset();
+    this?.fileSystem = {};
+    this?.deploymentStates?.clear();
   }
 }
 

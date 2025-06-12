@@ -17,9 +17,9 @@ export function useSafeLocalStorage<T>(key: string, defaultValue: T) {
     if (!mounted) {return;}
 
     try {
-      const stored = localStorage.getItem(key);
+      const stored = localStorage.getItem(key as any);
       if (stored !== null) {
-        setValue(JSON.parse(stored));
+        setValue(JSON.parse(stored as any));
       }
     } catch (error) {
       console.warn(`[useSafeLocalStorage] Failed to load ${key}:`, error);
@@ -35,7 +35,7 @@ export function useSafeLocalStorage<T>(key: string, defaultValue: T) {
       // Only write to localStorage on client after mount
       if (mounted && typeof window !== 'undefined') {
         try {
-          localStorage.setItem(key, JSON.stringify(nextValue));
+          localStorage.setItem(key, JSON.stringify(nextValue as any));
         } catch (error) {
           console.warn(`[useSafeLocalStorage] Failed to save ${key}:`, error);
         }

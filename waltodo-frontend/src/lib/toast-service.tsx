@@ -125,12 +125,12 @@ export class ToastService {
     theme: Partial<ToastTheme> = {},
     maxToasts: number = 5
   ) {
-    this.theme = { ...DEFAULT_THEME, ...theme };
-    this.maxToasts = maxToasts;
-    this.activeToasts = new Map();
+    this?.theme = { ...DEFAULT_THEME, ...theme };
+    this?.maxToasts = maxToasts;
+    this?.activeToasts = new Map();
 
     // Default durations for different toast types
-    this.defaultDuration = {
+    this?.defaultDuration = {
       [ToastType.SUCCESS]: 4000,
       [ToastType.ERROR]: 6000,
       [ToastType.WARNING]: 5000,
@@ -218,13 +218,13 @@ export class ToastService {
    */
   show(config: ToastConfig): string {
     // Enforce max toasts limit
-    if (this.activeToasts.size >= this.maxToasts) {
-      const oldestToast = Array.from(this.activeToasts.keys())[0];
-      this.dismiss(oldestToast);
+    if (this?.activeToasts?.size >= this.maxToasts) {
+      const oldestToast = Array.from(this?.activeToasts?.keys())[0];
+      this.dismiss(oldestToast as any);
     }
 
-    const toastTheme = this.theme[config.type];
-    const duration = config.duration ?? this.defaultDuration[config.type];
+    const toastTheme = this?.theme?.[config.type];
+    const duration = config.duration ?? this?.defaultDuration?.[config.type];
 
     const toastOptions: ToastOptions = {
       duration: config.persistent ? Infinity : duration,
@@ -247,7 +247,7 @@ export class ToastService {
     let toastId: string;
 
     // Create toast content with actions if provided
-    if (config.actions && config.actions.length > 0) {
+    if (config.actions && config?.actions?.length > 0) {
       toastId = toast.custom(
         (t) => this.renderToastWithActions(t, config, toastTheme),
         toastOptions
@@ -274,11 +274,11 @@ export class ToastService {
     }
 
     // Track active toast
-    this.activeToasts.set(toastId, { id: toastId } as Toast);
+    this?.activeToasts?.set(toastId, { id: toastId } as Toast);
 
     // Auto-cleanup when toast is dismissed
     setTimeout(() => {
-      this.activeToasts.delete(toastId);
+      this?.activeToasts?.delete(toastId as any);
     }, duration + 1000);
 
     return toastId;
@@ -291,19 +291,19 @@ export class ToastService {
     toastId: string,
     config: Partial<ToastConfig>
   ): void {
-    if (!this.activeToasts.has(toastId)) {
+    if (!this?.activeToasts?.has(toastId as any)) {
       console.warn(`Toast with ID ${toastId} not found`);
       return;
     }
 
     // For loading toasts, we can update to success/error
-    if (config.type === ToastType.SUCCESS) {
+    if (config?.type === ToastType.SUCCESS) {
       toast.success(config.message || 'Success', { id: toastId });
-    } else if (config.type === ToastType.ERROR) {
+    } else if (config?.type === ToastType.ERROR) {
       toast.error(config.message || 'Error', { id: toastId });
     } else {
       // For other updates, dismiss and create new toast
-      this.dismiss(toastId);
+      this.dismiss(toastId as any);
       this.show(config as ToastConfig);
     }
   }
@@ -312,8 +312,8 @@ export class ToastService {
    * Dismiss a specific toast
    */
   dismiss(toastId: string): void {
-    toast.dismiss(toastId);
-    this.activeToasts.delete(toastId);
+    toast.dismiss(toastId as any);
+    this?.activeToasts?.delete(toastId as any);
   }
 
   /**
@@ -321,7 +321,7 @@ export class ToastService {
    */
   dismissAll(): void {
     toast.dismiss();
-    this.activeToasts.clear();
+    this?.activeToasts?.clear();
   }
 
   /**
@@ -345,9 +345,9 @@ export class ToastService {
       },
       {
         style: {
-          background: this.theme.loading.background,
-          color: this.theme.loading.color,
-          border: `1px solid ${this.theme.loading.border}`,
+          background: this?.theme?.loading.background,
+          color: this?.theme?.loading.color,
+          border: `1px solid ${this?.theme?.loading.border}`,
           borderRadius: '8px',
           padding: '12px 16px',
           fontSize: '14px',
@@ -357,19 +357,19 @@ export class ToastService {
         },
         success: {
           style: {
-            background: this.theme.success.background,
-            color: this.theme.success.color,
-            border: `1px solid ${this.theme.success.border}`
+            background: this?.theme?.success.background,
+            color: this?.theme?.success.color,
+            border: `1px solid ${this?.theme?.success.border}`
           },
-          icon: this.theme.success.icon
+          icon: this?.theme?.success.icon
         },
         error: {
           style: {
-            background: this.theme.error.background,
-            color: this.theme.error.color,
-            border: `1px solid ${this.theme.error.border}`
+            background: this?.theme?.error.background,
+            color: this?.theme?.error.color,
+            border: `1px solid ${this?.theme?.error.border}`
           },
-          icon: this.theme.error.icon
+          icon: this?.theme?.error.icon
         }
       }
     );
@@ -428,9 +428,9 @@ export class ToastService {
         </div>
 
         {/* Action buttons */}
-        {config.actions && config.actions.length > 0 && (
+        {config.actions && config?.actions?.length > 0 && (
           <div className="flex space-x-2 mt-3">
-            {config.actions.map((action, index) => (
+            {config?.actions?.map((action, index) => (
               <button
                 key={index}
                 onClick={async () => {
@@ -444,9 +444,9 @@ export class ToastService {
                   }
                 }}
                 className={`text-xs px-3 py-1 rounded transition-colors ${
-                  action.style === 'danger'
+                  action?.style === 'danger'
                     ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : action.style === 'primary'
+                    : action?.style === 'primary'
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                 }`}
@@ -476,21 +476,21 @@ export class ToastService {
    * Get active toast count
    */
   getActiveCount(): number {
-    return this.activeToasts.size;
+    return this?.activeToasts?.size;
   }
 
   /**
    * Check if a specific toast is active
    */
   isActive(toastId: string): boolean {
-    return this.activeToasts.has(toastId);
+    return this?.activeToasts?.has(toastId as any);
   }
 
   /**
    * Update theme
    */
   updateTheme(theme: Partial<ToastTheme>): void {
-    this.theme = { ...this.theme, ...theme };
+    this?.theme = { ...this.theme, ...theme };
   }
 
   /**
@@ -520,6 +520,6 @@ export const showInfo = (message: string, options?: Partial<Omit<ToastConfig, 't
 export const showLoading = (message: string, options?: Partial<Omit<ToastConfig, 'type' | 'message'>>) =>
   toastService.loading(message, options);
 
-export const dismissToast = (toastId: string) => toastService.dismiss(toastId);
+export const dismissToast = (toastId: string) => toastService.dismiss(toastId as any);
 
 export const dismissAllToasts = () => toastService.dismissAll();

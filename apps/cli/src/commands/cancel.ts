@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { jobManager } from '../utils/PerformanceMonitor';
 import { backgroundDataRetriever } from '../utils/BackgroundDataRetriever';
 import { createBackgroundOperationsManager } from '../utils/background-operations';
@@ -70,7 +70,7 @@ export default class CancelCommand extends BaseCommand {
   };
 
   async run() {
-    const { args, flags } = await this.parse(CancelCommand);
+    const { args, flags } = await this.parse(CancelCommand as any);
 
     // Handle data retrieval operation cancellation
     if (flags.retrieval) {
@@ -79,7 +79,7 @@ export default class CancelCommand extends BaseCommand {
 
     // Handle bulk operations
     if (flags.all || flags.pattern || flags.timeout || flags.command) {
-      return this.cancelMultipleJobs(flags);
+      return this.cancelMultipleJobs(flags as any);
     }
 
     // Handle single job cancellation
@@ -97,7 +97,7 @@ export default class CancelCommand extends BaseCommand {
    * Cancel a single job
    */
   private async cancelSingleJob(jobId: string, flags: any): Promise<void> {
-    const job = jobManager.getJob(jobId);
+    const job = jobManager.getJob(jobId as any);
 
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
@@ -105,9 +105,9 @@ export default class CancelCommand extends BaseCommand {
 
     // Check if job can be cancelled
     if (
-      job.status === 'completed' ||
-      job.status === 'failed' ||
-      job.status === 'cancelled'
+      job?.status === 'completed' ||
+      job?.status === 'failed' ||
+      job?.status === 'cancelled'
     ) {
       this.warn(
         `Job ${jobId} is already ${job.status} and cannot be cancelled`
@@ -115,7 +115,7 @@ export default class CancelCommand extends BaseCommand {
       return;
     }
 
-    if (flags['dry-run']) {
+    if (flags?.["dry-run"]) {
       this.log(chalk.yellow(`Would cancel job: ${jobId} (${job.command})`));
       return;
     }
@@ -123,30 +123,30 @@ export default class CancelCommand extends BaseCommand {
     // Show job info before cancelling
     this.log(chalk.blue(`🛑 Cancelling job: ${jobId}`));
     const argsStr = Array.isArray(job.args)
-      ? job.args.join(' ')
+      ? job?.args?.join(' ')
       : job.args || '';
     this.log(chalk.dim(`  Command: ${job.command} ${argsStr}`));
     this.log(chalk.dim(`  Status: ${job.status}`));
     this.log(chalk.dim(`  Progress: ${job.progress}%`));
 
     const duration = Date.now() - job.startTime;
-    this.log(chalk.dim(`  Running for: ${this.formatJobDuration(duration)}`));
+    this.log(chalk.dim(`  Running for: ${this.formatJobDuration(duration as any)}`));
 
     try {
       // Attempt graceful cancellation first
       if (!flags.force) {
         this.log(chalk.yellow('⏳ Attempting graceful cancellation...'));
 
-        const cancelled = jobManager.cancelJob(jobId);
+        const cancelled = jobManager.cancelJob(jobId as any);
 
         if (cancelled) {
           // Give it a moment to clean up
           await new Promise(resolve => setTimeout(resolve, 2000));
 
-          const updatedJob = jobManager.getJob(jobId);
+          const updatedJob = jobManager.getJob(jobId as any);
           if (updatedJob?.status === 'cancelled') {
             this.log(chalk.green('✅ Job cancelled gracefully'));
-            this.showCancellationSummary(updatedJob);
+            this.showCancellationSummary(updatedJob as any);
             return;
           }
         }
@@ -159,21 +159,21 @@ export default class CancelCommand extends BaseCommand {
       }
 
       // Force cancellation
-      const success = await this.forceCancelJob(jobId);
+      const success = await this.forceCancelJob(jobId as any);
 
       if (success) {
         this.log(chalk.green('✅ Job cancelled (forced)'));
 
-        const updatedJob = jobManager.getJob(jobId);
+        const updatedJob = jobManager.getJob(jobId as any);
         if (updatedJob) {
-          this.showCancellationSummary(updatedJob);
+          this.showCancellationSummary(updatedJob as any);
         }
       } else {
         throw new CLIError('Failed to cancel job', 'CANCEL_FAILED');
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to cancel job ${jobId}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to cancel job ${jobId}: ${error instanceof Error ? error.message : String(error as any)}`,
         'CANCEL_FAILED'
       );
     }
@@ -185,10 +185,10 @@ export default class CancelCommand extends BaseCommand {
   private async cancelMultipleJobs(flags: any): Promise<void> {
     const allJobs = jobManager.getAllJobs();
     const activeJobs = allJobs.filter(
-      job => job.status === 'running' || job.status === 'pending'
+      job => job?.status === 'running' || job?.status === 'pending'
     );
 
-    if (activeJobs.length === 0) {
+    if (activeJobs?.length === 0) {
       this.info('No active jobs to cancel');
       return;
     }
@@ -197,18 +197,18 @@ export default class CancelCommand extends BaseCommand {
     let jobsToCancel = activeJobs;
 
     if (flags.pattern) {
-      const pattern = new RegExp(flags.pattern.replace(/\*/g, '.*'), 'i');
+      const pattern = new RegExp(flags?.pattern?.replace(/\*/g, '.*'), 'i');
       jobsToCancel = jobsToCancel.filter(
         job =>
           pattern.test(job.id) ||
           pattern.test(job.command) ||
-          job.args.some(arg => pattern.test(arg))
+          job?.args?.some(arg => pattern.test(arg as any))
       );
     }
 
     if (flags.command) {
       jobsToCancel = jobsToCancel.filter(job =>
-        job.command.toLowerCase().includes(flags.command.toLowerCase())
+        job?.command?.toLowerCase().includes(flags?.command?.toLowerCase())
       );
     }
 
@@ -220,18 +220,18 @@ export default class CancelCommand extends BaseCommand {
       );
     }
 
-    if (jobsToCancel.length === 0) {
+    if (jobsToCancel?.length === 0) {
       this.info('No jobs match the specified criteria');
       return;
     }
 
-    if (flags['dry-run']) {
-      this.log(chalk.yellow(`Would cancel ${jobsToCancel.length} job(s):`));
+    if (flags?.["dry-run"]) {
+      this.log(chalk.yellow(`Would cancel ${jobsToCancel.length} job(s as any):`));
       jobsToCancel.forEach(job => {
         const duration = Date.now() - job.startTime;
         this.log(
           chalk.dim(
-            `  • ${job.id} - ${job.command} (${this.formatJobDuration(duration)})`
+            `  • ${job.id} - ${job.command} (${this.formatJobDuration(duration as any)})`
           )
         );
       });
@@ -239,12 +239,12 @@ export default class CancelCommand extends BaseCommand {
     }
 
     // Show what will be cancelled
-    this.log(chalk.blue(`🛑 Found ${jobsToCancel.length} job(s) to cancel:`));
+    this.log(chalk.blue(`🛑 Found ${jobsToCancel.length} job(s as any) to cancel:`));
     jobsToCancel.forEach(job => {
       const duration = Date.now() - job.startTime;
       this.log(
         chalk.dim(
-          `  • ${job.id} - ${job.command} ${job.args.join(' ')} (${this.formatJobDuration(duration)})`
+          `  • ${job.id} - ${job.command} ${job?.args?.join(' ')} (${this.formatJobDuration(duration as any)})`
         )
       );
     });
@@ -261,7 +261,7 @@ export default class CancelCommand extends BaseCommand {
     }
 
     // Cancel jobs
-    this.log(chalk.yellow(`\n⏳ Cancelling ${jobsToCancel.length} job(s)...`));
+    this.log(chalk.yellow(`\n⏳ Cancelling ${jobsToCancel.length} job(s as any)...`));
 
     const results = {
       successful: 0,
@@ -280,14 +280,14 @@ export default class CancelCommand extends BaseCommand {
           this.log(chalk.green(`  ✅ Cancelled: ${job.id}`));
         } else {
           results.failed++;
-          results.errors.push(`Failed to cancel ${job.id}`);
+          results?.errors?.push(`Failed to cancel ${job.id}`);
           this.log(chalk.red(`  ❌ Failed: ${job.id}`));
         }
       } catch (error) {
         results.failed++;
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        results.errors.push(`${job.id}: ${errorMessage}`);
+          error instanceof Error ? error.message : String(error as any);
+        results?.errors?.push(`${job.id}: ${errorMessage}`);
         this.log(chalk.red(`  ❌ Error: ${job.id} - ${errorMessage}`));
       }
 
@@ -297,16 +297,16 @@ export default class CancelCommand extends BaseCommand {
 
     // Show summary
     this.log(chalk.bold('\n📊 Cancellation Summary'));
-    this.log(chalk.gray('─'.repeat(30)));
+    this.log(chalk.gray('─'.repeat(30 as any)));
     this.log(`Total Jobs: ${chalk.cyan(jobsToCancel.length)}`);
     this.log(`Successful: ${chalk.green(results.successful)}`);
 
     if (results.failed > 0) {
       this.log(`Failed: ${chalk.red(results.failed)}`);
 
-      if (results.errors.length > 0) {
+      if (results?.errors?.length > 0) {
         this.log(chalk.red('\nErrors:'));
-        results.errors.forEach(error => {
+        results?.errors?.forEach(error => {
           this.log(chalk.red(`  • ${error}`));
         });
       }
@@ -321,7 +321,7 @@ export default class CancelCommand extends BaseCommand {
     flags: any
   ): Promise<void> {
     const status =
-      await backgroundDataRetriever.getRetrievalStatus(operationId);
+      await backgroundDataRetriever.getRetrievalStatus(operationId as any);
 
     if (!status) {
       throw new CLIError(
@@ -330,14 +330,14 @@ export default class CancelCommand extends BaseCommand {
       );
     }
 
-    if (status.phase === 'complete') {
+    if (status?.phase === 'complete') {
       this.warn(
         `Retrieval operation ${operationId} is already complete and cannot be cancelled`
       );
       return;
     }
 
-    if (flags['dry-run']) {
+    if (flags?.["dry-run"]) {
       this.log(
         chalk.yellow(`Would cancel retrieval operation: ${operationId}`)
       );
@@ -354,14 +354,14 @@ export default class CancelCommand extends BaseCommand {
 
     try {
       const cancelled =
-        await backgroundDataRetriever.cancelRetrieval(operationId);
+        await backgroundDataRetriever.cancelRetrieval(operationId as any);
 
       if (cancelled) {
         this.log(chalk.green('✅ Retrieval operation cancelled'));
 
         // Show final status
         const finalStatus =
-          await backgroundDataRetriever.getRetrievalStatus(operationId);
+          await backgroundDataRetriever.getRetrievalStatus(operationId as any);
         if (finalStatus) {
           this.log(chalk.dim(`\nFinal status: ${finalStatus.phase}`));
           if (finalStatus.processedItems && finalStatus.totalItems) {
@@ -380,7 +380,7 @@ export default class CancelCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to cancel retrieval operation ${operationId}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to cancel retrieval operation ${operationId}: ${error instanceof Error ? error.message : String(error as any)}`,
         'CANCEL_FAILED'
       );
     }
@@ -390,11 +390,11 @@ export default class CancelCommand extends BaseCommand {
    * Force cancel a job (terminates process if needed)
    */
   private async forceCancelJob(jobId: string): Promise<boolean> {
-    const job = jobManager.getJob(jobId);
+    const job = jobManager.getJob(jobId as any);
     if (!job) return false;
 
     // Try to cancel through job manager first
-    const cancelled = jobManager.cancelJob(jobId);
+    const cancelled = jobManager.cancelJob(jobId as any);
 
     // If job has a PID, try to terminate the process
     if (job.pid && !cancelled) {
@@ -404,7 +404,7 @@ export default class CancelCommand extends BaseCommand {
         // Wait a bit then try SIGKILL if still running
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const updatedJob = jobManager.getJob(jobId);
+        const updatedJob = jobManager.getJob(jobId as any);
         if (updatedJob?.status !== 'cancelled') {
           process.kill(job.pid, 'SIGKILL');
         }
@@ -416,7 +416,7 @@ export default class CancelCommand extends BaseCommand {
     // Try to cancel through background operations manager
     try {
       const backgroundOps = await createBackgroundOperationsManager();
-      await backgroundOps.cancelOperation(jobId);
+      await backgroundOps.cancelOperation(jobId as any);
     } catch (error) {
       // This is fine, job might not be a background operation
     }
@@ -433,11 +433,11 @@ export default class CancelCommand extends BaseCommand {
       : Date.now() - job.startTime;
 
     this.log(chalk.bold('\n📊 Cancellation Summary'));
-    this.log(chalk.gray('─'.repeat(30)));
+    this.log(chalk.gray('─'.repeat(30 as any)));
     this.log(`Job ID: ${chalk.cyan(job.id)}`);
-    this.log(`Command: ${chalk.cyan(job.command)} ${job.args.join(' ')}`);
+    this.log(`Command: ${chalk.cyan(job.command)} ${job?.args?.join(' ')}`);
     this.log(`Final Status: ${chalk.gray('Cancelled')}`);
-    this.log(`Runtime: ${chalk.yellow(this.formatJobDuration(duration))}`);
+    this.log(`Runtime: ${chalk.yellow(this.formatJobDuration(duration as any))}`);
 
     if (job.processedItems !== undefined && job.totalItems !== undefined) {
       this.log(
@@ -460,7 +460,7 @@ export default class CancelCommand extends BaseCommand {
    */
   private formatJobDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -470,10 +470,10 @@ export default class CancelCommand extends BaseCommand {
    * Simple prompt utility
    */
   private async simplePrompt(message: string): Promise<string> {
-    process.stdout.write(chalk.yellow(`${message} `));
+    process?.stdout?.write(chalk.yellow(`${message} `));
 
     return new Promise(resolve => {
-      process.stdin.once('data', data => {
+      process?.stdin?.once('data', data => {
         resolve(data.toString().trim());
       });
     });

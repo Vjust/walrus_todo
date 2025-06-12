@@ -1,4 +1,4 @@
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../types/errors/consolidated';
 import { configService } from '../../services/config-service';
 

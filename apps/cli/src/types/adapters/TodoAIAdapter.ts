@@ -45,13 +45,13 @@ export class TodoAIAdapter {
     todoAIRegistry: string,
     verificationRegistry: string
   ) {
-    this.client = client;
-    this.todoAIModuleAddress = todoAIModuleAddress;
-    this.aiVerifierModuleAddress = aiVerifierModuleAddress;
-    this.todoAIRegistry = todoAIRegistry;
-    this.verificationRegistry = verificationRegistry;
+    this?.client = client;
+    this?.todoAIModuleAddress = todoAIModuleAddress;
+    this?.aiVerifierModuleAddress = aiVerifierModuleAddress;
+    this?.todoAIRegistry = todoAIRegistry;
+    this?.verificationRegistry = verificationRegistry;
     // Use getInstance to get the logger, as the constructor is private
-    this.logger = new Logger('TodoAIAdapter');
+    this?.logger = new Logger('TodoAIAdapter');
   }
 
   /**
@@ -73,26 +73,26 @@ export class TodoAIAdapter {
         target: `${this.todoAIModuleAddress}::todo_ai_extension::link_verification_to_todo`,
         arguments: [
           tx.object(this.todoAIRegistry),
-          tx.pure(todoId),
-          tx.pure(verificationId),
-          tx.pure(operation),
+          tx.pure(todoId as any),
+          tx.pure(verificationId as any),
+          tx.pure(operation as any),
           tx.pure(new Date().toISOString()),
         ],
       });
 
       const result: SuiTransactionResponse =
-        await this.client.signAndExecuteTransaction({
+        await this?.client?.signAndExecuteTransaction({
           signer: keypair,
           transaction: tx,
         });
 
-      this.logger.info(
+      this?.logger?.info(
         `Linked verification ${verificationId} to todo ${todoId}`
       );
       return result.digest;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : `${error}`;
-      this.logger.error(`Failed to link verification to todo: ${errorMessage}`);
+      this?.logger?.error(`Failed to link verification to todo: ${errorMessage}`);
       throw new CLIError(
         `Failed to link verification to todo: ${errorMessage}`,
         'VERIFICATION_LINK_FAILED'
@@ -117,19 +117,19 @@ export class TodoAIAdapter {
         target: `${this.todoAIModuleAddress}::todo_ai_extension::has_verification_for_operation`,
         arguments: [
           tx.object(this.todoAIRegistry),
-          tx.pure(todoId),
-          tx.pure(operation),
+          tx.pure(todoId as any),
+          tx.pure(operation as any),
         ],
       });
 
       const result: SuiInspectionResult =
-        await this.client.devInspectTransactionBlock({
+        await this?.client?.devInspectTransactionBlock({
           sender: '0x0', // Dummy address for read-only operation
           transaction: tx,
         });
 
       if (result?.results?.[0]) {
-        const returnValue = result.results[0].returnValues?.[0]?.[0];
+        const returnValue = result?.results?.[0].returnValues?.[0]?.[0];
         // Convert to string before comparison to avoid type errors
         const returnValueStr = String(returnValue || '');
         return returnValueStr === '1' || returnValueStr === 'true';
@@ -138,7 +138,7 @@ export class TodoAIAdapter {
       return false;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : `${error}`;
-      this.logger.error(`Failed to check verification: ${errorMessage}`);
+      this?.logger?.error(`Failed to check verification: ${errorMessage}`);
       return false;
     }
   }
@@ -155,22 +155,22 @@ export class TodoAIAdapter {
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::get_verifications_for_todo`,
-        arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId)],
+        arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId as any)],
       });
 
       const result: SuiInspectionResult =
-        await this.client.devInspectTransactionBlock({
+        await this?.client?.devInspectTransactionBlock({
           sender: '0x0', // Dummy address for read-only operation
           transaction: tx,
         });
 
       if (result?.results?.[0]) {
         // Parse vector of strings from the result
-        const returnValues = result.results[0].returnValues;
+        const returnValues = result?.results?.[0].returnValues;
         if (returnValues && returnValues.length > 0) {
           // Ensure we're handling string[] properly and not comparing with number[]
           const values = returnValues[0];
-          if (Array.isArray(values)) {
+          if (Array.isArray(values as any)) {
             // Convert all values to strings to avoid type comparison issues
             return values.map(value => String(value || ''));
           }
@@ -180,7 +180,7 @@ export class TodoAIAdapter {
       return [];
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : `${error}`;
-      this.logger.error(`Failed to get verifications: ${errorMessage}`);
+      this?.logger?.error(`Failed to get verifications: ${errorMessage}`);
       return [];
     }
   }
@@ -203,19 +203,19 @@ export class TodoAIAdapter {
         arguments: [
           tx.object(this.todoAIRegistry),
           tx.object(this.verificationRegistry),
-          tx.pure(todoId),
-          tx.pure(operation),
+          tx.pure(todoId as any),
+          tx.pure(operation as any),
         ],
       });
 
       const result: SuiInspectionResult =
-        await this.client.devInspectTransactionBlock({
+        await this?.client?.devInspectTransactionBlock({
           sender: '0x0', // Dummy address for read-only operation
           transaction: tx,
         });
 
       if (result?.results?.[0]) {
-        const returnValue = result.results[0].returnValues?.[0]?.[0];
+        const returnValue = result?.results?.[0].returnValues?.[0]?.[0];
         // Convert to string before comparison to avoid type errors
         const returnValueStr = String(returnValue || '');
         return returnValueStr === '1' || returnValueStr === 'true';
@@ -224,7 +224,7 @@ export class TodoAIAdapter {
       return false;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : `${error}`;
-      this.logger.error(`Failed to verify todo operation: ${errorMessage}`);
+      this?.logger?.error(`Failed to verify todo operation: ${errorMessage}`);
       return false;
     }
   }
@@ -252,11 +252,11 @@ export class TodoAIAdapter {
         target: `${this.aiVerifierModuleAddress}::ai_operation_verifier::verify_operation`,
         arguments: [
           tx.object(this.verificationRegistry),
-          tx.pure(provider),
-          tx.pure(operation),
-          tx.pure(inputHash),
-          tx.pure(outputHash),
-          tx.pure(timestamp),
+          tx.pure(provider as any),
+          tx.pure(operation as any),
+          tx.pure(inputHash as any),
+          tx.pure(outputHash as any),
+          tx.pure(timestamp as any),
         ],
       });
 
@@ -273,21 +273,21 @@ export class TodoAIAdapter {
         target: `${this.todoAIModuleAddress}::todo_ai_extension::link_verification_to_todo`,
         arguments: [
           tx.object(this.todoAIRegistry),
-          tx.pure(todoId),
-          tx.pure(verificationId),
-          tx.pure(operation),
-          tx.pure(timestamp),
+          tx.pure(todoId as any),
+          tx.pure(verificationId as any),
+          tx.pure(operation as any),
+          tx.pure(timestamp as any),
         ],
       });
 
       // Execute the transaction
       const txResult: SuiTransactionResponse =
-        await this.client.signAndExecuteTransaction({
+        await this?.client?.signAndExecuteTransaction({
           signer: keypair,
           transaction: tx,
         });
 
-      this.logger.info(`Created and linked verification to todo ${todoId}`, {
+      this?.logger?.info(`Created and linked verification to todo ${todoId}`, {
         transactionDigest: txResult.digest,
         effects: txResult.effects?.status,
       });
@@ -301,7 +301,7 @@ export class TodoAIAdapter {
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : `${error}`;
-      this.logger.error(
+      this?.logger?.error(
         `Failed to create and link verification: ${errorMessage}`
       );
       throw new CLIError(

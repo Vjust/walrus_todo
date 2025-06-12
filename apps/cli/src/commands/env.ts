@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
 import { envConfig } from '../utils/environment-config';
@@ -122,7 +122,7 @@ export default class EnvironmentCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(EnvironmentCommand);
+    const { args, flags } = await this.parse(EnvironmentCommand as any);
 
     try {
       // Load environment configuration
@@ -135,7 +135,7 @@ export default class EnvironmentCommand extends BaseCommand {
           action = 'validate';
         } else if (flags.generate) {
           action = 'generate';
-        } else if (flags['show-all']) {
+        } else if (flags?.["show-all"]) {
           action = 'show';
         } else {
           // Default action is 'show' when no action specified
@@ -162,7 +162,7 @@ export default class EnvironmentCommand extends BaseCommand {
         case 'show':
           await this.showEnvironment(
             flags.format,
-            flags.reveal || flags['show-all']
+            flags.reveal || flags?.["show-all"]
           );
           break;
         case 'check':
@@ -176,7 +176,7 @@ export default class EnvironmentCommand extends BaseCommand {
       }
     } catch (error) {
       this.error(
-        `Error processing environment command: ${error instanceof Error ? error.message : String(error)}`
+        `Error processing environment command: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -208,7 +208,7 @@ export default class EnvironmentCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Environment validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Environment validation failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'ENV_VALIDATION_FAILED'
       );
     }
@@ -237,13 +237,13 @@ export default class EnvironmentCommand extends BaseCommand {
         );
       }
 
-      generateEnvTemplate(templatePath);
+      generateEnvTemplate(templatePath as any);
       this.log(
         chalk.green(`✓ Environment template generated at ${templatePath}`)
       );
     } catch (error) {
       throw new CLIError(
-        `Failed to generate template: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to generate template: ${error instanceof Error ? error.message : String(error as any)}`,
         'TEMPLATE_GENERATION_FAILED'
       );
     }
@@ -261,8 +261,8 @@ export default class EnvironmentCommand extends BaseCommand {
       const docs = generateEnvironmentDocs();
 
       // Create directory if it doesn't exist
-      const dir = path.dirname(docsPath);
-      if (!fs.existsSync(dir)) {
+      const dir = path.dirname(docsPath as any);
+      if (!fs.existsSync(dir as any)) {
         fs.mkdirSync(dir, { recursive: true });
       }
 
@@ -272,7 +272,7 @@ export default class EnvironmentCommand extends BaseCommand {
       );
     } catch (error) {
       throw new CLIError(
-        `Failed to generate documentation: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to generate documentation: ${error instanceof Error ? error.message : String(error as any)}`,
         'DOCS_GENERATION_FAILED'
       );
     }
@@ -292,7 +292,7 @@ export default class EnvironmentCommand extends BaseCommand {
       const jsonConfig = envConfig.toJSON();
       // Mask sensitive values unless reveal is true
       if (!reveal) {
-        for (const [key, value] of Object.entries(jsonConfig)) {
+        for (const [key, value] of Object.entries(jsonConfig as any)) {
           const varConfig = envConfig.getAllVariables()[key];
           if (varConfig?.sensitive && value) {
             jsonConfig[key] = '********';
@@ -303,7 +303,7 @@ export default class EnvironmentCommand extends BaseCommand {
     } else if (format === 'env') {
       // Display as .env file format
       const config = envConfig.getAllVariables();
-      for (const [key, value] of Object.entries(config)) {
+      for (const [key, value] of Object.entries(config as any)) {
         // Skip printing sensitive values unless reveal is true
         if (value.sensitive && value.value && !reveal) {
           this.log(`${key}=********`);
@@ -336,7 +336,7 @@ export default class EnvironmentCommand extends BaseCommand {
         Other: [],
       };
 
-      for (const [key, value] of Object.entries(config)) {
+      for (const [key, value] of Object.entries(config as any)) {
         let category = 'Other';
         if (key.startsWith('AI_') || key.endsWith('_API_KEY')) {
           category = 'AI';
@@ -372,9 +372,9 @@ export default class EnvironmentCommand extends BaseCommand {
         let displayValue = value.value;
         if (value.sensitive && value.value && !reveal) {
           displayValue = '********';
-        } else if (value.value === undefined || value.value === null) {
+        } else if (value?.value === undefined || value?.value === null) {
           displayValue = chalk.gray('<not set>');
-        } else if (value.value === '') {
+        } else if (value?.value === '') {
           displayValue = chalk.gray('<empty string>');
         }
 
@@ -396,29 +396,29 @@ export default class EnvironmentCommand extends BaseCommand {
       }
 
       // Display each category
-      for (const [category, values] of Object.entries(categories)) {
-        if (values.length === 0) continue;
+      for (const [category, values] of Object.entries(categories as any)) {
+        if (values?.length === 0) continue;
 
-        this.log('\n' + chalk.green.bold(category));
+        this.log('\n' + chalk?.green?.bold(category as any));
         this.log('─'.repeat(category.length));
 
         // Create a table-like output
         this.log(
-          chalk.bold('Variable'.padEnd(30)) +
-            chalk.bold('Value'.padEnd(30)) +
-            chalk.bold('Source'.padEnd(15)) +
-            chalk.bold('Required'.padEnd(10)) +
+          chalk.bold('Variable'.padEnd(30 as any)) +
+            chalk.bold('Value'.padEnd(30 as any)) +
+            chalk.bold('Source'.padEnd(15 as any)) +
+            chalk.bold('Required'.padEnd(10 as any)) +
             chalk.bold('Sensitive')
         );
 
-        this.log('─'.repeat(100));
+        this.log('─'.repeat(100 as any));
 
         for (const item of values) {
           this.log(
-            chalk.cyan(item.name.padEnd(30)) +
-              String(item.value).substring(0, 28).padEnd(30) +
-              chalk.gray(item.source.padEnd(15)) +
-              item.required.padEnd(10) +
+            chalk.cyan(item?.name?.padEnd(30 as any)) +
+              String(item.value).substring(0, 28).padEnd(30 as any) +
+              chalk.gray(item?.source?.padEnd(15 as any)) +
+              item?.required?.padEnd(10 as any) +
               item.sensitive
           );
         }
@@ -445,9 +445,9 @@ export default class EnvironmentCommand extends BaseCommand {
     }
 
     // Missing variables
-    if (validationResult.missingVars.length > 0) {
+    if (validationResult?.missingVars?.length > 0) {
       this.log(chalk.red('\nMissing required variables:'));
-      validationResult.missingVars.forEach(v =>
+      validationResult?.missingVars?.forEach(v =>
         this.log(chalk.red(`  - ${v}`))
       );
     } else {
@@ -455,9 +455,9 @@ export default class EnvironmentCommand extends BaseCommand {
     }
 
     // Invalid variables
-    if (validationResult.invalidVars.length > 0) {
+    if (validationResult?.invalidVars?.length > 0) {
       this.log(chalk.red('\nInvalid variables:'));
-      validationResult.invalidVars.forEach(v =>
+      validationResult?.invalidVars?.forEach(v =>
         this.log(chalk.red(`  - ${v}`))
       );
     } else {
@@ -465,25 +465,25 @@ export default class EnvironmentCommand extends BaseCommand {
     }
 
     // Deprecated variables
-    if (validationResult.deprecatedVars.length > 0) {
+    if (validationResult?.deprecatedVars?.length > 0) {
       this.log(chalk.yellow('\nDeprecated variables:'));
-      validationResult.deprecatedVars.forEach(v =>
+      validationResult?.deprecatedVars?.forEach(v =>
         this.log(chalk.yellow(`  - ${v}`))
       );
     }
 
     // Insecure variables
-    if (validationResult.insecureVars.length > 0) {
+    if (validationResult?.insecureVars?.length > 0) {
       this.log(chalk.yellow('\nInsecure storage of sensitive variables:'));
-      validationResult.insecureVars.forEach(v =>
+      validationResult?.insecureVars?.forEach(v =>
         this.log(chalk.yellow(`  - ${v}`))
       );
     }
 
     // Other warnings
-    if (validationResult.warnings.length > 0) {
+    if (validationResult?.warnings?.length > 0) {
       this.log(chalk.yellow('\nWarnings:'));
-      validationResult.warnings.forEach(w =>
+      validationResult?.warnings?.forEach(w =>
         this.log(chalk.yellow(`  - ${w}`))
       );
     }
@@ -498,7 +498,7 @@ export default class EnvironmentCommand extends BaseCommand {
     // Suggestions
     this.log('\n' + chalk.bold('Suggestions:'));
 
-    if (validationResult.missingVars.length > 0) {
+    if (validationResult?.missingVars?.length > 0) {
       this.log(
         chalk.dim(
           '- Add missing required variables to your .env file or environment'
@@ -506,7 +506,7 @@ export default class EnvironmentCommand extends BaseCommand {
       );
     }
 
-    if (validationResult.invalidVars.length > 0) {
+    if (validationResult?.invalidVars?.length > 0) {
       this.log(
         chalk.dim(
           '- Fix invalid variable values according to their validation rules'
@@ -514,7 +514,7 @@ export default class EnvironmentCommand extends BaseCommand {
       );
     }
 
-    if (validationResult.insecureVars.length > 0) {
+    if (validationResult?.insecureVars?.length > 0) {
       this.log(
         chalk.dim(
           '- Move sensitive variables from config files to environment variables'
@@ -522,7 +522,7 @@ export default class EnvironmentCommand extends BaseCommand {
       );
     }
 
-    if (validationResult.deprecatedVars.length > 0) {
+    if (validationResult?.deprecatedVars?.length > 0) {
       this.log(
         chalk.dim('- Update deprecated variables to their newer alternatives')
       );
@@ -559,7 +559,7 @@ export default class EnvironmentCommand extends BaseCommand {
       const envPath = path.join(process.cwd(), '.env');
       let envContent = '';
 
-      if (fs.existsSync(envPath)) {
+      if (fs.existsSync(envPath as any)) {
         const content = fs.readFileSync(envPath, 'utf-8');
         envContent =
           typeof content === 'string' ? content : content.toString('utf-8');
@@ -591,7 +591,7 @@ export default class EnvironmentCommand extends BaseCommand {
       fs.writeFileSync(envPath, newLines.join('\n'));
 
       // Set in current process
-      process.env[key] = value;
+      process?.env?.[key] = value;
 
       this.log(
         chalk.green(`✓ Environment variable ${key} has been set to ${value}`)
@@ -612,12 +612,12 @@ export default class EnvironmentCommand extends BaseCommand {
           )
         );
         this.log(
-          chalk.yellow(error instanceof Error ? error.message : String(error))
+          chalk.yellow(error instanceof Error ? error.message : String(error as any))
         );
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to set environment variable: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to set environment variable: ${error instanceof Error ? error.message : String(error as any)}`,
         'SET_VARIABLE_FAILED'
       );
     }

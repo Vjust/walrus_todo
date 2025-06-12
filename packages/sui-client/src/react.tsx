@@ -126,11 +126,11 @@ const WalTodoWalletContext = createContext<WalTodoWalletContextType | null>(null
  * Hook to use the WalTodo wallet context
  */
 export function useWalTodoWallet(): WalTodoWalletContextType {
-  const context = useContext(WalTodoWalletContext);
+  const context = useContext(WalTodoWalletContext as any);
   if (!context) {
     throw new Error('useWalTodoWallet must be used within a WalTodoWalletProvider');
   }
-  return context;
+  return context as WalTodoWalletContextType;
 }
 
 /**
@@ -150,12 +150,12 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
   const [transactionHistory, setTransactionHistory] = useState<TransactionRecord[]>([]);
   const [currentNetwork, setCurrentNetwork] = useState('testnet');
   const [error, setError] = useState<string | null>(null);
-  const [sessionExpired, setSessionExpired] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false as any);
+  const [isModalOpen, setIsModalOpen] = useState(false as any);
   const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Connection state
-  const connected = Boolean(account);
+  const connected = Boolean(account as any);
 
   // Load configuration on mount
   useEffect(() => {
@@ -164,14 +164,14 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
 
   // Clear error when wallet state changes
   useEffect(() => {
-    setError(null);
+    setError(null as any);
   }, [connected]);
 
   const loadConfig = useCallback(async () => {
     try {
       const appConfig = await loadAppConfig();
-      setConfig(appConfig);
-      setCurrentNetwork(appConfig.network.name);
+      setConfig(appConfig as any);
+      setCurrentNetwork(appConfig?.network?.name);
     } catch (error) {
       console.error('[WalTodoWallet] Failed to load configuration:', error);
       setError('Failed to load configuration');
@@ -184,8 +184,8 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(() => {
     try {
-      setError(null);
-      setIsModalOpen(true);
+      setError(null as any);
+      setIsModalOpen(true as any);
     } catch (error) {
       console.error('[WalTodoWallet] Connect error:', error);
       setError('Failed to open wallet connection');
@@ -194,7 +194,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
 
   const disconnect = useCallback(() => {
     try {
-      setError(null);
+      setError(null as any);
       disconnectWallet();
       setTransactionHistory([]);
       // Clear localStorage
@@ -212,7 +212,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
   const signAndExecuteTransaction = useCallback(
     async (txb: CompatibleTransaction): Promise<TransactionResult> => {
       try {
-        setError(null);
+        setError(null as any);
 
         if (!connected || !account) {
           throw new WalletNotConnectedError();
@@ -236,12 +236,12 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         resetActivityTimer();
 
         // Use compatibility wrapper for transaction result
-        return normalizeTransactionResult(result);
+        return normalizeTransactionResult(result as any);
       } catch (error) {
         console.error('[WalTodoWallet] Transaction error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         setError(`Transaction failed: ${errorMessage}`);
-        throw new TransactionError(errorMessage);
+        throw new TransactionError(errorMessage as any);
       }
     },
     [connected, account, signAndExecute, resetActivityTimer]
@@ -253,8 +253,8 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         throw new WalletNotConnectedError();
       }
 
-      const packageId = config.contracts.todoNft.packageId;
-      const moduleName = config.contracts.todoNft.moduleName;
+      const packageId = config?.contracts?.todoNft.packageId;
+      const moduleName = config?.contracts?.todoNft.moduleName;
 
       const tx = new Transaction();
       tx.setSender(account.address);
@@ -270,7 +270,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         ],
       });
 
-      return await signAndExecuteTransaction(tx);
+      return await signAndExecuteTransaction(tx as any);
     },
     [config, account, signAndExecuteTransaction]
   );
@@ -281,8 +281,8 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         throw new WalletNotConnectedError();
       }
 
-      const packageId = config.contracts.todoNft.packageId;
-      const moduleName = config.contracts.todoNft.moduleName;
+      const packageId = config?.contracts?.todoNft.packageId;
+      const moduleName = config?.contracts?.todoNft.moduleName;
 
       const tx = new Transaction();
       tx.setSender(account.address);
@@ -298,7 +298,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         ],
       });
 
-      return await signAndExecuteTransaction(tx);
+      return await signAndExecuteTransaction(tx as any);
     },
     [config, account, signAndExecuteTransaction]
   );
@@ -309,18 +309,18 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         throw new WalletNotConnectedError();
       }
 
-      const packageId = config.contracts.todoNft.packageId;
-      const moduleName = config.contracts.todoNft.moduleName;
+      const packageId = config?.contracts?.todoNft.packageId;
+      const moduleName = config?.contracts?.todoNft.moduleName;
 
       const tx = new Transaction();
       tx.setSender(account.address);
 
       tx.moveCall({
         target: `${packageId}::${moduleName}::complete_todo`,
-        arguments: [tx.object(objectId)],
+        arguments: [tx.object(objectId as any)],
       });
 
-      return await signAndExecuteTransaction(tx);
+      return await signAndExecuteTransaction(tx as any);
     },
     [config, account, signAndExecuteTransaction]
   );
@@ -331,18 +331,18 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         throw new WalletNotConnectedError();
       }
 
-      const packageId = config.contracts.todoNft.packageId;
-      const moduleName = config.contracts.todoNft.moduleName;
+      const packageId = config?.contracts?.todoNft.packageId;
+      const moduleName = config?.contracts?.todoNft.moduleName;
 
       const tx = new Transaction();
       tx.setSender(account.address);
 
       tx.moveCall({
         target: `${packageId}::${moduleName}::delete_todo`,
-        arguments: [tx.object(objectId)],
+        arguments: [tx.object(objectId as any)],
       });
 
-      return await signAndExecuteTransaction(tx);
+      return await signAndExecuteTransaction(tx as any);
     },
     [config, account, signAndExecuteTransaction]
   );
@@ -356,7 +356,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
       const rawResponse = await suiClient.getOwnedObjects({
         owner: account.address,
         filter: {
-          StructType: `${config.contracts.todoNft.packageId}::${config.contracts.todoNft.moduleName}::${config.contracts.todoNft.structName}`,
+          StructType: `${config?.contracts?.todoNft.packageId}::${config?.contracts?.todoNft.moduleName}::${config?.contracts?.todoNft.structName}`,
         },
         options: {
           showContent: true,
@@ -366,13 +366,13 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
       });
 
       // Use compatibility wrapper for response
-      const response = normalizeOwnedObjectsResponse(rawResponse);
+      const response = normalizeOwnedObjectsResponse(rawResponse as any);
       const todos: Todo[] = [];
 
       for (const item of response.data) {
-        const todo = transformSuiObjectToTodo(item);
+        const todo = transformSuiObjectToTodo(item as any);
         if (todo) {
-          todos.push(todo);
+          todos.push(todo as any);
         }
       }
 
@@ -389,26 +389,26 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const switchNetwork = useCallback((network: string) => {
-    setCurrentNetwork(network);
+    setCurrentNetwork(network as any);
     clearConfigCache();
     loadConfig();
   }, [loadConfig]);
 
   const resetSession = useCallback(() => {
-    setSessionExpired(false);
+    setSessionExpired(false as any);
     resetActivityTimer();
   }, [resetActivityTimer]);
 
   const clearError = useCallback(() => {
-    setError(null);
+    setError(null as any);
   }, []);
 
   const openModal = useCallback(() => {
-    setIsModalOpen(true);
+    setIsModalOpen(true as any);
   }, []);
 
   const closeModal = useCallback(() => {
-    setIsModalOpen(false);
+    setIsModalOpen(false as any);
   }, []);
 
   const contextValue: WalTodoWalletContextType = {
@@ -447,11 +447,11 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         trigger={<div style={{ display: 'none' }} />}
         open={isModalOpen}
         onOpenChange={(open) => {
-          setIsModalOpen(open);
+          setIsModalOpen(open as any);
           if (!open && connected && account) {
             // Save connected wallet to localStorage
             const connectedWallet = wallets.find((w) =>
-              w.accounts?.some((acc) => acc.address === account.address)
+              w.accounts?.some((acc) => acc?.address === account.address)
             );
             if (connectedWallet) {
               try {
@@ -494,7 +494,7 @@ export function WalTodoWalletProvider({
     testnet: { url: getFullnodeUrl('testnet') },
     devnet: { url: getFullnodeUrl('devnet') },
     mainnet: { url: getFullnodeUrl('mainnet') },
-    localnet: { url: 'http://127.0.0.1:9000' },
+    localnet: { url: 'http://127?.0?.0.1:9000' },
   });
 
   return (
@@ -523,7 +523,7 @@ export function useExecuteTxn() {
  */
 export function useTransactionExecution() {
   const { signAndExecuteTransaction, connected, account } = useWalTodoWallet();
-  const [isExecuting, setIsExecuting] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false as any);
   const [lastResult, setLastResult] = useState<TransactionResult | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
 
@@ -531,30 +531,30 @@ export function useTransactionExecution() {
     async (transaction: CompatibleTransaction): Promise<TransactionResult> => {
       if (!connected || !account) {
         const error = 'Wallet not connected';
-        setLastError(error);
+        setLastError(error as any);
         throw new WalletNotConnectedError();
       }
 
-      setIsExecuting(true);
-      setLastError(null);
+      setIsExecuting(true as any);
+      setLastError(null as any);
 
       try {
-        const result = await signAndExecuteTransaction(transaction);
-        setLastResult(result);
+        const result = await signAndExecuteTransaction(transaction as any);
+        setLastResult(result as any);
         return result;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
-        setLastError(errorMessage);
+        setLastError(errorMessage as any);
         throw error;
       } finally {
-        setIsExecuting(false);
+        setIsExecuting(false as any);
       }
     },
     [signAndExecuteTransaction, connected, account]
   );
 
   const clearError = useCallback(() => {
-    setLastError(null);
+    setLastError(null as any);
   }, []);
 
   return {
@@ -616,16 +616,16 @@ export function useAppConfig() {
 
   useEffect(() => {
     if (!config) {
-      setLoading(true);
+      setLoading(true as any);
       loadConfig()
         .catch((err) => {
           setError(err.message);
         })
         .finally(() => {
-          setLoading(false);
+          setLoading(false as any);
         });
     } else {
-      setLoading(false);
+      setLoading(false as any);
     }
   }, [config, loadConfig]);
 
@@ -636,11 +636,11 @@ export function useAppConfig() {
  * Utility function to transform Sui object to Todo
  */
 function transformSuiObjectToTodo(suiObject: any): Todo | null {
-  if (!suiObject.data?.content || suiObject.data.content.dataType !== 'moveObject') {
+  if (!suiObject.data?.content || suiObject?.data?.content.dataType !== 'moveObject') {
     return null;
   }
 
-  const moveObject = suiObject.data.content;
+  const moveObject = suiObject?.data?.content;
   const fields = moveObject.fields;
 
   if (!fields) {
@@ -649,11 +649,11 @@ function transformSuiObjectToTodo(suiObject: any): Todo | null {
 
   try {
     return {
-      id: suiObject.data.objectId,
-      objectId: suiObject.data.objectId,
+      id: suiObject?.data?.objectId,
+      objectId: suiObject?.data?.objectId,
       title: fields.title || 'Untitled',
       description: fields.description || '',
-      completed: fields.completed === true,
+      completed: fields?.completed === true,
       priority: 'medium',
       tags: [],
       blockchainStored: true,
@@ -662,7 +662,7 @@ function transformSuiObjectToTodo(suiObject: any): Todo | null {
       completedAt: fields.completed_at ? parseInt(fields.completed_at) : undefined,
       owner: fields.owner,
       metadata: fields.metadata || '',
-      isPrivate: fields.is_private === true,
+      isPrivate: fields?.is_private === true,
     };
   } catch (error) {
     console.error('[WalTodoWallet] Error transforming Sui object to Todo:', error);

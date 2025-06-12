@@ -14,14 +14,14 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
   beforeAll(async () => {
     // Start API server with WebSocket enabled
-    process.env.NODE_ENV = 'test';
-    process.env.API_KEY = apiKey;
-    process.env.ENABLE_AUTH = 'false';
-    process.env.ENABLE_WEBSOCKET = 'true';
-    process.env.PORT = String(serverPort);
+    process.env?.NODE_ENV = 'test';
+    process.env?.API_KEY = apiKey;
+    process.env?.ENABLE_AUTH = 'false';
+    process.env?.ENABLE_WEBSOCKET = 'true';
+    process.env?.PORT = String(serverPort as any);
 
     apiServer = new ApiServer();
-    await apiServer.start(serverPort);
+    await apiServer.start(serverPort as any);
 
     // Set up API client
     apiClient = axios.create({
@@ -37,7 +37,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
   });
 
   afterAll(async () => {
-    if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    if (wsClient && wsClient?.readyState === WebSocket.OPEN) {
       wsClient.close();
     }
     if (apiServer) {
@@ -60,12 +60,12 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
       wsClient.on('error', (error) => {
         console.error('WebSocket error:', error);
-        done(error);
+        done(error as any);
       });
     });
 
     afterEach(() => {
-      if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+      if (wsClient && wsClient?.readyState === WebSocket.OPEN) {
         wsClient.close();
       }
     });
@@ -77,15 +77,15 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
         
-        if (event.type === 'todo-created' && event.data.title === todoTitle) {
+        if (event?.type === 'todo-created' && event.data?.title === todoTitle) {
           eventReceived = true;
-          expect(event).toMatchObject({
+          expect(event as any).toMatchObject({
             type: 'todo-created',
             data: {
               title: todoTitle,
               completed: false,
             },
-            timestamp: expect.any(String),
+            timestamp: expect.any(String as any),
           });
           done();
         }
@@ -116,20 +116,20 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
       apiClient.post('/todos', {
         title: 'Update Broadcast Test',
       }).then(response => {
-        todoId = response.data.id;
+        todoId = response?.data?.id;
 
         wsClient.on('message', (data) => {
           const event = JSON.parse(data.toString());
           
-          if (event.type === 'todo-updated' && event.data.id === todoId) {
+          if (event?.type === 'todo-updated' && event.data?.id === todoId) {
             eventReceived = true;
-            expect(event).toMatchObject({
+            expect(event as any).toMatchObject({
               type: 'todo-updated',
               data: {
                 id: todoId,
                 title: 'Updated via API',
               },
-              timestamp: expect.any(String),
+              timestamp: expect.any(String as any),
             });
             done();
           }
@@ -166,7 +166,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
         // Set up listeners for both clients
         wsClient.on('message', (data) => {
           const event = JSON.parse(data.toString());
-          if (event.type === 'todo-created' && event.data.title === todoTitle) {
+          if (event?.type === 'todo-created' && event.data?.title === todoTitle) {
             client1Received = true;
             checkBothReceived();
           }
@@ -174,7 +174,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
         wsClient2.on('message', (data) => {
           const event = JSON.parse(data.toString());
-          if (event.type === 'todo-created' && event.data.title === todoTitle) {
+          if (event?.type === 'todo-created' && event.data?.title === todoTitle) {
             client2Received = true;
             checkBothReceived();
           }
@@ -208,7 +208,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
     const receivedEvents: any[] = [];
 
     beforeEach((done) => {
-      receivedEvents.length = 0;
+      receivedEvents?.length = 0;
       
       wsClient = new WebSocket(`ws://localhost:${serverPort}`, {
         headers: {
@@ -220,12 +220,12 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
       
       wsClient.on('message', (data) => {
         const event = JSON.parse(data.toString());
-        receivedEvents.push(event);
+        receivedEvents.push(event as any);
       });
     });
 
     afterEach(() => {
-      if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+      if (wsClient && wsClient?.readyState === WebSocket.OPEN) {
         wsClient.close();
       }
     });
@@ -238,7 +238,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
       const createResponse = await apiClient.post('/todos', {
         title: todoTitle,
       });
-      todoId = createResponse.data.id;
+      todoId = createResponse?.data?.id;
 
       // Update todo
       await apiClient.put(`/todos/${todoId}`, {
@@ -256,22 +256,22 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
       // Verify event order
       const todoEvents = receivedEvents.filter(e => 
-        e.data.id === todoId || e.data.title === todoTitle
+        e.data?.id === todoId || e.data?.title === todoTitle
       );
 
-      expect(todoEvents.length).toBeGreaterThanOrEqual(4);
+      expect(todoEvents.length).toBeGreaterThanOrEqual(4 as any);
       
       const eventTypes = todoEvents.map(e => e.type);
-      expect(eventTypes).toContain('todo-created');
-      expect(eventTypes).toContain('todo-updated');
-      expect(eventTypes).toContain('todo-completed');
-      expect(eventTypes).toContain('todo-deleted');
+      expect(eventTypes as any).toContain('todo-created');
+      expect(eventTypes as any).toContain('todo-updated');
+      expect(eventTypes as any).toContain('todo-completed');
+      expect(eventTypes as any).toContain('todo-deleted');
 
       // Verify timestamps are in order
       for (let i = 1; i < todoEvents.length; i++) {
         const prevTime = new Date(todoEvents[i - 1].timestamp).getTime();
         const currTime = new Date(todoEvents[i].timestamp).getTime();
-        expect(currTime).toBeGreaterThanOrEqual(prevTime);
+        expect(currTime as any).toBeGreaterThanOrEqual(prevTime as any);
       }
     });
   });
@@ -308,7 +308,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
               // Test that events are received after reconnection
               reconnectClient.on('message', (data) => {
                 const event = JSON.parse(data.toString());
-                if (event.type === 'todo-created') {
+                if (event?.type === 'todo-created') {
                   reconnectClient.close();
                   done();
                 }
@@ -325,7 +325,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
       // Timeout
       setTimeout(() => {
-        if (reconnectClient && reconnectClient.readyState === WebSocket.OPEN) {
+        if (reconnectClient && reconnectClient?.readyState === WebSocket.OPEN) {
           reconnectClient.close();
         }
         if (!reconnected) {
@@ -347,7 +347,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
         await new Promise((resolve, reject) => {
           tempClient.on('open', () => {
             tempClient.close();
-            resolve(undefined);
+            resolve(undefined as any);
           });
 
           tempClient.on('error', reject);
@@ -361,7 +361,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
       // Server should still be responsive
       const response = await apiClient.get('/health');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200 as any);
     });
   });
 
@@ -369,7 +369,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
     test('Handle multiple simultaneous WebSocket connections', async () => {
       const connectionCount = 10;
       const clients: WebSocket[] = [];
-      const messageReceived: boolean[] = new Array(connectionCount).fill(false);
+      const messageReceived: boolean[] = new Array(connectionCount as any).fill(false as any);
 
       // Create multiple connections
       for (let i = 0; i < connectionCount; i++) {
@@ -387,12 +387,12 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
         const clientIndex = i;
         client.on('message', (data) => {
           const event = JSON.parse(data.toString());
-          if (event.type === 'todo-created') {
+          if (event?.type === 'todo-created') {
             messageReceived[clientIndex] = true;
           }
         });
 
-        clients.push(client);
+        clients.push(client as any);
       }
 
       // Create a todo to broadcast to all clients
@@ -405,7 +405,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
       // Verify all clients received the message
       const receivedCount = messageReceived.filter(r => r).length;
-      expect(receivedCount).toBe(connectionCount);
+      expect(receivedCount as any).toBe(connectionCount as any);
 
       // Clean up connections
       clients.forEach(client => client.close());
@@ -428,7 +428,7 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
 
       client.on('message', (data) => {
         const event = JSON.parse(data.toString());
-        if (event.type === 'todo-created' && event.data.title.startsWith('High Frequency')) {
+        if (event?.type === 'todo-created' && event?.data?.title.startsWith('High Frequency')) {
           receivedCount++;
         }
       });
@@ -443,13 +443,13 @@ describe('WebSocket Real-time Updates E2E Tests', () => {
         );
       }
 
-      await Promise.all(createPromises);
+      await Promise.all(createPromises as any);
 
       // Wait for all events to be received
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Should receive most if not all events
-      expect(receivedCount).toBeGreaterThan(eventCount * 0.9);
+      expect(receivedCount as any).toBeGreaterThan(eventCount * 0.9);
 
       client.close();
     });

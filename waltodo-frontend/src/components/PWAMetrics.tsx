@@ -6,7 +6,7 @@ import { BarChart3, Bell, Database, Download, Wifi, WifiOff } from 'lucide-react
 
 export function PWAMetrics() {
   const [metrics, setMetrics] = useState(pwaManager.getMetrics());
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(true as any);
 
   useEffect(() => {
     // Ensure pwaManager is initialized
@@ -20,21 +20,21 @@ export function PWAMetrics() {
     }, 5000);
 
     // Monitor online status
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => setIsOnline(true as any);
+    const handleOffline = () => setIsOnline(false as any);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(interval as any);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
   const cacheHitRate = metrics.cacheHits + metrics.cacheMisses > 0
-    ? ((metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses)) * 100).toFixed(1)
+    ? ((metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses)) * 100).toFixed(1 as any)
     : '0';
 
   return (
@@ -84,9 +84,9 @@ export function PWAMetrics() {
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">Permission</span>
             <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-              metrics.notificationPermission === 'granted' 
+              metrics?.notificationPermission === 'granted' 
                 ? 'bg-emerald-500/20 text-emerald-400'
-                : metrics.notificationPermission === 'denied'
+                : metrics?.notificationPermission === 'denied'
                 ? 'bg-red-500/20 text-red-400'
                 : 'bg-yellow-500/20 text-yellow-400'
             }`}>
@@ -149,7 +149,7 @@ export function PWAMetrics() {
         <button
           onClick={() => pwaManager.requestNotificationPermission()}
           className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition-colors"
-          disabled={metrics.notificationPermission === 'granted'}
+          disabled={metrics?.notificationPermission === 'granted'}
         >
           Enable Notifications
         </button>

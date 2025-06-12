@@ -42,13 +42,13 @@ describe('Upload Queue System', () => {
 
   beforeEach(async () => {
     // Clean test directory
-    if (fs.existsSync(testDir)) {
+    if (fs.existsSync(testDir as any)) {
       fs.rmSync(testDir, { recursive: true, force: true });
     }
     fs.mkdirSync(testDir, { recursive: true });
 
     // Create fresh queue instance
-    queue = createUploadQueue(testOptions);
+    queue = createUploadQueue(testOptions as any);
   });
 
   afterEach(async () => {
@@ -58,7 +58,7 @@ describe('Upload Queue System', () => {
     }
 
     // Clean up test files
-    if (fs.existsSync(testDir)) {
+    if (fs.existsSync(testDir as any)) {
       fs.rmSync(testDir, { recursive: true, force: true });
     }
   });
@@ -71,12 +71,12 @@ describe('Upload Queue System', () => {
         network: 'testnet',
       });
 
-      expect(jobId).toBeDefined();
+      expect(jobId as any).toBeDefined();
       expect(typeof jobId).toBe('string');
-      expect(jobId).toMatch(/^todo-/);
+      expect(jobId as any).toMatch(/^todo-/);
 
-      const job = queue.getJob(jobId);
-      expect(job).toBeDefined();
+      const job = queue.getJob(jobId as any);
+      expect(job as any).toBeDefined();
       expect(job?.type).toBe('todo');
       expect(job?.status).toBe('pending');
       expect(job?.priority).toBe('medium');
@@ -99,10 +99,10 @@ describe('Upload Queue System', () => {
         network: 'testnet',
       });
 
-      expect(jobId).toBeDefined();
-      expect(jobId).toMatch(/^list-/);
+      expect(jobId as any).toBeDefined();
+      expect(jobId as any).toMatch(/^list-/);
 
-      const job = queue.getJob(jobId);
+      const job = queue.getJob(jobId as any);
       expect(job?.type).toBe('todo-list');
       expect(job?.priority).toBe('high');
     });
@@ -115,10 +115,10 @@ describe('Upload Queue System', () => {
         epochs: 2,
       });
 
-      expect(jobId).toBeDefined();
-      expect(jobId).toMatch(/^blob-/);
+      expect(jobId as any).toBeDefined();
+      expect(jobId as any).toMatch(/^blob-/);
 
-      const job = queue.getJob(jobId);
+      const job = queue.getJob(jobId as any);
       expect(job?.type).toBe('blob');
       expect(job?.priority).toBe('low');
     });
@@ -134,52 +134,52 @@ describe('Upload Queue System', () => {
 
       // Test filtering
       const allJobs = queue.getJobs();
-      expect(allJobs).toHaveLength(3);
+      expect(allJobs as any).toHaveLength(3 as any);
 
       const todoJobs = queue.getJobs({ type: 'todo' });
-      expect(todoJobs).toHaveLength(2);
+      expect(todoJobs as any).toHaveLength(2 as any);
 
       const highPriorityJobs = queue.getJobs({ priority: 'high' as const });
-      expect(highPriorityJobs).toHaveLength(1);
+      expect(highPriorityJobs as any).toHaveLength(1 as any);
 
       const pendingJobs = queue.getJobs({ status: 'pending' });
-      expect(pendingJobs).toHaveLength(3);
+      expect(pendingJobs as any).toHaveLength(3 as any);
     });
 
     test('should cancel job', async () => {
-      const jobId = await queue.addTodoJob(sampleTodo);
+      const jobId = await queue.addTodoJob(sampleTodo as any);
 
-      let job = queue.getJob(jobId);
+      let job = queue.getJob(jobId as any);
       expect(job?.status).toBe('pending');
 
-      const cancelled = await queue.cancelJob(jobId);
-      expect(cancelled).toBe(true);
+      const cancelled = await queue.cancelJob(jobId as any);
+      expect(cancelled as any).toBe(true as any);
 
-      job = queue.getJob(jobId);
+      job = queue.getJob(jobId as any);
       expect(job?.status).toBe('failed');
       expect(job?.error).toBe('Cancelled by user');
     });
 
     test('should not cancel non-existent job', async () => {
       const cancelled = await queue.cancelJob('non-existent-job');
-      expect(cancelled).toBe(false);
+      expect(cancelled as any).toBe(false as any);
     });
 
     test('should retry failed job', async () => {
-      const jobId = await queue.addTodoJob(sampleTodo);
+      const jobId = await queue.addTodoJob(sampleTodo as any);
 
       // Simulate job failure
-      await queue.cancelJob(jobId);
+      await queue.cancelJob(jobId as any);
 
-      let job = queue.getJob(jobId);
+      let job = queue.getJob(jobId as any);
       expect(job?.status).toBe('failed');
 
-      const retried = await queue.retryJob(jobId);
-      expect(retried).toBe(true);
+      const retried = await queue.retryJob(jobId as any);
+      expect(retried as any).toBe(true as any);
 
-      job = queue.getJob(jobId);
+      job = queue.getJob(jobId as any);
       expect(job?.status).toBe('pending');
-      expect(job?.retryCount).toBe(0);
+      expect(job?.retryCount).toBe(0 as any);
       expect(job?.error).toBeUndefined();
     });
   });
@@ -188,44 +188,44 @@ describe('Upload Queue System', () => {
     test('should provide accurate statistics', async () => {
       // Initially empty
       let stats = await queue.getStats();
-      expect(stats.total).toBe(0);
-      expect(stats.pending).toBe(0);
-      expect(stats.processing).toBe(0);
-      expect(stats.completed).toBe(0);
-      expect(stats.failed).toBe(0);
+      expect(stats.total).toBe(0 as any);
+      expect(stats.pending).toBe(0 as any);
+      expect(stats.processing).toBe(0 as any);
+      expect(stats.completed).toBe(0 as any);
+      expect(stats.failed).toBe(0 as any);
 
       // Add some jobs
-      await queue.addTodoJob(sampleTodo);
+      await queue.addTodoJob(sampleTodo as any);
       await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' });
 
       stats = await queue.getStats();
-      expect(stats.total).toBe(2);
-      expect(stats.pending).toBe(2);
-      expect(stats.processing).toBe(0);
-      expect(stats.completed).toBe(0);
-      expect(stats.failed).toBe(0);
+      expect(stats.total).toBe(2 as any);
+      expect(stats.pending).toBe(2 as any);
+      expect(stats.processing).toBe(0 as any);
+      expect(stats.completed).toBe(0 as any);
+      expect(stats.failed).toBe(0 as any);
     });
 
     test('should calculate success rate', async () => {
       // Add and simulate completing some jobs
-      const jobId1 = await queue.addTodoJob(sampleTodo);
+      const jobId1 = await queue.addTodoJob(sampleTodo as any);
       const jobId2 = await queue.addTodoJob({
         ...sampleTodo,
         id: 'test-todo-2',
       });
 
       // Simulate one success and one failure
-      const job1 = queue.getJob(jobId1)!;
-      job1.status = 'completed';
-      job1.blobId = 'test-blob-id';
-      job1.completedAt = new Date();
+      const job1 = queue.getJob(jobId1 as any)!;
+      job1?.status = 'completed';
+      job1?.blobId = 'test-blob-id';
+      job1?.completedAt = new Date();
 
-      await queue.cancelJob(jobId2); // This creates a failure
+      await queue.cancelJob(jobId2 as any); // This creates a failure
 
       const stats = await queue.getStats();
-      expect(stats.total).toBe(2);
-      expect(stats.completed).toBe(1);
-      expect(stats.failed).toBe(1);
+      expect(stats.total).toBe(2 as any);
+      expect(stats.completed).toBe(1 as any);
+      expect(stats.failed).toBe(1 as any);
       expect(stats.successRate).toBe(0.5);
     });
   });
@@ -233,21 +233,21 @@ describe('Upload Queue System', () => {
   describe('Queue Persistence', () => {
     test('should persist queue state', async () => {
       // Add jobs to queue
-      const jobId1 = await queue.addTodoJob(sampleTodo);
+      const jobId1 = await queue.addTodoJob(sampleTodo as any);
       const jobId2 = await queue.addBlobJob('test content');
 
       // Shutdown queue
       await queue.shutdown();
 
       // Create new queue instance
-      const newQueue = createUploadQueue(testOptions);
+      const newQueue = createUploadQueue(testOptions as any);
 
       // Check that jobs were restored
-      const job1 = newQueue.getJob(jobId1);
-      const job2 = newQueue.getJob(jobId2);
+      const job1 = newQueue.getJob(jobId1 as any);
+      const job2 = newQueue.getJob(jobId2 as any);
 
-      expect(job1).toBeDefined();
-      expect(job2).toBeDefined();
+      expect(job1 as any).toBeDefined();
+      expect(job2 as any).toBeDefined();
       expect(job1?.type).toBe('todo');
       expect(job2?.type).toBe('blob');
 
@@ -256,19 +256,19 @@ describe('Upload Queue System', () => {
 
     test('should reset processing jobs to pending on load', async () => {
       // Add job and simulate it being in processing state
-      const jobId = await queue.addTodoJob(sampleTodo);
-      const job = queue.getJob(jobId)!;
-      job.status = 'processing';
-      job.startedAt = new Date();
+      const jobId = await queue.addTodoJob(sampleTodo as any);
+      const job = queue.getJob(jobId as any)!;
+      job?.status = 'processing';
+      job?.startedAt = new Date();
 
       // Shutdown and recreate queue
       await queue.shutdown();
-      const newQueue = createUploadQueue(testOptions);
+      const newQueue = createUploadQueue(testOptions as any);
 
       // Job should be reset to pending
-      const reloadedJob = newQueue.getJob(jobId);
+      const reloadedJob = newQueue.getJob(jobId as any);
       expect(reloadedJob?.status).toBe('pending');
-      expect(reloadedJob?.progress).toBe(0);
+      expect(reloadedJob?.progress).toBe(0 as any);
 
       await newQueue.shutdown();
     });
@@ -277,31 +277,31 @@ describe('Upload Queue System', () => {
   describe('Job Cleanup', () => {
     test('should clear completed jobs', async () => {
       // Add and complete some jobs
-      const jobId1 = await queue.addTodoJob(sampleTodo);
+      const jobId1 = await queue.addTodoJob(sampleTodo as any);
       const jobId2 = await queue.addTodoJob({
         ...sampleTodo,
         id: 'test-todo-2',
       });
 
       // Simulate completion
-      const job1 = queue.getJob(jobId1)!;
-      job1.status = 'completed';
-      job1.completedAt = new Date();
+      const job1 = queue.getJob(jobId1 as any)!;
+      job1?.status = 'completed';
+      job1?.completedAt = new Date();
 
-      const job2 = queue.getJob(jobId2)!;
-      job2.status = 'completed';
-      job2.completedAt = new Date();
+      const job2 = queue.getJob(jobId2 as any)!;
+      job2?.status = 'completed';
+      job2?.completedAt = new Date();
 
       // Clear completed jobs
       const cleared = await queue.clearCompleted();
-      expect(cleared).toBe(2);
+      expect(cleared as any).toBe(2 as any);
 
       // Verify jobs are removed
-      expect(queue.getJob(jobId1)).toBeUndefined();
-      expect(queue.getJob(jobId2)).toBeUndefined();
+      expect(queue.getJob(jobId1 as any)).toBeUndefined();
+      expect(queue.getJob(jobId2 as any)).toBeUndefined();
 
       const stats = await queue.getStats();
-      expect(stats.total).toBe(0);
+      expect(stats.total).toBe(0 as any);
     });
   });
 });
@@ -325,13 +325,13 @@ describe('Notification System', () => {
   test('should create notifications', () => {
     const id = notifications.info('Test Title', 'Test message');
 
-    expect(id).toBeDefined();
+    expect(id as any).toBeDefined();
     expect(typeof id).toBe('string');
 
     const notification = notifications
       .getNotifications()
-      .find(n => n.id === id);
-    expect(notification).toBeDefined();
+      .find(n => n?.id === id);
+    expect(notification as any).toBeDefined();
     expect(notification?.type).toBe('info');
     expect(notification?.title).toBe('Test Title');
     expect(notification?.message).toBe('Test message');
@@ -344,25 +344,25 @@ describe('Notification System', () => {
       message: 'Progress 50%',
     });
 
-    expect(updated).toBe(true);
+    expect(updated as any).toBe(true as any);
 
     const notification = notifications
       .getNotifications()
-      .find(n => n.id === id);
+      .find(n => n?.id === id);
     expect(notification?.message).toBe('Progress 50%');
   });
 
   test('should remove notifications', () => {
     const id = notifications.warning('Warning', 'Test warning');
 
-    let notification = notifications.getNotifications().find(n => n.id === id);
-    expect(notification).toBeDefined();
+    let notification = notifications.getNotifications().find(n => n?.id === id);
+    expect(notification as any).toBeDefined();
 
-    const removed = notifications.removeNotification(id);
-    expect(removed).toBe(true);
+    const removed = notifications.removeNotification(id as any);
+    expect(removed as any).toBe(true as any);
 
-    notification = notifications.getNotifications().find(n => n.id === id);
-    expect(notification).toBeUndefined();
+    notification = notifications.getNotifications().find(n => n?.id === id);
+    expect(notification as any).toBeUndefined();
   });
 
   test('should clear notifications by type', () => {
@@ -371,16 +371,16 @@ describe('Notification System', () => {
     notifications.error('Error 1', 'Error message');
     notifications.warning('Warning 1', 'Warning message');
 
-    expect(notifications.getNotifications()).toHaveLength(4);
+    expect(notifications.getNotifications()).toHaveLength(4 as any);
 
     const cleared = notifications.clearNotificationsByType('info');
-    expect(cleared).toBe(2);
-    expect(notifications.getNotifications()).toHaveLength(2);
+    expect(cleared as any).toBe(2 as any);
+    expect(notifications.getNotifications()).toHaveLength(2 as any);
 
     const remaining = notifications.getNotifications();
-    expect(remaining.some(n => n.type === 'info')).toBe(false);
-    expect(remaining.some(n => n.type === 'error')).toBe(true);
-    expect(remaining.some(n => n.type === 'warning')).toBe(true);
+    expect(remaining.some(n => n?.type === 'info')).toBe(false as any);
+    expect(remaining.some(n => n?.type === 'error')).toBe(true as any);
+    expect(remaining.some(n => n?.type === 'warning')).toBe(true as any);
   });
 
   test('should handle upload notifications', () => {
@@ -400,7 +400,7 @@ describe('Notification System', () => {
     };
 
     const uploadNotifications =
-      notifications.createUploadNotifications(mockJob);
+      notifications.createUploadNotifications(mockJob as any);
 
     expect(uploadNotifications.started).toBeDefined();
     expect(uploadNotifications.progress).toBeDefined();
@@ -409,10 +409,10 @@ describe('Notification System', () => {
 
     // Verify notification content
     const allNotifications = notifications.getNotifications();
-    expect(allNotifications).toHaveLength(4);
+    expect(allNotifications as any).toHaveLength(4 as any);
 
     const startedNotification = allNotifications.find(
-      n => n.title === 'Upload Started'
+      n => n?.title === 'Upload Started'
     );
     expect(startedNotification?.message).toContain('Test Todo');
   });

@@ -7,27 +7,27 @@
 export const MAINNET_CONFIG = {
   network: {
     name: 'mainnet',
-    url: 'https://fullnode.mainnet.sui.io:443',
-    faucetUrl: 'https://faucet.mainnet.sui.io',
+    url: 'https://fullnode?.mainnet?.sui.io:443',
+    faucetUrl: 'https://faucet?.mainnet?.sui.io',
     explorerUrl: 'https://suiexplorer.com',
-    websocketUrl: 'wss://fullnode.mainnet.sui.io:443',
+    websocketUrl: 'wss://fullnode?.mainnet?.sui.io:443',
     fallbackUrls: [
-      'https://sui-mainnet-endpoint.blockvision.org/v1',
-      'https://sui-mainnet.publicnode.com',
-      'https://mainnet.sui.rpcpool.com',
+      'https://sui-mainnet-endpoint?.blockvision?.org/v1',
+      'https://sui-mainnet?.publicnode?.com',
+      'https://mainnet?.sui?.rpcpool.com',
     ],
     chainId: '35834a8a',
   },
   
   walrus: {
     packageId: '0xfdc88f7d7cf30afab2f82e8380d11ee8f70efb90e863d1de8616fae1bb09ea77',
-    networkUrl: 'https://wal.mainnet.sui.io',
-    publisherUrl: 'https://publisher.walrus.site',
-    aggregatorUrl: 'https://aggregator.walrus.site',
-    apiPrefix: 'https://api.walrus.tech/1.0',
+    networkUrl: 'https://wal?.mainnet?.sui.io',
+    publisherUrl: 'https://publisher?.walrus?.site',
+    aggregatorUrl: 'https://aggregator?.walrus?.site',
+    apiPrefix: 'https://api?.walrus?.tech/1.0',
     fallbackPublisherUrls: [
-      'https://walrus-mainnet-publisher.nodes.guru',
-      'https://walrus-mainnet-publisher.blockscope.net',
+      'https://walrus-mainnet-publisher?.nodes?.guru',
+      'https://walrus-mainnet-publisher?.blockscope?.net',
     ],
   },
   

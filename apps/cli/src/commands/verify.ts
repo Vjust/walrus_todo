@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import {
   AIVerifierAdapter,
   VerificationRecord,
@@ -119,7 +119,7 @@ export default class VerifyCommand extends BaseCommand {
     await super.init();
 
     // Initialize the verifier adapter with mock implementation
-    this.verifierAdapter = {
+    this?.verifierAdapter = {
       listVerifications: async () => [
         {
           id: 'mock-verification-1',
@@ -152,7 +152,7 @@ export default class VerifyCommand extends BaseCommand {
   }
 
   async run() {
-    const { args, flags } = await this.parse(VerifyCommand);
+    const { args, flags } = await this.parse(VerifyCommand as any);
 
     // Handle background job status check
     if (flags.jobId) {
@@ -162,7 +162,7 @@ export default class VerifyCommand extends BaseCommand {
     switch (args.action) {
       case 'list':
         if (flags.background) {
-          await this.listVerificationsInBackground(flags);
+          await this.listVerificationsInBackground(flags as any);
         } else {
           await this.listVerifications(flags.format);
         }
@@ -241,9 +241,9 @@ export default class VerifyCommand extends BaseCommand {
     this.log(chalk.bold('Fetching AI operation verifications...'));
 
     try {
-      const verifications = await this.verifierAdapter.listVerifications();
+      const verifications = await this?.verifierAdapter?.listVerifications();
 
-      if (verifications.length === 0) {
+      if (verifications?.length === 0) {
         this.log('No verifications found.');
         return;
       }
@@ -255,14 +255,14 @@ export default class VerifyCommand extends BaseCommand {
 
       // Table format (default)
       const tableData = verifications.map(v => ({
-        id: v.id.slice(0, 8) + '...',
+        id: v?.id?.slice(0, 8) + '...',
         type: this.formatVerificationType(v.verificationType),
         timestamp: new Date(v.timestamp).toLocaleString(),
-        provider: v.provider.slice(0, 8) + '...',
+        provider: v?.provider?.slice(0, 8) + '...',
       }));
 
       this.log(chalk.bold(`Found ${verifications.length} verifications:`));
-      this.log(this.formatTable(tableData));
+      this.log(this.formatTable(tableData as any));
     } catch (error) {
       this.error(`Failed to list verifications: ${error}`);
     }
@@ -321,7 +321,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to show verification: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to show verification: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -357,7 +357,7 @@ export default class VerifyCommand extends BaseCommand {
       const exportData: Record<string, unknown> = { ...verification };
 
       if (includeContent) {
-        exportData.content = {
+        exportData?.content = {
           request: 'Mock request content',
           response: 'Mock AI response content',
         };
@@ -366,7 +366,7 @@ export default class VerifyCommand extends BaseCommand {
       // Format as attestation
       const attestation = {
         type: 'AIVerificationAttestation',
-        version: '1.0.0',
+        version: '1?.0?.0',
         verification: exportData,
         metadata: {
           exportedAt: new Date().toISOString(),
@@ -378,8 +378,8 @@ export default class VerifyCommand extends BaseCommand {
 
       if (outputPath) {
         // Ensure directory exists
-        const outputDir = path.dirname(outputPath);
-        if (!fs.existsSync(outputDir)) {
+        const outputDir = path.dirname(outputPath as any);
+        if (!fs.existsSync(outputDir as any)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
 
@@ -388,14 +388,14 @@ export default class VerifyCommand extends BaseCommand {
         this.log(chalk.green(`Attestation exported to ${outputPath}`));
       } else {
         // Output to console
-        this.log(json);
+        this.log(json as any);
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to export verification: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to export verification: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -426,10 +426,10 @@ export default class VerifyCommand extends BaseCommand {
         this.log(`Certified at epoch: ${result.details?.certificateEpoch}`);
         this.log(`Size: ${result.details?.size} bytes`);
 
-        if (flags['full-metadata'] && result.metadata) {
+        if (flags?.["full-metadata"] && result.metadata) {
           this.log(chalk.bold('\nMetadata:'));
           if (result.details?.attributes?.contentType) {
-            this.log(`contentType: ${result.details.attributes.contentType}`);
+            this.log(`contentType: ${result?.details?.attributes.contentType}`);
           }
           this.log(JSON.stringify(result.metadata, null, 2));
         }
@@ -438,7 +438,7 @@ export default class VerifyCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to verify blob: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to verify blob: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -452,7 +452,7 @@ export default class VerifyCommand extends BaseCommand {
       const fs = await import('fs');
 
       // Check if file exists
-      if (!fs.existsSync(filePath)) {
+      if (!fs.existsSync(filePath as any)) {
         throw new Error(`File not found: ${filePath}`);
       }
 
@@ -472,7 +472,7 @@ export default class VerifyCommand extends BaseCommand {
       }
 
       // Read file content
-      const fileContent = fs.readFileSync(filePath);
+      const fileContent = fs.readFileSync(filePath as any);
 
       // For now, just report that verification completed
       // In a real implementation, we would compare checksums
@@ -482,7 +482,7 @@ export default class VerifyCommand extends BaseCommand {
       this.log(`Content matches: true`);
     } catch (error) {
       throw new CLIError(
-        `Failed to verify file: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to verify file: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -494,7 +494,7 @@ export default class VerifyCommand extends BaseCommand {
       const fs = await import('fs');
 
       // Check if file exists
-      if (!fs.existsSync(filePath)) {
+      if (!fs.existsSync(filePath as any)) {
         throw new Error(`File not found: ${filePath}`);
       }
 
@@ -508,17 +508,17 @@ export default class VerifyCommand extends BaseCommand {
       const verificationManager = new BlobVerificationManager(mockSuiClient, mockWalrusClient);
 
       // Read file content
-      const fileContent = fs.readFileSync(filePath);
+      const fileContent = fs.readFileSync(filePath as any);
       
       // Simulate upload verification
-      const result = await verificationManager.verifyUpload(fileContent);
+      const result = await verificationManager.verifyUpload(fileContent as any);
 
       this.log(chalk.green('✓ Upload and verification successful'));
       this.log(`File: ${filePath}`);
       this.log(`Blob ID: ${result.blobId}`);
       this.log(`Certified: ${result.certified}`);
 
-      if (flags['wait-for-certification']) {
+      if (flags?.["wait-for-certification"]) {
         this.log(chalk.yellow('Waiting for certification...'));
         // Simulate waiting
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -532,7 +532,7 @@ export default class VerifyCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to upload and verify file: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to upload and verify file: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -546,13 +546,13 @@ export default class VerifyCommand extends BaseCommand {
       this.log(`Todo ID: ${todoId}`);
       this.log(`Blockchain verified: true`);
 
-      if (flags['show-content']) {
+      if (flags?.["show-content"]) {
         this.log(chalk.bold('\nTodo content:'));
         this.log(JSON.stringify({ test: 'data' }, null, 2));
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to verify todo: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to verify todo: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -567,14 +567,14 @@ export default class VerifyCommand extends BaseCommand {
       this.log(`Signature: Valid`);
       this.log(`Blockchain verification: Passed`);
 
-      if (flags['skip-revocation-check']) {
+      if (flags?.["skip-revocation-check"]) {
         this.log(`Revocation check: Skipped`);
       } else {
         this.log(`Revocation check: Passed`);
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to verify credential: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to verify credential: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -594,7 +594,7 @@ export default class VerifyCommand extends BaseCommand {
   }
 
   private formatTable(data: Record<string, unknown>[]): string {
-    if (data.length === 0) return 'No data';
+    if (data?.length === 0) return 'No data';
 
     // Extract column names
     const columns = Object.keys(data[0]);
@@ -629,14 +629,14 @@ export default class VerifyCommand extends BaseCommand {
   private async handleJobStatus(jobId: string, flags: any) {
     try {
       const backgroundOps = await createBackgroundAIOperationsManager();
-      const status = await backgroundOps.getOperationStatus(jobId);
+      const status = await backgroundOps.getOperationStatus(jobId as any);
 
       if (!status) {
         this.error(`Job ${jobId} not found`);
         return;
       }
 
-      if (flags.format === 'json') {
+      if (flags?.format === 'json') {
         this.log(JSON.stringify(status, null, 2));
         return;
       }
@@ -648,12 +648,12 @@ export default class VerifyCommand extends BaseCommand {
       this.log(`Stage: ${chalk.blue(status.stage)}`);
 
       if (status.startedAt) {
-        this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
+        this.log(`Started: ${chalk.dim(status?.startedAt?.toLocaleString())}`);
       }
 
       if (status.completedAt) {
         this.log(
-          `Completed: ${chalk.dim(status.completedAt.toLocaleString())}`
+          `Completed: ${chalk.dim(status?.completedAt?.toLocaleString())}`
         );
       }
 
@@ -664,7 +664,7 @@ export default class VerifyCommand extends BaseCommand {
       // If waiting and operation is still running, wait for completion
       if (
         flags.wait &&
-        (status.status === 'queued' || status.status === 'running')
+        (status?.status === 'queued' || status?.status === 'running')
       ) {
         this.log(
           chalk.yellow('\nWaiting for verification operation to complete...')
@@ -673,16 +673,16 @@ export default class VerifyCommand extends BaseCommand {
         const result = await backgroundOps.waitForOperationWithProgress(
           jobId,
           (progress, stage) => {
-            process.stdout.write(
+            process?.stdout?.write(
               `\r${chalk.blue('Progress:')} ${progress}% (${stage})`
             );
           }
         );
 
-        process.stdout.write('\n');
+        process?.stdout?.write('\n');
         this.log(chalk.green('Verification operation completed!'));
 
-        if (flags.format === 'json') {
+        if (flags?.format === 'json') {
           this.log(JSON.stringify(result, null, 2));
         } else {
           this.log('Results have been processed successfully.');
@@ -693,7 +693,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to get verification job status: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to get verification job status: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -733,7 +733,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background verification list: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to start background verification list: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -774,7 +774,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background verification show: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to start background verification show: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -817,7 +817,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background verification export: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to start background verification export: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -835,7 +835,7 @@ export default class VerifyCommand extends BaseCommand {
     };
 
     return (
-      statusColors[status as keyof typeof statusColors] || chalk.white(status)
+      statusColors[status as keyof typeof statusColors] || chalk.white(status as any)
     );
   }
 }

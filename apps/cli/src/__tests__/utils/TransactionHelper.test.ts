@@ -32,20 +32,20 @@ describe('TransactionHelper', () => {
 
   beforeEach(() => {
     mockSigner = {
-      signData: jest.fn().mockResolvedValue(new Uint8Array(32)),
+      signData: jest.fn().mockResolvedValue(new Uint8Array(32 as any)),
       toSuiAddress: jest.fn().mockReturnValue('0x123'),
-      getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32)),
+      getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32 as any)),
       signTransaction: jest.fn().mockResolvedValue({
         signature: 'mock-signature',
         bytes: 'base64-encoded-bytes',
-        messageBytes: new Uint8Array(64),
+        messageBytes: new Uint8Array(64 as any),
       }),
       signMessage: jest.fn().mockResolvedValue({
         signature: 'mock-signature',
         bytes: 'base64-encoded-bytes',
-        messageBytes: new Uint8Array(64),
+        messageBytes: new Uint8Array(64 as any),
       }),
-      sign: jest.fn().mockResolvedValue(new Uint8Array(32)),
+      sign: jest.fn().mockResolvedValue(new Uint8Array(32 as any)),
       signWithIntent: jest.fn().mockResolvedValue({
         signature: 'mock-signature',
         bytes: 'base64-encoded-bytes',
@@ -62,13 +62,13 @@ describe('TransactionHelper', () => {
     };
 
     mockLogger = {
-      debug: jest.fn().mockReturnValue(undefined),
-      info: jest.fn().mockReturnValue(undefined),
-      warn: jest.fn().mockReturnValue(undefined),
-      error: jest.fn().mockReturnValue(undefined),
+      debug: jest.fn().mockReturnValue(undefined as any),
+      info: jest.fn().mockReturnValue(undefined as any),
+      warn: jest.fn().mockReturnValue(undefined as any),
+      error: jest.fn().mockReturnValue(undefined as any),
     };
 
-    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
+    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger as any);
 
     helper = new TransactionHelper(mockSigner as unknown as Signer);
   });
@@ -85,9 +85,9 @@ describe('TransactionHelper', () => {
         name: 'test operation',
       });
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(3);
-      expect(mockLogger.warn).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(3 as any);
+      expect(mockLogger.warn).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should respect maximum retry attempts', async () => {
@@ -104,7 +104,7 @@ describe('TransactionHelper', () => {
         helper.executeWithRetry(operation, { name: 'test operation' })
       ).rejects.toThrow('Persistent error');
 
-      expect(operation).toHaveBeenCalledTimes(2);
+      expect(operation as any).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should implement exponential backoff', async () => {
@@ -131,7 +131,7 @@ describe('TransactionHelper', () => {
         helper.executeWithRetry(operation, { name: 'test operation' })
       ).rejects.toThrow('Network error');
 
-      expect(delays).toEqual([100, 200]); // 100ms, then 200ms
+      expect(delays as any).toEqual([100, 200]); // 100ms, then 200ms
     });
 
     it('should cap retry delay at maxDelay', () => {
@@ -141,8 +141,8 @@ describe('TransactionHelper', () => {
         exponential: true,
       });
 
-      const delay = helper.getRetryDelay(5); // 5th attempt
-      expect(delay).toBe(5000); // Should be capped at maxDelay
+      const delay = helper.getRetryDelay(5 as any); // 5th attempt
+      expect(delay as any).toBe(5000 as any); // Should be capped at maxDelay
     });
   });
 
@@ -161,29 +161,29 @@ describe('TransactionHelper', () => {
           name: 'test transaction',
           requireSigner: true,
         })
-      ).toThrow(ValidationError);
+      ).toThrow(ValidationError as any);
     });
 
     it('should accept custom signer', () => {
       const customSigner = {
-        signData: jest.fn().mockResolvedValue(new Uint8Array(32)),
+        signData: jest.fn().mockResolvedValue(new Uint8Array(32 as any)),
         toSuiAddress: jest.fn().mockReturnValue('0x456'),
-        getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32)),
+        getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32 as any)),
         signTransaction: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
-          messageBytes: new Uint8Array(64),
+          messageBytes: new Uint8Array(64 as any),
         }),
         signMessage: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
-          messageBytes: new Uint8Array(64),
+          messageBytes: new Uint8Array(64 as any),
         }),
-        sign: jest.fn().mockResolvedValue(new Uint8Array(32)),
+        sign: jest.fn().mockResolvedValue(new Uint8Array(32 as any)),
         signWithIntent: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
-          messageBytes: new Uint8Array(64),
+          messageBytes: new Uint8Array(64 as any),
         }),
       } as unknown as Signer;
 
@@ -202,8 +202,8 @@ describe('TransactionHelper', () => {
   describe('Error Handling', () => {
     it('should decide retry based on error type', () => {
       // Network errors should be retried
-      expect(helper.shouldRetry(new Error('network timeout'))).toBe(true);
-      expect(helper.shouldRetry(new Error('connection refused'))).toBe(true);
+      expect(helper.shouldRetry(new Error('network timeout'))).toBe(true as any);
+      expect(helper.shouldRetry(new Error('connection refused'))).toBe(true as any);
 
       // Validation errors should not be retried
       expect(
@@ -212,7 +212,7 @@ describe('TransactionHelper', () => {
             field: 'test',
           })
         )
-      ).toBe(false);
+      ).toBe(false as any);
 
       // Blockchain errors depend on recoverable flag
       expect(
@@ -222,7 +222,7 @@ describe('TransactionHelper', () => {
             recoverable: true,
           })
         )
-      ).toBe(true);
+      ).toBe(true as any);
 
       expect(
         helper.shouldRetry(
@@ -231,7 +231,7 @@ describe('TransactionHelper', () => {
             recoverable: false,
           })
         )
-      ).toBe(false);
+      ).toBe(false as any);
     });
 
     it('should include operation name in errors', async () => {
@@ -241,7 +241,7 @@ describe('TransactionHelper', () => {
         helper.executeWithRetry(operation, {
           name: 'important operation',
         })
-      ).rejects.toThrow(BlockchainError);
+      ).rejects.toThrow(BlockchainError as any);
 
       await expect(
         helper.executeWithRetry(operation, {
@@ -256,10 +256,10 @@ describe('TransactionHelper', () => {
   describe('Configuration', () => {
     it('should create new instance with custom config', () => {
       const customSigner = {
-        signData: jest.fn().mockResolvedValue(new Uint8Array(32)),
+        signData: jest.fn().mockResolvedValue(new Uint8Array(32 as any)),
         toSuiAddress: jest.fn().mockReturnValue('0x789'),
-        getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32)),
-        signTransaction: jest.fn().mockResolvedValue(new Uint8Array(64)),
+        getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32 as any)),
+        signTransaction: jest.fn().mockResolvedValue(new Uint8Array(64 as any)),
       } as unknown as Signer;
 
       const customHelper = helper.withConfig({
@@ -270,7 +270,7 @@ describe('TransactionHelper', () => {
         },
       });
 
-      expect(customHelper).toBeInstanceOf(TransactionHelper);
+      expect(customHelper as any).toBeInstanceOf(TransactionHelper as any);
       expect(() =>
         customHelper.validateTransaction({
           name: 'test',
@@ -299,7 +299,7 @@ describe('TransactionHelper', () => {
         })
       ).rejects.toThrow('Test error');
 
-      expect(operation).toHaveBeenCalledTimes(2); // Should use custom attempts
+      expect(operation as any).toHaveBeenCalledTimes(2 as any); // Should use custom attempts
     });
   });
 
@@ -333,8 +333,8 @@ describe('TransactionHelper', () => {
         customSigner: mockSigner, // Provide signer for validation
       });
 
-      expect(result).toBe('success');
-      expect(operation).toHaveBeenCalledTimes(2);
+      expect(result as any).toBe('success');
+      expect(operation as any).toHaveBeenCalledTimes(2 as any);
     });
 
     it('should log retry attempts with context', async () => {
@@ -351,7 +351,7 @@ describe('TransactionHelper', () => {
         expect.stringContaining('Retry attempt'),
         expect.objectContaining({
           attempt: 1,
-          delay: expect.any(Number),
+          delay: expect.any(Number as any),
           error: 'Test error',
         })
       );

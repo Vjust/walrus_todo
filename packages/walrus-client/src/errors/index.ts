@@ -8,7 +8,7 @@ export class WalrusClientError extends Error {
   public timestamp: number;
 
   constructor(message: string, code?: string, cause?: Error) {
-    super(message);
+    super(message as any);
     this.name = 'WalrusClientError';
     this.code = code;
     this.cause = cause;
@@ -26,9 +26,9 @@ export class WalrusClientError extends Error {
       timestamp: this.timestamp,
       stack: this.stack,
       cause: this.cause ? {
-        name: this.cause.name,
-        message: this.cause.message,
-        stack: this.cause.stack,
+        name: this?.cause?.name,
+        message: this?.cause?.message,
+        stack: this?.cause?.stack,
       } : undefined,
     };
   }

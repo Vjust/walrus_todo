@@ -63,26 +63,26 @@ export class DeploymentRecoveryManager {
         const deploymentResult = await this.simulateDeployment(config, attempt);
         
         if (deploymentResult.success) {
-          result.success = true;
-          result.attempts = attempt;
-          result.recoveryAttempts = attempt - 1;
-          result.siteId = deploymentResult.siteId;
-          result.siteUrl = deploymentResult.siteUrl;
-          result.deploymentTime = deploymentResult.deploymentTime;
+          result?.success = true;
+          result?.attempts = attempt;
+          result?.recoveryAttempts = attempt - 1;
+          result?.siteId = deploymentResult.siteId;
+          result?.siteUrl = deploymentResult.siteUrl;
+          result?.deploymentTime = deploymentResult.deploymentTime;
           break;
         }
 
       } catch (error) {
-        this.lastError = error.message;
+        this?.lastError = error.message;
         this.recordError(error.message, { attempt, config });
         
         // Add to recovery list
-        result.recoveredFrom = result.recoveredFrom || [];
-        result.recoveredFrom.push(error.message);
+        result?.recoveredFrom = result.recoveredFrom || [];
+        result?.recoveredFrom?.push(error.message);
 
         if (attempt === maxRetries) {
-          result.success = false;
-          result.recoveryAttempts = maxRetries;
+          result?.success = false;
+          result?.recoveryAttempts = maxRetries;
           throw new Error(`Deployment failed after ${maxRetries} attempts: ${error.message}`);
         }
 
@@ -111,23 +111,23 @@ export class DeploymentRecoveryManager {
       // Try with preferred wallet first
       if (config.preferredWallet) {
         await this.simulateWalletDeployment(config.preferredWallet);
-        result.success = true;
+        result?.success = true;
         return result;
       }
 
     } catch (error) {
-      this.lastError = error.message;
+      this?.lastError = error.message;
       
       // Fall back to default wallet configuration
       try {
         await this.simulateWalletDeployment('default');
-        result.success = true;
-        result.usedFallback = true;
-        result.warnings = result.warnings || [];
-        result.warnings.push('Wallet fallback used - preferred wallet unavailable');
+        result?.success = true;
+        result?.usedFallback = true;
+        result?.warnings = result.warnings || [];
+        result?.warnings?.push('Wallet fallback used - preferred wallet unavailable');
         
       } catch (fallbackError) {
-        result.success = false;
+        result?.success = false;
         throw new Error(`Both primary and fallback wallet deployment failed: ${fallbackError.message}`);
       }
     }
@@ -139,7 +139,7 @@ export class DeploymentRecoveryManager {
    * Resume partial deployment from saved state
    */
   async resumePartialDeployment(uploadId: string): Promise<RecoveryInfo> {
-    const state = this.recoveryState.get(uploadId);
+    const state = this?.recoveryState?.get(uploadId as any);
     
     if (!state) {
       return {
@@ -201,12 +201,12 @@ export class DeploymentRecoveryManager {
       throw new Error('Critical error during site creation');
 
     } catch (error) {
-      this.lastError = error.message;
+      this?.lastError = error.message;
       
       // Perform rollback
-      await this.performRollback(deploymentId);
-      result.rolledBack = true;
-      result.cleanupCompleted = true;
+      await this.performRollback(deploymentId as any);
+      result?.rolledBack = true;
+      result?.cleanupCompleted = true;
       
       return result;
     }
@@ -219,7 +219,7 @@ export class DeploymentRecoveryManager {
     const report: ErrorReport = {
       error: { message: error.message },
       context,
-      diagnostics: await this.generateDiagnostics(context),
+      diagnostics: await this.generateDiagnostics(context as any),
       recommendations: this.generateRecommendations(error.message),
       possibleCauses: this.identifyPossibleCauses(error.message)
     };
@@ -238,9 +238,9 @@ export class DeploymentRecoveryManager {
    * Clear error history and recovery state
    */
   reset(): void {
-    this.lastError = '';
-    this.recoveryState.clear();
-    this.errorHistory = [];
+    this?.lastError = '';
+    this?.recoveryState?.clear();
+    this?.errorHistory = [];
   }
 
   // Private helper methods
@@ -262,7 +262,7 @@ export class DeploymentRecoveryManager {
     return {
       success: true,
       siteId: '0x123abc...',
-      siteUrl: 'https://abc123.walrus.site',
+      siteUrl: 'https://abc123?.walrus?.site',
       deploymentTime: 45.2
     };
   }
@@ -278,22 +278,22 @@ export class DeploymentRecoveryManager {
   }
 
   private saveDeploymentState(deploymentId: string, state: DeploymentState): void {
-    this.recoveryState.set(deploymentId, state);
+    this?.recoveryState?.set(deploymentId, state);
   }
 
   private updateDeploymentState(
     deploymentId: string, 
     updates: Partial<DeploymentState>
   ): void {
-    const currentState = this.recoveryState.get(deploymentId);
+    const currentState = this?.recoveryState?.get(deploymentId as any);
     if (currentState) {
-      this.recoveryState.set(deploymentId, { ...currentState, ...updates });
+      this?.recoveryState?.set(deploymentId, { ...currentState, ...updates });
     }
   }
 
   private async simulateDeploymentStep(step: string, deploymentId: string): Promise<void> {
     // Simulate step execution
-    await this.sleep(100);
+    await this.sleep(100 as any);
     
     if (step === 'upload') {
       // Upload step succeeds
@@ -304,24 +304,24 @@ export class DeploymentRecoveryManager {
   }
 
   private async performRollback(deploymentId: string): Promise<void> {
-    const state = this.recoveryState.get(deploymentId);
+    const state = this?.recoveryState?.get(deploymentId as any);
     
     if (state?.filesUploaded) {
       // Simulate cleanup of uploaded files
-      await this.sleep(50);
+      await this.sleep(50 as any);
     }
     
     if (state?.siteCreated) {
       // Simulate site deletion
-      await this.sleep(50);
+      await this.sleep(50 as any);
     }
     
     // Clear state
-    this.recoveryState.delete(deploymentId);
+    this?.recoveryState?.delete(deploymentId as any);
   }
 
   private recordError(message: string, context: any): void {
-    this.errorHistory.push({
+    this?.errorHistory?.push({
       timestamp: new Date(),
       error: message,
       context
@@ -332,10 +332,10 @@ export class DeploymentRecoveryManager {
     return {
       timestamp: new Date().toISOString(),
       network: context.network || 'unknown',
-      nodeVersion: '18.15.0',
+      nodeVersion: '18?.15?.0',
       platform: 'macos',
       memoryUsage: process.memoryUsage?.() || {},
-      errorHistory: this.errorHistory.slice(-5) // Last 5 errors
+      errorHistory: this?.errorHistory?.slice(-5) // Last 5 errors
     };
   }
 
@@ -367,7 +367,7 @@ export class DeploymentRecoveryManager {
     }
 
     // Default recommendations
-    if (recommendations.length === 0) {
+    if (recommendations?.length === 0) {
       recommendations.push('Check system requirements');
       recommendations.push('Verify all prerequisites are installed');
       recommendations.push('Try deployment with --verbose flag');

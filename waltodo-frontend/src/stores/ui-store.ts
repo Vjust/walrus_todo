@@ -136,7 +136,7 @@ export const useUIStore = create<UIState & UIActions>()(
 
             closeAllModals: () => {
               set((state) => {
-                state.modals = {
+                state?.modals = {
                   createTodo: false,
                   walletConnect: false,
                   todoDetail: null,
@@ -151,9 +151,9 @@ export const useUIStore = create<UIState & UIActions>()(
             updateForm: withPerformanceMonitoring('UI Store', 'updateForm', (form, updates) => {
               set((state) => {
                 // More efficient object update
-                const currentForm = state.forms[form];
+                const currentForm = state?.forms?.[form];
                 for (const key in updates) {
-                  if (updates.hasOwnProperty(key)) {
+                  if (updates.hasOwnProperty(key as any)) {
                     (currentForm as any)[key] = (updates as any)[key];
                   }
                 }
@@ -163,48 +163,48 @@ export const useUIStore = create<UIState & UIActions>()(
             resetForm: (form) => {
               set((state) => {
                 if (form === 'createTodo') {
-                  state.forms.createTodo = { ...initialUIState.forms.createTodo };
+                  state.forms?.createTodo = { ...initialUIState?.forms?.createTodo };
                 } else if (form === 'editTodo') {
-                  state.forms.editTodo = { ...initialUIState.forms.editTodo };
+                  state.forms?.editTodo = { ...initialUIState?.forms?.editTodo };
                 }
               });
             },
 
             setFormError: (form, field, error) => {
               set((state) => {
-                state.forms[form].errors[field] = error;
+                state?.forms?.[form].errors[field] = error;
               });
             },
 
             clearFormErrors: (form) => {
               set((state) => {
-                state.forms[form].errors = {};
+                state?.forms?.[form].errors = {};
               });
             },
 
             // Error actions
             setError: (key, error) => {
               set((state) => {
-                state.errors.form[key] = error;
+                state.errors?.form?.[key] = error;
               });
             },
 
             clearErrors: () => {
               set((state) => {
-                state.errors.form = {};
-                state.errors.transaction = {};
+                state.errors?.form = {};
+                state.errors?.transaction = {};
               });
             },
 
             setGlobalError: (error) => {
               set((state) => {
-                state.errors.global = error;
+                state.errors?.global = error;
               });
             },
 
             setNetworkError: (error) => {
               set((state) => {
-                state.errors.network = error;
+                state.errors?.network = error;
               });
             },
 
@@ -220,9 +220,9 @@ export const useUIStore = create<UIState & UIActions>()(
             setTransactionLoading: (txId, loading) => {
               set((state) => {
                 if (loading) {
-                  state.loading.transactions[txId] = true;
+                  state.loading?.transactions?.[txId] = true;
                 } else {
-                  delete state.loading.transactions[txId];
+                  delete state.loading?.transactions?.[txId];
                 }
               });
             },
@@ -230,32 +230,32 @@ export const useUIStore = create<UIState & UIActions>()(
             // Navigation actions
             setCurrentPage: (page) => {
               set((state) => {
-                state.navigation.currentPage = page;
+                state.navigation?.currentPage = page;
               });
             },
 
             toggleSidebar: () => {
               set((state) => {
-                state.navigation.sidebarOpen = !state.navigation.sidebarOpen;
+                state.navigation?.sidebarOpen = !state?.navigation?.sidebarOpen;
               });
             },
 
             toggleMobileMenu: () => {
               set((state) => {
-                state.navigation.mobileMenuOpen = !state.navigation.mobileMenuOpen;
+                state.navigation?.mobileMenuOpen = !state?.navigation?.mobileMenuOpen;
               });
             },
 
             // Preference actions
             setTheme: (theme) => {
               set((state) => {
-                state.preferences.theme = theme;
+                state.preferences?.theme = theme;
               });
             },
 
             setDisplayMode: (mode) => {
               set((state) => {
-                state.preferences.todoDisplayMode = mode;
+                state.preferences?.todoDisplayMode = mode;
               });
             },
 
@@ -272,38 +272,38 @@ export const useUIStore = create<UIState & UIActions>()(
               if (currentQuery === query) return;
               
               set((state) => {
-                state.search.query = query;
+                state.search?.query = query;
               });
             }),
 
             setFilter: (filter, value) => {
               set((state) => {
-                (state.search.filters as any)[filter] = value;
+                (state?.search?.filters as any)[filter] = value;
               });
             },
 
             setSorting: (sortBy, sortOrder) => {
               set((state) => {
-                state.search.sortBy = sortBy;
-                state.search.sortOrder = sortOrder;
+                state.search?.sortBy = sortBy;
+                state.search?.sortOrder = sortOrder;
               });
             },
 
             clearFilters: withPerformanceMonitoring('UI Store', 'clearFilters', () => {
               set((state) => {
                 // More efficient reset
-                state.search.filters.status = 'all';
-                state.search.filters.priority = 'all';
-                state.search.filters.category = null;
-                state.search.filters.tags = [];
-                state.search.filters.dateRange.start = null;
-                state.search.filters.dateRange.end = null;
+                state?.search?.filters?.status = 'all';
+                state?.search?.filters?.priority = 'all';
+                state?.search?.filters?.category = null;
+                state?.search?.filters?.tags = [];
+                state?.search?.filters.dateRange?.start = null;
+                state?.search?.filters.dateRange?.end = null;
               });
             }),
 
             resetSearch: () => {
               set((state) => {
-                state.search = { ...initialUIState.search };
+                state?.search = { ...initialUIState.search };
               });
             },
           }))
@@ -318,7 +318,7 @@ export const useUIStore = create<UIState & UIActions>()(
     ),
     {
       name: 'WalTodo UI Store',
-      enabled: process.env.NODE_ENV === 'development',
+      enabled: process.env?.NODE_ENV === 'development',
     }
   )
 );
@@ -333,14 +333,14 @@ export const useUISearch = () => useUIStore((state) => state.search);
 export const useUIForms = () => useUIStore((state) => state.forms);
 
 // Specific modal selectors
-export const useCreateTodoModal = () => useUIStore((state) => state.modals.createTodo);
-export const useWalletConnectModal = () => useUIStore((state) => state.modals.walletConnect);
-export const useNFTGalleryModal = () => useUIStore((state) => state.modals.nftGallery);
-export const useTodoDetailModal = () => useUIStore((state) => state.modals.todoDetail);
+export const useCreateTodoModal = () => useUIStore((state) => state?.modals?.createTodo);
+export const useWalletConnectModal = () => useUIStore((state) => state?.modals?.walletConnect);
+export const useNFTGalleryModal = () => useUIStore((state) => state?.modals?.nftGallery);
+export const useTodoDetailModal = () => useUIStore((state) => state?.modals?.todoDetail);
 
 // Form selectors
-export const useCreateTodoForm = () => useUIStore((state) => state.forms.createTodo);
-export const useEditTodoForm = () => useUIStore((state) => state.forms.editTodo);
+export const useCreateTodoForm = () => useUIStore((state) => state?.forms?.createTodo);
+export const useEditTodoForm = () => useUIStore((state) => state?.forms?.editTodo);
 
 // Action selectors
 export const useUIActions = () => useUIStore((state) => ({
@@ -371,27 +371,27 @@ export const useUIActions = () => useUIStore((state) => ({
 }));
 
 // Theme-specific selectors
-export const useTheme = () => useUIStore((state) => state.preferences.theme);
-export const useDisplayMode = () => useUIStore((state) => state.preferences.todoDisplayMode);
+export const useTheme = () => useUIStore((state) => state?.preferences?.theme);
+export const useDisplayMode = () => useUIStore((state) => state?.preferences?.todoDisplayMode);
 
 // Loading state selectors
-export const useAppLoading = () => useUIStore((state) => state.loading.app);
-export const useBlockchainLoading = () => useUIStore((state) => state.loading.blockchain);
-export const useTodosLoading = () => useUIStore((state) => state.loading.todos);
+export const useAppLoading = () => useUIStore((state) => state?.loading?.app);
+export const useBlockchainLoading = () => useUIStore((state) => state?.loading?.blockchain);
+export const useTodosLoading = () => useUIStore((state) => state?.loading?.todos);
 export const useTransactionLoading = (txId: string) => 
-  useUIStore((state) => state.loading.transactions[txId] || false);
+  useUIStore((state) => state.loading?.transactions?.[txId] || false);
 
 // Error selectors
-export const useGlobalError = () => useUIStore((state) => state.errors.global);
-export const useNetworkError = () => useUIStore((state) => state.errors.network);
-export const useFormErrors = () => useUIStore((state) => state.errors.form);
+export const useGlobalError = () => useUIStore((state) => state?.errors?.global);
+export const useNetworkError = () => useUIStore((state) => state?.errors?.network);
+export const useFormErrors = () => useUIStore((state) => state?.errors?.form);
 
 // Search selectors
-export const useSearchQuery = () => useUIStore((state) => state.search.query);
-export const useSearchFilters = () => useUIStore((state) => state.search.filters);
+export const useSearchQuery = () => useUIStore((state) => state?.search?.query);
+export const useSearchFilters = () => useUIStore((state) => state?.search?.filters);
 export const useSearchSorting = () => useUIStore((state) => ({
-  sortBy: state.search.sortBy,
-  sortOrder: state.search.sortOrder,
+  sortBy: state?.search?.sortBy,
+  sortOrder: state?.search?.sortOrder,
 }));
 
 /**
@@ -399,6 +399,6 @@ export const useSearchSorting = () => useUIStore((state) => ({
  */
 export const hydrateUIStore = () => {
   if (typeof window !== 'undefined') {
-    useUIStore.persist.rehydrate();
+    useUIStore?.persist?.rehydrate();
   }
 };

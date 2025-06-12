@@ -18,9 +18,9 @@ type BlockchainTodoListProps = {
 export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) {
   // State management
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true as any);
   const [error, setError] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false as any);
   
   // Wallet context
   const walletContext = useWalletContext();
@@ -39,7 +39,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
         await blockchainEventManager.initialize(address || '');
         await blockchainEventManager.startListening();
         
-        setIsInitialized(true);
+        setIsInitialized(true as any);
         // Blockchain service initialized successfully
       } catch (err) {
         // Failed to initialize blockchain service
@@ -50,7 +50,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
     if (connected && address) {
       initializeBlockchainService();
     } else {
-      setIsInitialized(false);
+      setIsInitialized(false as any);
       setTodos([]);
     }
 
@@ -76,7 +76,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
       const { todoId } = event.data;
       setTodos(prev => 
         prev.map(todo => 
-          todo.id === todoId ? { ...todo, completed: true, completedAt: new Date().toISOString() } : todo
+          todo?.id === todoId ? { ...todo, completed: true, completedAt: new Date().toISOString() } : todo
         )
       );
       toast.success('Todo completed on blockchain!');
@@ -87,7 +87,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
       if (updatedTodo) {
         setTodos(prev => 
           prev.map(todo => 
-            todo.id === updatedTodo.id ? { ...todo, ...updatedTodo } : todo
+            todo?.id === updatedTodo.id ? { ...todo, ...updatedTodo } : todo
           )
         );
       }
@@ -118,22 +118,22 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
   const loadTodos = useCallback(async () => {
     if (!address || !isInitialized) {return;}
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true as any);
+    setError(null as any);
 
     try {
       const { todos: blockchainTodos } = await blockchainTodoService.getTodos(address, {
         useCache: true // Use cache for faster loading, will sync with blockchain in background
       });
       
-      setTodos(blockchainTodos);
+      setTodos(blockchainTodos as any);
       // Loaded todos from blockchain
     } catch (err) {
       // Failed to load todos
       setError('Failed to load todos from blockchain');
       toast.error('Failed to load todos');
     } finally {
-      setIsLoading(false);
+      setIsLoading(false as any);
     }
   }, [address, isInitialized]);
 
@@ -149,7 +149,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
       return;
     }
 
-    const todo = todos.find(t => t.id === todoId);
+    const todo = todos.find(t => t?.id === todoId);
     if (!todo) {return;}
 
     try {
@@ -163,7 +163,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
         // Optimistic update
         setTodos(prev => 
           prev.map(t => 
-            t.id === todoId ? { ...t, completed: true, completedAt: new Date().toISOString() } : t
+            t?.id === todoId ? { ...t, completed: true, completedAt: new Date().toISOString() } : t
           )
         );
         
@@ -181,7 +181,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
         // Optimistic update
         setTodos(prev => 
           prev.map(t => 
-            t.id === todoId ? { ...t, completed: false, completedAt: undefined } : t
+            t?.id === todoId ? { ...t, completed: false, completedAt: undefined } : t
           )
         );
         
@@ -224,7 +224,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
         useCache: false // Force fresh data from blockchain
       });
       
-      setTodos(freshTodos);
+      setTodos(freshTodos as any);
       toast.success('Todos refreshed from blockchain');
     } catch (err) {
       // Failed to refresh todos
@@ -291,7 +291,7 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
       </div>
 
       {/* Todo list */}
-      {todos.length === 0 ? (
+      {todos?.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <p>No todos found on the blockchain.</p>
           <p className="text-sm mt-2">Create a todo to get started!</p>
@@ -322,8 +322,8 @@ export function BlockchainTodoList({ className = '' }: BlockchainTodoListProps) 
                   <div className="flex items-center space-x-2 mt-2">
                     {todo.priority && (
                       <span className={`px-2 py-1 text-xs rounded ${
-                        todo.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        todo.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        todo?.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        todo?.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-green-100 text-green-800'
                       }`}>
                         {todo.priority}

@@ -69,30 +69,30 @@ export class AIService {
   ) {
     // Store provider for permission checks
     if (provider) {
-      this.currentProvider = typeof provider === 'string' ? provider : provider;
+      this?.currentProvider = typeof provider === 'string' ? provider : provider;
     }
     // Sanitize and set default options with overrides from parameters
     // Ensure options is never undefined or null
     const safeOptions = options || {};
-    this.options = this.sanitizeOptions({
+    this?.options = this.sanitizeOptions({
       temperature: 0.7,
       maxTokens: 2000,
       ...safeOptions,
     });
 
-    this.verificationService = verificationService;
+    this?.verificationService = verificationService;
 
     // Initialize permission manager
     this.initializePermissionManager();
 
     // Initialize with default fallback adapter immediately
-    this.modelAdapter = this.createMinimalFallbackAdapter();
+    this?.modelAdapter = this.createMinimalFallbackAdapter();
 
     try {
       // Check if AIProviderFactory methods are available
-      if (typeof AIProviderFactory.createDefaultAdapter === 'function') {
+      if (typeof AIProviderFactory?.createDefaultAdapter === 'function') {
         const defaultAdapter = AIProviderFactory.createDefaultAdapter();
-        this.modelAdapter = defaultAdapter;
+        this?.modelAdapter = defaultAdapter;
       } else {
         logger.warn(
           'AIProviderFactory.createDefaultAdapter is not available, using fallback'
@@ -115,11 +115,11 @@ export class AIService {
           provider,
           modelName,
           errorType:
-            error instanceof Error ? error.constructor.name : typeof error,
+            error instanceof Error ? error?.constructor?.name : typeof error,
         }
       );
       // Ensure fallback adapter is always set on failure
-      this.modelAdapter = this.createMinimalFallbackAdapter();
+      this?.modelAdapter = this.createMinimalFallbackAdapter();
     });
   }
 
@@ -139,14 +139,14 @@ export class AIService {
   private initializePermissionManager(): void {
     try {
       // Try to get existing permission manager
-      this.permissionManager = getPermissionManager();
+      this?.permissionManager = getPermissionManager();
     } catch {
       // Create new permission manager if none exists
       try {
         const credentialManager = new SecureCredentialManager();
         const mockVerifierAdapter = {} as any;
-        const blockchainVerifier = new BlockchainVerifier(mockVerifierAdapter);
-        this.permissionManager = initializePermissionManager(
+        const blockchainVerifier = new BlockchainVerifier(mockVerifierAdapter as any);
+        this?.permissionManager = initializePermissionManager(
           credentialManager,
           blockchainVerifier
         );
@@ -166,7 +166,7 @@ export class AIService {
     }
 
     try {
-      const hasPermission = await this.permissionManager.checkPermission(
+      const hasPermission = await this?.permissionManager?.checkPermission(
         this.currentProvider,
         operation
       );
@@ -179,7 +179,7 @@ export class AIService {
     } catch (error) {
       if (
         error instanceof Error &&
-        error.message.includes('Insufficient permissions')
+        error?.message?.includes('Insufficient permissions')
       ) {
         throw error;
       }
@@ -209,17 +209,17 @@ export class AIService {
       // If API key provided directly, use it (for testing/direct instantiation)
       if (apiKey) {
         // Validate and sanitize the API key
-        this.validateApiKey(apiKey);
+        this.validateApiKey(apiKey as any);
 
         const selectedProvider =
           (typeof provider === 'string' ? provider : provider) ||
           AIProvider.XAI;
         const selectedModelName = modelName || 'grok-beta';
-        this.currentProvider = selectedProvider;
+        this?.currentProvider = selectedProvider;
 
         // Create adapter directly with provided API key
         // Ensure options is not undefined when passed to factory
-        this.modelAdapter = await AIProviderFactory.createProvider({
+        this?.modelAdapter = await AIProviderFactory.createProvider({
           provider: selectedProvider,
           modelName: selectedModelName,
           options: this.options || {},
@@ -254,11 +254,11 @@ export class AIService {
           (typeof provider === 'string' ? provider : provider) ||
           defaultProvider.provider;
         const selectedModelName = modelName || defaultProvider.modelName;
-        this.currentProvider = selectedProvider;
+        this?.currentProvider = selectedProvider;
 
         // Initialize the provider adapter
         // Ensure options is not undefined when passed to factory
-        this.modelAdapter = await AIProviderFactory.createProvider({
+        this?.modelAdapter = await AIProviderFactory.createProvider({
           provider: selectedProvider,
           modelName: selectedModelName,
           options: this.options || {},
@@ -267,14 +267,14 @@ export class AIService {
       }
     } catch (error) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       logger.error(
         'AIService: Failed to initialize model adapter:',
         typedError,
         {
           provider,
           modelName,
-          errorType: typedError.constructor.name,
+          errorType: typedError?.constructor?.name,
         }
       );
       throw new Error(
@@ -304,9 +304,9 @@ export class AIService {
   ): void {
     if (
       this.modelAdapter &&
-      typeof this.modelAdapter.cancelAllRequests === 'function'
+      typeof this.modelAdapter?.cancelAllRequests === 'function'
     ) {
-      this.modelAdapter.cancelAllRequests(reason);
+      this?.modelAdapter?.cancelAllRequests(reason as any);
     }
   }
 
@@ -322,14 +322,14 @@ export class AIService {
    * @throws Error if the user has not consented to this operation type
    */
   public setOperationType(operationType: string): void {
-    this.operationType = operationType;
+    this?.operationType = operationType;
 
     // Check if this adapter has consent checking capabilities
     if (
       this.modelAdapter &&
-      typeof this.modelAdapter.checkConsentFor === 'function'
+      typeof this.modelAdapter?.checkConsentFor === 'function'
     ) {
-      const hasConsent = this.modelAdapter.checkConsentFor(operationType);
+      const hasConsent = this?.modelAdapter?.checkConsentFor(operationType as any);
       if (!hasConsent) {
         throw new Error(
           `AIService: User has not provided consent for operation type: ${operationType}. Please provide consent before using this AI operation.`
@@ -338,7 +338,7 @@ export class AIService {
     }
 
     // Update options with the operation type for potential provider-specific handling
-    this.options = {
+    this?.options = {
       ...this.options,
       operation: operationType,
     };
@@ -360,7 +360,7 @@ export class AIService {
     options?: AIModelOptions
   ): Promise<void> {
     try {
-      this.modelAdapter = await AIProviderFactory.createProvider({
+      this?.modelAdapter = await AIProviderFactory.createProvider({
         provider,
         modelName,
         options: { ...this.options, ...options },
@@ -368,7 +368,7 @@ export class AIService {
       });
     } catch (error) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       logger.error(`Failed to set provider ${provider}`, typedError, {
         modelName,
         provider,
@@ -401,11 +401,11 @@ export class AIService {
       throw new Error('Cannot summarize null or undefined input');
     }
 
-    if (!Array.isArray(todos)) {
+    if (!Array.isArray(todos as any)) {
       throw new Error('Input must be an array of todos');
     }
 
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       throw new Error('Cannot summarize empty todo list');
     }
 
@@ -417,7 +417,7 @@ export class AIService {
     }
 
     // Calculate total input size for validation
-    const totalInputSize = this.calculateInputSize(todos);
+    const totalInputSize = this.calculateInputSize(todos as any);
     const MAX_INPUT_SIZE = 100 * 1024; // 100KB
     if (totalInputSize > MAX_INPUT_SIZE) {
       throw new Error('Input size exceeds maximum');
@@ -433,21 +433,21 @@ export class AIService {
       .join('\n');
 
     // Check for prompt injection attempts BEFORE sanitization
-    this.detectPromptInjection(rawTodoStr);
+    this.detectPromptInjection(rawTodoStr as any);
 
     // Now sanitize data for processing
-    const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
+    const sanitizedTodos = todos.map(t => this.sanitizeTodo(t as any));
     const todoStr = sanitizedTodos
       .map(t => `- ${t.title}: ${t.description || 'No description'}`)
       .join('\n');
 
     // Ensure we have a working adapter
-    if (!this.modelAdapter || !this.modelAdapter.processWithPromptTemplate) {
-      this.modelAdapter = this.createMinimalFallbackAdapter();
+    if (!this.modelAdapter || !this?.modelAdapter?.processWithPromptTemplate) {
+      this?.modelAdapter = this.createMinimalFallbackAdapter();
     }
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(
+      const response = await this?.modelAdapter?.processWithPromptTemplate(
         prompt,
         { todos: todoStr }
       );
@@ -457,7 +457,7 @@ export class AIService {
     } catch (error) {
       // Ensure no sensitive data in error message
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
       const summaryError = new Error(
         `Failed to summarize todos: ${sanitizedMessage}`
@@ -484,17 +484,17 @@ export class AIService {
 
     // Only include description if present
     if (todo.description) {
-      sanitized.description = this.anonymizePII(todo.description);
+      sanitized?.description = this.anonymizePII(todo.description);
     }
 
     // Only include priority if present
     if (todo.priority) {
-      sanitized.priority = todo.priority;
+      sanitized?.priority = todo.priority;
     }
 
     // Only include tags if present (but as a new array to prevent reference issues)
     if (todo.tags && Array.isArray(todo.tags)) {
-      sanitized.tags = [...todo.tags];
+      sanitized?.tags = [...todo.tags];
     }
 
     return sanitized;
@@ -510,7 +510,7 @@ export class AIService {
     if (!text) return text;
 
     // First sanitize prompt injection patterns
-    const sanitized = this.sanitizePromptInjection(text);
+    const sanitized = this.sanitizePromptInjection(text as any);
 
     // Common PII patterns
     const piiPatterns: Array<{ pattern: RegExp; replacement: string }> = [
@@ -574,10 +574,10 @@ export class AIService {
     let sanitized = text;
 
     // First sanitize XSS patterns
-    sanitized = this.sanitizeXSS(sanitized);
+    sanitized = this.sanitizeXSS(sanitized as any);
 
     // Then sanitize SQL injection patterns
-    sanitized = this.sanitizeSQLInjection(sanitized);
+    sanitized = this.sanitizeSQLInjection(sanitized as any);
 
     // Finally filter prompt injection patterns
     for (const pattern of injectionPatterns) {
@@ -668,7 +668,7 @@ export class AIService {
    * @returns Total size in bytes
    */
   private calculateInputSize(todos: Todo[]): number {
-    const jsonString = JSON.stringify(todos);
+    const jsonString = JSON.stringify(todos as any);
     return Buffer.byteLength(jsonString, 'utf8');
   }
 
@@ -684,7 +684,7 @@ export class AIService {
     let sanitized = response;
 
     // Remove any script tags that might be in the response
-    sanitized = this.sanitizeXSS(sanitized);
+    sanitized = this.sanitizeXSS(sanitized as any);
 
     // Remove any potential command injection
     sanitized = sanitized.replace(/\$\([^)]*\)/g, '[COMMAND_FILTERED]');
@@ -705,8 +705,8 @@ export class AIService {
     }
 
     // Allow shorter API keys in test environments (for mock/test keys)
-    const isTestEnvironment = process.env.NODE_ENV === 'test' || 
-                               process.env.JEST_WORKER_ID !== undefined ||
+    const isTestEnvironment = process.env?.NODE_ENV === 'test' || 
+                               process?.env?.JEST_WORKER_ID !== undefined ||
                                apiKey.startsWith('test-') || 
                                apiKey.startsWith('mock-') || 
                                apiKey === 'test-api-key';
@@ -738,53 +738,53 @@ export class AIService {
 
     // Only allow known safe properties
     if (
-      typeof options.temperature === 'number' &&
+      typeof options?.temperature === 'number' &&
       options.temperature >= 0 &&
       options.temperature <= 2
     ) {
-      sanitized.temperature = options.temperature;
+      sanitized?.temperature = options.temperature;
     }
 
     if (
-      typeof options.maxTokens === 'number' &&
+      typeof options?.maxTokens === 'number' &&
       options.maxTokens > 0 &&
       options.maxTokens <= 50000
     ) {
-      sanitized.maxTokens = options.maxTokens;
+      sanitized?.maxTokens = options.maxTokens;
     }
 
     if (
-      typeof options.baseUrl === 'string' &&
-      options.baseUrl.startsWith('https://')
+      typeof options?.baseUrl === 'string' &&
+      options?.baseUrl?.startsWith('https://')
     ) {
-      sanitized.baseUrl = options.baseUrl;
+      sanitized?.baseUrl = options.baseUrl;
     }
 
     // Reject any options that try to disable security
-    if (options.rejectUnauthorized === false) {
+    if (options?.rejectUnauthorized === false) {
       throw new Error(
         'Invalid SSL configuration: certificate validation disabled'
       );
     }
 
     // Copy other safe options
-    if (options.operation && typeof options.operation === 'string') {
-      sanitized.operation = options.operation;
+    if (options.operation && typeof options?.operation === 'string') {
+      sanitized?.operation = options.operation;
     }
 
-    if (options.differentialPrivacy === true) {
-      sanitized.differentialPrivacy = true;
-      if (typeof options.epsilon === 'number' && options.epsilon > 0) {
-        sanitized.epsilon = options.epsilon;
+    if (options?.differentialPrivacy === true) {
+      sanitized?.differentialPrivacy = true;
+      if (typeof options?.epsilon === 'number' && options.epsilon > 0) {
+        sanitized?.epsilon = options.epsilon;
       }
     }
 
-    if (options.collectUsageData === false) {
-      sanitized.collectUsageData = false;
+    if (options?.collectUsageData === false) {
+      sanitized?.collectUsageData = false;
     }
 
-    if (options.storePromptHistory === false) {
-      sanitized.storePromptHistory = false;
+    if (options?.storePromptHistory === false) {
+      sanitized?.storePromptHistory = false;
     }
 
     return sanitized;
@@ -805,7 +805,7 @@ export class AIService {
     });
 
     // Redact PII
-    sanitized = this.anonymizePII(sanitized);
+    sanitized = this.anonymizePII(sanitized as any);
 
     // Remove detailed paths
     sanitized = sanitized.replace(/(?:\/[\w.-]+){3,}/g, '[PATH]');
@@ -865,8 +865,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
 
-    const summary = await this.summarize(todos);
-    return this.verificationService.createVerifiedSummary(
+    const summary = await this.summarize(todos as any);
+    return this?.verificationService?.createVerifiedSummary(
       todos,
       summary,
       privacyLevel
@@ -892,11 +892,11 @@ export class AIService {
       throw new Error('Cannot categorize null or undefined input');
     }
 
-    if (!Array.isArray(todos)) {
+    if (!Array.isArray(todos as any)) {
       throw new Error('Input must be an array of todos');
     }
 
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       throw new Error('Cannot categorize empty todo list');
     }
 
@@ -910,7 +910,7 @@ export class AIService {
     );
 
     // Format todos with minimal required fields and sanitize data
-    const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
+    const sanitizedTodos = todos.map(t => this.sanitizeTodo(t as any));
     const todoStr = sanitizedTodos
       .map(
         t =>
@@ -919,17 +919,17 @@ export class AIService {
       .join('\n');
 
     // Ensure we have a working adapter
-    if (!this.modelAdapter || !this.modelAdapter.completeStructured) {
-      this.modelAdapter = this.createMinimalFallbackAdapter();
+    if (!this.modelAdapter || !this?.modelAdapter?.completeStructured) {
+      this?.modelAdapter = this.createMinimalFallbackAdapter();
     }
 
     try {
       // Apply differential privacy if enabled in options
-      const privacyEnabled = this.options.differentialPrivacy === true;
+      const privacyEnabled = this.options?.differentialPrivacy === true;
       const privacyOptions = privacyEnabled
         ? {
             ...this.options,
-            noiseFactor: this.options.epsilon || 0.5,
+            noiseFactor: this?.options?.epsilon || 0.5,
             temperature: 0.5,
           }
         : {
@@ -937,7 +937,7 @@ export class AIService {
             temperature: 0.5,
           };
 
-      const response = await this.modelAdapter.completeStructured<
+      const response = await this?.modelAdapter?.completeStructured<
         Record<string, string[]>
       >({
         prompt,
@@ -950,10 +950,10 @@ export class AIService {
       const result = response.result || {};
 
       // Create a clean object without prototype chain to prevent pollution
-      const sanitizedResult = Object.create(null);
+      const sanitizedResult = Object.create(null as any);
 
       // Ensure valid structure in the response
-      Object.keys(result).forEach(category => {
+      Object.keys(result as any).forEach(category => {
         // Guard against prototype pollution or malformed response
         if (
           category === '__proto__' ||
@@ -965,7 +965,7 @@ export class AIService {
 
         // Ensure values are arrays of strings
         const ids = result[category];
-        if (Array.isArray(ids)) {
+        if (Array.isArray(ids as any)) {
           sanitizedResult[category] = ids.filter(id => typeof id === 'string');
         }
       });
@@ -974,7 +974,7 @@ export class AIService {
     } catch (error) {
       // Ensure no sensitive data in error message
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
       const categorizeError = new Error(
         `Failed to categorize todos: ${sanitizedMessage}`
@@ -1001,8 +1001,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
 
-    const categories = await this.categorize(todos);
-    return this.verificationService.createVerifiedCategorization(
+    const categories = await this.categorize(todos as any);
+    return this?.verificationService?.createVerifiedCategorization(
       todos,
       categories,
       privacyLevel
@@ -1034,7 +1034,7 @@ export class AIService {
       )
       .join('\n');
 
-    const response = await this.modelAdapter.completeStructured<
+    const response = await this?.modelAdapter?.completeStructured<
       Record<string, number>
     >({
       prompt,
@@ -1063,8 +1063,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
 
-    const priorities = await this.prioritize(todos);
-    return this.verificationService.createVerifiedPrioritization(
+    const priorities = await this.prioritize(todos as any);
+    return this?.verificationService?.createVerifiedPrioritization(
       todos,
       priorities,
       privacyLevel
@@ -1094,7 +1094,7 @@ export class AIService {
       .join('\n');
 
     // Pass the todos in the input object
-    const response = await this.modelAdapter.completeStructured<string[]>({
+    const response = await this?.modelAdapter?.completeStructured<string[]>({
       prompt: prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.8 },
@@ -1121,8 +1121,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
 
-    const suggestions = await this.suggest(todos);
-    return this.verificationService.createVerifiedSuggestion(
+    const suggestions = await this.suggest(todos as any);
+    return this?.verificationService?.createVerifiedSuggestion(
       todos,
       suggestions,
       privacyLevel
@@ -1150,11 +1150,11 @@ export class AIService {
       throw new Error('Cannot analyze null or undefined input');
     }
 
-    if (!Array.isArray(todos)) {
+    if (!Array.isArray(todos as any)) {
       throw new Error('Input must be an array of todos');
     }
 
-    if (todos.length === 0) {
+    if (todos?.length === 0) {
       throw new Error('Cannot analyze empty todo list');
     }
 
@@ -1182,7 +1182,7 @@ export class AIService {
       )
       .join('\n');
 
-    const response = await this.modelAdapter.completeStructured<
+    const response = await this?.modelAdapter?.completeStructured<
       Record<string, unknown>
     >({
       prompt,
@@ -1211,8 +1211,8 @@ export class AIService {
       throw new Error('Verification service not initialized');
     }
 
-    const analysis = await this.analyze(todos);
-    return this.verificationService.createVerifiedAnalysis(
+    const analysis = await this.analyze(todos as any);
+    return this?.verificationService?.createVerifiedAnalysis(
       todos,
       analysis,
       privacyLevel
@@ -1237,7 +1237,7 @@ export class AIService {
     );
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(
+      const response = await this?.modelAdapter?.processWithPromptTemplate(
         prompt,
         {
           title: todo.title,
@@ -1254,7 +1254,7 @@ export class AIService {
       }
     } catch (error) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? error : new Error(String(error as any));
       const tagsError = new Error(
         `Failed to suggest tags: ${typedError.message}`
       );
@@ -1280,7 +1280,7 @@ export class AIService {
     );
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(
+      const response = await this?.modelAdapter?.processWithPromptTemplate(
         prompt,
         {
           title: todo.title,
@@ -1289,8 +1289,8 @@ export class AIService {
       );
 
       // Validate and normalize the priority response
-      const priority = response.result.trim().toLowerCase();
-      if (['high', 'medium', 'low'].includes(priority)) {
+      const priority = response?.result?.trim().toLowerCase();
+      if (['high', 'medium', 'low'].includes(priority as any)) {
         return priority as 'high' | 'medium' | 'low';
       } else {
         logger.warn(
@@ -1325,7 +1325,7 @@ export class AIService {
         if (
           params &&
           params.metadata &&
-          params.metadata.operation === 'categorize'
+          params.metadata?.operation === 'categorize'
         ) {
           // For testing prototype pollution sanitization, return a malicious response
           // that should be sanitized by the categorize method
@@ -1368,8 +1368,8 @@ export class AIService {
         let result = 'Test result';
         if (
           template &&
-          typeof template.template === 'string' &&
-          template.template.includes('Summarize')
+          typeof template?.template === 'string' &&
+          template?.template?.includes('Summarize')
         ) {
           result = 'Test result summary';
         }

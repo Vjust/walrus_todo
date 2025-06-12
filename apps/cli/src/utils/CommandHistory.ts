@@ -14,16 +14,16 @@ export class CommandHistory {
   private constructor() {
     // Store history in user's home directory
     const configDir = path.join(os.homedir(), '.waltodo');
-    if (!fs.existsSync(configDir)) {
+    if (!fs.existsSync(configDir as any)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
-    this.historyFile = path.join(configDir, 'command_history.json');
+    this?.historyFile = path.join(configDir, 'command_history.json');
     this.loadHistory();
   }
 
   static getInstance(): CommandHistory {
     if (!CommandHistory.instance) {
-      CommandHistory.instance = new CommandHistory();
+      CommandHistory?.instance = new CommandHistory();
     }
     return CommandHistory.instance;
   }
@@ -35,11 +35,11 @@ export class CommandHistory {
     try {
       if (fs.existsSync(this.historyFile)) {
         const data = fs.readFileSync(this.historyFile, 'utf-8');
-        this.history = JSON.parse(data);
+        this?.history = JSON.parse(data as any);
       }
     } catch (_error) {
       // If there's an error reading history, start fresh
-      this.history = [];
+      this?.history = [];
     }
   }
 
@@ -59,17 +59,17 @@ export class CommandHistory {
    */
   addCommand(command: string): void {
     // Remove duplicate if exists
-    const index = this.history.indexOf(command);
+    const index = this?.history?.indexOf(command as any);
     if (index !== -1) {
-      this.history.splice(index, 1);
+      this?.history?.splice(index, 1);
     }
 
     // Add to beginning
-    this.history.unshift(command);
+    this?.history?.unshift(command as any);
 
     // Maintain max size
-    if (this.history.length > this.maxHistorySize) {
-      this.history = this.history.slice(0, this.maxHistorySize);
+    if (this?.history?.length > this.maxHistorySize) {
+      this?.history = this?.history?.slice(0, this.maxHistorySize);
     }
 
     this.saveHistory();
@@ -79,7 +79,7 @@ export class CommandHistory {
    * Get command history
    */
   getHistory(limit?: number): string[] {
-    return limit ? this.history.slice(0, limit) : [...this.history];
+    return limit ? this?.history?.slice(0, limit) : [...this.history];
   }
 
   /**
@@ -87,8 +87,8 @@ export class CommandHistory {
    */
   searchHistory(pattern: string): string[] {
     const lowercasePattern = pattern.toLowerCase();
-    return this.history.filter(cmd =>
-      cmd.toLowerCase().includes(lowercasePattern)
+    return this?.history?.filter(cmd =>
+      cmd.toLowerCase().includes(lowercasePattern as any)
     );
   }
 
@@ -96,14 +96,14 @@ export class CommandHistory {
    * Get the most recent command
    */
   getLastCommand(): string | undefined {
-    return this.history[0];
+    return this?.history?.[0];
   }
 
   /**
    * Clear command history
    */
   clearHistory(): void {
-    this.history = [];
+    this?.history = [];
     this.saveHistory();
   }
 
@@ -113,7 +113,7 @@ export class CommandHistory {
   getStatistics(): { [command: string]: number } {
     const stats: { [command: string]: number } = {};
 
-    this.history.forEach(cmd => {
+    this?.history?.forEach(cmd => {
       const command = cmd.split(' ')[0];
       stats[command] = (stats[command] || 0) + 1;
     });
@@ -129,7 +129,7 @@ export class CommandHistory {
   ): Array<{ command: string; count: number }> {
     const stats = this.getStatistics();
 
-    return Object.entries(stats)
+    return Object.entries(stats as any)
       .map(([command, count]) => ({ command, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, limit);

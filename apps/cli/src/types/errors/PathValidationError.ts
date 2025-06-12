@@ -55,6 +55,6 @@ export class PathValidationError extends BaseError {
     });
 
     // Set error name
-    this.name = 'PathValidationError';
+    this?.name = 'PathValidationError';
   }
 }

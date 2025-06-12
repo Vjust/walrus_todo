@@ -32,7 +32,7 @@ jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier', () => {
       verificationType: 0, // AIActionType.SUMMARIZE
       metadata: {},
     }),
-    verifyRecord: jest.fn().mockResolvedValue(true),
+    verifyRecord: jest.fn().mockResolvedValue(true as any),
     getProviderInfo: jest.fn().mockResolvedValue({
       name: 'blockchain-provider',
       publicKey: 'mock_public_key',
@@ -53,11 +53,11 @@ jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier', () => {
       verificationType: 0, // AIActionType.SUMMARIZE
       metadata: {},
     }),
-    getSigner: jest.fn().mockReturnValue(mockSigner),
+    getSigner: jest.fn().mockReturnValue(mockSigner as any),
     generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
     exportVerifications: jest.fn().mockResolvedValue(JSON.stringify([])),
-    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-    securelyDestroyData: jest.fn().mockResolvedValue(true),
+    enforceRetentionPolicy: jest.fn().mockResolvedValue(0 as any),
+    securelyDestroyData: jest.fn().mockResolvedValue(true as any),
   };
 
   return {
@@ -94,8 +94,8 @@ jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier', () => {
           metadata: {},
         },
       ]),
-      getVerifierAdapter: jest.fn().mockReturnValue(mockVerifierAdapter),
-      getSigner: jest.fn().mockReturnValue(mockSigner),
+      getVerifierAdapter: jest.fn().mockReturnValue(mockVerifierAdapter as any),
+      getSigner: jest.fn().mockReturnValue(mockSigner as any),
       generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
     })),
   };
@@ -151,13 +151,13 @@ jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {
 jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
   return {
     getPermissionManager: jest.fn().mockReturnValue({
-      checkPermission: jest.fn().mockResolvedValue(true), // Return boolean directly
+      checkPermission: jest.fn().mockResolvedValue(true as any), // Return boolean directly
     }),
   };
 });
 
 describe('AI Verification Services', () => {
-  const sampleTodos = createSampleTodos(3);
+  const sampleTodos = createSampleTodos(3 as any);
 
   // SECTION: Basic Verification Service
   describe('Basic Verification Service', () => {
@@ -166,7 +166,7 @@ describe('AI Verification Services', () => {
 
     beforeEach(() => {
       mockVerifierAdapter = createMockAIVerifierAdapter();
-      verificationService = new AIVerificationService(mockVerifierAdapter);
+      verificationService = new AIVerificationService(mockVerifierAdapter as any);
     });
 
     it('should create a verification record', async () => {
@@ -178,11 +178,11 @@ describe('AI Verification Services', () => {
         AIPrivacyLevel.HASH_ONLY
       );
 
-      expect(verification).toBeDefined();
+      expect(verification as any).toBeDefined();
       expect(verification.id).toBeDefined();
       expect(verification.verificationType).toBe(AIActionType.SUMMARIZE);
       expect(verification.metadata).toHaveProperty('todoCount', '3');
-      expect(mockVerifierAdapter.createVerification).toHaveBeenCalledTimes(1);
+      expect(mockVerifierAdapter.createVerification).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should verify a recorded operation', async () => {
@@ -202,8 +202,8 @@ describe('AI Verification Services', () => {
         'Sample summary text'
       );
 
-      expect(isValid).toBe(true);
-      expect(mockVerifierAdapter.verifyRecord).toHaveBeenCalledTimes(1);
+      expect(isValid as any).toBe(true as any);
+      expect(mockVerifierAdapter.verifyRecord).toHaveBeenCalledTimes(1 as any);
     });
 
     it('should list all verifications', async () => {
@@ -227,10 +227,10 @@ describe('AI Verification Services', () => {
       // List verifications
       const verifications = await verificationService.listVerifications();
 
-      expect(verifications).toBeDefined();
-      expect(Array.isArray(verifications)).toBe(true);
-      expect(verifications.length).toBeGreaterThan(0);
-      expect(mockVerifierAdapter.listVerifications).toHaveBeenCalledTimes(1);
+      expect(verifications as any).toBeDefined();
+      expect(Array.isArray(verifications as any)).toBe(true as any);
+      expect(verifications.length).toBeGreaterThan(0 as any);
+      expect(mockVerifierAdapter.listVerifications).toHaveBeenCalledTimes(1 as any);
     });
   });
 
@@ -240,7 +240,7 @@ describe('AI Verification Services', () => {
 
     beforeEach(() => {
       const mockVerifierAdapter = createMockAIVerifierAdapter();
-      verificationService = new AIVerificationService(mockVerifierAdapter);
+      verificationService = new AIVerificationService(mockVerifierAdapter as any);
     });
 
     it('should create a verified AI summary', async () => {
@@ -252,13 +252,13 @@ describe('AI Verification Services', () => {
         AIPrivacyLevel.HASH_ONLY
       );
 
-      expect(verifiedResult).toBeDefined();
-      expect(verifiedResult.result).toBe(summary);
+      expect(verifiedResult as any).toBeDefined();
+      expect(verifiedResult.result).toBe(summary as any);
       expect(verifiedResult.verification).toBeDefined();
-      expect(verifiedResult.verification.actionType).toBe(
+      expect(verifiedResult?.verification?.actionType).toBe(
         AIActionType.SUMMARIZE
       );
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'todoCount',
         '3'
       );
@@ -277,17 +277,17 @@ describe('AI Verification Services', () => {
           AIPrivacyLevel.HASH_ONLY
         );
 
-      expect(verifiedResult).toBeDefined();
-      expect(verifiedResult.result).toEqual(categories);
+      expect(verifiedResult as any).toBeDefined();
+      expect(verifiedResult.result).toEqual(categories as any);
       expect(verifiedResult.verification).toBeDefined();
-      expect(verifiedResult.verification.actionType).toBe(
+      expect(verifiedResult?.verification?.actionType).toBe(
         AIActionType.CATEGORIZE
       );
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'todoCount',
         '3'
       );
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'categoryCount',
         '2'
       );
@@ -307,13 +307,13 @@ describe('AI Verification Services', () => {
           AIPrivacyLevel.HASH_ONLY
         );
 
-      expect(verifiedResult).toBeDefined();
-      expect(verifiedResult.result).toEqual(priorities);
+      expect(verifiedResult as any).toBeDefined();
+      expect(verifiedResult.result).toEqual(priorities as any);
       expect(verifiedResult.verification).toBeDefined();
-      expect(verifiedResult.verification.actionType).toBe(
+      expect(verifiedResult?.verification?.actionType).toBe(
         AIActionType.PRIORITIZE
       );
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'todoCount',
         '3'
       );
@@ -332,15 +332,15 @@ describe('AI Verification Services', () => {
         AIPrivacyLevel.HASH_ONLY
       );
 
-      expect(verifiedResult).toBeDefined();
-      expect(verifiedResult.result).toEqual(suggestions);
+      expect(verifiedResult as any).toBeDefined();
+      expect(verifiedResult.result).toEqual(suggestions as any);
       expect(verifiedResult.verification).toBeDefined();
-      expect(verifiedResult.verification.actionType).toBe(AIActionType.SUGGEST);
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.actionType).toBe(AIActionType.SUGGEST);
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'todoCount',
         '3'
       );
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'suggestionCount',
         '3'
       );
@@ -359,15 +359,15 @@ describe('AI Verification Services', () => {
         AIPrivacyLevel.HASH_ONLY
       );
 
-      expect(verifiedResult).toBeDefined();
-      expect(verifiedResult.result).toEqual(analysis);
+      expect(verifiedResult as any).toBeDefined();
+      expect(verifiedResult.result).toEqual(analysis as any);
       expect(verifiedResult.verification).toBeDefined();
-      expect(verifiedResult.verification.actionType).toBe(AIActionType.ANALYZE);
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.actionType).toBe(AIActionType.ANALYZE);
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'todoCount',
         '3'
       );
-      expect(verifiedResult.verification.metadata).toHaveProperty(
+      expect(verifiedResult?.verification?.metadata).toHaveProperty(
         'analysisKeys',
         'themes,bottlenecks,timeEstimate'
       );
@@ -438,7 +438,7 @@ describe('AI Verification Services', () => {
       };
 
       const permissionManager = {
-        checkPermission: jest.fn().mockResolvedValue(true),
+        checkPermission: jest.fn().mockResolvedValue(true as any),
       };
 
       const credentialManager = {
@@ -468,13 +468,13 @@ describe('AI Verification Services', () => {
           { todoCount: '3' }
         );
 
-      expect(result).toBeDefined();
+      expect(result as any).toBeDefined();
       expect(result.result).toBe('Sample summary text');
       expect(result.verification).toBeDefined();
       expect(result.proof).toBeDefined();
       expect(result.transactionId).toBeDefined();
       expect(result.provider).toBe('xai');
-      expect(result.verificationDate).toBeInstanceOf(Date);
+      expect(result.verificationDate).toBeInstanceOf(Date as any);
     });
 
     it('should create a verified blockchain summary', async () => {
@@ -487,8 +487,8 @@ describe('AI Verification Services', () => {
         'xai'
       );
 
-      expect(result).toBeDefined();
-      expect(result.result).toBe(summary);
+      expect(result as any).toBeDefined();
+      expect(result.result).toBe(summary as any);
       expect(result.verification).toBeDefined();
       expect(result.proof).toBeDefined();
       expect(result.transactionId).toBeDefined();
@@ -499,14 +499,14 @@ describe('AI Verification Services', () => {
         'exported-proof-string'
       );
 
-      expect(isValid).toBe(true);
+      expect(isValid as any).toBe(true as any);
     });
 
     it('should get a specific verification record', async () => {
       const verification =
         await blockchainVerificationService.getVerification('bc-ver-123');
 
-      expect(verification).toBeDefined();
+      expect(verification as any).toBeDefined();
       expect(verification.verification).toBeDefined();
       expect(verification.provider).toBe('xai');
     });
@@ -515,9 +515,9 @@ describe('AI Verification Services', () => {
       const verifications =
         await blockchainVerificationService.listVerifications();
 
-      expect(verifications).toBeDefined();
-      expect(Array.isArray(verifications)).toBe(true);
-      expect(verifications.length).toBeGreaterThan(0);
+      expect(verifications as any).toBeDefined();
+      expect(Array.isArray(verifications as any)).toBe(true as any);
+      expect(verifications.length).toBeGreaterThan(0 as any);
     });
   });
 
@@ -527,7 +527,7 @@ describe('AI Verification Services', () => {
 
     beforeEach(() => {
       const mockVerifierAdapter = createMockAIVerifierAdapter();
-      verificationService = new AIVerificationService(mockVerifierAdapter);
+      verificationService = new AIVerificationService(mockVerifierAdapter as any);
     });
 
     it('should respect different privacy levels when creating verifications', async () => {

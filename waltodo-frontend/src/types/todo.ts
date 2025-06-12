@@ -141,16 +141,16 @@ export function adaptSharedTodo(sharedTodo: SharedTodo): Todo {
     description: sharedTodo.description || '',
     priority: (sharedTodo.priority as 'high' | 'medium' | 'low') || 'medium',
     tags: sharedTodo.tags || [],
-    createdAt: typeof sharedTodo.createdAt === 'string' 
+    createdAt: typeof sharedTodo?.createdAt === 'string' 
       ? sharedTodo.createdAt 
       : new Date(sharedTodo.createdAt).toISOString(),
-    updatedAt: typeof sharedTodo.updatedAt === 'string' 
+    updatedAt: typeof sharedTodo?.updatedAt === 'string' 
       ? sharedTodo.updatedAt 
       : sharedTodo.updatedAt 
         ? new Date(sharedTodo.updatedAt).toISOString()
         : new Date().toISOString(),
     ...(sharedTodo.dueDate && {
-      dueDate: typeof sharedTodo.dueDate === 'string' 
+      dueDate: typeof sharedTodo?.dueDate === 'string' 
         ? sharedTodo.dueDate 
         : new Date(sharedTodo.dueDate).toISOString()
     }),

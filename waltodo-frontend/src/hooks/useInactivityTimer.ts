@@ -29,10 +29,10 @@ export function useInactivityTimer({
     if (typeof window === 'undefined') {return Date.now();}
     
     try {
-      const stored = localStorage.getItem(storageKey);
+      const stored = localStorage.getItem(storageKey as any);
       if (stored) {
         const timestamp = parseInt(stored, 10);
-        if (!isNaN(timestamp) && timestamp > 0) {
+        if (!isNaN(timestamp as any) && timestamp > 0) {
           return timestamp;
         }
       }
@@ -45,8 +45,8 @@ export function useInactivityTimer({
   
   const [isActive, setIsActive] = useState<boolean>(true);
   const [hasTimedOut, setHasTimedOut] = useState<boolean>(false);
-  const timeoutCalledRef = useRef(false);
-  const lastThrottleRef = useRef(0);
+  const timeoutCalledRef = useRef(false as any);
+  const lastThrottleRef = useRef(0 as any);
 
   // Update localStorage and broadcast to other tabs
   const updateActivityTime = useCallback((timestamp: number) => {
@@ -59,10 +59,10 @@ export function useInactivityTimer({
       const event = new StorageEvent('storage', {
         key: STORAGE_EVENT_KEY,
         newValue: timestamp.toString(),
-        url: window.location.href,
+        url: window?.location?.href,
         storageArea: localStorage,
       });
-      window.dispatchEvent(event);
+      window.dispatchEvent(event as any);
     } catch (e) {
       console.warn('Failed to update activity in localStorage:', e);
     }
@@ -73,12 +73,12 @@ export function useInactivityTimer({
 
     // Throttle updates to avoid excessive state changes
     if (now - lastThrottleRef.current > throttle) {
-      lastThrottleRef.current = now;
-      setLastActivity(now);
-      setIsActive(true);
-      setHasTimedOut(false);
-      timeoutCalledRef.current = false;
-      updateActivityTime(now);
+      lastThrottleRef?.current = now;
+      setLastActivity(now as any);
+      setIsActive(true as any);
+      setHasTimedOut(false as any);
+      timeoutCalledRef?.current = false;
+      updateActivityTime(now as any);
     }
   }, [throttle, updateActivityTime]);
 
@@ -87,13 +87,13 @@ export function useInactivityTimer({
     if (typeof window === 'undefined') {return;}
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === storageKey && e.newValue) {
+      if (e?.key === storageKey && e.newValue) {
         const timestamp = parseInt(e.newValue, 10);
-        if (!isNaN(timestamp) && timestamp > lastActivity) {
-          setLastActivity(timestamp);
-          setIsActive(true);
-          setHasTimedOut(false);
-          timeoutCalledRef.current = false;
+        if (!isNaN(timestamp as any) && timestamp > lastActivity) {
+          setLastActivity(timestamp as any);
+          setIsActive(true as any);
+          setHasTimedOut(false as any);
+          timeoutCalledRef?.current = false;
         }
       }
     };
@@ -102,11 +102,11 @@ export function useInactivityTimer({
     const handleActivityBroadcast = (e: Event) => {
       if ((e as StorageEvent).key === STORAGE_EVENT_KEY && (e as StorageEvent).newValue) {
         const timestamp = parseInt((e as StorageEvent).newValue || '0', 10);
-        if (!isNaN(timestamp) && timestamp > lastActivity) {
-          setLastActivity(timestamp);
-          setIsActive(true);
-          setHasTimedOut(false);
-          timeoutCalledRef.current = false;
+        if (!isNaN(timestamp as any) && timestamp > lastActivity) {
+          setLastActivity(timestamp as any);
+          setIsActive(true as any);
+          setHasTimedOut(false as any);
+          timeoutCalledRef?.current = false;
         }
       }
     };
@@ -147,15 +147,15 @@ export function useInactivityTimer({
       const timeSinceLastActivity = now - lastActivity;
 
       if (timeSinceLastActivity >= timeout && !hasTimedOut && !timeoutCalledRef.current) {
-        setIsActive(false);
-        setHasTimedOut(true);
-        timeoutCalledRef.current = true;
+        setIsActive(false as any);
+        setHasTimedOut(true as any);
+        timeoutCalledRef?.current = true;
         onTimeout();
       } else if (timeSinceLastActivity < timeout && hasTimedOut) {
         // Reset if activity detected after timeout
-        setIsActive(true);
-        setHasTimedOut(false);
-        timeoutCalledRef.current = false;
+        setIsActive(true as any);
+        setHasTimedOut(false as any);
+        timeoutCalledRef?.current = false;
       }
     };
 
@@ -166,14 +166,14 @@ export function useInactivityTimer({
     const interval = setInterval(checkTimeout, CHECK_INTERVAL);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(interval as any);
     };
   }, [lastActivity, timeout, onTimeout, hasTimedOut]);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      timeoutCalledRef.current = false;
+      timeoutCalledRef?.current = false;
     };
   }, []);
 

@@ -122,17 +122,17 @@ export default class DeployWithHealthCheck extends BaseCommand {
   private readonly logger = new Logger('DeployWithHealthCheck');
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(DeployWithHealthCheck);
+    const { args, flags } = await this.parse();
     const { sitePath } = args;
 
     // Validate site path
-    if (!existsSync(sitePath)) {
+    if (!existsSync(sitePath as any)) {
       throw new ValidationError(`Site path does not exist: ${sitePath}`);
     }
 
     try {
       // Initialize health manager
-      await this.initializeHealthManager(flags);
+      await this.initializeHealthManager(flags as any);
 
       // Create deployment context
       const context: DeploymentContext = {
@@ -143,31 +143,31 @@ export default class DeployWithHealthCheck extends BaseCommand {
       };
 
       // Perform pre-deployment validation if enabled
-      if (!flags['skip-validation']) {
+      if (!flags?.["skip-validation"]) {
         await this.performValidation(context, flags);
       }
 
       // Start monitoring if enabled
-      if (!flags['skip-monitoring'] && flags.monitor) {
+      if (!flags?.["skip-monitoring"] && flags.monitor) {
         await this.startMonitoring();
       }
 
       // Perform deployment
-      if (!flags['dry-run']) {
+      if (!flags?.["dry-run"]) {
         await this.performDeployment(context, flags);
       } else {
         this.log('✓ Dry run completed successfully - deployment would proceed');
       }
 
       // Generate final report
-      await this.generateFinalReport(flags);
+      await this.generateFinalReport(flags as any);
 
     } catch (error) {
-      await this.handleDeploymentError(error);
+      await this.handleDeploymentError(error as any);
     } finally {
       // Cleanup resources
       if (this.healthManager) {
-        this.healthManager.destroy();
+        this?.healthManager?.destroy();
       }
     }
   }
@@ -181,33 +181,33 @@ export default class DeployWithHealthCheck extends BaseCommand {
     // Create configuration based on network and flags
     const config: Partial<DeploymentHealthConfig> = {
       network: flags.network,
-      enableMonitoring: !flags['skip-monitoring'],
-      enableAutomaticFailover: !flags['disable-failover'],
-      enablePreValidation: !flags['skip-validation'],
+      enableMonitoring: !flags?.["skip-monitoring"],
+      enableAutomaticFailover: !flags?.["disable-failover"],
+      enablePreValidation: !flags?.["skip-validation"],
       strictValidation: flags.strict,
       monitoringInterval: 30000,
       retryConfig: {
-        maxRetries: flags['max-retries'],
-        initialDelay: flags['retry-delay'],
-        maxDelay: Math.max(flags['retry-delay'] * 16, 30000),
+        maxRetries: flags?.["max-retries"],
+        initialDelay: flags?.["retry-delay"],
+        maxDelay: Math.max(flags?.["retry-delay"] * 16, 30000),
         timeoutMs: flags.timeout,
       },
     };
 
     // Use factory method for common configurations
-    if (flags.network === 'testnet') {
-      this.healthManager = WalrusDeploymentHealthManager.forTestnet(config);
-    } else if (flags.network === 'mainnet') {
-      this.healthManager = WalrusDeploymentHealthManager.forMainnet(config);
+    if (flags?.network === 'testnet') {
+      this?.healthManager = WalrusDeploymentHealthManager.forTestnet(config as any);
+    } else if (flags?.network === 'mainnet') {
+      this?.healthManager = WalrusDeploymentHealthManager.forMainnet(config as any);
     } else {
       throw new ValidationError(`Network ${flags.network} not supported by health manager`);
     }
 
     // Setup event listeners
-    this.setupEventListeners(flags);
+    this.setupEventListeners(flags as any);
 
     // Initialize components
-    await this.healthManager.initialize();
+    await this?.healthManager?.initialize();
 
     this.log('✓ Health management initialized');
   }
@@ -218,14 +218,14 @@ export default class DeployWithHealthCheck extends BaseCommand {
   private setupEventListeners(flags: any): void {
     if (!this.healthManager) return;
 
-    this.healthManager.on('status_changed', (status) => {
+    this?.healthManager?.on('status_changed', (status) => {
       if (flags.verbose) {
         this.log(`📊 Status: ${status.phase} | Readiness: ${status.deploymentReadiness}`);
       }
     });
 
-    this.healthManager.on('network_event', (event) => {
-      const icon = event.severity === 'error' ? '❌' : event.severity === 'warning' ? '⚠️' : 'ℹ️';
+    this?.healthManager?.on('network_event', (event) => {
+      const icon = event?.severity === 'error' ? '❌' : event?.severity === 'warning' ? '⚠️' : 'ℹ️';
       this.log(`${icon} ${event.message}`);
       
       if (event.suggestion && flags.verbose) {
@@ -233,22 +233,22 @@ export default class DeployWithHealthCheck extends BaseCommand {
       }
     });
 
-    this.healthManager.on('validation_completed', (summary) => {
-      this.displayValidationSummary(summary);
+    this?.healthManager?.on('validation_completed', (summary) => {
+      this.displayValidationSummary(summary as any);
     });
 
-    this.healthManager.on('monitoring_started', () => {
+    this?.healthManager?.on('monitoring_started', () => {
       if (flags.monitor) {
         this.log('📡 Network monitoring started');
       }
     });
 
-    this.healthManager.on('deployment_started', () => {
+    this?.healthManager?.on('deployment_started', () => {
       this.log('🚀 Starting deployment...');
     });
 
-    this.healthManager.on('deployment_completed', (result) => {
-      this.displayDeploymentResult(result);
+    this?.healthManager?.on('deployment_completed', (result) => {
+      this.displayDeploymentResult(result as any);
     });
   }
 
@@ -258,16 +258,16 @@ export default class DeployWithHealthCheck extends BaseCommand {
   private async performValidation(context: DeploymentContext, flags: any): Promise<void> {
     this.log('🔍 Performing pre-deployment validation...');
 
-    const validationSummary = await this.healthManager!.validateDeployment(context);
+    const validationSummary = await this.healthManager!.validateDeployment(context as any);
 
     // Check if deployment should proceed
-    if (validationSummary.overallStatus === 'failed') {
+    if (validationSummary?.overallStatus === 'failed') {
       if (!flags.force) {
         throw new ValidationError(`Deployment validation failed. Use --force to override.`);
       } else {
         this.log('⚠️  Validation failed but continuing due to --force flag');
       }
-    } else if (validationSummary.overallStatus === 'warnings') {
+    } else if (validationSummary?.overallStatus === 'warnings') {
       if (flags.strict && !flags.force) {
         throw new ValidationError(`Deployment has warnings in strict mode. Use --force to override.`);
       } else if (!flags.force) {
@@ -310,11 +310,10 @@ export default class DeployWithHealthCheck extends BaseCommand {
       this.log(`🔗 Site ID: ${result.siteId}`);
 
       deploymentSuccess = true;
-      return result;
 
     } catch (error) {
-      this.logger.error('Deployment failed', {
-        error: error instanceof Error ? error.message : String(error),
+      this?.logger?.error('Deployment failed', {
+        error: error instanceof Error ? error.message : String(error as any),
       });
       
       deploymentSuccess = false;
@@ -322,7 +321,7 @@ export default class DeployWithHealthCheck extends BaseCommand {
 
     } finally {
       // Complete deployment tracking
-      this.healthManager!.completeDeployment(deploymentSuccess);
+      this.healthManager!.completeDeployment(deploymentSuccess as any);
     }
   }
 
@@ -360,14 +359,14 @@ export default class DeployWithHealthCheck extends BaseCommand {
       });
 
       // Parse output to extract site information
-      const siteId = this.extractSiteId(output);
+      const siteId = this.extractSiteId(output as any);
       const siteUrl = this.constructSiteUrl(siteId, context.network);
 
       return { siteUrl, siteId };
 
     } catch (error) {
       throw new NetworkError(
-        `Walrus deployment failed: ${error instanceof Error ? error.message : String(error)}`
+        `Walrus deployment failed: ${error instanceof Error ? error.message : String(error as any)}`
       );
     }
   }
@@ -384,8 +383,8 @@ export default class DeployWithHealthCheck extends BaseCommand {
     ];
 
     for (const pattern of patterns) {
-      const match = output.match(pattern);
-      if (match) {
+      const match = output.match(pattern as any);
+      if (match && match[1]) {
         return match[1];
       }
     }
@@ -429,7 +428,7 @@ export default class DeployWithHealthCheck extends BaseCommand {
     }
 
     // Show critical issues
-    const criticalIssues = summary.results.filter((r: any) => !r.passed);
+    const criticalIssues = summary?.results?.filter((r: any) => !r.passed);
     if (criticalIssues.length > 0) {
       this.log('\n❌ Critical Issues:');
       for (const issue of criticalIssues.slice(0, 5)) {
@@ -441,9 +440,9 @@ export default class DeployWithHealthCheck extends BaseCommand {
     }
 
     // Show recommendations
-    if (summary.recommendedActions.length > 0) {
+    if (summary?.recommendedActions?.length > 0) {
       this.log('\n💡 Recommendations:');
-      for (const action of summary.recommendedActions.slice(0, 3)) {
+      for (const action of summary?.recommendedActions?.slice(0, 3)) {
         this.log(`   • ${action}`);
       }
     }
@@ -455,23 +454,23 @@ export default class DeployWithHealthCheck extends BaseCommand {
   private displayDeploymentResult(result: any): void {
     this.log('\n📊 Deployment Metrics:');
     this.log(`   Duration: ${Math.round(result.duration / 1000)}s`);
-    this.log(`   Requests: ${result.networkMetrics.totalRequests}`);
-    this.log(`   Error rate: ${(result.networkMetrics.errorRate * 100).toFixed(1)}%`);
-    this.log(`   Avg response time: ${Math.round(result.networkMetrics.averageResponseTime)}ms`);
-    this.log(`   Endpoint switches: ${result.networkMetrics.endpointSwitches}`);
+    this.log(`   Requests: ${result?.networkMetrics?.totalRequests}`);
+    this.log(`   Error rate: ${(result?.networkMetrics?.errorRate * 100).toFixed(1 as any)}%`);
+    this.log(`   Avg response time: ${Math.round(result?.networkMetrics?.averageResponseTime)}ms`);
+    this.log(`   Endpoint switches: ${result?.networkMetrics?.endpointSwitches}`);
 
-    if (result.issues.length > 0) {
+    if (result?.issues?.length > 0) {
       this.log('\n⚠️  Issues encountered:');
-      for (const issue of result.issues.slice(0, 5)) {
-        const icon = issue.severity === 'error' ? '❌' : '⚠️';
+      for (const issue of result?.issues?.slice(0, 5)) {
+        const icon = issue?.severity === 'error' ? '❌' : '⚠️';
         this.log(`   ${icon} ${issue.message}`);
       }
     }
 
     this.log('\n🔗 Final endpoints:');
-    this.log(`   Sui RPC: ${result.finalEndpoints.sui}`);
-    this.log(`   Walrus Publisher: ${result.finalEndpoints.walrusPublisher}`);
-    this.log(`   Walrus Aggregator: ${result.finalEndpoints.walrusAggregator}`);
+    this.log(`   Sui RPC: ${result?.finalEndpoints?.sui}`);
+    this.log(`   Walrus Publisher: ${result?.finalEndpoints?.walrusPublisher}`);
+    this.log(`   Walrus Aggregator: ${result?.finalEndpoints?.walrusAggregator}`);
   }
 
   /**
@@ -480,23 +479,23 @@ export default class DeployWithHealthCheck extends BaseCommand {
   private async generateFinalReport(flags: any): Promise<void> {
     if (!this.healthManager) return;
 
-    const report = this.healthManager.generateDiagnosticReport();
+    const report = this?.healthManager?.generateDiagnosticReport();
     
-    if (flags['output-report'] && report) {
+    if (flags?.["output-report"] && report) {
       const fs = require('fs');
-      fs.writeFileSync(flags['output-report'], JSON.stringify(report, null, 2));
-      this.log(`📄 Diagnostic report saved to: ${flags['output-report']}`);
+      fs.writeFileSync(flags?.["output-report"], JSON.stringify(report, null, 2));
+      this.log(`📄 Diagnostic report saved to: ${flags?.["output-report"]}`);
     }
 
     if (flags.verbose && report) {
       this.log('\n📊 Network Health Summary:');
-      this.log(`   Overall health: ${report.networkHealth.overall.healthy ? 'Healthy' : 'Issues detected'}`);
-      this.log(`   Health score: ${report.networkHealth.overall.score}/100`);
-      this.log(`   Network condition: ${report.metrics.networkCondition}`);
+      this.log(`   Overall health: ${report?.networkHealth?.overall.healthy ? 'Healthy' : 'Issues detected'}`);
+      this.log(`   Health score: ${report?.networkHealth?.overall.score}/100`);
+      this.log(`   Network condition: ${report?.metrics?.networkCondition}`);
       
-      if (report.recommendations.length > 0) {
+      if (report?.recommendations?.length > 0) {
         this.log('\n💡 Final Recommendations:');
-        for (const rec of report.recommendations.slice(0, 3)) {
+        for (const rec of report?.recommendations?.slice(0, 3)) {
           this.log(`   • ${rec}`);
         }
       }
@@ -507,8 +506,8 @@ export default class DeployWithHealthCheck extends BaseCommand {
    * Handle deployment errors with context
    */
   private async handleDeploymentError(error: unknown): Promise<void> {
-    this.logger.error('Deployment failed', {
-      error: error instanceof Error ? error.message : String(error),
+    this?.logger?.error('Deployment failed', {
+      error: error instanceof Error ? error.message : String(error as any),
     });
 
     // Generate error diagnostic report
@@ -521,18 +520,18 @@ export default class DeployWithHealthCheck extends BaseCommand {
       
       if (report) {
         this.log('\n🔍 Network diagnostic information:');
-        this.log(`   Network condition: ${report.metrics.networkCondition}`);
-        this.log(`   Active endpoints: ${report.metrics.activeEndpoints}`);
-        this.log(`   Failed endpoints: ${report.metrics.failedEndpoints}`);
+        this.log(`   Network condition: ${report?.metrics?.networkCondition}`);
+        this.log(`   Active endpoints: ${report?.metrics?.activeEndpoints}`);
+        this.log(`   Failed endpoints: ${report?.metrics?.failedEndpoints}`);
       }
     } else {
-      this.error(`Deployment failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.error(`Deployment failed: ${error instanceof Error ? error.message : String(error as any)}`);
     }
 
     // Stop monitoring if it was started
     if (this.healthManager) {
-      this.healthManager.stopMonitoring();
-      this.healthManager.completeDeployment(false);
+      this?.healthManager?.stopMonitoring();
+      this?.healthManager?.completeDeployment(false as any);
     }
 
     throw error;

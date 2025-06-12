@@ -22,8 +22,8 @@ export function useSafeTheme() {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
       
-      setTheme(initialTheme);
-      document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+      setTheme(initialTheme as any);
+      document?.documentElement?.classList.toggle('dark', initialTheme === 'dark');
     } catch (error) {
       console.warn('[useSafeTheme] Failed to initialize theme:', error);
       // Keep light theme as fallback
@@ -38,7 +38,7 @@ export function useSafeTheme() {
       
       try {
         localStorage.setItem('theme', newTheme);
-        document.documentElement.classList.toggle('dark', newTheme === 'dark');
+        document?.documentElement?.classList.toggle('dark', newTheme === 'dark');
       } catch (error) {
         console.warn('[useSafeTheme] Failed to save theme:', error);
       }
@@ -50,11 +50,11 @@ export function useSafeTheme() {
   const setThemeValue = useCallback((newTheme: Theme) => {
     if (!mounted) {return;}
 
-    setTheme(newTheme);
+    setTheme(newTheme as any);
     
     try {
       localStorage.setItem('theme', newTheme);
-      document.documentElement.classList.toggle('dark', newTheme === 'dark');
+      document?.documentElement?.classList.toggle('dark', newTheme === 'dark');
     } catch (error) {
       console.warn('[useSafeTheme] Failed to save theme:', error);
     }

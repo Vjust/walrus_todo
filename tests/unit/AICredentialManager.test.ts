@@ -53,23 +53,23 @@ describe('Secure Credential Manager', () => {
   const keysDir = '/mock/keys';
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
+    process?.env = { ...originalEnv };
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   // SECTION: Basic credential management
   describe('Credential Management', () => {
     it('should initialize with a master key', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
-      expect(credentialManager).toBeDefined();
+      const credentialManager = new SecureCredentialManager(keysDir as any);
+      expect(credentialManager as any).toBeDefined();
     });
 
     it('should store and retrieve credentials', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store a credential
       credentialManager.storeCredential(
@@ -80,11 +80,11 @@ describe('Secure Credential Manager', () => {
 
       // Retrieve the credential
       const credential = credentialManager.getCredential(AIProvider.XAI);
-      expect(credential).toBe('api-key-123');
+      expect(credential as any).toBe('api-key-123');
     });
 
     it('should retrieve credential object with permission level', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store a credential
       credentialManager.storeCredential(
@@ -97,7 +97,7 @@ describe('Secure Credential Manager', () => {
       const credentialObj = credentialManager.getCredentialObject(
         AIProvider.XAI
       );
-      expect(credentialObj).toEqual({
+      expect(credentialObj as any).toEqual({
         provider: AIProvider.XAI,
         key: 'api-key-123',
         permissionLevel: AIPermissionLevel.FULL,
@@ -105,7 +105,7 @@ describe('Secure Credential Manager', () => {
     });
 
     it('should throw an error when retrieving non-existent credential', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       expect(() => {
         credentialManager.getCredential(AIProvider.OPENAI);
@@ -113,7 +113,7 @@ describe('Secure Credential Manager', () => {
     });
 
     it('should update an existing credential', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store a credential
       credentialManager.storeCredential(
@@ -131,7 +131,7 @@ describe('Secure Credential Manager', () => {
 
       // Retrieve the updated credential
       const credential = credentialManager.getCredential(AIProvider.XAI);
-      expect(credential).toBe('api-key-updated');
+      expect(credential as any).toBe('api-key-updated');
 
       // Check the updated permission level
       const credentialObj = credentialManager.getCredentialObject(
@@ -141,7 +141,7 @@ describe('Secure Credential Manager', () => {
     });
 
     it('should delete a stored credential', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store a credential
       credentialManager.storeCredential(
@@ -163,7 +163,7 @@ describe('Secure Credential Manager', () => {
   // SECTION: Multiple provider support
   describe('Multiple Provider Support', () => {
     it('should store credentials for multiple providers', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store credentials for multiple providers
       credentialManager.storeCredential(
@@ -209,7 +209,7 @@ describe('Secure Credential Manager', () => {
     });
 
     it('should list all stored providers', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store credentials for multiple providers
       credentialManager.storeCredential(
@@ -227,7 +227,7 @@ describe('Secure Credential Manager', () => {
       // List all providers
       const providers = credentialManager.listProviders();
 
-      expect(providers).toEqual([AIProvider.XAI, AIProvider.OPENAI]);
+      expect(providers as any).toEqual([AIProvider.XAI, AIProvider.OPENAI]);
     });
   });
 
@@ -235,23 +235,23 @@ describe('Secure Credential Manager', () => {
   describe('Environment Variable Integration', () => {
     it('should use API key from environment variable if available', () => {
       // Set environment variable
-      process.env.XAI_API_KEY = 'env-xai-api-key';
+      process.env?.XAI_API_KEY = 'env-xai-api-key';
 
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Get credential with fallback to environment variable
       const credential = credentialManager.getCredentialWithEnvFallback(
         AIProvider.XAI
       );
 
-      expect(credential).toBe('env-xai-api-key');
+      expect(credential as any).toBe('env-xai-api-key');
     });
 
     it('should fall back to stored credential when environment variable is not set', () => {
       // Make sure environment variable is not set
-      delete process.env.XAI_API_KEY;
+      delete process?.env?.XAI_API_KEY;
 
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Store a credential
       credentialManager.storeCredential(
@@ -265,15 +265,15 @@ describe('Secure Credential Manager', () => {
         AIProvider.XAI
       );
 
-      expect(credential).toBe('stored-xai-api-key');
+      expect(credential as any).toBe('stored-xai-api-key');
     });
 
     it('should throw an error when no credential is available', () => {
       // Make sure environment variable is not set
-      delete process.env.XAI_API_KEY;
-      delete process.env.OPENAI_API_KEY;
+      delete process?.env?.XAI_API_KEY;
+      delete process?.env?.OPENAI_API_KEY;
 
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       // Attempt to get credential without any source
       expect(() => {
@@ -285,15 +285,15 @@ describe('Secure Credential Manager', () => {
   // SECTION: Error handling and validation
   describe('Error Handling and Validation', () => {
     it('should throw a specific error type when credential is not found', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       expect(() => {
         credentialManager.getCredential(AIProvider.ANTHROPIC);
-      }).toThrow(CLIError);
+      }).toThrow(CLIError as any);
     });
 
     it('should throw CLIError with CREDENTIAL_NOT_FOUND code when credential is not found', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       let thrownError: unknown;
       try {
@@ -302,12 +302,12 @@ describe('Secure Credential Manager', () => {
         thrownError = error;
       }
 
-      expect(thrownError).toBeInstanceOf(CLIError);
+      expect(thrownError as any).toBeInstanceOf(CLIError as any);
       expect((thrownError as CLIError).code).toBe('CREDENTIAL_NOT_FOUND');
     });
 
     it('should validate permission levels when storing credentials', () => {
-      const credentialManager = new SecureCredentialManager(keysDir);
+      const credentialManager = new SecureCredentialManager(keysDir as any);
 
       expect(() => {
         credentialManager.storeCredential(

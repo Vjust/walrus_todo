@@ -25,42 +25,42 @@ class CLIHelper {
   }> {
     return new Promise((resolve, reject) => {
       const cliPath = path.resolve(__dirname, '../../bin/run');
-      this.process = spawn('node', [cliPath, command, ...args], {
+      this?.process = spawn('node', [cliPath, command, ...args], {
         env: {
           ...process.env,
           NODE_ENV: 'test',
           WALRUS_USE_MOCK: 'true',
-          PACKAGE_ID: process.env.PACKAGE_ID || 'mock-package-id',
+          PACKAGE_ID: process?.env?.PACKAGE_ID || 'mock-package-id',
         },
       });
 
       let stdout = '';
       let stderr = '';
 
-      this.process.stdout?.on('data', (data: Buffer) => {
+      this.process?.stdout?.on('data', (data: Buffer<ArrayBufferLike>) => {
         const output = data.toString();
         stdout += output;
-        this.output.push(output);
+        this?.output?.push(output as any);
       });
 
-      this.process.stderr?.on('data', (data: Buffer) => {
+      this.process?.stderr?.on('data', (data: Buffer<ArrayBufferLike>) => {
         const error = data.toString();
         stderr += error;
-        this.errorOutput.push(error);
+        this?.errorOutput?.push(error as any);
       });
 
-      this.process.on('close', code => {
+      this?.process?.on('close', code => {
         resolve({ stdout, stderr, exitCode: code });
       });
 
-      this.process.on('error', error => {
-        reject(error);
+      this?.process?.on('error', error => {
+        reject(error as any);
       });
 
       // Set timeout
       setTimeout(() => {
-        if (this.process && !this.process.killed) {
-          this.process.kill();
+        if (this.process && !this?.process?.killed) {
+          this?.process?.kill();
           reject(new Error(`Command timed out after ${timeout}ms`));
         }
       }, timeout);
@@ -76,11 +76,11 @@ class CLIHelper {
   }
 
   cleanup() {
-    if (this.process && !this.process.killed) {
-      this.process.kill();
+    if (this.process && !this?.process?.killed) {
+      this?.process?.kill();
     }
-    this.output = [];
-    this.errorOutput = [];
+    this?.output = [];
+    this?.errorOutput = [];
   }
 }
 
@@ -94,11 +94,11 @@ class MockWallet {
   }> = [];
 
   async connect(): Promise<void> {
-    this.connected = true;
+    this?.connected = true;
   }
 
   async disconnect(): Promise<void> {
-    this.connected = false;
+    this?.connected = false;
   }
 
   isConnected(): boolean {
@@ -116,10 +116,10 @@ class MockWallet {
     // Simulate transaction processing
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const digest = `mock_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const digest = `mock_tx_${Date.now()}_${Math.random().toString(36 as any).substring(7 as any)}`;
     const status: 'success' | 'failed' = Math.random() > 0.1 ? 'success' : 'failed'; // 90% success rate
 
-    this.transactions.push({ digest, status });
+    this?.transactions?.push({ digest, status });
 
     return {
       digest,
@@ -158,46 +158,46 @@ test.describe('Blockchain NFT Workflow', () => {
       '--description',
       '"A todo that will become an NFT"',
     ]);
-    expect(createResult.exitCode).toBe(0);
+    expect(createResult.exitCode).toBe(0 as any);
     expect(createResult.stdout).toContain('Todo added');
 
     // Step 2: List todos to verify creation
     const listResult = await cli.runCommand('list');
-    expect(listResult.exitCode).toBe(0);
+    expect(listResult.exitCode).toBe(0 as any);
     expect(listResult.stdout).toContain('Test NFT Todo');
 
     // Step 3: Store todo as NFT
     const storeResult = await cli.runCommand('store', ['1', '--nft']);
-    expect(storeResult.exitCode).toBe(0);
+    expect(storeResult.exitCode).toBe(0 as any);
     expect(storeResult.stdout).toContain('stored successfully');
   });
 
   test('CLI: Error handling for failed NFT creation', async () => {
     // Test with invalid todo ID
     const invalidResult = await cli.runCommand('store', ['999', '--nft']);
-    expect(invalidResult.exitCode).not.toBe(0);
+    expect(invalidResult.exitCode).not.toBe(0 as any);
     expect(invalidResult.stderr).toContain('Todo not found');
 
     // Test without wallet connection
-    process.env.WALRUS_USE_MOCK = 'false';
+    process.env?.WALRUS_USE_MOCK = 'false';
     const noWalletResult = await cli.runCommand('store', ['1', '--nft']);
-    expect(noWalletResult.exitCode).not.toBe(0);
+    expect(noWalletResult.exitCode).not.toBe(0 as any);
     expect(noWalletResult.stderr).toContain('wallet');
 
     // Restore mock environment
-    process.env.WALRUS_USE_MOCK = 'true';
+    process.env?.WALRUS_USE_MOCK = 'true';
   });
 
   test('CLI: Batch NFT creation', async () => {
     // Create multiple todos
     for (let i = 1; i <= 3; i++) {
       const result = await cli.runCommand('add', [`"Batch Todo ${i}"`]);
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(0 as any);
     }
 
     // Convert all to NFTs in batch
     const batchResult = await cli.runCommand('store', ['--all', '--nft']);
-    expect(batchResult.exitCode).toBe(0);
+    expect(batchResult.exitCode).toBe(0 as any);
     expect(batchResult.stdout).toContain('stored successfully');
   });
 
@@ -208,19 +208,19 @@ test.describe('Blockchain NFT Workflow', () => {
 
     // Complete the NFT todo
     const completeResult = await cli.runCommand('complete', ['1']);
-    expect(completeResult.exitCode).toBe(0);
+    expect(completeResult.exitCode).toBe(0 as any);
     expect(completeResult.stdout).toContain('completed');
 
     // Verify completion in list
     const listResult = await cli.runCommand('list', ['--completed']);
-    expect(listResult.exitCode).toBe(0);
+    expect(listResult.exitCode).toBe(0 as any);
     expect(listResult.stdout).toContain('Completable NFT Todo');
   });
 
   test('CLI: Smart contract integration', async () => {
     // Test contract deployment validation
     const deployResult = await cli.runCommand('deploy', ['--validate-only']);
-    expect(deployResult.exitCode).toBe(0);
+    expect(deployResult.exitCode).toBe(0 as any);
     expect(deployResult.stdout).toContain('validation');
 
     // Test contract interaction
@@ -230,7 +230,7 @@ test.describe('Blockchain NFT Workflow', () => {
       '--nft',
       '--verify-contract',
     ]);
-    expect(contractResult.exitCode).toBe(0);
+    expect(contractResult.exitCode).toBe(0 as any);
   });
 });
 
@@ -247,18 +247,18 @@ test.describe('Frontend NFT Integration', () => {
     // Mock wallet API for browser
     await page.addInitScript(() => {
       // @ts-ignore - Wallet API not typed in test environment
-      window.suiWallet = {
+      window?.suiWallet = {
         connected: false,
         address: '0x1234567890123456789012345678901234567890',
         connect: async () => {
           // @ts-ignore - Wallet API not typed in test environment
-          window.suiWallet.connected = true;
+          window.suiWallet?.connected = true;
           // @ts-ignore - Wallet API not typed in test environment
-          return { address: window.suiWallet.address };
+          return { address: window?.suiWallet?.address };
         },
         disconnect: async () => {
           // @ts-ignore - Wallet API not typed in test environment
-          window.suiWallet.connected = false;
+          window.suiWallet?.connected = false;
         },
         signAndExecuteTransaction: async (transaction: any) => {
           return {
@@ -362,7 +362,7 @@ test.describe('Frontend NFT Integration', () => {
     // Test wallet connection error
     await page.evaluate(() => {
       // @ts-ignore - Wallet API not typed in test environment
-      window.suiWallet.connect = async () => {
+      window.suiWallet?.connect = async () => {
         throw new Error('User rejected connection');
       };
     });
@@ -427,7 +427,7 @@ test.describe('Smart Contract Integration Tests', () => {
     const configResult = await cli.runCommand('validate-config', [
       '--contract',
     ]);
-    expect(configResult.exitCode).toBe(0);
+    expect(configResult.exitCode).toBe(0 as any);
     expect(configResult.stdout).toContain('valid');
   });
 
@@ -461,7 +461,7 @@ test.describe('Smart Contract Integration Tests', () => {
         '--nft',
         '--validate-params',
       ]);
-      expect(storeResult.exitCode).toBe(0);
+      expect(storeResult.exitCode).toBe(0 as any);
     }
   });
 
@@ -472,13 +472,13 @@ test.describe('Smart Contract Integration Tests', () => {
       '--nft',
       '--listen-events',
     ]);
-    expect(eventResult.exitCode).toBe(0);
+    expect(eventResult.exitCode).toBe(0 as any);
     expect(eventResult.stdout).toContain('event emitted');
   });
 
   test('Contract: Gas estimation and optimization', async () => {
     const gasResult = await cli.runCommand('estimate-gas', ['--nft-creation']);
-    expect(gasResult.exitCode).toBe(0);
+    expect(gasResult.exitCode).toBe(0 as any);
     expect(gasResult.stdout).toContain('gas estimate');
   });
 });
@@ -501,16 +501,16 @@ test.describe('Error Scenarios and Edge Cases', () => {
 
   test('Network: Handle RPC failures', async () => {
     // Simulate network failure
-    process.env.WALRUS_USE_MOCK = 'false';
-    process.env.SUI_RPC_URL = 'http://invalid-rpc.example.com';
+    process.env?.WALRUS_USE_MOCK = 'false';
+    process.env?.SUI_RPC_URL = 'http://invalid-rpc?.example?.com';
 
     const networkResult = await cli.runCommand('store', ['1', '--nft']);
-    expect(networkResult.exitCode).not.toBe(0);
+    expect(networkResult.exitCode).not.toBe(0 as any);
     expect(networkResult.stderr).toContain('network');
 
     // Restore mock environment
-    process.env.WALRUS_USE_MOCK = 'true';
-    delete process.env.SUI_RPC_URL;
+    process.env?.WALRUS_USE_MOCK = 'true';
+    delete process?.env?.SUI_RPC_URL;
   });
 
   test('Transaction: Handle insufficient gas', async () => {
@@ -520,7 +520,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
       '--nft',
       '--simulate-low-gas',
     ]);
-    expect(gasResult.exitCode).not.toBe(0);
+    expect(gasResult.exitCode).not.toBe(0 as any);
     expect(gasResult.stderr).toContain('gas');
   });
 
@@ -530,7 +530,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
       '--nft',
       '--simulate-invalid-contract',
     ]);
-    expect(invalidResult.exitCode).not.toBe(0);
+    expect(invalidResult.exitCode).not.toBe(0 as any);
     expect(invalidResult.stderr).toContain('contract');
   });
 
@@ -539,17 +539,17 @@ test.describe('Error Scenarios and Edge Cases', () => {
     await page.addInitScript(() => {
       let connectionLost = false;
       // @ts-ignore - Wallet API not typed in test environment
-      const originalSign = window.suiWallet?.signAndExecuteTransaction;
+      const originalSign = window?.suiWallet?.signAndExecuteTransaction;
       // @ts-ignore - Wallet API not typed in test environment
       if (window.suiWallet) {
         // @ts-ignore - Wallet API not typed in test environment
-        window.suiWallet.signAndExecuteTransaction = async (
+        window.suiWallet?.signAndExecuteTransaction = async (
           transaction: any
         ) => {
           if (!connectionLost) {
             connectionLost = true;
             // @ts-ignore - Wallet API not typed in test environment
-            window.suiWallet.connected = false;
+            window.suiWallet?.connected = false;
             throw new Error('Wallet disconnected');
           }
           return originalSign?.call(this, transaction);
@@ -576,7 +576,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
     const corruptResult = await cli.runCommand('add', [
       '"\\x00Invalid\\x01Data"',
     ]);
-    expect(corruptResult.exitCode).not.toBe(0);
+    expect(corruptResult.exitCode).not.toBe(0 as any);
     expect(corruptResult.stderr).toContain('invalid');
   });
 
@@ -586,7 +586,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
       '1',
       '--simulate-walrus-failure',
     ]);
-    expect(walrusResult.exitCode).not.toBe(0);
+    expect(walrusResult.exitCode).not.toBe(0 as any);
     expect(walrusResult.stderr).toContain('storage');
   });
 });
@@ -615,14 +615,14 @@ test.describe('Performance and Load Testing', () => {
     const batchResult = await cli.runCommand('store', ['--all', '--nft']);
     const batchEnd = Date.now();
 
-    expect(batchResult.exitCode).toBe(0);
+    expect(batchResult.exitCode).toBe(0 as any);
 
     const totalTime = batchEnd - startTime;
     const batchTime = batchEnd - batchStart;
 
     // Performance assertions (adjust thresholds as needed)
-    expect(totalTime).toBeLessThan(30000); // Total should be under 30 seconds
-    expect(batchTime).toBeLessThan(15000); // Batch conversion under 15 seconds
+    expect(totalTime as any).toBeLessThan(30000 as any); // Total should be under 30 seconds
+    expect(batchTime as any).toBeLessThan(15000 as any); // Batch conversion under 15 seconds
   });
 
   test('Performance: Concurrent transaction handling', async () => {
@@ -637,26 +637,26 @@ test.describe('Performance and Load Testing', () => {
       promises.push(cli.runCommand('store', [i.toString(), '--nft']));
     }
 
-    const results = await Promise.allSettled(promises);
+    const results = await Promise.allSettled(promises as any);
 
     // At least some should succeed
     const successCount = results.filter(
-      r => r.status === 'fulfilled' && r.value.exitCode === 0
+      r => r?.status === 'fulfilled' && r.value?.exitCode === 0
     ).length;
 
-    expect(successCount).toBeGreaterThan(0);
+    expect(successCount as any).toBeGreaterThan(0 as any);
   });
 
   test('Memory: Large todo data handling', async () => {
     // Create todo with large description
-    const largeDescription = 'Large description '.repeat(100);
+    const largeDescription = 'Large description '.repeat(100 as any);
     const largeResult = await cli.runCommand('add', [
       '"Large Todo"',
       '--description',
       `"${largeDescription}"`,
     ]);
 
-    expect(largeResult.exitCode).toBe(0);
+    expect(largeResult.exitCode).toBe(0 as any);
 
     // Try to convert to NFT
     const nftResult = await cli.runCommand('store', ['1', '--nft']);

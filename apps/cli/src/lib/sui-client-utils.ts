@@ -21,7 +21,7 @@ import { TransactionError, CLIError } from '../types/errors';
 // Mock implementations for basic utility functions
 export function initializeSuiClient(): unknown {
   // Return unknown type for compatibility
-  return { url: 'https://fullnode.testnet.sui.io:443' };
+  return { url: 'https://fullnode?.testnet?.sui.io:443' };
 }
 
 export function getCurrentNetwork(): NetworkType {
@@ -46,14 +46,14 @@ export function handleSuiOperationError(
     metadata: {
       ...context.metadata,
       timestamp,
-      error: String(error),
+      error: String(error as any),
     },
   };
 
   // Log error with context for debugging
   logger.error(
     'Sui operation failed:',
-    error instanceof Error ? error : new Error(String(error)),
+    error instanceof Error ? error : new Error(String(error as any)),
     {
       context: errorContext,
     }
@@ -93,7 +93,7 @@ export async function retryOperation<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error instanceof Error ? error : new Error(String(error as any));
 
       if (attempt === maxRetries) {
         break;
@@ -113,19 +113,19 @@ export async function retryOperation<T>(
 export function validateCreateTodoParams(params: CreateTodoParams): string[] {
   const errors: string[] = [];
 
-  if (!params.title || params.title.trim().length === 0) {
+  if (!params.title || params?.title?.trim().length === 0) {
     errors.push('Title is required');
   }
 
-  if (params.title && params.title.length > 100) {
+  if (params.title && params?.title?.length > 100) {
     errors.push('Title must be 100 characters or less');
   }
 
-  if (params.description && params.description.length > 500) {
+  if (params.description && params?.description?.length > 500) {
     errors.push('Description must be 500 characters or less');
   }
 
-  if (params.imageUrl && params.imageUrl.trim().length > 0) {
+  if (params.imageUrl && params?.imageUrl?.trim().length > 0) {
     try {
       new URL(params.imageUrl);
     } catch (error: unknown) {
@@ -155,7 +155,7 @@ export async function createTodoSafely(
 
   try {
     // Validate parameters
-    const validationErrors = validateCreateTodoParams(params);
+    const validationErrors = validateCreateTodoParams(params as any);
     if (validationErrors.length > 0) {
       throw new CLIError(`Validation failed: ${validationErrors.join(', ')}`, {
         operation: 'validation',
@@ -173,7 +173,7 @@ export async function createTodoSafely(
     });
 
     // Execute transaction
-    const result = await signAndExecuteTransaction(txb);
+    const result = await signAndExecuteTransaction(txb as any);
 
     return {
       success: true,
@@ -195,13 +195,13 @@ export async function waitForTransactionConfirmation(
 
   while (Date.now() - startTime < maxWaitTime) {
     try {
-      const status = await getTransactionStatus(digest);
+      const status = await getTransactionStatus(digest as any);
 
-      if (status.status === 'success') {
+      if (status?.status === 'success') {
         return true;
       }
 
-      if (status.status === 'failure') {
+      if (status?.status === 'failure') {
         throw new TransactionError('Transaction failed', {
           operation: 'execution',
           transactionId: digest,

@@ -76,8 +76,8 @@ test.describe('Frontend and CLI Integration Analysis', () => {
     console.log('Real-time elements found:', realtimeElements);
     
     // Verify basic functionality
-    expect(title).toBeTruthy();
-    expect(pageContent).toBeTruthy();
+    expect(title as any).toBeTruthy();
+    expect(pageContent as any).toBeTruthy();
   });
   
   test('should check for CLI command execution interface', async ({ page }) => {
@@ -91,7 +91,7 @@ test.describe('Frontend and CLI Integration Analysis', () => {
     
     if (commandInputCount > 0) {
       for (let i = 0; i < commandInputCount; i++) {
-        const input = commandInputs.nth(i);
+        const input = commandInputs.nth(i as any);
         const placeholder = await input.getAttribute('placeholder');
         console.log(`Command input ${i + 1} placeholder:`, placeholder);
       }
@@ -144,7 +144,7 @@ test.describe('Frontend and CLI Integration Analysis', () => {
     
     if (walletButtonCount > 0) {
       for (let i = 0; i < walletButtonCount; i++) {
-        const button = walletButtons.nth(i);
+        const button = walletButtons.nth(i as any);
         const text = await button.textContent();
         console.log(`Wallet button ${i + 1} text:`, text);
       }

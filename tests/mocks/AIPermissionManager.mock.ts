@@ -30,12 +30,12 @@ export function createMockAIPermissionManager(): MockAIPermissionManager {
       }
       
       // For other providers, allow everything except restricted operations
-      return !restrictedOperations.includes(operation);
+      return !restrictedOperations.includes(operation as any);
     }),
     
     verifyOperationPermission: jest.fn().mockImplementation(async (operation: string) => {
       const allowedOperations = ['summarize', 'categorize', 'suggest'];
-      if (!allowedOperations.includes(operation)) {
+      if (!allowedOperations.includes(operation as any)) {
         throw new Error(`Operation "${operation}" is not permitted`);
       }
     }),
@@ -43,7 +43,7 @@ export function createMockAIPermissionManager(): MockAIPermissionManager {
     updatePermissions: jest.fn().mockImplementation(async (provider: string, permissions: string[]) => {
       // Simulate permission update logic
       const adminOperations = ['admin', 'delete_all', 'system_access'];
-      const hasAdminPermission = permissions.some(p => adminOperations.includes(p));
+      const hasAdminPermission = permissions.some(p => adminOperations.includes(p as any));
       
       if (hasAdminPermission) {
         throw new Error('Unauthorized permission escalation attempt');

@@ -20,14 +20,14 @@ export class CredentialVerifier {
   private moduleAddress: string;
 
   constructor() {
-    this.logger = new Logger('CredentialVerifier');
+    this?.logger = new Logger('CredentialVerifier');
     // Initialize with devnet as expected environment and auto-switch disabled
-    this.networkValidator = new NetworkValidator({
+    this?.networkValidator = new NetworkValidator({
       expectedEnvironment: 'devnet',
       autoSwitch: false,
     });
     // Get the deployed AI verifier module address
-    this.moduleAddress = getAIVerifierAddress();
+    this?.moduleAddress = getAIVerifierAddress();
     this.initializeClient();
   }
 
@@ -37,8 +37,8 @@ export class CredentialVerifier {
   private initializeClient() {
     // Initialize Sui client (skip network validation for now)
     const clientUrl =
-      process.env.SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443';
-    this.client = { url: clientUrl } as SuiClient; // TODO: Replace with proper SuiClient instantiation
+      process?.env?.SUI_RPC_URL || 'https://fullnode?.devnet?.sui.io:443';
+    this?.client = { url: clientUrl } as SuiClient; // TODO: Replace with proper SuiClient instantiation
   }
 
   /**
@@ -49,7 +49,7 @@ export class CredentialVerifier {
     apiKey: string
   ): Promise<string> {
     // Create a one-way hash of the API key to store on-chain
-    const keyHash = this.hashCredential(apiKey);
+    const keyHash = this.hashCredential(apiKey as any);
 
     try {
       // Prepare keypair for transaction
@@ -62,29 +62,29 @@ export class CredentialVerifier {
       tx.moveCall({
         target: `${this.moduleAddress}::ai_verifier::register_credential`,
         arguments: [
-          tx.pure(provider),
-          tx.pure(keyHash),
+          tx.pure(provider as any),
+          tx.pure(keyHash as any),
           tx.pure(new Date().toISOString()), // registration timestamp
         ],
       });
 
       // Execute transaction
       // Use proper transaction type for Sui client
-      const result = await this.client.signAndExecuteTransaction({
+      const result = await this?.client?.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
       });
 
-      this.logger.info(
+      this?.logger?.info(
         `Credential registered on blockchain with digest: ${result.digest}`
       );
       return result.digest;
     } catch (_error) {
-      this.logger.error(
-        `Failed to register credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Failed to register credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       throw new CLIError(
-        `Failed to register credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to register credential on blockchain: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'CREDENTIAL_REGISTRATION_FAILED'
       );
     }
@@ -97,28 +97,28 @@ export class CredentialVerifier {
     provider: AIProvider,
     apiKey: string
   ): Promise<boolean> {
-    const keyHash = this.hashCredential(apiKey);
+    const keyHash = this.hashCredential(apiKey as any);
 
     try {
       // Query the blockchain to check if this credential exists and is valid
       const tx = this.buildVerifyTx(provider, keyHash);
-      const result = await this.client.devInspectTransactionBlock({
+      const result = await this?.client?.devInspectTransactionBlock({
         sender: this.getKeypair().getPublicKey().toSuiAddress(),
         transactionBlock: tx,
       });
 
       // Parse the result to get boolean value
-      if (result && result.results && result.results[0]) {
-        const returnValue = result.results[0].returnValues[0][0];
+      if (result && result.results && result?.results?.[0]) {
+        const returnValue = result?.results?.[0].returnValues[0][0];
         // BCS decode the return value (should be a boolean)
-        const isValid = bcs.Bool.parse(Uint8Array.from(returnValue));
+        const isValid = bcs?.Bool?.parse(Uint8Array.from(returnValue as any));
         return isValid;
       }
 
       return false;
     } catch (_error) {
-      this.logger.error(
-        `Failed to verify credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Failed to verify credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       return false;
     }
@@ -134,23 +134,23 @@ export class CredentialVerifier {
       const tx = new TransactionBlock();
       tx.moveCall({
         target: `${this.moduleAddress}::ai_verifier::is_provider_registered`,
-        arguments: [tx.pure(provider)],
+        arguments: [tx.pure(provider as any)],
       });
 
-      const result = await this.client.devInspectTransactionBlock({
+      const result = await this?.client?.devInspectTransactionBlock({
         sender: this.getKeypair().getPublicKey().toSuiAddress(),
         transactionBlock: tx,
       });
 
-      if (result && result.results && result.results[0]) {
-        const returnValue = result.results[0].returnValues[0][0];
-        return bcs.Bool.parse(Uint8Array.from(returnValue));
+      if (result && result.results && result?.results?.[0]) {
+        const returnValue = result?.results?.[0].returnValues[0][0];
+        return bcs?.Bool?.parse(Uint8Array.from(returnValue as any));
       }
 
       return false;
     } catch (_error) {
-      this.logger.error(
-        `Failed to check registration status: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Failed to check registration status: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       return false;
     }
@@ -168,21 +168,21 @@ export class CredentialVerifier {
       const tx = new TransactionBlock();
       tx.moveCall({
         target: `${this.moduleAddress}::ai_verifier::revoke_credential`,
-        arguments: [tx.pure(provider)],
+        arguments: [tx.pure(provider as any)],
       });
 
-      await this.client.signAndExecuteTransaction({
+      await this?.client?.signAndExecuteTransaction({
         signer: keypair,
         transaction: tx,
       });
 
-      this.logger.info(`Credential for ${provider} revoked successfully`);
+      this?.logger?.info(`Credential for ${provider} revoked successfully`);
     } catch (_error) {
-      this.logger.error(
-        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.error(
+        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       throw new CLIError(
-        `Failed to revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'CREDENTIAL_REVOCATION_FAILED'
       );
     }
@@ -200,7 +200,7 @@ export class CredentialVerifier {
     const tx = new TransactionBlock();
     tx.moveCall({
       target: `${this.moduleAddress}::ai_verifier::verify_credential`,
-      arguments: [tx.pure(provider), tx.pure(keyHash)],
+      arguments: [tx.pure(provider as any), tx.pure(keyHash as any)],
     });
 
     return tx;
@@ -213,7 +213,7 @@ export class CredentialVerifier {
     // In a real implementation, this would use the user's actual keypair
     // For simplicity, we're creating a keypair from an environment variable
     const privateKey =
-      process.env.SUI_PRIVATE_KEY ||
+      process?.env?.SUI_PRIVATE_KEY ||
       '0000000000000000000000000000000000000000000000000000000000000001';
 
     return Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
@@ -224,6 +224,6 @@ export class CredentialVerifier {
    */
   private hashCredential(apiKey: string): string {
     // Create a SHA-256 hash of the API key
-    return createHash('sha256').update(apiKey).digest('hex');
+    return createHash('sha256').update(apiKey as any).digest('hex');
   }
 }

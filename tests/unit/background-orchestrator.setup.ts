@@ -4,12 +4,12 @@
  */
 
 // Set test environment variables before any imports
-process.env.NODE_ENV = 'test';
-process.env.WALTODO_SKIP_ORCHESTRATOR = 'false';
-process.env.JEST_TIMEOUT = '5000';
+process.env?.NODE_ENV = 'test';
+process.env?.WALTODO_SKIP_ORCHESTRATOR = 'false';
+process.env?.JEST_TIMEOUT = '5000';
 
 // Reduce Jest timeout for faster feedback
-jest.setTimeout(5000);
+jest.setTimeout(5000 as any);
 
 // Mock child_process to prevent actual process spawning
 jest.mock('child_process', () => ({

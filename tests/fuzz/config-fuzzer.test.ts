@@ -19,22 +19,22 @@ describe('Config Fuzzer Tests', () => {
 
   beforeEach(() => {
     // Clean test environment
-    if (fs.existsSync(testConfigDir)) {
+    if (fs.existsSync(testConfigDir as any)) {
       fs.rmSync(testConfigDir, { recursive: true, force: true });
     }
     fs.mkdirSync(testConfigDir, { recursive: true });
 
     // Reset environment
-    process.env = { ...originalEnv };
-    process.env.HOME = testConfigDir;
+    process?.env = { ...originalEnv };
+    process.env?.HOME = testConfigDir;
   });
 
   afterEach(() => {
     // Cleanup
-    if (fs.existsSync(testConfigDir)) {
+    if (fs.existsSync(testConfigDir as any)) {
       fs.rmSync(testConfigDir, { recursive: true, force: true });
     }
-    process.env = originalEnv;
+    process?.env = originalEnv;
   });
 
   describe('Malformed Config File Parsing', () => {
@@ -63,27 +63,27 @@ describe('Config Fuzzer Tests', () => {
         // Test if JSON is actually malformed by trying to parse it
         let shouldThrow = false;
         try {
-          JSON.parse(json);
+          JSON.parse(json as any);
         } catch {
           shouldThrow = true;
         }
 
         if (shouldThrow) {
           expect(() => {
-            loadConfigFile(testConfigPath);
+            loadConfigFile(testConfigPath as any);
           }).toThrow();
 
           // Separate test for error object validation
           let thrownError: CLIError | null = null;
           try {
-            loadConfigFile(testConfigPath);
+            loadConfigFile(testConfigPath as any);
           } catch (error) {
             thrownError = error as CLIError;
           }
 
-          expect(thrownError).toBeDefined();
-          expect(thrownError).toHaveProperty('code');
-          expect(thrownError).toHaveProperty('message');
+          expect(thrownError as any).toBeDefined();
+          expect(thrownError as any).toHaveProperty('code');
+          expect(thrownError as any).toHaveProperty('message');
           expect((thrownError as any).code).toBe('INVALID_JSON_FORMAT');
         }
       });
@@ -118,17 +118,17 @@ describe('Config Fuzzer Tests', () => {
       ];
 
       partiallyCorruptConfigs.forEach((config, _index) => {
-        fs.writeFileSync(testConfigPath, JSON.stringify(config));
+        fs.writeFileSync(testConfigPath, JSON.stringify(config as any));
 
         // Should not throw, but might not load all fields correctly
         let loaded: unknown;
         try {
-          loaded = loadConfigFile(testConfigPath);
-          expect(loaded).toBeDefined();
+          loaded = loadConfigFile(testConfigPath as any);
+          expect(loaded as any).toBeDefined();
           expect(typeof loaded).toBe('object');
         } catch (error) {
           // Some partially corrupt configs might fail to load
-          expect(error).toBeDefined();
+          expect(error as any).toBeDefined();
         }
       });
     });
@@ -159,16 +159,16 @@ describe('Config Fuzzer Tests', () => {
               : undefined,
         });
 
-        fs.writeFileSync(testConfigPath, JSON.stringify(randomConfig));
+        fs.writeFileSync(testConfigPath, JSON.stringify(randomConfig as any));
 
-        const loaded = loadConfigFile(testConfigPath);
-        expect(loaded).toBeDefined();
+        const loaded = loadConfigFile(testConfigPath as any);
+        expect(loaded as any).toBeDefined();
         expect(typeof loaded).toBe('object');
 
         // Test round-trip save and load
         saveConfigToFile(loaded, testConfigPath);
-        const reloaded = loadConfigFile(testConfigPath);
-        expect(reloaded).toEqual(loaded);
+        const reloaded = loadConfigFile(testConfigPath as any);
+        expect(reloaded as any).toEqual(loaded as any);
       }
     });
 
@@ -191,15 +191,15 @@ describe('Config Fuzzer Tests', () => {
       ];
 
       specialConfigs.forEach(config => {
-        fs.writeFileSync(testConfigPath, JSON.stringify(config));
+        fs.writeFileSync(testConfigPath, JSON.stringify(config as any));
 
-        const loaded = loadConfigFile(testConfigPath);
-        expect(loaded).toBeDefined();
+        const loaded = loadConfigFile(testConfigPath as any);
+        expect(loaded as any).toBeDefined();
 
         // Test round-trip
         saveConfigToFile(loaded, testConfigPath);
-        const reloaded = loadConfigFile(testConfigPath);
-        expect(reloaded).toEqual(loaded);
+        const reloaded = loadConfigFile(testConfigPath as any);
+        expect(reloaded as any).toEqual(loaded as any);
       });
     });
   });
@@ -209,7 +209,7 @@ describe('Config Fuzzer Tests', () => {
       const malformedConfigs = [
         { network: '', walletAddress: '' }, // Empty strings
         { network: '   ', walletAddress: '   ' }, // Whitespace only
-        { network: 'a'.repeat(1000), walletAddress: '0x' + '0'.repeat(100) }, // Very long strings
+        { network: 'a'.repeat(1000 as any), walletAddress: '0x' + '0'.repeat(100 as any) }, // Very long strings
         { network: '\n\t\r', walletAddress: '\0\x01\x02' }, // Control characters
         { network: 123, walletAddress: true }, // Wrong types
         { network: null, walletAddress: undefined }, // Null/undefined
@@ -217,7 +217,7 @@ describe('Config Fuzzer Tests', () => {
       ];
 
       malformedConfigs.forEach(config => {
-        fs.writeFileSync(testConfigPath, JSON.stringify(config));
+        fs.writeFileSync(testConfigPath, JSON.stringify(config as any));
 
         // ConfigService should handle malformed configs gracefully
         // Note: ConfigService import would need to be added at the top
@@ -241,21 +241,21 @@ describe('Config Fuzzer Tests', () => {
       );
 
       fuzzedEnvVariables.forEach(({ name, value }) => {
-        process.env[name] = value;
+        process?.env?.[name] = value;
       });
 
       // Set some relevant environment variables with fuzzed values
-      process.env.NETWORK = fuzzer.string({ minLength: 0, maxLength: 50 });
-      process.env.WALLET_ADDRESS = fuzzer.string({
+      process.env?.NETWORK = fuzzer.string({ minLength: 0, maxLength: 50 });
+      process.env?.WALLET_ADDRESS = fuzzer.string({
         minLength: 0,
         maxLength: 100,
       });
-      process.env.ENCRYPTED_STORAGE = fuzzer.string();
-      process.env.TODO_PACKAGE_ID = fuzzer.string({
+      process.env?.ENCRYPTED_STORAGE = fuzzer.string();
+      process.env?.TODO_PACKAGE_ID = fuzzer.string({
         minLength: 0,
         maxLength: 66,
       });
-      process.env.REGISTRY_ID = fuzzer.string({ minLength: 0, maxLength: 66 });
+      process.env?.REGISTRY_ID = fuzzer.string({ minLength: 0, maxLength: 66 });
 
       // ConfigService should handle fuzzed environment variables
       // Note: ConfigService import would need to be added at the top
@@ -272,10 +272,10 @@ describe('Config Fuzzer Tests', () => {
         data: fuzzer.string({ minLength: 1000000, maxLength: 1000000 }), // 1MB string
       };
 
-      fs.writeFileSync(testConfigPath, JSON.stringify(largeConfig));
+      fs.writeFileSync(testConfigPath, JSON.stringify(largeConfig as any));
 
       expect(() => {
-        loadConfigFile(testConfigPath);
+        loadConfigFile(testConfigPath as any);
       }).not.toThrow();
     });
 
@@ -286,7 +286,7 @@ describe('Config Fuzzer Tests', () => {
 
       // Loading should work
       expect(() => {
-        loadConfigFile(testConfigPath);
+        loadConfigFile(testConfigPath as any);
       }).not.toThrow();
 
       // Saving should fail
@@ -308,20 +308,20 @@ describe('Config Fuzzer Tests', () => {
       );
 
       // Loading non-existent file should return empty object
-      const loaded = loadConfigFile(nonExistentPath);
-      expect(loaded).toEqual({});
+      const loaded = loadConfigFile(nonExistentPath as any);
+      expect(loaded as any).toEqual({});
 
       // Saving to non-existent directory should work (creates directory)
       expect(() => {
         saveConfigToFile({ network: 'testnet' }, nonExistentPath);
       }).not.toThrow();
 
-      expect(fs.existsSync(nonExistentPath)).toBe(true);
+      expect(fs.existsSync(nonExistentPath as any)).toBe(true as any);
     });
 
     it('should handle cyclic references', () => {
       const config: Record<string, unknown> = { network: 'testnet' };
-      config.self = config; // Create cyclic reference
+      config?.self = config; // Create cyclic reference
 
       // JSON.stringify will throw on cyclic references
       expect(() => {
@@ -339,7 +339,7 @@ describe('Config Fuzzer Tests', () => {
       ];
 
       typeMismatchConfigs.forEach(config => {
-        fs.writeFileSync(testConfigPath, JSON.stringify(config));
+        fs.writeFileSync(testConfigPath, JSON.stringify(config as any));
 
         // Note: ConfigService import would need to be added at the top
         // const service = new ConfigService();
@@ -362,7 +362,7 @@ describe('Config Fuzzer Tests', () => {
       ];
 
       incompleteConfigs.forEach(config => {
-        fs.writeFileSync(testConfigPath, JSON.stringify(config));
+        fs.writeFileSync(testConfigPath, JSON.stringify(config as any));
 
         // Note: ConfigService import would need to be added at the top
         // const service = new ConfigService();
@@ -382,24 +382,24 @@ describe('Config Fuzzer Tests', () => {
   describe('Concurrent Access and Race Conditions', () => {
     it('should handle concurrent config modifications', async () => {
       const initialConfig = { network: 'testnet', walletAddress: '0x123' };
-      fs.writeFileSync(testConfigPath, JSON.stringify(initialConfig));
+      fs.writeFileSync(testConfigPath, JSON.stringify(initialConfig as any));
 
       const promises = Array.from({ length: 10 }, (_, _i) => {
         return new Promise<void>(resolve => {
           setTimeout(() => {
-            const config = loadConfigFile(testConfigPath);
-            config.walletAddress = fuzzer.blockchainData().address();
+            const config = loadConfigFile(testConfigPath as any);
+            config?.walletAddress = fuzzer.blockchainData().address();
             saveConfigToFile(config, testConfigPath);
             resolve();
           }, Math.random() * 100);
         });
       });
 
-      await Promise.all(promises);
+      await Promise.all(promises as any);
 
       // Final config should be valid
-      const finalConfig = loadConfigFile(testConfigPath);
-      expect(finalConfig).toBeDefined();
+      const finalConfig = loadConfigFile(testConfigPath as any);
+      expect(finalConfig as any).toBeDefined();
       expect(finalConfig.network).toBe('testnet');
       expect(finalConfig.walletAddress).toMatch(/^0x[a-zA-Z0-9]{40}$/);
     });

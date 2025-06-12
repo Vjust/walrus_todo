@@ -43,9 +43,9 @@ async function basicDeploymentExample() {
       force: false,
     };
 
-    const validation = await healthManager.validateDeployment(context);
+    const validation = await healthManager.validateDeployment(context as any);
     
-    if (validation.overallStatus === 'ready') {
+    if (validation?.overallStatus === 'ready') {
       console.log('✅ Ready for deployment');
       
       // Start monitoring
@@ -68,7 +68,7 @@ async function basicDeploymentExample() {
     }
 
   } catch (error) {
-    console.error('❌ Deployment failed:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Deployment failed:', error instanceof Error ? error.message : String(error as any));
   } finally {
     healthManager.destroy();
   }
@@ -90,29 +90,29 @@ async function standaloneHealthCheckExample() {
     const health = await healthChecker.checkHealth();
     
     console.log('📊 Network Health Report:');
-    console.log(`Overall healthy: ${health.overall.healthy}`);
-    console.log(`Health score: ${health.overall.score}/100`);
+    console.log(`Overall healthy: ${health?.overall?.healthy}`);
+    console.log(`Health score: ${health?.overall?.score}/100`);
     
     console.log('\n🔗 Sui Endpoints:');
-    console.log(`Primary: ${health.sui.primary.available ? '✅' : '❌'} ${health.sui.primary.url}`);
-    console.log(`Fallbacks: ${health.sui.fallbacks.filter(f => f.available).length}/${health.sui.fallbacks.length} available`);
+    console.log(`Primary: ${health?.sui?.primary.available ? '✅' : '❌'} ${health?.sui?.primary.url}`);
+    console.log(`Fallbacks: ${health?.sui?.fallbacks.filter(f => f.available).length}/${health?.sui?.fallbacks.length} available`);
     
     console.log('\n🌊 Walrus Endpoints:');
-    console.log(`Publisher: ${health.walrus.publisher.available ? '✅' : '❌'} ${health.walrus.publisher.url}`);
-    console.log(`Aggregator: ${health.walrus.aggregator.available ? '✅' : '❌'} ${health.walrus.aggregator.url}`);
+    console.log(`Publisher: ${health?.walrus?.publisher.available ? '✅' : '❌'} ${health?.walrus?.publisher.url}`);
+    console.log(`Aggregator: ${health?.walrus?.aggregator.available ? '✅' : '❌'} ${health?.walrus?.aggregator.url}`);
     
-    if (health.overall.issues.length > 0) {
+    if (health?.overall?.issues.length > 0) {
       console.log('\n⚠️ Issues detected:');
-      health.overall.issues.forEach(issue => console.log(`  • ${issue}`));
+      health?.overall?.issues.forEach(issue => console.log(`  • ${issue}`));
     }
     
-    if (health.overall.recommendations.length > 0) {
+    if (health?.overall?.recommendations.length > 0) {
       console.log('\n💡 Recommendations:');
-      health.overall.recommendations.forEach(rec => console.log(`  • ${rec}`));
+      health?.overall?.recommendations.forEach(rec => console.log(`  • ${rec}`));
     }
 
   } catch (error) {
-    console.error('❌ Health check failed:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Health check failed:', error instanceof Error ? error.message : String(error as any));
   }
 }
 
@@ -136,7 +136,7 @@ async function preValidationExample() {
     };
 
     console.log('🔍 Running pre-deployment validation...');
-    const summary = await validator.validate(context);
+    const summary = await validator.validate(context as any);
     
     console.log('\n📋 Validation Results:');
     console.log(`Status: ${summary.overallStatus}`);
@@ -153,11 +153,11 @@ async function preValidationExample() {
     const categories = ['network', 'wallet', 'configuration', 'dependencies', 'deployment'];
     
     for (const category of categories) {
-      const categoryResults = summary.results.filter(r => r.category === category);
+      const categoryResults = summary?.results?.filter(r => r?.category === category);
       if (categoryResults.length > 0) {
         console.log(`\n📂 ${category.toUpperCase()}:`);
         categoryResults.forEach(result => {
-          const icon = result.passed ? '✅' : (result.severity === 'error' ? '❌' : '⚠️');
+          const icon = result.passed ? '✅' : (result?.severity === 'error' ? '❌' : '⚠️');
           console.log(`  ${icon} ${result.name}: ${result.message}`);
           if (result.suggestion && !result.passed) {
             console.log(`     💡 ${result.suggestion}`);
@@ -167,13 +167,13 @@ async function preValidationExample() {
     }
     
     // Show recommendations
-    if (summary.recommendedActions.length > 0) {
+    if (summary?.recommendedActions?.length > 0) {
       console.log('\n💡 Recommended Actions:');
-      summary.recommendedActions.forEach(action => console.log(`  • ${action}`));
+      summary?.recommendedActions?.forEach(action => console.log(`  • ${action}`));
     }
 
   } catch (error) {
-    console.error('❌ Validation failed:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Validation failed:', error instanceof Error ? error.message : String(error as any));
   }
 }
 
@@ -199,19 +199,19 @@ async function customConfigExample() {
     },
     endpoints: {
       sui: {
-        primary: 'https://fullnode.testnet.sui.io:443',
+        primary: 'https://fullnode?.testnet?.sui.io:443',
         fallbacks: [
-          'https://sui-testnet-endpoint.blockvision.org/v1',
-          'https://sui-testnet.publicnode.com',
+          'https://sui-testnet-endpoint?.blockvision?.org/v1',
+          'https://sui-testnet?.publicnode?.com',
         ],
-        websocket: 'wss://fullnode.testnet.sui.io:443',
-        faucet: 'https://faucet.testnet.sui.io',
+        websocket: 'wss://fullnode?.testnet?.sui.io:443',
+        faucet: 'https://faucet?.testnet?.sui.io',
       },
       walrus: {
-        publisher: 'https://publisher-testnet.walrus.site',
-        aggregator: 'https://aggregator-testnet.walrus.site',
+        publisher: 'https://publisher-testnet?.walrus?.site',
+        aggregator: 'https://aggregator-testnet?.walrus?.site',
         fallbackPublishers: [
-          'https://walrus-testnet-publisher.nodes.guru',
+          'https://walrus-testnet-publisher?.nodes?.guru',
         ],
       },
     },
@@ -222,12 +222,12 @@ async function customConfigExample() {
 
     // Set up detailed event monitoring
     healthManager.on('metrics_updated', (metrics) => {
-      console.log(`📊 Metrics update - Network condition: ${metrics.networkCondition}, Error rate: ${(metrics.errorRate * 100).toFixed(1)}%`);
+      console.log(`📊 Metrics update - Network condition: ${metrics.networkCondition}, Error rate: ${(metrics.errorRate * 100).toFixed(1 as any)}%`);
     });
 
     healthManager.on('network_event', (event) => {
       const timestamp = new Date(event.timestamp).toISOString();
-      console.log(`🔔 [${timestamp}] ${event.severity.toUpperCase()}: ${event.message}`);
+      console.log(`🔔 [${timestamp}] ${event?.severity?.toUpperCase()}: ${event.message}`);
       if (event.endpoint) {
         console.log(`   Endpoint: ${event.endpoint}`);
       }
@@ -248,20 +248,20 @@ async function customConfigExample() {
     console.log('\n📊 Current Status:');
     console.log(`Phase: ${status.phase}`);
     console.log(`Readiness: ${status.deploymentReadiness}`);
-    console.log(`Network health score: ${status.networkHealth.overall?.score || 'N/A'}`);
+    console.log(`Network health score: ${status?.networkHealth?.overall?.score || 'N/A'}`);
     
     // Generate diagnostic report
     const report = healthManager.generateDiagnosticReport();
     if (report) {
       console.log('\n📋 Diagnostic Report:');
-      console.log(`Network condition: ${report.metrics.networkCondition}`);
-      console.log(`Active endpoints: ${report.metrics.activeEndpoints}`);
-      console.log(`Recent events: ${report.events.length}`);
+      console.log(`Network condition: ${report?.metrics?.networkCondition}`);
+      console.log(`Active endpoints: ${report?.metrics?.activeEndpoints}`);
+      console.log(`Recent events: ${report?.events?.length}`);
       console.log(`Estimated impact: ${report.estimatedImpact}`);
       
-      if (report.patterns.length > 0) {
+      if (report?.patterns?.length > 0) {
         console.log('\n🔍 Error Patterns:');
-        report.patterns.forEach(pattern => {
+        report?.patterns?.forEach(pattern => {
           console.log(`  • ${pattern.errorPattern}: ${pattern.frequency} occurrences`);
           console.log(`    💡 ${pattern.suggestion}`);
         });
@@ -269,7 +269,7 @@ async function customConfigExample() {
     }
 
   } catch (error) {
-    console.error('❌ Custom config example failed:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Custom config example failed:', error instanceof Error ? error.message : String(error as any));
   } finally {
     healthManager.destroy();
   }
@@ -291,20 +291,20 @@ async function quickHealthCheckExample() {
     };
 
     // Quick validation check
-    const quickCheck = await validator.quickValidate(context);
+    const quickCheck = await validator.quickValidate(context as any);
     
     if (quickCheck.ready) {
       console.log('✅ Quick check passed - system ready for deployment');
-      process.exit(0);
+      process.exit(0 as any);
     } else {
       console.log('❌ Quick check failed:');
-      quickCheck.issues.forEach(issue => console.log(`  • ${issue}`));
-      process.exit(1);
+      quickCheck?.issues?.forEach(issue => console.log(`  • ${issue}`));
+      process.exit(1 as any);
     }
 
   } catch (error) {
-    console.error('❌ Quick check failed:', error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    console.error('❌ Quick check failed:', error instanceof Error ? error.message : String(error as any));
+    process.exit(1 as any);
   }
 }
 
@@ -312,7 +312,7 @@ async function quickHealthCheckExample() {
  * Run examples based on command line argument
  */
 async function main() {
-  const example = process.argv[2] || '1';
+  const example = process?.argv?.[2] || '1';
 
   switch (example) {
     case '1':
@@ -342,7 +342,7 @@ async function main() {
 }
 
 // Run if called directly
-if (require.main === module) {
+if (require?.main === module) {
   main().catch(console.error);
 }
 

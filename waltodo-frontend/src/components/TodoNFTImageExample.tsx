@@ -14,7 +14,7 @@ export function TodoNFTImageExample() {
     },
     {
       // HTTP URL from Walrus aggregator
-      url: 'https://aggregator-testnet.walrus.site/v1/blobId987654321',
+      url: 'https://aggregator-testnet?.walrus?.site/v1/blobId987654321',
       alt: 'Todo NFT Example 2',
     },
     {

@@ -24,7 +24,7 @@ export function createMockAuditLogger(): MockAuditLogger {
   const mockLogEntries: unknown[] = [];
   let enabled = true;
 
-  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  const homeDir = process?.env?.HOME || process?.env?.USERPROFILE || '';
   const configDir = path.join(homeDir, '.config', 'walrus_todo');
   const logFilePath = path.join(configDir, 'audit.log');
 
@@ -44,16 +44,16 @@ export function createMockAuditLogger(): MockAuditLogger {
     const sanitizeObject = (obj: unknown): unknown => {
       if (typeof obj !== 'object' || obj === null) return obj;
 
-      const result: Record<string, unknown> = Array.isArray(obj) ? [] : {};
+      const result: Record<string, unknown> = Array.isArray(obj as any) ? [] : {};
 
-      for (const [key, value] of Object.entries(obj)) {
+      for (const [key, value] of Object.entries(obj as any)) {
         // Check if the key is sensitive
-        if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
+        if (sensitiveFields.some(field => key.toLowerCase().includes(field as any))) {
           result[key] = typeof value === 'string' ? '[REDACTED]' : null;
         }
         // Recurse for objects and arrays
         else if (typeof value === 'object' && value !== null) {
-          result[key] = sanitizeObject(value);
+          result[key] = sanitizeObject(value as any);
         }
         // Pass through non-sensitive primitives
         else {
@@ -69,7 +69,7 @@ export function createMockAuditLogger(): MockAuditLogger {
 
   const writeToFile = (entry: unknown): void => {
     try {
-      const line = JSON.stringify(entry) + '\n';
+      const line = JSON.stringify(entry as any) + '\n';
       fs.appendFileSync(logFilePath, line, { mode: 0o600 });
     } catch (error) {
       // Handle file write errors gracefully in tests
@@ -84,11 +84,11 @@ export function createMockAuditLogger(): MockAuditLogger {
       const entry = {
         eventType,
         timestamp: Date.now(),
-        ...sanitize(details),
+        ...sanitize(details as any),
       };
 
-      mockLogEntries.push(entry);
-      writeToFile(entry);
+      mockLogEntries.push(entry as any);
+      writeToFile(entry as any);
     }),
 
     getEntries: jest.fn().mockImplementation(() => {

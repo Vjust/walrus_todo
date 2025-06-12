@@ -74,8 +74,8 @@ const StatsSkeletonComponent: React.FC<StatsSkeletonProps> = ({
   );
 };
 
-export const StatsSkeleton = memo(StatsSkeletonComponent);
-StatsSkeleton.displayName = 'StatsSkeleton';
+export const StatsSkeleton = memo(StatsSkeletonComponent as any);
+StatsSkeleton?.displayName = 'StatsSkeleton';
 
 interface StatCardSkeletonProps {
   size: 'sm' | 'md' | 'lg';
@@ -158,8 +158,8 @@ const StatCardSkeletonComponent: React.FC<StatCardSkeletonProps> = ({
   );
 };
 
-const StatCardSkeleton = memo(StatCardSkeletonComponent);
-StatCardSkeleton.displayName = 'StatCardSkeleton';
+const StatCardSkeleton = memo(StatCardSkeletonComponent as any);
+StatCardSkeleton?.displayName = 'StatCardSkeleton';
 
 /**
  * KPI Dashboard Skeleton

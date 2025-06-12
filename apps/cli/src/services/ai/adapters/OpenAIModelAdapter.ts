@@ -57,7 +57,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
   ) {
     super(AIProvider.OPENAI, apiKey, modelName, options);
 
-    this.apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    this?.apiEndpoint = 'https://api?.openai?.com/v1/chat/completions';
 
     // Chat completion models need different API endpoints than older completion models
     if (
@@ -65,7 +65,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       !modelName.includes('instruct') &&
       !modelName.includes('turbo')
     ) {
-      this.apiEndpoint = 'https://api.openai.com/v1/completions';
+      this?.apiEndpoint = 'https://api?.openai?.com/v1/completions';
     }
   }
 
@@ -77,7 +77,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       const options = { ...this.defaultOptions, ...params.options };
       const resolvedPrompt = await this.resolvePrompt(params.prompt);
 
-      const isChatModel = this.apiEndpoint.includes('chat/completions');
+      const isChatModel = this?.apiEndpoint?.includes('chat/completions');
 
       const requestOptions: OpenAIAPIOptions = {
         model: this.modelName,
@@ -90,14 +90,14 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
 
       // Set the appropriate prompt format based on API endpoint
       if (isChatModel) {
-        requestOptions.messages = [
+        requestOptions?.messages = [
           {
             role: 'user',
             content: resolvedPrompt,
           },
         ];
       } else {
-        requestOptions.prompt = resolvedPrompt;
+        requestOptions?.prompt = resolvedPrompt;
       }
 
       // Use the executeRequest method for proper timeout and retry handling
@@ -110,7 +110,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestOptions),
+          body: JSON.stringify(requestOptions as any),
         },
         {
           timeout: options.timeout,
@@ -123,9 +123,9 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       // Extract content based on response format
       let content: string;
       if (isChatModel) {
-        content = data.choices[0]?.message?.content || '';
+        content = data?.choices?.[0]?.message?.content || '';
       } else {
-        content = data.choices[0]?.text || '';
+        content = data?.choices?.[0]?.text || '';
       }
 
       const aiResponse: AIResponse = {
@@ -134,15 +134,15 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         provider: this.provider,
         tokenUsage: data.usage
           ? {
-              prompt: data.usage.prompt_tokens,
-              completion: data.usage.completion_tokens,
-              total: data.usage.total_tokens,
+              prompt: data?.usage?.prompt_tokens,
+              completion: data?.usage?.completion_tokens,
+              total: data?.usage?.total_tokens,
             }
           : undefined,
         timestamp: Date.now(),
         metadata: {
           requestId: data.id,
-          finishReason: data.choices[0]?.finish_reason,
+          finishReason: data?.choices?.[0]?.finish_reason,
         },
       };
 
@@ -165,7 +165,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       // For structured responses, we modify the prompt to request JSON format
       const jsonPrompt = `${resolvedPrompt}\n\nYou must respond with a valid, parseable JSON object and nothing else.`;
 
-      const isChatModel = this.apiEndpoint.includes('chat/completions');
+      const isChatModel = this?.apiEndpoint?.includes('chat/completions');
 
       const requestOptions: OpenAIAPIOptions = {
         model: this.modelName,
@@ -178,7 +178,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
 
       // Set the appropriate prompt format based on API endpoint
       if (isChatModel) {
-        requestOptions.messages = [
+        requestOptions?.messages = [
           {
             role: 'system',
             content:
@@ -190,7 +190,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
           },
         ];
       } else {
-        requestOptions.prompt = jsonPrompt;
+        requestOptions?.prompt = jsonPrompt;
       }
 
       // Use the executeRequest method for proper timeout and retry handling
@@ -203,7 +203,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestOptions),
+          body: JSON.stringify(requestOptions as any),
         },
         {
           timeout: options.timeout,
@@ -216,9 +216,9 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       // Extract content based on response format
       let content: string;
       if (isChatModel) {
-        content = data.choices[0]?.message?.content || '';
+        content = data?.choices?.[0]?.message?.content || '';
       } else {
-        content = data.choices[0]?.text || '';
+        content = data?.choices?.[0]?.text || '';
       }
 
       const parsedResult = ResponseParser.parseJson<T>(content, {} as T);
@@ -229,15 +229,15 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         provider: this.provider,
         tokenUsage: data.usage
           ? {
-              prompt: data.usage.prompt_tokens,
-              completion: data.usage.completion_tokens,
-              total: data.usage.total_tokens,
+              prompt: data?.usage?.prompt_tokens,
+              completion: data?.usage?.completion_tokens,
+              total: data?.usage?.total_tokens,
             }
           : undefined,
         timestamp: Date.now(),
         metadata: {
           requestId: data.id,
-          finishReason: data.choices[0]?.finish_reason,
+          finishReason: data?.choices?.[0]?.finish_reason,
         },
       };
 
@@ -260,7 +260,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
     await this.enforceRateLimit();
 
     try {
-      const formattedPrompt = await promptTemplate.format(input);
+      const formattedPrompt = await promptTemplate.format(input as any);
 
       // Use the complete method internally
       return this.complete({

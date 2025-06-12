@@ -42,14 +42,14 @@ export function useSafeWallet() {
                 if (walletName.toLowerCase().includes('sui wallet')) {
                   walletName = 'Slush Wallet';
                 }
-                detected.push(walletName);
+                detected.push(walletName as any);
               }
             });
           }
         }
         
         // Fallback: Manual detection for specific wallet injections
-        if (detected.length === 0) {
+        if (detected?.length === 0) {
           // Check for Slush wallet (current official Sui wallet)
           if ((window as any).sui || (window as any).slush || (window as any).suiWallet) {
             detected.push('Slush Wallet');
@@ -102,7 +102,7 @@ export function useSafeWallet() {
     ];
     
     return () => {
-      timeouts.forEach(clearTimeout);
+      timeouts.forEach(clearTimeout as any);
     };
   }, [mounted]);
 

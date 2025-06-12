@@ -91,7 +91,7 @@ class ResourceMonitoringAnalyzer {
   private jobCompletionTimes: Map<string, number> = new Map();
 
   constructor(config: Partial<AnalysisConfig> = {}) {
-    this.config = {
+    this?.config = {
       monitoringDuration: 300000, // 5 minutes
       jobCreationRate: 0.5,       // 1 job every 2 seconds
       memoryThreshold: 0.8,       // 80%
@@ -99,28 +99,28 @@ class ResourceMonitoringAnalyzer {
       ...config
     };
 
-    this.logger = new Logger('ResourceAnalyzer');
+    this?.logger = new Logger('ResourceAnalyzer');
     this.setupEnvironment();
   }
 
   private setupEnvironment(): void {
     // Create output directory
-    if (!fs.existsSync(this.config.analysisOutputDir)) {
-      fs.mkdirSync(this.config.analysisOutputDir, { recursive: true });
+    if (!fs.existsSync(this?.config?.analysisOutputDir)) {
+      fs.mkdirSync(this?.config?.analysisOutputDir, { recursive: true });
     }
 
     // Initialize components
-    const testDir = path.join(this.config.analysisOutputDir, 'test-data');
-    this.orchestrator = new BackgroundCommandOrchestrator(testDir);
-    this.performanceMonitor = new PerformanceMonitor(path.join(testDir, 'performance'));
-    this.resourceManager = ResourceManager.getInstance({ autoDispose: false });
+    const testDir = path.join(this?.config?.analysisOutputDir, 'test-data');
+    this?.orchestrator = new BackgroundCommandOrchestrator(testDir as any);
+    this?.performanceMonitor = new PerformanceMonitor(path.join(testDir, 'performance'));
+    this?.resourceManager = ResourceManager.getInstance({ autoDispose: false });
 
     this.setupMonitoring();
   }
 
   private setupMonitoring(): void {
     // Monitor resource updates for interval analysis
-    this.orchestrator.on('resourceUpdate', (usage) => {
+    this?.orchestrator?.on('resourceUpdate', (usage) => {
       const now = Date.now();
       const interval = this.lastResourceUpdate > 0 ? now - this.lastResourceUpdate : 0;
       
@@ -134,7 +134,7 @@ class ResourceMonitoringAnalyzer {
       else if (usage.memory > 0.7) systemHealth = 'WARNING';
       
       // Check if throttling is active
-      const currentConcurrency = this.orchestrator['maxConcurrentJobs'];
+      const currentConcurrency = this?.orchestrator?.['maxConcurrentJobs'];
       const throttlingActive = currentConcurrency < 10; // Assuming 10 is the default max
       
       const metric: MonitoringMetrics = {
@@ -146,21 +146,21 @@ class ResourceMonitoringAnalyzer {
         systemHealth
       };
       
-      this.monitoringMetrics.push(metric);
-      this.lastResourceUpdate = now;
+      this?.monitoringMetrics?.push(metric as any);
+      this?.lastResourceUpdate = now;
     });
 
     // Monitor job lifecycle for performance analysis
-    this.orchestrator.on('jobStarted', (job) => {
-      this.jobCreationTimes.set(job.id, Date.now());
+    this?.orchestrator?.on('jobStarted', (job) => {
+      this?.jobCreationTimes?.set(job.id, Date.now());
     });
 
-    this.orchestrator.on('jobCompleted', (job) => {
-      this.jobCompletionTimes.set(job.id, Date.now());
+    this?.orchestrator?.on('jobCompleted', (job) => {
+      this?.jobCompletionTimes?.set(job.id, Date.now());
     });
 
-    this.orchestrator.on('jobFailed', (job) => {
-      this.jobCompletionTimes.set(job.id, Date.now());
+    this?.orchestrator?.on('jobFailed', (job) => {
+      this?.jobCompletionTimes?.set(job.id, Date.now());
     });
   }
 
@@ -168,47 +168,47 @@ class ResourceMonitoringAnalyzer {
    * Test 5-second monitoring intervals
    */
   async testMonitoringIntervals(): Promise<void> {
-    this.logger.info('Testing 5-second monitoring intervals...');
+    this?.logger?.info('Testing 5-second monitoring intervals...');
     
     const testDuration = 60000; // 1 minute
     const startTime = Date.now();
     
     // Reset metrics
-    this.monitoringMetrics = [];
-    this.lastResourceUpdate = 0;
+    this?.monitoringMetrics = [];
+    this?.lastResourceUpdate = 0;
     
     while (Date.now() - startTime < testDuration) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    this.logger.info(`Collected ${this.monitoringMetrics.length} monitoring intervals`);
+    this?.logger?.info(`Collected ${this?.monitoringMetrics?.length} monitoring intervals`);
   }
 
   /**
    * Test job throttling mechanisms
    */
   async testJobThrottling(): Promise<void> {
-    this.logger.info('Testing job throttling mechanisms...');
+    this?.logger?.info('Testing job throttling mechanisms...');
     
-    const initialConcurrency = this.orchestrator['maxConcurrentJobs'];
-    this.throttlingEvents = [];
+    const initialConcurrency = this?.orchestrator?.['maxConcurrentJobs'];
+    this?.throttlingEvents = [];
     
     // Create rapid burst of jobs to trigger throttling
     const burstPromises = [];
     for (let i = 0; i < 50; i++) {
       burstPromises.push(
-        this.orchestrator.executeInBackground('store', [`throttle-test-${i}.txt`], {})
+        this?.orchestrator?.executeInBackground('store', [`throttle-test-${i}.txt`], {})
           .catch(error => {
             // Expected for throttling
-            if (error.message.includes('concurrency limit')) {
+            if (error?.message?.includes('concurrency limit')) {
               const event: ThrottlingEvent = {
                 timestamp: Date.now(),
                 trigger: 'CONCURRENCY',
                 beforeConcurrency: initialConcurrency,
-                afterConcurrency: this.orchestrator['maxConcurrentJobs'],
+                afterConcurrency: this?.orchestrator?.['maxConcurrentJobs'],
                 resourceUsage: 0 // Will be updated by resource monitoring
               };
-              this.throttlingEvents.push(event);
+              this?.throttlingEvents?.push(event as any);
             }
             return null;
           })
@@ -220,7 +220,7 @@ class ResourceMonitoringAnalyzer {
       }
     }
     
-    await Promise.allSettled(burstPromises);
+    await Promise.allSettled(burstPromises as any);
     
     // Test memory-based throttling by simulating high memory usage
     const mockHighMemory = jest.spyOn(this.orchestrator as any, 'getCurrentResourceUsage')
@@ -234,9 +234,9 @@ class ResourceMonitoringAnalyzer {
     // Wait for next resource monitoring cycle
     await new Promise(resolve => setTimeout(resolve, 6000));
     
-    const postMemoryTest = this.orchestrator['maxConcurrentJobs'];
+    const postMemoryTest = this?.orchestrator?.['maxConcurrentJobs'];
     if (postMemoryTest < initialConcurrency) {
-      this.throttlingEvents.push({
+      this?.throttlingEvents?.push({
         timestamp: Date.now(),
         trigger: 'MEMORY',
         beforeConcurrency: initialConcurrency,
@@ -247,14 +247,14 @@ class ResourceMonitoringAnalyzer {
     
     mockHighMemory.mockRestore();
     
-    this.logger.info(`Recorded ${this.throttlingEvents.length} throttling events`);
+    this?.logger?.info(`Recorded ${this?.throttlingEvents?.length} throttling events`);
   }
 
   /**
    * Test memory leak detection
    */
   async testMemoryLeakDetection(): Promise<void> {
-    this.logger.info('Testing memory leak detection...');
+    this?.logger?.info('Testing memory leak detection...');
     
     const initialMemory = process.memoryUsage().heapUsed;
     const memorySnapshots = [initialMemory];
@@ -266,8 +266,8 @@ class ResourceMonitoringAnalyzer {
       // Create batch of jobs
       for (let i = 0; i < 10; i++) {
         try {
-          const jobId = await this.orchestrator.executeInBackground('store', [`leak-test-${batch}-${i}.txt`], {});
-          batchJobs.push(jobId);
+          const jobId = await this?.orchestrator?.executeInBackground('store', [`leak-test-${batch}-${i}.txt`], {});
+          batchJobs.push(jobId as any);
         } catch (error) {
           // Expected for concurrency limits
         }
@@ -275,7 +275,7 @@ class ResourceMonitoringAnalyzer {
       
       // Wait for batch completion with timeout
       await Promise.all(batchJobs.map(jobId => 
-        this.orchestrator.waitForJob(jobId, 5000).catch(() => {})
+        this?.orchestrator?.waitForJob(jobId, 5000).catch(() => {})
       ));
       
       // Force garbage collection
@@ -293,45 +293,45 @@ class ResourceMonitoringAnalyzer {
     const memoryGrowth = memorySnapshots[memorySnapshots.length - 1] - memorySnapshots[0];
     const avgGrowthPerBatch = memoryGrowth / 10;
     
-    this.logger.info(`Memory analysis: ${memoryGrowth} bytes total growth, ${avgGrowthPerBatch} bytes per batch`);
+    this?.logger?.info(`Memory analysis: ${memoryGrowth} bytes total growth, ${avgGrowthPerBatch} bytes per batch`);
   }
 
   /**
    * Test resource cleanup effectiveness
    */
   async testResourceCleanup(): Promise<void> {
-    this.logger.info('Testing resource cleanup effectiveness...');
+    this?.logger?.info('Testing resource cleanup effectiveness...');
     
     // Create resources
-    const resourcesBefore = this.resourceManager.getActiveResources().length;
+    const resourcesBefore = this?.resourceManager?.getActiveResources().length;
     
     // Create some test jobs
     const jobs = [];
     for (let i = 0; i < 5; i++) {
       try {
-        const jobId = await this.orchestrator.executeInBackground('store', [`cleanup-test-${i}.txt`], {});
-        jobs.push(jobId);
+        const jobId = await this?.orchestrator?.executeInBackground('store', [`cleanup-test-${i}.txt`], {});
+        jobs.push(jobId as any);
       } catch (error) {
         // Expected for concurrency limits
       }
     }
     
-    const resourcesAfter = this.resourceManager.getActiveResources().length;
+    const resourcesAfter = this?.resourceManager?.getActiveResources().length;
     
     // Test cleanup
-    await this.orchestrator.shutdown();
-    await this.resourceManager.disposeAll({ continueOnError: true });
+    await this?.orchestrator?.shutdown();
+    await this?.resourceManager?.disposeAll({ continueOnError: true });
     
-    const resourcesAfterCleanup = this.resourceManager.getActiveResources().length;
+    const resourcesAfterCleanup = this?.resourceManager?.getActiveResources().length;
     
-    this.logger.info(`Resources: Before=${resourcesBefore}, After=${resourcesAfter}, Post-cleanup=${resourcesAfterCleanup}`);
+    this?.logger?.info(`Resources: Before=${resourcesBefore}, After=${resourcesAfter}, Post-cleanup=${resourcesAfterCleanup}`);
   }
 
   /**
    * Run comprehensive analysis
    */
   async runComprehensiveAnalysis(): Promise<AnalysisResults> {
-    this.logger.info('Starting comprehensive resource monitoring analysis...');
+    this?.logger?.info('Starting comprehensive resource monitoring analysis...');
     
     const startTime = Date.now();
     
@@ -346,17 +346,17 @@ class ResourceMonitoringAnalyzer {
       const results = this.generateAnalysisResults();
       
       // Save results
-      this.saveAnalysisResults(results);
+      this.saveAnalysisResults(results as any);
       
       return results;
       
     } finally {
       // Cleanup
       try {
-        await this.orchestrator.shutdown();
-        await this.resourceManager.disposeAll({ continueOnError: true });
+        await this?.orchestrator?.shutdown();
+        await this?.resourceManager?.disposeAll({ continueOnError: true });
       } catch (error) {
-        this.logger.error('Cleanup failed:', error);
+        this?.logger?.error('Cleanup failed:', error);
       }
     }
   }
@@ -369,26 +369,26 @@ class ResourceMonitoringAnalyzer {
     
     const averageInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length || 0;
     const expectedInterval = 5000;
-    const intervalVariance = this.calculateVariance(intervals);
+    const intervalVariance = this.calculateVariance(intervals as any);
     const missedIntervals = intervals.filter(i => Math.abs(i - expectedInterval) > 1000).length;
     const accuracyPercentage = (1 - missedIntervals / intervals.length) * 100;
     
     // Analyze throttling effectiveness
-    const memoryTriggered = this.throttlingEvents.filter(e => e.trigger === 'MEMORY').length;
-    const concurrencyTriggered = this.throttlingEvents.filter(e => e.trigger === 'CONCURRENCY').length;
+    const memoryTriggered = this?.throttlingEvents?.filter(e => e?.trigger === 'MEMORY').length;
+    const concurrencyTriggered = this?.throttlingEvents?.filter(e => e?.trigger === 'CONCURRENCY').length;
     const avgResponseTime = this.calculateAverageResponseTime();
     
     // Analyze memory management
-    const memoryUsages = this.monitoringMetrics.map(m => m.resourceUsage.memory);
+    const memoryUsages = this?.monitoringMetrics?.map(m => m?.resourceUsage?.memory);
     const peakUsage = Math.max(...memoryUsages);
     const averageUsage = memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length;
     const leakDetected = this.detectMemoryLeak();
     
     // Analyze job management
-    const totalJobsCreated = this.jobCreationTimes.size;
-    const peakConcurrency = Math.max(...this.monitoringMetrics.map(m => m.resourceUsage.activeJobs));
+    const totalJobsCreated = this?.jobCreationTimes?.size;
+    const peakConcurrency = Math.max(...this?.monitoringMetrics?.map(m => m?.resourceUsage?.activeJobs));
     const averageQueueTime = this.calculateAverageQueueTime();
-    const completionRate = this.jobCompletionTimes.size / this.jobCreationTimes.size;
+    const completionRate = this?.jobCompletionTimes?.size / this?.jobCreationTimes?.size;
     
     // Determine overall health
     const overallHealth = this.assessOverallHealth(accuracyPercentage, peakUsage, completionRate);
@@ -401,11 +401,11 @@ class ResourceMonitoringAnalyzer {
         accuracyPercentage
       },
       throttlingEffectiveness: {
-        totalEvents: this.throttlingEvents.length,
+        totalEvents: this?.throttlingEvents?.length,
         memoryTriggered,
         concurrencyTriggered,
         averageResponseTime: avgResponseTime,
-        successRate: this.throttlingEvents.length > 0 ? 1 : 0
+        successRate: this?.throttlingEvents?.length > 0 ? 1 : 0
       },
       memoryManagement: {
         peakUsage,
@@ -425,7 +425,7 @@ class ResourceMonitoringAnalyzer {
   }
 
   private calculateVariance(values: number[]): number {
-    if (values.length === 0) return 0;
+    if (values?.length === 0) return 0;
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
     return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
@@ -437,7 +437,7 @@ class ResourceMonitoringAnalyzer {
   }
 
   private detectMemoryLeak(): boolean {
-    const memoryUsages = this.monitoringMetrics.map(m => m.resourceUsage.memory);
+    const memoryUsages = this?.monitoringMetrics?.map(m => m?.resourceUsage?.memory);
     if (memoryUsages.length < 10) return false;
     
     const early = memoryUsages.slice(0, 5);
@@ -454,7 +454,7 @@ class ResourceMonitoringAnalyzer {
     let count = 0;
     
     for (const [jobId, startTime] of this.jobCreationTimes) {
-      const endTime = this.jobCompletionTimes.get(jobId);
+      const endTime = this?.jobCompletionTimes?.get(jobId as any);
       if (endTime) {
         totalQueueTime += endTime - startTime;
         count++;
@@ -482,25 +482,25 @@ class ResourceMonitoringAnalyzer {
 
   private saveAnalysisResults(results: AnalysisResults): void {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = path.join(this.config.analysisOutputDir, `analysis-${timestamp}.json`);
-    const reportFilename = path.join(this.config.analysisOutputDir, `report-${timestamp}.txt`);
+    const filename = path.join(this?.config?.analysisOutputDir, `analysis-${timestamp}.json`);
+    const reportFilename = path.join(this?.config?.analysisOutputDir, `report-${timestamp}.txt`);
     
     // Save JSON results
     fs.writeFileSync(filename, JSON.stringify(results, null, 2));
     
     // Generate and save text report
-    const report = this.generateTextReport(results);
+    const report = this.generateTextReport(results as any);
     fs.writeFileSync(reportFilename, report);
     
-    this.logger.info(`Analysis results saved to: ${filename}`);
-    this.logger.info(`Text report saved to: ${reportFilename}`);
+    this?.logger?.info(`Analysis results saved to: ${filename}`);
+    this?.logger?.info(`Text report saved to: ${reportFilename}`);
   }
 
   private generateTextReport(results: AnalysisResults): string {
     const report = [];
     
     report.push('RESOURCE MONITORING ANALYSIS REPORT');
-    report.push('='.repeat(50));
+    report.push('='.repeat(50 as any));
     report.push('');
     
     // Overall health
@@ -509,49 +509,49 @@ class ResourceMonitoringAnalyzer {
     
     // Monitoring accuracy
     report.push('MONITORING ACCURACY:');
-    report.push(`  Average Interval: ${results.monitoringAccuracy.averageInterval.toFixed(0)}ms (expected: 5000ms)`);
-    report.push(`  Interval Variance: ${results.monitoringAccuracy.intervalVariance.toFixed(0)}ms²`);
-    report.push(`  Missed Intervals: ${results.monitoringAccuracy.missedIntervals}`);
-    report.push(`  Accuracy Percentage: ${results.monitoringAccuracy.accuracyPercentage.toFixed(1)}%`);
+    report.push(`  Average Interval: ${results?.monitoringAccuracy?.averageInterval.toFixed(0 as any)}ms (expected: 5000ms)`);
+    report.push(`  Interval Variance: ${results?.monitoringAccuracy?.intervalVariance.toFixed(0 as any)}ms²`);
+    report.push(`  Missed Intervals: ${results?.monitoringAccuracy?.missedIntervals}`);
+    report.push(`  Accuracy Percentage: ${results?.monitoringAccuracy?.accuracyPercentage.toFixed(1 as any)}%`);
     report.push('');
     
     // Throttling effectiveness
     report.push('THROTTLING EFFECTIVENESS:');
-    report.push(`  Total Events: ${results.throttlingEffectiveness.totalEvents}`);
-    report.push(`  Memory Triggered: ${results.throttlingEffectiveness.memoryTriggered}`);
-    report.push(`  Concurrency Triggered: ${results.throttlingEffectiveness.concurrencyTriggered}`);
-    report.push(`  Average Response Time: ${results.throttlingEffectiveness.averageResponseTime}ms`);
-    report.push(`  Success Rate: ${(results.throttlingEffectiveness.successRate * 100).toFixed(1)}%`);
+    report.push(`  Total Events: ${results?.throttlingEffectiveness?.totalEvents}`);
+    report.push(`  Memory Triggered: ${results?.throttlingEffectiveness?.memoryTriggered}`);
+    report.push(`  Concurrency Triggered: ${results?.throttlingEffectiveness?.concurrencyTriggered}`);
+    report.push(`  Average Response Time: ${results?.throttlingEffectiveness?.averageResponseTime}ms`);
+    report.push(`  Success Rate: ${(results?.throttlingEffectiveness?.successRate * 100).toFixed(1 as any)}%`);
     report.push('');
     
     // Memory management
     report.push('MEMORY MANAGEMENT:');
-    report.push(`  Peak Usage: ${(results.memoryManagement.peakUsage * 100).toFixed(1)}%`);
-    report.push(`  Average Usage: ${(results.memoryManagement.averageUsage * 100).toFixed(1)}%`);
-    report.push(`  Memory Leak Detected: ${results.memoryManagement.leakDetected ? 'YES' : 'NO'}`);
-    report.push(`  Cleanup Effectiveness: ${(results.memoryManagement.cleanupEffectiveness * 100).toFixed(1)}%`);
+    report.push(`  Peak Usage: ${(results?.memoryManagement?.peakUsage * 100).toFixed(1 as any)}%`);
+    report.push(`  Average Usage: ${(results?.memoryManagement?.averageUsage * 100).toFixed(1 as any)}%`);
+    report.push(`  Memory Leak Detected: ${results?.memoryManagement?.leakDetected ? 'YES' : 'NO'}`);
+    report.push(`  Cleanup Effectiveness: ${(results?.memoryManagement?.cleanupEffectiveness * 100).toFixed(1 as any)}%`);
     report.push('');
     
     // Job management
     report.push('JOB MANAGEMENT:');
-    report.push(`  Total Jobs Created: ${results.jobManagement.totalJobsCreated}`);
-    report.push(`  Peak Concurrency: ${results.jobManagement.peakConcurrency}`);
-    report.push(`  Average Queue Time: ${results.jobManagement.averageQueueTime.toFixed(0)}ms`);
-    report.push(`  Completion Rate: ${(results.jobManagement.completionRate * 100).toFixed(1)}%`);
+    report.push(`  Total Jobs Created: ${results?.jobManagement?.totalJobsCreated}`);
+    report.push(`  Peak Concurrency: ${results?.jobManagement?.peakConcurrency}`);
+    report.push(`  Average Queue Time: ${results?.jobManagement?.averageQueueTime.toFixed(0 as any)}ms`);
+    report.push(`  Completion Rate: ${(results?.jobManagement?.completionRate * 100).toFixed(1 as any)}%`);
     report.push('');
     
     // Recommendations
     report.push('RECOMMENDATIONS:');
-    if (results.monitoringAccuracy.accuracyPercentage < 90) {
+    if (results?.monitoringAccuracy?.accuracyPercentage < 90) {
       report.push('  - Improve monitoring interval accuracy');
     }
-    if (results.memoryManagement.peakUsage > 0.8) {
+    if (results?.memoryManagement?.peakUsage > 0.8) {
       report.push('  - Implement more aggressive memory management');
     }
-    if (results.jobManagement.completionRate < 0.9) {
+    if (results?.jobManagement?.completionRate < 0.9) {
       report.push('  - Investigate job failure causes');
     }
-    if (results.memoryManagement.leakDetected) {
+    if (results?.memoryManagement?.leakDetected) {
       report.push('  - Address potential memory leaks');
     }
     
@@ -570,20 +570,20 @@ async function main() {
     const results = await analyzer.runComprehensiveAnalysis();
     
     console.log('\nANALYSIS COMPLETE');
-    console.log('='.repeat(30));
+    console.log('='.repeat(30 as any));
     console.log(`Overall Health: ${results.overallHealth}`);
-    console.log(`Monitoring Accuracy: ${results.monitoringAccuracy.accuracyPercentage.toFixed(1)}%`);
-    console.log(`Memory Leak Detected: ${results.memoryManagement.leakDetected ? 'YES' : 'NO'}`);
-    console.log(`Job Completion Rate: ${(results.jobManagement.completionRate * 100).toFixed(1)}%`);
+    console.log(`Monitoring Accuracy: ${results?.monitoringAccuracy?.accuracyPercentage.toFixed(1 as any)}%`);
+    console.log(`Memory Leak Detected: ${results?.memoryManagement?.leakDetected ? 'YES' : 'NO'}`);
+    console.log(`Job Completion Rate: ${(results?.jobManagement?.completionRate * 100).toFixed(1 as any)}%`);
     
     // Exit with error code if critical issues found
-    if (results.overallHealth === 'CRITICAL' || results.memoryManagement.leakDetected) {
-      process.exit(1);
+    if (results?.overallHealth === 'CRITICAL' || results?.memoryManagement?.leakDetected) {
+      process.exit(1 as any);
     }
     
   } catch (error) {
     console.error('Analysis failed:', error);
-    process.exit(1);
+    process.exit(1 as any);
   }
 }
 
@@ -592,6 +592,6 @@ export { ResourceMonitoringAnalyzer };
 export type { AnalysisResults, MonitoringMetrics };
 
 // Run if called directly
-if (require.main === module) {
+if (require?.main === module) {
   main().catch(console.error);
 }

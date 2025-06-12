@@ -1,0 +1,4 @@
+CLI_AVAILABILITY_FAIL: CLI Test - Global CLI - Expected 0, got 127 (0s)
+CLI_AVAILABILITY_FAIL: CLI Test - Local Binary - Expected 0, got 127 (0s)
+CLI_AVAILABILITY_FAIL: CLI Test - Node.js Direct - Expected 0, got 1 (1s)
+CLI_AVAILABILITY_FAIL: CLI Test - pnpm Script - Expected 0, got 1 (0s)

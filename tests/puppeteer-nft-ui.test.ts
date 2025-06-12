@@ -42,19 +42,19 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       $$eval: jest.fn(),
     } as any;
 
-    (browser.newPage as jest.Mock).mockResolvedValue(page);
-    (puppeteer.launch as jest.Mock).mockResolvedValue(browser);
+    (browser.newPage as jest.Mock).mockResolvedValue(page as any);
+    (puppeteer.launch as jest.Mock).mockResolvedValue(browser as any);
   });
 
   beforeEach(async () => {
     jest.clearAllMocks();
 
     // Setup page defaults
-    (page.goto as jest.Mock).mockResolvedValue(undefined);
-    (page.waitForSelector as jest.Mock).mockResolvedValue(undefined);
-    (page.click as jest.Mock).mockResolvedValue(undefined);
-    (page.type as jest.Mock).mockResolvedValue(undefined);
-    (page.setViewport as jest.Mock).mockResolvedValue(undefined);
+    (page.goto as jest.Mock).mockResolvedValue(undefined as any);
+    (page.waitForSelector as jest.Mock).mockResolvedValue(undefined as any);
+    (page.click as jest.Mock).mockResolvedValue(undefined as any);
+    (page.type as jest.Mock).mockResolvedValue(undefined as any);
+    (page.setViewport as jest.Mock).mockResolvedValue(undefined as any);
   });
 
   afterAll(async () => {
@@ -70,7 +70,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.setViewport({ width: 1920, height: 1080 });
 
       // Wait for wallet connection prompt
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="wallet-connection-prompt"]');
 
       // Verify connection prompt is displayed
@@ -80,7 +80,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(promptText).toBe('Wallet Connection Required');
+      expect(promptText as any).toBe('Wallet Connection Required');
       expect(page.goto).toHaveBeenCalledWith(`${FRONTEND_URL}/blockchain`);
       expect(page.waitForSelector).toHaveBeenCalledWith(
         '[data-testid="wallet-connection-prompt"]'
@@ -91,18 +91,18 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.goto(`${FRONTEND_URL}/blockchain`);
 
       // Mock wallet connection button
-      (page.$ as jest.Mock).mockResolvedValue(true);
+      (page.$ as jest.Mock).mockResolvedValue(true as any);
       const connectButton = await page.$(
         '[data-testid="connect-wallet-button"]'
       );
 
-      expect(connectButton).toBeTruthy();
+      expect(connectButton as any).toBeTruthy();
 
       // Click connect button
       await page.click('[data-testid="connect-wallet-button"]');
 
       // Wait for modal to appear
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="wallet-connection-modal"]');
 
       expect(page.click).toHaveBeenCalledWith(
@@ -127,13 +127,13 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       ]);
 
       const walletOptions = await page.$$('[data-testid^="wallet-option-"]');
-      expect(walletOptions.length).toBeGreaterThan(0);
+      expect(walletOptions.length).toBeGreaterThan(0 as any);
 
       // Click on first wallet option
       await walletOptions[0].click();
 
       // Wait for connection success
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="wallet-connected-indicator"]');
 
       expect(page.waitForSelector).toHaveBeenCalledWith(
@@ -157,7 +157,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.goto(`${FRONTEND_URL}/blockchain`);
 
       // Wait for the main TodoNFT manager to load
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="todo-nft-manager"]');
 
       // Click on "Create TodoNFT" button
@@ -176,10 +176,10 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       );
       const submitButton = await page.$('[data-testid="create-todo-submit"]');
 
-      expect(titleInput).toBeTruthy();
-      expect(descriptionInput).toBeTruthy();
-      expect(prioritySelect).toBeTruthy();
-      expect(submitButton).toBeTruthy();
+      expect(titleInput as any).toBeTruthy();
+      expect(descriptionInput as any).toBeTruthy();
+      expect(prioritySelect as any).toBeTruthy();
+      expect(submitButton as any).toBeTruthy();
     });
 
     it('should fill out and submit NFT creation form', async () => {
@@ -207,7 +207,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.click('[data-testid="create-todo-submit"]');
 
       // Wait for transaction confirmation
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="transaction-success"]', {
         timeout: 30000,
       });
@@ -239,7 +239,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.click('[data-testid="create-todo-submit"]');
 
       // Wait for validation errors
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="validation-error-title"]');
 
       // Check error message
@@ -249,7 +249,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(errorText).toBe('Title is required');
+      expect(errorText as any).toBe('Title is required');
     });
   });
 
@@ -266,7 +266,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       ]);
 
       const nftItems = await page.$$('[data-testid^="todo-nft-item-"]');
-      expect(nftItems.length).toBe(3);
+      expect(nftItems.length).toBe(3 as any);
 
       // Verify NFT count display
       (page.$eval as jest.Mock).mockResolvedValue('Your TodoNFTs (3)');
@@ -275,7 +275,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(countText).toBe('Your TodoNFTs (3)');
+      expect(countText as any).toBe('Your TodoNFTs (3)');
     });
 
     it('should complete a TodoNFT', async () => {
@@ -288,17 +288,17 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       );
 
       // Wait for transaction confirmation
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="transaction-success"]');
 
       // Verify NFT is marked as completed
-      (page.$eval as jest.Mock).mockResolvedValue(true);
+      (page.$eval as jest.Mock).mockResolvedValue(true as any);
       const isCompleted = await page.$eval(
         '[data-testid="todo-nft-item-1"]',
-        (el: Element) => el.classList.contains('completed')
+        (el: Element) => el?.classList?.contains('completed')
       );
 
-      expect(isCompleted).toBe(true);
+      expect(isCompleted as any).toBe(true as any);
     });
 
     it('should edit a TodoNFT', async () => {
@@ -311,7 +311,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       );
 
       // Wait for inline edit mode
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="edit-title-input"]');
 
       // Clear and type new title
@@ -319,7 +319,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         const input = document.querySelector(
           '[data-testid="edit-title-input"]'
         ) as HTMLInputElement;
-        if (input) input.value = '';
+        if (input) input?.value = '';
       });
       await page.type('[data-testid="edit-title-input"]', 'Updated NFT Title');
 
@@ -356,7 +356,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       );
 
       // Wait for transaction confirmation
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="transaction-success"]');
 
       // Verify NFT is removed from list
@@ -366,7 +366,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       ]);
 
       const remainingNfts = await page.$$('[data-testid^="todo-nft-item-"]');
-      expect(remainingNfts.length).toBe(2);
+      expect(remainingNfts.length).toBe(2 as any);
     });
   });
 
@@ -382,7 +382,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.select('[data-testid="network-switcher"]', 'devnet');
 
       // Wait for network status update
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="network-status-devnet"]');
 
       // Verify network indicator
@@ -392,7 +392,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(networkStatus).toBe('devnet ✅');
+      expect(networkStatus as any).toBe('devnet ✅');
       expect(page.select).toHaveBeenCalledWith(
         '[data-testid="network-switcher"]',
         'devnet'
@@ -417,7 +417,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.click('[data-testid="create-todo-submit"]');
 
       // Wait for error message
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="error-message"]');
 
       // Verify error display
@@ -429,7 +429,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(errorText).toBe('Transaction failed: Insufficient gas');
+      expect(errorText as any).toBe('Transaction failed: Insufficient gas');
     });
 
     it('should handle network connectivity issues', async () => {
@@ -442,7 +442,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       });
 
       // Wait for offline indicator
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="offline-indicator"]');
 
       // Verify offline message
@@ -452,7 +452,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(offlineText).toBe('Network connection lost');
+      expect(offlineText as any).toBe('Network connection lost');
     });
   });
 
@@ -463,12 +463,12 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       await page.goto(`${FRONTEND_URL}/blockchain`);
 
       // Wait for mobile layout
-      (page.waitForSelector as jest.Mock).mockResolvedValue(true);
+      (page.waitForSelector as jest.Mock).mockResolvedValue(true as any);
       await page.waitForSelector('[data-testid="mobile-layout"]');
 
       // Verify mobile-specific elements
       const mobileMenu = await page.$('[data-testid="mobile-menu-button"]');
-      expect(mobileMenu).toBeTruthy();
+      expect(mobileMenu as any).toBeTruthy();
 
       expect(page.setViewport).toHaveBeenCalledWith({
         width: 375,
@@ -488,7 +488,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.getAttribute('data-layout')
       );
 
-      expect(layoutMode).toBe('tablet');
+      expect(layoutMode as any).toBe('tablet');
     });
   });
 
@@ -502,7 +502,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
       const loadTime = Date.now() - startTime;
 
       // Simulate that page loads within 3 seconds
-      expect(loadTime).toBeLessThan(3000);
+      expect(loadTime as any).toBeLessThan(3000 as any);
     });
 
     it('should handle large numbers of NFTs efficiently', async () => {
@@ -510,11 +510,11 @@ describe('Puppeteer NFT UI Automation Tests', () => {
 
       // Mock 100 NFTs
       (page.$$ as jest.Mock).mockResolvedValue(
-        new Array(100).fill({ textContent: 'NFT' })
+        new Array(100 as any).fill({ textContent: 'NFT' })
       );
 
       const nftItems = await page.$$('[data-testid^="todo-nft-item-"]');
-      expect(nftItems.length).toBe(100);
+      expect(nftItems.length).toBe(100 as any);
 
       // Verify virtualization or pagination is working
       (page.$eval as jest.Mock).mockResolvedValue('10'); // Items per page
@@ -523,7 +523,7 @@ describe('Puppeteer NFT UI Automation Tests', () => {
         (el: Element) => el.textContent
       );
 
-      expect(parseInt(visibleItems)).toBeLessThanOrEqual(50); // Should not render all 100 at once
+      expect(parseInt(visibleItems as any)).toBeLessThanOrEqual(50 as any); // Should not render all 100 at once
     });
   });
 });

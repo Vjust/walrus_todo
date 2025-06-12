@@ -98,12 +98,12 @@ export class DeploymentRecoveryManager {
     baseDirectory: string = path.join(process.cwd(), '.walrus-deployment'),
     options: Partial<RecoveryOptions> = {}
   ) {
-    this.logger = new Logger('DeploymentRecovery');
-    this.stateDirectory = path.join(baseDirectory, 'state');
-    this.checkpointDirectory = path.join(baseDirectory, 'checkpoints');
-    this.tempDirectory = path.join(baseDirectory, 'temp');
+    this?.logger = new Logger('DeploymentRecovery');
+    this?.stateDirectory = path.join(baseDirectory, 'state');
+    this?.checkpointDirectory = path.join(baseDirectory, 'checkpoints');
+    this?.tempDirectory = path.join(baseDirectory, 'temp');
     
-    this.recoveryOptions = {
+    this?.recoveryOptions = {
       maxRetries: 3,
       retryDelay: 5000,
       timeoutMs: 300000, // 5 minutes
@@ -127,8 +127,8 @@ export class DeploymentRecoveryManager {
     previousVersion?: { siteId: string; manifestBlobId: string }
   ): Promise<string> {
     const deploymentId = this.generateDeploymentId();
-    const files = await this.scanBuildDirectory(buildDirectory);
-    const totalSize = await this.calculateTotalSize(files);
+    const files = await this.scanBuildDirectory(buildDirectory as any);
+    const totalSize = await this.calculateTotalSize(files as any);
 
     const initialState: DeploymentState = {
       id: deploymentId,
@@ -155,7 +155,7 @@ export class DeploymentRecoveryManager {
       },
       metadata: {
         totalSize,
-        estimatedCost: await this.estimateDeploymentCost(totalSize),
+        estimatedCost: await this.estimateDeploymentCost(totalSize as any),
       },
       recovery: {
         canResume: true,
@@ -167,16 +167,16 @@ export class DeploymentRecoveryManager {
       errors: [],
     };
 
-    await this.saveDeploymentState(initialState);
+    await this.saveDeploymentState(initialState as any);
     await this.createCheckpoint(deploymentId, 'initialization', {
       filesToUpload: files,
       completedUploads: [],
       pendingTransactions: [],
     });
 
-    this.activeDeployments.set(deploymentId, initialState);
+    this?.activeDeployments?.set(deploymentId, initialState);
     
-    this.logger.info('Deployment initialized', {
+    this?.logger?.info('Deployment initialized', {
       deploymentId,
       siteName,
       totalFiles: files.length,
@@ -194,7 +194,7 @@ export class DeploymentRecoveryManager {
     updates: Partial<DeploymentState>,
     createCheckpoint: boolean = false
   ): Promise<void> {
-    const currentState = this.activeDeployments.get(deploymentId);
+    const currentState = this?.activeDeployments?.get(deploymentId as any);
     if (!currentState) {
       throw new CLIError(`Deployment ${deploymentId} not found`, 'DEPLOYMENT_NOT_FOUND');
     }
@@ -205,23 +205,23 @@ export class DeploymentRecoveryManager {
       lastUpdate: new Date().toISOString(),
     };
 
-    await this.saveDeploymentState(updatedState);
-    this.activeDeployments.set(deploymentId, updatedState);
+    await this.saveDeploymentState(updatedState as any);
+    this?.activeDeployments?.set(deploymentId, updatedState);
 
     if (createCheckpoint) {
       await this.createCheckpoint(deploymentId, 'state_update', {
-        filesToUpload: updatedState.walrusOperations.uploads
-          .filter(u => u.status === 'pending')
+        filesToUpload: updatedState?.walrusOperations?.uploads
+          .filter(u => u?.status === 'pending')
           .map(u => u.file),
-        completedUploads: updatedState.walrusOperations.uploads
-          .filter(u => u.status === 'completed')
+        completedUploads: updatedState?.walrusOperations?.uploads
+          .filter(u => u?.status === 'completed')
           .map(u => ({ file: u.file, blobId: u.blobId! })),
-        pendingTransactions: updatedState.walrusOperations.transactions
-          .filter(t => t.status === 'pending'),
+        pendingTransactions: updatedState?.walrusOperations?.transactions
+          .filter(t => t?.status === 'pending'),
       });
     }
 
-    this.logger.debug('Deployment state updated', { deploymentId, status: updatedState.status });
+    this?.logger?.debug('Deployment state updated', { deploymentId, status: updatedState.status });
   }
 
   /**
@@ -236,7 +236,7 @@ export class DeploymentRecoveryManager {
       recoverable?: boolean;
     }
   ): Promise<void> {
-    const state = this.activeDeployments.get(deploymentId);
+    const state = this?.activeDeployments?.get(deploymentId as any);
     if (!state) return;
 
     const errorRecord = {
@@ -247,11 +247,11 @@ export class DeploymentRecoveryManager {
       recoverable: error.recoverable !== false,
     };
 
-    state.errors.push(errorRecord);
+    state?.errors?.push(errorRecord as any);
     
     // Determine if deployment should be marked as failed
-    const criticalErrors = state.errors.filter(e => !e.recoverable).length;
-    const recentErrors = state.errors.filter(e => 
+    const criticalErrors = state?.errors?.filter(e => !e.recoverable).length;
+    const recentErrors = state?.errors?.filter(e => 
       Date.now() - new Date(e.timestamp).getTime() < 60000 // Last minute
     ).length;
 
@@ -262,7 +262,7 @@ export class DeploymentRecoveryManager {
       });
     }
 
-    this.logger.error('Deployment error recorded', {
+    this?.logger?.error('Deployment error recorded', {
       deploymentId,
       errorType: error.type,
       message: error.message,
@@ -273,23 +273,23 @@ export class DeploymentRecoveryManager {
    * Attempt to recover a failed deployment
    */
   async recoverDeployment(deploymentId: string): Promise<boolean> {
-    this.logger.info('Attempting deployment recovery', { deploymentId });
+    this?.logger?.info('Attempting deployment recovery', { deploymentId });
 
-    const state = this.activeDeployments.get(deploymentId);
+    const state = this?.activeDeployments?.get(deploymentId as any);
     if (!state) {
       throw new CLIError(`Deployment ${deploymentId} not found`, 'DEPLOYMENT_NOT_FOUND');
     }
 
-    if (!state.recovery.canResume) {
-      this.logger.warn('Deployment cannot be resumed', { deploymentId });
+    if (!state?.recovery?.canResume) {
+      this?.logger?.warn('Deployment cannot be resumed', { deploymentId });
       return false;
     }
 
     try {
       // Load the latest checkpoint
-      const checkpoint = await this.loadLatestCheckpoint(deploymentId);
+      const checkpoint = await this.loadLatestCheckpoint(deploymentId as any);
       if (!checkpoint) {
-        this.logger.warn('No checkpoint found for recovery', { deploymentId });
+        this?.logger?.warn('No checkpoint found for recovery', { deploymentId });
         return false;
       }
 
@@ -303,16 +303,16 @@ export class DeploymentRecoveryManager {
       const validUploads = await this.validatePartialUploads(deploymentId, checkpoint.completedUploads);
       
       // Update upload states based on validation
-      for (const upload of state.walrusOperations.uploads) {
-        const validUpload = validUploads.find(v => v.file === upload.file);
+      for (const upload of state?.walrusOperations?.uploads) {
+        const validUpload = validUploads.find(v => v?.file === upload.file);
         if (validUpload) {
-          upload.status = 'completed';
-          upload.blobId = validUpload.blobId;
-        } else if (upload.status === 'completed') {
+          upload?.status = 'completed';
+          upload?.blobId = validUpload.blobId;
+        } else if (upload?.status === 'completed') {
           // Previously completed upload is no longer valid
-          upload.status = 'pending';
-          upload.blobId = undefined;
-          upload.retryCount = 0;
+          upload?.status = 'pending';
+          upload?.blobId = undefined;
+          upload?.retryCount = 0;
         }
       }
 
@@ -326,23 +326,23 @@ export class DeploymentRecoveryManager {
         }
       }, true);
 
-      this.logger.info('Deployment recovery prepared', {
+      this?.logger?.info('Deployment recovery prepared', {
         deploymentId,
         validUploads: validUploads.length,
-        totalFiles: state.progress.totalFiles,
+        totalFiles: state?.progress?.totalFiles,
       });
 
       return true;
     } catch (error) {
-      this.logger.error('Deployment recovery failed', {
+      this?.logger?.error('Deployment recovery failed', {
         deploymentId,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
       
       await this.recordError(deploymentId, {
         type: 'config',
         message: 'Recovery attempt failed',
-        details: { error: error instanceof Error ? error.message : String(error) },
+        details: { error: error instanceof Error ? error.message : String(error as any) },
         recoverable: false,
       });
 
@@ -354,11 +354,11 @@ export class DeploymentRecoveryManager {
    * Rollback a deployment to previous version
    */
   async rollbackDeployment(deploymentId: string): Promise<boolean> {
-    this.logger.info('Attempting deployment rollback', { deploymentId });
+    this?.logger?.info('Attempting deployment rollback', { deploymentId });
 
-    const state = this.activeDeployments.get(deploymentId);
-    if (!state || !state.recovery.rollbackAvailable || !state.recovery.previousVersion) {
-      this.logger.warn('Rollback not available', { deploymentId });
+    const state = this?.activeDeployments?.get(deploymentId as any);
+    if (!state || !state?.recovery?.rollbackAvailable || !state?.recovery?.previousVersion) {
+      this?.logger?.warn('Rollback not available', { deploymentId });
       return false;
     }
 
@@ -367,7 +367,7 @@ export class DeploymentRecoveryManager {
 
       // Here you would implement the actual rollback logic
       // This might involve updating site configuration to point to previous version
-      const previousVersion = state.recovery.previousVersion;
+      const previousVersion = state?.recovery?.previousVersion;
       
       // Simulate rollback operation
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -381,22 +381,22 @@ export class DeploymentRecoveryManager {
         },
       });
 
-      this.logger.info('Deployment rolled back successfully', {
+      this?.logger?.info('Deployment rolled back successfully', {
         deploymentId,
         previousSiteId: previousVersion.siteId,
       });
 
       return true;
     } catch (error) {
-      this.logger.error('Rollback failed', {
+      this?.logger?.error('Rollback failed', {
         deploymentId,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
 
       await this.recordError(deploymentId, {
         type: 'blockchain',
         message: 'Rollback operation failed',
-        details: { error: error instanceof Error ? error.message : String(error) },
+        details: { error: error instanceof Error ? error.message : String(error as any) },
         recoverable: true,
       });
 
@@ -408,30 +408,30 @@ export class DeploymentRecoveryManager {
    * Clean up failed deployment resources
    */
   async cleanupDeployment(deploymentId: string, removePartialUploads: boolean = false): Promise<void> {
-    this.logger.info('Cleaning up deployment', { deploymentId, removePartialUploads });
+    this?.logger?.info('Cleaning up deployment', { deploymentId, removePartialUploads });
 
-    const state = this.activeDeployments.get(deploymentId);
+    const state = this?.activeDeployments?.get(deploymentId as any);
     if (!state) return;
 
     try {
       // Clean up temporary files
       const tempDeploymentDir = path.join(this.tempDirectory, deploymentId);
-      if (fs.existsSync(tempDeploymentDir)) {
+      if (fs.existsSync(tempDeploymentDir as any)) {
         fs.rmSync(tempDeploymentDir, { recursive: true, force: true });
       }
 
       // Clean up partial uploads if requested
       if (removePartialUploads) {
-        const completedUploads = state.walrusOperations.uploads.filter(u => u.status === 'completed');
+        const completedUploads = state?.walrusOperations?.uploads.filter(u => u?.status === 'completed');
         for (const upload of completedUploads) {
           if (upload.blobId) {
             try {
               // Here you would call Walrus delete API if supported
-              this.logger.debug('Would delete blob', { blobId: upload.blobId });
+              this?.logger?.debug('Would delete blob', { blobId: upload.blobId });
             } catch (deleteError) {
-              this.logger.warn('Failed to delete blob', {
+              this?.logger?.warn('Failed to delete blob', {
                 blobId: upload.blobId,
-                error: deleteError instanceof Error ? deleteError.message : String(deleteError),
+                error: deleteError instanceof Error ? deleteError.message : String(deleteError as any),
               });
             }
           }
@@ -440,23 +440,23 @@ export class DeploymentRecoveryManager {
 
       // Clean up state files
       const stateFile = path.join(this.stateDirectory, `${deploymentId}.json`);
-      if (fs.existsSync(stateFile)) {
-        fs.unlinkSync(stateFile);
+      if (fs.existsSync(stateFile as any)) {
+        fs.unlinkSync(stateFile as any);
       }
 
       // Clean up checkpoints
       const checkpointDir = path.join(this.checkpointDirectory, deploymentId);
-      if (fs.existsSync(checkpointDir)) {
+      if (fs.existsSync(checkpointDir as any)) {
         fs.rmSync(checkpointDir, { recursive: true, force: true });
       }
 
-      this.activeDeployments.delete(deploymentId);
+      this?.activeDeployments?.delete(deploymentId as any);
 
-      this.logger.info('Deployment cleanup completed', { deploymentId });
+      this?.logger?.info('Deployment cleanup completed', { deploymentId });
     } catch (error) {
-      this.logger.error('Cleanup failed', {
+      this?.logger?.error('Cleanup failed', {
         deploymentId,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error as any),
       });
     }
   }
@@ -465,22 +465,22 @@ export class DeploymentRecoveryManager {
    * List all active deployments
    */
   getActiveDeployments(): DeploymentState[] {
-    return Array.from(this.activeDeployments.values());
+    return Array.from(this?.activeDeployments?.values());
   }
 
   /**
    * Get deployment state by ID
    */
   getDeploymentState(deploymentId: string): DeploymentState | undefined {
-    return this.activeDeployments.get(deploymentId);
+    return this?.activeDeployments?.get(deploymentId as any);
   }
 
   /**
    * Check if deployment can be resumed
    */
   canResumeDeployment(deploymentId: string): boolean {
-    const state = this.activeDeployments.get(deploymentId);
-    return state?.recovery.canResume === true && 
+    const state = this?.activeDeployments?.get(deploymentId as any);
+    return state?.recovery?.canResume === true && 
            ['failed', 'pending'].includes(state.status);
   }
 
@@ -493,30 +493,30 @@ export class DeploymentRecoveryManager {
     totalFiles: number;
     currentOperation?: string;
   } | null {
-    const state = this.activeDeployments.get(deploymentId);
+    const state = this?.activeDeployments?.get(deploymentId as any);
     if (!state) return null;
 
-    const percentage = state.progress.totalFiles > 0 
-      ? (state.progress.uploadedFiles / state.progress.totalFiles) * 100 
+    const percentage = state?.progress?.totalFiles > 0 
+      ? (state?.progress?.uploadedFiles / state?.progress?.totalFiles) * 100 
       : 0;
 
     return {
-      percentage: Math.round(percentage),
-      uploadedFiles: state.progress.uploadedFiles,
-      totalFiles: state.progress.totalFiles,
-      currentOperation: state.progress.currentFile,
+      percentage: Math.round(percentage as any),
+      uploadedFiles: state?.progress?.uploadedFiles,
+      totalFiles: state?.progress?.totalFiles,
+      currentOperation: state?.progress?.currentFile,
     };
   }
 
   // Private helper methods
 
   private generateDeploymentId(): string {
-    return `deploy_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    return `deploy_${Date.now()}_${crypto.randomBytes(4 as any).toString('hex')}`;
   }
 
   private ensureDirectories(): void {
     for (const dir of [this.stateDirectory, this.checkpointDirectory, this.tempDirectory]) {
-      if (!fs.existsSync(dir)) {
+      if (!fs.existsSync(dir as any)) {
         fs.mkdirSync(dir, { recursive: true });
       }
     }
@@ -526,20 +526,20 @@ export class DeploymentRecoveryManager {
     const files: string[] = [];
     
     const scanDir = (dir: string, basePath: string = '') => {
-      const items = fs.readdirSync(dir);
+      const items = fs.readdirSync(dir as any);
       for (const item of items) {
         const fullPath = path.join(dir, item);
         const relativePath = path.join(basePath, item);
         
-        if (fs.statSync(fullPath).isDirectory()) {
+        if (fs.statSync(fullPath as any).isDirectory()) {
           scanDir(fullPath, relativePath);
         } else {
-          files.push(relativePath);
+          files.push(relativePath as any);
         }
       }
     };
 
-    scanDir(buildDirectory);
+    scanDir(buildDirectory as any);
     return files;
   }
 
@@ -565,18 +565,18 @@ export class DeploymentRecoveryManager {
     for (const file of stateFiles) {
       try {
         const stateData = fs.readFileSync(path.join(this.stateDirectory, file), 'utf8');
-        const state: DeploymentState = JSON.parse(stateData);
+        const state: DeploymentState = JSON.parse(stateData as any);
         
         // Only load deployments that are not completed
         if (state.status !== 'completed') {
-          this.activeDeployments.set(state.id, state);
+          this?.activeDeployments?.set(state.id, state);
         }
       } catch (error) {
-        this.logger.warn('Failed to load deployment state', { file, error });
+        this?.logger?.warn('Failed to load deployment state', { file, error });
       }
     }
 
-    this.logger.info('Loaded active deployments', { count: this.activeDeployments.size });
+    this?.logger?.info('Loaded active deployments', { count: this?.activeDeployments?.size });
   }
 
   private async createCheckpoint(
@@ -585,13 +585,13 @@ export class DeploymentRecoveryManager {
     checkpointData: Partial<DeploymentCheckpoint>
   ): Promise<void> {
     const checkpointDir = path.join(this.checkpointDirectory, deploymentId);
-    if (!fs.existsSync(checkpointDir)) {
+    if (!fs.existsSync(checkpointDir as any)) {
       fs.mkdirSync(checkpointDir, { recursive: true });
     }
 
     const checkpoint: DeploymentCheckpoint = {
       timestamp: new Date().toISOString(),
-      state: this.activeDeployments.get(deploymentId),
+      state: this?.activeDeployments?.get(deploymentId as any),
       filesToUpload: [],
       completedUploads: [],
       pendingTransactions: [],
@@ -604,21 +604,21 @@ export class DeploymentRecoveryManager {
 
   private async loadLatestCheckpoint(deploymentId: string): Promise<DeploymentCheckpoint | null> {
     const checkpointDir = path.join(this.checkpointDirectory, deploymentId);
-    if (!fs.existsSync(checkpointDir)) return null;
+    if (!fs.existsSync(checkpointDir as any)) return null;
 
-    const checkpointFiles = fs.readdirSync(checkpointDir)
+    const checkpointFiles = fs.readdirSync(checkpointDir as any)
       .filter(f => f.endsWith('.json'))
       .sort()
       .reverse();
 
-    if (checkpointFiles.length === 0) return null;
+    if (checkpointFiles?.length === 0) return null;
 
     try {
       const latestFile = path.join(checkpointDir, checkpointFiles[0]);
       const checkpointData = fs.readFileSync(latestFile, 'utf8');
-      return JSON.parse(checkpointData);
+      return JSON.parse(checkpointData as any);
     } catch (error) {
-      this.logger.error('Failed to load checkpoint', { deploymentId, error });
+      this?.logger?.error('Failed to load checkpoint', { deploymentId, error });
       return null;
     }
   }
@@ -633,9 +633,9 @@ export class DeploymentRecoveryManager {
       try {
         // Here you would verify the blob still exists and is valid
         // For now, we'll assume they're all valid
-        validUploads.push(upload);
+        validUploads.push(upload as any);
       } catch (error) {
-        this.logger.warn('Upload validation failed', {
+        this?.logger?.warn('Upload validation failed', {
           deploymentId,
           file: upload.file,
           blobId: upload.blobId,

@@ -54,7 +54,7 @@ describe('ExpiryMonitor', () => {
       }),
       toSuiAddress: jest.fn().mockReturnValue('mockAddress'),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
-      connect: jest.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined as any),
     },
     network: {
       environment: 'testnet' as const,
@@ -65,7 +65,7 @@ describe('ExpiryMonitor', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     mockDate = new Date('2025-01-01T00:00:00Z');
-    jest.setSystemTime(mockDate);
+    jest.setSystemTime(mockDate as any);
 
     _mockVaultManager = {
       getExpiringBlobs: jest.fn().mockReturnValue([]),
@@ -76,7 +76,7 @@ describe('ExpiryMonitor', () => {
     _mockWalrusClient = {
       getConfig: jest.fn().mockResolvedValue({
         network: 'testnet',
-        version: '1.0.0',
+        version: '1?.0?.0',
         maxSize: 1000000,
       }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
@@ -86,7 +86,7 @@ describe('ExpiryMonitor', () => {
       getBlobObject: jest
         .fn()
         .mockResolvedValue({ content: 'test', metadata: {} }),
-      verifyPoA: jest.fn().mockResolvedValue(true),
+      verifyPoA: jest.fn().mockResolvedValue(true as any),
       writeBlob: jest
         .fn()
         .mockResolvedValue({ blobId: 'blob1', blobObject: {} }),
@@ -97,9 +97,9 @@ describe('ExpiryMonitor', () => {
         created: new Date().toISOString(),
       }),
       storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
+        storageCost: BigInt(1000 as any),
+        writeCost: BigInt(500 as any),
+        totalCost: BigInt(1500 as any),
       }),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
         digest: 'mock-storage-tx',
@@ -121,7 +121,7 @@ describe('ExpiryMonitor', () => {
         .fn()
         .mockResolvedValue(['provider1', 'provider2']),
       getSuiBalance: jest.fn().mockResolvedValue('1000'),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
+      getBlobSize: jest.fn().mockResolvedValue(1024 as any),
       reset: jest.fn(),
     } as unknown as jest.MockedObject<WalrusClientExt>;
 
@@ -150,8 +150,8 @@ describe('ExpiryMonitor', () => {
   });
 
   test('should setup mock infrastructure correctly', () => {
-    expect(mockDate).toBeDefined();
+    expect(mockDate as any).toBeDefined();
     // Mock tests to be implemented when ExpiryMonitor is available
-    expect(true).toBe(true);
+    expect(true as any).toBe(true as any);
   });
 });

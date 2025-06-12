@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import { jobManager } from '../utils/PerformanceMonitor';
 import { backgroundDataRetriever } from '../utils/BackgroundDataRetriever';
 import chalk = require('chalk');
@@ -68,7 +68,7 @@ export default class StatusCommand extends BaseCommand {
   };
 
   async run() {
-    const { args, flags } = await this.parse(StatusCommand);
+    const { args, flags } = await this.parse(StatusCommand as any);
 
     // Handle data retrieval operation status
     if (flags.retrieval) {
@@ -77,7 +77,7 @@ export default class StatusCommand extends BaseCommand {
 
     // Handle summary mode
     if (flags.summary) {
-      return this.showJobsSummary(flags);
+      return this.showJobsSummary(flags as any);
     }
 
     // Determine job ID to check
@@ -85,7 +85,7 @@ export default class StatusCommand extends BaseCommand {
 
     if (!jobId && flags.latest) {
       const jobs = jobManager.getAllJobs();
-      if (jobs.length === 0) {
+      if (jobs?.length === 0) {
         this.info('No jobs found');
         return;
       }
@@ -112,7 +112,7 @@ export default class StatusCommand extends BaseCommand {
    * Show status of a single job
    */
   private async showJobStatus(jobId: string, flags: any): Promise<void> {
-    const job = jobManager.getJob(jobId);
+    const job = jobManager.getJob(jobId as any);
 
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
@@ -122,21 +122,21 @@ export default class StatusCommand extends BaseCommand {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration);
+    const durationStr = this.formatDuration(duration as any);
 
     // Status header
     this.section(`Job Status: ${jobId}`, this.getStatusDisplay(job.status));
 
     // Basic information
     const argsStr = Array.isArray(job.args)
-      ? job.args.join(' ')
+      ? job?.args?.join(' ')
       : job.args || '';
     this.log(`Command: ${chalk.cyan(job.command)} ${argsStr}`);
     this.log(`Status: ${this.getStatusDisplay(job.status)}`);
     this.log(
       `Progress: ${this.createProgressBarVisual(job.progress)} ${chalk.yellow(job.progress + '%')}`
     );
-    this.log(`Duration: ${chalk.yellow(durationStr)}`);
+    this.log(`Duration: ${chalk.yellow(durationStr as any)}`);
     this.log(`Started: ${chalk.dim(new Date(job.startTime).toLocaleString())}`);
 
     if (job.endTime) {
@@ -156,13 +156,13 @@ export default class StatusCommand extends BaseCommand {
       if (job.totalItems > 0) {
         const completionRate = (job.processedItems / job.totalItems) * 100;
         this.log(
-          `Completion Rate: ${chalk.yellow(completionRate.toFixed(1) + '%')}`
+          `Completion Rate: ${chalk.yellow(completionRate.toFixed(1 as any) + '%')}`
         );
       }
     }
 
     // Error information
-    if (job.status === 'failed' && job.errorMessage) {
+    if (job?.status === 'failed' && job.errorMessage) {
       this.log(`\n${chalk.red('Error Details:')}`);
       this.log(chalk.red(`  ${job.errorMessage}`));
     }
@@ -171,24 +171,24 @@ export default class StatusCommand extends BaseCommand {
     if (job.metadata && Object.keys(job.metadata).length > 0) {
       this.log(`\n${chalk.bold('Metadata:')}`);
       Object.entries(job.metadata).forEach(([key, value]) => {
-        this.log(`  ${chalk.dim(key)}: ${chalk.white(JSON.stringify(value))}`);
+        this.log(`  ${chalk.dim(key as any)}: ${chalk.white(JSON.stringify(value as any))}`);
       });
     }
 
     // Show logs if verbose or if job failed
-    if (flags.verbose || job.status === 'failed') {
+    if (flags.verbose || job?.status === 'failed') {
       this.showJobLogs(jobId, flags.limit);
     }
 
     // Show next steps based on status
-    this.showJobActions(job);
+    this.showJobActions(job as any);
   }
 
   /**
    * Show logs for a job
    */
   private showJobLogs(jobId: string, limit: number): void {
-    const logs = jobManager.readJobLog(jobId);
+    const logs = jobManager.readJobLog(jobId as any);
 
     if (!logs) {
       this.log(chalk.dim('\nNo logs available'));
@@ -201,16 +201,16 @@ export default class StatusCommand extends BaseCommand {
     this.log(
       chalk.bold(`\n📋 Recent Logs (${recentLogs.length}/${logLines.length}):`)
     );
-    this.log(chalk.gray('─'.repeat(60)));
+    this.log(chalk.gray('─'.repeat(60 as any)));
 
     recentLogs.forEach(line => {
       const timestampMatch = line.match(/^\[([^\]]+)\]/);
       if (timestampMatch) {
         const timestamp = timestampMatch[1];
         const message = line.substring(timestampMatch[0].length).trim();
-        this.log(`${chalk.dim(timestamp)} ${message}`);
+        this.log(`${chalk.dim(timestamp as any)} ${message}`);
       } else {
-        this.log(chalk.dim(line));
+        this.log(chalk.dim(line as any));
       }
     });
 
@@ -226,7 +226,7 @@ export default class StatusCommand extends BaseCommand {
   private showJobActions(job: any): void {
     this.log(chalk.bold('\n🔧 Available Actions:'));
 
-    if (job.status === 'running' || job.status === 'pending') {
+    if (job?.status === 'running' || job?.status === 'pending') {
       this.log(
         chalk.dim(
           `  waltodo cancel ${job.id}                 # Cancel this job`
@@ -239,7 +239,7 @@ export default class StatusCommand extends BaseCommand {
       );
     }
 
-    if (job.status === 'completed') {
+    if (job?.status === 'completed') {
       this.log(
         chalk.dim(
           `  waltodo status ${job.id} --verbose       # View detailed logs`
@@ -247,7 +247,7 @@ export default class StatusCommand extends BaseCommand {
       );
     }
 
-    if (job.status === 'failed') {
+    if (job?.status === 'failed') {
       this.log(
         chalk.dim(
           `  waltodo status ${job.id} --verbose       # View error details`
@@ -266,7 +266,7 @@ export default class StatusCommand extends BaseCommand {
    * Follow job progress in real-time
    */
   private async followJobProgress(jobId: string, flags: any): Promise<void> {
-    let job = jobManager.getJob(jobId);
+    let job = jobManager.getJob(jobId as any);
 
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
@@ -280,10 +280,10 @@ export default class StatusCommand extends BaseCommand {
     let lastStatus = '';
 
     const updateDisplay = () => {
-      job = jobManager.getJob(jobId);
+      job = jobManager.getJob(jobId as any);
       if (!job) {
         this.log(chalk.red('\n❌ Job no longer exists'));
-        process.exit(1);
+        process.exit(1 as any);
       }
 
       // Only update if progress or status changed
@@ -293,17 +293,17 @@ export default class StatusCommand extends BaseCommand {
         const duration = job.endTime
           ? job.endTime - job.startTime
           : Date.now() - job.startTime;
-        const durationStr = this.formatDuration(duration);
+        const durationStr = this.formatDuration(duration as any);
 
         // Clear line and show progress
-        process.stdout.clearLine(0);
-        process.stdout.cursorTo(0);
-        process.stdout.write(
+        process?.stdout?.clearLine(0 as any);
+        process?.stdout?.cursorTo(0 as any);
+        process?.stdout?.write(
           `${statusIcon} ${progressBar} ${job.progress}% | ${durationStr}`
         );
 
         if (job.processedItems !== undefined && job.totalItems !== undefined) {
-          process.stdout.write(
+          process?.stdout?.write(
             ` | Items: ${job.processedItems}/${job.totalItems}`
           );
         }
@@ -314,15 +314,15 @@ export default class StatusCommand extends BaseCommand {
 
       // Check if job is complete
       if (
-        job.status === 'completed' ||
-        job.status === 'failed' ||
-        job.status === 'cancelled'
+        job?.status === 'completed' ||
+        job?.status === 'failed' ||
+        job?.status === 'cancelled'
       ) {
-        process.stdout.write('\n\n');
+        process?.stdout?.write('\n\n');
 
-        if (job.status === 'completed') {
+        if (job?.status === 'completed') {
           this.log(chalk.green('✅ Job completed successfully!'));
-        } else if (job.status === 'failed') {
+        } else if (job?.status === 'failed') {
           this.log(chalk.red('❌ Job failed'));
           if (job.errorMessage) {
             this.log(chalk.red(`Error: ${job.errorMessage}`));
@@ -332,7 +332,7 @@ export default class StatusCommand extends BaseCommand {
         }
 
         // Show final summary
-        this.showJobStatus(jobId, { verbose: job.status === 'failed' });
+        this.showJobStatus(jobId, { verbose: job?.status === 'failed' });
         return;
       }
 
@@ -342,14 +342,14 @@ export default class StatusCommand extends BaseCommand {
 
     // Handle Ctrl+C gracefully
     process.on('SIGINT', () => {
-      process.stdout.write('\n\n');
+      process?.stdout?.write('\n\n');
       this.log(chalk.yellow('👋 Stopped following job progress'));
       this.log(
         chalk.dim(
           `Job is still running. Check status with: waltodo status ${jobId}`
         )
       );
-      process.exit(0);
+      process.exit(0 as any);
     });
 
     // Start following
@@ -364,7 +364,7 @@ export default class StatusCommand extends BaseCommand {
     flags: any
   ): Promise<void> {
     const status =
-      await backgroundDataRetriever.getRetrievalStatus(operationId);
+      await backgroundDataRetriever.getRetrievalStatus(operationId as any);
 
     if (!status) {
       throw new CLIError(
@@ -394,9 +394,9 @@ export default class StatusCommand extends BaseCommand {
     }
 
     if (status.bytesTransferred && status.totalBytes) {
-      const transferredMB = (status.bytesTransferred / 1024 / 1024).toFixed(2);
-      const totalMB = (status.totalBytes / 1024 / 1024).toFixed(2);
-      this.log(`Data: ${chalk.green(transferredMB)}/${chalk.blue(totalMB)} MB`);
+      const transferredMB = (status.bytesTransferred / 1024 / 1024).toFixed(2 as any);
+      const totalMB = (status.totalBytes / 1024 / 1024).toFixed(2 as any);
+      this.log(`Data: ${chalk.green(transferredMB as any)}/${chalk.blue(totalMB as any)} MB`);
     }
 
     if (status.chunksCompleted && status.totalChunks) {
@@ -406,9 +406,9 @@ export default class StatusCommand extends BaseCommand {
     }
 
     // Check if operation is complete and show result
-    if (status.phase === 'complete') {
+    if (status?.phase === 'complete') {
       const result =
-        await backgroundDataRetriever.getRetrievalResult(operationId);
+        await backgroundDataRetriever.getRetrievalResult(operationId as any);
 
       if (result) {
         this.log(chalk.bold('\n📊 Retrieval Result:'));
@@ -418,20 +418,20 @@ export default class StatusCommand extends BaseCommand {
 
         if (result.metadata) {
           this.log(
-            `Duration: ${chalk.yellow(this.formatDuration(result.metadata.duration))}`
+            `Duration: ${chalk.yellow(this.formatDuration(result?.metadata?.duration))}`
           );
           this.log(
-            `Items Retrieved: ${chalk.green(result.metadata.totalItems)}`
+            `Items Retrieved: ${chalk.green(result?.metadata?.totalItems)}`
           );
           this.log(
-            `Bytes Transferred: ${chalk.blue(this.formatBytes(result.metadata.bytesTransferred))}`
+            `Bytes Transferred: ${chalk.blue(this.formatBytes(result?.metadata?.bytesTransferred))}`
           );
 
-          if (result.metadata.errors.length > 0) {
-            this.log(`Errors: ${chalk.red(result.metadata.errors.length)}`);
+          if (result?.metadata?.errors.length > 0) {
+            this.log(`Errors: ${chalk.red(result?.metadata?.errors.length)}`);
             if (flags.verbose) {
               this.log(chalk.red('\nErrors:'));
-              result.metadata.errors.forEach(error => {
+              result?.metadata?.errors.forEach(error => {
                 this.log(chalk.red(`  • ${error}`));
               });
             }
@@ -439,7 +439,7 @@ export default class StatusCommand extends BaseCommand {
         }
 
         if (result.error) {
-          this.log(`Error: ${chalk.red(result.error.message)}`);
+          this.log(`Error: ${chalk.red(result?.error?.message)}`);
         }
       }
     }
@@ -451,18 +451,18 @@ export default class StatusCommand extends BaseCommand {
   private showJobsSummary(flags: any): void {
     const allJobs = jobManager.getAllJobs();
 
-    if (allJobs.length === 0) {
+    if (allJobs?.length === 0) {
       this.info('No jobs found');
       return;
     }
 
     // Group jobs by status
     const jobsByStatus = {
-      running: allJobs.filter(j => j.status === 'running'),
-      pending: allJobs.filter(j => j.status === 'pending'),
-      completed: allJobs.filter(j => j.status === 'completed'),
-      failed: allJobs.filter(j => j.status === 'failed'),
-      cancelled: allJobs.filter(j => j.status === 'cancelled'),
+      running: allJobs.filter(j => j?.status === 'running'),
+      pending: allJobs.filter(j => j?.status === 'pending'),
+      completed: allJobs.filter(j => j?.status === 'completed'),
+      failed: allJobs.filter(j => j?.status === 'failed'),
+      cancelled: allJobs.filter(j => j?.status === 'cancelled'),
     };
 
     this.section('Jobs Summary', `${allJobs.length} total jobs`);
@@ -471,17 +471,17 @@ export default class StatusCommand extends BaseCommand {
     const activeJobs = [...jobsByStatus.running, ...jobsByStatus.pending];
     if (activeJobs.length > 0) {
       this.log(chalk.bold(`\n🔄 Active Jobs (${activeJobs.length})`));
-      this.log(chalk.gray('─'.repeat(50)));
+      this.log(chalk.gray('─'.repeat(50 as any)));
 
       activeJobs.forEach(job => {
         const duration = Date.now() - job.startTime;
-        const durationStr = this.formatDuration(duration);
+        const durationStr = this.formatDuration(duration as any);
         const progressBar = this.createProgressBarVisual(job.progress, 15);
         const statusIcon = this.getStatusIcon(job.status);
 
         this.log(`${statusIcon} ${job.id} - ${chalk.cyan(job.command)}`);
         this.log(
-          `   ${progressBar} ${job.progress}% | ${chalk.gray(durationStr)}`
+          `   ${progressBar} ${job.progress}% | ${chalk.gray(durationStr as any)}`
         );
 
         if (job.processedItems !== undefined && job.totalItems !== undefined) {
@@ -495,23 +495,23 @@ export default class StatusCommand extends BaseCommand {
 
     // Show statistics
     this.log(chalk.bold('\n📊 Statistics'));
-    this.log(chalk.gray('─'.repeat(30)));
+    this.log(chalk.gray('─'.repeat(30 as any)));
     this.log(`Total Jobs: ${chalk.cyan(allJobs.length)}`);
 
-    if (jobsByStatus.running.length > 0) {
-      this.log(`Running: ${chalk.blue(jobsByStatus.running.length)}`);
+    if (jobsByStatus?.running?.length > 0) {
+      this.log(`Running: ${chalk.blue(jobsByStatus?.running?.length)}`);
     }
-    if (jobsByStatus.pending.length > 0) {
-      this.log(`Pending: ${chalk.yellow(jobsByStatus.pending.length)}`);
+    if (jobsByStatus?.pending?.length > 0) {
+      this.log(`Pending: ${chalk.yellow(jobsByStatus?.pending?.length)}`);
     }
-    if (jobsByStatus.completed.length > 0) {
-      this.log(`Completed: ${chalk.green(jobsByStatus.completed.length)}`);
+    if (jobsByStatus?.completed?.length > 0) {
+      this.log(`Completed: ${chalk.green(jobsByStatus?.completed?.length)}`);
     }
-    if (jobsByStatus.failed.length > 0) {
-      this.log(`Failed: ${chalk.red(jobsByStatus.failed.length)}`);
+    if (jobsByStatus?.failed?.length > 0) {
+      this.log(`Failed: ${chalk.red(jobsByStatus?.failed?.length)}`);
     }
-    if (jobsByStatus.cancelled.length > 0) {
-      this.log(`Cancelled: ${chalk.gray(jobsByStatus.cancelled.length)}`);
+    if (jobsByStatus?.cancelled?.length > 0) {
+      this.log(`Cancelled: ${chalk.gray(jobsByStatus?.cancelled?.length)}`);
     }
 
     // Show recent completed/failed jobs if verbose
@@ -522,12 +522,12 @@ export default class StatusCommand extends BaseCommand {
 
       if (recentJobs.length > 0) {
         this.log(chalk.bold('\n📋 Recent Completed Jobs'));
-        this.log(chalk.gray('─'.repeat(40)));
+        this.log(chalk.gray('─'.repeat(40 as any)));
 
         recentJobs.forEach(job => {
           const statusIcon = this.getStatusIcon(job.status);
           const duration = job.endTime ? job.endTime - job.startTime : 0;
-          const durationStr = this.formatDuration(duration);
+          const durationStr = this.formatDuration(duration as any);
           const timeAgo = job.endTime
             ? this.formatTimeAgo(Date.now() - job.endTime)
             : '';
@@ -557,9 +557,9 @@ export default class StatusCommand extends BaseCommand {
    * Get status display with color and icon
    */
   private getStatusDisplay(status: string): string {
-    const icon = this.getStatusIcon(status);
-    const color = this.getStatusColor(status);
-    return `${icon} ${color(status.charAt(0).toUpperCase() + status.slice(1))}`;
+    const icon = this.getStatusIcon(status as any);
+    const color = this.getStatusColor(status as any);
+    return `${icon} ${color(status.charAt(0 as any).toUpperCase() + status.slice(1 as any))}`;
   }
 
   /**
@@ -585,7 +585,7 @@ export default class StatusCommand extends BaseCommand {
     const icon = icons[phase as keyof typeof icons] || '❓';
     const color = colors[phase as keyof typeof colors] || chalk.white;
 
-    return `${icon} ${color(phase.charAt(0).toUpperCase() + phase.slice(1))}`;
+    return `${icon} ${color(phase.charAt(0 as any).toUpperCase() + phase.slice(1 as any))}`;
   }
 
   /**
@@ -639,8 +639,8 @@ export default class StatusCommand extends BaseCommand {
     const empty = width - filled;
     return (
       chalk.green('[') +
-      chalk.green('█'.repeat(filled)) +
-      chalk.gray('░'.repeat(empty)) +
+      chalk.green('█'.repeat(filled as any)) +
+      chalk.gray('░'.repeat(empty as any)) +
       chalk.green(']')
     );
   }
@@ -650,7 +650,7 @@ export default class StatusCommand extends BaseCommand {
    */
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -661,10 +661,10 @@ export default class StatusCommand extends BaseCommand {
    */
   private formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1 as any)} KB`;
     if (bytes < 1024 * 1024 * 1024)
-      return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-    return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
+      return `${(bytes / 1024 / 1024).toFixed(1 as any)} MB`;
+    return `${(bytes / 1024 / 1024 / 1024).toFixed(1 as any)} GB`;
   }
 
   /**

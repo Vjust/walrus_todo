@@ -61,7 +61,7 @@ export class BlobVerificationManager {
     private walrusClient: WalrusClientExt,
     signer?: TransactionSigner
   ) {
-    this.signer = signer || null;
+    this?.signer = signer || null;
   }
 
   protected async getTransactionSigner(): Promise<TransactionSigner> {
@@ -109,21 +109,21 @@ export class BlobVerificationManager {
     // Use only cryptographically secure, collision-resistant hash algorithms
     const checksums = {
       // SHA-256: Collision-resistant and widely standardized
-      sha256: crypto.createHash('sha256').update(data).digest('hex'),
+      sha256: crypto.createHash('sha256').update(data as any).digest('hex'),
       // SHA-512: Higher security variant with longer output
-      sha512: crypto.createHash('sha512').update(data).digest('hex'),
+      sha512: crypto.createHash('sha512').update(data as any).digest('hex'),
       // BLAKE2b: Modern, faster alternative with proven security
-      blake2b: crypto.createHash('blake2b512').update(data).digest('hex'),
+      blake2b: crypto.createHash('blake2b512').update(data as any).digest('hex'),
     };
 
     // Validate hash outputs for corruption detection
-    if (!checksums.sha256 || checksums.sha256.length !== 64) {
+    if (!checksums.sha256 || checksums?.sha256?.length !== 64) {
       throw new Error('SHA-256 hash generation failed - invalid output length');
     }
-    if (!checksums.sha512 || checksums.sha512.length !== 128) {
+    if (!checksums.sha512 || checksums?.sha512?.length !== 128) {
       throw new Error('SHA-512 hash generation failed - invalid output length');
     }
-    if (!checksums.blake2b || checksums.blake2b.length !== 128) {
+    if (!checksums.blake2b || checksums?.blake2b?.length !== 128) {
       throw new Error('BLAKE2b hash generation failed - invalid output length');
     }
 
@@ -148,7 +148,7 @@ export class BlobVerificationManager {
     providers: number;
   }> {
     try {
-      const blobInfo = await this.walrusClient.getBlobInfo(blobId);
+      const blobInfo = await this?.walrusClient?.getBlobInfo(blobId as any);
 
       if (!blobInfo) {
         throw new CLIError(
@@ -158,7 +158,7 @@ export class BlobVerificationManager {
       }
 
       // Get storage providers and availability proof
-      const providers = await this.walrusClient.getStorageProviders({ blobId });
+      const providers = await this?.walrusClient?.getStorageProviders({ blobId });
       const hasMinProviders =
         !options?.minProviders || providers.length >= options.minProviders;
 
@@ -175,7 +175,7 @@ export class BlobVerificationManager {
       // 2. Storage providers published their certificates AND
       // 3. Certificates were validated by Sui validators
       const poaComplete = options?.requirePoA
-        ? await this.walrusClient.verifyPoA({ blobId }).catch(() => false)
+        ? await this?.walrusClient?.verifyPoA({ blobId }).catch(() => false)
         : true;
 
       if (
@@ -228,7 +228,7 @@ export class BlobVerificationManager {
     metadata: BlobMetadata;
   }> {
     try {
-      const response = await this.walrusClient.getBlobMetadata({ blobId });
+      const response = await this?.walrusClient?.getBlobMetadata({ blobId });
       if (!response) {
         throw new CLIError(
           'Failed to retrieve blob metadata',
@@ -284,13 +284,13 @@ export class BlobVerificationManager {
       }> = [];
 
       // Type-safe attribute comparison
-      for (const [key, expectedValue] of Object.entries(expectedAttributes)) {
+      for (const [key, expectedValue] of Object.entries(expectedAttributes as any)) {
         const actualValue = actualAttributes[key];
         // Handle different types appropriately
         const match =
           typeof expectedValue === 'object'
-            ? JSON.stringify(actualValue) === JSON.stringify(expectedValue)
-            : String(actualValue) === String(expectedValue);
+            ? JSON.stringify(actualValue as any) === JSON.stringify(expectedValue as any)
+            : String(actualValue as any) === String(expectedValue as any);
 
         if (!match) {
           mismatches.push({
@@ -302,7 +302,7 @@ export class BlobVerificationManager {
       }
 
       return {
-        valid: mismatches.length === 0,
+        valid: mismatches?.length === 0,
         actualAttributes,
         mismatches,
         metadata,
@@ -313,7 +313,7 @@ export class BlobVerificationManager {
       const defaultMetadata = this.createDefaultMetadata();
       return {
         valid: false,
-        actualAttributes: {} as Record<string, never>,
+        actualAttributes: {} as Record<string, unknown>,
         mismatches: [],
         metadata: defaultMetadata,
       };
@@ -330,9 +330,9 @@ export class BlobVerificationManager {
   ): Promise<Buffer> {
     const retryManager = new RetryManager(
       [
-        'https://testnet.wal.app',
-        'https://testnet-replica1.wal.app',
-        'https://testnet-replica2.wal.app',
+        'https://testnet?.wal?.app',
+        'https://testnet-replica1?.wal?.app',
+        'https://testnet-replica2?.wal?.app',
       ],
       {
         timeout,
@@ -347,11 +347,11 @@ export class BlobVerificationManager {
     );
 
     return retryManager.execute(async (_node: NetworkNode) => {
-      const content = await this.walrusClient.readBlob({ blobId });
+      const content = await this?.walrusClient?.readBlob({ blobId });
       if (!content) {
         throw new Error('Retrieved content is empty');
       }
-      return Buffer.from(content);
+      return Buffer.from(content as any);
     }, 'blob retrieval');
   }
 
@@ -377,7 +377,7 @@ export class BlobVerificationManager {
     let attempts = 0;
     let lastError: Error | null = null;
     const expectedSize = expectedData.length;
-    const expectedChecksums = this.calculateChecksums(expectedData);
+    const expectedChecksums = this.calculateChecksums(expectedData as any);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       attempts = attempt;
@@ -401,7 +401,7 @@ export class BlobVerificationManager {
         }
 
         // 3. Verify checksums with tamper detection
-        const actualChecksums = this.calculateChecksums(retrievedContent);
+        const actualChecksums = this.calculateChecksums(retrievedContent as any);
 
         // Track tampering detection results
         const tamperingDetected = [];
@@ -433,12 +433,12 @@ export class BlobVerificationManager {
         }
 
         // Log successful verification for audit trail
-        if (tamperingDetected.length === 0) {
+        if (tamperingDetected?.length === 0) {
           logger.info(
-            `Hash verification PASSED: All ${Object.keys(expectedChecksums).length} checksums match`,
+            `Hash verification PASSED: All ${Object.keys(expectedChecksums as any).length} checksums match`,
             {
               blobId,
-              algorithms: Object.keys(expectedChecksums),
+              algorithms: Object.keys(expectedChecksums as any),
               verified: true,
             }
           );
@@ -458,7 +458,7 @@ export class BlobVerificationManager {
         };
 
         if (verifySmartContract) {
-          const systemState = await this.suiClient.getLatestSuiSystemState();
+          const systemState = await this?.suiClient?.getLatestSuiSystemState();
           if (
             !systemState ||
             typeof systemState !== 'object' ||
@@ -467,7 +467,7 @@ export class BlobVerificationManager {
             throw new Error('Failed to get system state or epoch information');
           }
           const { epoch } = systemState as { epoch: string };
-          const result = await this.verifySmartContract(blobId, BigInt(epoch), {
+          const result = await this.verifySmartContract(blobId, BigInt(epoch as any), {
             requirePoA: true,
             minProviders: 1,
           });
@@ -484,7 +484,7 @@ export class BlobVerificationManager {
 
           // Additional epoch validation if required
           if (requireEpochValidation) {
-            const systemState = await this.suiClient.getLatestSuiSystemState();
+            const systemState = await this?.suiClient?.getLatestSuiSystemState();
             if (
               !systemState ||
               typeof systemState !== 'object' ||
@@ -493,7 +493,7 @@ export class BlobVerificationManager {
               throw new Error('Epoch validation failed: Failed to get system state or epoch information');
             }
             const { epoch } = systemState as { epoch: string };
-            const currentEpoch = BigInt(epoch);
+            const currentEpoch = BigInt(epoch as any);
             
             // Validate that certification epoch is not in the future
             if (contractVerification.certificateEpoch !== undefined) {
@@ -520,7 +520,7 @@ export class BlobVerificationManager {
         // 5. Verify metadata if requested
         let metadataVerification = {
           valid: true,
-          actualAttributes: {} as Record<string, never>,
+          actualAttributes: {} as Record<string, unknown>,
           mismatches: [] as Array<{
             key: string;
             expected: unknown;
@@ -579,7 +579,7 @@ export class BlobVerificationManager {
             metadataVerification.metadata || this.createDefaultMetadata(),
         };
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
 
         if (attempt === maxRetries) {
           break;
@@ -627,12 +627,12 @@ export class BlobVerificationManager {
           timeout,
           attempts
         );
-        const actualChecksums = this.calculateChecksums(content);
+        const actualChecksums = this.calculateChecksums(content as any);
 
         // 2. Verify all checksums with tamper detection
         let tamperingDetectedInMonitoring = false;
 
-        for (const [algorithm, expectedHash] of Object.entries(checksums)) {
+        for (const [algorithm, expectedHash] of Object.entries(checksums as any)) {
           const actualHash =
             actualChecksums[algorithm as keyof typeof actualChecksums];
 
@@ -657,7 +657,7 @@ export class BlobVerificationManager {
         }
 
         // 3. Check certification status
-        const systemState = await this.suiClient.getLatestSuiSystemState();
+        const systemState = await this?.suiClient?.getLatestSuiSystemState();
         if (
           !systemState ||
           typeof systemState !== 'object' ||
@@ -668,7 +668,7 @@ export class BlobVerificationManager {
         const { epoch } = systemState as { epoch: string };
         const { certified } = await this.verifySmartContract(
           blobId,
-          BigInt(epoch),
+          BigInt(epoch as any),
           {
             requirePoA: false,
             minProviders: 1,
@@ -686,7 +686,7 @@ export class BlobVerificationManager {
         );
         return;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
 
         if (attempts === maxAttempts) {
           break;
@@ -734,23 +734,23 @@ export class BlobVerificationManager {
 
     // Upload the blob
     const signer = await this.getTransactionSigner();
-    const uploadResult = await this.walrusClient.writeBlob({
-      blob: new Uint8Array(data),
+    const uploadResult = await this?.walrusClient?.writeBlob({
+      blob: new Uint8Array(data as any),
       deletable: false,
       epochs: 52,
       signer,
     });
-    const blobId = uploadResult.blobObject.blob_id;
+    const blobId = uploadResult?.blobObject?.blob_id;
 
     // Calculate checksums
-    const checksums = this.calculateChecksums(data);
+    const checksums = this.calculateChecksums(data as any);
 
     // Get storage providers
-    const providers = await this.walrusClient.getStorageProviders({ blobId });
+    const providers = await this?.walrusClient?.getStorageProviders({ blobId });
     const hasMinProviders = providers.length >= minProviders;
 
     // Check initial certification status
-    const systemState = await this.suiClient.getLatestSuiSystemState();
+    const systemState = await this?.suiClient?.getLatestSuiSystemState();
     if (
       !systemState ||
       typeof systemState !== 'object' ||
@@ -761,7 +761,7 @@ export class BlobVerificationManager {
     const { epoch } = systemState as { epoch: string };
     let verificationResult = await this.verifySmartContract(
       blobId,
-      BigInt(epoch),
+      BigInt(epoch as any),
       {
         requirePoA: true,
         minProviders,
@@ -773,7 +773,7 @@ export class BlobVerificationManager {
       const startTime = Date.now();
       while (Date.now() - startTime < waitTimeout) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const newSystemState = await this.suiClient.getLatestSuiSystemState();
+        const newSystemState = await this?.suiClient?.getLatestSuiSystemState();
         if (
           !newSystemState ||
           typeof newSystemState !== 'object' ||
@@ -786,7 +786,7 @@ export class BlobVerificationManager {
         const { epoch: newEpoch } = newSystemState as { epoch: string };
         verificationResult = await this.verifySmartContract(
           blobId,
-          BigInt(newEpoch),
+          BigInt(newEpoch as any),
           {
             requirePoA: true,
             minProviders,

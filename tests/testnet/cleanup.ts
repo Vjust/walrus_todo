@@ -16,7 +16,7 @@ import { Logger } from '../../apps/cli/src/utils/Logger';
  * - Test todo entries
  */
 
-const execPromise = promisify(exec);
+const execPromise = promisify(exec as any);
 const logger = new Logger();
 
 /**
@@ -83,8 +83,8 @@ export async function cleanupTestFiles(
 
   logger.info('Starting test cleanup...', {
     dryRun: finalConfig.dryRun,
-    pathCount: finalConfig.paths.length,
-    patternCount: finalConfig.patterns.length,
+    pathCount: finalConfig?.paths?.length,
+    patternCount: finalConfig?.patterns?.length,
   });
 
   const projectRoot = path.resolve(__dirname, '../../');
@@ -95,19 +95,19 @@ export async function cleanupTestFiles(
   for (const pathPattern of finalConfig.paths) {
     try {
       const fullPath = path.join(projectRoot, pathPattern);
-      const files = await findFiles(fullPath);
+      const files = await findFiles(fullPath as any);
 
       for (const file of files) {
         try {
           if (finalConfig.dryRun) {
             logger.info(`[DRY RUN] Would remove: ${file}`);
           } else {
-            await fs.unlink(file);
+            await fs.unlink(file as any);
             logger.debug(`Removed file: ${file}`);
             filesRemoved++;
           }
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage = error instanceof Error ? error.message : String(error as any);
           logger.error(`Failed to remove file: ${file}`, errorMessage);
           errors++;
         }
@@ -144,7 +144,7 @@ export async function cleanupTestFiles(
 async function findFiles(pattern: string): Promise<string[]> {
   try {
     const { stdout } = await execPromise(`find . -name "${pattern}" -type f`);
-    return stdout.split('\n').filter(Boolean);
+    return stdout.split('\n').filter(Boolean as any);
   } catch (error: unknown) {
     return [];
   }
@@ -154,12 +154,12 @@ async function findFiles(pattern: string): Promise<string[]> {
  * Clean up test todos from local storage
  */
 async function cleanupTestTodos(patterns: string[]): Promise<void> {
-  const storageDir = path.join(process.env.HOME || '', '.walrus-todos');
+  const storageDir = path.join(process?.env?.HOME || '', '.walrus-todos');
   const todosFile = path.join(storageDir, 'todos.json');
 
   try {
     const data = await fs.readFile(todosFile, 'utf-8');
-    const todos = JSON.parse(data);
+    const todos = JSON.parse(data as any);
 
     // Filter out test todos based on patterns
     const filteredTodos = todos.filter((todo: Record<string, unknown>) => {
@@ -181,7 +181,7 @@ async function cleanupTestTodos(patterns: string[]): Promise<void> {
       logger.info(`Removed ${todos.length - filteredTodos.length} test todos`);
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
     logger.debug('No todos file found or error reading it:', errorMessage);
   }
 }
@@ -201,7 +201,7 @@ async function cleanupNetworkTestData(): Promise<void> {
 
     logger.info('Network test data cleanup completed');
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
     logger.error('Error cleaning up network test data:', errorMessage);
     throw error;
   }
@@ -243,7 +243,7 @@ async function cleanupSuiTestNFTs(): Promise<void> {
  * Main cleanup function for CLI usage
  */
 export async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+  const args = process?.argv?.slice(2 as any);
 
   const config: Partial<CleanupConfig> = {
     dryRun: args.includes('--dry-run'),
@@ -267,26 +267,26 @@ Examples:
   npm run test:cleanup --network          # Clean local and network test data
   npm run test:cleanup --network --dry-run # Preview network cleanup
 `);
-    process.exit(0);
+    process.exit(0 as any);
   }
 
   try {
-    await cleanupTestFiles(config);
+    await cleanupTestFiles(config as any);
     logger.info('Cleanup completed successfully');
-    process.exit(0);
+    process.exit(0 as any);
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
     logger.error('Cleanup failed:', errorMessage);
-    process.exit(1);
+    process.exit(1 as any);
   }
 }
 
 // Run if called directly
-if (require.main === module) {
+if (require?.main === module) {
   main().catch((error: unknown) => {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error as any);
     logger.error('Fatal error:', errorMessage);
-    process.exit(1);
+    process.exit(1 as any);
   });
 }
 

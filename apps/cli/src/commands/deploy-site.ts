@@ -6,7 +6,7 @@
  */
 
 import { Args, Flags } from '@oclif/core';
-import BaseCommand from '../base-command';
+import { BaseCommand } from '../base-command';
 import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
@@ -148,25 +148,25 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
   private progressInterval?: NodeJS.Timeout;
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(DeploySiteCommand);
+    const { args, flags } = await this.parse(DeploySiteCommand as any);
 
     // Initialize deployment service
     await this.initializeDeploymentService(flags.network as 'testnet' | 'mainnet');
 
     try {
       // Handle management commands first
-      if (flags['list-deployments']) {
+      if (flags?.["list-deployments"]) {
         await this.listDeployments();
         return;
       }
 
-      if (flags['deployment-status']) {
-        await this.showDeploymentStatus(flags['deployment-status']);
+      if (flags?.["deployment-status"]) {
+        await this.showDeploymentStatus(flags?.["deployment-status"]);
         return;
       }
 
-      if (flags['cleanup-old']) {
-        await this.cleanupOldDeployments(flags['cleanup-old']);
+      if (flags?.["cleanup-old"]) {
+        await this.cleanupOldDeployments(flags?.["cleanup-old"]);
         return;
       }
 
@@ -198,7 +198,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
       }
 
       throw new CLIError(
-        `Deployment failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Deployment failed: ${error instanceof Error ? error.message : String(error as any)}`,
         'DEPLOYMENT_FAILED'
       );
     }
@@ -208,17 +208,9 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     const walrusClient = new WalrusClient({ network });
     await walrusClient.init();
 
-    this.deploymentService = new WalrusSitesDeploymentService(
+    this?.deploymentService = new WalrusSitesDeploymentService(
       walrusClient,
-      process.env.SITE_BUILDER_PATH || 'site-builder',
-      {
-        maxRetries: 3,
-        retryDelay: 5000,
-        timeoutMs: 300000,
-        cleanupOnFailure: true,
-        enableRollback: true,
-        preservePartialUploads: true,
-      }
+      process?.env?.SITE_BUILDER_PATH || 'site-builder'
     );
 
     logger.debug('Deployment service initialized', { network });
@@ -236,7 +228,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
       );
     }
 
-    if (!flags['site-name']) {
+    if (!flags?.["site-name"]) {
       throw new CLIError(
         'Site name is required for new deployments. Use --site-name flag.',
         'MISSING_SITE_NAME'
@@ -246,15 +238,15 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     const buildDirectory = path.resolve(args.buildDirectory);
 
     this.log(chalk.blue('\n🚀 Starting Walrus Sites Deployment'));
-    this.log(chalk.blue('━'.repeat(50)));
-    this.log(chalk.cyan(`📁 Build Directory: ${chalk.bold(buildDirectory)}`));
-    this.log(chalk.cyan(`🏷️  Site Name:       ${chalk.bold(flags['site-name'])}`));
+    this.log(chalk.blue('━'.repeat(50 as any)));
+    this.log(chalk.cyan(`📁 Build Directory: ${chalk.bold(buildDirectory as any)}`));
+    this.log(chalk.cyan(`🏷️  Site Name:       ${chalk.bold(flags?.["site-name"])}`));
     this.log(chalk.cyan(`🌐 Network:         ${chalk.bold(flags.network)}`));
     this.log(chalk.cyan(`⏱️  Epochs:          ${chalk.bold(flags.epochs)}`));
-    this.log(chalk.blue('━'.repeat(50)));
+    this.log(chalk.blue('━'.repeat(50 as any)));
 
     // Warn for mainnet deployment
-    if (flags.network === 'mainnet') {
+    if (flags?.network === 'mainnet') {
       this.log(chalk.yellow('\n⚠️  WARNING: Deploying to MAINNET'));
       this.log(chalk.yellow('   This will use real WAL tokens and cannot be undone.'));
       this.log(chalk.dim('   Press Ctrl+C to cancel, or wait 3 seconds to continue...\n'));
@@ -262,59 +254,59 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     }
 
     const deploymentOptions = {
-      siteName: flags['site-name'],
+      siteName: flags?.["site-name"],
       network: flags.network,
       buildDirectory,
       force: flags.force,
-      skipValidation: flags['skip-validation'],
-      maxRetries: flags['max-retries'],
+      skipValidation: flags?.["skip-validation"],
+      maxRetries: flags?.["max-retries"],
       timeoutMs: flags.timeout * 1000,
-      enableRecovery: !flags['no-recovery'],
-      cleanupOnFailure: !flags['no-cleanup'],
+      enableRecovery: !flags?.["no-recovery"],
+      cleanupOnFailure: !flags?.["no-cleanup"],
       epochs: flags.epochs,
     };
 
-    const result = await this.deploymentService.deploy(deploymentOptions);
+    const result = await this?.deploymentService?.deploy(deploymentOptions as any);
 
     if (flags.progress) {
       this.startProgressTracking(result.deploymentId);
     }
 
     if (result.success) {
-      this.displaySuccessResult(result);
+      this.displaySuccessResult(result as any);
     } else {
-      this.displayFailureResult(result);
+      this.displayFailureResult(result as any);
     }
   }
 
   private async resumeDeployment(deploymentId: string, flags: Record<string, any>): Promise<void> {
     this.log(chalk.blue(`\n🔄 Resuming Deployment: ${deploymentId}`));
-    this.log(chalk.blue('━'.repeat(50)));
+    this.log(chalk.blue('━'.repeat(50 as any)));
 
     try {
-      const result = await this.deploymentService.resumeDeployment(deploymentId);
+      const result = await this?.deploymentService?.resumeDeployment(deploymentId as any);
       
       if (flags.progress) {
-        this.startProgressTracking(deploymentId);
+        this.startProgressTracking(deploymentId as any);
       }
 
       if (result.success) {
         this.log(chalk.green('\n✅ Deployment resumed and completed successfully!'));
-        this.displaySuccessResult(result);
+        this.displaySuccessResult(result as any);
       } else {
         this.log(chalk.red('\n❌ Deployment resume failed'));
-        this.displayFailureResult(result);
+        this.displayFailureResult(result as any);
       }
     } catch (error) {
-      this.log(chalk.red(`\n❌ Failed to resume deployment: ${error instanceof Error ? error.message : String(error)}`));
+      this.log(chalk.red(`\n❌ Failed to resume deployment: ${error instanceof Error ? error.message : String(error as any)}`));
     }
   }
 
   private async rollbackDeployment(deploymentId: string): Promise<void> {
     this.log(chalk.yellow(`\n↩️  Rolling back Deployment: ${deploymentId}`));
-    this.log(chalk.yellow('━'.repeat(50)));
+    this.log(chalk.yellow('━'.repeat(50 as any)));
 
-    const success = await this.deploymentService.rollbackDeployment(deploymentId);
+    const success = await this?.deploymentService?.rollbackDeployment(deploymentId as any);
     
     if (success) {
       this.log(chalk.green('✅ Deployment rolled back successfully!'));
@@ -326,17 +318,17 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
   private async cancelDeployment(deploymentId: string): Promise<void> {
     this.log(chalk.yellow(`\n🛑 Cancelling Deployment: ${deploymentId}`));
     
-    await this.deploymentService.cancelDeployment(deploymentId, true);
+    await this?.deploymentService?.cancelDeployment(deploymentId, true);
     this.log(chalk.yellow('✅ Deployment cancelled'));
   }
 
   private async listDeployments(): Promise<void> {
     this.log(chalk.blue('\n📋 Active and Recent Deployments'));
-    this.log(chalk.blue('━'.repeat(60)));
+    this.log(chalk.blue('━'.repeat(60 as any)));
 
-    const deployments = this.deploymentService.listDeployments();
+    const deployments = this?.deploymentService?.listDeployments();
     
-    if (deployments.length === 0) {
+    if (deployments?.length === 0) {
       this.log(chalk.dim('   No deployments found'));
       return;
     }
@@ -347,7 +339,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
         ? ` (${deployment.progress}%)` 
         : '';
       
-      this.log(`${statusColor(deployment.status.toUpperCase().padEnd(12))} ${deployment.deploymentId}`);
+      this.log(`${statusColor(deployment?.status?.toUpperCase().padEnd(12 as any))} ${deployment.deploymentId}`);
       this.log(`   Site: ${chalk.cyan(deployment.siteName)}`);
       this.log(`   Started: ${chalk.dim(new Date(deployment.startTime).toLocaleString())}${progressText}`);
       this.log('');
@@ -356,10 +348,10 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
 
   private async showDeploymentStatus(deploymentId: string): Promise<void> {
     this.log(chalk.blue(`\n📊 Deployment Status: ${deploymentId}`));
-    this.log(chalk.blue('━'.repeat(60)));
+    this.log(chalk.blue('━'.repeat(60 as any)));
 
-    const details = this.deploymentService.getDeploymentDetails(deploymentId);
-    const progress = this.deploymentService.getDeploymentProgress(deploymentId);
+    const details = this?.deploymentService?.getDeploymentDetails(deploymentId as any);
+    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
 
     if (!details) {
       this.log(chalk.red('Deployment not found'));
@@ -369,7 +361,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     // Basic information
     this.log(`${chalk.cyan('Site Name:')} ${details.siteName}`);
     this.log(`${chalk.cyan('Network:')} ${details.network}`);
-    this.log(`${chalk.cyan('Status:')} ${this.getStatusColor(details.status)(details.status.toUpperCase())}`);
+    this.log(`${chalk.cyan('Status:')} ${this.getStatusColor(details.status)(details?.status?.toUpperCase())}`);
     this.log(`${chalk.cyan('Started:')} ${new Date(details.startTime).toLocaleString()}`);
     this.log(`${chalk.cyan('Last Update:')} ${new Date(details.lastUpdate).toLocaleString()}`);
 
@@ -386,43 +378,43 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
 
     // Recovery information
     this.log('\n' + chalk.blue('Recovery Options:'));
-    this.log(`${chalk.cyan('Can Resume:')} ${details.recovery.canResume ? '✅' : '❌'}`);
-    this.log(`${chalk.cyan('Rollback Available:')} ${details.recovery.rollbackAvailable ? '✅' : '❌'}`);
-    this.log(`${chalk.cyan('Cleanup Required:')} ${details.recovery.cleanupRequired ? '⚠️' : '✅'}`);
+    this.log(`${chalk.cyan('Can Resume:')} ${details?.recovery?.canResume ? '✅' : '❌'}`);
+    this.log(`${chalk.cyan('Rollback Available:')} ${details?.recovery?.rollbackAvailable ? '✅' : '❌'}`);
+    this.log(`${chalk.cyan('Cleanup Required:')} ${details?.recovery?.cleanupRequired ? '⚠️' : '✅'}`);
 
     // Error information
-    if (details.errors.length > 0) {
+    if (details?.errors?.length > 0) {
       this.log('\n' + chalk.red('Recent Errors:'));
-      for (const error of details.errors.slice(-3)) {
+      for (const error of details?.errors?.slice(-3)) {
         this.log(`${chalk.red('•')} ${error.message} (${error.type})`);
         this.log(`  ${chalk.dim(new Date(error.timestamp).toLocaleString())}`);
       }
     }
 
     // Site information
-    if (details.metadata.siteId) {
+    if (details?.metadata?.siteId) {
       this.log('\n' + chalk.blue('Site Information:'));
-      this.log(`${chalk.cyan('Site ID:')} ${details.metadata.siteId}`);
-      if (details.metadata.manifestBlobId) {
-        this.log(`${chalk.cyan('Manifest Blob ID:')} ${details.metadata.manifestBlobId}`);
+      this.log(`${chalk.cyan('Site ID:')} ${details?.metadata?.siteId}`);
+      if (details?.metadata?.manifestBlobId) {
+        this.log(`${chalk.cyan('Manifest Blob ID:')} ${details?.metadata?.manifestBlobId}`);
       }
-      this.log(`${chalk.cyan('Total Size:')} ${this.formatBytes(details.metadata.totalSize)}`);
-      this.log(`${chalk.cyan('Estimated Cost:')} ${details.metadata.estimatedCost} WAL`);
+      this.log(`${chalk.cyan('Total Size:')} ${this.formatBytes(details?.metadata?.totalSize)}`);
+      this.log(`${chalk.cyan('Estimated Cost:')} ${details?.metadata?.estimatedCost} WAL`);
     }
   }
 
   private async cleanupOldDeployments(days: number): Promise<void> {
     this.log(chalk.blue(`\n🧹 Cleaning up deployments older than ${days} days`));
     
-    const cleaned = await this.deploymentService.cleanupOldDeployments(days);
+    const cleaned = await this?.deploymentService?.cleanupOldDeployments(days as any);
     this.log(chalk.green(`✅ Cleaned up ${cleaned} old deployments`));
   }
 
   private startProgressTracking(deploymentId: string): void {
     let lastProgress = -1;
     
-    this.progressInterval = setInterval(() => {
-      const progress = this.deploymentService.getDeploymentProgress(deploymentId);
+    this?.progressInterval = setInterval(() => {
+      const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
       
       if (progress && progress.progress !== lastProgress) {
         lastProgress = progress.progress;
@@ -430,11 +422,11 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
         const progressBar = this.createProgressBar(progress.progress);
         const currentFile = progress.currentFile ? ` | ${path.basename(progress.currentFile)}` : '';
         
-        process.stdout.write(`\r${progressBar} ${progress.progress}% (${progress.uploadedFiles}/${progress.totalFiles})${currentFile}`);
+        process?.stdout?.write(`\r${progressBar} ${progress.progress}% (${progress.uploadedFiles}/${progress.totalFiles})${currentFile}`);
         
         if (progress.progress >= 100) {
           clearInterval(this.progressInterval!);
-          process.stdout.write('\n');
+          process?.stdout?.write('\n');
         }
       }
     }, 1000);
@@ -443,15 +435,15 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
   private createProgressBar(progress: number, width: number = 30): string {
     const filled = Math.round((progress / 100) * width);
     const empty = width - filled;
-    return chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
+    return chalk.green('█'.repeat(filled as any)) + chalk.gray('░'.repeat(empty as any));
   }
 
   private displaySuccessResult(result: any): void {
     this.log(chalk.green('\n✅ Deployment Completed Successfully!'));
-    this.log(chalk.green('━'.repeat(50)));
+    this.log(chalk.green('━'.repeat(50 as any)));
     
     if (result.siteUrl) {
-      this.log(chalk.cyan(`🌐 Site URL: ${chalk.bold.underline(result.siteUrl)}`));
+      this.log(chalk.cyan(`🌐 Site URL: ${chalk?.bold?.underline(result.siteUrl)}`));
     }
     
     if (result.siteId) {
@@ -470,12 +462,12 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
 
   private displayFailureResult(result: any): void {
     this.log(chalk.red('\n❌ Deployment Failed'));
-    this.log(chalk.red('━'.repeat(50)));
+    this.log(chalk.red('━'.repeat(50 as any)));
     
     this.log(chalk.cyan(`📁 Files Processed: ${result.totalFiles || 0}`));
     this.log(chalk.cyan(`⏱️  Duration: ${Math.round(result.duration / 1000)}s`));
     
-    if (result.errors && result.errors.length > 0) {
+    if (result.errors && result?.errors?.length > 0) {
       this.log(chalk.red('\n🚨 Errors:'));
       for (const error of result.errors) {
         this.log(chalk.red(`   • ${error}`));
@@ -483,9 +475,9 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     }
     
     this.log(chalk.blue('\n💡 Recovery Options:'));
-    this.log(chalk.dim(`   • Resume: ${this.config.bin} deploy-site --resume ${result.deploymentId}`));
-    this.log(chalk.dim(`   • Status: ${this.config.bin} deploy-site --deployment-status ${result.deploymentId}`));
-    this.log(chalk.dim(`   • Cancel: ${this.config.bin} deploy-site --cancel ${result.deploymentId}`));
+    this.log(chalk.dim(`   • Resume: ${this?.config?.bin} deploy-site --resume ${result.deploymentId}`));
+    this.log(chalk.dim(`   • Status: ${this?.config?.bin} deploy-site --deployment-status ${result.deploymentId}`));
+    this.log(chalk.dim(`   • Cancel: ${this?.config?.bin} deploy-site --cancel ${result.deploymentId}`));
   }
 
   private getStatusColor(status: string): (text: string) => string {
@@ -503,7 +495,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any)) + ' ' + sizes[i];
   }
 }

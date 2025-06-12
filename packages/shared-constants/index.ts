@@ -12,8 +12,8 @@ export const SHARED_STORAGE_CONFIG = {
    * 2. Default: ~/Documents/Projects/walrus_todo/Todos
    */
   getTodosPath(): string {
-    if (process.env.TODO_DATA_PATH) {
-      return path.resolve(process.env.TODO_DATA_PATH);
+    if (process?.env?.TODO_DATA_PATH) {
+      return path.resolve(process?.env?.TODO_DATA_PATH);
     }
     
     // Default to project root Todos directory

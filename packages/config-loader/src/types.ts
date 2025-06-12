@@ -173,7 +173,7 @@ export type NetworkName = 'testnet' | 'devnet' | 'localnet' | 'mainnet';
  */
 export class ConfigValidationError extends Error {
   constructor(message: string, public field?: string) {
-    super(message);
+    super(message as any);
     this.name = 'ConfigValidationError';
   }
 }
@@ -183,7 +183,7 @@ export class ConfigValidationError extends Error {
  */
 export class ConfigLoadError extends Error {
   constructor(message: string, public cause?: Error) {
-    super(message);
+    super(message as any);
     this.name = 'ConfigLoadError';
   }
 }

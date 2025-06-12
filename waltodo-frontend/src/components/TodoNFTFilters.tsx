@@ -81,7 +81,7 @@ export default function TodoNFTFilters({
   availableTags = [],
   className = ''
 }: TodoNFTFiltersProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false as any);
   const [filters, setFilters] = useState<TodoNFTFilter>({});
   const [ownerInput, setOwnerInput] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -96,29 +96,29 @@ export default function TodoNFTFilters({
 
   // Load saved filters on mount
   useEffect(() => {
-    if (mounted && isStorageLoaded && Object.keys(savedFilters).length > 0) {
+    if (mounted && isStorageLoaded && Object.keys(savedFilters as any).length > 0) {
       try {
         // Restore dates if present
         if (savedFilters.dateRange) {
-          if (savedFilters.dateRange.start) {
-            const startDate = new Date(savedFilters.dateRange.start);
+          if (savedFilters?.dateRange?.start) {
+            const startDate = new Date(savedFilters?.dateRange?.start);
             setStartDate(format(startDate, 'yyyy-MM-dd'));
           }
-          if (savedFilters.dateRange.end) {
-            const endDate = new Date(savedFilters.dateRange.end);
+          if (savedFilters?.dateRange?.end) {
+            const endDate = new Date(savedFilters?.dateRange?.end);
             setEndDate(format(endDate, 'yyyy-MM-dd'));
           }
         }
         // Restore other fields
         if (savedFilters.ownerAddress) {setOwnerInput(savedFilters.ownerAddress);}
         if (savedFilters.storageSizeRange) {
-          if (savedFilters.storageSizeRange.min) {setMinSize(String(savedFilters.storageSizeRange.min));}
-          if (savedFilters.storageSizeRange.max) {setMaxSize(String(savedFilters.storageSizeRange.max));}
+          if (savedFilters?.storageSizeRange?.min) {setMinSize(String(savedFilters?.storageSizeRange?.min));}
+          if (savedFilters?.storageSizeRange?.max) {setMaxSize(String(savedFilters?.storageSizeRange?.max));}
         }
         if (savedFilters.tags) {setSelectedTags(savedFilters.tags);}
         if (savedFilters.priorities) {setSelectedPriorities(savedFilters.priorities);}
         
-        setFilters(savedFilters);
+        setFilters(savedFilters as any);
       } catch (error) {
         console.error('Failed to load saved filters:', error);
       }
@@ -128,9 +128,9 @@ export default function TodoNFTFilters({
   // Save filters to localStorage and notify parent
   useEffect(() => {
     if (mounted && isStorageLoaded) {
-      setSavedFilters(filters);
+      setSavedFilters(filters as any);
     }
-    onFilterChange(filters);
+    onFilterChange(filters as any);
   }, [filters, onFilterChange, mounted, isStorageLoaded, setSavedFilters]);
 
   // Calculate active filter count
@@ -139,8 +139,8 @@ export default function TodoNFTFilters({
     if (filters.ownerAddress) {count++;}
     if (filters.dateRange?.start || filters.dateRange?.end) {count++;}
     if (filters.storageSizeRange?.min || filters.storageSizeRange?.max) {count++;}
-    if (filters.tags && filters.tags.length > 0) {count++;}
-    if (filters.priorities && filters.priorities.length > 0) {count++;}
+    if (filters.tags && filters?.tags?.length > 0) {count++;}
+    if (filters.priorities && filters?.priorities?.length > 0) {count++;}
     return count;
   }, [filters]);
 
@@ -149,15 +149,15 @@ export default function TodoNFTFilters({
   };
 
   const applyPreset = (preset: FilterPreset) => {
-    const presetFilters = preset.apply(currentUserAddress);
-    setFilters(presetFilters);
+    const presetFilters = preset.apply(currentUserAddress as any);
+    setFilters(presetFilters as any);
     
     // Update input fields
     setOwnerInput(presetFilters.ownerAddress || '');
-    setStartDate(presetFilters.dateRange?.start ? format(presetFilters.dateRange.start, 'yyyy-MM-dd') : '');
-    setEndDate(presetFilters.dateRange?.end ? format(presetFilters.dateRange.end, 'yyyy-MM-dd') : '');
-    setMinSize(presetFilters.storageSizeRange?.min ? String(presetFilters.storageSizeRange.min) : '');
-    setMaxSize(presetFilters.storageSizeRange?.max ? String(presetFilters.storageSizeRange.max) : '');
+    setStartDate(presetFilters.dateRange?.start ? format(presetFilters?.dateRange?.start, 'yyyy-MM-dd') : '');
+    setEndDate(presetFilters.dateRange?.end ? format(presetFilters?.dateRange?.end, 'yyyy-MM-dd') : '');
+    setMinSize(presetFilters.storageSizeRange?.min ? String(presetFilters?.storageSizeRange?.min) : '');
+    setMaxSize(presetFilters.storageSizeRange?.max ? String(presetFilters?.storageSizeRange?.max) : '');
     setSelectedTags(presetFilters.tags || []);
     setSelectedPriorities(presetFilters.priorities || []);
   };
@@ -174,25 +174,25 @@ export default function TodoNFTFilters({
   };
 
   const handleOwnerChange = (value: string) => {
-    setOwnerInput(value);
+    setOwnerInput(value as any);
     updateFilters({ ownerAddress: value || undefined });
   };
 
   const handleDateChange = (type: 'start' | 'end', value: string) => {
     if (type === 'start') {
-      setStartDate(value);
+      setStartDate(value as any);
       updateFilters({
         dateRange: {
           ...filters.dateRange,
-          start: value ? new Date(value) : undefined
+          start: value ? new Date(value as any) : undefined
         }
       });
     } else {
-      setEndDate(value);
+      setEndDate(value as any);
       updateFilters({
         dateRange: {
           ...filters.dateRange,
-          end: value ? new Date(value) : undefined
+          end: value ? new Date(value as any) : undefined
         }
       });
     }
@@ -201,7 +201,7 @@ export default function TodoNFTFilters({
   const handleSizeChange = (type: 'min' | 'max', value: string) => {
     const numValue = value ? parseInt(value, 10) : undefined;
     if (type === 'min') {
-      setMinSize(value);
+      setMinSize(value as any);
       updateFilters({
         storageSizeRange: {
           ...filters.storageSizeRange,
@@ -209,7 +209,7 @@ export default function TodoNFTFilters({
         }
       });
     } else {
-      setMaxSize(value);
+      setMaxSize(value as any);
       updateFilters({
         storageSizeRange: {
           ...filters.storageSizeRange,
@@ -220,18 +220,18 @@ export default function TodoNFTFilters({
   };
 
   const handleTagToggle = (tag: string) => {
-    const newTags = selectedTags.includes(tag)
+    const newTags = selectedTags.includes(tag as any)
       ? selectedTags.filter(t => t !== tag)
       : [...selectedTags, tag];
-    setSelectedTags(newTags);
+    setSelectedTags(newTags as any);
     updateFilters({ tags: newTags.length > 0 ? newTags : undefined });
   };
 
   const handlePriorityToggle = (priority: 'low' | 'medium' | 'high') => {
-    const newPriorities = selectedPriorities.includes(priority)
+    const newPriorities = selectedPriorities.includes(priority as any)
       ? selectedPriorities.filter(p => p !== priority)
       : [...selectedPriorities, priority];
-    setSelectedPriorities(newPriorities);
+    setSelectedPriorities(newPriorities as any);
     updateFilters({ priorities: newPriorities.length > 0 ? newPriorities : undefined });
   };
 
@@ -239,8 +239,8 @@ export default function TodoNFTFilters({
     if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any))  } ${  sizes[i]}`;
   };
 
   return (
@@ -276,9 +276,9 @@ export default function TodoNFTFilters({
               {filterPresets.map(preset => (
                 <button
                   key={preset.id}
-                  onClick={() => applyPreset(preset)}
+                  onClick={() => applyPreset(preset as any)}
                   className={`px-3 py-2 text-sm rounded-md border transition-colors ${
-                    filters.preset === preset.id
+                    filters?.preset === preset.id
                       ? 'bg-blue-50 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
                       : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
@@ -298,7 +298,7 @@ export default function TodoNFTFilters({
             <input
               type="text"
               value={ownerInput}
-              onChange={(e) => handleOwnerChange(e.target.value)}
+              onChange={(e) => handleOwnerChange(e?.target?.value)}
               placeholder="0x..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
             />
@@ -313,13 +313,13 @@ export default function TodoNFTFilters({
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => handleDateChange('start', e.target.value)}
+                onChange={(e) => handleDateChange('start', e?.target?.value)}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => handleDateChange('end', e.target.value)}
+                onChange={(e) => handleDateChange('end', e?.target?.value)}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
             </div>
@@ -334,7 +334,7 @@ export default function TodoNFTFilters({
               <input
                 type="number"
                 value={minSize}
-                onChange={(e) => handleSizeChange('min', e.target.value)}
+                onChange={(e) => handleSizeChange('min', e?.target?.value)}
                 placeholder="Min"
                 min="0"
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
@@ -342,7 +342,7 @@ export default function TodoNFTFilters({
               <input
                 type="number"
                 value={maxSize}
-                onChange={(e) => handleSizeChange('max', e.target.value)}
+                onChange={(e) => handleSizeChange('max', e?.target?.value)}
                 placeholder="Max"
                 min="0"
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
@@ -350,9 +350,9 @@ export default function TodoNFTFilters({
             </div>
             {(minSize || maxSize) && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {minSize && `Min: ${formatBytes(parseInt(minSize))}`}
+                {minSize && `Min: ${formatBytes(parseInt(minSize as any))}`}
                 {minSize && maxSize && ' - '}
-                {maxSize && `Max: ${formatBytes(parseInt(maxSize))}`}
+                {maxSize && `Max: ${formatBytes(parseInt(maxSize as any))}`}
               </p>
             )}
           </div>
@@ -367,9 +367,9 @@ export default function TodoNFTFilters({
                 {availableTags.map(tag => (
                   <button
                     key={tag}
-                    onClick={() => handleTagToggle(tag)}
+                    onClick={() => handleTagToggle(tag as any)}
                     className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                      selectedTags.includes(tag)
+                      selectedTags.includes(tag as any)
                         ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
                         : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
@@ -391,8 +391,8 @@ export default function TodoNFTFilters({
                 <label key={priority} className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedPriorities.includes(priority)}
-                    onChange={() => handlePriorityToggle(priority)}
+                    checked={selectedPriorities.includes(priority as any)}
+                    onChange={() => handlePriorityToggle(priority as any)}
                     className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                   />
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">

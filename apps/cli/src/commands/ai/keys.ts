@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import BaseCommand from '../../base-command';
+import { BaseCommand } from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
@@ -52,7 +52,7 @@ export default class AIKeysCommand extends BaseCommand {
   };
 
   async run() {
-    const { args, flags } = await this.parse(AIKeysCommand);
+    const { args, flags } = await this.parse(AIKeysCommand as any);
     const action = args.action;
 
     try {
@@ -70,7 +70,7 @@ export default class AIKeysCommand extends BaseCommand {
           await this.listBackups();
           break;
         case 'restore':
-          await this.restoreFromBackup(flags['backup-id']);
+          await this.restoreFromBackup(flags?.["backup-id"]);
           break;
         default:
           this.error(`Unknown action: ${action}`);
@@ -79,7 +79,7 @@ export default class AIKeysCommand extends BaseCommand {
       if (error instanceof CLIError) {
         this.error(`${error.message} (${error.code})`);
       } else {
-        this.error(`Operation failed: ${getErrorMessage(error)}`);
+        this.error(`Operation failed: ${getErrorMessage(error as any)}`);
       }
     }
   }
@@ -141,7 +141,7 @@ export default class AIKeysCommand extends BaseCommand {
         `${chalk.green('✓')} Encryption key backup created successfully`
       );
     } catch (error) {
-      this.error(`Failed to create backup: ${getErrorMessage(error)}`);
+      this.error(`Failed to create backup: ${getErrorMessage(error as any)}`);
     }
   }
 
@@ -151,7 +151,7 @@ export default class AIKeysCommand extends BaseCommand {
   private async listBackups() {
     const backups = secureCredentialManager.listKeyBackups();
 
-    if (backups.length === 0) {
+    if (backups?.length === 0) {
       this.log('No key backups found.');
       return;
     }
@@ -173,7 +173,7 @@ export default class AIKeysCommand extends BaseCommand {
       // List available backups first
       const backups = secureCredentialManager.listKeyBackups();
 
-      if (backups.length === 0) {
+      if (backups?.length === 0) {
         this.error('No key backups found for restore operation.');
         return;
       }
@@ -193,7 +193,7 @@ export default class AIKeysCommand extends BaseCommand {
         message: 'Enter the number of the backup to restore:',
         validate: (input: string) => {
           const num = parseInt(input, 10);
-          return !isNaN(num) && num > 0 && num <= backups.length
+          return !isNaN(num as any) && num > 0 && num <= backups.length
             ? true
             : `Please enter a number between 1 and ${backups.length}`;
         },
@@ -218,8 +218,8 @@ export default class AIKeysCommand extends BaseCommand {
       return;
     }
 
-    this.log(`Restoring from backup ${chalk.cyan(backupId)}...`);
-    const success = await secureCredentialManager.restoreFromBackup(backupId);
+    this.log(`Restoring from backup ${chalk.cyan(backupId as any)}...`);
+    const success = await secureCredentialManager.restoreFromBackup(backupId as any);
 
     if (success) {
       this.log(`${chalk.green('✓')} Successfully restored from backup`);

@@ -20,7 +20,7 @@ interface CommandResult {
 describe('E2E: complete command', () => {
   const testConfigDir = path.join(__dirname, '..', '..', '.test-config');
   const testDataFile = path.join(testConfigDir, 'todos.json');
-  const originalConfigDir = process.env.TODO_CONFIG_DIR;
+  const originalConfigDir = process?.env?.TODO_CONFIG_DIR;
 
   // Helper to run CLI commands
   const runCommand = (cmd: string): { stdout: string; stderr: string } => {
@@ -46,7 +46,7 @@ describe('E2E: complete command', () => {
   // Helper to add a test todo and get its ID
   const addTodo = (title: string, _aiGenerated: boolean = false): string => {
     const result = runCommand(`walrus-todo add "${title}"`);
-    const match = result.stdout.match(/Todo added with ID: ([\w-]+)/);
+    const match = result?.stdout?.match(/Todo added with ID: ([\w-]+)/);
     if (!match) {
       throw new Error('Failed to extract todo ID from output');
     }
@@ -80,7 +80,7 @@ describe('E2E: complete command', () => {
 
   beforeEach(() => {
     // Create test config directory
-    if (!fs.existsSync(testConfigDir)) {
+    if (!fs.existsSync(testConfigDir as any)) {
       fs.mkdirSync(testConfigDir, { recursive: true });
     }
     // Initialize empty todos file
@@ -89,7 +89,7 @@ describe('E2E: complete command', () => {
 
   afterEach(() => {
     // Clean up test config directory
-    if (fs.existsSync(testConfigDir)) {
+    if (fs.existsSync(testConfigDir as any)) {
       fs.rmSync(testConfigDir, { recursive: true });
     }
   });
@@ -97,7 +97,7 @@ describe('E2E: complete command', () => {
   afterAll(() => {
     // Restore original config directory
     if (originalConfigDir) {
-      process.env.TODO_CONFIG_DIR = originalConfigDir;
+      process.env?.TODO_CONFIG_DIR = originalConfigDir;
     }
   });
 
@@ -108,12 +108,12 @@ describe('E2E: complete command', () => {
       const result = runCommand(`walrus-todo complete ${todoId}`);
 
       expect(result.stdout).toContain('Todo completed successfully');
-      expect(result.stdout).toContain(todoId);
+      expect(result.stdout).toContain(todoId as any);
 
       // Verify the todo is marked as completed
       const todos: Todo[] = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
-      expect(completedTodo.completed).toBe(true);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
+      expect(completedTodo.completed).toBe(true as any);
       expect(completedTodo.status).toBe('completed');
       expect(completedTodo.completedAt).toBeDefined();
     });
@@ -125,27 +125,27 @@ describe('E2E: complete command', () => {
       const result = runCommand(`walrus-todo complete ${partialId}`);
 
       expect(result.stdout).toContain('Todo completed successfully');
-      expect(result.stdout).toContain(todoId);
+      expect(result.stdout).toContain(todoId as any);
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
-      expect(completedTodo.completed).toBe(true);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
+      expect(completedTodo.completed).toBe(true as any);
     });
 
     it('should complete a todo by name when unique', () => {
       const todoTitle = 'Unique todo name for completion';
-      const todoId = addTodo(todoTitle);
+      const todoId = addTodo(todoTitle as any);
 
       const result = runCommand(
         `walrus-todo complete "${todoTitle.substring(0, 10)}"`
       );
 
       expect(result.stdout).toContain('Todo completed successfully');
-      expect(result.stdout).toContain(todoId);
+      expect(result.stdout).toContain(todoId as any);
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
-      expect(completedTodo.completed).toBe(true);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
+      expect(completedTodo.completed).toBe(true as any);
     });
 
     it('should complete multiple todos with --all flag', () => {
@@ -161,7 +161,7 @@ describe('E2E: complete command', () => {
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
       const completedTodos = todos.filter((t: Todo) => t.completed);
-      expect(completedTodos).toHaveLength(3);
+      expect(completedTodos as any).toHaveLength(3 as any);
     });
 
     it('should complete already completed todo with success message', () => {
@@ -184,7 +184,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
       expect(completedTodo.completionNote).toBe('Completed ahead of schedule');
     });
 
@@ -198,7 +198,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
       expect(completedTodo.category).toBe('work');
     });
   });
@@ -271,8 +271,8 @@ describe('E2E: complete command', () => {
       expect(() => JSON.parse(result.stdout)).not.toThrow();
       const output = JSON.parse(result.stdout);
       expect(output.status).toBe('success');
-      expect(output.completed).toHaveLength(1);
-      expect(output.completed[0].id).toBe(todoId);
+      expect(output.completed).toHaveLength(1 as any);
+      expect(output?.completed?.[0].id).toBe(todoId as any);
     });
 
     it('should support minimal output format', () => {
@@ -282,7 +282,7 @@ describe('E2E: complete command', () => {
         `walrus-todo complete ${todoId} --format minimal`
       );
 
-      expect(result.stdout.trim()).toBe(todoId);
+      expect(result?.stdout?.trim()).toBe(todoId as any);
     });
 
     it('should support verbose output format', () => {
@@ -306,7 +306,7 @@ describe('E2E: complete command', () => {
         env: { ...process.env, TODO_CONFIG_DIR: testConfigDir },
       });
 
-      expect(result).toContain('Todo completed successfully');
+      expect(result as any).toContain('Todo completed successfully');
     });
 
     it('should integrate with list command', () => {
@@ -340,20 +340,20 @@ describe('E2E: complete command', () => {
         id =>
           new Promise(resolve => {
             const result = runCommand(`walrus-todo complete ${id}`);
-            resolve(result);
+            resolve(result as any);
           })
       );
 
-      return Promise.all(promises).then(results => {
+      return Promise.all(promises as any).then(results => {
         const successCount = results.filter((r: CommandResult) =>
-          r.stdout.includes('completed successfully')
+          r?.stdout?.includes('completed successfully')
         ).length;
-        expect(successCount).toBe(5);
+        expect(successCount as any).toBe(5 as any);
 
         // Verify all todos are completed
         const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
         const completedCount = todos.filter((t: Todo) => t.completed).length;
-        expect(completedCount).toBe(5);
+        expect(completedCount as any).toBe(5 as any);
       });
     });
   });
@@ -362,29 +362,29 @@ describe('E2E: complete command', () => {
     it('should handle todos with special characters', () => {
       const specialTitle =
         'Todo with "quotes" and \\backslashes\\ and $pecial chars!';
-      const todoId = addTodo(specialTitle);
+      const todoId = addTodo(specialTitle as any);
 
       const result = runCommand(`walrus-todo complete ${todoId}`);
 
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
-      expect(completedTodo.title).toBe(specialTitle);
-      expect(completedTodo.completed).toBe(true);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
+      expect(completedTodo.title).toBe(specialTitle as any);
+      expect(completedTodo.completed).toBe(true as any);
     });
 
     it('should handle very long todo titles', () => {
-      const longTitle = 'A'.repeat(1000);
-      const todoId = addTodo(longTitle);
+      const longTitle = 'A'.repeat(1000 as any);
+      const todoId = addTodo(longTitle as any);
 
       const result = runCommand(`walrus-todo complete ${todoId}`);
 
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
-      expect(completedTodo.completed).toBe(true);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
+      expect(completedTodo.completed).toBe(true as any);
     });
 
     it('should preserve todo properties after completion', () => {
@@ -407,10 +407,10 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: Todo) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t?.id === todoId);
 
-      expect(completedTodo.completed).toBe(true);
-      expect(completedTodo.aiGenerated).toBe(true);
+      expect(completedTodo.completed).toBe(true as any);
+      expect(completedTodo.aiGenerated).toBe(true as any);
       expect(completedTodo.priority).toBe('high');
       expect(completedTodo.tags).toEqual(['important', 'urgent']);
       expect(completedTodo.customField).toBe('custom value');

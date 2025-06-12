@@ -73,7 +73,7 @@ export class BackgroundCacheManager extends EventEmitter {
   constructor(config: Partial<BackgroundCacheConfig> = {}) {
     super();
 
-    this.config = {
+    this?.config = {
       maxConcurrentProcesses: 3,
       processTimeout: 300000, // 5 minutes
       enableWorkerThreads: true,
@@ -83,16 +83,16 @@ export class BackgroundCacheManager extends EventEmitter {
     };
 
     // Initialize caches
-    this.statusCache = createCache<ProcessStatus>('process-status', {
+    this?.statusCache = createCache<ProcessStatus>('process-status', {
       strategy: 'LRU',
       maxSize: 100,
-      persistenceDir: path.join(this.config.cacheDir, 'status'),
+      persistenceDir: path.join(this?.config?.cacheDir, 'status'),
     });
 
-    this.resultCache = createCache<any>('process-results', {
+    this?.resultCache = createCache<any>('process-results', {
       strategy: 'TTL',
       ttlMs: 3600000, // 1 hour
-      persistenceDir: path.join(this.config.cacheDir, 'results'),
+      persistenceDir: path.join(this?.config?.cacheDir, 'results'),
     });
 
     this.setupCleanupTimer();
@@ -106,7 +106,7 @@ export class BackgroundCacheManager extends EventEmitter {
     operation: CacheOperation,
     options?: OperationProcessor
   ): Promise<string> {
-    this.logger.info(`Queuing background operation: ${operation.type}`, {
+    this?.logger?.info(`Queuing background operation: ${operation.type}`, {
       id: operation.id,
       priority: operation.priority,
     });
@@ -120,19 +120,19 @@ export class BackgroundCacheManager extends EventEmitter {
       startTime: Date.now(),
     };
 
-    this.processStatus.set(operation.id, status);
-    await this.statusCache.set(operation.id, status);
+    this?.processStatus?.set(operation.id, status);
+    await this?.statusCache?.set(operation.id, status);
 
     // Store custom processor if provided
     if (options?.processor) {
-      this.operationProcessors.set(operation.id, options);
+      this?.operationProcessors?.set(operation.id, options);
     }
 
     // Add to queue based on priority
-    if (operation.priority === 'high') {
-      this.operationQueue.unshift(operation);
+    if (operation?.priority === 'high') {
+      this?.operationQueue?.unshift(operation as any);
     } else {
-      this.operationQueue.push(operation);
+      this?.operationQueue?.push(operation as any);
     }
 
     // Process queue
@@ -147,11 +147,11 @@ export class BackgroundCacheManager extends EventEmitter {
    */
   async getOperationStatus(operationId: string): Promise<ProcessStatus | null> {
     // Check memory first
-    let status = this.processStatus.get(operationId);
+    let status = this?.processStatus?.get(operationId as any);
 
     // Fall back to cache
     if (!status) {
-      status = await this.statusCache.get(operationId);
+      status = await this?.statusCache?.get(operationId as any);
     }
 
     return status || null;
@@ -161,7 +161,7 @@ export class BackgroundCacheManager extends EventEmitter {
    * Get result of a completed operation
    */
   async getOperationResult(operationId: string): Promise<any> {
-    const status = await this.getOperationStatus(operationId);
+    const status = await this.getOperationStatus(operationId as any);
 
     if (!status || status.status !== 'completed') {
       return null;
@@ -173,14 +173,14 @@ export class BackgroundCacheManager extends EventEmitter {
     }
 
     // Check cache
-    return await this.resultCache.get(operationId);
+    return await this?.resultCache?.get(operationId as any);
   }
 
   /**
    * Cancel a pending or running operation
    */
   async cancelOperation(operationId: string): Promise<boolean> {
-    const process = this.activeProcesses.get(operationId);
+    const process = this?.activeProcesses?.get(operationId as any);
 
     if (process) {
       if ('terminate' in process) {
@@ -191,15 +191,15 @@ export class BackgroundCacheManager extends EventEmitter {
         process.kill('SIGTERM');
       }
 
-      this.activeProcesses.delete(operationId);
+      this?.activeProcesses?.delete(operationId as any);
 
       // Update status
-      const status = this.processStatus.get(operationId);
+      const status = this?.processStatus?.get(operationId as any);
       if (status) {
-        status.status = 'failed';
-        status.error = 'Operation cancelled';
-        status.endTime = Date.now();
-        await this.statusCache.set(operationId, status);
+        status?.status = 'failed';
+        status?.error = 'Operation cancelled';
+        status?.endTime = Date.now();
+        await this?.statusCache?.set(operationId, status);
       }
 
       this.emit('operationCancelled', operationId);
@@ -207,18 +207,18 @@ export class BackgroundCacheManager extends EventEmitter {
     }
 
     // Remove from queue if pending
-    const queueIndex = this.operationQueue.findIndex(
-      op => op.id === operationId
+    const queueIndex = this?.operationQueue?.findIndex(
+      op => op?.id === operationId
     );
     if (queueIndex >= 0) {
-      this.operationQueue.splice(queueIndex, 1);
+      this?.operationQueue?.splice(queueIndex, 1);
 
-      const status = this.processStatus.get(operationId);
+      const status = this?.processStatus?.get(operationId as any);
       if (status) {
-        status.status = 'failed';
-        status.error = 'Operation cancelled before execution';
-        status.endTime = Date.now();
-        await this.statusCache.set(operationId, status);
+        status?.status = 'failed';
+        status?.error = 'Operation cancelled before execution';
+        status?.endTime = Date.now();
+        await this?.statusCache?.set(operationId, status);
       }
 
       this.emit('operationCancelled', operationId);
@@ -232,8 +232,8 @@ export class BackgroundCacheManager extends EventEmitter {
    * Get list of all active operations
    */
   getActiveOperations(): ProcessStatus[] {
-    return Array.from(this.processStatus.values()).filter(
-      status => status.status === 'running' || status.status === 'pending'
+    return Array.from(this?.processStatus?.values()).filter(
+      status => status?.status === 'running' || status?.status === 'pending'
     );
   }
 
@@ -252,20 +252,20 @@ export class BackgroundCacheManager extends EventEmitter {
       }, timeoutMs);
 
       const checkStatus = async () => {
-        const status = await this.getOperationStatus(operationId);
+        const status = await this.getOperationStatus(operationId as any);
 
         if (!status) {
-          clearTimeout(timeoutId);
+          clearTimeout(timeoutId as any);
           reject(new Error(`Operation ${operationId} not found`));
           return;
         }
 
-        if (status.status === 'completed') {
-          clearTimeout(timeoutId);
-          const result = await this.getOperationResult(operationId);
-          resolve(result);
-        } else if (status.status === 'failed') {
-          clearTimeout(timeoutId);
+        if (status?.status === 'completed') {
+          clearTimeout(timeoutId as any);
+          const result = await this.getOperationResult(operationId as any);
+          resolve(result as any);
+        } else if (status?.status === 'failed') {
+          clearTimeout(timeoutId as any);
           reject(new Error(status.error || 'Operation failed'));
         } else {
           // Check again in 1 second
@@ -286,20 +286,20 @@ export class BackgroundCacheManager extends EventEmitter {
     }
 
     // Check if we can start new processes
-    if (this.activeProcesses.size >= this.config.maxConcurrentProcesses) {
+    if (this?.activeProcesses?.size >= this?.config?.maxConcurrentProcesses) {
       return;
     }
 
     // Get next operation from queue
-    const operation = this.operationQueue.shift();
+    const operation = this?.operationQueue?.shift();
     if (!operation) {
       return;
     }
 
     try {
-      await this.executeOperation(operation);
+      await this.executeOperation(operation as any);
     } catch (error) {
-      this.logger.error(`Failed to execute operation ${operation.id}`, error);
+      this?.logger?.error(`Failed to execute operation ${operation.id}`, error);
       await this.markOperationFailed(operation.id, error);
     }
 
@@ -311,13 +311,13 @@ export class BackgroundCacheManager extends EventEmitter {
    * Execute a cache operation in the background
    */
   private async executeOperation(operation: CacheOperation): Promise<void> {
-    const status = this.processStatus.get(operation.id);
+    const status = this?.processStatus?.get(operation.id);
     if (!status) {
       throw new Error(`Status not found for operation ${operation.id}`);
     }
 
     // Check if we have a custom processor for this operation
-    const customProcessor = this.operationProcessors.get(operation.id);
+    const customProcessor = this?.operationProcessors?.get(operation.id);
     if (customProcessor?.processor) {
       return this.executeCustomProcessor(
         operation,
@@ -327,38 +327,38 @@ export class BackgroundCacheManager extends EventEmitter {
     }
 
     // Update status to running
-    status.status = 'running';
-    status.startTime = Date.now();
-    await this.statusCache.set(operation.id, status);
+    status?.status = 'running';
+    status?.startTime = Date.now();
+    await this?.statusCache?.set(operation.id, status);
 
-    this.logger.info(`Starting background operation: ${operation.type}`, {
+    this?.logger?.info(`Starting background operation: ${operation.type}`, {
       id: operation.id,
     });
 
     try {
       let process: ChildProcess | Worker;
 
-      if (this.config.enableWorkerThreads && operation.type !== 'upload') {
+      if (this?.config?.enableWorkerThreads && operation.type !== 'upload') {
         // Use worker threads for CPU-intensive operations
-        process = await this.createWorkerProcess(operation);
+        process = await this.createWorkerProcess(operation as any);
       } else {
         // Use child processes for I/O operations like uploads
-        process = await this.createChildProcess(operation);
+        process = await this.createChildProcess(operation as any);
       }
 
-      this.activeProcesses.set(operation.id, process);
-      status.pid = 'pid' in process ? process.pid : undefined;
+      this?.activeProcesses?.set(operation.id, process);
+      status?.pid = 'pid' in process ? process.pid : undefined;
 
       // Set timeout
-      const timeoutMs = operation.timeout || this.config.processTimeout;
+      const timeoutMs = operation.timeout || this?.config?.processTimeout;
       const timeoutId = setTimeout(async () => {
         await this.timeoutOperation(operation.id);
       }, timeoutMs);
 
       // Handle process completion
       const handleCompletion = async (result?: any, error?: Error) => {
-        clearTimeout(timeoutId);
-        this.activeProcesses.delete(operation.id);
+        clearTimeout(timeoutId as any);
+        this?.activeProcesses?.delete(operation.id);
 
         if (error) {
           await this.markOperationFailed(operation.id, error);
@@ -369,7 +369,7 @@ export class BackgroundCacheManager extends EventEmitter {
 
       if ('on' in process) {
         // Worker thread
-        process.on('message', result => handleCompletion(result));
+        process.on('message', result => handleCompletion(result as any));
         process.on('error', error => handleCompletion(undefined, error));
         process.on('exit', code => {
           if (code !== 0) {
@@ -382,11 +382,11 @@ export class BackgroundCacheManager extends EventEmitter {
       } else {
         // Child process
         process.on('message', (message: any) => {
-          if (message.type === 'result') {
+          if (message?.type === 'result') {
             handleCompletion(message.data);
-          } else if (message.type === 'progress') {
+          } else if (message?.type === 'progress') {
             this.updateOperationProgress(operation.id, message.progress);
-          } else if (message.type === 'error') {
+          } else if (message?.type === 'error') {
             handleCompletion(undefined, new Error(message.error));
           }
         });
@@ -418,11 +418,11 @@ export class BackgroundCacheManager extends EventEmitter {
     ) => Promise<any>
   ): Promise<void> {
     // Update status to running
-    status.status = 'running';
-    status.startTime = Date.now();
-    await this.statusCache.set(operation.id, status);
+    status?.status = 'running';
+    status?.startTime = Date.now();
+    await this?.statusCache?.set(operation.id, status);
 
-    this.logger.info(
+    this?.logger?.info(
       `Starting custom processor for operation: ${operation.type}`,
       {
         id: operation.id,
@@ -432,10 +432,10 @@ export class BackgroundCacheManager extends EventEmitter {
     try {
       // Create progress update function
       const updateProgress = async (progress: number, stage?: string) => {
-        status.progress = progress;
-        status.stage = stage;
-        this.processStatus.set(operation.id, status);
-        await this.statusCache.set(operation.id, status);
+        status?.progress = progress;
+        status?.stage = stage;
+        this?.processStatus?.set(operation.id, status);
+        await this?.statusCache?.set(operation.id, status);
         this.emit('operationProgress', operation.id, progress, stage);
       };
 
@@ -445,14 +445,14 @@ export class BackgroundCacheManager extends EventEmitter {
       // Mark as completed
       await this.markOperationCompleted(operation.id, result);
     } catch (error) {
-      this.logger.error(
+      this?.logger?.error(
         `Custom processor failed for operation ${operation.id}`,
         error
       );
       await this.markOperationFailed(operation.id, error);
     } finally {
       // Clean up the processor reference
-      this.operationProcessors.delete(operation.id);
+      this?.operationProcessors?.delete(operation.id);
     }
   }
 
@@ -492,7 +492,7 @@ export class BackgroundCacheManager extends EventEmitter {
       stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
       env: {
         ...process.env,
-        BACKGROUND_CACHE_OPERATION: JSON.stringify(operation),
+        BACKGROUND_CACHE_OPERATION: JSON.stringify(operation as any),
         BACKGROUND_CACHE_CONFIG: JSON.stringify(this.config),
       },
     });
@@ -507,10 +507,10 @@ export class BackgroundCacheManager extends EventEmitter {
     operationId: string,
     progress: number
   ): Promise<void> {
-    const status = this.processStatus.get(operationId);
+    const status = this?.processStatus?.get(operationId as any);
     if (status) {
-      status.progress = Math.min(100, Math.max(0, progress));
-      await this.statusCache.set(operationId, status);
+      status?.progress = Math.min(100, Math.max(0, progress));
+      await this?.statusCache?.set(operationId, status);
       this.emit('operationProgress', operationId, progress);
     }
   }
@@ -522,19 +522,19 @@ export class BackgroundCacheManager extends EventEmitter {
     operationId: string,
     result: any
   ): Promise<void> {
-    const status = this.processStatus.get(operationId);
+    const status = this?.processStatus?.get(operationId as any);
     if (status) {
-      status.status = 'completed';
-      status.progress = 100;
-      status.endTime = Date.now();
-      status.result = result;
+      status?.status = 'completed';
+      status?.progress = 100;
+      status?.endTime = Date.now();
+      status?.result = result;
 
-      await this.statusCache.set(operationId, status);
-      await this.resultCache.set(operationId, result);
+      await this?.statusCache?.set(operationId, status);
+      await this?.resultCache?.set(operationId, result);
 
       this.emit('operationCompleted', operationId, result);
 
-      this.logger.info(`Background operation completed: ${status.type}`, {
+      this?.logger?.info(`Background operation completed: ${status.type}`, {
         id: operationId,
         duration: status.endTime - status.startTime,
       });
@@ -548,17 +548,17 @@ export class BackgroundCacheManager extends EventEmitter {
     operationId: string,
     error: any
   ): Promise<void> {
-    const status = this.processStatus.get(operationId);
+    const status = this?.processStatus?.get(operationId as any);
     if (status) {
-      status.status = 'failed';
-      status.endTime = Date.now();
-      status.error = error instanceof Error ? error.message : String(error);
+      status?.status = 'failed';
+      status?.endTime = Date.now();
+      status?.error = error instanceof Error ? error.message : String(error as any);
 
-      await this.statusCache.set(operationId, status);
+      await this?.statusCache?.set(operationId, status);
 
       this.emit('operationFailed', operationId, error);
 
-      this.logger.error(`Background operation failed: ${status.type}`, {
+      this?.logger?.error(`Background operation failed: ${status.type}`, {
         id: operationId,
         error: status.error,
         duration: status.endTime - status.startTime,
@@ -570,26 +570,26 @@ export class BackgroundCacheManager extends EventEmitter {
    * Handle operation timeout
    */
   private async timeoutOperation(operationId: string): Promise<void> {
-    const process = this.activeProcesses.get(operationId);
+    const process = this?.activeProcesses?.get(operationId as any);
     if (process) {
       if ('terminate' in process) {
         await process.terminate();
       } else {
         process.kill('SIGKILL');
       }
-      this.activeProcesses.delete(operationId);
+      this?.activeProcesses?.delete(operationId as any);
     }
 
-    const status = this.processStatus.get(operationId);
+    const status = this?.processStatus?.get(operationId as any);
     if (status) {
-      status.status = 'timeout';
-      status.endTime = Date.now();
-      status.error = 'Operation timeout';
+      status?.status = 'timeout';
+      status?.endTime = Date.now();
+      status?.error = 'Operation timeout';
 
-      await this.statusCache.set(operationId, status);
+      await this?.statusCache?.set(operationId, status);
       this.emit('operationTimeout', operationId);
 
-      this.logger.warn(`Background operation timeout: ${status.type}`, {
+      this?.logger?.warn(`Background operation timeout: ${status.type}`, {
         id: operationId,
       });
     }
@@ -599,7 +599,7 @@ export class BackgroundCacheManager extends EventEmitter {
    * Setup cleanup timer to remove old completed operations
    */
   private setupCleanupTimer(): void {
-    this.processCleanupTimer = setInterval(async () => {
+    this?.processCleanupTimer = setInterval(async () => {
       await this.cleanupOldOperations();
     }, 600000); // Run every 10 minutes
   }
@@ -610,15 +610,15 @@ export class BackgroundCacheManager extends EventEmitter {
   private async cleanupOldOperations(): Promise<void> {
     const cutoffTime = Date.now() - 24 * 60 * 60 * 1000; // 24 hours ago
 
-    for (const [id, status] of this.processStatus.entries()) {
+    for (const [id, status] of this?.processStatus?.entries()) {
       if (
-        (status.status === 'completed' ||
-          status.status === 'failed' ||
-          status.status === 'timeout') &&
+        (status?.status === 'completed' ||
+          status?.status === 'failed' ||
+          status?.status === 'timeout') &&
         status.endTime &&
         status.endTime < cutoffTime
       ) {
-        this.processStatus.delete(id);
+        this?.processStatus?.delete(id as any);
         // Keep cache entries for longer persistence
       }
     }
@@ -643,7 +643,7 @@ export class BackgroundCacheManager extends EventEmitter {
   private async ensureWorkerScript(): Promise<void> {
     const workerScript = path.join(__dirname, 'background-cache-worker.js');
 
-    if (!existsSync(workerScript)) {
+    if (!existsSync(workerScript as any)) {
       const workerCode = this.generateWorkerScript();
       await fs.writeFile(workerScript, workerCode, 'utf8');
     }
@@ -655,7 +655,7 @@ export class BackgroundCacheManager extends EventEmitter {
   private async ensureProcessScript(): Promise<void> {
     const processScript = path.join(__dirname, 'background-cache-process.js');
 
-    if (!existsSync(processScript)) {
+    if (!existsSync(processScript as any)) {
       const processCode = this.generateProcessScript();
       await fs.writeFile(processScript, processCode, 'utf8');
     }
@@ -693,13 +693,13 @@ async function processOperation(operation, config) {
         throw new Error(\`Unknown operation type: \${operation.type}\`);
     }
     
-    parentPort.postMessage(result);
+    parentPort.postMessage(result as any);
   } catch (error) {
     parentPort.postMessage({ error: error.message });
   }
 }
 
-async function processBlobCache(data) {
+async function processBlobCache(data as any) {
   // Implement blob caching logic
   const cache = createCache('blob-ids', { strategy: 'LRU', maxSize: 1000 });
   
@@ -707,20 +707,20 @@ async function processBlobCache(data) {
     await cache.set(item.key, item.value);
   }
   
-  return { cached: data.items.length };
+  return { cached: data?.items?.length };
 }
 
-async function processStorageAllocation(data) {
+async function processStorageAllocation(data as any) {
   // Implement storage allocation logic
   return { allocated: data.size };
 }
 
-async function processBatchOperation(data) {
+async function processBatchOperation(data as any) {
   // Implement batch processing logic
-  return { processed: data.items.length };
+  return { processed: data?.items?.length };
 }
 
-async function processSyncOperation(data) {
+async function processSyncOperation(data as any) {
   // Implement sync operation logic
   const { TodoService } = require('../services/todoService');
   const { createWalrusStorage } = require('./walrus-storage');
@@ -735,13 +735,13 @@ async function processSyncOperation(data) {
   try {
     for (const todo of data.todos) {
       try {
-        if (data.direction === 'push' || data.direction === 'both') {
+        if (data?.direction === 'push' || data?.direction === 'both') {
           if (todo.walrusBlobId) {
             await walrusStorage.updateTodo(todo.walrusBlobId, todo);
           }
         }
         
-        if (data.direction === 'pull' || data.direction === 'both') {
+        if (data?.direction === 'pull' || data?.direction === 'both') {
           if (todo.walrusBlobId) {
             const blockchainTodo = await walrusStorage.retrieveTodo(todo.walrusBlobId);
             await todoService.updateTodo(data.listName || 'default', todo.id, blockchainTodo);
@@ -757,10 +757,10 @@ async function processSyncOperation(data) {
     await walrusStorage.disconnect();
   }
   
-  return { synced: syncedCount, failed: failedCount, total: data.todos.length };
+  return { synced: syncedCount, failed: failedCount, total: data?.todos?.length };
 }
 
-async function processContinuousSyncOperation(data) {
+async function processContinuousSyncOperation(data as any) {
   // Implement continuous sync logic (daemon-like behavior)
   const { TodoService } = require('../services/todoService');
   const { createWalrusStorage } = require('./walrus-storage');
@@ -786,20 +786,20 @@ async function processContinuousSyncOperation(data) {
       let cycleSynced = 0;
       
       for (const listName of lists) {
-        const list = await todoService.getList(listName);
+        const list = await todoService.getList(listName as any);
         if (list) {
-          const bothStorageTodos = list.todos.filter(t => t.storageLocation === 'both');
+          const bothStorageTodos = list?.todos?.filter(t => t?.storageLocation === 'both');
           
           for (const todo of bothStorageTodos) {
             try {
               // Perform sync based on direction and resolve strategy
-              if (data.direction === 'push' || data.direction === 'both') {
+              if (data?.direction === 'push' || data?.direction === 'both') {
                 if (todo.walrusBlobId) {
                   await walrusStorage.updateTodo(todo.walrusBlobId, todo);
                 }
               }
               
-              if (data.direction === 'pull' || data.direction === 'both') {
+              if (data?.direction === 'pull' || data?.direction === 'both') {
                 if (todo.walrusBlobId) {
                   const blockchainTodo = await walrusStorage.retrieveTodo(todo.walrusBlobId);
                   await todoService.updateTodo(listName, todo.id, blockchainTodo);
@@ -853,8 +853,8 @@ processOperation(workerData.operation, workerData.config);
    */
   private generateProcessScript(): string {
     return `
-const operation = JSON.parse(process.env.BACKGROUND_CACHE_OPERATION);
-const config = JSON.parse(process.env.BACKGROUND_CACHE_CONFIG);
+const operation = JSON.parse(process?.env?.BACKGROUND_CACHE_OPERATION);
+const config = JSON.parse(process?.env?.BACKGROUND_CACHE_CONFIG);
 
 async function processOperation() {
   try {
@@ -880,7 +880,7 @@ async function processOperation() {
   }
 }
 
-async function processUpload(data) {
+async function processUpload(data as any) {
   // Implement upload logic
   const { createWalrusStorage } = require('./walrus-storage');
   
@@ -889,11 +889,11 @@ async function processUpload(data) {
   
   const results = [];
   
-  for (let i = 0; i < data.todos.length; i++) {
-    const todo = data.todos[i];
+  for (let i = 0; i < data?.todos?.length; i++) {
+    const todo = data?.todos?.[i];
     
     // Report progress
-    const progress = Math.round((i / data.todos.length) * 100);
+    const progress = Math.round((i / data?.todos?.length) * 100);
     process.send({ type: 'progress', progress });
     
     try {
@@ -908,7 +908,7 @@ async function processUpload(data) {
   return { uploads: results };
 }
 
-async function processSync(data) {
+async function processSync(data as any) {
   // Implement sync operation logic for child process
   const { TodoService } = require('../services/todoService');
   const { createWalrusStorage } = require('./walrus-storage');
@@ -919,24 +919,24 @@ async function processSync(data) {
   
   let syncedCount = 0;
   let failedCount = 0;
-  const total = data.todos.length;
+  const total = data?.todos?.length;
   
   try {
-    for (let i = 0; i < data.todos.length; i++) {
-      const todo = data.todos[i];
+    for (let i = 0; i < data?.todos?.length; i++) {
+      const todo = data?.todos?.[i];
       
       // Report progress
       const progress = Math.round((i / total) * 100);
       process.send({ type: 'progress', progress });
       
       try {
-        if (data.direction === 'push' || data.direction === 'both') {
+        if (data?.direction === 'push' || data?.direction === 'both') {
           if (todo.walrusBlobId) {
             await walrusStorage.updateTodo(todo.walrusBlobId, todo);
           }
         }
         
-        if (data.direction === 'pull' || data.direction === 'both') {
+        if (data?.direction === 'pull' || data?.direction === 'both') {
           if (todo.walrusBlobId) {
             const blockchainTodo = await walrusStorage.retrieveTodo(todo.walrusBlobId);
             await todoService.updateTodo(data.listName || 'default', todo.id, blockchainTodo);
@@ -956,7 +956,7 @@ async function processSync(data) {
   return { synced: syncedCount, failed: failedCount, total };
 }
 
-async function processContinuousSync(data) {
+async function processContinuousSync(data as any) {
   // Implement continuous sync logic for child process
   const { TodoService } = require('../services/todoService');
   const { createWalrusStorage } = require('./walrus-storage');
@@ -987,22 +987,22 @@ async function processContinuousSync(data) {
       for (const listName of lists) {
         if (!isRunning) break;
         
-        const list = await todoService.getList(listName);
+        const list = await todoService.getList(listName as any);
         if (list) {
-          const bothStorageTodos = list.todos.filter(t => t.storageLocation === 'both');
+          const bothStorageTodos = list?.todos?.filter(t => t?.storageLocation === 'both');
           
           for (const todo of bothStorageTodos) {
             if (!isRunning) break;
             
             try {
               // Perform sync based on direction and resolve strategy
-              if (data.direction === 'push' || data.direction === 'both') {
+              if (data?.direction === 'push' || data?.direction === 'both') {
                 if (todo.walrusBlobId) {
                   await walrusStorage.updateTodo(todo.walrusBlobId, todo);
                 }
               }
               
-              if (data.direction === 'pull' || data.direction === 'both') {
+              if (data?.direction === 'pull' || data?.direction === 'both') {
                 if (todo.walrusBlobId) {
                   const blockchainTodo = await walrusStorage.retrieveTodo(todo.walrusBlobId);
                   await todoService.updateTodo(listName, todo.id, blockchainTodo);
@@ -1065,8 +1065,8 @@ processOperation();
       return;
     }
 
-    this.isShuttingDown = true;
-    this.logger.info('Shutting down background cache manager...');
+    this?.isShuttingDown = true;
+    this?.logger?.info('Shutting down background cache manager...');
 
     // Clear cleanup timer
     if (this.processCleanupTimer) {
@@ -1076,7 +1076,7 @@ processOperation();
     // Terminate all active processes
     const shutdownPromises: Promise<void>[] = [];
 
-    for (const [id, process] of this.activeProcesses.entries()) {
+    for (const [id, process] of this?.activeProcesses?.entries()) {
       shutdownPromises.push(
         new Promise<void>(resolve => {
           const timeout = setTimeout(() => {
@@ -1090,13 +1090,13 @@ processOperation();
 
           if ('terminate' in process) {
             process.terminate().then(() => {
-              clearTimeout(timeout);
+              clearTimeout(timeout as any);
               resolve();
             });
           } else {
             process.kill('SIGTERM');
             process.on('exit', () => {
-              clearTimeout(timeout);
+              clearTimeout(timeout as any);
               resolve();
             });
           }
@@ -1104,16 +1104,16 @@ processOperation();
       );
     }
 
-    await Promise.all(shutdownPromises);
-    this.activeProcesses.clear();
+    await Promise.all(shutdownPromises as any);
+    this?.activeProcesses?.clear();
 
     // Shutdown caches
     await Promise.all([
-      this.statusCache.shutdown(),
-      this.resultCache.shutdown(),
+      this?.statusCache?.shutdown(),
+      this?.resultCache?.shutdown(),
     ]);
 
-    this.logger.info('Background cache manager shutdown complete');
+    this?.logger?.info('Background cache manager shutdown complete');
   }
 }
 
@@ -1121,7 +1121,7 @@ processOperation();
 export function createBackgroundCacheManager(
   config?: Partial<BackgroundCacheConfig>
 ): BackgroundCacheManager {
-  return new BackgroundCacheManager(config);
+  return new BackgroundCacheManager(config as any);
 }
 
 // Global instance for singleton usage

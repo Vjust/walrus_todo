@@ -51,7 +51,7 @@ const DEFAULT_RESPONSES = {
 
   categorize: (todos: Todo[]) => {
     const categories: Record<string, string[]> = { General: [] };
-    todos.forEach(todo => categories.General.push(todo.id));
+    todos.forEach(todo => categories?.General?.push(todo.id));
     return categories;
   },
 
@@ -59,9 +59,9 @@ const DEFAULT_RESPONSES = {
     const priorities: Record<string, number> = {};
     todos.forEach(todo => {
       // Assign priority based on existing todo priority field or default to medium (5)
-      if (todo.priority === 'high') {
+      if (todo?.priority === 'high') {
         priorities[todo.id] = 8;
-      } else if (todo.priority === 'low') {
+      } else if (todo?.priority === 'low') {
         priorities[todo.id] = 3;
       } else {
         priorities[todo.id] = 5; // medium
@@ -108,11 +108,11 @@ export class SafeAIService {
   private activeTimeouts: Set<NodeJS.Timeout> = new Set();
 
   constructor() {
-    this.logger = Logger.getInstance();
+    this?.logger = Logger.getInstance();
     // Initialize AI service in background, but don't await it
     // This prevents blocking the constructor while still ensuring 
     // the logger is available for any early calls to initializeAIService
-    this.initializationPromise = this.initializeAIService().catch(error => {
+    this?.initializationPromise = this.initializeAIService().catch(error => {
       // Error handling is already done in initializeAIService
       // This catch just prevents unhandled promise rejections
       return Promise.resolve();
@@ -124,10 +124,10 @@ export class SafeAIService {
    */
   private createTimeout(callback: () => void, delay: number): NodeJS.Timeout {
     const timeout = setTimeout(() => {
-      this.activeTimeouts.delete(timeout);
+      this?.activeTimeouts?.delete(timeout as any);
       callback();
     }, delay);
-    this.activeTimeouts.add(timeout);
+    this?.activeTimeouts?.add(timeout as any);
     return timeout;
   }
 
@@ -135,8 +135,8 @@ export class SafeAIService {
    * Clears a specific timeout and removes it from tracking
    */
   private clearTrackedTimeout(timeout: NodeJS.Timeout): void {
-    clearTimeout(timeout);
-    this.activeTimeouts.delete(timeout);
+    clearTimeout(timeout as any);
+    this?.activeTimeouts?.delete(timeout as any);
   }
 
   /**
@@ -144,9 +144,9 @@ export class SafeAIService {
    */
   private clearAllTimeouts(): void {
     for (const timeout of this.activeTimeouts) {
-      clearTimeout(timeout);
+      clearTimeout(timeout as any);
     }
-    this.activeTimeouts.clear();
+    this?.activeTimeouts?.clear();
   }
 
   /**
@@ -154,29 +154,29 @@ export class SafeAIService {
    */
   private async initializeAIService(): Promise<void> {
     try {
-      this.logger.debug('Initializing Safe AI Service...');
+      this?.logger?.debug('Initializing Safe AI Service...');
 
       // Try to create AI service
-      this.aiService = new AIService();
-      this.isInitialized = true;
-      this.initializationError = null;
+      this?.aiService = new AIService();
+      this?.isInitialized = true;
+      this?.initializationError = null;
 
       // Perform initial health check
       await this.performHealthCheck();
 
-      this.logger.debug('Safe AI Service initialized successfully');
+      this?.logger?.debug('Safe AI Service initialized successfully');
     } catch (_error) {
-      this.isInitialized = false;
-      this.aiHealthy = false;
-      this.initializationError =
-        _error instanceof Error ? _error.message : String(_error);
+      this?.isInitialized = false;
+      this?.aiHealthy = false;
+      this?.initializationError =
+        _error instanceof Error ? _error.message : String(_error as any);
 
-      this.logger.warn(
+      this?.logger?.warn(
         `AI Service initialization failed: ${this.initializationError}. Fallback mode enabled.`
       );
 
       // Don't throw - just log and continue in fallback mode
-      this.aiService = null;
+      this?.aiService = null;
     }
   }
 
@@ -191,10 +191,10 @@ export class SafeAIService {
       return this.aiHealthy;
     }
 
-    this.lastHealthCheck = now;
+    this?.lastHealthCheck = now;
 
     if (!this.aiService) {
-      this.aiHealthy = false;
+      this?.aiHealthy = false;
       return false;
     }
 
@@ -216,7 +216,7 @@ export class SafeAIService {
 
       // Attempt a simple summarize operation with short timeout
       const testResult = await Promise.race([
-        this.aiService.summarize(testTodos),
+        this?.aiService?.summarize(testTodos as any),
         new Promise((_, reject) => {
           this.createTimeout(
             () => reject(new Error('Health check timeout')),
@@ -225,19 +225,19 @@ export class SafeAIService {
         }),
       ]);
 
-      this.aiHealthy = typeof testResult === 'string' && testResult.length > 0;
+      this?.aiHealthy = typeof testResult === 'string' && testResult.length > 0;
 
       if (this.aiHealthy) {
-        this.logger.debug('AI service health check passed');
+        this?.logger?.debug('AI service health check passed');
       } else {
-        this.logger.warn('AI service health check failed: invalid response');
+        this?.logger?.warn('AI service health check failed: invalid response');
       }
 
       return this.aiHealthy;
     } catch (_error) {
-      this.aiHealthy = false;
-      this.logger.warn(
-        `AI service health check failed: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.aiHealthy = false;
+      this?.logger?.warn(
+        `AI service health check failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
       return false;
     }
@@ -295,7 +295,7 @@ export class SafeAIService {
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable) {
-      this.logger.debug(`AI not available for ${operation}, using fallback`);
+      this?.logger?.debug(`AI not available for ${operation}, using fallback`);
       return {
         success: true,
         result: fallbackResult,
@@ -307,7 +307,7 @@ export class SafeAIService {
 
     try {
       // Set AI feature requested flag
-      AIProviderFactory.setAIFeatureRequested(true);
+      AIProviderFactory.setAIFeatureRequested(true as any);
 
       const result = await Promise.race([
         aiOperation(),
@@ -319,7 +319,7 @@ export class SafeAIService {
         }),
       ]);
 
-      this.logger.debug(`AI operation ${operation} completed successfully`);
+      this?.logger?.debug(`AI operation ${operation} completed successfully`);
 
       return {
         success: true,
@@ -330,13 +330,13 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `AI operation ${operation} failed: ${errorMessage}, using fallback`
       );
 
       // Mark AI as unhealthy if operation failed
-      this.aiHealthy = false;
+      this?.aiHealthy = false;
 
       return {
         success: true, // Still successful due to fallback
@@ -357,7 +357,7 @@ export class SafeAIService {
 
     return this.safeExecute(
       'summarize',
-      () => this.aiService.summarize(todos),
+      () => this?.aiService?.summarize(todos as any),
       fallback
     );
   }
@@ -398,7 +398,7 @@ export class SafeAIService {
     }
 
     try {
-      const result = await this.aiService.summarizeWithVerification(
+      const result = await this?.aiService?.summarizeWithVerification(
         todos,
         privacyLevel
       );
@@ -411,8 +411,8 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `AI verification summarize failed: ${errorMessage}, using fallback`
       );
 
@@ -448,11 +448,11 @@ export class SafeAIService {
   public async categorize(
     todos: Todo[]
   ): Promise<SafeAIResult<Record<string, string[]>>> {
-    const fallback = DEFAULT_RESPONSES.categorize(todos);
+    const fallback = DEFAULT_RESPONSES.categorize(todos as any);
 
     return this.safeExecute(
       'categorize',
-      () => this.aiService.categorize(todos),
+      () => this?.aiService?.categorize(todos as any),
       fallback
     );
   }
@@ -468,7 +468,7 @@ export class SafeAIService {
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
-      const fallbackCategories = DEFAULT_RESPONSES.categorize(todos);
+      const fallbackCategories = DEFAULT_RESPONSES.categorize(todos as any);
       const fallbackResult: VerifiedAIResult<Record<string, string[]>> = {
         result: fallbackCategories,
         verification: {
@@ -493,7 +493,7 @@ export class SafeAIService {
     }
 
     try {
-      const result = await this.aiService.categorizeWithVerification(
+      const result = await this?.aiService?.categorizeWithVerification(
         todos,
         privacyLevel
       );
@@ -506,12 +506,12 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `AI verification categorize failed: ${errorMessage}, using fallback`
       );
 
-      const fallbackCategories = DEFAULT_RESPONSES.categorize(todos);
+      const fallbackCategories = DEFAULT_RESPONSES.categorize(todos as any);
       const fallbackResult: VerifiedAIResult<Record<string, string[]>> = {
         result: fallbackCategories,
         verification: {
@@ -543,11 +543,11 @@ export class SafeAIService {
   public async prioritize(
     todos: Todo[]
   ): Promise<SafeAIResult<Record<string, number>>> {
-    const fallback = DEFAULT_RESPONSES.prioritize(todos);
+    const fallback = DEFAULT_RESPONSES.prioritize(todos as any);
 
     return this.safeExecute(
       'prioritize',
-      () => this.aiService.prioritize(todos),
+      () => this?.aiService?.prioritize(todos as any),
       fallback
     );
   }
@@ -563,7 +563,7 @@ export class SafeAIService {
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
-      const fallbackPriorities = DEFAULT_RESPONSES.prioritize(todos);
+      const fallbackPriorities = DEFAULT_RESPONSES.prioritize(todos as any);
       const fallbackResult: VerifiedAIResult<Record<string, number>> = {
         result: fallbackPriorities,
         verification: {
@@ -588,7 +588,7 @@ export class SafeAIService {
     }
 
     try {
-      const result = await this.aiService.prioritizeWithVerification(
+      const result = await this?.aiService?.prioritizeWithVerification(
         todos,
         privacyLevel
       );
@@ -601,12 +601,12 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `AI verification prioritize failed: ${errorMessage}, using fallback`
       );
 
-      const fallbackPriorities = DEFAULT_RESPONSES.prioritize(todos);
+      const fallbackPriorities = DEFAULT_RESPONSES.prioritize(todos as any);
       const fallbackResult: VerifiedAIResult<Record<string, number>> = {
         result: fallbackPriorities,
         verification: {
@@ -640,7 +640,7 @@ export class SafeAIService {
 
     return this.safeExecute(
       'suggest',
-      () => this.aiService.suggest(todos),
+      () => this?.aiService?.suggest(todos as any),
       fallback
     );
   }
@@ -681,7 +681,7 @@ export class SafeAIService {
     }
 
     try {
-      const result = await this.aiService.suggestWithVerification(
+      const result = await this?.aiService?.suggestWithVerification(
         todos,
         privacyLevel
       );
@@ -694,8 +694,8 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `AI verification suggest failed: ${errorMessage}, using fallback`
       );
 
@@ -735,7 +735,7 @@ export class SafeAIService {
 
     return this.safeExecute(
       'analyze',
-      () => this.aiService.analyze(todos),
+      () => this?.aiService?.analyze(todos as any),
       fallback
     );
   }
@@ -776,7 +776,7 @@ export class SafeAIService {
     }
 
     try {
-      const result = await this.aiService.analyzeWithVerification(
+      const result = await this?.aiService?.analyzeWithVerification(
         todos,
         privacyLevel
       );
@@ -789,8 +789,8 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `AI verification analyze failed: ${errorMessage}, using fallback`
       );
 
@@ -828,7 +828,7 @@ export class SafeAIService {
 
     return this.safeExecute(
       'suggestTags',
-      () => this.aiService.suggestTags(todo),
+      () => this?.aiService?.suggestTags(todo as any),
       fallback
     );
   }
@@ -843,7 +843,7 @@ export class SafeAIService {
 
     return this.safeExecute(
       'suggestPriority',
-      () => this.aiService.suggestPriority(todo),
+      () => this?.aiService?.suggestPriority(todo as any),
       fallback
     );
   }
@@ -869,10 +869,10 @@ export class SafeAIService {
     }
 
     try {
-      await this.aiService.setProvider(provider, modelName, options);
+      await this?.aiService?.setProvider(provider, modelName, options);
 
       // Reset health status to trigger new health check
-      this.lastHealthCheck = 0;
+      this?.lastHealthCheck = 0;
       await this.performHealthCheck();
 
       return {
@@ -884,8 +884,8 @@ export class SafeAIService {
       };
     } catch (_error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error);
-      this.logger.warn(
+        _error instanceof Error ? _error.message : String(_error as any);
+      this?.logger?.warn(
         `Failed to set AI provider to ${provider}: ${errorMessage}`
       );
 
@@ -908,14 +908,14 @@ export class SafeAIService {
       this.clearAllTimeouts();
 
       if (this.aiService) {
-        this.aiService.cancelAllOperations(reason);
+        this?.aiService?.cancelAllOperations(reason as any);
       }
-      this.logger.debug(
+      this?.logger?.debug(
         `Cancelled all AI operations${reason ? `: ${reason}` : ''}`
       );
     } catch (_error) {
-      this.logger.warn(
-        `Error cancelling AI operations: ${_error instanceof Error ? _error.message : String(_error)}`
+      this?.logger?.warn(
+        `Error cancelling AI operations: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
     }
   }
@@ -926,9 +926,9 @@ export class SafeAIService {
   public cleanup(): void {
     this.clearAllTimeouts();
     this.cancelAllOperations('Service cleanup');
-    this.aiService = null;
-    this.isInitialized = false;
-    this.aiHealthy = false;
+    this?.aiService = null;
+    this?.isInitialized = false;
+    this?.aiHealthy = false;
   }
 
   /**

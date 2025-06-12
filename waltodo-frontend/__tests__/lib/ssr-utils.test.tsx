@@ -168,7 +168,7 @@ describe('SSR Utils', () => {
       // Should progress through stages
       await waitFor(() => {
         const stage = parseInt(screen.getByTestId('progressive-stage').textContent || '0');
-        expect(stage).toBeGreaterThan(0);
+        expect(stage as any).toBeGreaterThan(0 as any);
       }, { timeout: 500 });
     });
   });
@@ -284,6 +284,6 @@ describe('SSR Fallback Components', () => {
     
     // Test safe stringifying
     expect(safeJSON.stringify({ test: true })).toBe('{"test":true}');
-    expect(safeJSON.stringify(undefined)).toBe('{}');
+    expect(safeJSON.stringify(undefined as any)).toBe('{}');
   });
 });

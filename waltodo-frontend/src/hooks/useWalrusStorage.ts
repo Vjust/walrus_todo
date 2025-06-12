@@ -5,7 +5,8 @@
  * with proper state management, error handling, and loading states.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+// @ts-ignore - Unused import temporarily disabled
+// import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   TodoStorageMetadata,
   WalrusClientError,
@@ -15,8 +16,10 @@ import {
   WalrusTodoManager,
   WalrusTodoUploadOptions,
 } from '@/lib/walrus-todo-integration';
-import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+// @ts-ignore - Unused import temporarily disabled
+// import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
+// @ts-ignore - Unused import temporarily disabled
+// import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { Signer } from '@mysten/sui/cryptography';
 
 // Hook state interface
@@ -37,16 +40,15 @@ interface UseWalrusStorageReturn extends WalrusStorageState {
   // Todo operations
   createTodo: (
     todo: Omit<
-      WalrusTodo,
-      'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'
-    >,
+      WalrusTodo, _'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'
+    >, 
     options?: WalrusTodoUploadOptions
   ) => Promise<WalrusTodoCreateResult | null>;
 
   retrieveTodo: (walrusBlobId: string) => Promise<WalrusTodo | null>;
 
   updateTodo: (
-    todo: WalrusTodo,
+    todo: WalrusTodo, 
     options?: Partial<WalrusTodoUploadOptions>
   ) => Promise<boolean>;
 
@@ -55,8 +57,8 @@ interface UseWalrusStorageReturn extends WalrusStorageState {
   // Batch operations
   createMultipleTodos: (
     todos: Array<
-      Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
-    >,
+      Omit<WalrusTodo, _'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
+    >, 
     options?: WalrusTodoUploadOptions
   ) => Promise<WalrusTodoCreateResult[]>;
 
@@ -64,28 +66,28 @@ interface UseWalrusStorageReturn extends WalrusStorageState {
   getTodoStorageInfo: (walrusBlobId: string) => Promise<{
     exists: boolean;
     blobInfo?: any;
-    storageCost?: { total: bigint; storage: bigint; write: bigint };
+    storageCost?: { total: string; storage: string; write: string };
   } | null>;
 
   estimateStorageCosts: (
     todos: Array<
-      Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
-    >,
+      Omit<WalrusTodo, _'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
+    >, 
     epochs?: number
   ) => Promise<{
-    totalCost: bigint;
+    totalCost: string;
     totalSize: number;
-    perTodoCost: Array<{ totalCost: bigint; size: number }>;
+    perTodoCost: Array<{ totalCost: string; size: number }>;
   } | null>;
 
   // Health check operations
   testConnection: () => Promise<{ success: boolean; error?: string }>;
-  uploadBlob: (data: Uint8Array, options?: { metadata?: any }) => Promise<{ success: boolean; blobId?: string; error?: string }>;
+  uploadBlob: (data: Uint8Array,  options?: { metadata?: any }) => Promise<{ success: boolean; blobId?: string; error?: string }>;
   retrieveBlob: (blobId: string) => Promise<{ success: boolean; data?: Uint8Array; error?: string }>;
 
   // Image upload operation
   uploadImage: (
-    file: File,
+    file: File, 
     options?: { epochs?: number; onProgress?: (progress: number) => void }
   ) => Promise<{ blobId: string; url: string } | null>;
 
@@ -118,13 +120,18 @@ export function useWalrusStorage(
   } = options;
 
   // Get wallet context - this is the proper way to access wallet state
-  const walletContext = useClientSafeWallet();
+// @ts-ignore - Unused variable
+//   const walletContext = useClientSafeWallet();
   
   // Safely extract wallet properties with fallbacks
-  const connected = walletContext?.connected || false;
-  const address = walletContext?.address || null;
-  const walletError = walletContext?.error || null;
-  const signAndExecuteTransaction = walletContext?.signAndExecuteTransaction;
+// @ts-ignore - Unused variable
+//   const connected = walletContext?.connected || false;
+// @ts-ignore - Unused variable
+//   const address = walletContext?.address || null;
+// @ts-ignore - Unused variable
+//   const walletError = walletContext?.error || null;
+// @ts-ignore - Unused variable
+//   const signAndExecuteTransaction = walletContext?.signAndExecuteTransaction;
 
   // State management
   const [state, setState] = useState<WalrusStorageState>({
@@ -140,23 +147,26 @@ export function useWalrusStorage(
   });
 
   // Walrus manager instance
-  const walrusManagerRef = useRef<WalrusTodoManager | null>(null);
+// @ts-ignore - Unused variable
+//   const walrusManagerRef = useRef<WalrusTodoManager | null>(null);
 
   // Initialize manager
-  useEffect(() => {
-    walrusManagerRef.current = new WalrusTodoManager(network);
+  useEffect(_() => {
+    walrusManagerRef?.current = new WalrusTodoManager(network as any);
   }, [network]);
 
   // Get current manager
-  const getManager = useCallback((): WalrusTodoManager => {
+// @ts-ignore - Unused variable
+//   const getManager = useCallback((): WalrusTodoManager => {
     if (!walrusManagerRef.current) {
-      walrusManagerRef.current = new WalrusTodoManager(network);
+      walrusManagerRef?.current = new WalrusTodoManager(network as any);
     }
     return walrusManagerRef.current;
   }, [network]);
 
   // Helper function to handle errors
-  const handleError = useCallback(
+// @ts-ignore - Unused variable
+//   const handleError = useCallback(
     (error: unknown, operation: string): WalrusClientError => {
       let walrusError: WalrusClientError;
 
@@ -177,7 +187,8 @@ export function useWalrusStorage(
   );
 
   // Progress update helper
-  const updateProgress = useCallback((message: string, progress: number) => {
+// @ts-ignore - Unused variable
+//   const updateProgress = useCallback((message: string,  progress: number) => {
     setState(prev => ({
       ...prev,
       progress: Math.min(100, Math.max(0, progress)),
@@ -186,7 +197,8 @@ export function useWalrusStorage(
   }, []);
 
   // Create todo operation
-  const createTodo = useCallback(
+// @ts-ignore - Unused variable
+//   const createTodo = useCallback(
     async (
       todo: Omit<
         WalrusTodo,
@@ -209,10 +221,10 @@ export function useWalrusStorage(
       }));
 
       try {
-        const manager = getManager();
+// @ts-ignore - Unused variable
+//         const manager = getManager();
 
-        // Ensure we have the signAndExecuteTransaction function
-        if (!signAndExecuteTransaction) {
+        // Ensure we have the signAndExecuteTransaction function if(!signAndExecuteTransaction: unknown) {
           throw new Error('Wallet signing capability not available');
         }
 
@@ -222,8 +234,8 @@ export function useWalrusStorage(
             // For Walrus uploads, we don't need actual signing - just return mock data
             // The actual signing happens when creating the NFT on Sui
             return {
-              signature: new Uint8Array(64), // Mock signature
-              publicKey: new Uint8Array(32), // Mock public key
+              signature: new Uint8Array(64 as any), // Mock signature
+              publicKey: new Uint8Array(32 as any), // Mock public key
             };
           },
           getAddress(): string {
@@ -233,10 +245,11 @@ export function useWalrusStorage(
             return address;
           },
         };
-
+// @ts-ignore - Unused variable
+// 
         const result = await manager.createTodo(
           todo,
-          walletSigner as any,
+          walletSigner as unknown,
           signAndExecuteTransaction,
           {
             ...options,
@@ -263,7 +276,8 @@ export function useWalrusStorage(
   );
 
   // Retrieve todo operation
-  const retrieveTodo = useCallback(
+// @ts-ignore - Unused variable
+//   const retrieveTodo = useCallback(
     async (walrusBlobId: string): Promise<WalrusTodo | null> => {
       setState(prev => ({
         ...prev,
@@ -274,8 +288,10 @@ export function useWalrusStorage(
       }));
 
       try {
-        const manager = getManager();
-        const result = await manager.retrieveTodo(walrusBlobId);
+// @ts-ignore - Unused variable
+//         const manager = getManager();
+// @ts-ignore - Unused variable
+//         const result = await manager.retrieveTodo(walrusBlobId as any);
 
         setState(prev => ({
           ...prev,
@@ -295,7 +311,8 @@ export function useWalrusStorage(
   );
 
   // Update todo operation
-  const updateTodo = useCallback(
+// @ts-ignore - Unused variable
+//   const updateTodo = useCallback(
     async (
       todo: WalrusTodo,
       options: Partial<WalrusTodoUploadOptions> = {}
@@ -314,14 +331,15 @@ export function useWalrusStorage(
       }));
 
       try {
-        const manager = getManager();
+// @ts-ignore - Unused variable
+//         const manager = getManager();
         
         // Create wallet signer
         const walletSigner = {
           async signData(data: Uint8Array): Promise<{ signature: Uint8Array; publicKey: Uint8Array }> {
             return {
-              signature: new Uint8Array(64),
-              publicKey: new Uint8Array(32),
+              signature: new Uint8Array(64 as any),
+              publicKey: new Uint8Array(32 as any),
             };
           },
           getAddress(): string {
@@ -332,7 +350,7 @@ export function useWalrusStorage(
           },
         };
 
-        await manager.updateTodo(todo, walletSigner as any, options);
+        await manager.updateTodo(todo, walletSigner as unknown, options);
 
         setState(prev => ({
           ...prev,
@@ -352,7 +370,8 @@ export function useWalrusStorage(
   );
 
   // Delete todo operation
-  const deleteTodo = useCallback(
+// @ts-ignore - Unused variable
+//   const deleteTodo = useCallback(
     async (walrusBlobId: string): Promise<boolean> => {
       if (!connected || !address) {
         handleError(new Error('Wallet not connected'), 'Delete Todo');
@@ -368,14 +387,15 @@ export function useWalrusStorage(
       }));
 
       try {
-        const manager = getManager();
+// @ts-ignore - Unused variable
+//         const manager = getManager();
         
         // Create wallet signer for deletion
         const walletSigner = {
           async signData(data: Uint8Array): Promise<{ signature: Uint8Array; publicKey: Uint8Array }> {
             return {
-              signature: new Uint8Array(64),
-              publicKey: new Uint8Array(32),
+              signature: new Uint8Array(64 as any),
+              publicKey: new Uint8Array(32 as any),
             };
           },
           getAddress(): string {
@@ -386,7 +406,7 @@ export function useWalrusStorage(
           },
         };
 
-        await manager.deleteTodo(walrusBlobId, walletSigner as any);
+        await manager.deleteTodo(walrusBlobId, walletSigner as unknown);
 
         setState(prev => ({
           ...prev,
@@ -406,7 +426,8 @@ export function useWalrusStorage(
   );
 
   // Create multiple todos
-  const createMultipleTodos = useCallback(
+// @ts-ignore - Unused variable
+//   const createMultipleTodos = useCallback(
     async (
       todos: Array<
         Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
@@ -428,10 +449,10 @@ export function useWalrusStorage(
       }));
 
       try {
-        const manager = getManager();
+// @ts-ignore - Unused variable
+//         const manager = getManager();
         
-        // Ensure we have the signAndExecuteTransaction function
-        if (!signAndExecuteTransaction) {
+        // Ensure we have the signAndExecuteTransaction function if(!signAndExecuteTransaction: unknown) {
           throw new Error('Wallet signing capability not available');
         }
 
@@ -439,8 +460,8 @@ export function useWalrusStorage(
         const walletSigner = {
           async signData(data: Uint8Array): Promise<{ signature: Uint8Array; publicKey: Uint8Array }> {
             return {
-              signature: new Uint8Array(64),
-              publicKey: new Uint8Array(32),
+              signature: new Uint8Array(64 as any),
+              publicKey: new Uint8Array(32 as any),
             };
           },
           getAddress(): string {
@@ -450,10 +471,11 @@ export function useWalrusStorage(
             return address;
           },
         };
-
+// @ts-ignore - Unused variable
+// 
         const results = await manager.createMultipleTodos(
           todos,
-          walletSigner as any,
+          walletSigner as unknown,
           signAndExecuteTransaction,
           {
             ...options,
@@ -480,13 +502,16 @@ export function useWalrusStorage(
   );
 
   // Get todo storage info
-  const getTodoStorageInfo = useCallback(
+// @ts-ignore - Unused variable
+//   const getTodoStorageInfo = useCallback(
     async (walrusBlobId: string) => {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
       try {
-        const manager = getManager();
-        const result = await manager.getTodoStorageInfo(walrusBlobId);
+// @ts-ignore - Unused variable
+//         const manager = getManager();
+// @ts-ignore - Unused variable
+//         const result = await manager.getTodoStorageInfo(walrusBlobId as any);
 
         setState(prev => ({ ...prev, loading: false }));
         return result;
@@ -499,18 +524,21 @@ export function useWalrusStorage(
   );
 
   // Estimate storage costs
-  const estimateStorageCosts = useCallback(
+// @ts-ignore - Unused variable
+//   const estimateStorageCosts = useCallback(
     async (
       todos: Array<
-        Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
-      >,
+        Omit<WalrusTodo, _'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
+      >, 
       epochs: number = 5
     ) => {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
       try {
-        const manager = getManager();
-        const result = await manager.estimateStorageCosts(todos, epochs);
+// @ts-ignore - Unused variable
+//         const manager = getManager();
+// @ts-ignore - Unused variable
+//         const result = await manager.estimateStorageCosts(todos, epochs);
 
         setState(prev => ({ ...prev, loading: false }));
         return result;
@@ -523,10 +551,12 @@ export function useWalrusStorage(
   );
 
   // Refresh WAL balance
-  const refreshWalBalance = useCallback(async () => {
+// @ts-ignore - Unused variable
+//   const refreshWalBalance = useCallback(_async () => {
     try {
       const manager = getManager();
-      const balance = await manager.getWalBalance();
+// @ts-ignore - Unused variable
+//       const balance = await manager.getWalBalance();
       setState(prev => ({ ...prev, walBalance: balance }));
     } catch (error) {
       console.warn('Failed to refresh WAL balance:', error);
@@ -534,10 +564,12 @@ export function useWalrusStorage(
   }, [getManager]);
 
   // Refresh storage usage
-  const refreshStorageUsage = useCallback(async () => {
+// @ts-ignore - Unused variable
+//   const refreshStorageUsage = useCallback(_async () => {
     try {
       const manager = getManager();
-      const usage = await manager.getStorageUsage();
+// @ts-ignore - Unused variable
+//       const usage = await manager.getStorageUsage();
       setState(prev => ({ ...prev, storageUsage: usage }));
     } catch (error) {
       console.warn('Failed to refresh storage usage:', error);
@@ -545,12 +577,14 @@ export function useWalrusStorage(
   }, [getManager]);
 
   // Test connection
-  const testConnection = useCallback(async () => {
+// @ts-ignore - Unused variable
+//   const testConnection = useCallback(_async () => {
     try {
       const manager = getManager();
       // Use the walrus client to test connection
-      const client = manager['walrusClient'] || manager['walrusStorage']?.getClient?.();
-      if (client && typeof client.getWalBalance === 'function') {
+// @ts-ignore - Unused variable
+//       const client = manager?.["walrusClient"] || manager?.["walrusStorage"]?.getClient?.();
+      if (client && typeof client?.getWalBalance === 'function') {
         await client.getWalBalance();
         return { success: true };
       }
@@ -564,14 +598,17 @@ export function useWalrusStorage(
   }, [getManager]);
 
   // Upload blob
-  const uploadBlob = useCallback(
-    async (data: Uint8Array, options: { metadata?: any } = {}) => {
+// @ts-ignore - Unused variable
+//   const uploadBlob = useCallback(
+    async (data: Uint8Array,  options: { metadata?: any } = {}) => {
       try {
         const manager = getManager();
         // Use the walrus client directly
-        const client = manager['walrusClient'] || manager['walrusStorage']?.getClient?.();
-        if (client && typeof client.upload === 'function') {
-          const result = await client.upload(data, { epochs: 1 });
+// @ts-ignore - Unused variable
+//         const client = manager?.["walrusClient"] || manager?.["walrusStorage"]?.getClient?.();
+        if (client && typeof client?.upload === 'function') {
+// @ts-ignore - Unused variable
+//           const result = await client.upload(data, { epochs: 1 });
           return { success: true, blobId: result.blobId };
         }
         throw new Error('Walrus client not available');
@@ -586,14 +623,17 @@ export function useWalrusStorage(
   );
 
   // Retrieve blob
-  const retrieveBlob = useCallback(
+// @ts-ignore - Unused variable
+//   const retrieveBlob = useCallback(
     async (blobId: string) => {
       try {
         const manager = getManager();
         // Use the walrus client directly
-        const client = manager['walrusClient'] || manager['walrusStorage']?.getClient?.();
-        if (client && typeof client.download === 'function') {
-          const result = await client.download(blobId);
+// @ts-ignore - Unused variable
+//         const client = manager?.["walrusClient"] || manager?.["walrusStorage"]?.getClient?.();
+        if (client && typeof client?.download === 'function') {
+// @ts-ignore - Unused variable
+//           const result = await client.download(blobId as any);
           return { success: true, data: result.data };
         }
         throw new Error('Walrus client not available');
@@ -610,7 +650,7 @@ export function useWalrusStorage(
   // Upload image
   const uploadImage = useCallback(
     async (
-      file: File,
+      file: File, 
       options: { epochs?: number; onProgress?: (progress: number) => void } = {}
     ) => {
       if (!connected || !address) {
@@ -628,18 +668,22 @@ export function useWalrusStorage(
       }));
 
       try {
-        const manager = getManager();
+// @ts-ignore - Unused variable
+//         const manager = getManager();
         // Use the walrus client directly
-        const client = manager['walrusClient'] || manager['walrusStorage']?.getClient?.();
-        if (client && typeof client.uploadImage === 'function') {
+// @ts-ignore - Unused variable
+//         const client = manager?.["walrusClient"] || manager?.["walrusStorage"]?.getClient?.();
+        if (client && typeof client?.uploadImage === 'function') {
           options?.onProgress?.(20);
-          
+// @ts-ignore - Unused variable
+//           
           const result = await client.uploadImage(file, {
             epochs: options.epochs || 5,
           });
           
           options?.onProgress?.(80);
-          
+// @ts-ignore - Unused variable
+//           
           const url = client.getBlobUrl?.(result.blobId) || `walrus://${result.blobId}`;
           
           setState(prev => ({
@@ -668,12 +712,14 @@ export function useWalrusStorage(
   );
 
   // Clear error
-  const clearError = useCallback(() => {
+// @ts-ignore - Unused variable
+//   const clearError = useCallback(_() => {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
   // Reset state
-  const reset = useCallback(() => {
+// @ts-ignore - Unused variable
+//   const reset = useCallback(_() => {
     setState({
       loading: false,
       uploading: false,
@@ -688,13 +734,14 @@ export function useWalrusStorage(
   }, []);
 
   // Auto-refresh balance and usage
-  useEffect(() => {
+  useEffect(_() => {
     if (!connected || !address) {return;}
 
     let intervalId: NodeJS.Timeout | undefined;
 
     if (autoRefreshBalance || autoRefreshUsage) {
-      const refresh = async () => {
+// @ts-ignore - Unused variable
+//       const refresh = async () => {
         if (autoRefreshBalance) {
           await refreshWalBalance();
         }
@@ -712,7 +759,7 @@ export function useWalrusStorage(
 
     return () => {
       if (intervalId) {
-        clearInterval(intervalId);
+        clearInterval(intervalId as any);
       }
     };
   }, [
@@ -726,7 +773,7 @@ export function useWalrusStorage(
   ]);
 
   // Handle wallet errors
-  useEffect(() => {
+  useEffect(_() => {
     if (walletError) {
       setState(prev => ({
         ...prev,

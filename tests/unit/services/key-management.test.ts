@@ -49,12 +49,12 @@ describe('KeyManagementService', () => {
       Ed25519Keypair.fromSecretKey as jest.MockedFunction<
         typeof Ed25519Keypair.fromSecretKey
       >
-    ).mockReturnValue(mockKeypair);
+    ).mockReturnValue(mockKeypair as any);
     (
       Ed25519Keypair.generate as jest.MockedFunction<
         typeof Ed25519Keypair.generate
       >
-    ).mockReturnValue(mockKeypair);
+    ).mockReturnValue(mockKeypair as any);
 
     keyManagementService = KeyManagementService.getInstance();
   });
@@ -70,7 +70,7 @@ describe('KeyManagementService', () => {
     it('should return the same instance (singleton)', () => {
       const instance1 = KeyManagementService.getInstance();
       const instance2 = KeyManagementService.getInstance();
-      expect(instance1).toBe(instance2);
+      expect(instance1 as any).toBe(instance2 as any);
     });
   });
 
@@ -78,7 +78,7 @@ describe('KeyManagementService', () => {
     const validPrivateKeyBase64 = 'dGVzdC1wcml2YXRlLWtleQo='; // base64 encoded test key
 
     it('should retrieve and cache keypair from secure storage', async () => {
-      mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
+      mockSecureStorage?.getSecureItem?.mockResolvedValue(validPrivateKeyBase64 as any);
 
       const keypair = await keyManagementService.getKeypair();
 
@@ -88,22 +88,22 @@ describe('KeyManagementService', () => {
       expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledWith(
         Buffer.from(validPrivateKeyBase64, 'base64')
       );
-      expect(keypair).toBe(mockKeypair);
+      expect(keypair as any).toBe(mockKeypair as any);
     });
 
     it('should return cached keypair on subsequent calls', async () => {
-      mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
+      mockSecureStorage?.getSecureItem?.mockResolvedValue(validPrivateKeyBase64 as any);
 
       const keypair1 = await keyManagementService.getKeypair();
       const keypair2 = await keyManagementService.getKeypair();
 
-      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1);
-      expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledTimes(1);
-      expect(keypair1).toBe(keypair2);
+      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1 as any);
+      expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledTimes(1 as any);
+      expect(keypair1 as any).toBe(keypair2 as any);
     });
 
     it('should throw error when no private key is found', async () => {
-      mockSecureStorage.getSecureItem.mockResolvedValue(null);
+      mockSecureStorage?.getSecureItem?.mockResolvedValue(null as any);
 
       await expect(keyManagementService.getKeypair()).rejects.toThrow(
         new CLIError(
@@ -114,7 +114,7 @@ describe('KeyManagementService', () => {
     });
 
     it('should throw error when keypair creation fails', async () => {
-      mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
+      mockSecureStorage?.getSecureItem?.mockResolvedValue(validPrivateKeyBase64 as any);
       (
         Ed25519Keypair.fromSecretKey as jest.MockedFunction<
           typeof Ed25519Keypair.fromSecretKey
@@ -136,7 +136,7 @@ describe('KeyManagementService', () => {
     const validPrivateKeyBase64 = 'dGVzdC1wcml2YXRlLWtleQo=';
 
     it('should store valid private key in secure storage', async () => {
-      await keyManagementService.storeKeypair(validPrivateKeyBase64);
+      await keyManagementService.storeKeypair(validPrivateKeyBase64 as any);
 
       expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledWith(
         Buffer.from(validPrivateKeyBase64, 'base64')
@@ -148,14 +148,14 @@ describe('KeyManagementService', () => {
     });
 
     it('should cache the keypair after successful storage', async () => {
-      await keyManagementService.storeKeypair(validPrivateKeyBase64);
+      await keyManagementService.storeKeypair(validPrivateKeyBase64 as any);
 
       // Clear mocks to verify cache is used
       jest.clearAllMocks();
 
       const keypair = await keyManagementService.getKeypair();
       expect(mockSecureStorage.getSecureItem).not.toHaveBeenCalled();
-      expect(keypair).toBe(mockKeypair);
+      expect(keypair as any).toBe(mockKeypair as any);
     });
 
     it('should validate private key format before storing', async () => {
@@ -183,12 +183,12 @@ describe('KeyManagementService', () => {
       const newKey = 'bmV3LXByaXZhdGUta2V5Cg==';
 
       // Store first key
-      await keyManagementService.storeKeypair(validPrivateKeyBase64);
+      await keyManagementService.storeKeypair(validPrivateKeyBase64 as any);
 
       // Store new key
-      await keyManagementService.storeKeypair(newKey);
+      await keyManagementService.storeKeypair(newKey as any);
 
-      expect(mockSecureStorage.setSecureItem).toHaveBeenCalledTimes(2);
+      expect(mockSecureStorage.setSecureItem).toHaveBeenCalledTimes(2 as any);
       expect(mockSecureStorage.setSecureItem).toHaveBeenLastCalledWith(
         'SUI_PRIVATE_KEY',
         newKey
@@ -199,18 +199,18 @@ describe('KeyManagementService', () => {
   describe('clearCache', () => {
     it('should clear the cached keypair', async () => {
       const validPrivateKeyBase64 = 'dGVzdC1wcml2YXRlLWtleQo=';
-      mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
+      mockSecureStorage?.getSecureItem?.mockResolvedValue(validPrivateKeyBase64 as any);
 
       // Load and cache keypair
       await keyManagementService.getKeypair();
-      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1);
+      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1 as any);
 
       // Clear cache
       keyManagementService.clearCache();
 
       // Next call should fetch from storage again
       await keyManagementService.getKeypair();
-      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(2);
+      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(2 as any);
     });
   });
 
@@ -221,7 +221,7 @@ describe('KeyManagementService', () => {
         Ed25519Keypair.generate as jest.MockedFunction<
           typeof Ed25519Keypair.generate
         >
-      ).mockReturnValue(newKeypair);
+      ).mockReturnValue(newKeypair as any);
 
       // Generate new keypair
       Ed25519Keypair.generate();
@@ -230,7 +230,7 @@ describe('KeyManagementService', () => {
       const exportedKey = Buffer.from('generated-private-key').toString(
         'base64'
       );
-      await keyManagementService.storeKeypair(exportedKey);
+      await keyManagementService.storeKeypair(exportedKey as any);
 
       expect(mockSecureStorage.setSecureItem).toHaveBeenCalledWith(
         'SUI_PRIVATE_KEY',
@@ -241,7 +241,7 @@ describe('KeyManagementService', () => {
 
   describe('error scenarios', () => {
     it('should handle storage errors gracefully', async () => {
-      mockSecureStorage.getSecureItem.mockRejectedValue(
+      mockSecureStorage?.getSecureItem?.mockRejectedValue(
         new Error('Storage access denied')
       );
 
@@ -251,7 +251,7 @@ describe('KeyManagementService', () => {
     });
 
     it('should handle corrupt key data', async () => {
-      mockSecureStorage.getSecureItem.mockResolvedValue('not-valid-base64&&&');
+      mockSecureStorage?.getSecureItem?.mockResolvedValue('not-valid-base64&&&');
       (
         Ed25519Keypair.fromSecretKey as jest.MockedFunction<
           typeof Ed25519Keypair.fromSecretKey
@@ -272,7 +272,7 @@ describe('KeyManagementService', () => {
   describe('concurrent access', () => {
     it('should handle concurrent getKeypair calls safely', async () => {
       const validPrivateKeyBase64 = 'dGVzdC1wcml2YXRlLWtleQo=';
-      mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
+      mockSecureStorage?.getSecureItem?.mockResolvedValue(validPrivateKeyBase64 as any);
 
       // Simulate concurrent access
       const promises = [
@@ -281,10 +281,10 @@ describe('KeyManagementService', () => {
         keyManagementService.getKeypair(),
       ];
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
       // Should only fetch from storage once due to caching
-      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1);
+      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1 as any);
       expect(results[0]).toBe(results[1]);
       expect(results[1]).toBe(results[2]);
     });

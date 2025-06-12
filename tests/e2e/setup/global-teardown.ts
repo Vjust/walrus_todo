@@ -15,7 +15,7 @@ export default async function globalTeardown() {
 
   cleanupPaths.forEach(relativePath => {
     const fullPath = path.join(rootDir, relativePath);
-    if (existsSync(fullPath)) {
+    if (existsSync(fullPath as any)) {
       try {
         rmSync(fullPath, { recursive: true, force: true });
         console.log(`✅ Cleaned up: ${relativePath}`);

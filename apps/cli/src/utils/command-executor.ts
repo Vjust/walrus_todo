@@ -33,7 +33,7 @@ export class CommandExecutionError extends BaseError {
       cause,
       context: options,
     });
-    this.name = 'CommandExecutionError';
+    this?.name = 'CommandExecutionError';
   }
 }
 
@@ -110,7 +110,7 @@ export function resetCommandExecutorConfig(): void {
  */
 function isCommandAllowed(command: string): boolean {
   const normalizedCommand = command.trim().split(' ')[0].toLowerCase();
-  return currentConfig.allowedCommands.includes(normalizedCommand);
+  return currentConfig?.allowedCommands?.includes(normalizedCommand as any);
 }
 
 /**
@@ -119,7 +119,7 @@ function isCommandAllowed(command: string): boolean {
  * @throws CommandExecutionError if the command is not allowed in strict mode
  */
 function validateCommand(command: string): void {
-  if (!isCommandAllowed(command)) {
+  if (!isCommandAllowed(command as any)) {
     const message = `Command not allowlisted: ${command}`;
 
     if (currentConfig.strictMode) {
@@ -149,7 +149,7 @@ export function sanitizeCommandInput(input: string): string {
  */
 export function isValidSuiAddress(address: string): boolean {
   // Check if the address is in the format 0x followed by hexadecimal characters
-  return /^0x[a-fA-F0-9]+$/.test(address);
+  return /^0x[a-fA-F0-9]+$/.test(address as any);
 }
 
 /**
@@ -158,7 +158,7 @@ export function isValidSuiAddress(address: string): boolean {
  * @returns True if the string is a valid number, false otherwise
  */
 export function isValidNumberString(value: string): boolean {
-  return /^[0-9]+$/.test(value);
+  return /^[0-9]+$/.test(value as any);
 }
 
 /**
@@ -173,7 +173,7 @@ export function safeExecSync(
   options?: ExecSyncOptions
 ): Buffer | string {
   try {
-    validateCommand(command);
+    validateCommand(command as any);
     return execSync(command, options);
   } catch (error) {
     // Differentiate between validation errors and execution errors
@@ -182,7 +182,7 @@ export function safeExecSync(
     }
 
     throw new CommandExecutionError(
-      `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to execute command: ${error instanceof Error ? error.message : String(error as any)}`,
       error instanceof Error ? error : undefined,
       { command }
     );
@@ -203,7 +203,7 @@ export function safeExecFileSync(
   options?: ExecSyncOptions
 ): Buffer | string {
   try {
-    validateCommand(command);
+    validateCommand(command as any);
     return execFileSync(command, args, options);
   } catch (error) {
     // Differentiate between validation errors and execution errors
@@ -212,7 +212,7 @@ export function safeExecFileSync(
     }
 
     throw new CommandExecutionError(
-      `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to execute command: ${error instanceof Error ? error.message : String(error as any)}`,
       error instanceof Error ? error : undefined,
       { command, args }
     );
@@ -233,7 +233,7 @@ export function safeSpawnSync(
   options?: SpawnSyncOptions
 ): ReturnType<typeof spawnSync> {
   try {
-    validateCommand(command);
+    validateCommand(command as any);
     return spawnSync(command, args, options);
   } catch (error) {
     // Differentiate between validation errors and execution errors
@@ -242,7 +242,7 @@ export function safeSpawnSync(
     }
 
     throw new CommandExecutionError(
-      `Failed to spawn command: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to spawn command: ${error instanceof Error ? error.message : String(error as any)}`,
       error instanceof Error ? error : undefined,
       { command, args }
     );
@@ -266,7 +266,7 @@ export function executeSuiCommand(
     return safeExecFileSync('sui', [subcommand, ...args], options);
   } catch (error) {
     throw new CommandExecutionError(
-      `Failed to execute Sui command: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to execute Sui command: ${error instanceof Error ? error.message : String(error as any)}`,
       error instanceof Error ? error : undefined,
       { command: 'sui', args: [subcommand, ...args] }
     );
@@ -281,7 +281,7 @@ export function executeSuiCommand(
  */
 export function switchSuiAddress(address: string): string {
   // Validate the address format
-  if (!isValidSuiAddress(address)) {
+  if (!isValidSuiAddress(address as any)) {
     throw new CommandExecutionError(
       'Invalid Sui address format. Address must start with 0x followed by hexadecimal characters.',
       undefined,
@@ -322,8 +322,8 @@ export function publishSuiPackage(
   options: { skipDependencyVerification?: boolean; json?: boolean } = {}
 ): string {
   // Validate the gas budget
-  const gasBudgetStr = String(gasBudget);
-  if (!isValidNumberString(gasBudgetStr)) {
+  const gasBudgetStr = String(gasBudget as any);
+  if (!isValidNumberString(gasBudgetStr as any)) {
     throw new CommandExecutionError(
       'Invalid gas budget format. Gas budget must be a positive number.',
       undefined,
@@ -344,10 +344,10 @@ export function publishSuiPackage(
     args.push('--json');
   }
 
-  args.push(packagePath);
+  args.push(packagePath as any);
 
   // Execute the command safely with the validated arguments
-  const result = executeSuiCommand('client', args.slice(1), {
+  const result = executeSuiCommand('client', args.slice(1 as any), {
     encoding: 'utf8',
   });
   return result.toString();

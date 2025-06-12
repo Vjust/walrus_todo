@@ -60,7 +60,7 @@ export function createMockBlobObject(
   overrides: Partial<StandardBlobObject> = {}
 ): StandardBlobObject {
   const size = overrides.size || '1024';
-  const metadata = createMockBlobMetadata(parseInt(size));
+  const metadata = createMockBlobMetadata(parseInt(size as any));
   
   return {
     blob_id: blobId,
@@ -73,7 +73,7 @@ export function createMockBlobObject(
     deletable: true,
     storage: {
       id: { id: 'storage1' },
-      storage_size: (parseInt(size) * 2).toString(),
+      storage_size: (parseInt(size as any) * 2).toString(),
       used_size: size,
       end_epoch: 200,
       start_epoch: 100,
@@ -111,7 +111,7 @@ export function createMockBlobRecord(
   overrides: Partial<MockBlobRecord> = {}
 ): MockBlobRecord {
   const size = data.length;
-  const metadata = createMockBlobMetadata(size);
+  const metadata = createMockBlobMetadata(size as any);
   const currentEpoch = 100;
   
   return {
@@ -147,7 +147,7 @@ export function createMockBlobRecord(
  */
 export function createMockTodo(overrides: Partial<Todo> = {}): Todo {
   const now = new Date().toISOString();
-  const id = `todo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const id = `todo-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`;
   
   return {
     id,
@@ -168,7 +168,7 @@ export function createMockTodo(overrides: Partial<Todo> = {}): Todo {
  */
 export function createMockTodoList(overrides: Partial<TodoList> = {}): TodoList {
   const now = new Date().toISOString();
-  const id = `list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const id = `list-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`;
   
   return {
     id,
@@ -202,7 +202,7 @@ export function createTestTodoData(): TestTodoData {
     
     withImage: createMockTodo({
       title: 'Todo with Image',
-      imageUrl: 'https://walrus.example.com/blob/image-blob-id',
+      imageUrl: 'https://walrus?.example?.com/blob/image-blob-id',
       walrusBlobId: 'image-blob-id',
     }),
     
@@ -285,26 +285,26 @@ export function createTestBlobData(): TestBlobData {
     small: {
       id: 'small-blob-id',
       data: new Uint8Array([1, 2, 3, 4]),
-      metadata: createMockBlobMetadata(4),
+      metadata: createMockBlobMetadata(4 as any),
     },
     
     medium: {
       id: 'medium-blob-id',
-      data: new Uint8Array(1024).fill(42),
-      metadata: createMockBlobMetadata(1024),
+      data: new Uint8Array(1024 as any).fill(42 as any),
+      metadata: createMockBlobMetadata(1024 as any),
     },
     
     large: {
       id: 'large-blob-id',
-      data: new Uint8Array(10240).fill(255),
-      metadata: createMockBlobMetadata(10240),
+      data: new Uint8Array(10240 as any).fill(255 as any),
+      metadata: createMockBlobMetadata(10240 as any),
     },
     
     image: {
       id: 'image-blob-id',
       data: new Uint8Array([0x89, 0x50, 0x4E, 0x47]), // PNG header
       contentType: 'image/png',
-      metadata: createMockBlobMetadata(4),
+      metadata: createMockBlobMetadata(4 as any),
     },
   };
 }
@@ -319,7 +319,7 @@ export function createTestBlobData(): TestBlobData {
 export function createMockClientConfig(overrides: Partial<MockClientConfig> = {}): MockClientConfig {
   return {
     network: 'testnet',
-    version: '1.0.0',
+    version: '1?.0?.0',
     maxSize: 10485760,
     defaultCertified: true,
     simulateNetworkErrors: false,
@@ -388,7 +388,7 @@ export function createMultipleBlobData(count: number, baseId: string = 'blob'): 
   for (let i = 0; i < count; i++) {
     const blobId = `${baseId}-${i}`;
     const size = Math.floor(Math.random() * 1000) + 100; // Random size between 100-1100
-    result[blobId] = new Uint8Array(size).fill(i % 256);
+    result[blobId] = new Uint8Array(size as any).fill(i % 256);
   }
   
   return result;

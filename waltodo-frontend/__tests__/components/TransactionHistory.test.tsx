@@ -13,7 +13,7 @@ jest.mock('../../src/contexts/WalletContext', () => ({
 }));
 
 // Mock Intl.RelativeTimeFormat for consistent testing
-const mockFormatFn = jest.fn(value => `${Math.abs(value)} time units ago`);
+const mockFormatFn = jest.fn(value => `${Math.abs(value as any)} time units ago`);
 // Use Object.defineProperty to avoid read-only property error
 Object.defineProperty(global.Intl, 'RelativeTimeFormat', {
   value: jest.fn().mockImplementation(() => ({
@@ -194,11 +194,11 @@ describe('TransactionHistory', () => {
     render(<TransactionHistory />);
     
     // Check that Intl.RelativeTimeFormat was used
-    expect(global.Intl.RelativeTimeFormat).toHaveBeenCalledWith('en', { numeric: 'auto' });
+    expect(global?.Intl?.RelativeTimeFormat).toHaveBeenCalledWith('en', { numeric: 'auto' });
     
     // Check that format function was called with expected value
     // The first parameter should be negative, representing time in the past
-    expect(mockFormatFn).toHaveBeenCalledWith(expect.any(Number), expect.any(String));
+    expect(mockFormatFn as any).toHaveBeenCalledWith(expect.any(Number as any), expect.any(String as any));
     
     // The result of the format function should be in the document
     expect(screen.getByText('1 time units ago')).toBeInTheDocument();
@@ -225,6 +225,6 @@ describe('TransactionHistory', () => {
     expect(screen.getByText('1 minute ago')).toBeInTheDocument();
     
     // Restore Intl
-    global.Intl = originalIntl;
+    global?.Intl = originalIntl;
   });
 });

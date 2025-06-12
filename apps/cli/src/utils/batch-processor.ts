@@ -40,7 +40,7 @@ export class BatchProcessor {
   private abortController?: AbortController;
 
   constructor(private options: BatchOptions) {
-    this.options = {
+    this?.options = {
       ...options,
       retryAttempts: options.retryAttempts ?? RETRY_CONFIG.ATTEMPTS,
       retryDelayMs: options.retryDelayMs ?? RETRY_CONFIG.DELAY_MS,
@@ -56,18 +56,18 @@ export class BatchProcessor {
   ): Promise<BatchResult<R>> {
     const startTime = Date.now();
     const totalItems = items.length;
-    const batchSize = this.options.batchSize;
+    const batchSize = this?.options?.batchSize;
     const totalBatches = Math.ceil(totalItems / batchSize);
 
     const successful: R[] = [];
     const failed: Array<{ item: T; error: Error; index: number }> = [];
 
     let processedCount = 0;
-    this.abortController = new AbortController();
+    this?.abortController = new AbortController();
 
     try {
       for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-        if (this.abortController.signal.aborted) {
+        if (this?.abortController?.signal.aborted) {
           throw new Error('Batch processing aborted');
         }
 
@@ -75,7 +75,7 @@ export class BatchProcessor {
         const batchEnd = Math.min(batchStart + batchSize, totalItems);
         const batchItems = items.slice(batchStart, batchEnd);
 
-        this.logger.info(`Processing batch ${batchIndex + 1}/${totalBatches}`, {
+        this?.logger?.info(`Processing batch ${batchIndex + 1}/${totalBatches}`, {
           batchSize: batchItems.length,
           range: `${batchStart}-${batchEnd - 1}`,
         });
@@ -102,7 +102,7 @@ export class BatchProcessor {
           }
 
           // Report progress
-          if (this.options.progressCallback) {
+          if (this?.options?.progressCallback) {
             const elapsedMs = Date.now() - startTime;
             const itemsPerMs = processedCount / elapsedMs;
             const remainingItems = totalItems - processedCount;
@@ -120,22 +120,22 @@ export class BatchProcessor {
               estimatedTimeRemainingMs,
             };
 
-            this.options.progressCallback(progress);
+            this?.options?.progressCallback(progress as any);
           }
         }
 
         // Pause between batches if configured
         if (
-          this.options.pauseBetweenBatchesMs &&
+          this?.options?.pauseBetweenBatchesMs &&
           batchIndex < totalBatches - 1
         ) {
-          await sleep(this.options.pauseBetweenBatchesMs);
+          await sleep(this?.options?.pauseBetweenBatchesMs);
         }
       }
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
-      this.logger.error('Batch processing error', typedError);
+        error instanceof Error ? error : new Error(String(error as any));
+      this?.logger?.error('Batch processing error', typedError);
       throw typedError;
     }
 
@@ -152,7 +152,7 @@ export class BatchProcessor {
       estimatedTimeRemainingMs: 0,
     };
 
-    this.logger.info('Batch processing completed', {
+    this?.logger?.info('Batch processing completed', {
       successful: successful.length,
       failed: failed.length,
       duration: `${duration}ms`,
@@ -174,7 +174,7 @@ export class BatchProcessor {
     startIndex: number,
     processor: (item: T, index: number) => Promise<R>
   ): Promise<Array<BatchItemResult<T, R>>> {
-    const concurrencyLimit = this.options.concurrencyLimit;
+    const concurrencyLimit = this?.options?.concurrencyLimit;
     const results: Array<BatchItemResult<T, R>> = [];
     const activePromises: Map<number, Promise<void>> = new Map();
 
@@ -194,7 +194,7 @@ export class BatchProcessor {
         processor
       ).then(result => {
         results[i] = result;
-        activePromises.delete(i);
+        activePromises.delete(i as any);
       });
 
       activePromises.set(i, promise);
@@ -216,7 +216,7 @@ export class BatchProcessor {
   ): Promise<BatchItemResult<T, R>> {
     let lastError: Error | null = null;
 
-    const retryAttempts = this.options.retryAttempts || 3;
+    const retryAttempts = this?.options?.retryAttempts || 3;
     for (let attempt = 0; attempt < retryAttempts; attempt++) {
       try {
         const value = await processor(item, index);
@@ -228,9 +228,9 @@ export class BatchProcessor {
           error: null,
         };
       } catch (error: unknown) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
 
-        this.logger.warn(
+        this?.logger?.warn(
           `Processing failed for item ${index}, attempt ${attempt + 1}`,
           {
             error: lastError.message,
@@ -238,15 +238,15 @@ export class BatchProcessor {
         );
 
         // Call error handler if provided
-        if (this.options.errorHandler) {
-          await this.options.errorHandler(lastError, item, index);
+        if (this?.options?.errorHandler) {
+          await this?.options?.errorHandler(lastError, item, index);
         }
 
         // Retry with exponential backoff
         if (attempt < retryAttempts - 1) {
-          const retryDelayMs = this.options.retryDelayMs || 1000;
+          const retryDelayMs = this?.options?.retryDelayMs || 1000;
           const delay = retryDelayMs * Math.pow(2, attempt);
-          await sleep(delay);
+          await sleep(delay as any);
         }
       }
     }
@@ -265,8 +265,8 @@ export class BatchProcessor {
    */
   abort(): void {
     if (this.abortController) {
-      this.abortController.abort();
-      this.logger.info('Batch processing aborted');
+      this?.abortController?.abort();
+      this?.logger?.info('Batch processing aborted');
     }
   }
 
@@ -284,14 +284,14 @@ export class BatchProcessor {
       ...options,
     };
 
-    const batchProcessor = new BatchProcessor(defaultOptions);
+    const batchProcessor = new BatchProcessor(defaultOptions as any);
     const result = await batchProcessor.process(items, (item, _index) =>
-      processor(item)
+      processor(item as any)
     );
 
-    if (result.failed.length > 0) {
+    if (result?.failed?.length > 0) {
       throw new Error(
-        `Batch processing failed for ${result.failed.length} items`
+        `Batch processing failed for ${result?.failed?.length} items`
       );
     }
 
@@ -312,7 +312,7 @@ export class BatchProcessor {
       ...options,
     };
 
-    const batchProcessor = new BatchProcessor(defaultOptions);
+    const batchProcessor = new BatchProcessor(defaultOptions as any);
     const result = await batchProcessor.process(items, mapper);
 
     return result.successful;
@@ -332,7 +332,7 @@ export class BatchProcessor {
       ...options,
     };
 
-    const batchProcessor = new BatchProcessor(defaultOptions);
+    const batchProcessor = new BatchProcessor(defaultOptions as any);
     const result = await batchProcessor.process(items, async (item, index) => {
       const passed = await predicate(item, index);
       return { item, passed };
@@ -357,13 +357,13 @@ export type BatchItemResultVariant<T, R> =
 export function isSuccessResult<T, R>(
   result: BatchItemResultVariant<T, R>
 ): result is { kind: 'success'; item: T; index: number; value: R } {
-  return result.kind === 'success';
+  return result?.kind === 'success';
 }
 
 export function isErrorResult<T, R>(
   result: BatchItemResultVariant<T, R>
 ): result is { kind: 'error'; item: T; index: number; error: Error } {
-  return result.kind === 'error';
+  return result?.kind === 'error';
 }
 
 /**
@@ -417,10 +417,10 @@ export function hasError<T, R>(
 export function normalizeResult<T, R>(
   result: BatchItemResult<T, R>
 ): BatchItemResultVariant<T, R> {
-  if (hasValue(result)) {
+  if (hasValue(result as any)) {
     return createSuccessResult(result.item, result.index, result.value);
   }
-  if (hasError(result)) {
+  if (hasError(result as any)) {
     return createErrorResult(result.item, result.index, result.error);
   }
   // Fallback for malformed results

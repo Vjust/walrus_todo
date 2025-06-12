@@ -22,10 +22,10 @@ jest.mock('../../apps/cli/src/services/ai/SecureCredentialService', () => ({
     getAllCredentials: jest
       .fn()
       .mockResolvedValue([{ key: 'mock-api-key', provider: 'xai' }]),
-    storeCredential: jest.fn().mockResolvedValue(true),
-    removeCredential: jest.fn().mockResolvedValue(true),
-    rotateCredential: jest.fn().mockResolvedValue(true),
-    validateCredential: jest.fn().mockResolvedValue(true),
+    storeCredential: jest.fn().mockResolvedValue(true as any),
+    removeCredential: jest.fn().mockResolvedValue(true as any),
+    rotateCredential: jest.fn().mockResolvedValue(true as any),
+    validateCredential: jest.fn().mockResolvedValue(true as any),
   },
 }));
 
@@ -102,7 +102,7 @@ jest.mock('../../apps/cli/src/services/ai/ResultCache', () => {
       ttlMs: 900000,
       maxEntries: 100,
     }),
-    get: jest.fn().mockReturnValue(null),
+    get: jest.fn().mockReturnValue(null as any),
     set: jest.fn(),
     clear: jest.fn(),
     clearOperation: jest.fn(),
@@ -127,7 +127,7 @@ jest.mock('../../apps/cli/src/services/ai/ResultCache', () => {
       recordHit: mockInstance.recordHit,
       recordMiss: mockInstance.recordMiss,
     })),
-    getInstance: jest.fn().mockReturnValue(mockInstance),
+    getInstance: jest.fn().mockReturnValue(mockInstance as any),
   };
 });
 
@@ -139,7 +139,7 @@ jest.spyOn(ResultCache, 'getInstance').mockReturnValue({
     ttlMs: 900000,
     maxEntries: 100,
   }),
-  get: jest.fn().mockReturnValue(null),
+  get: jest.fn().mockReturnValue(null as any),
   set: jest.fn(),
   clear: jest.fn(),
   clearOperation: jest.fn(),
@@ -170,7 +170,7 @@ jest.mock('../../apps/cli/src/services/ai/PromptManager', () => {
       clearAllPromptOverrides: mockInstance.clearAllPromptOverrides,
       clearPromptOverride: mockInstance.clearPromptOverride,
     })),
-    getInstance: jest.fn().mockReturnValue(mockInstance),
+    getInstance: jest.fn().mockReturnValue(mockInstance as any),
   };
 });
 
@@ -232,7 +232,7 @@ jest.mock('../../apps/cli/src/services/ai/AIConfigManager', () => {
       updateOperationConfig: mockInstance.updateOperationConfig,
       resetToDefaults: mockInstance.resetToDefaults,
     })),
-    getInstance: jest.fn().mockReturnValue(mockInstance),
+    getInstance: jest.fn().mockReturnValue(mockInstance as any),
   };
 });
 
@@ -336,15 +336,15 @@ describe('Consolidated AIService', () => {
     const instance1 = AIService.getInstance();
     const instance2 = AIService.getInstance();
 
-    expect(instance1).toBe(instance2);
+    expect(instance1 as any).toBe(instance2 as any);
 
     // Verify the exported singleton instance
-    expect(aiService).toBe(instance1);
+    expect(aiService as any).toBe(instance1 as any);
   });
 
   it('should provide access to the provider', () => {
     const provider = aiService.getProvider();
-    expect(provider).toBeDefined();
+    expect(provider as any).toBeDefined();
   });
 
   it('should allow changing the provider', async () => {
@@ -355,10 +355,10 @@ describe('Consolidated AIService', () => {
 
   it('should allow configuring service behavior', () => {
     const configManagerSpy = jest.spyOn(
-      aiService['configManager'],
+      aiService?.["configManager"],
       'updateGlobalConfig'
     );
-    const resultCacheSpy = jest.spyOn(aiService['resultCache'], 'configure');
+    const resultCacheSpy = jest.spyOn(aiService?.["resultCache"], 'configure');
 
     aiService.configure({
       cacheEnabled: false,
@@ -367,13 +367,13 @@ describe('Consolidated AIService', () => {
       defaultMaxTokens: 1000,
     });
 
-    expect(configManagerSpy).toHaveBeenCalledWith({
+    expect(configManagerSpy as any).toHaveBeenCalledWith({
       useEnhancedPrompts: true,
       defaultTemperature: 0.5,
       defaultMaxTokens: 1000,
     });
 
-    expect(resultCacheSpy).toHaveBeenCalledWith({
+    expect(resultCacheSpy as any).toHaveBeenCalledWith({
       enabled: false,
     });
   });
@@ -381,28 +381,28 @@ describe('Consolidated AIService', () => {
   // Test core operations
   describe('Core Operations', () => {
     it('should summarize todos', async () => {
-      const result = await aiService.summarize(mockTodos);
-      expect(result).toBe('Created response');
+      const result = await aiService.summarize(mockTodos as any);
+      expect(result as any).toBe('Created response');
     });
 
     it('should categorize todos', async () => {
-      const result = await aiService.categorize(mockTodos);
-      expect(result).toEqual({ category1: ['todo1'] });
+      const result = await aiService.categorize(mockTodos as any);
+      expect(result as any).toEqual({ category1: ['todo1'] });
     });
 
     it('should prioritize todos', async () => {
-      const result = await aiService.prioritize(mockTodos);
-      expect(result).toEqual({ todo1: 8 });
+      const result = await aiService.prioritize(mockTodos as any);
+      expect(result as any).toEqual({ todo1: 8 });
     });
 
     it('should suggest new todos', async () => {
-      const result = await aiService.suggest(mockTodos);
-      expect(result).toEqual(['Suggested todo 1', 'Suggested todo 2']);
+      const result = await aiService.suggest(mockTodos as any);
+      expect(result as any).toEqual(['Suggested todo 1', 'Suggested todo 2']);
     });
 
     it('should analyze todos', async () => {
-      const result = await aiService.analyze(mockTodos);
-      expect(result).toEqual({
+      const result = await aiService.analyze(mockTodos as any);
+      expect(result as any).toEqual({
         themes: ['theme1'],
         bottlenecks: ['bottleneck1'],
       });
@@ -412,26 +412,26 @@ describe('Consolidated AIService', () => {
   // Test advanced operations
   describe('Advanced Operations', () => {
     it('should group todos', async () => {
-      const result = await aiService.group(mockTodos);
-      expect(result).toEqual({
+      const result = await aiService.group(mockTodos as any);
+      expect(result as any).toEqual({
         sequentialTracks: { track1: ['todo1'] },
         parallelOpportunities: [['todo2', 'todo3']],
       });
     });
 
     it('should schedule todos', async () => {
-      const result = await aiService.schedule(mockTodos);
-      expect(result).toEqual({ todo1: { start: 0, duration: 2, due: 5 } });
+      const result = await aiService.schedule(mockTodos as any);
+      expect(result as any).toEqual({ todo1: { start: 0, duration: 2, due: 5 } });
     });
 
     it('should detect dependencies', async () => {
-      const result = await aiService.detectDependencies(mockTodos);
-      expect(result).toEqual({ dependencies: {}, blockers: {} });
+      const result = await aiService.detectDependencies(mockTodos as any);
+      expect(result as any).toEqual({ dependencies: {}, blockers: {} });
     });
 
     it('should estimate effort', async () => {
-      const result = await aiService.estimateEffort(mockTodos);
-      expect(result).toEqual({
+      const result = await aiService.estimateEffort(mockTodos as any);
+      expect(result as any).toEqual({
         todo1: { effort: 3, reasoning: 'Moderate complexity' },
       });
     });
@@ -459,22 +459,22 @@ describe('Consolidated AIService', () => {
       // Mock JSON parsing
       const mockResponse = { result: '["tag1", "tag2"]' };
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
-        .mockResolvedValueOnce(mockResponse);
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
+        .mockResolvedValueOnce(mockResponse as any);
 
-      const result = await aiService.suggestTags(mockTodo);
-      expect(result).toEqual(['tag1', 'tag2']);
+      const result = await aiService.suggestTags(mockTodo as any);
+      expect(result as any).toEqual(['tag1', 'tag2']);
     });
 
     it('should suggest priority for a todo', async () => {
       // Mock response with a valid priority
       const mockResponse = { result: 'high' };
       jest
-        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
-        .mockResolvedValueOnce(mockResponse);
+        .spyOn(aiService?.["modelAdapter"], 'processWithPromptTemplate')
+        .mockResolvedValueOnce(mockResponse as any);
 
-      const result = await aiService.suggestPriority(mockTodo);
-      expect(result).toBe('high');
+      const result = await aiService.suggestPriority(mockTodo as any);
+      expect(result as any).toBe('high');
     });
   });
 
@@ -518,13 +518,13 @@ describe('Consolidated AIService', () => {
     });
 
     it('should summarize with verification', async () => {
-      const result = await aiService.summarizeWithVerification(mockTodos);
+      const result = await aiService.summarizeWithVerification(mockTodos as any);
       expect(mockVerificationService.createVerifiedSummary).toHaveBeenCalled();
       expect(result.result).toBe('Verified summary');
     });
 
     it('should categorize with verification', async () => {
-      const result = await aiService.categorizeWithVerification(mockTodos);
+      const result = await aiService.categorizeWithVerification(mockTodos as any);
       expect(
         mockVerificationService.createVerifiedCategorization
       ).toHaveBeenCalled();
@@ -532,7 +532,7 @@ describe('Consolidated AIService', () => {
     });
 
     it('should prioritize with verification', async () => {
-      const result = await aiService.prioritizeWithVerification(mockTodos);
+      const result = await aiService.prioritizeWithVerification(mockTodos as any);
       expect(
         mockVerificationService.createVerifiedPrioritization
       ).toHaveBeenCalled();
@@ -540,7 +540,7 @@ describe('Consolidated AIService', () => {
     });
 
     it('should suggest with verification', async () => {
-      const result = await aiService.suggestWithVerification(mockTodos);
+      const result = await aiService.suggestWithVerification(mockTodos as any);
       expect(
         mockVerificationService.createVerifiedSuggestion
       ).toHaveBeenCalled();
@@ -548,7 +548,7 @@ describe('Consolidated AIService', () => {
     });
 
     it('should analyze with verification', async () => {
-      const result = await aiService.analyzeWithVerification(mockTodos);
+      const result = await aiService.analyzeWithVerification(mockTodos as any);
       expect(mockVerificationService.createVerifiedAnalysis).toHaveBeenCalled();
       expect(result.result).toEqual({ themes: ['theme1'] });
     });
@@ -557,25 +557,25 @@ describe('Consolidated AIService', () => {
   // Test cache operations
   describe('Cache Operations', () => {
     it('should clear the cache', () => {
-      const clearSpy = jest.spyOn(aiService['resultCache'], 'clear');
+      const clearSpy = jest.spyOn(aiService?.["resultCache"], 'clear');
       aiService.clearCache();
-      expect(clearSpy).toHaveBeenCalled();
+      expect(clearSpy as any).toHaveBeenCalled();
     });
 
     it('should clear specific operation cache', () => {
       const clearOperationSpy = jest.spyOn(
-        aiService['resultCache'],
+        aiService?.["resultCache"],
         'clearOperation'
       );
       aiService.clearCache('summarize');
-      expect(clearOperationSpy).toHaveBeenCalledWith('summarize');
+      expect(clearOperationSpy as any).toHaveBeenCalledWith('summarize');
     });
 
     it('should get cache stats', () => {
-      const getStatsSpy = jest.spyOn(aiService['resultCache'], 'getStats');
+      const getStatsSpy = jest.spyOn(aiService?.["resultCache"], 'getStats');
       const stats = aiService.getCacheStats();
-      expect(getStatsSpy).toHaveBeenCalled();
-      expect(stats).toEqual({
+      expect(getStatsSpy as any).toHaveBeenCalled();
+      expect(stats as any).toEqual({
         size: 0,
         hitRate: 0,
         operations: {},

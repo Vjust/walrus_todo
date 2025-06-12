@@ -39,7 +39,7 @@ export const createMockAIVerifierAdapter =
             };
           }
         ),
-      verifyRecord: jest.fn().mockResolvedValue(true),
+      verifyRecord: jest.fn().mockResolvedValue(true as any),
       getProviderInfo: jest
         .fn()
         .mockImplementation(
@@ -78,11 +78,11 @@ export const createMockAIVerifierAdapter =
             };
           }
         ),
-      getSigner: jest.fn().mockReturnValue(mockSigner),
+      getSigner: jest.fn().mockReturnValue(mockSigner as any),
       generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
       exportVerifications: jest.fn().mockResolvedValue(JSON.stringify([])),
-      enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-      securelyDestroyData: jest.fn().mockResolvedValue(true),
+      enforceRetentionPolicy: jest.fn().mockResolvedValue(0 as any),
+      securelyDestroyData: jest.fn().mockResolvedValue(true as any),
     };
   };
 
@@ -123,12 +123,12 @@ export const createMockBlockchainVerifier = () => {
         }
       ),
     listVerifications: jest.fn().mockResolvedValue([]),
-    getVerifierAdapter: jest.fn().mockReturnValue(mockVerifierAdapter),
+    getVerifierAdapter: jest.fn().mockReturnValue(mockVerifierAdapter as any),
     getSigner: jest.fn().mockReturnValue(mockVerifierAdapter.getSigner()),
     generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
     setCredentialAdapter: jest.fn(),
     setWalrusAdapter: jest.fn(),
-    verifyRecord: jest.fn().mockResolvedValue(true),
+    verifyRecord: jest.fn().mockResolvedValue(true as any),
     retrieveVerificationData: jest.fn().mockResolvedValue({
       request: 'mock_request',
       response: 'mock_response',
@@ -138,9 +138,9 @@ export const createMockBlockchainVerifier = () => {
       .mockResolvedValue('base64_encoded_proof'),
     verifyProof: jest.fn().mockResolvedValue({ isValid: true }),
     exportVerifications: jest.fn().mockResolvedValue('[]'),
-    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-    securelyDestroyData: jest.fn().mockResolvedValue(true),
-    deleteVerification: jest.fn().mockResolvedValue(true),
-    verifySignature: jest.fn().mockResolvedValue(true),
+    enforceRetentionPolicy: jest.fn().mockResolvedValue(0 as any),
+    securelyDestroyData: jest.fn().mockResolvedValue(true as any),
+    deleteVerification: jest.fn().mockResolvedValue(true as any),
+    verifySignature: jest.fn().mockResolvedValue(true as any),
   };
 };

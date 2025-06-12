@@ -31,7 +31,7 @@ const mockGetLatestSuiSystemState = jest
 // Create a properly typed mock SuiClient (for future use)
 const _mockSuiClient = {
   signAndExecuteTransactionBlock: mockSignAndExecuteTransactionBlock,
-  waitForTransactionBlock: jest.fn().mockResolvedValue(null),
+  waitForTransactionBlock: jest.fn().mockResolvedValue(null as any),
   getObject: mockGetObject,
   getLatestSuiSystemState: mockGetLatestSuiSystemState,
   url: 'https://mock-rpc-url.com',
@@ -71,41 +71,41 @@ describe('SuiNftStorage', () => {
       getPublicKey: () => ({
         toSuiAddress: () => 'mock-address',
         toBase64: () => 'mock-public-key-base64',
-        toBytes: () => new Uint8Array(32).fill(1),
+        toBytes: () => new Uint8Array(32 as any).fill(1 as any),
         toString: () => 'mock-public-key-string',
         equals: () => true,
       }),
-      sign: (_data: Uint8Array) => Promise.resolve(new Uint8Array(64)),
+      sign: (_data: Uint8Array) => Promise.resolve(new Uint8Array(64 as any)),
       signPersonalMessage: (_data: Uint8Array) =>
         Promise.resolve({
-          bytes: Buffer.from(_data).toString('base64'),
-          signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+          bytes: Buffer.from(_data as any).toString('base64'),
+          signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
         }),
       signWithIntent: (_data: Uint8Array, _intent: IntentScope) =>
         Promise.resolve({
-          bytes: Buffer.from(_data).toString('base64'),
-          signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+          bytes: Buffer.from(_data as any).toString('base64'),
+          signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
         }),
       signTransactionBlock: (_transaction: Transaction) =>
         Promise.resolve({
           bytes: 'mock-transaction-bytes',
-          signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+          signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
         }),
       signTransaction: (_transaction: Transaction) =>
         Promise.resolve({
           bytes: 'mock-transaction-bytes',
-          signature: Buffer.from(new Uint8Array(64)).toString('base64'),
+          signature: Buffer.from(new Uint8Array(64 as any)).toString('base64'),
         }),
       toSuiAddress: () => 'mock-address',
       getKeyScheme: () => 'ED25519' as const,
       export: () => ({
-        publicKey: new Uint8Array(32).fill(1),
-        secretKey: new Uint8Array(64).fill(1),
+        publicKey: new Uint8Array(32 as any).fill(1 as any),
+        secretKey: new Uint8Array(64 as any).fill(1 as any),
       }),
-      signData: (_data: Uint8Array) => new Uint8Array(64),
+      signData: (_data: Uint8Array) => new Uint8Array(64 as any),
       getKeyPair: () => ({
-        publicKey: new Uint8Array(32).fill(1),
-        secretKey: new Uint8Array(64).fill(1),
+        publicKey: new Uint8Array(32 as any).fill(1 as any),
+        secretKey: new Uint8Array(64 as any).fill(1 as any),
       }),
       deriveKeypair: () => mockSigner,
     } as unknown as Ed25519Keypair;
@@ -113,8 +113,8 @@ describe('SuiNftStorage', () => {
   });
 
   test('should setup mock infrastructure correctly', () => {
-    expect(mockSignAndExecuteTransactionBlock).toBeDefined();
-    expect(mockGetObject).toBeDefined();
-    expect(mockGetLatestSuiSystemState).toBeDefined();
+    expect(mockSignAndExecuteTransactionBlock as any).toBeDefined();
+    expect(mockGetObject as any).toBeDefined();
+    expect(mockGetLatestSuiSystemState as any).toBeDefined();
   });
 });

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'TodoNFT Team' }],
   creator: 'TodoNFT',
   publisher: 'TodoNFT',
-  metadataBase: new URL('https://todonft.walrus.site'),
+  metadataBase: new URL('https://todonft?.walrus?.site'),
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'TodoNFT - Transform Tasks into Valuable NFTs',
     description: 'Create, trade, and own your productivity achievements as NFTs on Sui blockchain with permanent Walrus storage.',
-    url: 'https://todonft.walrus.site',
+    url: 'https://todonft?.walrus?.site',
     siteName: 'TodoNFT',
     images: [
       {
@@ -85,7 +85,7 @@ function RootErrorFallback() {
               Something went wrong. Please refresh the page.
             </p>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => window?.location?.reload()}
               style={{
                 backgroundColor: '#3b82f6',
                 color: 'white',
@@ -113,8 +113,8 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning>
       <head>
         {/* Preload critical resources */}
-        <link rel='preconnect' href='https://fonts.googleapis.com' />
-        <link rel='dns-prefetch' href='https://fonts.googleapis.com' />
+        <link rel='preconnect' href='https://fonts?.googleapis?.com' />
+        <link rel='dns-prefetch' href='https://fonts?.googleapis?.com' />
       </head>
       <body 
         className='font-sans min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 antialiased'
@@ -133,7 +133,7 @@ export default function RootLayout({
             __html: `
               // Prevent FOUC (Flash of Unstyled Content)
               if (typeof window !== 'undefined') {
-                document.documentElement.classList.add('js');
+                document?.documentElement?.classList.add('js');
               }
             `,
           }}

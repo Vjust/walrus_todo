@@ -12,8 +12,8 @@ beforeAll(() => {
   });
 
   // Set test environment flag
-  process.env.NODE_ENV = 'test';
-  process.env.WALRUS_USE_MOCK = 'true';
+  process.env?.NODE_ENV = 'test';
+  process.env?.WALRUS_USE_MOCK = 'true';
 });
 
 afterAll(() => {
@@ -22,4 +22,4 @@ afterAll(() => {
 });
 
 // Increase timeout for e2e tests
-jest.setTimeout(30000);
+jest.setTimeout(30000 as any);

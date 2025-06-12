@@ -47,9 +47,9 @@ export function RealtimeTodoList({
   const { syncedTodos, isConnected, connectionState } = useTodoStateSync({
     todos,
     onTodoChange: updatedTodos => {
-      setTodos(updatedTodos);
+      setTodos(updatedTodos as any);
       if (onTodoUpdate) {
-        onTodoUpdate(updatedTodos);
+        onTodoUpdate(updatedTodos as any);
       }
     },
     owner: address || undefined,
@@ -109,7 +109,7 @@ export function RealtimeTodoList({
   const handleTodoComplete = useCallback(
     async (todo: Todo) => {
       if (onTodoComplete) {
-        await onTodoComplete(todo);
+        await onTodoComplete(todo as any);
       }
     },
     [onTodoComplete]
@@ -118,7 +118,7 @@ export function RealtimeTodoList({
   const handleTodoDelete = useCallback(
     async (todoId: string) => {
       if (onTodoDelete) {
-        await onTodoDelete(todoId);
+        await onTodoDelete(todoId as any);
       }
     },
     [onTodoDelete]
@@ -126,7 +126,7 @@ export function RealtimeTodoList({
 
   // Update todos when initial todos change
   useEffect(() => {
-    setTodos(initialTodos);
+    setTodos(initialTodos as any);
   }, [initialTodos]);
 
   const getNotificationIcon = (type: string) => {
@@ -226,7 +226,7 @@ export function RealtimeTodoList({
 
       {/* Todo list */}
       <div className='space-y-3'>
-        {todos.length === 0 ? (
+        {todos?.length === 0 ? (
           <div className='text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-lg'>
             <p className='text-gray-600 dark:text-gray-400'>
               No todos found. Create your first todo to get started!
@@ -246,7 +246,7 @@ export function RealtimeTodoList({
                     <input
                       type='checkbox'
                       checked={todo.completed}
-                      onChange={() => handleTodoComplete(todo)}
+                      onChange={() => handleTodoComplete(todo as any)}
                       className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
                     />
                     <h4
@@ -278,9 +278,9 @@ export function RealtimeTodoList({
                       {todo.priority}
                     </span>
 
-                    {todo.tags && todo.tags.length > 0 && (
+                    {todo.tags && todo?.tags?.length > 0 && (
                       <div className='flex space-x-1'>
-                        {todo.tags.map((tag, index) => (
+                        {todo?.tags?.map((tag, index) => (
                           <span
                             key={index}
                             className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800'
@@ -327,7 +327,7 @@ export function RealtimeTodoList({
       </div>
 
       {/* Recent events debug info (dev mode) */}
-      {process.env.NODE_ENV === 'development' && recentEvents.length > 0 && (
+      {process.env?.NODE_ENV === 'development' && recentEvents.length > 0 && (
         <div className='mt-6 p-4 bg-gray-100 rounded-lg'>
           <h4 className='font-medium mb-2'>Recent Events (Dev Mode)</h4>
           <div className='space-y-1 text-xs'>

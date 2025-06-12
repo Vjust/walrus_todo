@@ -58,16 +58,16 @@ export class SuiTestService implements ISuiService {
   private counter = 0;
 
   constructor(private config: AppConfig) {
-    const network = config.activeNetwork.name as NetworkType;
+    const network = config?.activeNetwork?.name as NetworkType;
     const url = NETWORK_URLS[network];
 
     if (!url) {
       throw new CLIError(`Invalid network type: ${network}`, 'INVALID_NETWORK');
     }
 
-    this.client = createCompatibleSuiClient({ url });
+    this?.client = createCompatibleSuiClient({ url });
     // Initialize wallet address from config
-    this.walletAddress = config.activeAccount.address;
+    this?.walletAddress = config?.activeAccount?.address;
   }
 
   /**
@@ -75,10 +75,10 @@ export class SuiTestService implements ISuiService {
    */
   async init(): Promise<void> {
     try {
-      this.walletAddress = await this.getWalletAddress();
+      this?.walletAddress = await this.getWalletAddress();
     } catch (_error) {
       throw new CLIError(
-        `Failed to initialize Sui service: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to initialize Sui service: ${_error instanceof Error ? _error.message : String(_error as any)}`,
         'INIT_FAILED'
       );
     }
@@ -93,13 +93,13 @@ export class SuiTestService implements ISuiService {
     }
 
     // Try config first, then environment
-    const configAddress = this.config.activeAccount.address;
+    const configAddress = this?.config?.activeAccount.address;
     if (configAddress) {
-      this.walletAddress = configAddress;
+      this?.walletAddress = configAddress;
       return configAddress;
     }
 
-    const address = process.env.WALLET_ADDRESS;
+    const address = process?.env?.WALLET_ADDRESS;
     if (!address) {
       throw new CLIError(
         'Wallet address not found in config or environment',
@@ -107,7 +107,7 @@ export class SuiTestService implements ISuiService {
       );
     }
 
-    this.walletAddress = address;
+    this?.walletAddress = address;
     return address;
   }
 
@@ -126,7 +126,7 @@ export class SuiTestService implements ISuiService {
       updatedAt: Date.now(),
     };
 
-    this.todoLists.set(id, todoList);
+    this?.todoLists?.set(id, todoList);
     return id;
   }
 
@@ -134,7 +134,7 @@ export class SuiTestService implements ISuiService {
    * Add a todo item to a list
    */
   async addTodo(listId: string, text: string): Promise<string> {
-    const list = this.todoLists.get(listId);
+    const list = this?.todoLists?.get(listId as any);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
@@ -147,8 +147,8 @@ export class SuiTestService implements ISuiService {
       updatedAt: Date.now(),
     };
 
-    list.items.set(itemId, item);
-    list.updatedAt = Date.now();
+    list?.items?.set(itemId, item);
+    list?.updatedAt = Date.now();
 
     return itemId;
   }
@@ -157,12 +157,12 @@ export class SuiTestService implements ISuiService {
    * Get all todos from a list
    */
   async getTodos(listId: string): Promise<TodoItem[]> {
-    const list = this.todoLists.get(listId);
+    const list = this?.todoLists?.get(listId as any);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    return Array.from(list.items.values());
+    return Array.from(list?.items?.values());
   }
 
   /**
@@ -173,46 +173,46 @@ export class SuiTestService implements ISuiService {
     itemId: string,
     changes: Partial<Omit<TodoItem, 'id'>>
   ): Promise<void> {
-    const list = this.todoLists.get(listId);
+    const list = this?.todoLists?.get(listId as any);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    const item = list.items.get(itemId);
+    const item = list?.items?.get(itemId as any);
     if (!item) {
       throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
     }
 
     Object.assign(item, changes, { updatedAt: Date.now() });
-    list.updatedAt = Date.now();
+    list?.updatedAt = Date.now();
   }
 
   /**
    * Delete a todo item
    */
   async deleteTodo(listId: string, itemId: string): Promise<void> {
-    const list = this.todoLists.get(listId);
+    const list = this?.todoLists?.get(listId as any);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    if (!list.items.has(itemId)) {
+    if (!list?.items?.has(itemId as any)) {
       throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
     }
 
-    list.items.delete(itemId);
-    list.updatedAt = Date.now();
+    list?.items?.delete(itemId as any);
+    list?.updatedAt = Date.now();
   }
 
   /**
    * Delete a todo list
    */
   async deleteTodoList(listId: string): Promise<void> {
-    if (!this.todoLists.has(listId)) {
+    if (!this?.todoLists?.has(listId as any)) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    this.todoLists.delete(listId);
+    this?.todoLists?.delete(listId as any);
   }
 
   /**
@@ -225,7 +225,7 @@ export class SuiTestService implements ISuiService {
     const effects = result.effects as
       | { status?: { status?: string; error?: string } }
       | undefined;
-    if (!effects?.status?.status || effects.status.status !== 'success') {
+    if (!effects?.status?.status || effects?.status?.status !== 'success') {
       throw new CLIError(
         `Transaction failed: ${effects?.status?.error || 'Unknown error'}`,
         'TRANSACTION_FAILED'
@@ -234,10 +234,10 @@ export class SuiTestService implements ISuiService {
 
     if (SECURITY_CONFIG.ENABLE_BLOCKCHAIN_VERIFICATION) {
       let retries = 0;
-      while (retries < SECURITY_CONFIG.TRANSACTION_VERIFICATION.MAX_RETRIES) {
+      while (retries < SECURITY_CONFIG?.TRANSACTION_VERIFICATION?.MAX_RETRIES) {
         try {
           // Wait for transaction finality
-          await this.client.waitForTransaction({
+          await this?.client?.waitForTransaction({
             digest: result.digest,
             timeout: RETRY_CONFIG.TIMEOUT_MS,
             options: {
@@ -247,7 +247,7 @@ export class SuiTestService implements ISuiService {
           });
 
           // Verify effects match expected changes
-          const transactionData = await this.client.getTransactionBlock({
+          const transactionData = await this?.client?.getTransactionBlock({
             digest: result.digest,
             options: {
               showEffects: true,
@@ -268,16 +268,16 @@ export class SuiTestService implements ISuiService {
           return;
         } catch (_error) {
           retries++;
-          if (retries >= SECURITY_CONFIG.TRANSACTION_VERIFICATION.MAX_RETRIES) {
+          if (retries >= SECURITY_CONFIG?.TRANSACTION_VERIFICATION?.MAX_RETRIES) {
             throw new CLIError(
-              `Transaction verification failed after ${retries} attempts: ${_error instanceof Error ? _error.message : String(_error)}`,
+              `Transaction verification failed after ${retries} attempts: ${_error instanceof Error ? _error.message : String(_error as any)}`,
               'VERIFICATION_FAILED'
             );
           }
           await new Promise(resolve =>
             setTimeout(
               resolve,
-              SECURITY_CONFIG.TRANSACTION_VERIFICATION.RETRY_DELAY_MS
+              SECURITY_CONFIG?.TRANSACTION_VERIFICATION?.RETRY_DELAY_MS
             )
           );
         }

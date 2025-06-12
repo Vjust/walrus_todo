@@ -158,7 +158,7 @@ export class WalrusError extends BaseError {
       shouldRetry: this.shouldRetry,
       stack: this.stack,
       cause:
-        this.cause instanceof Error ? this.cause.message : String(this.cause),
+        this.cause instanceof Error ? this?.cause?.message : String(this.cause),
     };
   }
 }
@@ -177,8 +177,8 @@ export function toErrorWithMessage(maybeError: unknown): { message: string } {
     return maybeError as { message: string };
   }
   try {
-    return new Error(JSON.stringify(maybeError));
+    return new Error(JSON.stringify(maybeError as any));
   } catch (error: unknown) {
-    return new Error(String(maybeError));
+    return new Error(String(maybeError as any));
   }
 }

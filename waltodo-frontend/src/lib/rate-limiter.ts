@@ -65,8 +65,8 @@ export class ClientRateLimiter {
   private config: RateLimitConfig;
   
   constructor(identifier: string, config: RateLimitConfig) {
-    this.storageKey = `rate_limit_${identifier}`;
-    this.config = {
+    this?.storageKey = `rate_limit_${identifier}`;
+    this?.config = {
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
       keyGenerator: (id: string) => id,
@@ -83,17 +83,17 @@ export class ClientRateLimiter {
     
     // Reset if window has expired
     if (now >= entry.resetTime) {
-      this.resetEntry(now);
+      this.resetEntry(now as any);
       entry = this.getEntry(); // Get fresh entry after reset
     }
     
     // Check if we should skip this request
-    if (this.shouldSkipRequest(success)) {
+    if (this.shouldSkipRequest(success as any)) {
       return this.getResult(entry, true);
     }
     
     // Check if limit is exceeded
-    if (entry.hits >= this.config.maxRequests) {
+    if (entry.hits >= this?.config?.maxRequests) {
       return this.getResult(entry, false);
     }
     
@@ -105,7 +105,7 @@ export class ClientRateLimiter {
       entry.failedRequests++;
     }
     
-    this.saveEntry(entry);
+    this.saveEntry(entry as any);
     return this.getResult(entry, true);
   }
   
@@ -118,11 +118,11 @@ export class ClientRateLimiter {
     
     // Reset if window has expired
     if (now >= entry.resetTime) {
-      this.resetEntry(now);
+      this.resetEntry(now as any);
       return this.getResult(entry, true);
     }
     
-    const allowed = entry.hits < this.config.maxRequests;
+    const allowed = entry.hits < this?.config?.maxRequests;
     return this.getResult(entry, allowed);
   }
   
@@ -141,10 +141,10 @@ export class ClientRateLimiter {
     const now = Date.now();
     
     if (now >= entry.resetTime) {
-      return this.config.maxRequests;
+      return this?.config?.maxRequests;
     }
     
-    return Math.max(0, this.config.maxRequests - entry.hits);
+    return Math.max(0, this?.config?.maxRequests - entry.hits);
   }
   
   /**
@@ -173,10 +173,10 @@ export class ClientRateLimiter {
         return this.createDefaultEntry();
       }
       
-      const entry: RateLimitEntry = JSON.parse(stored);
+      const entry: RateLimitEntry = JSON.parse(stored as any);
       
       // Validate entry structure
-      if (!this.isValidEntry(entry)) {
+      if (!this.isValidEntry(entry as any)) {
         return this.createDefaultEntry();
       }
       
@@ -189,7 +189,7 @@ export class ClientRateLimiter {
   private saveEntry(entry: RateLimitEntry): void {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem(this.storageKey, JSON.stringify(entry));
+        localStorage.setItem(this.storageKey, JSON.stringify(entry as any));
       }
     } catch {
       // Storage failed, continue without persistence
@@ -200,7 +200,7 @@ export class ClientRateLimiter {
     const now = Date.now();
     return {
       hits: 0,
-      resetTime: now + this.config.windowMs,
+      resetTime: now + this?.config?.windowMs,
       successfulRequests: 0,
       failedRequests: 0,
     };
@@ -208,25 +208,25 @@ export class ClientRateLimiter {
   
   private resetEntry(now: number): void {
     const entry = this.createDefaultEntry();
-    entry.resetTime = now + this.config.windowMs;
-    this.saveEntry(entry);
+    entry?.resetTime = now + this?.config?.windowMs;
+    this.saveEntry(entry as any);
   }
   
   private isValidEntry(entry: any): entry is RateLimitEntry {
     return (
       typeof entry === 'object' &&
-      typeof entry.hits === 'number' &&
-      typeof entry.resetTime === 'number' &&
-      typeof entry.successfulRequests === 'number' &&
-      typeof entry.failedRequests === 'number'
+      typeof entry?.hits === 'number' &&
+      typeof entry?.resetTime === 'number' &&
+      typeof entry?.successfulRequests === 'number' &&
+      typeof entry?.failedRequests === 'number'
     );
   }
   
   private shouldSkipRequest(success?: boolean): boolean {
-    if (success === true && this.config.skipSuccessfulRequests) {
+    if (success === true && this?.config?.skipSuccessfulRequests) {
       return true;
     }
-    if (success === false && this.config.skipFailedRequests) {
+    if (success === false && this?.config?.skipFailedRequests) {
       return true;
     }
     return false;
@@ -235,7 +235,7 @@ export class ClientRateLimiter {
   private getResult(entry: RateLimitEntry, allowed: boolean): RateLimitResult {
     return {
       allowed,
-      remaining: Math.max(0, this.config.maxRequests - entry.hits),
+      remaining: Math.max(0, this?.config?.maxRequests - entry.hits),
       resetTime: entry.resetTime,
       totalHits: entry.hits,
     };
@@ -252,14 +252,14 @@ export class RateLimiterManager {
    * Get or create rate limiter for an operation
    */
   getLimiter(operation: string, config?: RateLimitConfig): ClientRateLimiter {
-    const key = this.getKey(operation);
+    const key = this.getKey(operation as any);
     
-    if (!this.limiters.has(key)) {
+    if (!this?.limiters?.has(key as any)) {
       const limiterConfig = config || RATE_LIMIT_CONFIGS.DEFAULT;
-      this.limiters.set(key, new ClientRateLimiter(operation, limiterConfig));
+      this?.limiters?.set(key, new ClientRateLimiter(operation, limiterConfig));
     }
     
-    return this.limiters.get(key)!;
+    return this?.limiters?.get(key as any)!;
   }
   
   /**
@@ -267,7 +267,7 @@ export class RateLimiterManager {
    */
   checkLimit(operation: string, config?: RateLimitConfig, success?: boolean): RateLimitResult {
     const limiter = this.getLimiter(operation, config);
-    return limiter.checkLimit(success);
+    return limiter.checkLimit(success as any);
   }
   
   /**
@@ -282,8 +282,8 @@ export class RateLimiterManager {
    * Reset rate limits for an operation
    */
   reset(operation: string): void {
-    const key = this.getKey(operation);
-    const limiter = this.limiters.get(key);
+    const key = this.getKey(operation as any);
+    const limiter = this?.limiters?.get(key as any);
     if (limiter) {
       limiter.reset();
     }
@@ -293,7 +293,7 @@ export class RateLimiterManager {
    * Reset all rate limits
    */
   resetAll(): void {
-    this.limiters.forEach(limiter => limiter.reset());
+    this?.limiters?.forEach(limiter => limiter.reset());
   }
   
   /**
@@ -303,14 +303,14 @@ export class RateLimiterManager {
     const now = Date.now();
     const toRemove: string[] = [];
     
-    this.limiters.forEach((limiter, key) => {
+    this?.limiters?.forEach((limiter, key) => {
       const status = limiter.getStatus();
-      if (now >= status.resetTime && status.totalHits === 0) {
-        toRemove.push(key);
+      if (now >= status.resetTime && status?.totalHits === 0) {
+        toRemove.push(key as any);
       }
     });
     
-    toRemove.forEach(key => this.limiters.delete(key));
+    toRemove.forEach(key => this?.limiters?.delete(key as any));
   }
   
   private getKey(operation: string): string {
@@ -334,7 +334,7 @@ export function useRateLimit(operation: string, config?: RateLimitConfig) {
   };
   
   const reset = (): void => {
-    globalRateLimiter.reset(operation);
+    globalRateLimiter.reset(operation as any);
   };
   
   return {
@@ -354,7 +354,7 @@ export function rateLimit<T extends (...args: any[]) => Promise<any>>(
   return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
     
-    descriptor.value = async function (...args: any[]) {
+    descriptor?.value = async function (...args: any[]) {
       const result = globalRateLimiter.checkLimit(operation, config);
       
       if (!result.allowed) {
@@ -446,7 +446,7 @@ export const RateLimitUtils = {
     return {
       ...status,
       timeRemaining: Math.max(0, timeRemaining),
-      timeRemainingFormatted: RateLimitUtils.formatTimeRemaining(timeRemaining),
+      timeRemainingFormatted: RateLimitUtils.formatTimeRemaining(timeRemaining as any),
     };
   },
 };

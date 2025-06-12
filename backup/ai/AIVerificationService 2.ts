@@ -10,7 +10,7 @@ export class AIVerificationService {
   private verifierAdapter: AIVerifierAdapter;
 
   constructor(verifierAdapter?: AIVerifierAdapter) {
-    this.verifierAdapter = verifierAdapter;
+    this?.verifierAdapter = verifierAdapter;
   }
 
   /**
@@ -24,11 +24,11 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerificationRecord> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr = typeof request === 'string' ? request : JSON.stringify(request as any);
+    const responseStr = typeof response === 'string' ? response : JSON.stringify(response as any);
 
     // Create verification
-    return this.verifierAdapter.createVerification({
+    return this?.verifierAdapter?.createVerification({
       actionType: verificationType,  // Map to the expected parameter name in the adapter
       request: requestStr,
       response: responseStr,
@@ -97,17 +97,17 @@ export class AIVerificationService {
     response: any
   ): Promise<boolean> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr = typeof request === 'string' ? request : JSON.stringify(request as any);
+    const responseStr = typeof response === 'string' ? response : JSON.stringify(response as any);
 
-    return this.verifierAdapter.verifyRecord(record, requestStr, responseStr);
+    return this?.verifierAdapter?.verifyRecord(record, requestStr, responseStr);
   }
 
   /**
    * Verify an existing operation by its verification ID
    */
   async verifyExistingOperation(verificationId: string): Promise<boolean> {
-    const verification = await this.verifierAdapter.getVerification(verificationId);
+    const verification = await this?.verifierAdapter?.getVerification(verificationId as any);
 
     if (!verification) {
       return false;
@@ -131,8 +131,8 @@ export class AIVerificationService {
       todos,
       summary,
       {
-        todoCount: todos.length.toString(),
-        summaryLength: summary.length.toString(),
+        todoCount: todos?.length?.toString(),
+        summaryLength: summary?.length?.toString(),
         timestamp: Date.now().toString(),
       },
       privacyLevel
@@ -157,8 +157,8 @@ export class AIVerificationService {
       todos,
       categories,
       {
-        todoCount: todos.length.toString(),
-        categoryCount: Object.keys(categories).length.toString(),
+        todoCount: todos?.length?.toString(),
+        categoryCount: Object.keys(categories as any).length.toString(),
         timestamp: Date.now().toString(),
       },
       privacyLevel
@@ -183,7 +183,7 @@ export class AIVerificationService {
       todos,
       priorities,
       {
-        todoCount: todos.length.toString(),
+        todoCount: todos?.length?.toString(),
         timestamp: Date.now().toString(),
       },
       privacyLevel
@@ -208,8 +208,8 @@ export class AIVerificationService {
       todos,
       suggestions,
       {
-        todoCount: todos.length.toString(),
-        suggestionCount: suggestions.length.toString(),
+        todoCount: todos?.length?.toString(),
+        suggestionCount: suggestions?.length?.toString(),
         timestamp: Date.now().toString(),
       },
       privacyLevel
@@ -234,8 +234,8 @@ export class AIVerificationService {
       todos,
       analysis,
       {
-        todoCount: todos.length.toString(),
-        analysisKeys: Object.keys(analysis).join(','),
+        todoCount: todos?.length?.toString(),
+        analysisKeys: Object.keys(analysis as any).join(','),
         timestamp: Date.now().toString(),
       },
       privacyLevel

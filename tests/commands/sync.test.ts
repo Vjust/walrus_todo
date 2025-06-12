@@ -83,25 +83,25 @@ describe('SyncCommand', () => {
         }
         return input;
       }),
-    } as any;
+    } as unknown;
 
     // Setup the sync mock to use our mocked services
     (sync.run as jest.Mock).mockImplementation(
       async (args: { args: { blobIdOrUrl: string } }) => {
-        const blobId = sync.extractBlobId(args.args.blobIdOrUrl);
+        const blobId = sync.extractBlobId(args?.args?.blobIdOrUrl);
 
         // Mock the sync behavior
-        const remoteData = await mockWalrusStorage.retrieve(blobId);
+        const remoteData = await mockWalrusStorage.retrieve(blobId as any);
         const localTodos = await mockConfigService.getTodoList();
 
-        if (remoteData.todos.length === 0) {
+        if (remoteData.todos?.length === 0) {
           console.warn(chalk.yellow('The blob contains no todos.'));
           console.log('Nothing to sync.');
           return;
         }
 
         console.log(
-          `Found ${chalk.cyan(remoteData.todos.length)} todos in the blob.`
+          `Found ${chalk.cyan(remoteData?.todos?.length)} todos in the blob.`
         );
         console.log(
           `You currently have ${chalk.cyan(localTodos.length)} todo.`
@@ -120,12 +120,12 @@ describe('SyncCommand', () => {
   describe('run', () => {
     it('should sync todos with merge option', async () => {
       // Setup mocks
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: mockRemoteTodos,
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
-      mockConfigService.saveAllTodos.mockResolvedValue(true);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
+      mockConfigService?.saveAllTodos?.mockResolvedValue(true as any);
 
       // Mock interactive prompt
       const mockReadline: Partial<readline.Interface> = {
@@ -140,7 +140,7 @@ describe('SyncCommand', () => {
       await sync.run({ args: { blobIdOrUrl: mockBlobId } });
 
       // Verify the flow
-      expect(mockWalrusStorage.retrieve).toHaveBeenCalledWith(mockBlobId);
+      expect(mockWalrusStorage.retrieve).toHaveBeenCalledWith(mockBlobId as any);
       expect(mockConfigService.getTodoList).toHaveBeenCalled();
       expect(mockConfigService.saveAllTodos).toHaveBeenCalledWith([
         ...mockLocalTodos,
@@ -150,12 +150,12 @@ describe('SyncCommand', () => {
     });
 
     it('should sync todos with replace option', async () => {
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: mockRemoteTodos,
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
-      mockConfigService.saveAllTodos.mockResolvedValue(true);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
+      mockConfigService?.saveAllTodos?.mockResolvedValue(true as any);
 
       const mockReadline: Partial<readline.Interface> = {
         question: jest.fn((_, callback) => callback('replace')),
@@ -173,11 +173,11 @@ describe('SyncCommand', () => {
     });
 
     it('should cancel sync operation', async () => {
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: mockRemoteTodos,
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
 
       const mockReadline: Partial<readline.Interface> = {
         question: jest.fn((_, callback) => callback('cancel')),
@@ -195,12 +195,12 @@ describe('SyncCommand', () => {
     it('should handle shared link URLs', async () => {
       const sharedLink = `https://wal.gg/${mockBlobId}`;
 
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: mockRemoteTodos,
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
-      mockConfigService.saveAllTodos.mockResolvedValue(true);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
+      mockConfigService?.saveAllTodos?.mockResolvedValue(true as any);
 
       const mockReadline: Partial<readline.Interface> = {
         question: jest.fn((_, callback) => callback('merge')),
@@ -212,12 +212,12 @@ describe('SyncCommand', () => {
 
       await sync.run({ args: { blobIdOrUrl: sharedLink } });
 
-      expect(mockWalrusStorage.retrieve).toHaveBeenCalledWith(mockBlobId);
+      expect(mockWalrusStorage.retrieve).toHaveBeenCalledWith(mockBlobId as any);
     });
 
     it('should handle network errors gracefully', async () => {
       const mockError = new Error('Network error');
-      mockWalrusStorage.retrieve.mockRejectedValue(mockError);
+      mockWalrusStorage?.retrieve?.mockRejectedValue(mockError as any);
 
       await expect(
         sync.run({ args: { blobIdOrUrl: mockBlobId } })
@@ -230,11 +230,11 @@ describe('SyncCommand', () => {
     });
 
     it('should handle empty blob data', async () => {
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: [],
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
 
       await sync.run({ args: { blobIdOrUrl: mockBlobId } });
 
@@ -245,12 +245,12 @@ describe('SyncCommand', () => {
     });
 
     it('should display todo counts during sync', async () => {
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: mockRemoteTodos,
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
-      mockConfigService.saveAllTodos.mockResolvedValue(true);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
+      mockConfigService?.saveAllTodos?.mockResolvedValue(true as any);
 
       const mockReadline: Partial<readline.Interface> = {
         question: jest.fn((_, callback) => callback('merge')),
@@ -273,7 +273,7 @@ describe('SyncCommand', () => {
     it('should handle invalid blob ID', async () => {
       const invalidBlobId = 'invalid-id';
       const mockError = new Error('Invalid blob ID');
-      mockWalrusStorage.retrieve.mockRejectedValue(mockError);
+      mockWalrusStorage?.retrieve?.mockRejectedValue(mockError as any);
 
       await expect(
         sync.run({ args: { blobIdOrUrl: invalidBlobId } })
@@ -287,11 +287,11 @@ describe('SyncCommand', () => {
 
     it('should handle corrupted blob data', async () => {
       // Mock retrieve to return corrupted data
-      mockWalrusStorage.retrieve.mockResolvedValue({
+      mockWalrusStorage?.retrieve?.mockResolvedValue({
         id: mockBlobId,
         todos: null as unknown as Todo[], // This would cause an error when trying to access length
       });
-      mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
+      mockConfigService?.getTodoList?.mockResolvedValue(mockLocalTodos as any);
 
       await expect(
         sync.run({ args: { blobIdOrUrl: mockBlobId } })
@@ -304,7 +304,7 @@ describe('SyncCommand', () => {
       const testCases = [
         { input: 'https://wal.gg/blob123', expected: 'blob123' },
         { input: 'http://wal.gg/blob456', expected: 'blob456' },
-        { input: 'https://example.wal.app/blob/789', expected: '789' },
+        { input: 'https://example?.wal?.app/blob/789', expected: '789' },
         { input: '0x12345', expected: '0x12345' },
         { input: 'plain-blob-id', expected: 'plain-blob-id' },
       ];
@@ -313,8 +313,8 @@ describe('SyncCommand', () => {
         expect(
           (
             sync as unknown as { extractBlobId: (input: string) => string }
-          ).extractBlobId(input)
-        ).toBe(expected);
+          ).extractBlobId(input as any)
+        ).toBe(expected as any);
       });
     });
   });

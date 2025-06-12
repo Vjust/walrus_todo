@@ -7,7 +7,7 @@ async function main() {
 
   // First create or get list
   Logger.getInstance().info('Creating/getting todo list...');
-  let list = await todoService.getList(listName);
+  let list = await todoService.getList(listName as any);
   if (!list) {
     list = await todoService.createList(listName, 'test-user');
     Logger.getInstance().info('Created new list:', { list });

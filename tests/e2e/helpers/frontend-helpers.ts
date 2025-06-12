@@ -36,7 +36,7 @@ export class FrontendHelpers {
    */
   async waitForAppReady(timeout = 10000): Promise<void> {
     // Wait for main app container
-    await this.page.waitForSelector('[data-testid="app-container"]', {
+    await this?.page?.waitForSelector('[data-testid="app-container"]', {
       timeout,
     });
 
@@ -51,7 +51,7 @@ export class FrontendHelpers {
       });
 
     // Wait for todo list container
-    await this.page.waitForSelector('[data-testid="todo-list"]', { timeout });
+    await this?.page?.waitForSelector('[data-testid="todo-list"]', { timeout });
 
     // Ensure React has finished hydration
     await this.page
@@ -69,8 +69,8 @@ export class FrontendHelpers {
   async waitForTodoByTitle(title: string, timeout = 5000): Promise<Locator> {
     const todoSelector = `[data-testid="todo-item"][data-title="${title}"]`;
 
-    await this.page.waitForSelector(todoSelector, { timeout });
-    return this.page.locator(todoSelector);
+    await this?.page?.waitForSelector(todoSelector, { timeout });
+    return this?.page?.locator(todoSelector as any);
   }
 
   /**
@@ -108,7 +108,7 @@ export class FrontendHelpers {
     await completeButton.click();
 
     // Wait for completion animation/state change
-    await this.page.waitForTimeout(500);
+    await this?.page?.waitForTimeout(500 as any);
   }
 
   /**
@@ -116,7 +116,7 @@ export class FrontendHelpers {
    */
   async clearAllTodos(): Promise<void> {
     try {
-      const clearAllButton = this.page.locator(
+      const clearAllButton = this?.page?.locator(
         '[data-testid="clear-all-todos-btn"]'
       );
 
@@ -124,7 +124,7 @@ export class FrontendHelpers {
         await clearAllButton.click();
 
         // Confirm in modal if it appears
-        const confirmButton = this.page.locator(
+        const confirmButton = this?.page?.locator(
           '[data-testid="confirm-clear-all"]'
         );
         if ((await confirmButton.count()) > 0) {
@@ -132,7 +132,7 @@ export class FrontendHelpers {
         }
 
         // Wait for todos to be cleared
-        await this.page.waitForTimeout(1000);
+        await this?.page?.waitForTimeout(1000 as any);
       }
     } catch (error) {
       // Clear all might not be available, continue
@@ -143,7 +143,7 @@ export class FrontendHelpers {
    * Connect wallet in the frontend
    */
   async connectWallet(): Promise<void> {
-    const connectButton = this.page.locator(
+    const connectButton = this?.page?.locator(
       '[data-testid="connect-wallet-btn"]'
     );
 
@@ -151,7 +151,7 @@ export class FrontendHelpers {
       await connectButton.click();
 
       // Select wallet type (assuming test wallet is available)
-      const testWalletOption = this.page.locator(
+      const testWalletOption = this?.page?.locator(
         '[data-testid="wallet-option-test"]'
       );
       if ((await testWalletOption.count()) > 0) {
@@ -159,7 +159,7 @@ export class FrontendHelpers {
       }
 
       // Wait for wallet connection to complete
-      await this.page.waitForSelector('[data-testid="wallet-connected"]', {
+      await this?.page?.waitForSelector('[data-testid="wallet-connected"]', {
         timeout: 10000,
       });
     }
@@ -169,7 +169,7 @@ export class FrontendHelpers {
    * Get connected wallet address
    */
   async getConnectedWalletAddress(): Promise<string> {
-    const walletAddress = this.page.locator('[data-testid="wallet-address"]');
+    const walletAddress = this?.page?.locator('[data-testid="wallet-address"]');
     return (await walletAddress.textContent()) || '';
   }
 
@@ -178,13 +178,13 @@ export class FrontendHelpers {
    */
   async verifyWebSocketConnection(): Promise<void> {
     // Check for WebSocket connection indicator
-    const wsIndicator = this.page.locator('[data-testid="ws-status"]');
+    const wsIndicator = this?.page?.locator('[data-testid="ws-status"]');
 
     if ((await wsIndicator.count()) > 0) {
-      await expect(wsIndicator).toHaveAttribute('data-status', 'connected');
+      await expect(wsIndicator as any).toHaveAttribute('data-status', 'connected');
     } else {
       // Alternative: Check for real-time functionality
-      await this.page.waitForFunction(() => {
+      await this?.page?.waitForFunction(() => {
         return window.WebSocket !== undefined;
       });
     }
@@ -197,16 +197,16 @@ export class FrontendHelpers {
     errorPattern: RegExp,
     timeout = 5000
   ): Promise<void> {
-    const errorNotification = this.page.locator(
+    const errorNotification = this?.page?.locator(
       '[data-testid="error-notification"]'
     );
 
-    await this.page.waitForSelector('[data-testid="error-notification"]', {
+    await this?.page?.waitForSelector('[data-testid="error-notification"]', {
       timeout,
     });
 
     const errorText = (await errorNotification.textContent()) || '';
-    expect(errorText).toMatch(errorPattern);
+    expect(errorText as any).toMatch(errorPattern as any);
   }
 
   /**
@@ -214,23 +214,23 @@ export class FrontendHelpers {
    */
   async simulateNetworkError(): Promise<void> {
     // Intercept and fail network requests
-    await this.page.route('**/api/**', route => route.abort('failed'));
-    await this.page.route('**/ws**', route => route.abort('failed'));
+    await this?.page?.route('**/api/**', route => route.abort('failed'));
+    await this?.page?.route('**/ws**', route => route.abort('failed'));
   }
 
   /**
    * Restore network connectivity
    */
   async restoreNetwork(): Promise<void> {
-    await this.page.unroute('**/api/**');
-    await this.page.unroute('**/ws**');
+    await this?.page?.unroute('**/api/**');
+    await this?.page?.unroute('**/ws**');
   }
 
   /**
    * Start performance monitoring
    */
   async startPerformanceMonitoring(): Promise<void> {
-    await this.page.evaluate(() => {
+    await this?.page?.evaluate(() => {
       // Initialize performance tracking
       (window as any).perfMetrics = {
         renderTimes: [],
@@ -240,11 +240,11 @@ export class FrontendHelpers {
       // Hook into React render cycle if available
       if ((window as any).React) {
         const originalRender = (window as any).React.render;
-        (window as any).React.render = function (...args: any[]) {
+        (window as any).React?.render = function (...args: any[]) {
           const start = performance.now();
           const result = originalRender.apply(this, args);
           const end = performance.now();
-          (window as any).perfMetrics.renderTimes.push(end - start);
+          (window as any).perfMetrics?.renderTimes?.push(end - start);
           return result;
         };
       }
@@ -255,15 +255,15 @@ export class FrontendHelpers {
    * Get performance metrics
    */
   async getPerformanceMetrics(): Promise<PerformanceMetrics> {
-    return await this.page.evaluate(() => {
+    return await this?.page?.evaluate(() => {
       const metrics = (window as any).perfMetrics || {};
       const memory = (performance as any).memory;
 
       return {
         avgRenderTime:
-          metrics.renderTimes?.length > 0
-            ? metrics.renderTimes.reduce((a: number, b: number) => a + b, 0) /
-              metrics.renderTimes.length
+          metrics?.renderTimes?.length > 0
+            ? metrics?.renderTimes?.reduce((a: number, b: number) => a + b, 0) /
+              metrics?.renderTimes?.length
             : 0,
         memoryUsage: memory?.usedJSHeapSize || 0,
         wsLatency: 0, // TODO: Implement WebSocket latency measurement
@@ -276,7 +276,7 @@ export class FrontendHelpers {
    */
   async getTransactionHistory(): Promise<TransactionData[]> {
     // Open transaction history panel
-    const historyButton = this.page.locator(
+    const historyButton = this?.page?.locator(
       '[data-testid="transaction-history-btn"]'
     );
 
@@ -284,7 +284,7 @@ export class FrontendHelpers {
       await historyButton.click();
 
       // Wait for history to load
-      await this.page.waitForSelector('[data-testid="transaction-list"]', {
+      await this?.page?.waitForSelector('[data-testid="transaction-list"]', {
         timeout: 5000,
       });
 
@@ -322,76 +322,76 @@ export class FrontendHelpers {
     } = {}
   ): Promise<void> {
     // Click add todo button
-    const addButton = this.page.locator('[data-testid="add-todo-btn"]');
+    const addButton = this?.page?.locator('[data-testid="add-todo-btn"]');
     await addButton.click();
 
     // Fill form
-    await this.page.fill('[data-testid="todo-title-input"]', title);
-    await this.page.fill('[data-testid="todo-description-input"]', description);
+    await this?.page?.fill('[data-testid="todo-title-input"]', title);
+    await this?.page?.fill('[data-testid="todo-description-input"]', description);
 
     if (options.priority) {
-      await this.page.selectOption(
+      await this?.page?.selectOption(
         '[data-testid="todo-priority-select"]',
         options.priority
       );
     }
 
-    if (options.tags?.length) {
-      const tagsInput = this.page.locator('[data-testid="todo-tags-input"]');
-      await tagsInput.fill(options.tags.join(', '));
+    if (options?.tags?.length) {
+      const tagsInput = this?.page?.locator('[data-testid="todo-tags-input"]');
+      await tagsInput.fill(options?.tags?.join(', '));
     }
 
     if (options.blockchain) {
-      const blockchainCheckbox = this.page.locator(
+      const blockchainCheckbox = this?.page?.locator(
         '[data-testid="blockchain-todo-checkbox"]'
       );
       await blockchainCheckbox.check();
     }
 
     // Submit form
-    const submitButton = this.page.locator('[data-testid="submit-todo-btn"]');
+    const submitButton = this?.page?.locator('[data-testid="submit-todo-btn"]');
     await submitButton.click();
 
     // Wait for creation to complete
-    await this.page.waitForTimeout(1000);
+    await this?.page?.waitForTimeout(1000 as any);
   }
 
   /**
    * Search for todos by text
    */
   async searchTodos(searchText: string): Promise<Locator[]> {
-    const searchInput = this.page.locator('[data-testid="todo-search-input"]');
-    await searchInput.fill(searchText);
+    const searchInput = this?.page?.locator('[data-testid="todo-search-input"]');
+    await searchInput.fill(searchText as any);
 
     // Wait for search results
-    await this.page.waitForTimeout(500);
+    await this?.page?.waitForTimeout(500 as any);
 
-    return await this.page.locator('[data-testid="todo-item"]').all();
+    return await this?.page?.locator('[data-testid="todo-item"]').all();
   }
 
   /**
    * Filter todos by status
    */
   async filterTodos(status: 'all' | 'active' | 'completed'): Promise<void> {
-    const filterButton = this.page.locator(`[data-testid="filter-${status}"]`);
+    const filterButton = this?.page?.locator(`[data-testid="filter-${status}"]`);
     await filterButton.click();
 
     // Wait for filter to apply
-    await this.page.waitForTimeout(500);
+    await this?.page?.waitForTimeout(500 as any);
   }
 
   /**
    * Get count of visible todos
    */
   async getTodoCount(): Promise<number> {
-    return await this.page.locator('[data-testid="todo-item"]').count();
+    return await this?.page?.locator('[data-testid="todo-item"]').count();
   }
 
   /**
    * Verify app is in dark mode
    */
   async verifyDarkMode(): Promise<boolean> {
-    const body = this.page.locator('body');
+    const body = this?.page?.locator('body');
     const classes = (await body.getAttribute('class')) || '';
     return classes.includes('dark') || classes.includes('dark-mode');
   }
@@ -400,12 +400,12 @@ export class FrontendHelpers {
    * Toggle dark mode
    */
   async toggleDarkMode(): Promise<void> {
-    const darkModeToggle = this.page.locator(
+    const darkModeToggle = this?.page?.locator(
       '[data-testid="dark-mode-toggle"]'
     );
     await darkModeToggle.click();
 
     // Wait for theme change
-    await this.page.waitForTimeout(300);
+    await this?.page?.waitForTimeout(300 as any);
   }
 }

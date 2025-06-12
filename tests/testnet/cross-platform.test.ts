@@ -16,7 +16,7 @@ describe('Cross-Platform Compatibility Tests', () => {
     // Create temp directory for cross-platform testing
     tempDir = path.join(os.tmpdir(), `todo-cli-test-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
-    process.env.TODOS_DATA_DIR = tempDir;
+    process.env?.TODOS_DATA_DIR = tempDir;
   });
 
   afterEach(() => {
@@ -26,7 +26,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       configurable: true,
       writable: true,
     });
-    process.env = originalEnv;
+    process?.env = originalEnv;
 
     // Clean up temp directory
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -46,7 +46,7 @@ describe('Cross-Platform Compatibility Tests', () => {
 
       // Test that paths are properly normalized for Windows
       const todoPath = path.join(tempDir, 'todos.json');
-      expect(todoPath).toContain('\\');
+      expect(todoPath as any).toContain('\\');
     });
 
     it('should handle Unix path separators', () => {
@@ -54,7 +54,7 @@ describe('Cross-Platform Compatibility Tests', () => {
 
       // Test that paths are properly normalized for Unix
       const todoPath = path.join(tempDir, 'todos.json');
-      expect(todoPath).toContain('/');
+      expect(todoPath as any).toContain('/');
     });
   });
 
@@ -75,19 +75,19 @@ describe('Cross-Platform Compatibility Tests', () => {
         const _originalExecSync = execSync;
 
         // Mock execSync to simulate Windows command execution
-        jest.spyOn(childProcess, 'execSync').mockImplementation(mockExecSync);
+        jest.spyOn(childProcess, 'execSync').mockImplementation(mockExecSync as any);
 
         try {
           execSync(command, { shell: 'cmd.exe', encoding: 'utf8' });
-          expect(mockExecSync).toHaveBeenCalledWith(
+          expect(mockExecSync as any).toHaveBeenCalledWith(
             expect.stringContaining('cmd.exe'),
-            expect.any(Object)
+            expect.any(Object as any)
           );
         } finally {
           // Restore original execSync
           jest
             .spyOn(childProcess, 'execSync')
-            .mockImplementation(_originalExecSync);
+            .mockImplementation(_originalExecSync as any);
         }
       });
     });
@@ -106,12 +106,12 @@ describe('Cross-Platform Compatibility Tests', () => {
             // Mock execSync to simulate Unix command execution
             jest
               .spyOn(childProcess, 'execSync')
-              .mockImplementation(mockExecSync);
+              .mockImplementation(mockExecSync as any);
 
             try {
               execSync(command, { shell: '/bin/sh', encoding: 'utf8' });
-              expect(mockExecSync).toHaveBeenCalledWith(
-                expect.any(String),
+              expect(mockExecSync as any).toHaveBeenCalledWith(
+                expect.any(String as any),
                 expect.objectContaining({
                   shell: '/bin/sh',
                 })
@@ -120,7 +120,7 @@ describe('Cross-Platform Compatibility Tests', () => {
               // Restore original execSync
               jest
                 .spyOn(childProcess, 'execSync')
-                .mockImplementation(_originalExecSync);
+                .mockImplementation(_originalExecSync as any);
             }
           });
         });
@@ -139,8 +139,8 @@ describe('Cross-Platform Compatibility Tests', () => {
       fs.writeFileSync(file2, '[]');
 
       // On Linux, these should be different files
-      expect(fs.existsSync(file1)).toBe(true);
-      expect(fs.existsSync(file2)).toBe(true);
+      expect(fs.existsSync(file1 as any)).toBe(true as any);
+      expect(fs.existsSync(file2 as any)).toBe(true as any);
     });
 
     it('should handle case-insensitive file systems (Windows/macOS)', () => {
@@ -152,7 +152,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       fs.writeFileSync(file1, '[]');
 
       // On Windows/macOS, accessing with different case should work
-      expect(fs.existsSync(file2)).toBe(true);
+      expect(fs.existsSync(file2 as any)).toBe(true as any);
     });
   });
 
@@ -160,21 +160,21 @@ describe('Cross-Platform Compatibility Tests', () => {
     it('should handle Windows environment variable syntax', () => {
       mockPlatform('win32');
 
-      process.env.XAI_API_KEY = 'test-key';
-      process.env.WALRUS_USE_MOCK = 'true';
+      process.env?.XAI_API_KEY = 'test-key';
+      process.env?.WALRUS_USE_MOCK = 'true';
 
-      expect(process.env.XAI_API_KEY).toBe('test-key');
-      expect(process.env.WALRUS_USE_MOCK).toBe('true');
+      expect(process?.env?.XAI_API_KEY).toBe('test-key');
+      expect(process?.env?.WALRUS_USE_MOCK).toBe('true');
     });
 
     it('should handle Unix environment variable syntax', () => {
       mockPlatform('linux');
 
-      process.env.XAI_API_KEY = 'test-key';
-      process.env.WALRUS_USE_MOCK = 'true';
+      process.env?.XAI_API_KEY = 'test-key';
+      process.env?.WALRUS_USE_MOCK = 'true';
 
-      expect(process.env.XAI_API_KEY).toBe('test-key');
-      expect(process.env.WALRUS_USE_MOCK).toBe('true');
+      expect(process?.env?.XAI_API_KEY).toBe('test-key');
+      expect(process?.env?.WALRUS_USE_MOCK).toBe('true');
     });
   });
 
@@ -183,17 +183,17 @@ describe('Cross-Platform Compatibility Tests', () => {
       mockPlatform('win32');
 
       const configPaths = [
-        path.join(process.env.APPDATA || '', 'walrus-todo', 'config.json'),
-        path.join(process.env.USERPROFILE || '', '.walrus-todo', 'config.json'),
+        path.join(process?.env?.APPDATA || '', 'walrus-todo', 'config.json'),
+        path.join(process?.env?.USERPROFILE || '', '.walrus-todo', 'config.json'),
       ];
 
       configPaths.forEach(configPath => {
-        const dir = path.dirname(configPath);
-        if (!fs.existsSync(dir)) {
+        const dir = path.dirname(configPath as any);
+        if (!fs.existsSync(dir as any)) {
           fs.mkdirSync(dir, { recursive: true });
         }
         fs.writeFileSync(configPath, '{"version": "1.0"}');
-        expect(fs.existsSync(configPath)).toBe(true);
+        expect(fs.existsSync(configPath as any)).toBe(true as any);
       });
     });
 
@@ -202,21 +202,21 @@ describe('Cross-Platform Compatibility Tests', () => {
 
       const configPaths = [
         path.join(
-          process.env.HOME || '',
+          process?.env?.HOME || '',
           '.config',
           'walrus-todo',
           'config.json'
         ),
-        path.join(process.env.HOME || '', '.walrus-todo', 'config.json'),
+        path.join(process?.env?.HOME || '', '.walrus-todo', 'config.json'),
       ];
 
       configPaths.forEach(configPath => {
-        const dir = path.dirname(configPath);
-        if (!fs.existsSync(dir)) {
+        const dir = path.dirname(configPath as any);
+        if (!fs.existsSync(dir as any)) {
           fs.mkdirSync(dir, { recursive: true });
         }
         fs.writeFileSync(configPath, '{"version": "1.0"}');
-        expect(fs.existsSync(configPath)).toBe(true);
+        expect(fs.existsSync(configPath as any)).toBe(true as any);
       });
     });
   });
@@ -230,17 +230,17 @@ describe('Cross-Platform Compatibility Tests', () => {
       accented: 'Café résumé',
     };
 
-    Object.entries(specialChars).forEach(([type, text]) => {
+    Object.entries(specialChars as any).forEach(([type, text]) => {
       it(`should handle ${type} characters across platforms`, () => {
         const todoFile = path.join(tempDir, 'todos.json');
         const todos = [{ id: 1, text, completed: false }];
 
-        fs.writeFileSync(todoFile, JSON.stringify(todos), 'utf8');
+        fs.writeFileSync(todoFile, JSON.stringify(todos as any), 'utf8');
         const rawContent: string | Buffer = fs.readFileSync(todoFile, 'utf8');
         const content: string = typeof rawContent === 'string' ? rawContent : (rawContent as Buffer).toString('utf8');
-        const parsed = JSON.parse(content);
+        const parsed = JSON.parse(content as any);
 
-        expect(parsed[0].text).toBe(text);
+        expect(parsed[0].text).toBe(text as any);
       });
     });
   });
@@ -256,7 +256,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       const rawRead: string | Buffer = fs.readFileSync(file, 'utf8');
       const read: string = typeof rawRead === 'string' ? rawRead : (rawRead as Buffer).toString('utf8');
 
-      expect(read).toContain('\r\n');
+      expect(read as any).toContain('\r\n');
     });
 
     it('should handle Unix LF line endings', () => {
@@ -269,8 +269,8 @@ describe('Cross-Platform Compatibility Tests', () => {
       const rawRead: string | Buffer = fs.readFileSync(file, 'utf8');
       const read: string = typeof rawRead === 'string' ? rawRead : (rawRead as Buffer).toString('utf8');
 
-      expect(read).not.toContain('\r\n');
-      expect(read).toContain('\n');
+      expect(read as any).not.toContain('\r\n');
+      expect(read as any).toContain('\n');
     });
   });
 
@@ -286,7 +286,7 @@ describe('Cross-Platform Compatibility Tests', () => {
         .map(arg => (arg.includes(' ') ? `"${arg}"` : arg))
         .join(' ')}`;
 
-      expect(command).toBe(expected);
+      expect(command as any).toBe(expected as any);
     });
 
     it('should handle shell arguments on Unix', () => {
@@ -300,25 +300,25 @@ describe('Cross-Platform Compatibility Tests', () => {
         .map(arg => (arg.includes(' ') ? `'${arg}'` : arg))
         .join(' ')}`;
 
-      expect(command).toBe(expected);
+      expect(command as any).toBe(expected as any);
     });
   });
 
   describe('Platform-specific CLI Features', () => {
     it('should adapt color output for different terminals', () => {
       const colorSupport = {
-        win32: process.env.TERM !== 'dumb',
+        win32: process?.env?.TERM !== 'dumb',
         darwin: true,
-        linux: process.env.TERM !== 'dumb',
+        linux: process?.env?.TERM !== 'dumb',
       };
 
-      Object.entries(colorSupport).forEach(([platform, expected]) => {
+      Object.entries(colorSupport as any).forEach(([platform, expected]) => {
         mockPlatform(platform as NodeJS.Platform);
 
         // Mock color support detection
         const hasColorSupport =
-          process.env.TERM !== 'dumb' || platform === 'darwin';
-        expect(hasColorSupport).toBe(expected);
+          process?.env?.TERM !== 'dumb' || platform === 'darwin';
+        expect(hasColorSupport as any).toBe(expected as any);
       });
     });
 
@@ -329,11 +329,11 @@ describe('Cross-Platform Compatibility Tests', () => {
         linux: { quit: 'Ctrl+C', save: 'Ctrl+S' },
       };
 
-      Object.entries(keybindings).forEach(([platform, bindings]) => {
+      Object.entries(keybindings as any).forEach(([platform, bindings]) => {
         mockPlatform(platform as NodeJS.Platform);
 
         const expected = platform === 'darwin' ? 'Cmd' : 'Ctrl';
-        expect(bindings.quit).toContain(expected);
+        expect(bindings.quit).toContain(expected as any);
       });
     });
   });
@@ -346,7 +346,7 @@ describe('Cross-Platform Compatibility Tests', () => {
 
       exePaths.forEach(exe => {
         // Test typical Windows executable extensions
-        expect(exe).toMatch(/\.(exe|cmd|bat)$/);
+        expect(exe as any).toMatch(/\.(exe|cmd|bat)$/);
       });
     });
 
@@ -356,22 +356,22 @@ describe('Cross-Platform Compatibility Tests', () => {
       const binPaths = [
         '/usr/bin/node',
         '/usr/local/bin/npm',
-        path.join(process.env.HOME || '', '.local/bin/pnpm'),
+        path.join(process?.env?.HOME || '', '.local/bin/pnpm'),
       ];
 
       binPaths.forEach(bin => {
         // Unix executables typically don't have extensions
-        expect(path.extname(bin)).toBe('');
+        expect(path.extname(bin as any)).toBe('');
       });
     });
   });
 
   describe('Integration Tests', () => {
     it('should complete a full workflow on each platform', async () => {
-      const platforms: NodeJS.Platform[] = ['win32', 'darwin', 'linux'];
+      const platforms: NodeJS?.Platform?.[] = ['win32', 'darwin', 'linux'];
 
       for (const platform of platforms) {
-        mockPlatform(platform);
+        mockPlatform(platform as any);
 
         // Simulate a complete workflow
         const workflow = [
@@ -387,9 +387,9 @@ describe('Cross-Platform Compatibility Tests', () => {
           const shellCommand = platform === 'win32' ? 'cmd.exe' : '/bin/sh';
           const commandFormat = platform === 'win32' ? '/c' : '-c';
 
-          expect(shellCommand).toBeDefined();
-          expect(commandFormat).toBeDefined();
-          expect(step).toBeDefined();
+          expect(shellCommand as any).toBeDefined();
+          expect(commandFormat as any).toBeDefined();
+          expect(step as any).toBeDefined();
         }
       }
     });

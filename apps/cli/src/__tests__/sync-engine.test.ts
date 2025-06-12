@@ -35,7 +35,7 @@ describe('SyncEngine', () => {
       syncDebounceMs: 500,
     };
 
-    syncEngine = new SyncEngine(mockConfig);
+    syncEngine = new SyncEngine(mockConfig as any);
   });
 
   afterEach(async () => {
@@ -60,7 +60,7 @@ describe('SyncEngine', () => {
       await syncEngine.initialize('test-wallet');
       await initPromise;
 
-      expect(syncEngine.getSyncStatus().isActive).toBe(false); // Not started yet
+      expect(syncEngine.getSyncStatus().isActive).toBe(false as any); // Not started yet
     });
 
     it('should create todos directory if it does not exist', async () => {
@@ -71,11 +71,11 @@ describe('SyncEngine', () => {
         todosDirectory: nonExistentDir,
       };
 
-      const engine = new SyncEngine(config);
+      const engine = new SyncEngine(config as any);
       await engine.initialize('test-wallet');
 
-      const stats = await fs.stat(nonExistentDir);
-      expect(stats.isDirectory()).toBe(true);
+      const stats = await fs.stat(nonExistentDir as any);
+      expect(stats.isDirectory()).toBe(true as any);
 
       await engine.shutdown();
     });
@@ -85,7 +85,7 @@ describe('SyncEngine', () => {
     it('should return correct initial status', () => {
       const status = syncEngine.getSyncStatus();
 
-      expect(status).toEqual({
+      expect(status as any).toEqual({
         isActive: false,
         lastSync: 0,
         pendingChanges: 0,
@@ -99,7 +99,7 @@ describe('SyncEngine', () => {
       await syncEngine.start();
 
       const status = syncEngine.getSyncStatus();
-      expect(status.isActive).toBe(true);
+      expect(status.isActive).toBe(true as any);
     });
   });
 
@@ -112,20 +112,20 @@ describe('SyncEngine', () => {
         },
       };
 
-      const engine = new SyncEngine(minimalConfig);
+      const engine = new SyncEngine(minimalConfig as any);
       const config = engine.getConfig();
 
-      expect(config.syncInterval).toBe(30000); // Default value
+      expect(config.syncInterval).toBe(30000 as any); // Default value
       expect(config.conflictResolution).toBe('newest'); // Default value
-      expect(config.enableRealTimeSync).toBe(true); // Default value
+      expect(config.enableRealTimeSync).toBe(true as any); // Default value
     });
 
     it('should override default values with provided config', () => {
       const config = syncEngine.getConfig();
 
-      expect(config.syncInterval).toBe(1000); // From mockConfig
+      expect(config.syncInterval).toBe(1000 as any); // From mockConfig
       expect(config.conflictResolution).toBe('newest'); // From mockConfig
-      expect(config.maxConcurrentSyncs).toBe(2); // From mockConfig
+      expect(config.maxConcurrentSyncs).toBe(2 as any); // From mockConfig
     });
   });
 
@@ -137,13 +137,13 @@ describe('SyncEngine', () => {
 
       await syncEngine.initialize('test-wallet');
 
-      expect(MockFileWatcher).toHaveBeenCalledWith({
+      expect(MockFileWatcher as any).toHaveBeenCalledWith({
         recursive: true,
         ignoreInitial: false,
         debounceMs: 1000,
         fileExtensions: ['.json'],
         excludePatterns: expect.arrayContaining([
-          expect.any(RegExp), // Should include exclude patterns
+          expect.any(RegExp as any), // Should include exclude patterns
         ]),
       });
     });
@@ -155,7 +155,7 @@ describe('SyncEngine', () => {
 
       await syncEngine.initialize('test-wallet');
 
-      expect(MockApiClient).toHaveBeenCalledWith({
+      expect(MockApiClient as any).toHaveBeenCalledWith({
         baseURL: 'http://localhost:3001',
         timeout: 5000,
         enableWebSocket: true,
@@ -168,7 +168,7 @@ describe('SyncEngine', () => {
       const MockFileWatcher = FileWatcher as jest.MockedClass<
         typeof FileWatcher
       >;
-      const mockInstance = MockFileWatcher.mock.instances[0] as any;
+      const mockInstance = MockFileWatcher.mock?.instances?.[0] as any;
 
       await syncEngine.initialize('test-wallet');
 
@@ -180,12 +180,12 @@ describe('SyncEngine', () => {
       mockInstance.emit('error', testError);
 
       const receivedError = await errorPromise;
-      expect(receivedError).toBe(testError);
+      expect(receivedError as any).toBe(testError as any);
     });
 
     it('should emit error events when API client fails', async () => {
       const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
-      const mockInstance = MockApiClient.mock.instances[0] as any;
+      const mockInstance = MockApiClient.mock?.instances?.[0] as any;
 
       await syncEngine.initialize('test-wallet');
 
@@ -197,7 +197,7 @@ describe('SyncEngine', () => {
       mockInstance.emit('error', testError);
 
       const receivedError = await errorPromise;
-      expect(receivedError).toBe(testError);
+      expect(receivedError as any).toBe(testError as any);
     });
   });
 
@@ -212,7 +212,7 @@ describe('SyncEngine', () => {
       await syncEngine.start();
       await startPromise;
 
-      expect(syncEngine.getSyncStatus().isActive).toBe(true);
+      expect(syncEngine.getSyncStatus().isActive).toBe(true as any);
 
       const stopPromise = new Promise<void>(resolve => {
         syncEngine.on('stopped', resolve);
@@ -221,7 +221,7 @@ describe('SyncEngine', () => {
       await syncEngine.stop();
       await stopPromise;
 
-      expect(syncEngine.getSyncStatus().isActive).toBe(false);
+      expect(syncEngine.getSyncStatus().isActive).toBe(false as any);
     });
 
     it('should shutdown cleanly', async () => {
@@ -231,7 +231,7 @@ describe('SyncEngine', () => {
       // Should not throw
       await syncEngine.shutdown();
 
-      expect(syncEngine.getSyncStatus().isActive).toBe(false);
+      expect(syncEngine.getSyncStatus().isActive).toBe(false as any);
     });
   });
 
@@ -243,7 +243,7 @@ describe('SyncEngine', () => {
 
       // Verify API client was called to connect with new wallet
       const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
-      const mockInstance = MockApiClient.mock.instances[0] as any;
+      const mockInstance = MockApiClient.mock?.instances?.[0] as any;
       expect(mockInstance.connect).toHaveBeenCalledWith('new-wallet-address');
     });
   });
@@ -283,7 +283,7 @@ describe('SyncEngine Integration', () => {
       syncDebounceMs: 100, // Fast for testing
     };
 
-    syncEngine = new SyncEngine(config);
+    syncEngine = new SyncEngine(config as any);
 
     await syncEngine.initialize('test-wallet');
     await syncEngine.start();
@@ -312,7 +312,7 @@ describe('SyncEngine Integration', () => {
 
     // Verify that sync was triggered (through mocked API calls)
     const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
-    const mockInstance = MockApiClient.mock.instances[0] as any;
+    const mockInstance = MockApiClient.mock?.instances?.[0] as any;
 
     // Should have attempted to push the todo
     expect(mockInstance.pushTodo).toHaveBeenCalled();

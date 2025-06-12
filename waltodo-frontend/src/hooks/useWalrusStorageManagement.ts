@@ -136,7 +136,7 @@ export function useWalrusStorageManagement() {
   // Storage preferences
   const [preferences, setPreferences] = useState(() => {
     const saved = localStorage.getItem('storagePreferences');
-    return saved ? JSON.parse(saved) : {
+    return saved ? JSON.parse(saved as any) : {
       autoCleanup: false,
       cleanupDays: 30,
       compressionEnabled: true,
@@ -152,8 +152,8 @@ export function useWalrusStorageManagement() {
   const savePreferences = useCallback(async (newPreferences: typeof preferences) => {
     try {
       // TODO: Save to API
-      localStorage.setItem('storagePreferences', JSON.stringify(newPreferences));
-      setPreferences(newPreferences);
+      localStorage.setItem('storagePreferences', JSON.stringify(newPreferences as any));
+      setPreferences(newPreferences as any);
       toast.success('Preferences saved successfully');
     } catch (error) {
       toast.error('Failed to save preferences');
@@ -166,7 +166,7 @@ export function useWalrusStorageManagement() {
     if (!preferences.autoCleanup || !blobs.length) {return;}
 
     const expiredBlobs = blobs.filter(blob => {
-      const ageInDays = (Date.now() - blob.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      const ageInDays = (Date.now() - blob?.createdAt?.getTime()) / (1000 * 60 * 60 * 24);
       return ageInDays > preferences.cleanupDays;
     });
 

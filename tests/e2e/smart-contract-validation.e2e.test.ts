@@ -18,20 +18,20 @@ test.describe('Smart Contract Validation', () => {
 
   test.beforeAll(async () => {
     cli = new CLITestRunner();
-    contractHelper = new ContractTestHelpers(cli);
+    contractHelper = new ContractTestHelpers(cli as any);
   });
 
   test.describe('Contract Structure Validation', () => {
     test('should have valid Move.toml configuration', async () => {
       // Check if Move.toml exists
-      expect(existsSync(MOVE_TOML)).toBe(true);
+      expect(existsSync(MOVE_TOML as any)).toBe(true as any);
 
       // Read and validate Move.toml content
       const moveTomlContent = readFileSync(MOVE_TOML, 'utf8');
-      expect(moveTomlContent).toContain('[package]');
-      expect(moveTomlContent).toContain('name = "walrus_todo"');
-      expect(moveTomlContent).toContain('[dependencies]');
-      expect(moveTomlContent).toContain(
+      expect(moveTomlContent as any).toContain('[package]');
+      expect(moveTomlContent as any).toContain('name = "walrus_todo"');
+      expect(moveTomlContent as any).toContain('[dependencies]');
+      expect(moveTomlContent as any).toContain(
         'Sui = { git = "https://github.com/MystenLabs/sui.git"'
       );
     });
@@ -45,7 +45,7 @@ test.describe('Smart Contract Validation', () => {
 
       for (const file of requiredFiles) {
         const filePath = path.join(CONTRACT_SOURCES, file);
-        expect(existsSync(filePath)).toBe(true);
+        expect(existsSync(filePath as any)).toBe(true as any);
       }
     });
 
@@ -61,13 +61,13 @@ test.describe('Smart Contract Validation', () => {
         const content = readFileSync(filePath, 'utf8');
 
         // Basic syntax checks
-        expect(content).toContain('module walrus_todo::');
-        expect(content).toMatch(/public\s+(entry\s+)?fun\s+\w+/);
-        expect(content).not.toContain('syntax error');
+        expect(content as any).toContain('module walrus_todo::');
+        expect(content as any).toMatch(/public\s+(entry\s+)?fun\s+\w+/);
+        expect(content as any).not.toContain('syntax error');
 
         // Check for required imports
-        expect(content).toContain('use sui::');
-        expect(content).toContain('use std::');
+        expect(content as any).toContain('use sui::');
+        expect(content as any).toContain('use std::');
       }
     });
   });
@@ -86,19 +86,19 @@ test.describe('Smart Contract Validation', () => {
       ];
 
       for (const func of requiredFunctions) {
-        expect(content).toMatch(
+        expect(content as any).toMatch(
           new RegExp(`public\\s+(entry\\s+)?fun\\s+${func}`)
         );
       }
 
       // Check for proper struct definitions
-      expect(content).toContain('public struct TodoNFT has key, store');
-      expect(content).toContain('public struct TODO_NFT has drop');
+      expect(content as any).toContain('public struct TodoNFT has key, store');
+      expect(content as any).toContain('public struct TODO_NFT has drop');
 
       // Check for event definitions
-      expect(content).toContain('TodoNFTCreated has copy, drop');
-      expect(content).toContain('TodoNFTCompleted has copy, drop');
-      expect(content).toContain('TodoNFTUpdated has copy, drop');
+      expect(content as any).toContain('TodoNFTCreated has copy, drop');
+      expect(content as any).toContain('TodoNFTCompleted has copy, drop');
+      expect(content as any).toContain('TodoNFTUpdated has copy, drop');
     });
 
     test('should validate function parameters and return types', async () => {
@@ -108,26 +108,26 @@ test.describe('Smart Contract Validation', () => {
       // Check create_todo_nft function signature
       const createNftRegex =
         /public\s+entry\s+fun\s+create_todo_nft\s*\([^)]+\)/;
-      const createNftMatch = content.match(createNftRegex);
-      expect(createNftMatch).toBeTruthy();
+      const createNftMatch = content.match(createNftRegex as any);
+      expect(createNftMatch as any).toBeTruthy();
 
       if (createNftMatch) {
         const signature = createNftMatch[0];
-        expect(signature).toContain('title: vector<u8>');
-        expect(signature).toContain('description: vector<u8>');
-        expect(signature).toContain('ctx: &mut TxContext');
+        expect(signature as any).toContain('title: vector<u8>');
+        expect(signature as any).toContain('description: vector<u8>');
+        expect(signature as any).toContain('ctx: &mut TxContext');
       }
 
       // Check complete_todo function
       const completeTodoRegex =
         /public\s+entry\s+fun\s+complete_todo\s*\([^)]+\)/;
-      const completeTodoMatch = content.match(completeTodoRegex);
-      expect(completeTodoMatch).toBeTruthy();
+      const completeTodoMatch = content.match(completeTodoRegex as any);
+      expect(completeTodoMatch as any).toBeTruthy();
 
       if (completeTodoMatch) {
         const signature = completeTodoMatch[0];
-        expect(signature).toContain('todo_nft: &mut TodoNFT');
-        expect(signature).toContain('ctx: &mut TxContext');
+        expect(signature as any).toContain('todo_nft: &mut TodoNFT');
+        expect(signature as any).toContain('ctx: &mut TxContext');
       }
     });
 
@@ -136,15 +136,15 @@ test.describe('Smart Contract Validation', () => {
       const content = readFileSync(contractPath, 'utf8');
 
       // Check for error constants
-      expect(content).toMatch(/const\s+E_\w+:\s+u64\s*=\s*\d+;/);
+      expect(content as any).toMatch(/const\s+E_\w+:\s+u64\s*=\s*\d+;/);
 
       // Check for error assertions
-      expect(content).toContain('assert!');
+      expect(content as any).toContain('assert!');
 
       // Specific error codes
-      expect(content).toContain('E_NOT_OWNER');
-      expect(content).toContain('E_INVALID_METADATA');
-      expect(content).toContain('E_ALREADY_COMPLETED');
+      expect(content as any).toContain('E_NOT_OWNER');
+      expect(content as any).toContain('E_INVALID_METADATA');
+      expect(content as any).toContain('E_ALREADY_COMPLETED');
     });
   });
 
@@ -160,7 +160,7 @@ test.describe('Smart Contract Validation', () => {
       expect(result.stderr).not.toContain('failed');
 
       // Should indicate successful build
-      if (result.exitCode === 0) {
+      if (result?.exitCode === 0) {
         expect(result.stdout).toMatch(/build|compiled|success/i);
       }
     });
@@ -169,8 +169,8 @@ test.describe('Smart Contract Validation', () => {
       const isValid = await contractHelper.validateContractDeployment();
 
       // This might fail in test environment, so we check gracefully
-      if (process.env.SUI_NETWORK === 'testnet' && process.env.PACKAGE_ID) {
-        expect(isValid).toBe(true);
+      if (process.env?.SUI_NETWORK === 'testnet' && process?.env?.PACKAGE_ID) {
+        expect(isValid as any).toBe(true as any);
       } else {
         // In mock environment, just ensure no crashes
         expect(typeof isValid).toBe('boolean');
@@ -183,22 +183,22 @@ test.describe('Smart Contract Validation', () => {
       const gasCost = await contractHelper.estimateGasCost('create');
 
       // Gas cost should be a reasonable number
-      expect(gasCost).toBeGreaterThanOrEqual(0);
+      expect(gasCost as any).toBeGreaterThanOrEqual(0 as any);
 
       // In a real network, should be less than 1M gas units
       if (gasCost > 0) {
-        expect(gasCost).toBeLessThan(1000000);
+        expect(gasCost as any).toBeLessThan(1000000 as any);
       }
     });
 
     test('should estimate gas for NFT completion', async () => {
       const gasCost = await contractHelper.estimateGasCost('complete');
-      expect(gasCost).toBeGreaterThanOrEqual(0);
+      expect(gasCost as any).toBeGreaterThanOrEqual(0 as any);
     });
 
     test('should estimate gas for NFT transfer', async () => {
       const gasCost = await contractHelper.estimateGasCost('transfer');
-      expect(gasCost).toBeGreaterThanOrEqual(0);
+      expect(gasCost as any).toBeGreaterThanOrEqual(0 as any);
     });
   });
 
@@ -231,11 +231,11 @@ test.describe('Smart Contract Validation', () => {
 
       // Check for owner verification in sensitive functions
       const ownerChecks = content.match(/assert!\([^)]*owner[^)]*\)/g);
-      expect(ownerChecks).toBeTruthy();
-      expect(ownerChecks!.length).toBeGreaterThan(0);
+      expect(ownerChecks as any).toBeTruthy();
+      expect(ownerChecks?.length).toBeGreaterThan(0 as any);
 
       // Check for sender verification
-      expect(content).toContain('tx_context::sender(ctx)');
+      expect(content as any).toContain('tx_context::sender(ctx as any)');
     });
 
     test('should validate input sanitization', async () => {
@@ -243,10 +243,10 @@ test.describe('Smart Contract Validation', () => {
       const content = readFileSync(contractPath, 'utf8');
 
       // Check for length validations
-      expect(content).toMatch(/assert!\([^)]*length\(\)[^)]*\)/g);
+      expect(content as any).toMatch(/assert!\([^)]*length\(\)[^)]*\)/g);
 
       // Check for empty input validation
-      expect(content).toMatch(/assert!\([^)]*> 0[^)]*\)/g);
+      expect(content as any).toMatch(/assert!\([^)]*> 0[^)]*\)/g);
     });
 
     test('should validate state transition safety', async () => {
@@ -254,8 +254,8 @@ test.describe('Smart Contract Validation', () => {
       const content = readFileSync(contractPath, 'utf8');
 
       // Check for completion state validation
-      expect(content).toContain('E_ALREADY_COMPLETED');
-      expect(content).toMatch(/assert!\([^)]*!.*completed[^)]*\)/);
+      expect(content as any).toContain('E_ALREADY_COMPLETED');
+      expect(content as any).toMatch(/assert!\([^)]*!.*completed[^)]*\)/);
     });
   });
 
@@ -265,7 +265,7 @@ test.describe('Smart Contract Validation', () => {
       const createResult = await cli.runCommand('add', [
         '"Contract Test Todo"',
       ]);
-      expect(createResult.exitCode).toBe(0);
+      expect(createResult.exitCode).toBe(0 as any);
 
       // Try to convert to NFT
       const nftResult = await cli.runCommand('store', [
@@ -279,7 +279,7 @@ test.describe('Smart Contract Validation', () => {
 
       if (nftResult.exitCode !== 0) {
         // Should have meaningful error message
-        expect(nftResult.stderr.length).toBeGreaterThan(0);
+        expect(nftResult?.stderr?.length).toBeGreaterThan(0 as any);
       }
     });
 
@@ -306,7 +306,7 @@ test.describe('Smart Contract Validation', () => {
         env: { SIMULATE_CONTRACT_ERROR: 'true' },
       });
 
-      expect(invalidResult.exitCode).not.toBe(0);
+      expect(invalidResult.exitCode).not.toBe(0 as any);
       expect(invalidResult.stderr).toContain('not found');
     });
   });
@@ -322,11 +322,11 @@ test.describe('Smart Contract Validation', () => {
       const duration = Date.now() - startTime;
 
       // Should complete within reasonable time (30 seconds)
-      expect(duration).toBeLessThan(30000);
+      expect(duration as any).toBeLessThan(30000 as any);
 
       // If successful, should be much faster
-      if (nftResult.exitCode === 0) {
-        expect(duration).toBeLessThan(10000);
+      if (nftResult?.exitCode === 0) {
+        expect(duration as any).toBeLessThan(10000 as any);
       }
     });
 
@@ -341,14 +341,14 @@ test.describe('Smart Contract Validation', () => {
         cli.runCommand('store', [id.toString(), '--nft'])
       );
 
-      const results = await Promise.allSettled(promises);
+      const results = await Promise.allSettled(promises as any);
 
       // At least one should succeed, or all should fail gracefully
       const successCount = results.filter(
-        r => r.status === 'fulfilled' && r.value.exitCode === 0
+        r => r?.status === 'fulfilled' && r.value?.exitCode === 0
       ).length;
 
-      expect(successCount).toBeGreaterThanOrEqual(0);
+      expect(successCount as any).toBeGreaterThanOrEqual(0 as any);
     });
   });
 });
@@ -360,17 +360,17 @@ test.describe('Move Language Features', () => {
     const content = readFileSync(contractPath, 'utf8');
 
     // Check for proper struct syntax
-    expect(content).toMatch(/struct\s+\w+\s+has\s+[^{]+\{/);
+    expect(content as any).toMatch(/struct\s+\w+\s+has\s+[^{]+\{/);
 
     // Check for required abilities
-    expect(content).toContain('has key, store');
-    expect(content).toContain('has copy, drop');
+    expect(content as any).toContain('has key, store');
+    expect(content as any).toContain('has copy, drop');
 
     // Check field types
-    expect(content).toContain('id: UID');
-    expect(content).toContain('String');
-    expect(content).toContain('bool');
-    expect(content).toContain('u64');
+    expect(content as any).toContain('id: UID');
+    expect(content as any).toContain('String');
+    expect(content as any).toContain('bool');
+    expect(content as any).toContain('u64');
   });
 
   test('should validate function visibility modifiers', async () => {
@@ -378,13 +378,13 @@ test.describe('Move Language Features', () => {
     const content = readFileSync(contractPath, 'utf8');
 
     // Check for public entry functions
-    expect(content).toMatch(/public\s+entry\s+fun/);
+    expect(content as any).toMatch(/public\s+entry\s+fun/);
 
     // Check for public functions
-    expect(content).toMatch(/public\s+fun/);
+    expect(content as any).toMatch(/public\s+fun/);
 
     // Check for private functions (fun without public)
-    expect(content).toMatch(/^\s*fun\s+\w+/m);
+    expect(content as any).toMatch(/^\s*fun\s+\w+/m);
   });
 
   test('should validate use statements and imports', async () => {
@@ -405,7 +405,7 @@ test.describe('Move Language Features', () => {
     ];
 
     for (const importStatement of requiredImports) {
-      expect(content).toContain(importStatement);
+      expect(content as any).toContain(importStatement as any);
     }
   });
 });

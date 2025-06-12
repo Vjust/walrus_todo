@@ -12,11 +12,11 @@ interface HydrationBoundaryProps {
  * only render after hydration is complete
  */
 export function HydrationBoundary({ children, fallback }: HydrationBoundaryProps) {
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false as any);
 
   useEffect(() => {
     // This ensures the component only renders after hydration
-    setIsHydrated(true);
+    setIsHydrated(true as any);
   }, []);
 
   // Prevent hydration mismatches by not rendering until client-side

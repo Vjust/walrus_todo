@@ -14,7 +14,7 @@ import { Logger } from '../utils/Logger';
  */
 const initHook: Hook<'init'> = async function () {
   // Initialize configuration if not already done
-  if (typeof process.env.ENV_CONFIG_INITIALIZED === 'undefined') {
+  if (typeof process.env?.ENV_CONFIG_INITIALIZED === 'undefined') {
     try {
       // Load from .env and config files first
       loadEnvironment({
@@ -34,15 +34,15 @@ const initHook: Hook<'init'> = async function () {
       } catch (validationError) {
         // Just log validation error but don't fail, individual commands will do more specific validation
         Logger.getInstance().warn(
-          `Environment validation warning: ${validationError instanceof Error ? validationError.message : String(validationError)}`
+          `Environment validation warning: ${validationError instanceof Error ? validationError.message : String(validationError as any)}`
         );
       }
 
       // Mark as initialized to prevent duplicate initialization
-      process.env.ENV_CONFIG_INITIALIZED = 'true';
+      process.env?.ENV_CONFIG_INITIALIZED = 'true';
     } catch (_error) {
       Logger.getInstance().error(
-        `Failed to initialize environment configuration: ${_error instanceof Error ? _error.message : String(_error)}`
+        `Failed to initialize environment configuration: ${_error instanceof Error ? _error.message : String(_error as any)}`
       );
 
       // Output helpful error recovery information
@@ -70,14 +70,14 @@ const initHook: Hook<'init'> = async function () {
  */
 const commandRegistryHook: Hook<'init'> = async function (opts) {
   // Record command in history
-  const command = opts.argv.join(' ');
+  const command = opts?.argv?.join(' ');
   if (command) {
-    commandHistory.addCommand(command);
+    commandHistory.addCommand(command as any);
   }
 
   // Register todo commands and groups
   // TODO: Re-enable when todoGroup is available
-  // commandRegistry.registerGroup(todoGroup);
+  // commandRegistry.registerGroup(todoGroup as any);
 
   // Register basic commands manually
   const basicCommands = [
@@ -108,7 +108,7 @@ const commandRegistryHook: Hook<'init'> = async function (opts) {
   ];
 
   basicCommands.forEach(cmd => {
-    commandRegistry.registerCommand(cmd);
+    commandRegistry.registerCommand(cmd as any);
   });
 
   // Register other common commands

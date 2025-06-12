@@ -69,8 +69,8 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
 
   beforeEach(() => {
     // Set test environment
-    process.env.NODE_ENV = 'test';
-    process.env.HOME = mockHomeDir;
+    process.env?.NODE_ENV = 'test';
+    process.env?.HOME = mockHomeDir;
 
     // Mock file existence checks
     (fs.existsSync as jest.Mock).mockImplementation((path: string) => {
@@ -137,13 +137,13 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    delete process.env.HOME;
-    delete process.env.NODE_ENV;
+    delete process?.env?.HOME;
+    delete process?.env?.NODE_ENV;
   });
 
   test('should initialize with existing key and metadata', () => {
-    expect(fs.readFileSync).toHaveBeenCalledWith(mockKeyPath);
-    expect(fs.existsSync).toHaveBeenCalledWith(mockKeyPath);
+    expect(fs.readFileSync).toHaveBeenCalledWith(mockKeyPath as any);
+    expect(fs.existsSync).toHaveBeenCalledWith(mockKeyPath as any);
   });
 
   test('should successfully rotate keys', async () => {
@@ -153,30 +153,30 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     expect(fs.copyFileSync).toHaveBeenCalled();
 
     // Should generate a new key
-    expect(crypto.randomBytes).toHaveBeenCalledWith(32);
+    expect(crypto.randomBytes).toHaveBeenCalledWith(32 as any);
 
     // Should write the new key to disk
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       mockKeyPath,
-      expect.any(Buffer),
+      expect.any(Buffer as any),
       expect.objectContaining({ mode: 0o600 })
     );
 
     // Should update metadata
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       mockMetadataPath,
-      expect.any(String),
+      expect.any(String as any),
       expect.objectContaining({ mode: 0o600 })
     );
 
     // Should re-encrypt credentials with new key
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       mockCredentialsPath,
-      expect.any(Buffer),
+      expect.any(Buffer as any),
       expect.objectContaining({ mode: 0o600 })
     );
 
-    expect(result).toBe(true);
+    expect(result as any).toBe(true as any);
   });
 
   test('should validate key integrity', () => {
@@ -186,7 +186,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     expect(crypto.createCipheriv).toHaveBeenCalled();
     expect(crypto.createDecipheriv).toHaveBeenCalled();
 
-    expect(result).toBe(true);
+    expect(result as any).toBe(true as any);
   });
 
   test('should create key backups', async () => {
@@ -198,7 +198,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     // Should backup metadata
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining('metadata_backup_'),
-      expect.any(String),
+      expect.any(String as any),
       expect.objectContaining({ mode: 0o400 }) // Read-only
     );
 
@@ -212,7 +212,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
 
   test('should restore from a backup', async () => {
     const mockBackupId = 'test-key-id';
-    const result = await manager.restoreFromBackup(mockBackupId);
+    const result = await manager.restoreFromBackup(mockBackupId as any);
 
     // Should copy the backup key to the main key location
     expect(fs.copyFileSync).toHaveBeenCalled();
@@ -223,17 +223,17 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     // Should restore metadata
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       mockMetadataPath,
-      expect.any(String),
+      expect.any(String as any),
       expect.objectContaining({ mode: 0o600 })
     );
 
-    expect(result).toBe(true);
+    expect(result as any).toBe(true as any);
   });
 
   test('should list available backups', () => {
     const backups = manager.listKeyBackups();
 
-    expect(backups).toHaveLength(1);
+    expect(backups as any).toHaveLength(1 as any);
     expect(backups[0]).toHaveProperty('id');
     expect(backups[0]).toHaveProperty('timestamp');
     expect(backups[0]).toHaveProperty('version');
@@ -276,7 +276,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     );
 
     // Check if validation was called
-    expect(validateCredentialMethod).toHaveBeenCalledWith(
+    expect(validateCredentialMethod as any).toHaveBeenCalledWith(
       expiredCredential,
       'test-provider'
     );
@@ -293,7 +293,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     (manager as unknown as { saveCredentials: () => void }).saveCredentials();
 
     // Check if backup function was called
-    expect(backupCredentialsMethod).toHaveBeenCalled();
+    expect(backupCredentialsMethod as any).toHaveBeenCalled();
   });
 
   test('should clean up old backups', () => {
@@ -319,7 +319,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     ).backupCredentialsIfNeeded();
 
     // Should attempt to clean up old backups
-    expect(cleanupMethod).toHaveBeenCalled();
+    expect(cleanupMethod as any).toHaveBeenCalled();
 
     // Should delete older backups (keep only 5)
     expect(fs.unlinkSync).toHaveBeenCalled();

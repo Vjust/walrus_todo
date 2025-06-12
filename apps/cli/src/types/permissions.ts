@@ -408,12 +408,12 @@ export function permissionMatches(
 ): boolean {
   // Resource matching - exact match or wildcard
   const resourceMatches =
-    permission.resource === context.resource ||
-    permission.resource === `${context.resourceType}:*`;
+    permission?.resource === context.resource ||
+    permission?.resource === `${context.resourceType}:*`;
 
   // Action matching - exact match or wildcard
   const actionMatches =
-    permission.action === context.action || permission.action === '*';
+    permission?.action === context.action || permission?.action === '*';
 
   // If conditions exist, they should all be satisfied
   const conditionsMatch =

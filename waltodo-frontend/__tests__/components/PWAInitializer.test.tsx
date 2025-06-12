@@ -60,7 +60,7 @@ describe('PWAInitializer', () => {
     jest.clearAllMocks();
     
     // Setup default mock
-    (usePWA as jest.Mock).mockReturnValue(mockUsePWA);
+    (usePWA as jest.Mock).mockReturnValue(mockUsePWA as any);
     
     // Mock toast
     (toast.success as jest.Mock).mockImplementation(() => {});
@@ -70,7 +70,7 @@ describe('PWAInitializer', () => {
 
   describe('Service Worker Registration', () => {
     it('should register service worker on mount', async () => {
-      mockServiceWorker.register.mockResolvedValue({
+      mockServiceWorker?.register?.mockResolvedValue({
         scope: '/',
         active: { state: 'activated' },
       });
@@ -86,20 +86,20 @@ describe('PWAInitializer', () => {
 
       expect(toast.success).toHaveBeenCalledWith(
         'App ready for offline use!',
-        expect.any(Object)
+        expect.any(Object as any)
       );
     });
 
     it('should handle registration errors', async () => {
       const error = new Error('Registration failed');
-      mockServiceWorker.register.mockRejectedValue(error);
+      mockServiceWorker?.register?.mockRejectedValue(error as any);
 
       render(<PWAInitializer />);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
           'Failed to register service worker',
-          expect.any(Object)
+          expect.any(Object as any)
         );
       });
     });
@@ -107,10 +107,10 @@ describe('PWAInitializer', () => {
     it('should not register on localhost in development', async () => {
       // Mock window.location
       delete (window as any).location;
-      window.location = { hostname: 'localhost' } as any;
+      window?.location = { hostname: 'localhost' } as any;
       
-      // Mock process.env.NODE_ENV properly
-      const originalNodeEnv = process.env.NODE_ENV;
+      // Mock process?.env?.NODE_ENV properly
+      const originalNodeEnv = process?.env?.NODE_ENV;
       Object.defineProperty(process.env, 'NODE_ENV', {
         value: 'development',
         writable: true,
@@ -154,7 +154,7 @@ describe('PWAInitializer', () => {
       render(<PWAInitializer />);
 
       const refreshButton = screen.getByText(/Refresh to update/i);
-      fireEvent.click(refreshButton);
+      fireEvent.click(refreshButton as any);
 
       expect(mockUsePWA.updateApp).toHaveBeenCalled();
     });
@@ -168,7 +168,7 @@ describe('PWAInitializer', () => {
       render(<PWAInitializer />);
 
       const dismissButton = screen.getByLabelText(/Dismiss/i);
-      fireEvent.click(dismissButton);
+      fireEvent.click(dismissButton as any);
 
       expect(screen.queryByText(/Update available/i)).not.toBeInTheDocument();
     });
@@ -208,7 +208,7 @@ describe('PWAInitializer', () => {
 
       rerender(<PWAInitializer />);
 
-      expect(toast).toHaveBeenCalledWith(
+      expect(toast as any).toHaveBeenCalledWith(
         'You are now offline. Some features may be limited.',
         expect.objectContaining({
           icon: '📵',
@@ -258,7 +258,7 @@ describe('PWAInitializer', () => {
       render(<PWAInitializer />);
 
       await waitFor(() => {
-        expect(mockRegistration.sync.register).toHaveBeenCalledWith('sync-todos');
+        expect(mockRegistration?.sync?.register).toHaveBeenCalledWith('sync-todos');
       });
     });
 
@@ -297,7 +297,7 @@ describe('PWAInitializer', () => {
       // Assume there's a button to enable notifications
       const enableButton = screen.queryByText(/Enable notifications/i);
       if (enableButton) {
-        fireEvent.click(enableButton);
+        fireEvent.click(enableButton as any);
 
         await waitFor(() => {
           expect(mockNotification.requestPermission).toHaveBeenCalled();

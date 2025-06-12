@@ -46,17 +46,17 @@ describe('complete command - positional arguments', () => {
       network: 'testnet',
     } as any);
 
-    mockTodoService.prototype.getList = jest.fn().mockResolvedValue(mockList);
-    mockTodoService.prototype.getAllLists = jest
+    mockTodoService.prototype?.getList = jest.fn().mockResolvedValue(mockList as any);
+    mockTodoService.prototype?.getAllLists = jest
       .fn()
       .mockResolvedValue(['mylist']);
-    mockTodoService.prototype.getTodoByTitleOrId = jest
+    mockTodoService.prototype?.getTodoByTitleOrId = jest
       .fn()
-      .mockResolvedValue(mockTodo);
+      .mockResolvedValue(mockTodo as any);
     // Remove getListItems mock since the method doesn't exist in TodoService
-    mockTodoService.prototype.toggleItemStatus = jest
+    mockTodoService.prototype?.toggleItemStatus = jest
       .fn()
-      .mockResolvedValue(undefined);
+      .mockResolvedValue(undefined as any);
   });
 
   describe('new positional argument patterns', () => {
@@ -65,11 +65,11 @@ describe('complete command - positional arguments', () => {
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'todo-123',
         'default'
       );
-      expect(mockTodoService.prototype.toggleItemStatus).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.toggleItemStatus).toHaveBeenCalledWith(
         'default',
         'todo-123',
         true
@@ -81,11 +81,11 @@ describe('complete command - positional arguments', () => {
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'todo-456',
         'mylist'
       );
-      expect(mockTodoService.prototype.toggleItemStatus).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.toggleItemStatus).toHaveBeenCalledWith(
         'mylist',
         'todo-123',
         true
@@ -97,7 +97,7 @@ describe('complete command - positional arguments', () => {
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'Buy groceries',
         'default'
       );
@@ -105,14 +105,14 @@ describe('complete command - positional arguments', () => {
 
     test('completes todo by title from specific list', async () => {
       const cmd = new CompleteCommand(['work', 'Finish report'], {} as any);
-      mockTodoService.prototype.getList = jest.fn().mockResolvedValue({
+      mockTodoService.prototype?.getList = jest.fn().mockResolvedValue({
         ...mockList,
         name: 'work',
       });
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'Finish report',
         'work'
       );
@@ -125,7 +125,7 @@ describe('complete command - positional arguments', () => {
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'todo-789',
         'default'
       );
@@ -136,14 +136,14 @@ describe('complete command - positional arguments', () => {
         id: 'todo-999',
         list: 'personal',
       } as any);
-      mockTodoService.prototype.getList = jest.fn().mockResolvedValue({
+      mockTodoService.prototype?.getList = jest.fn().mockResolvedValue({
         ...mockList,
         name: 'personal',
       });
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'todo-999',
         'personal'
       );
@@ -154,7 +154,7 @@ describe('complete command - positional arguments', () => {
 
       await cmd.run();
 
-      expect(mockTodoService.prototype.getTodoByTitleOrId).toHaveBeenCalledWith(
+      expect(mockTodoService?.prototype?.getTodoByTitleOrId).toHaveBeenCalledWith(
         'Old task',
         'mylist'
       );
@@ -165,7 +165,7 @@ describe('complete command - positional arguments', () => {
     test('shows available todos when no arguments provided', async () => {
       const cmd = new CompleteCommand([], {} as any);
 
-      await expect(cmd.run()).rejects.toThrow(CLIError);
+      await expect(cmd.run()).rejects.toThrow(CLIError as any);
 
       await expect(cmd.run()).rejects.toThrow(
         expect.objectContaining({
@@ -178,12 +178,12 @@ describe('complete command - positional arguments', () => {
 
     test('shows available lists when list not found', async () => {
       const cmd = new CompleteCommand(['nonexistent', 'todo-123'], {} as any);
-      mockTodoService.prototype.getList = jest.fn().mockResolvedValue(null);
-      mockTodoService.prototype.getAllLists = jest
+      mockTodoService.prototype?.getList = jest.fn().mockResolvedValue(null as any);
+      mockTodoService.prototype?.getAllLists = jest
         .fn()
         .mockResolvedValue(['default', 'work', 'personal']);
 
-      await expect(cmd.run()).rejects.toThrow(CLIError);
+      await expect(cmd.run()).rejects.toThrow(CLIError as any);
 
       await expect(cmd.run()).rejects.toThrow(
         expect.objectContaining({
@@ -199,11 +199,11 @@ describe('complete command - positional arguments', () => {
         ['mylist', 'nonexistent-todo'],
         {} as any
       );
-      mockTodoService.prototype.getTodoByTitleOrId = jest
+      mockTodoService.prototype?.getTodoByTitleOrId = jest
         .fn()
-        .mockResolvedValue(null);
+        .mockResolvedValue(null as any);
       // Update getList to return a list with todos instead of using getListItems
-      mockTodoService.prototype.getList = jest.fn().mockResolvedValue({
+      mockTodoService.prototype?.getList = jest.fn().mockResolvedValue({
         ...mockList,
         todos: [
           { id: 'todo-111', title: 'Task 1', completed: false },
@@ -212,7 +212,7 @@ describe('complete command - positional arguments', () => {
         ]
       });
 
-      await expect(cmd.run()).rejects.toThrow(CLIError);
+      await expect(cmd.run()).rejects.toThrow(CLIError as any);
 
       await expect(cmd.run()).rejects.toThrow(
         expect.objectContaining({
@@ -220,7 +220,7 @@ describe('complete command - positional arguments', () => {
             expect.stringMatching(
               /Todo "nonexistent-todo" not found in list "mylist".*Available todos in this list:.*todo-111.*Task 1.*Task 2.*Tip: You can use either the todo ID or title/s
             ),
-            expect.not.stringContaining('Task 3') // Completed todos should not be shown
+            expect?.not?.stringContaining('Task 3') // Completed todos should not be shown
           ])
         })
       );
@@ -228,9 +228,9 @@ describe('complete command - positional arguments', () => {
 
     test('indicates when todo is already completed', async () => {
       const completedTodo = { ...mockTodo, completed: true };
-      mockTodoService.prototype.getTodoByTitleOrId = jest
+      mockTodoService.prototype?.getTodoByTitleOrId = jest
         .fn()
-        .mockResolvedValue(completedTodo);
+        .mockResolvedValue(completedTodo as any);
 
       const cmd = new CompleteCommand(['todo-123'], {} as any);
 

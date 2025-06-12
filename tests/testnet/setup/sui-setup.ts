@@ -33,7 +33,7 @@ import { CLIError } from '../../../apps/cli/src/types/errors';
 import { SuiClient } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 // Configuration constants
-const TESTNET_FAUCET_URL = 'https://faucet.testnet.sui.io';
+const TESTNET_FAUCET_URL = 'https://faucet?.testnet?.sui.io';
 const DEFAULT_FAUCET_AMOUNT = '1000000000'; // 1 SUI in MIST
 const KEYSTORE_FILE = 'sui.keystore';
 const CONFIG_FILE = 'client.yaml';
@@ -77,7 +77,7 @@ export class SuiTestnetSetup {
 
   constructor(config: WalletSetupConfig = {}) {
     // Set default configuration values
-    this.config = {
+    this?.config = {
       network: config.network || 'testnet',
       walletType: config.walletType || 'ed25519',
       keystorePath:
@@ -94,14 +94,14 @@ export class SuiTestnetSetup {
     };
 
     // Initialize Sui client
-    const networkUrl = NETWORK_URLS[this.config.network];
+    const networkUrl = NETWORK_URLS[this?.config?.network];
     if (!networkUrl) {
       throw new CLIError(
-        `Invalid network: ${this.config.network}`,
+        `Invalid network: ${this?.config?.network}`,
         'INVALID_NETWORK'
       );
     }
-    this.client = new SuiClient({ url: networkUrl });
+    this?.client = new SuiClient({ url: networkUrl });
   }
 
   /**
@@ -119,13 +119,13 @@ export class SuiTestnetSetup {
 
       // Backup wallet if enabled
       let backupPath: string | undefined;
-      if (this.config.backupWallet) {
-        backupPath = await this.backupWallet(wallet);
+      if (this?.config?.backupWallet) {
+        backupPath = await this.backupWallet(wallet as any);
       }
 
       // Fund wallet from faucet if enabled
       let fundingTxDigest: string | undefined;
-      if (this.config.enableFaucet) {
+      if (this?.config?.enableFaucet) {
         fundingTxDigest = await this.fundWalletFromFaucet(wallet.address);
 
         // Wait for funding to be confirmed
@@ -133,17 +133,17 @@ export class SuiTestnetSetup {
       }
 
       // Update wallet balance
-      wallet.balance = await this.getBalance(wallet.address);
+      wallet?.balance = await this.getBalance(wallet.address);
 
       // Create and save configuration files
-      await this.saveWalletConfiguration(wallet);
+      await this.saveWalletConfiguration(wallet as any);
 
       logger.info('✅ Sui testnet setup completed successfully!');
 
       return {
         wallet,
-        keystorePath: this.config.keystorePath,
-        configPath: this.config.configPath,
+        keystorePath: this?.config?.keystorePath,
+        configPath: this?.config?.configPath,
         backupPath,
         fundingTxDigest,
       };
@@ -160,14 +160,14 @@ export class SuiTestnetSetup {
     logger.info('🔍 Checking network connection...');
 
     try {
-      const health = await this.client.getLatestCheckpointSequenceNumber();
+      const health = await this?.client?.getLatestCheckpointSequenceNumber();
       if (typeof health !== 'string' && typeof health !== 'number') {
         throw new Error('Invalid health check response');
       }
       logger.info('✅ Network connection successful');
     } catch (error) {
       throw new CLIError(
-        `Failed to connect to Sui ${this.config.network}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to connect to Sui ${this?.config?.network}: ${error instanceof Error ? error.message : String(error as any)}`,
         'NETWORK_CONNECTION_FAILED'
       );
     }
@@ -180,7 +180,7 @@ export class SuiTestnetSetup {
     logger.info('🔐 Creating/restoring wallet...');
 
     // Check if keystore already exists
-    if (fs.existsSync(this.config.keystorePath)) {
+    if (fs.existsSync(this?.config?.keystorePath)) {
       logger.info('Found existing keystore, attempting to restore...');
       return await this.restoreWalletFromKeystore();
     }
@@ -197,7 +197,7 @@ export class SuiTestnetSetup {
     let keypair: Ed25519Keypair | Secp256k1Keypair;
 
     // Generate keypair based on wallet type
-    if (this.config.walletType === 'ed25519') {
+    if (this.config?.walletType === 'ed25519') {
       keypair = new Ed25519Keypair();
     } else {
       keypair = new Secp256k1Keypair();
@@ -208,8 +208,8 @@ export class SuiTestnetSetup {
     const privateKey = toB64(keypair.export().privateKey);
 
     // Create keystore directory if it doesn't exist
-    const keystoreDir = path.dirname(this.config.keystorePath);
-    if (!fs.existsSync(keystoreDir)) {
+    const keystoreDir = path.dirname(this?.config?.keystorePath);
+    if (!fs.existsSync(keystoreDir as any)) {
       fs.mkdirSync(keystoreDir, { recursive: true });
     }
 
@@ -223,11 +223,11 @@ export class SuiTestnetSetup {
       ),
     ];
     fs.writeFileSync(
-      this.config.keystorePath,
+      this?.config?.keystorePath,
       JSON.stringify(keystoreData, null, 2)
     );
 
-    logger.info(`✅ Created new ${this.config.walletType} wallet`);
+    logger.info(`✅ Created new ${this?.config?.walletType} wallet`);
     logger.info(`📍 Address: ${address}`);
 
     return {
@@ -235,7 +235,7 @@ export class SuiTestnetSetup {
       publicKey,
       privateKey,
       keyScheme: keypair.getKeyScheme(),
-      networkUrl: NETWORK_URLS[this.config.network],
+      networkUrl: NETWORK_URLS[this?.config?.network],
       balance: '0',
     };
   }
@@ -246,25 +246,25 @@ export class SuiTestnetSetup {
   private async restoreWalletFromKeystore(): Promise<WalletInfo> {
     try {
       const keystoreData = JSON.parse(
-        fs.readFileSync(this.config.keystorePath, 'utf-8')
+        fs.readFileSync(this?.config?.keystorePath, 'utf-8')
       );
 
-      if (!Array.isArray(keystoreData) || keystoreData.length === 0) {
+      if (!Array.isArray(keystoreData as any) || keystoreData?.length === 0) {
         throw new Error('Invalid keystore format');
       }
 
       // Use the first key in the keystore
       const keyBase64 = keystoreData[0];
-      const keyBuffer = fromB64(keyBase64);
+      const keyBuffer = fromB64(keyBase64 as any);
 
       // Determine key type and create keypair
       const keyType = keyBuffer[0];
       let keypair: Ed25519Keypair | Secp256k1Keypair;
 
       if (keyType === 0) {
-        keypair = Ed25519Keypair.fromSecretKey(keyBuffer.slice(1));
+        keypair = Ed25519Keypair.fromSecretKey(keyBuffer.slice(1 as any));
       } else if (keyType === 1) {
-        keypair = Secp256k1Keypair.fromSecretKey(keyBuffer.slice(1));
+        keypair = Secp256k1Keypair.fromSecretKey(keyBuffer.slice(1 as any));
       } else {
         throw new Error(`Unknown key type: ${keyType}`);
       }
@@ -281,12 +281,12 @@ export class SuiTestnetSetup {
         publicKey,
         privateKey,
         keyScheme: keypair.getKeyScheme(),
-        networkUrl: NETWORK_URLS[this.config.network],
-        balance: await this.getBalance(address),
+        networkUrl: NETWORK_URLS[this?.config?.network],
+        balance: await this.getBalance(address as any),
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to restore wallet from keystore: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to restore wallet from keystore: ${error instanceof Error ? error.message : String(error as any)}`,
         'KEYSTORE_RESTORE_FAILED'
       );
     }
@@ -298,7 +298,7 @@ export class SuiTestnetSetup {
   private async fundWalletFromFaucet(address: string): Promise<string> {
     logger.info('💰 Requesting funds from testnet faucet...');
 
-    if (this.config.network !== 'testnet') {
+    if (this?.config?.network !== 'testnet') {
       throw new CLIError(
         'Faucet is only available on testnet',
         'INVALID_NETWORK_FOR_FAUCET'
@@ -314,7 +314,7 @@ export class SuiTestnetSetup {
           {
             FixedAmountRequest: {
               recipient: address,
-              amount: this.config.faucetAmount,
+              amount: this?.config?.faucetAmount,
             },
           },
           {
@@ -325,12 +325,12 @@ export class SuiTestnetSetup {
           }
         );
 
-        if (response.data.error) {
-          throw new Error(response.data.error);
+        if (response?.data?.error) {
+          throw new Error(response?.data?.error);
         }
 
         const txDigest =
-          response.data.transferredGasObjects?.[0]?.transferTxDigest;
+          response?.data?.transferredGasObjects?.[0]?.transferTxDigest;
         if (!txDigest) {
           throw new Error('No transaction digest received from faucet');
         }
@@ -338,7 +338,7 @@ export class SuiTestnetSetup {
         logger.info(`✅ Faucet request successful! Tx: ${txDigest}`);
         return txDigest;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error as any));
 
         if (attempt < RETRY_ATTEMPTS) {
           logger.warn(`Faucet request attempt ${attempt} failed, retrying...`);
@@ -359,18 +359,18 @@ export class SuiTestnetSetup {
   private async waitForFunding(address: string): Promise<void> {
     logger.info('⏳ Waiting for funding to be confirmed...');
 
-    const startBalance = await this.getBalance(address);
+    const startBalance = await this.getBalance(address as any);
     const startTime = Date.now();
     const maxWaitTime = 60000; // 60 seconds
 
     while (Date.now() - startTime < maxWaitTime) {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const currentBalance = await this.getBalance(address);
-      if (BigInt(currentBalance) > BigInt(startBalance)) {
+      const currentBalance = await this.getBalance(address as any);
+      if (BigInt(currentBalance as any) > BigInt(startBalance as any)) {
         logger.info('✅ Funding confirmed!');
         logger.info(
-          `💰 New balance: ${this.formatBalance(currentBalance)} SUI`
+          `💰 New balance: ${this.formatBalance(currentBalance as any)} SUI`
         );
         return;
       }
@@ -386,7 +386,7 @@ export class SuiTestnetSetup {
    */
   private async getBalance(address: string): Promise<string> {
     try {
-      const balance = await this.client.getBalance({
+      const balance = await this?.client?.getBalance({
         owner: address,
         coinType: '0x2::sui::SUI',
       });
@@ -402,9 +402,9 @@ export class SuiTestnetSetup {
    * Format balance from MIST to SUI
    */
   private formatBalance(balanceInMist: string): string {
-    const mist = BigInt(balanceInMist);
-    const sui = Number(mist) / 1_000_000_000;
-    return sui.toFixed(9);
+    const mist = BigInt(balanceInMist as any);
+    const sui = Number(mist as any) / 1_000_000_000;
+    return sui.toFixed(9 as any);
   }
 
   /**
@@ -415,39 +415,39 @@ export class SuiTestnetSetup {
 
     try {
       // Create backup directory
-      if (!fs.existsSync(this.config.backupPath)) {
-        fs.mkdirSync(this.config.backupPath, { recursive: true });
+      if (!fs.existsSync(this?.config?.backupPath)) {
+        fs.mkdirSync(this?.config?.backupPath, { recursive: true });
       }
 
       // Backup keystore
       const keystoreBackupPath = path.join(
-        this.config.backupPath,
+        this?.config?.backupPath,
         KEYSTORE_FILE
       );
-      fs.copyFileSync(this.config.keystorePath, keystoreBackupPath);
+      fs.copyFileSync(this?.config?.keystorePath, keystoreBackupPath);
 
       // Save wallet info
       const walletInfoPath = path.join(
-        this.config.backupPath,
+        this?.config?.backupPath,
         'wallet-info.json'
       );
       const walletInfoToSave = {
         ...wallet,
         privateKey: '[REDACTED]', // Don't save private key in plain text
         backupDate: new Date().toISOString(),
-        network: this.config.network,
+        network: this?.config?.network,
       };
       fs.writeFileSync(
         walletInfoPath,
         JSON.stringify(walletInfoToSave, null, 2)
       );
 
-      logger.info(`✅ Wallet backed up to: ${this.config.backupPath}`);
-      return this.config.backupPath;
+      logger.info(`✅ Wallet backed up to: ${this?.config?.backupPath}`);
+      return this?.config?.backupPath;
     } catch (error) {
       logger.error('Failed to backup wallet:', error);
       throw new CLIError(
-        `Failed to backup wallet: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to backup wallet: ${error instanceof Error ? error.message : String(error as any)}`,
         'WALLET_BACKUP_FAILED'
       );
     }
@@ -461,8 +461,8 @@ export class SuiTestnetSetup {
 
     try {
       // Create config directory if it doesn't exist
-      const configDir = path.dirname(this.config.configPath);
-      if (!fs.existsSync(configDir)) {
+      const configDir = path.dirname(this?.config?.configPath);
+      if (!fs.existsSync(configDir as any)) {
         fs.mkdirSync(configDir, { recursive: true });
       }
 
@@ -470,17 +470,17 @@ export class SuiTestnetSetup {
       const clientConfig = {
         envs: [
           {
-            alias: this.config.network,
+            alias: this?.config?.network,
             rpc: wallet.networkUrl,
             ws: null,
           },
         ],
-        active_env: this.config.network,
+        active_env: this?.config?.network,
         active_address: wallet.address,
       };
 
       fs.writeFileSync(
-        this.config.configPath,
+        this?.config?.configPath,
         JSON.stringify(clientConfig, null, 2)
       );
 
@@ -488,7 +488,7 @@ export class SuiTestnetSetup {
       const envPath = path.join(process.cwd(), '.env.testnet');
       const envContent = `
 # Sui Testnet Configuration
-NETWORK=${this.config.network}
+NETWORK=${this?.config?.network}
 WALLET_ADDRESS=${wallet.address}
 SUI_RPC_URL=${wallet.networkUrl}
 SUI_KEY_SCHEME=${wallet.keyScheme}
@@ -501,7 +501,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
       logger.info('✅ Configuration files saved successfully');
     } catch (error) {
       throw new CLIError(
-        `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to save configuration: ${error instanceof Error ? error.message : String(error as any)}`,
         'CONFIG_SAVE_FAILED'
       );
     }
@@ -521,7 +521,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
   static async restoreFromBackup(backupPath: string): Promise<WalletInfo> {
     const keystoreBackupPath = path.join(backupPath, KEYSTORE_FILE);
 
-    if (!fs.existsSync(keystoreBackupPath)) {
+    if (!fs.existsSync(keystoreBackupPath as any)) {
       throw new CLIError('Backup keystore not found', 'BACKUP_NOT_FOUND');
     }
 
@@ -532,9 +532,9 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
       'sui_config',
       KEYSTORE_FILE
     );
-    const defaultKeystoreDir = path.dirname(defaultKeystorePath);
+    const defaultKeystoreDir = path.dirname(defaultKeystorePath as any);
 
-    if (!fs.existsSync(defaultKeystoreDir)) {
+    if (!fs.existsSync(defaultKeystoreDir as any)) {
       fs.mkdirSync(defaultKeystoreDir, { recursive: true });
     }
 
@@ -591,7 +591,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
 export async function setupTestnet(
   config?: WalletSetupConfig
 ): Promise<TestnetSetupResult> {
-  const setup = new SuiTestnetSetup(config);
+  const setup = new SuiTestnetSetup(config as any);
   return await setup.setup();
 }
 
@@ -602,18 +602,18 @@ export async function quickSetup(): Promise<TestnetSetupResult> {
 export async function restoreFromBackup(
   backupPath: string
 ): Promise<WalletInfo> {
-  return await SuiTestnetSetup.restoreFromBackup(backupPath);
+  return await SuiTestnetSetup.restoreFromBackup(backupPath as any);
 }
 
 // Example usage
-if (require.main === module) {
+if (require?.main === module) {
   (async () => {
     try {
       logger.info('Running Sui testnet setup...');
       const result = await quickSetup();
       logger.info('\nSetup complete!');
-      logger.info('Wallet address:', result.wallet.address);
-      logger.info('Balance:', result.wallet.balance, 'MIST');
+      logger.info('Wallet address:', result?.wallet?.address);
+      logger.info('Balance:', result?.wallet?.balance, 'MIST');
       logger.info('Keystore:', result.keystorePath);
       logger.info('Config:', result.configPath);
       if (result.backupPath) {
@@ -621,7 +621,7 @@ if (require.main === module) {
       }
     } catch (error) {
       logger.error('Setup failed:', error);
-      process.exit(1);
+      process.exit(1 as any);
     }
   })();
 }

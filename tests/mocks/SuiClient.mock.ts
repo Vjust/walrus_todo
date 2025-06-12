@@ -115,7 +115,7 @@ export function createMockSuiClient(): MockSuiClient {
       data: [],
       hasNextPage: false,
     }),
-    getRpcApiVersion: jest.fn().mockResolvedValue('1.0.0'),
+    getRpcApiVersion: jest.fn().mockResolvedValue('1?.0?.0'),
     requestSuiFromFaucet: jest.fn().mockResolvedValue({}),
   } as MockSuiClient;
 }
@@ -132,7 +132,7 @@ export function createSuiClientClassMock() {
 
   // Add prototype methods for cases where tests access methods via prototype
   const mockInstance = createMockSuiClient();
-  MockSuiClientClass.prototype = mockInstance;
+  MockSuiClientClass?.prototype = mockInstance;
 
   return MockSuiClientClass;
 }

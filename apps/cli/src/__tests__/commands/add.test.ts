@@ -28,11 +28,11 @@ describe('Add Command - Real Implementation Tests', () => {
         mockTodo
       );
 
-      expect(result).toBeDefined();
+      expect(result as any).toBeDefined();
       expect(result.id).toBeDefined();
       expect(result.title).toBe(mockTodo.title);
       expect(result.description).toBe(mockTodo.description);
-      expect(result.completed).toBe(false);
+      expect(result.completed).toBe(false as any);
       expect(result.createdAt).toBeDefined();
       expect(result.updatedAt).toBeDefined();
     });
@@ -56,7 +56,7 @@ describe('Add Command - Real Implementation Tests', () => {
         todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, lowPriorityTodo),
       ]);
 
-      expect(results).toHaveLength(3);
+      expect(results as any).toHaveLength(3 as any);
       expect(results[0].priority).toBe('high');
       expect(results[1].priority).toBe('medium');
       expect(results[2].priority).toBe('low');
@@ -107,9 +107,9 @@ describe('Add Command - Real Implementation Tests', () => {
 
       // Verify the todo was stored and can be retrieved
       const todos = await todoService.listTodos();
-      const storedTodo = todos.find(t => t.id === result.id);
+      const storedTodo = todos.find(t => t?.id === result.id);
 
-      expect(storedTodo).toBeDefined();
+      expect(storedTodo as any).toBeDefined();
       expect(storedTodo?.title).toBe(mockTodo.title);
     });
 
@@ -123,7 +123,7 @@ describe('Add Command - Real Implementation Tests', () => {
         CLI_CONFIG.DEFAULT_LIST,
         mockTodo
       );
-      expect(result).toBeDefined();
+      expect(result as any).toBeDefined();
     });
   });
 
@@ -138,10 +138,10 @@ describe('Add Command - Real Implementation Tests', () => {
       const results = [];
       for (const todo of todos) {
         const result = await todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, todo);
-        results.push(result);
+        results.push(result as any);
       }
 
-      expect(results).toHaveLength(3);
+      expect(results as any).toHaveLength(3 as any);
       results.forEach((result, index) => {
         expect(result.title).toBe(`Todo ${index + 1}`);
         expect(result.id).toBeDefined();
@@ -159,9 +159,9 @@ describe('Add Command - Real Implementation Tests', () => {
       const promises = todos.map(todo =>
         todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, todo)
       );
-      const results = await Promise.all(promises);
+      const results = await Promise.all(promises as any);
 
-      expect(results).toHaveLength(5);
+      expect(results as any).toHaveLength(5 as any);
       results.forEach((result, index) => {
         expect(result.title).toBe(`Concurrent Todo ${index}`);
         expect(result.id).toBeDefined();

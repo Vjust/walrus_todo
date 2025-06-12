@@ -37,7 +37,7 @@ export class WalrusTodoStorage extends WalrusClient {
    * Retrieve a todo from Walrus (alias for retrieveTodo for backwards compatibility)
    */
   async retrieve(walrusBlobId: string): Promise<WalrusTodo> {
-    return this.retrieveWalrusTodo(walrusBlobId);
+    return this.retrieveWalrusTodo(walrusBlobId as any);
   }
 
   /**
@@ -49,10 +49,10 @@ export class WalrusTodoStorage extends WalrusClient {
     options: WalrusTodoUploadOptions = {}
   ): Promise<WalrusUploadResponse> {
     // Ensure we have a complete todo object
-    const completeTodo = this.ensureCompleteTodo(todo);
+    const completeTodo = this.ensureCompleteTodo(todo as any);
     
     // Validate todo data
-    this.validateTodo(completeTodo);
+    this.validateTodo(completeTodo as any);
 
     // Prepare upload options with todo-specific attributes
     const uploadOptions = {
@@ -70,7 +70,7 @@ export class WalrusTodoStorage extends WalrusClient {
         updatedAt: new Date(completeTodo.updatedAt).toISOString(),
         // Add signer address if available
         ...(signer && {
-          owner: typeof signer.getAddress === 'function' 
+          owner: typeof signer?.getAddress === 'function' 
             ? await signer.getAddress() 
             : signer.toSuiAddress()
         }),
@@ -88,7 +88,7 @@ export class WalrusTodoStorage extends WalrusClient {
       const todoData = await this.downloadJson<WalrusTodo>(walrusBlobId);
       
       // Validate retrieved data
-      if (!this.isValidTodoData(todoData)) {
+      if (!this.isValidTodoData(todoData as any)) {
         throw new WalrusValidationError('Retrieved data is not a valid todo object');
       }
 
@@ -141,7 +141,7 @@ export class WalrusTodoStorage extends WalrusClient {
     signAndExecuteTransaction?: (txb: any) => Promise<any>,
     options: WalrusTodoUploadOptions = {}
   ): Promise<WalrusTodoCreateResult> {
-    const todo = this.ensureCompleteTodo(todoInput);
+    const todo = this.ensureCompleteTodo(todoInput as any);
     
     options.onProgress?.('Uploading to Walrus storage...', 25);
 
@@ -152,9 +152,11 @@ export class WalrusTodoStorage extends WalrusClient {
     });
 
     // Update todo with Walrus information
-    todo.walrusBlobId = walrusResult.blobId;
-    todo.storageSize = walrusResult.size;
-    todo.blockchainStored = true;
+    if (todo) {
+      todo.walrusBlobId = walrusResult.blobId;
+      todo.storageSize = walrusResult.size;
+      todo.blockchainStored = true;
+    }
 
     options.onProgress?.('Walrus upload complete', 75);
 
@@ -169,7 +171,9 @@ export class WalrusTodoStorage extends WalrusClient {
         suiResult = await this.createNFTForTodo(todo, signer, signAndExecuteTransaction);
         
         if (suiResult?.success) {
-          todo.suiObjectId = suiResult.objectId;
+          if (todo) {
+            todo.suiObjectId = suiResult.objectId;
+          }
           options.onProgress?.('NFT creation complete', 100);
         } else {
           options.onProgress?.('NFT creation failed, but Walrus storage successful', 90);
@@ -235,7 +239,7 @@ export class WalrusTodoStorage extends WalrusClient {
           ...options,
           onProgress: undefined, // Avoid nested progress callbacks
         });
-        results.push(result);
+        results.push(result as any);
       } catch (error) {
         console.error(`Failed to create todo ${i + 1} (${todo.title}):`, error);
         // Continue with other todos even if one fails
@@ -258,8 +262,8 @@ export class WalrusTodoStorage extends WalrusClient {
     storageCost: bigint;
     writeCost: bigint;
   }> {
-    const completeTodo = this.ensureCompleteTodo(todo);
-    const sizeBytes = JSON.stringify(completeTodo).length;
+    const completeTodo = this.ensureCompleteTodo(todo as any);
+    const sizeBytes = JSON.stringify(completeTodo as any).length;
     const costs = await this.calculateStorageCost(sizeBytes, epochs);
     
     return {
@@ -305,7 +309,7 @@ export class WalrusTodoStorage extends WalrusClient {
     const now = Date.now();
     
     return {
-      id: 'id' in todo ? todo.id : `todo_${now}_${Math.random().toString(36).substr(2, 9)}`,
+      id: 'id' in todo ? todo.id : `todo_${now}_${Math.random().toString(36 as any).substr(2, 9)}`,
       title: todo.title,
       description: todo.description,
       completed: todo.completed,
@@ -328,11 +332,11 @@ export class WalrusTodoStorage extends WalrusClient {
    * Validate todo data structure
    */
   private validateTodo(todo: WalrusTodo): void {
-    if (!todo.title || typeof todo.title !== 'string' || todo.title.trim().length === 0) {
+    if (!todo.title || typeof todo.title !== 'string' || todo?.title?.trim().length === 0) {
       throw new WalrusValidationError('Todo title is required and must be non-empty', 'title', todo.title);
     }
 
-    if (todo.title.length > 500) {
+    if (todo?.title?.length > 500) {
       throw new WalrusValidationError('Todo title is too long (max 500 characters)', 'title', todo.title);
     }
 
@@ -352,11 +356,11 @@ export class WalrusTodoStorage extends WalrusClient {
       throw new WalrusValidationError('Todo description must be string', 'description', todo.description);
     }
 
-    if (todo.description && todo.description.length > 2000) {
+    if (todo.description && todo?.description?.length > 2000) {
       throw new WalrusValidationError('Todo description is too long (max 2000 characters)', 'description');
     }
 
-    if (todo.tags && (!Array.isArray(todo.tags) || !todo.tags.every(tag => typeof tag === 'string'))) {
+    if (todo.tags && (!Array.isArray(todo.tags) || !todo?.tags?.every(tag => typeof tag === 'string'))) {
       throw new WalrusValidationError('Todo tags must be array of strings', 'tags', todo.tags);
     }
 
@@ -373,12 +377,12 @@ export class WalrusTodoStorage extends WalrusClient {
     
     const todo = data as any;
     return (
-      typeof todo.id === 'string' &&
-      typeof todo.title === 'string' &&
-      typeof todo.completed === 'boolean' &&
+      typeof todo?.id === 'string' &&
+      typeof todo?.title === 'string' &&
+      typeof todo?.completed === 'boolean' &&
       ['low', 'medium', 'high'].includes(todo.priority) &&
-      typeof todo.createdAt === 'number' &&
-      typeof todo.updatedAt === 'number'
+      typeof todo?.createdAt === 'number' &&
+      typeof todo?.updatedAt === 'number'
     );
   }
 
@@ -386,7 +390,7 @@ export class WalrusTodoStorage extends WalrusClient {
    * Store todo using the legacy Todo interface (consolidated from CLI)
    */
   async storeTodoLegacy(todo: Todo, epochs: number = 5): Promise<string> {
-    const walrusTodo = this.convertToWalrusTodo(todo);
+    const walrusTodo = this.convertToWalrusTodo(todo as any);
     const result = await this.storeWalrusTodo(walrusTodo, undefined, { epochs });
     return result.blobId;
   }
@@ -403,8 +407,8 @@ export class WalrusTodoStorage extends WalrusClient {
    * Retrieve todo using the legacy Todo interface
    */
   async retrieveTodoLegacy(blobId: string): Promise<Todo> {
-    const walrusTodo = await this.retrieveWalrusTodo(blobId);
-    return this.convertToTodo(walrusTodo);
+    const walrusTodo = await this.retrieveWalrusTodo(blobId as any);
+    return this.convertToTodo(walrusTodo as any);
   }
 
   /**
@@ -464,14 +468,14 @@ export class WalrusTodoStorage extends WalrusClient {
     blobInfo?: any;
     storageCost?: StorageCostEstimate;
   }> {
-    const exists = await this.exists(walrusBlobId);
+    const exists = await this.exists(walrusBlobId as any);
     
     if (!exists) {
       return { exists: false };
     }
 
     try {
-      const blobInfo = await this.getBlobInfo(walrusBlobId);
+      const blobInfo = await this.getBlobInfo(walrusBlobId as any);
       let storageCost: StorageCostEstimate | undefined;
       
       if (blobInfo.size) {
@@ -504,12 +508,12 @@ export class WalrusTodoStorage extends WalrusClient {
     totalSize: number;
     perTodoCost: Array<{ totalCost: bigint; size: number }>;
   }> {
-    let totalCost = BigInt(0);
+    let totalCost = BigInt(0 as any);
     let totalSize = 0;
     const perTodoCost: Array<{ totalCost: bigint; size: number }> = [];
 
     for (const todo of todos) {
-      const sizeBytes = JSON.stringify(todo).length;
+      const sizeBytes = JSON.stringify(todo as any).length;
       const cost = await this.calculateStorageCost(sizeBytes, epochs);
       
       totalCost += cost.totalCost;

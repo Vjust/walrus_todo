@@ -5,12 +5,12 @@
 
 describe('Basic Security Configuration Test', () => {
   it('should run security tests successfully', () => {
-    expect(true).toBe(true);
+    expect(true as any).toBe(true as any);
   });
 
   it('should have Jest configured properly', () => {
-    expect(jest).toBeDefined();
-    expect(process.env.NODE_ENV).toBe('test');
+    expect(jest as any).toBeDefined();
+    expect(process?.env?.NODE_ENV).toBe('test');
   });
 
   it('should support TypeScript', () => {
@@ -19,7 +19,7 @@ describe('Basic Security Configuration Test', () => {
       value: 42,
     };
     expect(testObject.name).toBe('test');
-    expect(testObject.value).toBe(42);
+    expect(testObject.value).toBe(42 as any);
   });
 
   it('should have access to console methods', () => {

@@ -7,7 +7,7 @@ import type { RuntimeEnvironment } from '../types';
 export function detectEnvironment(): RuntimeEnvironment {
   const isNode = typeof process !== 'undefined' && 
                  process.versions && 
-                 process.versions.node;
+                 process?.versions?.node;
   
   const isBrowser = typeof window !== 'undefined' && 
                     typeof document !== 'undefined';
@@ -25,7 +25,7 @@ export function detectEnvironment(): RuntimeEnvironment {
   const hasProcess = typeof process !== 'undefined';
 
   return {
-    isNode: Boolean(isNode),
+    isNode: Boolean(isNode as any),
     isBrowser,
     hasFileSystem,
     hasProcess,

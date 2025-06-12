@@ -182,16 +182,16 @@ function createMaliciousInput(type: string): Todo[] {
         storageLocation: 'local' as const,
       };
       // @ts-expect-error - intentional for testing
-      maliciousTodo.__proto__ = { polluted: true };
+      maliciousTodo?.__proto__ = { polluted: true };
       return [maliciousTodo];
     }
     case 'large':
-      return Array(100)
-        .fill(null)
+      return Array(100 as any)
+        .fill(null as any)
         .map((_, i) => ({
           id: `todo-large-${i}`,
           title: `Todo ${i}`,
-          description: 'X'.repeat(2000), // 2KB per todo
+          description: 'X'.repeat(2000 as any), // 2KB per todo
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -311,7 +311,7 @@ describe('Input Validation Security Tests', () => {
 
     // Default permission manager
     (initializePermissionManager as jest.Mock).mockReturnValue({
-      checkPermission: jest.fn().mockReturnValue(true),
+      checkPermission: jest.fn().mockReturnValue(true as any),
       verifyOperationPermission: jest.fn(),
     });
   });
@@ -333,12 +333,12 @@ describe('Input Validation Security Tests', () => {
                 const todoStr = context.todos;
 
                 // Should not contain raw script tags
-                expect(todoStr).not.toContain('<script>');
-                expect(todoStr).not.toContain('javascript:');
+                expect(todoStr as any).not.toContain('<script>');
+                expect(todoStr as any).not.toContain('javascript:');
 
                 // Should escape HTML entities
-                expect(todoStr).not.toContain('<img');
-                expect(todoStr).not.toContain('onerror=');
+                expect(todoStr as any).not.toContain('<img');
+                expect(todoStr as any).not.toContain('onerror=');
 
                 return {
                   result: 'Test result',
@@ -358,7 +358,7 @@ describe('Input Validation Security Tests', () => {
       const maliciousTodos = createMaliciousInput('xss');
 
       // Should sanitize the content before sending to API
-      await expect(aiService.summarize(maliciousTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(maliciousTodos as any)).resolves?.not?.toThrow();
     });
 
     it('should sanitize XSS in blockchain verification input', async () => {
@@ -424,11 +424,11 @@ describe('Input Validation Security Tests', () => {
       const aiService = new AIService('test-api-key');
 
       // Process should not throw
-      const result = await aiService.summarize(sampleTodos);
+      const result = await aiService.summarize(sampleTodos as any);
 
       // Result should be sanitized
-      expect(result).not.toContain('<script>');
-      expect(result).toContain('Test result');
+      expect(result as any).not.toContain('<script>');
+      expect(result as any).toContain('Test result');
     });
   });
 
@@ -449,10 +449,10 @@ describe('Input Validation Security Tests', () => {
                 const todoStr = context.todos;
 
                 // Should not contain SQL injection patterns
-                expect(todoStr).not.toContain('DROP TABLE');
-                expect(todoStr).not.toContain('DELETE FROM');
-                expect(todoStr).not.toContain('UPDATE users SET');
-                expect(todoStr).not.toContain('OR 1=1');
+                expect(todoStr as any).not.toContain('DROP TABLE');
+                expect(todoStr as any).not.toContain('DELETE FROM');
+                expect(todoStr as any).not.toContain('UPDATE users SET');
+                expect(todoStr as any).not.toContain('OR 1=1');
 
                 return {
                   result: 'Test result',
@@ -472,7 +472,7 @@ describe('Input Validation Security Tests', () => {
       const maliciousTodos = createMaliciousInput('sql');
 
       // Should sanitize the content before sending to API
-      await expect(aiService.summarize(maliciousTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(maliciousTodos as any)).resolves?.not?.toThrow();
     });
   });
 
@@ -493,9 +493,9 @@ describe('Input Validation Security Tests', () => {
                 const todoStr = context.todos;
 
                 // Should not contain unescaped command injection characters
-                expect(todoStr).not.toContain('$(rm');
-                expect(todoStr).not.toContain('`rm -rf');
-                expect(todoStr).toContain('Description with ');
+                expect(todoStr as any).not.toContain('$(rm');
+                expect(todoStr as any).not.toContain('`rm -rf');
+                expect(todoStr as any).toContain('Description with ');
 
                 return {
                   result: 'Test result',
@@ -515,7 +515,7 @@ describe('Input Validation Security Tests', () => {
       const injectionTodo = createMaliciousInput('command');
 
       // Should sanitize the content before sending to API
-      await expect(aiService.summarize(injectionTodo)).resolves.not.toThrow();
+      await expect(aiService.summarize(injectionTodo as any)).resolves?.not?.toThrow();
     });
   });
 
@@ -528,7 +528,7 @@ describe('Input Validation Security Tests', () => {
       const maliciousTodos = createMaliciousInput('prototype');
 
       // Should not pollute the prototype
-      await aiService.summarize(maliciousTodos);
+      await aiService.summarize(maliciousTodos as any);
 
       // Verify prototype isn't polluted
       expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -568,7 +568,7 @@ describe('Input Validation Security Tests', () => {
       const aiService = new AIService('test-api-key');
 
       // Should sanitize the response
-      const result = await aiService.categorize(sampleTodos);
+      const result = await aiService.categorize(sampleTodos as any);
 
       // Should have sanitized/removed the malicious properties
       expect(result.__proto__).toBeUndefined();
@@ -620,7 +620,7 @@ describe('Input Validation Security Tests', () => {
       const largeTodos = createMaliciousInput('large');
 
       // Should reject due to size limit
-      await expect(aiService.summarize(largeTodos)).rejects.toThrow(
+      await expect(aiService.summarize(largeTodos as any)).rejects.toThrow(
         'Input size exceeds maximum'
       );
     });
@@ -696,7 +696,7 @@ describe('Input Validation Security Tests', () => {
       const injectionTodos = createMaliciousInput('prompt_injection');
 
       // Should detect prompt injection attempts
-      await expect(aiService.summarize(injectionTodos)).rejects.toThrow(
+      await expect(aiService.summarize(injectionTodos as any)).rejects.toThrow(
         'Potential prompt injection detected'
       );
     });
@@ -771,18 +771,18 @@ describe('Input Validation Security Tests', () => {
               .fn()
               .mockImplementation(async (template, context) => {
                 // Check for URLs in the context that could be SSRF attempts
-                const contextString = JSON.stringify(context);
+                const contextString = JSON.stringify(context as any);
                 const ssrfPatterns = [
                   'file://',
                   'http://localhost',
-                  'http://127.0.0.1',
+                  'http://127?.0?.0.1',
                   'http://[::1]',
                   'http://internal',
                   'gopher://',
                 ];
 
                 if (
-                  ssrfPatterns.some(pattern => contextString.includes(pattern))
+                  ssrfPatterns.some(pattern => contextString.includes(pattern as any))
                 ) {
                   throw new Error('Potential SSRF attempt detected');
                 }
@@ -802,12 +802,12 @@ describe('Input Validation Security Tests', () => {
       const aiService = new AIService('test-api-key');
 
       // Regular usage should work
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // SSRF attempt in todo content should be detected
       const ssrfTodos = createMaliciousInput('ssrf');
 
-      await expect(aiService.summarize(ssrfTodos)).rejects.toThrow(
+      await expect(aiService.summarize(ssrfTodos as any)).rejects.toThrow(
         'Potential SSRF attempt'
       );
     });
@@ -827,7 +827,7 @@ describe('Input Validation Security Tests', () => {
               .fn()
               .mockImplementation(async (template, context) => {
                 // Check for headers in content that could be smuggled
-                const contextString = JSON.stringify(context);
+                const contextString = JSON.stringify(context as any);
                 const smugglingPatterns = [
                   'Content-Length:',
                   'Transfer-Encoding:',
@@ -836,7 +836,7 @@ describe('Input Validation Security Tests', () => {
 
                 if (
                   smugglingPatterns.some(pattern =>
-                    contextString.includes(pattern)
+                    contextString.includes(pattern as any)
                   )
                 ) {
                   throw new Error(
@@ -859,12 +859,12 @@ describe('Input Validation Security Tests', () => {
       const aiService = new AIService('test-api-key');
 
       // Regular usage should work
-      await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
+      await expect(aiService.summarize(sampleTodos as any)).resolves?.not?.toThrow();
 
       // Request smuggling attempt in todo content should be detected
       const smugglingTodos = createMaliciousInput('request_smuggling');
 
-      await expect(aiService.summarize(smugglingTodos)).rejects.toThrow(
+      await expect(aiService.summarize(smugglingTodos as any)).rejects.toThrow(
         'request smuggling'
       );
     });
@@ -882,9 +882,9 @@ describe('Input Validation Security Tests', () => {
 
           // Check for excessive input size
           const MAX_REQUEST_SIZE = 100 * 1024; // 100KB
-          if (params.request.length > MAX_REQUEST_SIZE) {
+          if (params?.request?.length > MAX_REQUEST_SIZE) {
             throw new Error(
-              `Request size (${params.request.length} bytes) exceeds maximum allowed (${MAX_REQUEST_SIZE} bytes)`
+              `Request size (${params?.request?.length} bytes) exceeds maximum allowed (${MAX_REQUEST_SIZE} bytes)`
             );
           }
 
@@ -971,9 +971,9 @@ describe('Input Validation Security Tests', () => {
       expect(({} as Record<string, unknown>).injected).toBeUndefined();
 
       // Verify options were sanitized
-      expect(mockAIService['options'].temperature).toBe(0.7);
-      expect(mockAIService['options'].maxTokens).toBe(2000);
-      expect(Object.keys(mockAIService['options']).length).toBeLessThanOrEqual(
+      expect(mockAIService?.["options"].temperature).toBe(0.7);
+      expect(mockAIService?.["options"].maxTokens).toBe(2000 as any);
+      expect(Object.keys(mockAIService?.["options"]).length).toBeLessThanOrEqual(
         3
       );
     });
@@ -1016,13 +1016,13 @@ describe('Input Validation Security Tests', () => {
           }
           if (
             typeof params.request !== 'string' ||
-            params.request.length === 0
+            params.request?.length === 0
           ) {
             throw new Error('Invalid request parameter');
           }
           if (
             typeof params.response !== 'string' ||
-            params.response.length === 0
+            params.response?.length === 0
           ) {
             throw new Error('Invalid response parameter');
           }

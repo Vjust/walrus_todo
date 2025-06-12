@@ -68,7 +68,7 @@ export class ErrorSimulator {
   > = new Map();
 
   constructor(config: ErrorSimulationConfig) {
-    this.config = {
+    this?.config = {
       probability: 1.0,
       shouldRetry: false,
       recoveryProbability: 0.0,
@@ -80,14 +80,14 @@ export class ErrorSimulator {
    * Update simulator configuration
    */
   updateConfig(config: Partial<ErrorSimulationConfig>): void {
-    this.config = {
+    this?.config = {
       ...this.config,
       ...config,
     };
 
     // If disabled, restore original methods
     if (
-      Object.prototype.hasOwnProperty.call(config, 'enabled') &&
+      Object?.prototype?.hasOwnProperty.call(config, 'enabled') &&
       !config.enabled
     ) {
       this.restoreAllMethods();
@@ -98,19 +98,19 @@ export class ErrorSimulator {
    * Create error based on configured type
    */
   createError(): Error {
-    if (this.config.errorFactory) {
-      return this.config.errorFactory();
+    if (this?.config?.errorFactory) {
+      return this?.config?.errorFactory();
     }
 
     const message =
-      this.config.errorMessage || `Simulated ${this.config.errorType} error`;
+      this?.config?.errorMessage || `Simulated ${this?.config?.errorType} error`;
 
-    switch (this.config.errorType) {
+    switch (this?.config?.errorType) {
       case ErrorType.NETWORK:
         return new NetworkError(message, {
           network: 'test',
           operation: 'connect',
-          recoverable: !!this.config.shouldRetry,
+          recoverable: !!this?.config?.shouldRetry,
           cause: new Error('Simulated underlying network error'),
         });
 
@@ -126,30 +126,30 @@ export class ErrorSimulator {
 
       case ErrorType.VALIDATION:
         return new ValidationError(message, {
-          field: this.config.additionalContext?.field,
-          constraint: this.config.additionalContext?.constraint,
-          recoverable: !!this.config.shouldRetry,
+          field: this?.config?.additionalContext?.field,
+          constraint: this?.config?.additionalContext?.constraint,
+          recoverable: !!this?.config?.shouldRetry,
         });
 
       case ErrorType.STORAGE:
         return new StorageError(message, {
-          operation: this.config.additionalContext?.operation || 'write',
-          blobId: this.config.additionalContext?.blobId,
-          recoverable: !!this.config.shouldRetry,
+          operation: this?.config?.additionalContext?.operation || 'write',
+          blobId: this?.config?.additionalContext?.blobId,
+          recoverable: !!this?.config?.shouldRetry,
         });
 
       case ErrorType.BLOCKCHAIN:
         return new BlockchainError(message, {
-          operation: this.config.additionalContext?.operation || 'execute',
-          transactionId: this.config.additionalContext?.transactionId,
-          recoverable: !!this.config.shouldRetry,
+          operation: this?.config?.additionalContext?.operation || 'execute',
+          transactionId: this?.config?.additionalContext?.transactionId,
+          recoverable: !!this?.config?.shouldRetry,
         });
 
       case ErrorType.TRANSACTION:
         return new TransactionError(message, {
-          operation: this.config.additionalContext?.operation || 'submit',
-          transactionId: this.config.additionalContext?.transactionId,
-          recoverable: !!this.config.shouldRetry,
+          operation: this?.config?.additionalContext?.operation || 'submit',
+          transactionId: this?.config?.additionalContext?.transactionId,
+          recoverable: !!this?.config?.shouldRetry,
         });
 
       case ErrorType.RATE_LIMIT: {
@@ -205,7 +205,7 @@ export class ErrorSimulator {
       }
 
       default:
-        return new Error(message);
+        return new Error(message as any);
     }
   }
 
@@ -213,24 +213,24 @@ export class ErrorSimulator {
    * Determine if an error should be triggered based on configuration
    */
   private shouldTriggerError(operationName?: string): boolean {
-    if (!this.config.enabled) return false;
+    if (!this?.config?.enabled) return false;
 
     // Check operation targeting
-    if (this.config.operationTargets && operationName) {
-      if (!this.config.operationTargets.includes(operationName)) {
+    if (this?.config?.operationTargets && operationName) {
+      if (!this?.config?.operationTargets.includes(operationName as any)) {
         return false;
       }
     }
 
     // Check probability
-    return Math.random() < (this.config.probability || 1.0);
+    return Math.random() < (this?.config?.probability || 1.0);
   }
 
   /**
    * Determine if error should recover
    */
   private shouldRecover(): boolean {
-    return Math.random() < (this.config.recoveryProbability || 0.0);
+    return Math.random() < (this?.config?.recoveryProbability || 0.0);
   }
 
   /**
@@ -245,7 +245,7 @@ export class ErrorSimulator {
     const methodKey = `${object.constructor?.name || 'unknown'}.${methodName}`;
 
     // Save original method for restoration
-    this.simulatedMethods.set(methodKey, {
+    this?.simulatedMethods?.set(methodKey, {
       object,
       methodName,
       originalMethod,
@@ -253,16 +253,16 @@ export class ErrorSimulator {
 
     // Replace method with error-injecting version using arrow function
     object[methodName] = async (...args: unknown[]) => {
-      if (this.shouldTriggerError(operationName)) {
-        if (this.config.delay) {
-          await new Promise(resolve => setTimeout(resolve, this.config.delay));
+      if (this.shouldTriggerError(operationName as any)) {
+        if (this?.config?.delay) {
+          await new Promise(resolve => setTimeout(resolve, this?.config?.delay));
         }
 
         if (this.shouldRecover()) {
           // Delay then proceed with original method
-          if (this.config.recoveryDelay) {
+          if (this?.config?.recoveryDelay) {
             await new Promise(resolve =>
-              setTimeout(resolve, this.config.recoveryDelay)
+              setTimeout(resolve, this?.config?.recoveryDelay)
             );
           }
           return originalMethod.call(object, ...args);
@@ -299,11 +299,11 @@ export class ErrorSimulator {
    */
   restoreMethod(object: Record<string, unknown>, methodName: string): void {
     const methodKey = `${object.constructor?.name || 'unknown'}.${methodName}`;
-    const savedMethod = this.simulatedMethods.get(methodKey);
+    const savedMethod = this?.simulatedMethods?.get(methodKey as any);
 
     if (savedMethod) {
       object[methodName] = savedMethod.originalMethod;
-      this.simulatedMethods.delete(methodKey);
+      this?.simulatedMethods?.delete(methodKey as any);
     }
   }
 
@@ -311,10 +311,10 @@ export class ErrorSimulator {
    * Restore all overridden methods
    */
   restoreAllMethods(): void {
-    for (const [, method] of this.simulatedMethods.entries()) {
-      method.object[method.methodName] = method.originalMethod;
+    for (const [, method] of this?.simulatedMethods?.entries()) {
+      method?.object?.[method.methodName] = method.originalMethod;
     }
-    this.simulatedMethods.clear();
+    this?.simulatedMethods?.clear();
   }
 }
 

@@ -11,14 +11,14 @@ interface TransactionHistoryProps {
 export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
   const walletContext = useWalletContext();
   const transactionHistory = walletContext?.transactionHistory || [];
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false as any);
 
   // Get transactions to display based on expanded state and maxItems
   const displayTransactions = expanded
     ? transactionHistory
     : transactionHistory.slice(0, maxItems);
 
-  if (transactionHistory.length === 0) {
+  if (transactionHistory?.length === 0) {
     return (
       <div className='p-4 ocean-card'>
         <p className='text-ocean-medium dark:text-ocean-light text-sm'>
@@ -30,11 +30,11 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
 
   // Format relative time using Intl.RelativeTimeFormat
   const formatRelativeTime = (timestamp: string) => {
-    const timestampMs = new Date(timestamp).getTime();
+    const timestampMs = new Date(timestamp as any).getTime();
     
     if (typeof Intl === 'undefined' || !Intl.RelativeTimeFormat) {
       // Fallback for environments without Intl.RelativeTimeFormat
-      return formatRelativeTimeFallback(timestampMs);
+      return formatRelativeTimeFallback(timestampMs as any);
     }
 
     const now = Date.now();
@@ -142,7 +142,7 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
               {tx.type}
               {tx.details?.digest && (
                 <span className='ml-2 text-xs text-ocean-medium dark:text-ocean-light truncate'>
-                  {tx.details.digest.slice(0, 8)}...{tx.details.digest.slice(-6)}
+                  {tx?.details?.digest.slice(0, 8)}...{tx?.details?.digest.slice(-6)}
                 </span>
               )}
             </p>
@@ -150,8 +150,8 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
               {formatRelativeTime(tx.timestamp)}
             </p>
           </div>
-          {tx.status === 'failed' && tx.details?.error && (
-            <p className='text-xs text-red-500 mt-1 truncate'>{tx.details.error}</p>
+          {tx?.status === 'failed' && tx.details?.error && (
+            <p className='text-xs text-red-500 mt-1 truncate'>{tx?.details?.error}</p>
           )}
         </div>
       </div>
@@ -174,7 +174,7 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
         )}
       </div>
       <div className='px-4 py-2 divide-y divide-ocean-light/10'>
-        {displayTransactions.map(renderTransaction)}
+        {displayTransactions.map(renderTransaction as any)}
       </div>
     </div>
   );

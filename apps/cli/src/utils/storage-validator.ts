@@ -10,7 +10,7 @@ export class StorageValidator {
   private walrusStorage: WalrusStorage;
 
   constructor(walrusStorage: WalrusStorage) {
-    this.walrusStorage = walrusStorage;
+    this?.walrusStorage = walrusStorage;
   }
 
   /**
@@ -29,8 +29,8 @@ export class StorageValidator {
 
     // Validate storage-specific requirements
     if (
-      (todo.storageLocation === 'blockchain' ||
-        todo.storageLocation === 'both') &&
+      (todo?.storageLocation === 'blockchain' ||
+        todo?.storageLocation === 'both') &&
       !todo.walrusBlobId
     ) {
       errors.push('Blockchain storage requires a Walrus blob ID');
@@ -39,14 +39,14 @@ export class StorageValidator {
     // Validate checksum if present
     const todoWithChecksum = todo as Todo & { checksum?: string };
     if (todoWithChecksum.checksum) {
-      const calculatedChecksum = this.calculateChecksum(todo);
+      const calculatedChecksum = this.calculateChecksum(todo as any);
       if (todoWithChecksum.checksum !== calculatedChecksum) {
         errors.push('Todo checksum mismatch - data may be corrupted');
       }
     }
 
     return {
-      valid: errors.length === 0,
+      valid: errors?.length === 0,
       errors,
     };
   }
@@ -66,8 +66,8 @@ export class StorageValidator {
       createdAt: todo.createdAt,
     };
 
-    const dataString = JSON.stringify(todoData, Object.keys(todoData).sort());
-    return crypto.createHash('sha256').update(dataString).digest('hex');
+    const dataString = JSON.stringify(todoData, Object.keys(todoData as any).sort());
+    return crypto.createHash('sha256').update(dataString as any).digest('hex');
   }
 
   /**
@@ -81,7 +81,7 @@ export class StorageValidator {
     const errors: string[] = [];
 
     // Check for same storage location
-    if (todo.storageLocation === newStorage) {
+    if (todo?.storageLocation === newStorage) {
       warnings.push(`Todo is already stored in ${newStorage}`);
       return { valid: true, warnings, errors };
     }
@@ -95,13 +95,13 @@ export class StorageValidator {
           // Check if storage has connect method and call it
           if (
             'connect' in this.walrusStorage &&
-            typeof this.walrusStorage.connect === 'function'
+            typeof this.walrusStorage?.connect === 'function'
           ) {
-            await this.walrusStorage.connect();
+            await this?.walrusStorage?.connect();
           }
         } catch (error) {
           errors.push(
-            `Cannot connect to blockchain: ${error instanceof Error ? error.message : String(error)}`
+            `Cannot connect to blockchain: ${error instanceof Error ? error.message : String(error as any)}`
           );
         }
         break;
@@ -131,7 +131,7 @@ export class StorageValidator {
     }
 
     return {
-      valid: errors.length === 0,
+      valid: errors?.length === 0,
       warnings,
       errors,
     };
@@ -152,8 +152,8 @@ export class StorageValidator {
         case 'blockchain':
         case 'both': {
           // Check blockchain connectivity and funds
-          await this.walrusStorage.connect();
-          const balance = await this.walrusStorage.checkBalance();
+          await this?.walrusStorage?.connect();
+          const balance = await this?.walrusStorage?.checkBalance();
 
           if (balance < 0.001) {
             // Minimum required balance
@@ -197,7 +197,7 @@ export class StorageValidator {
     let totalCost = 0;
 
     for (const todo of todos) {
-      const integrityCheck = await this.validateTodoIntegrity(todo);
+      const integrityCheck = await this.validateTodoIntegrity(todo as any);
 
       if (!integrityCheck.valid) {
         invalidTodos.push({ todo, errors: integrityCheck.errors });
@@ -214,16 +214,16 @@ export class StorageValidator {
         continue;
       }
 
-      validTodos.push(todo);
+      validTodos.push(todo as any);
 
       // Estimate storage cost
       if (newStorage === 'blockchain' || newStorage === 'both') {
-        totalCost += await this.estimateStorageCost(todo);
+        totalCost += await this.estimateStorageCost(todo as any);
       }
     }
 
     return {
-      valid: invalidTodos.length === 0,
+      valid: invalidTodos?.length === 0,
       validTodos,
       invalidTodos,
       totalCost: totalCost > 0 ? totalCost : undefined,
@@ -235,8 +235,8 @@ export class StorageValidator {
    */
   private async estimateStorageCost(todo: Todo): Promise<number> {
     // Simple size calculation
-    const todoJson = JSON.stringify(todo);
-    const sizeInBytes = Buffer.byteLength(todoJson);
+    const todoJson = JSON.stringify(todo as any);
+    const sizeInBytes = Buffer.byteLength(todoJson as any);
 
     // Rough estimate: $0.01 per KB
     return (sizeInBytes / 1024) * 0.01;
@@ -256,8 +256,8 @@ export class StorageValidator {
     }
 
     try {
-      await this.walrusStorage.connect();
-      const blockchainTodo = await this.walrusStorage.retrieveTodo(
+      await this?.walrusStorage?.connect();
+      const blockchainTodo = await this?.walrusStorage?.retrieveTodo(
         todo.walrusBlobId
       );
 
@@ -266,8 +266,8 @@ export class StorageValidator {
 
       if (localTime === blockchainTime) {
         // Check checksums to ensure data is identical
-        const localChecksum = this.calculateChecksum(todo);
-        const blockchainChecksum = this.calculateChecksum(blockchainTodo);
+        const localChecksum = this.calculateChecksum(todo as any);
+        const blockchainChecksum = this.calculateChecksum(blockchainTodo as any);
 
         return {
           synced: localChecksum === blockchainChecksum,

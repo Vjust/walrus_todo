@@ -95,7 +95,7 @@ export class PermissionService {
   private logger: Logger;
 
   private constructor() {
-    this.logger = Logger.getInstance();
+    this?.logger = Logger.getInstance();
     this.initializeRoles();
   }
 
@@ -104,7 +104,7 @@ export class PermissionService {
    */
   public static getInstance(): PermissionService {
     if (!PermissionService.instance) {
-      PermissionService.instance = new PermissionService();
+      PermissionService?.instance = new PermissionService();
     }
     return PermissionService.instance;
   }
@@ -114,10 +114,10 @@ export class PermissionService {
    */
   private initializeRoles(): void {
     DEFAULT_ROLES.forEach(role => {
-      this.roles.set(role.name, role);
+      this?.roles?.set(role.name, role);
     });
-    this.logger.debug('Permission roles initialized', {
-      rolesCount: this.roles.size,
+    this?.logger?.debug('Permission roles initialized', {
+      rolesCount: this?.roles?.size,
     });
   }
 
@@ -141,7 +141,7 @@ export class PermissionService {
     };
 
     // Store user
-    this.users.set(user.id, user);
+    this?.users?.set(user.id, user);
 
     // Log user creation
     auditLogger.log({
@@ -166,7 +166,7 @@ export class PermissionService {
    * Get user by ID
    */
   public async getUser(userId: string): Promise<PermissionUser | undefined> {
-    return this.users.get(userId);
+    return this?.users?.get(userId as any);
   }
 
   /**
@@ -175,8 +175,8 @@ export class PermissionService {
   public async getUserByUsername(
     username: string
   ): Promise<PermissionUser | undefined> {
-    return Array.from(this.users.values()).find(
-      user => user.username === username
+    return Array.from(this?.users?.values()).find(
+      user => user?.username === username
     );
   }
 
@@ -186,8 +186,8 @@ export class PermissionService {
   public async getUserByAddress(
     address: string
   ): Promise<PermissionUser | undefined> {
-    return Array.from(this.users.values()).find(
-      user => user.address === address
+    return Array.from(this?.users?.values()).find(
+      user => user?.address === address
     );
   }
 
@@ -195,10 +195,10 @@ export class PermissionService {
    * Check if a user has a specific role
    */
   public async hasRole(userId: string, role: UserRole): Promise<boolean> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) return false;
 
-    return user.roles.includes(role) || this.hasInheritedRole(user.roles, role);
+    return user?.roles?.includes(role as any) || this.hasInheritedRole(user.roles, role);
   }
 
   /**
@@ -210,18 +210,18 @@ export class PermissionService {
   ): boolean {
     // For each role the user has, check if it inherits from the target role
     for (const userRole of userRoles) {
-      const role = this.roles.get(userRole);
+      const role = this?.roles?.get(userRole as any);
       if (!role) continue;
 
       // Direct match
-      if (role.name === targetRole) return true;
+      if (role?.name === targetRole) return true;
 
       // Check inheritance chain
       let currentRole = role;
       while (currentRole.inheritsFrom) {
-        if (currentRole.inheritsFrom === targetRole) return true;
+        if (currentRole?.inheritsFrom === targetRole) return true;
         currentRole =
-          this.roles.get(currentRole.inheritsFrom) ||
+          this?.roles?.get(currentRole.inheritsFrom) ||
           ({ name: currentRole.inheritsFrom } as Role);
       }
     }
@@ -237,11 +237,11 @@ export class PermissionService {
     resource: string,
     action: string
   ): Promise<boolean> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) return false;
 
     // Super Admin always has access
-    if (user.roles.includes(UserRole.SUPER_ADMIN)) return true;
+    if (user?.roles?.includes(UserRole.SUPER_ADMIN)) return true;
 
     // Create permission context
     const context: PermissionContext = {
@@ -253,7 +253,7 @@ export class PermissionService {
     };
 
     // Check direct permissions first
-    const hasDirectPermission = user.directPermissions.some(permission =>
+    const hasDirectPermission = user?.directPermissions?.some(permission =>
       permissionMatches(permission, context)
     );
 
@@ -261,11 +261,11 @@ export class PermissionService {
 
     // Check role-based permissions
     for (const roleName of user.roles) {
-      const role = this.roles.get(roleName);
+      const role = this?.roles?.get(roleName as any);
       if (!role) continue;
 
       // Check if this role has the permission
-      const hasRolePermission = role.permissions.some(permission =>
+      const hasRolePermission = role?.permissions?.some(permission =>
         permissionMatches(permission, context)
       );
 
@@ -283,7 +283,7 @@ export class PermissionService {
 
     // Ownership check - if the user owns the resource, they have access
     // but only if the resource ID matches their user ID
-    if (context.resourceId && context.resourceId === user.id) {
+    if (context.resourceId && context?.resourceId === user.id) {
       return true;
     }
 
@@ -297,11 +297,11 @@ export class PermissionService {
     roleName: UserRole,
     context: PermissionContext
   ): Promise<boolean> {
-    const role = this.roles.get(roleName);
+    const role = this?.roles?.get(roleName as any);
     if (!role) return false;
 
     // Check if this role has the permission
-    const hasRolePermission = role.permissions.some(permission =>
+    const hasRolePermission = role?.permissions?.some(permission =>
       permissionMatches(permission, context)
     );
 
@@ -319,7 +319,7 @@ export class PermissionService {
    * Get all permissions for a user (direct and role-based)
    */
   public async getUserPermissions(userId: string): Promise<Permission[]> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) return [];
 
     // Start with direct permissions
@@ -327,19 +327,19 @@ export class PermissionService {
 
     // Add permissions from all roles, including inherited ones
     for (const roleName of user.roles) {
-      const rolePermissions = await this.getRolePermissions(roleName);
+      const rolePermissions = await this.getRolePermissions(roleName as any);
       permissions.push(...rolePermissions);
     }
 
     // Remove duplicates
-    return this.deduplicatePermissions(permissions);
+    return this.deduplicatePermissions(permissions as any);
   }
 
   /**
    * Get all permissions associated with a role, including inherited ones
    */
   private async getRolePermissions(roleName: UserRole): Promise<Permission[]> {
-    const role = this.roles.get(roleName);
+    const role = this?.roles?.get(roleName as any);
     if (!role) return [];
 
     // Start with this role's permissions
@@ -374,22 +374,22 @@ export class PermissionService {
    * Assign a role to a user
    */
   public async assignRoleToUser(userId: string, role: UserRole): Promise<void> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) {
       throw new CLIError(`User with ID ${userId} not found`, 'USER_NOT_FOUND');
     }
 
-    if (!this.roles.has(role)) {
+    if (!this?.roles?.has(role as any)) {
       throw new CLIError(`Role ${role} does not exist`, 'ROLE_NOT_FOUND');
     }
 
     // Check if user already has this role
-    if (user.roles.includes(role)) {
+    if (user?.roles?.includes(role as any)) {
       return;
     }
 
     // Add role
-    user.roles.push(role);
+    user?.roles?.push(role as any);
 
     // Log role assignment
     auditLogger.log({
@@ -415,18 +415,18 @@ export class PermissionService {
     userId: string,
     role: UserRole
   ): Promise<void> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) {
       throw new CLIError(`User with ID ${userId} not found`, 'USER_NOT_FOUND');
     }
 
     // Check if user has this role
-    if (!user.roles.includes(role)) {
+    if (!user?.roles?.includes(role as any)) {
       return;
     }
 
     // Remove role
-    user.roles = user.roles.filter(r => r !== role);
+    user?.roles = user?.roles?.filter(r => r !== role);
 
     // Log role removal
     auditLogger.log({
@@ -452,14 +452,14 @@ export class PermissionService {
     userId: string,
     permission: Permission
   ): Promise<void> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) {
       throw new CLIError(`User with ID ${userId} not found`, 'USER_NOT_FOUND');
     }
 
     // Check if user already has this permission
-    const existingPermission = user.directPermissions.find(
-      p => p.resource === permission.resource && p.action === permission.action
+    const existingPermission = user?.directPermissions?.find(
+      p => p?.resource === permission.resource && p?.action === permission.action
     );
 
     if (existingPermission) {
@@ -467,7 +467,7 @@ export class PermissionService {
     }
 
     // Grant permission
-    user.directPermissions.push(permission);
+    user?.directPermissions?.push(permission as any);
 
     // Log permission grant
     auditLogger.log({
@@ -494,14 +494,14 @@ export class PermissionService {
     resource: string,
     action: string
   ): Promise<void> {
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId as any);
     if (!user) {
       throw new CLIError(`User with ID ${userId} not found`, 'USER_NOT_FOUND');
     }
 
     // Remove matching permission
-    user.directPermissions = user.directPermissions.filter(
-      p => !(p.resource === resource && p.action === action)
+    user?.directPermissions = user?.directPermissions?.filter(
+      p => !(p?.resource === resource && p?.action === action)
     );
 
     // Log permission revocation
@@ -561,7 +561,7 @@ export class PermissionService {
     resourceId: string
   ): Promise<boolean> {
     // Get all permissions for the user
-    const permissions = await this.getUserPermissions(userId);
+    const permissions = await this.getUserPermissions(userId as any);
 
     // Check for ownership permission pattern (resource ID, wildcard action)
     const resourceIdentifier = createResourceIdentifier(
@@ -569,7 +569,7 @@ export class PermissionService {
       resourceId
     );
     return permissions.some(
-      p => p.resource === resourceIdentifier && p.action === '*'
+      p => p?.resource === resourceIdentifier && p?.action === '*'
     );
   }
 
@@ -619,7 +619,7 @@ export class PermissionService {
 
     // Log the authorization attempt
     const user =
-      (await this.getUser(userId)) ||
+      (await this.getUser(userId as any)) ||
       ({ username: 'unknown' } as PermissionUser);
 
     auditLogger.log({

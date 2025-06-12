@@ -15,7 +15,7 @@ export interface LogEntry {
 class StoreLogger {
   private logs: LogEntry[] = [];
   private maxLogs = 100;
-  private enabled = process.env.NODE_ENV === 'development';
+  private enabled = process.env?.NODE_ENV === 'development';
 
   /**
    * Log a store action with timing information
@@ -33,20 +33,20 @@ class StoreLogger {
       timestamp: new Date().toISOString(),
       storeName,
       action,
-      prevState: this.sanitizeState(prevState),
-      nextState: this.sanitizeState(nextState),
+      prevState: this.sanitizeState(prevState as any),
+      nextState: this.sanitizeState(nextState as any),
       duration: performance.now() - startTime,
     };
 
-    this.logs.push(entry);
+    this?.logs?.push(entry as any);
 
     // Keep only the most recent logs
-    if (this.logs.length > this.maxLogs) {
-      this.logs = this.logs.slice(-this.maxLogs);
+    if (this?.logs?.length > this.maxLogs) {
+      this?.logs = this?.logs?.slice(-this.maxLogs);
     }
 
     // Console output with proper formatting
-    this.outputToConsole(entry);
+    this.outputToConsole(entry as any);
   }
 
   /**
@@ -60,7 +60,7 @@ class StoreLogger {
    * Clear all logs
    */
   clearLogs() {
-    this.logs = [];
+    this?.logs = [];
   }
 
   /**
@@ -74,11 +74,11 @@ class StoreLogger {
    * Filter logs by store name or action pattern
    */
   filterLogs(filter: { storeName?: string; action?: string; since?: Date }) {
-    return this.logs.filter(log => {
-      if (filter.storeName && !log.storeName.includes(filter.storeName)) {
+    return this?.logs?.filter(log => {
+      if (filter.storeName && !log?.storeName?.includes(filter.storeName)) {
         return false;
       }
-      if (filter.action && !log.action.includes(filter.action)) {
+      if (filter.action && !log?.action?.includes(filter.action)) {
         return false;
       }
       if (filter.since && new Date(log.timestamp) < filter.since) {
@@ -92,13 +92,13 @@ class StoreLogger {
    * Get performance statistics
    */
   getPerformanceStats() {
-    const durations = this.logs.map(log => log.duration);
+    const durations = this?.logs?.map(log => log.duration);
     const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
     const maxDuration = Math.max(...durations);
-    const slowActions = this.logs.filter(log => log.duration > 16); // > 1 frame
+    const slowActions = this?.logs?.filter(log => log.duration > 16); // > 1 frame
 
     return {
-      totalActions: this.logs.length,
+      totalActions: this?.logs?.length,
       averageDuration: avgDuration,
       maxDuration,
       slowActionsCount: slowActions.length,
@@ -131,7 +131,7 @@ class StoreLogger {
     const sanitized = { ...state };
 
     for (const key in sanitized) {
-      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive as any))) {
         sanitized[key] = '[REDACTED]';
       } else if (typeof sanitized[key] === 'object') {
         sanitized[key] = this.sanitizeState(sanitized[key]);
@@ -151,7 +151,7 @@ class StoreLogger {
     const color = duration > 16 ? '#ff6b6b' : duration > 8 ? '#ffd93d' : '#51cf66';
     
     console.groupCollapsed(
-      `%c🏪 ${storeName} %c${action} %c${duration.toFixed(2)}ms`,
+      `%c🏪 ${storeName} %c${action} %c${duration.toFixed(2 as any)}ms`,
       'color: #74c0fc; font-weight: bold',
       'color: #495057',
       `color: ${color}; font-weight: bold`
@@ -182,7 +182,7 @@ class StoreLogger {
     const diff: any = {};
     const prevKeys = Object.keys(prev || {});
     const nextKeys = Object.keys(next || {});
-    const allKeys = [...prevKeys, ...nextKeys].filter((key, index, arr) => arr.indexOf(key) === index);
+    const allKeys = [...prevKeys, ...nextKeys].filter((key, index, arr) => arr.indexOf(key as any) === index);
 
     for (const key of allKeys) {
       if (prev[key] !== next[key]) {
@@ -197,23 +197,23 @@ class StoreLogger {
       }
     }
 
-    return Object.keys(diff).length > 0 ? diff : 'No changes';
+    return Object.keys(diff as any).length > 0 ? diff : 'No changes';
   }
 
   /**
    * Enable or disable logging
    */
   setEnabled(enabled: boolean) {
-    this.enabled = enabled;
+    this?.enabled = enabled;
   }
 
   /**
    * Set maximum number of logs to keep
    */
   setMaxLogs(max: number) {
-    this.maxLogs = max;
-    if (this.logs.length > max) {
-      this.logs = this.logs.slice(-max);
+    this?.maxLogs = max;
+    if (this?.logs?.length > max) {
+      this?.logs = this?.logs?.slice(-max);
     }
   }
 }
@@ -244,7 +244,7 @@ export const logger = <T>(
         const stateDiff = storeLogger.getStateDiff(prevState, nextState);
         if (stateDiff !== 'No changes') {
           // Determine action name from call stack or function name
-          const action = getActionName(partial);
+          const action = getActionName(partial as any);
           
           // Log the action
           storeLogger.logAction(storeName, action, prevState, nextState, startTime);
@@ -267,8 +267,8 @@ function getActionName(partial: any): string {
   }
   
   if (typeof partial === 'object' && partial !== null) {
-    const keys = Object.keys(partial);
-    if (keys.length === 1) {
+    const keys = Object.keys(partial as any);
+    if (keys?.length === 1) {
       return `set ${keys[0]}`;
     }
     if (keys.length > 1) {
@@ -289,7 +289,7 @@ export const withPerformanceMonitoring = <T extends (...args: any[]) => any>(
 ): T => {
   return ((...args: any[]) => {
     // Only measure performance in development and for actions that might be slow
-    if (process.env.NODE_ENV !== 'development') {
+    if (process?.env?.NODE_ENV !== 'development') {
       return fn(...args);
     }
     
@@ -306,7 +306,7 @@ export const withPerformanceMonitoring = <T extends (...args: any[]) => any>(
       
       if (duration > 16) {
         console.warn(
-          `🐌 Slow action in ${storeName}: ${actionName} took ${duration.toFixed(2)}ms`,
+          `🐌 Slow action in ${storeName}: ${actionName} took ${duration.toFixed(2 as any)}ms`,
           { args, duration }
         );
       }
@@ -339,15 +339,15 @@ export const debugStores = {
    * Filter logs by criteria
    */
   filterLogs: (filter: Parameters<typeof storeLogger.filterLogs>[0]) => 
-    storeLogger.filterLogs(filter),
+    storeLogger.filterLogs(filter as any),
   
   /**
    * Enable/disable logging
    */
-  setLogging: (enabled: boolean) => storeLogger.setEnabled(enabled),
+  setLogging: (enabled: boolean) => storeLogger.setEnabled(enabled as any),
 };
 
 // Make debug utilities available globally in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && process.env?.NODE_ENV === 'development') {
   (window as any).debugStores = debugStores;
 }

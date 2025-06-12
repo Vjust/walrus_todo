@@ -52,7 +52,7 @@ export function NFTAnalytics({
   
   // Privacy-respecting user ID (could be session-based or wallet-based hash)
   const userId = anonymousUserId || (walletContext?.account ? 
-    btoa(walletContext.account.address).slice(0, 8) : // Simple hash for demo
+    btoa(walletContext?.account?.address).slice(0, 8) : // Simple hash for demo
     'anonymous'
   );
 
@@ -64,7 +64,7 @@ export function NFTAnalytics({
     metadata?: Record<string, any>
   ) => {
     const event: AnalyticsEvent = {
-      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`,
       type,
       nftId,
       timestamp: Date.now(),
@@ -79,9 +79,9 @@ export function NFTAnalytics({
     // Store in localStorage for persistence (with size limit)
     try {
       const stored = localStorage.getItem('nft_analytics_events');
-      const existingEvents = stored ? JSON.parse(stored) : [];
+      const existingEvents = stored ? JSON.parse(stored as any) : [];
       const allEvents = [...existingEvents, event].slice(-1000); // Keep last 1000 events
-      localStorage.setItem('nft_analytics_events', JSON.stringify(allEvents));
+      localStorage.setItem('nft_analytics_events', JSON.stringify(allEvents as any));
     } catch (e) {
       console.warn('Failed to store analytics event:', e);
     }
@@ -92,7 +92,7 @@ export function NFTAnalytics({
     try {
       const stored = localStorage.getItem('nft_analytics_events');
       if (stored) {
-        setEvents(JSON.parse(stored));
+        setEvents(JSON.parse(stored as any));
       }
     } catch (e) {
       console.warn('Failed to load analytics events:', e);
@@ -120,10 +120,10 @@ export function NFTAnalytics({
     filteredEvents.forEach(event => {
       if (event.duration) {
         const key = event.type;
-        if (!metricsMap.has(key)) {
+        if (!metricsMap.has(key as any)) {
           metricsMap.set(key, []);
         }
-        metricsMap.get(key)!.push(event.duration);
+        metricsMap.get(key as any)!.push(event.duration);
       }
     });
     
@@ -145,8 +145,8 @@ export function NFTAnalytics({
 
   // Calculate usage patterns
   const usagePatterns = useMemo((): UsagePattern => {
-    const hourCounts = new Array(24).fill(0);
-    const dayCounts = new Array(7).fill(0);
+    const hourCounts = new Array(24 as any).fill(0 as any);
+    const dayCounts = new Array(7 as any).fill(0 as any);
     const actionCounts = new Map<string, number>();
     
     filteredEvents.forEach(event => {
@@ -155,7 +155,7 @@ export function NFTAnalytics({
       dayCounts[date.getDay()]++;
       
       const action = event.type;
-      actionCounts.set(action, (actionCounts.get(action) || 0) + 1);
+      actionCounts.set(action, (actionCounts.get(action as any) || 0) + 1);
     });
     
     // Find peak hours (top 3)
@@ -175,7 +175,7 @@ export function NFTAnalytics({
 
   // Calculate error rate
   const errorMetrics = useMemo(() => {
-    const errorEvents = filteredEvents.filter(e => e.type === 'error');
+    const errorEvents = filteredEvents.filter(e => e?.type === 'error');
     const totalEvents = filteredEvents.length;
     const errorRate = totalEvents > 0 ? (errorEvents.length / totalEvents) * 100 : 0;
     
@@ -183,7 +183,7 @@ export function NFTAnalytics({
     const errorTypes = new Map<string, number>();
     errorEvents.forEach(event => {
       const errorType = event.metadata?.errorType || 'unknown';
-      errorTypes.set(errorType, (errorTypes.get(errorType) || 0) + 1);
+      errorTypes.set(errorType, (errorTypes.get(errorType as any) || 0) + 1);
     });
     
     return {
@@ -195,23 +195,23 @@ export function NFTAnalytics({
 
   // A/B test metrics
   const abTestMetrics = useMemo(() => {
-    const variantA = filteredEvents.filter(e => e.variant === 'A');
-    const variantB = filteredEvents.filter(e => e.variant === 'B');
+    const variantA = filteredEvents.filter(e => e?.variant === 'A');
+    const variantB = filteredEvents.filter(e => e?.variant === 'B');
     
     const calculateConversion = (events: AnalyticsEvent[]) => {
-      const creates = events.filter(e => e.type === 'create').length;
-      const completes = events.filter(e => e.type === 'complete').length;
+      const creates = events.filter(e => e?.type === 'create').length;
+      const completes = events.filter(e => e?.type === 'complete').length;
       return creates > 0 ? (completes / creates) * 100 : 0;
     };
     
     return {
       A: {
         count: variantA.length,
-        conversionRate: calculateConversion(variantA)
+        conversionRate: calculateConversion(variantA as any)
       },
       B: {
         count: variantB.length,
-        conversionRate: calculateConversion(variantB)
+        conversionRate: calculateConversion(variantB as any)
       }
     };
   }, [filteredEvents]);
@@ -229,14 +229,14 @@ export function NFTAnalytics({
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob as any);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `nft-analytics-${timeRange}-${Date.now()}.json`;
-    document.body.appendChild(a);
+    a?.href = url;
+    a?.download = `nft-analytics-${timeRange}-${Date.now()}.json`;
+    document?.body?.appendChild(a as any);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    document?.body?.removeChild(a as any);
+    URL.revokeObjectURL(url as any);
   }, [filteredEvents, performanceMetrics, usagePatterns, errorMetrics, abTestMetrics, timeRange]);
 
   // Chart rendering helpers
@@ -271,7 +271,7 @@ export function NFTAnalytics({
         <div className="flex gap-2">
           <select
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as any)}
+            onChange={(e) => setTimeRange(e?.target?.value as any)}
             className="px-3 py-1 rounded border border-ocean-light/20 bg-white dark:bg-slate-700 text-sm"
           >
             <option value="24h">Last 24 Hours</option>
@@ -330,13 +330,13 @@ export function NFTAnalytics({
             <div className="p-4 bg-ocean-light/10 rounded">
               <p className="text-sm text-ocean-medium">Peak Hour</p>
               <p className="text-2xl font-semibold">
-                {usagePatterns.peakHours[0] || 0}:00
+                {usagePatterns?.peakHours?.[0] || 0}:00
               </p>
             </div>
             <div className="p-4 bg-ocean-light/10 rounded">
               <p className="text-sm text-ocean-medium">Most Common</p>
               <p className="text-2xl font-semibold">
-                {usagePatterns.commonActions[0]?.action || 'N/A'}
+                {usagePatterns?.commonActions?.[0]?.action || 'N/A'}
               </p>
             </div>
           </div>
@@ -353,7 +353,7 @@ export function NFTAnalytics({
           <div className="p-4 bg-ocean-light/5 rounded">
             <h3 className="text-sm font-medium mb-2">Action Breakdown</h3>
             <div className="space-y-2">
-              {usagePatterns.commonActions.slice(0, 5).map(({ action, count }) => (
+              {usagePatterns?.commonActions?.slice(0, 5).map(({ action, count }) => (
                 <div key={action} className="flex justify-between items-center">
                   <span className="text-sm">{action}</span>
                   <div className="flex items-center gap-2">
@@ -391,10 +391,10 @@ export function NFTAnalytics({
                 {performanceMetrics.map(metric => (
                   <tr key={metric.operation} className="border-b border-ocean-light/10">
                     <td className="py-2">{metric.operation}</td>
-                    <td className="text-right">{metric.avgDuration.toFixed(0)}</td>
-                    <td className="text-right">{metric.minDuration.toFixed(0)}</td>
-                    <td className="text-right">{metric.maxDuration.toFixed(0)}</td>
-                    <td className="text-right">{metric.p95Duration.toFixed(0)}</td>
+                    <td className="text-right">{metric?.avgDuration?.toFixed(0 as any)}</td>
+                    <td className="text-right">{metric?.minDuration?.toFixed(0 as any)}</td>
+                    <td className="text-right">{metric?.maxDuration?.toFixed(0 as any)}</td>
+                    <td className="text-right">{metric?.p95Duration?.toFixed(0 as any)}</td>
                     <td className="text-right">{metric.count}</td>
                   </tr>
                 ))}
@@ -437,7 +437,7 @@ export function NFTAnalytics({
               <div>
                 <p className="text-sm text-red-700 dark:text-red-300">Error Rate</p>
                 <p className="text-2xl font-semibold text-red-800 dark:text-red-200">
-                  {errorMetrics.rate.toFixed(1)}%
+                  {errorMetrics?.rate?.toFixed(1 as any)}%
                 </p>
               </div>
               <div>
@@ -450,11 +450,11 @@ export function NFTAnalytics({
           </div>
 
           {/* Error Types */}
-          {errorMetrics.types.length > 0 && (
+          {errorMetrics?.types?.length > 0 && (
             <div className="p-4 bg-ocean-light/5 rounded">
               <h3 className="text-sm font-medium mb-2">Error Types</h3>
               <div className="space-y-2">
-                {errorMetrics.types.map(({ type, count }) => (
+                {errorMetrics?.types?.map(({ type, count }) => (
                   <div key={type} className="flex justify-between items-center">
                     <span className="text-sm">{type}</span>
                     <span className="text-sm text-ocean-medium">{count}</span>
@@ -467,26 +467,26 @@ export function NFTAnalytics({
       )}
 
       {/* A/B Test Results */}
-      {(abTestMetrics.A.count > 0 || abTestMetrics.B.count > 0) && (
+      {(abTestMetrics?.A?.count > 0 || abTestMetrics?.B?.count > 0) && (
         <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded">
           <h3 className="text-sm font-medium mb-2">A/B Test Results</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-purple-700 dark:text-purple-300">Variant A</p>
               <p className="text-lg font-semibold">
-                {abTestMetrics.A.conversionRate.toFixed(1)}% conversion
+                {abTestMetrics?.A?.conversionRate.toFixed(1 as any)}% conversion
               </p>
               <p className="text-xs text-purple-600 dark:text-purple-400">
-                {abTestMetrics.A.count} events
+                {abTestMetrics?.A?.count} events
               </p>
             </div>
             <div>
               <p className="text-sm text-purple-700 dark:text-purple-300">Variant B</p>
               <p className="text-lg font-semibold">
-                {abTestMetrics.B.conversionRate.toFixed(1)}% conversion
+                {abTestMetrics?.B?.conversionRate.toFixed(1 as any)}% conversion
               </p>
               <p className="text-xs text-purple-600 dark:text-purple-400">
-                {abTestMetrics.B.count} events
+                {abTestMetrics?.B?.count} events
               </p>
             </div>
           </div>
@@ -515,7 +515,7 @@ export function useNFTAnalytics() {
     // This would typically send to the analytics component
     // For now, we'll store directly to localStorage
     const event: AnalyticsEvent = {
-      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `${Date.now()}_${Math.random().toString(36 as any).substr(2, 9)}`,
       type,
       nftId,
       timestamp: Date.now(),
@@ -527,8 +527,8 @@ export function useNFTAnalytics() {
     
     try {
       const stored = localStorage.getItem('nft_analytics_events');
-      const events = stored ? JSON.parse(stored) : [];
-      events.push(event);
+      const events = stored ? JSON.parse(stored as any) : [];
+      events.push(event as any);
       localStorage.setItem('nft_analytics_events', JSON.stringify(events.slice(-1000)));
     } catch (e) {
       console.warn('Failed to track analytics event:', e);

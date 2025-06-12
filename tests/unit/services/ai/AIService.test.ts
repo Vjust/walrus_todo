@@ -15,7 +15,7 @@ describe('AIService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = createMockAIService(testApiKey);
+    service = createMockAIService(testApiKey as any);
     mockProvider = mockXAIProvider;
     mockProvider.reset();
   });
@@ -52,10 +52,10 @@ describe('AIService', () => {
 
     describe('Summarize Operation', () => {
       it('should summarize todos successfully', async () => {
-        const result = await service.summarizeTodos(sampleTodos);
+        const result = await service.summarizeTodos(sampleTodos as any);
 
-        expect(result).toBeDefined();
-        expect(result).toContain('Test Todo');
+        expect(result as any).toBeDefined();
+        expect(result as any).toContain('Test Todo');
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Provide a brief summary')
         );
@@ -64,15 +64,15 @@ describe('AIService', () => {
       it('should handle empty todos list', async () => {
         const result = await service.summarizeTodos([]);
 
-        expect(result).toBe('No todos to summarize.');
+        expect(result as any).toBe('No todos to summarize.');
       });
 
       it('should handle API errors gracefully', async () => {
         const mockError = new Error('API Error');
-        mockProvider.setShouldError(true);
-        mockProvider.setError(mockError);
+        mockProvider.setShouldError(true as any);
+        mockProvider.setError(mockError as any);
 
-        await expect(service.summarizeTodos(sampleTodos)).rejects.toThrow(
+        await expect(service.summarizeTodos(sampleTodos as any)).rejects.toThrow(
           'Failed to summarize todos'
         );
       });
@@ -82,11 +82,11 @@ describe('AIService', () => {
       it('should categorize todos successfully', async () => {
         mockProvider.setResponse('Work: Test Todo 1\nPersonal: Test Todo 2');
 
-        const result = await service.categorizeTodos(sampleTodos);
+        const result = await service.categorizeTodos(sampleTodos as any);
 
-        expect(result).toBeDefined();
-        expect(result).toContain('Work');
-        expect(result).toContain('Personal');
+        expect(result as any).toBeDefined();
+        expect(result as any).toContain('Work');
+        expect(result as any).toContain('Personal');
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Categorize the following todos')
         );
@@ -95,7 +95,7 @@ describe('AIService', () => {
       it('should handle categorization with custom categories', async () => {
         mockProvider.setResponse('Urgent: Test Todo 2\nLater: Test Todo 1');
 
-        await service.categorizeTodos(sampleTodos);
+        await service.categorizeTodos(sampleTodos as any);
 
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Categorize the following todos')
@@ -109,11 +109,11 @@ describe('AIService', () => {
           '1. Test Todo 2 (High Priority)\n2. Test Todo 1 (Medium Priority)'
         );
 
-        const result = await service.prioritizeTodos(sampleTodos);
+        const result = await service.prioritizeTodos(sampleTodos as any);
 
-        expect(result).toBeDefined();
-        expect(result).toContain('Test Todo 2');
-        expect(result).toContain('High Priority');
+        expect(result as any).toBeDefined();
+        expect(result as any).toContain('Test Todo 2');
+        expect(result as any).toContain('High Priority');
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Prioritize the following todos')
         );
@@ -124,7 +124,7 @@ describe('AIService', () => {
           '1. Test Todo 1 (Work-related)\n2. Test Todo 2'
         );
 
-        await service.prioritizeTodos(sampleTodos);
+        await service.prioritizeTodos(sampleTodos as any);
 
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Prioritize the following todos')
@@ -138,11 +138,11 @@ describe('AIService', () => {
           'Next steps:\n1. Complete Test Todo 1\n2. Review Test Todo 2'
         );
 
-        const result = await service.suggestNextActions(sampleTodos);
+        const result = await service.suggestNextActions(sampleTodos as any);
 
-        expect(result).toBeDefined();
-        expect(result).toContain('Next steps');
-        expect(result).toContain('Complete Test Todo 1');
+        expect(result as any).toBeDefined();
+        expect(result as any).toContain('Next steps');
+        expect(result as any).toContain('Complete Test Todo 1');
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Suggest the most logical next actions')
         );
@@ -157,9 +157,9 @@ describe('AIService', () => {
           'All tasks completed! Consider:\n1. Review completed work\n2. Plan new tasks'
         );
 
-        const result = await service.suggestNextActions(completedTodos);
+        const result = await service.suggestNextActions(completedTodos as any);
 
-        expect(result).toContain('All tasks completed');
+        expect(result as any).toContain('All tasks completed');
       });
     });
 
@@ -169,19 +169,19 @@ describe('AIService', () => {
           'Analysis:\n- 50% completion rate\n- High priority focus\n- Balanced workload'
         );
 
-        const result = await service.analyzeTodos(sampleTodos);
+        const result = await service.analyzeTodos(sampleTodos as any);
 
-        expect(result).toBeDefined();
-        expect(result).toContain('Analysis');
-        expect(result).toContain('completion rate');
+        expect(result as any).toBeDefined();
+        expect(result as any).toContain('Analysis');
+        expect(result as any).toContain('completion rate');
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Analyze the following todos')
         );
       });
 
       it('should provide detailed analysis', async () => {
-        const largeTodoSet: Todo[] = Array(10)
-          .fill(null)
+        const largeTodoSet: Todo[] = Array(10 as any)
+          .fill(null as any)
           .map((_, i) => ({
             ...sampleTodos[0],
             id: `${i}`,
@@ -189,7 +189,7 @@ describe('AIService', () => {
             priority: i % 2 === 0 ? 'high' : ('low' as const),
           }));
 
-        await service.analyzeTodos(largeTodoSet);
+        await service.analyzeTodos(largeTodoSet as any);
 
         expect(mockProvider.invoke).toHaveBeenCalledWith(
           expect.stringContaining('Analyze the following todos')
@@ -201,20 +201,20 @@ describe('AIService', () => {
   describe('API Interactions', () => {
     it('should handle rate limiting', async () => {
       const rateLimitError = new Error('Rate limit exceeded');
-      mockProvider.setShouldError(true);
-      mockProvider.setError(rateLimitError);
+      mockProvider.setShouldError(true as any);
+      mockProvider.setError(rateLimitError as any);
 
-      await expect(service.summarizeTodos(sampleTodos)).rejects.toThrow(
+      await expect(service.summarizeTodos(sampleTodos as any)).rejects.toThrow(
         'Failed to summarize todos'
       );
     });
 
     it('should handle network errors', async () => {
       const networkError = new Error('Network timeout');
-      mockProvider.setShouldError(true);
-      mockProvider.setError(networkError);
+      mockProvider.setShouldError(true as any);
+      mockProvider.setError(networkError as any);
 
-      await expect(service.analyzeTodos(sampleTodos)).rejects.toThrow(
+      await expect(service.analyzeTodos(sampleTodos as any)).rejects.toThrow(
         'Failed to analyze todos'
       );
     });
@@ -222,7 +222,7 @@ describe('AIService', () => {
     it('should handle invalid API responses', async () => {
       mockProvider.setResponse(null as unknown as string);
 
-      await expect(service.suggestNextActions(sampleTodos)).rejects.toThrow(
+      await expect(service.suggestNextActions(sampleTodos as any)).rejects.toThrow(
         'Invalid response from AI service'
       );
     });
@@ -230,16 +230,16 @@ describe('AIService', () => {
     it('should handle malformed responses', async () => {
       mockProvider.setResponse(undefined as unknown as string);
 
-      await expect(service.categorizeTodos(sampleTodos)).rejects.toThrow(
+      await expect(service.categorizeTodos(sampleTodos as any)).rejects.toThrow(
         'Invalid response from AI service'
       );
     });
 
     it('should include proper headers in requests', async () => {
-      await service.summarizeTodos(sampleTodos);
+      await service.summarizeTodos(sampleTodos as any);
 
       // The mock provider tracks that invoke was called with the correct prompt
-      expect(mockProvider.invoke).toHaveBeenCalledTimes(1);
+      expect(mockProvider.invoke).toHaveBeenCalledTimes(1 as any);
     });
   });
 
@@ -254,41 +254,41 @@ describe('AIService', () => {
         1. Test Todo 2
         2. Test Todo 1
       `;
-      mockProvider.setResponse(structuredResponse);
+      mockProvider.setResponse(structuredResponse as any);
 
-      const result = await service.categorizeTodos(sampleTodos);
+      const result = await service.categorizeTodos(sampleTodos as any);
 
-      expect(result).toBe(structuredResponse);
+      expect(result as any).toBe(structuredResponse as any);
     });
 
     it('should handle empty responses gracefully', async () => {
       mockProvider.setResponse('');
 
-      await expect(service.analyzeTodos(sampleTodos)).rejects.toThrow(
+      await expect(service.analyzeTodos(sampleTodos as any)).rejects.toThrow(
         'Empty response from AI service'
       );
     });
 
     it('should sanitize output', async () => {
       const unsafeResponse = '<script>alert("xss")</script>Safe content';
-      mockProvider.setResponse(unsafeResponse);
+      mockProvider.setResponse(unsafeResponse as any);
 
-      const result = await service.summarizeTodos(sampleTodos);
+      const result = await service.summarizeTodos(sampleTodos as any);
 
       // The service should return the raw response, sanitization happens at display layer
-      expect(result).toBe(unsafeResponse);
+      expect(result as any).toBe(unsafeResponse as any);
     });
 
     it('should handle multi-line responses', async () => {
       const multiLineResponse = `Line 1: Summary
 Line 2: Details
 Line 3: Conclusion`;
-      mockProvider.setResponse(multiLineResponse);
+      mockProvider.setResponse(multiLineResponse as any);
 
-      const result = await service.analyzeTodos(sampleTodos);
+      const result = await service.analyzeTodos(sampleTodos as any);
 
-      expect(result).toBe(multiLineResponse);
-      expect(result.split('\n')).toHaveLength(3);
+      expect(result as any).toBe(multiLineResponse as any);
+      expect(result.split('\n')).toHaveLength(3 as any);
     });
 
     it('should handle JSON responses when expected', async () => {
@@ -297,12 +297,12 @@ Line 3: Conclusion`;
         priorities: [1, 2],
         suggestions: ['Complete Task 1', 'Review Task 2'],
       });
-      mockProvider.setResponse(jsonResponse);
+      mockProvider.setResponse(jsonResponse as any);
 
-      const result = await service.analyzeTodos(sampleTodos);
+      const result = await service.analyzeTodos(sampleTodos as any);
 
-      expect(result).toBe(jsonResponse);
-      expect(() => JSON.parse(result)).not.toThrow();
+      expect(result as any).toBe(jsonResponse as any);
+      expect(() => JSON.parse(result as any)).not.toThrow();
     });
   });
 
@@ -312,35 +312,35 @@ Line 3: Conclusion`;
 
       // The service should still work with the mock provider in test environment
       await expect(
-        brokenService.summarizeTodos(sampleTodos)
+        brokenService.summarizeTodos(sampleTodos as any)
       ).resolves.toBeDefined();
     });
 
     it('should handle concurrent operations', async () => {
       const operations = [
-        service.summarizeTodos(sampleTodos),
-        service.categorizeTodos(sampleTodos),
-        service.prioritizeTodos(sampleTodos),
-        service.analyzeTodos(sampleTodos),
+        service.summarizeTodos(sampleTodos as any),
+        service.categorizeTodos(sampleTodos as any),
+        service.prioritizeTodos(sampleTodos as any),
+        service.analyzeTodos(sampleTodos as any),
       ];
 
-      const results = await Promise.all(operations);
+      const results = await Promise.all(operations as any);
 
-      expect(results).toHaveLength(4);
+      expect(results as any).toHaveLength(4 as any);
       results.forEach(result => {
-        expect(result).toBeDefined();
+        expect(result as any).toBeDefined();
       });
     });
 
     it('should handle operation timeouts', async () => {
       jest.useFakeTimers();
 
-      const operationPromise = service.analyzeTodos(sampleTodos);
+      const operationPromise = service.analyzeTodos(sampleTodos as any);
 
-      jest.advanceTimersByTime(30000);
+      jest.advanceTimersByTime(30000 as any);
 
       // The actual service should complete before the timeout
-      await expect(operationPromise).resolves.toBeDefined();
+      await expect(operationPromise as any).resolves.toBeDefined();
 
       jest.useRealTimers();
     });
@@ -357,13 +357,13 @@ Line 3: Conclusion`;
 
       // All should work with mocks in test environment
       await expect(
-        xaiService.summarizeTodos(sampleTodos)
+        xaiService.summarizeTodos(sampleTodos as any)
       ).resolves.toBeDefined();
       await expect(
-        openaiService.summarizeTodos(sampleTodos)
+        openaiService.summarizeTodos(sampleTodos as any)
       ).resolves.toBeDefined();
       await expect(
-        anthropicService.summarizeTodos(sampleTodos)
+        anthropicService.summarizeTodos(sampleTodos as any)
       ).resolves.toBeDefined();
     });
 
@@ -371,7 +371,7 @@ Line 3: Conclusion`;
       const defaultService = new AIService(undefined, testApiKey);
 
       await expect(
-        defaultService.summarizeTodos(sampleTodos)
+        defaultService.summarizeTodos(sampleTodos as any)
       ).resolves.toBeDefined();
     });
   });

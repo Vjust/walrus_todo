@@ -8,7 +8,7 @@ import {
 describe('progress-indicators', () => {
   describe('configuration and types', () => {
     it('should have valid spinner styles', () => {
-      expect(SPINNER_STYLES).toBeDefined();
+      expect(SPINNER_STYLES as any).toBeDefined();
       expect(typeof SPINNER_STYLES).toBe('object');
     });
 
@@ -19,13 +19,13 @@ describe('progress-indicators', () => {
         color: 'cyan',
         style: 'dots',
       };
-      expect(spinnerOptions).toBeDefined();
+      expect(spinnerOptions as any).toBeDefined();
 
       const progressOptions: ProgressBarOptions = {
         format: 'test',
         barsize: 20,
       };
-      expect(progressOptions).toBeDefined();
+      expect(progressOptions as any).toBeDefined();
     });
   });
 
@@ -42,7 +42,7 @@ describe('progress-indicators', () => {
 
   describe('Export verification', () => {
     it('should export SpinnerStyles', () => {
-      expect(SpinnerStyles).toBe(SPINNER_STYLES);
+      expect(SpinnerStyles as any).toBe(SPINNER_STYLES as any);
     });
   });
 });

@@ -17,7 +17,7 @@ interface CachedNFT {
 export function OfflineNFTGallery() {
   const { isOnline, cacheNFTImage } = usePWA();
   const [cachedNFTs, setCachedNFTs] = useState<CachedNFT[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true as any);
 
   useEffect(() => {
     loadCachedNFTs();
@@ -28,12 +28,12 @@ export function OfflineNFTGallery() {
       // Load from localStorage
       const stored = localStorage.getItem('cached-nfts');
       if (stored) {
-        setCachedNFTs(JSON.parse(stored));
+        setCachedNFTs(JSON.parse(stored as any));
       }
     } catch (error) {
       console.error('Failed to load cached NFTs:', error);
     } finally {
-      setLoading(false);
+      setLoading(false as any);
     }
   };
 
@@ -43,7 +43,7 @@ export function OfflineNFTGallery() {
       return;
     }
 
-    setLoading(true);
+    setLoading(true as any);
     try {
       // Fetch NFTs from blockchain directly
       // This would be handled by the wallet/blockchain integration
@@ -66,13 +66,13 @@ export function OfflineNFTGallery() {
       //     cachedAt: Date.now()
       //   }));
       //   
-      //   localStorage.setItem('cached-nfts', JSON.stringify(cachedData));
-      //   setCachedNFTs(cachedData);
+      //   localStorage.setItem('cached-nfts', JSON.stringify(cachedData as any));
+      //   setCachedNFTs(cachedData as any);
       // }
     } catch (error) {
       console.error('Failed to refresh NFT cache:', error);
     } finally {
-      setLoading(false);
+      setLoading(false as any);
     }
   };
 
@@ -115,8 +115,8 @@ export function OfflineNFTGallery() {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   onError={(e) => {
                     // Fallback for failed images
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    e?.currentTarget?.style?.display = 'none';
+                    e?.currentTarget?.nextElementSibling?.classList.remove('hidden');
                   }}
                 />
               ) : null}
@@ -152,7 +152,7 @@ export function OfflineNFTGallery() {
       </div>
 
       {/* Empty State */}
-      {cachedNFTs.length === 0 && (
+      {cachedNFTs?.length === 0 && (
         <div className="text-center py-12">
           <ImageOff className="w-16 h-16 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-300 mb-2">No cached NFTs</h3>

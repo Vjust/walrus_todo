@@ -96,11 +96,11 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     registryId: string,
     walrusAdapter?: WalrusClientAdapter
   ) {
-    this.client = client;
-    this.signer = signer;
-    this.packageId = packageId;
-    this.registryId = registryId;
-    this.walrusAdapter = walrusAdapter;
+    this?.client = client;
+    this?.signer = signer;
+    this?.packageId = packageId;
+    this?.registryId = registryId;
+    this?.walrusAdapter = walrusAdapter;
   }
 
   async registerProvider(_params: ProviderRegistrationParams): Promise<string> {

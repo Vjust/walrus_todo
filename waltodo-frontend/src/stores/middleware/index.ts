@@ -14,9 +14,9 @@ export { immer } from 'zustand/middleware/immer';
  * Default middleware configuration for new stores
  */
 export const defaultMiddleware = {
-  enableDevtools: process.env.NODE_ENV === 'development',
+  enableDevtools: process.env?.NODE_ENV === 'development',
   enablePersistence: true,
-  enableLogging: process.env.NODE_ENV === 'development',
+  enableLogging: process.env?.NODE_ENV === 'development',
   enableSubscriptions: true,
   enableImmer: true,
 } as const;
@@ -41,7 +41,7 @@ export const createStoreWithMiddleware = async <T>(
     // Apply middleware in reverse order (innermost first)
     if (options.immer !== false && defaultMiddleware.enableImmer) {
       const { immer } = await import('zustand/middleware/immer');
-      config = immer(config);
+      config = immer(config as any);
     }
     
     if (options.logger !== false && defaultMiddleware.enableLogging) {
@@ -51,7 +51,7 @@ export const createStoreWithMiddleware = async <T>(
     
     if (options.subscriptions !== false && defaultMiddleware.enableSubscriptions) {
       const { subscribeWithSelector } = await import('zustand/middleware');
-      config = subscribeWithSelector(config);
+      config = subscribeWithSelector(config as any);
     }
     
     if (options.persist !== false && defaultMiddleware.enablePersistence) {
@@ -84,7 +84,7 @@ export const createStoreWithMiddleware = async <T>(
       
       config = devtools(config, {
         name: storeNames[name as keyof typeof storeNames] || name,
-        enabled: process.env.NODE_ENV === 'development',
+        enabled: process.env?.NODE_ENV === 'development',
       });
     }
   } catch (error) {
@@ -125,8 +125,8 @@ export const initializeStores = async () => {
       const { detectEnvironment, useAppStore } = await import('../app-store');
       
       const env = detectEnvironment();
-      useAppStore.getState().setEnvironment(env);
-      useAppStore.getState().setInitialized(true);
+      useAppStore.getState().setEnvironment(env as any);
+      useAppStore.getState().setInitialized(true as any);
       
       console.log('🏪 All Zustand stores initialized');
     } catch (error) {

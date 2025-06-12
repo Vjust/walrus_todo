@@ -36,21 +36,21 @@ describe('VaultManager', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
+    (fs.existsSync as jest.Mock).mockReturnValue(false as any);
     (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
     (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
     (path.join as jest.Mock).mockImplementation((...paths) => paths.join('/'));
 
-    vaultManager = new VaultManager(testBaseDir);
+    vaultManager = new VaultManager(testBaseDir as any);
   });
 
   describe('createVault', () => {
     it('should create vault with correct structure', () => {
-      const vaultId = vaultManager.createVault(mockVaultConfig);
+      const vaultId = vaultManager.createVault(mockVaultConfig as any);
 
-      expect(vaultId).toMatch(/^[a-f0-9]{32}$/);
+      expect(vaultId as any).toMatch(/^[a-f0-9]{32}$/);
       expect(fs.mkdirSync).toHaveBeenCalledWith(
-        expect.stringContaining(vaultId)
+        expect.stringContaining(vaultId as any)
       );
       expect(fs.mkdirSync).toHaveBeenCalledWith(
         expect.stringContaining('metadata')
@@ -61,15 +61,15 @@ describe('VaultManager', () => {
     });
 
     it('should save vault metadata', () => {
-      const vaultId = vaultManager.createVault(mockVaultConfig);
+      const vaultId = vaultManager.createVault(mockVaultConfig as any);
 
       // Get the last writeFileSync call as there might be multiple calls
-      const lastWriteCall = (fs.writeFileSync as jest.Mock).mock.calls.slice(
+      const lastWriteCall = (fs.writeFileSync as jest.Mock).mock?.calls?.slice(
         -1
       )[0];
       const savedData = JSON.parse(lastWriteCall[1]);
 
-      expect(savedData.vaults[0]).toEqual(
+      expect(savedData?.vaults?.[0]).toEqual(
         expect.objectContaining({
           id: vaultId,
           name: mockVaultConfig.name,
@@ -86,9 +86,9 @@ describe('VaultManager', () => {
     let vaultId: string;
 
     beforeEach(() => {
-      vaultId = vaultManager.createVault(mockVaultConfig);
+      vaultId = vaultManager.createVault(mockVaultConfig as any);
       mockBlobRecord = {
-        blobId: 'a'.repeat(64),
+        blobId: 'a'.repeat(64 as any),
         fileName: 'test.jpg',
         size: 1024,
         mimeType: 'image/jpeg',
@@ -100,25 +100,25 @@ describe('VaultManager', () => {
     });
 
     it('should save blob record correctly', () => {
-      vaultManager.saveBlobRecord(mockBlobRecord);
+      vaultManager.saveBlobRecord(mockBlobRecord as any);
 
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining(mockBlobRecord.blobId),
-        expect.any(String)
+        expect.any(String as any)
       );
     });
 
     it('should update vault statistics', () => {
-      vaultManager.saveBlobRecord(mockBlobRecord);
-      const vault = vaultManager.getVaultMetadata(vaultId);
+      vaultManager.saveBlobRecord(mockBlobRecord as any);
+      const vault = vaultManager.getVaultMetadata(vaultId as any);
 
-      expect(vault.totalFiles).toBe(1);
+      expect(vault.totalFiles).toBe(1 as any);
       expect(vault.totalSize).toBe(mockBlobRecord.size);
     });
 
     it('should throw error for invalid vault ID', () => {
-      mockBlobRecord.vaultId = 'invalid-vault-id';
-      expect(() => vaultManager.saveBlobRecord(mockBlobRecord)).toThrow(
+      mockBlobRecord?.vaultId = 'invalid-vault-id';
+      expect(() => vaultManager.saveBlobRecord(mockBlobRecord as any)).toThrow(
         WalrusError
       );
     });
@@ -128,7 +128,7 @@ describe('VaultManager', () => {
     let vaultId: string;
 
     beforeEach(() => {
-      vaultId = vaultManager.createVault(mockVaultConfig);
+      vaultId = vaultManager.createVault(mockVaultConfig as any);
     });
 
     it('should validate file size', () => {
@@ -149,7 +149,7 @@ describe('VaultManager', () => {
 
     it('should validate total vault size', () => {
       const mockBlobRecord: BlobRecord = {
-        blobId: 'a'.repeat(64),
+        blobId: 'a'.repeat(64 as any),
         fileName: 'test.jpg',
         size: mockVaultConfig.maxSize - 1024,
         mimeType: 'image/jpeg',
@@ -159,7 +159,7 @@ describe('VaultManager', () => {
         vaultId,
       };
 
-      vaultManager.saveBlobRecord(mockBlobRecord);
+      vaultManager.saveBlobRecord(mockBlobRecord as any);
 
       expect(() =>
         vaultManager.validateFileForVault(vaultId, 2048, 'image/jpeg')
@@ -177,8 +177,8 @@ describe('VaultManager', () => {
     let vaultId: string;
 
     beforeEach(() => {
-      vaultId = vaultManager.createVault(mockVaultConfig);
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      vaultId = vaultManager.createVault(mockVaultConfig as any);
+      (fs.existsSync as jest.Mock).mockReturnValue(true as any);
       (fs.readdirSync as jest.Mock).mockReturnValue([
         'blob1.json',
         'blob2.json',
@@ -192,12 +192,12 @@ describe('VaultManager', () => {
 
       const mockRecords = {
         'blob1.json': {
-          blobId: 'a'.repeat(64),
+          blobId: 'a'.repeat(64 as any),
           expiresAt: expiredDate.toISOString(),
           vaultId,
         },
         'blob2.json': {
-          blobId: 'b'.repeat(64),
+          blobId: 'b'.repeat(64 as any),
           expiresAt: futureDate.toISOString(),
           vaultId,
         },
@@ -206,12 +206,12 @@ describe('VaultManager', () => {
       (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
         const fileName = filePath.split('/').pop() as string;
         const record = mockRecords[fileName as keyof typeof mockRecords];
-        return JSON.stringify(record);
+        return JSON.stringify(record as any);
       });
 
-      const expiringBlobs = vaultManager.getExpiringBlobs(3); // Check next 3 days
-      expect(expiringBlobs).toHaveLength(1);
-      expect(expiringBlobs[0].blobId).toBe('a'.repeat(64));
+      const expiringBlobs = vaultManager.getExpiringBlobs(3 as any); // Check next 3 days
+      expect(expiringBlobs as any).toHaveLength(1 as any);
+      expect(expiringBlobs[0].blobId).toBe('a'.repeat(64 as any));
     });
   });
 
@@ -220,9 +220,9 @@ describe('VaultManager', () => {
     let mockBlobRecord: BlobRecord;
 
     beforeEach(() => {
-      vaultId = vaultManager.createVault(mockVaultConfig);
+      vaultId = vaultManager.createVault(mockVaultConfig as any);
       mockBlobRecord = {
-        blobId: 'a'.repeat(64),
+        blobId: 'a'.repeat(64 as any),
         fileName: 'test.jpg',
         size: 1024,
         mimeType: 'image/jpeg',
@@ -232,9 +232,9 @@ describe('VaultManager', () => {
         vaultId,
       };
 
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.existsSync as jest.Mock).mockReturnValue(true as any);
       (fs.readFileSync as jest.Mock).mockReturnValue(
-        JSON.stringify(mockBlobRecord)
+        JSON.stringify(mockBlobRecord as any)
       );
     });
 
@@ -248,12 +248,12 @@ describe('VaultManager', () => {
 
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining(mockBlobRecord.blobId),
-        expect.stringContaining(newExpiryDate)
+        expect.stringContaining(newExpiryDate as any)
       );
     });
 
     it('should throw error for non-existent blob', () => {
-      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.existsSync as jest.Mock).mockReturnValue(false as any);
       expect(() =>
         vaultManager.updateBlobExpiry(
           'nonexistent',

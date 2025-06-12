@@ -55,8 +55,8 @@ class MockAIModelAdapter implements AIModelAdapter {
     provider: AIProvider = AIProvider.XAI,
     modelName: string = 'mock-model'
   ) {
-    this.provider = provider;
-    this.modelName = modelName;
+    this?.provider = provider;
+    this?.modelName = modelName;
   }
 
   getProviderName(): AIProvider {
@@ -69,9 +69,9 @@ class MockAIModelAdapter implements AIModelAdapter {
 
   async complete(params: unknown): Promise<unknown> {
     // Limit call history size to prevent memory buildup
-    this.callHistory.push({ method: 'complete', params });
-    if (this.callHistory.length > this.maxHistorySize) {
-      this.callHistory.shift(); // Remove oldest entry
+    this?.callHistory?.push({ method: 'complete', params });
+    if (this?.callHistory?.length > this.maxHistorySize) {
+      this?.callHistory?.shift(); // Remove oldest entry
     }
 
     // Determine which operation is being called based on the prompt
@@ -103,9 +103,9 @@ class MockAIModelAdapter implements AIModelAdapter {
 
   async completeStructured(params: unknown): Promise<unknown> {
     // Limit call history size to prevent memory buildup
-    this.callHistory.push({ method: 'completeStructured', params });
-    if (this.callHistory.length > this.maxHistorySize) {
-      this.callHistory.shift(); // Remove oldest entry
+    this?.callHistory?.push({ method: 'completeStructured', params });
+    if (this?.callHistory?.length > this.maxHistorySize) {
+      this?.callHistory?.shift(); // Remove oldest entry
     }
 
     // Determine which operation is being called based on the prompt
@@ -114,7 +114,7 @@ class MockAIModelAdapter implements AIModelAdapter {
       metadata?: { operation?: string };
     };
     const promptStr =
-      typeof paramsObj.prompt === 'string'
+      typeof paramsObj?.prompt === 'string'
         ? paramsObj.prompt
         : paramsObj.metadata?.operation || 'unknown';
 
@@ -145,12 +145,12 @@ class MockAIModelAdapter implements AIModelAdapter {
     input: Record<string, unknown>
   ): Promise<unknown> {
     // Limit call history size to prevent memory buildup
-    this.callHistory.push({
+    this?.callHistory?.push({
       method: 'processWithPromptTemplate',
       params: { promptTemplate, input },
     });
-    if (this.callHistory.length > this.maxHistorySize) {
-      this.callHistory.shift(); // Remove oldest entry
+    if (this?.callHistory?.length > this.maxHistorySize) {
+      this?.callHistory?.shift(); // Remove oldest entry
     }
 
     // Try to determine the operation based on the prompt template format string
@@ -179,7 +179,7 @@ class MockAIModelAdapter implements AIModelAdapter {
 
   // Method to clear history to prevent memory buildup
   clearHistory(): void {
-    this.callHistory.length = 0;
+    this.callHistory?.length = 0;
   }
 }
 
@@ -189,7 +189,7 @@ jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
 
   return {
     AIProviderFactory: {
-      createProvider: jest.fn().mockReturnValue(mockAdapter),
+      createProvider: jest.fn().mockReturnValue(mockAdapter as any),
       getDefaultProvider: jest.fn().mockReturnValue({
         provider: AIProvider.XAI,
         modelName: 'mock-model',
@@ -270,101 +270,101 @@ describe('EnhancedAIService', () => {
   describe('Basic operations', () => {
     it('should summarize todos', async () => {
       const todos = createSampleTodos();
-      const summary = await aiService.summarize(todos);
+      const summary = await aiService.summarize(todos as any);
 
-      expect(summary).toBe('Mock summary of todos');
-      expect(mockAdapter.callHistory.length).toBe(1);
-      expect(mockAdapter.callHistory[0].method).toBe(
+      expect(summary as any).toBe('Mock summary of todos');
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
+      expect(mockAdapter?.callHistory?.[0].method).toBe(
         'processWithPromptTemplate'
       );
     });
 
     it('should categorize todos', async () => {
       const todos = createSampleTodos();
-      const categories = await aiService.categorize(todos);
+      const categories = await aiService.categorize(todos as any);
 
-      expect(categories).toEqual({
+      expect(categories as any).toEqual({
         'Category 1': ['todo1'],
         'Category 2': ['todo2'],
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
-      expect(mockAdapter.callHistory[0].method).toBe('completeStructured');
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
+      expect(mockAdapter?.callHistory?.[0].method).toBe('completeStructured');
     });
 
     it('should prioritize todos', async () => {
       const todos = createSampleTodos();
-      const priorities = await aiService.prioritize(todos);
+      const priorities = await aiService.prioritize(todos as any);
 
-      expect(priorities).toEqual({
+      expect(priorities as any).toEqual({
         todo1: 8,
         todo2: 5,
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
 
     it('should suggest new todos', async () => {
       const todos = createSampleTodos();
-      const suggestions = await aiService.suggest(todos);
+      const suggestions = await aiService.suggest(todos as any);
 
-      expect(suggestions).toEqual(['Suggested todo 1', 'Suggested todo 2']);
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(suggestions as any).toEqual(['Suggested todo 1', 'Suggested todo 2']);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
 
     it('should analyze todos', async () => {
       const todos = createSampleTodos();
-      const analysis = await aiService.analyze(todos);
+      const analysis = await aiService.analyze(todos as any);
 
-      expect(analysis).toEqual({
+      expect(analysis as any).toEqual({
         key_themes: ['Theme 1', 'Theme 2'],
         bottlenecks: ['Bottleneck 1'],
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
   });
 
   describe('New enhanced operations', () => {
     it('should group todos into workflows', async () => {
       const todos = createSampleTodos();
-      const groups = await aiService.group(todos);
+      const groups = await aiService.group(todos as any);
 
-      expect(groups).toEqual({
+      expect(groups as any).toEqual({
         sequentialTracks: { 'Track 1': ['todo1', 'todo2'] },
         parallelOpportunities: [['todo1', 'todo2']],
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
 
     it('should create a schedule for todos', async () => {
       const todos = createSampleTodos();
-      const schedule = await aiService.schedule(todos);
+      const schedule = await aiService.schedule(todos as any);
 
-      expect(schedule).toEqual({
+      expect(schedule as any).toEqual({
         todo1: { start: 0, duration: 2, due: 3 },
         todo2: { start: 2, duration: 1, due: 4 },
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
 
     it('should detect dependencies between todos', async () => {
       const todos = createSampleTodos();
-      const dependencies = await aiService.detectDependencies(todos);
+      const dependencies = await aiService.detectDependencies(todos as any);
 
-      expect(dependencies).toEqual({
+      expect(dependencies as any).toEqual({
         dependencies: { todo2: ['todo1'] },
         blockers: { todo2: ['todo1'] },
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
 
     it('should estimate effort for todos', async () => {
       const todos = createSampleTodos();
-      const efforts = await aiService.estimateEffort(todos);
+      const efforts = await aiService.estimateEffort(todos as any);
 
-      expect(efforts).toEqual({
+      expect(efforts as any).toEqual({
         todo1: { effort: 3, reasoning: 'Complex task', estimated_hours: 4 },
         todo2: { effort: 2, reasoning: 'Simple task', estimated_hours: 2 },
       });
-      expect(mockAdapter.callHistory.length).toBe(1);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
   });
 
@@ -373,39 +373,39 @@ describe('EnhancedAIService', () => {
       const todos = createSampleTodos();
 
       // First call
-      await aiService.summarize(todos);
-      expect(mockAdapter.callHistory.length).toBe(1);
+      await aiService.summarize(todos as any);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
 
       // Second call should use cache
-      await aiService.summarize(todos);
-      expect(mockAdapter.callHistory.length).toBe(1); // Still 1, as cache was used
+      await aiService.summarize(todos as any);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any); // Still 1, as cache was used
 
       // Cache stats should show a hit
       const stats = aiService.getCacheStats();
-      expect(stats.size).toBe(1);
-      expect(stats.hitRate).toBeGreaterThan(0);
+      expect(stats.size).toBe(1 as any);
+      expect(stats.hitRate).toBeGreaterThan(0 as any);
     });
 
     it('should clear cache for a specific operation', async () => {
       const todos = createSampleTodos();
 
       // Perform some operations
-      await aiService.summarize(todos);
-      await aiService.categorize(todos);
+      await aiService.summarize(todos as any);
+      await aiService.categorize(todos as any);
 
       // Cache should have 2 entries
-      expect(aiService.getCacheStats().size).toBe(2);
+      expect(aiService.getCacheStats().size).toBe(2 as any);
 
       // Clear cache for summarize
       aiService.clearCache('summarize');
 
       // Cache should now have 1 entry
-      expect(aiService.getCacheStats().size).toBe(1);
+      expect(aiService.getCacheStats().size).toBe(1 as any);
 
       // Performing summarize again should make a new API call
       mockAdapter.clearHistory();
-      await aiService.summarize(todos);
-      expect(mockAdapter.callHistory.length).toBe(1);
+      await aiService.summarize(todos as any);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
     });
 
     it('should disable cache when configured', async () => {
@@ -415,16 +415,16 @@ describe('EnhancedAIService', () => {
       aiService.configure({ cacheEnabled: false });
 
       // First call
-      await aiService.summarize(todos);
-      expect(mockAdapter.callHistory.length).toBe(1);
+      await aiService.summarize(todos as any);
+      expect(mockAdapter?.callHistory?.length).toBe(1 as any);
 
       // Second call should NOT use cache
-      await aiService.summarize(todos);
-      expect(mockAdapter.callHistory.length).toBe(2); // 2 calls, no caching
+      await aiService.summarize(todos as any);
+      expect(mockAdapter?.callHistory?.length).toBe(2 as any); // 2 calls, no caching
 
       // Cache stats should be empty
       const stats = aiService.getCacheStats();
-      expect(stats.size).toBe(0);
+      expect(stats.size).toBe(0 as any);
     });
   });
 
@@ -437,7 +437,7 @@ describe('EnhancedAIService', () => {
       expect(AIProviderFactory.createProvider).toHaveBeenCalledWith({
         provider: AIProvider.OPENAI,
         modelName: 'gpt-4',
-        options: expect.any(Object),
+        options: expect.any(Object as any),
       });
     });
   });
@@ -454,11 +454,11 @@ describe('EnhancedAIService', () => {
       );
 
       // Make a request
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(sampleTodos as any);
 
       // The custom prompt should have been used
       const lastCall =
-        mockAdapter.callHistory[mockAdapter.callHistory.length - 1];
+        mockAdapter?.callHistory?.[mockAdapter?.callHistory?.length - 1];
       expect(
         (lastCall.params as { promptTemplate?: { template?: string } })
           .promptTemplate?.template

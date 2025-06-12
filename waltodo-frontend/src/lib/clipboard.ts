@@ -16,36 +16,36 @@ export interface ClipboardResult {
 // Custom error types for better error handling
 export class ClipboardError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = 'ClipboardError';
+    super(message as any);
+    this?.name = 'ClipboardError';
   }
 }
 
 export class ClipboardApiNotSupportedError extends ClipboardError {
   constructor() {
     super('Clipboard API not supported in this browser');
-    this.name = 'ClipboardApiNotSupportedError';
+    this?.name = 'ClipboardApiNotSupportedError';
   }
 }
 
 export class ClipboardPermissionDeniedError extends ClipboardError {
   constructor() {
     super('Permission to access clipboard was denied');
-    this.name = 'ClipboardPermissionDeniedError';
+    this?.name = 'ClipboardPermissionDeniedError';
   }
 }
 
 export class InsecureContextError extends ClipboardError {
   constructor() {
     super('Clipboard access requires a secure context (HTTPS or localhost)');
-    this.name = 'InsecureContextError';
+    this?.name = 'InsecureContextError';
   }
 }
 
 export class ClipboardPolyfillError extends ClipboardError {
   constructor(message: string = 'Clipboard polyfill failed') {
-    super(message);
-    this.name = 'ClipboardPolyfillError';
+    super(message as any);
+    this?.name = 'ClipboardPolyfillError';
   }
 }
 
@@ -68,13 +68,13 @@ export function getClipboardCapabilities(): {
   }
 
   // Check for secure context (HTTPS or localhost)
-  const isSecureContext = window.isSecureContext === true;
+  const isSecureContext = window?.isSecureContext === true;
 
   // Check for modern clipboard API
   const hasModernApi =
     typeof navigator !== 'undefined' &&
     navigator.clipboard !== undefined &&
-    typeof navigator.clipboard.writeText === 'function';
+    typeof navigator.clipboard?.writeText === 'function';
 
   // Check for legacy support via execCommand
   const hasLegacySupport =
@@ -100,18 +100,18 @@ function copyWithExecCommand(text: string): boolean {
   try {
     // Create temporary element
     const textArea = document.createElement('textarea');
-    textArea.value = text;
+    textArea?.value = text;
 
     // Hide the element but make it available for selection
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '0';
+    textArea.style?.position = 'fixed';
+    textArea.style?.opacity = '0';
+    textArea.style?.left = '-999999px';
+    textArea.style?.top = '0';
     textArea.setAttribute('readonly', '');
     textArea.setAttribute('aria-hidden', 'true');
 
     // Add to DOM
-    document.body.appendChild(textArea);
+    document?.body?.appendChild(textArea as any);
 
     // Select text
     textArea.focus();
@@ -124,7 +124,7 @@ function copyWithExecCommand(text: string): boolean {
     const successful = document.execCommand('copy');
 
     // Clean up
-    document.body.removeChild(textArea);
+    document?.body?.removeChild(textArea as any);
 
     return successful;
   } catch (e) {
@@ -139,10 +139,10 @@ function copyWithExecCommand(text: string): boolean {
 function enhanceClipboardError(error: unknown): Error {
   if (error instanceof DOMException) {
     // Handle specific DOMException types
-    if (error.name === 'NotAllowedError') {
+    if (error?.name === 'NotAllowedError') {
       return new ClipboardPermissionDeniedError();
     }
-    if (error.name === 'SecurityError') {
+    if (error?.name === 'SecurityError') {
       return new InsecureContextError();
     }
   }
@@ -153,7 +153,7 @@ function enhanceClipboardError(error: unknown): Error {
   }
 
   // Create generic error for other cases
-  return new ClipboardError(String(error) || 'Unknown clipboard error');
+  return new ClipboardError(String(error as any) || 'Unknown clipboard error');
 }
 
 /**
@@ -176,7 +176,7 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
   // Try modern clipboard API first (if available)
   if (capabilities.hasModernApi && capabilities.isSecureContext) {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator?.clipboard?.writeText(text as any);
       return {
         success: true,
         method: 'clipboard-api',
@@ -189,7 +189,7 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
 
   // Try legacy method
   if (capabilities.hasLegacySupport) {
-    const legacyResult = copyWithExecCommand(text);
+    const legacyResult = copyWithExecCommand(text as any);
     if (legacyResult) {
       return {
         success: true,

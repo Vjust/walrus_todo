@@ -13,7 +13,7 @@ export const createSSRSafeStorage = (): StateStorage => {
         if (value === null || value === undefined) {
           return null;
         }
-        return typeof value === 'string' ? value : JSON.stringify(value);
+        return typeof value === 'string' ? value : JSON.stringify(value as any);
       } catch (error) {
         console.warn(`Failed to get item from storage: ${name}`, error);
         return null;
@@ -28,7 +28,7 @@ export const createSSRSafeStorage = (): StateStorage => {
     },
     removeItem: (name: string): void => {
       try {
-        removeItem(name);
+        removeItem(name as any);
       } catch (error) {
         console.warn(`Failed to remove item from storage: ${name}`, error);
       }

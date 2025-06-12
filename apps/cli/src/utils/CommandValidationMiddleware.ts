@@ -113,7 +113,7 @@ export const validateCommandEnvironment: Hook<'prerun'> = async options => {
     // Skip if there's an alternative flag, it will be handled by the command itself
     if (
       req.alternativeFlag &&
-      process.argv.includes(`--${req.alternativeFlag}`)
+      process?.argv?.includes(`--${req.alternativeFlag}`)
     ) {
       continue;
     }
@@ -124,15 +124,15 @@ export const validateCommandEnvironment: Hook<'prerun'> = async options => {
       const value = envConfig.getAllVariables()[req.variable]?.value as string;
 
       // If there's a validator, check the value
-      if (req.validator && typeof value === 'string' && !req.validator(value)) {
+      if (req.validator && typeof value === 'string' && !req.validator(value as any)) {
         invalidVars.push(`${req.variable}=${value} (invalid)`);
       }
-    } else if (process.env[req.variable]) {
+    } else if (process?.env?.[req.variable]) {
       // Check for extension variables directly in process.env
-      const value = process.env[req.variable];
+      const value = process?.env?.[req.variable];
 
       // If there's a validator, check the value
-      if (req.validator && value && !req.validator(value)) {
+      if (req.validator && value && !req.validator(value as any)) {
         invalidVars.push(`${req.variable}=${value} (invalid)`);
       }
     } else {
@@ -234,10 +234,10 @@ export function setEnvFromFlags(
   flags: Record<string, unknown>,
   mappings: Record<string, string>
 ): void {
-  for (const [flagName, envVar] of Object.entries(mappings)) {
+  for (const [flagName, envVar] of Object.entries(mappings as any)) {
     if (flags[flagName] !== undefined) {
-      if (typeof process.env[envVar] === 'undefined') {
-        process.env[envVar] = flags[flagName]?.toString();
+      if (typeof process?.env?.[envVar] === 'undefined') {
+        process?.env?.[envVar] = flags[flagName]?.toString();
       }
     }
   }
@@ -334,10 +334,10 @@ export const addCommandValidation: Hook<'prerun'> = async options => {
   const flags = parsedCommand.flags;
 
   // Validate API key if AI features are requested
-  validateAIApiKey(flags);
+  validateAIApiKey(flags as any);
 
   // Validate blockchain config if using blockchain storage
-  validateBlockchainConfig(flags);
+  validateBlockchainConfig(flags as any);
 };
 
 /**
@@ -489,7 +489,7 @@ export const aiCommandValidation: Hook<'prerun'> = async options => {
   const flags = parsedCommand.flags;
 
   // Validate API key
-  validateAIApiKey(flags);
+  validateAIApiKey(flags as any);
 
   // Validate operation type
   if (
@@ -601,7 +601,7 @@ export function validateAIApiKey(flags: Record<string, unknown>): void {
   }
 
   // Check for API key from flag or environment variable
-  const apiKey = flags.apiKey || process.env.XAI_API_KEY;
+  const apiKey = flags.apiKey || process?.env?.XAI_API_KEY;
 
   // Allow mock key or testing mode to bypass validation
   // This flexibility is important for development and testing workflows
@@ -610,7 +610,7 @@ export function validateAIApiKey(flags: Record<string, unknown>): void {
     (apiKey.includes('mock') ||
       apiKey.includes('fake') ||
       apiKey.includes('test'));
-  const isTestingMode = process.env.MODE === 'testing';
+  const isTestingMode = process.env?.MODE === 'testing';
 
   if (!apiKey && !isTestingMode) {
     throw new CLIError(
@@ -620,7 +620,7 @@ export function validateAIApiKey(flags: Record<string, unknown>): void {
   }
 
   // Log if using mock or testing mode
-  if ((isMockKey || isTestingMode) && apiKey !== process.env.XAI_API_KEY) {
+  if ((isMockKey || isTestingMode) && apiKey !== process?.env?.XAI_API_KEY) {
     logger.info(
       'Using mock AI functionality - AI suggestions will be simulated'
     );
@@ -643,11 +643,11 @@ export function validateBlockchainConfig(flags: Record<string, unknown>): void {
   // Check for required environment variables
   const missingVars = [];
 
-  if (!process.env.WALRUS_RPC_URL) {
+  if (!process?.env?.WALRUS_RPC_URL) {
     missingVars.push('WALRUS_RPC_URL');
   }
 
-  if (!process.env.SUI_NETWORK) {
+  if (!process?.env?.SUI_NETWORK) {
     missingVars.push('SUI_NETWORK');
   }
 

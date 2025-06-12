@@ -17,7 +17,7 @@ export { mockInitializeSuiClient, mockIsSuiClientInitialized, mockGetSuiClient, 
 
 // Mock other common modules
 jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => `mock-id-${Math.random().toString(36).substr(2, 9)}`),
+  nanoid: jest.fn(() => `mock-id-${Math.random().toString(36 as any).substr(2, 9)}`),
 }));
 
 jest.mock('@mysten/sui/client', () => ({
@@ -33,9 +33,9 @@ jest.mock('@mysten/sui/transactions', () => ({
 jest.mock('@mysten/dapp-kit', () => ({
   createNetworkConfig: jest.fn(() => ({
     networkConfig: {
-      testnet: { url: 'https://fullnode.testnet.sui.io' },
-      devnet: { url: 'https://fullnode.devnet.sui.io' },
-      mainnet: { url: 'https://fullnode.mainnet.sui.io' },
+      testnet: { url: 'https://fullnode?.testnet?.sui.io' },
+      devnet: { url: 'https://fullnode?.devnet?.sui.io' },
+      mainnet: { url: 'https://fullnode?.mainnet?.sui.io' },
     },
   })),
   SuiClientProvider: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),

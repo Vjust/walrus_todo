@@ -13,13 +13,13 @@ interface WalletErrorModalProps {
 }
 
 export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false as any);
 
   useEffect(() => {
     if (error) {
-      setIsVisible(true);
+      setIsVisible(true as any);
     } else {
-      setIsVisible(false);
+      setIsVisible(false as any);
     }
   }, [error]);
 
@@ -27,10 +27,10 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
     return null;
   }
 
-  const { message, suggestion } = getWalletErrorMessage(error);
+  const { message, suggestion } = getWalletErrorMessage(error as any);
 
   const handleDismiss = () => {
-    setIsVisible(false);
+    setIsVisible(false as any);
     onDismiss();
   };
 
@@ -51,7 +51,7 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
               strokeLinecap='round'
               strokeLinejoin='round'
               strokeWidth={2}
-              d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+              d='M12 9v2m0 4h.01m-6.938 4h13?.856c1?.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1?.333?.192 3 1.732 3z'
             />
           </svg>
         ),
@@ -126,7 +126,7 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
               {/* Installation links for wallet not installed errors */}
               {error instanceof WalletNotInstalledError && (
                 <div className='mt-3'>
-                  {error.walletName.includes('Phantom') && (
+                  {error?.walletName?.includes('Phantom') && (
                     <a
                       href='https://phantom.app/download'
                       target='_blank'
@@ -137,10 +137,10 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
                     </a>
                   )}
 
-                  {(error.walletName.includes('Sui') ||
-                    error.walletName.includes('Slush')) && (
+                  {(error?.walletName?.includes('Sui') ||
+                    error?.walletName?.includes('Slush')) && (
                     <a
-                      href='https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil'
+                      href='https://chrome?.google?.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil'
                       target='_blank'
                       rel='noopener noreferrer'
                       className='inline-flex items-center px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700'
@@ -149,9 +149,9 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
                     </a>
                   )}
 
-                  {error.walletName.includes('Backpack') && (
+                  {error?.walletName?.includes('Backpack') && (
                     <a
-                      href='https://www.backpack.app/download'
+                      href='https://www?.backpack?.app/download'
                       target='_blank'
                       rel='noopener noreferrer'
                       className='inline-flex items-center px-4 py-2 text-sm text-white bg-orange-600 rounded-md hover:bg-orange-700'
