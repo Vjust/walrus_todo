@@ -25,7 +25,7 @@ export class WalrusError extends Error {
       cause,
     } = options;
 
-    super(message as any);
+    super(message);
     if (cause) {
       Object.defineProperty(this, 'cause', {
         value: cause,
@@ -365,7 +365,7 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return String(error as any);
+  return String(error);
 }
 
 /**
@@ -375,5 +375,5 @@ export function toErrorWithMessage(error: unknown): { message: string } {
   if (error instanceof Error) {
     return error;
   }
-  return { message: String(error as any) };
+  return { message: String(error) };
 }

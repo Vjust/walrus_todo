@@ -45,19 +45,19 @@ export function createMockOCLIFConfig(): Config {
       ? jest.fn().mockResolvedValue({ successes: [], failures: [] })
       : () => Promise.resolve({ successes: [], failures: [] }),
     runCommand: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockResolvedValue(undefined as any)
+      ? jest.fn().mockResolvedValue(undefined)
       : () => Promise.resolve(),
     findCommand: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockReturnValue(undefined as any)
+      ? jest.fn().mockReturnValue(undefined)
       : () => undefined,
     findTopic: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockReturnValue(undefined as any)
+      ? jest.fn().mockReturnValue(undefined)
       : () => undefined,
     getAllCommandIDs: typeof jest !== 'undefined' && jest.fn 
       ? jest.fn().mockReturnValue([])
       : () => [],
     load: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockResolvedValue(undefined as any)
+      ? jest.fn().mockResolvedValue(undefined)
       : () => Promise.resolve(),
     scopedEnvVar: typeof jest !== 'undefined' && jest.fn 
       ? jest.fn((key: string) => `WALTODO_${key}`)
@@ -66,10 +66,10 @@ export function createMockOCLIFConfig(): Config {
       ? jest.fn((key: string) => `WALTODO_${key}`)
       : (key: string) => `WALTODO_${key}`,
     scopedEnvVarTrue: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockReturnValue(false as any)
+      ? jest.fn().mockReturnValue(false)
       : () => false,
     envVarTrue: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockReturnValue(false as any)
+      ? jest.fn().mockReturnValue(false)
       : () => false,
 
     // Additional properties that might be needed
@@ -87,7 +87,7 @@ export function createMockOCLIFConfig(): Config {
       ? jest.fn()
       : () => {},
     emit: typeof jest !== 'undefined' && jest.fn 
-      ? jest.fn().mockReturnValue(true as any)
+      ? jest.fn().mockReturnValue(true)
       : () => true,
 
     // Additional utility methods
@@ -121,7 +121,7 @@ export async function initializeCommandForTest<T extends Command>(
   const command = new CommandClass(argv, config);
 
   // Ensure the config property is set
-  (command as any).config = config;
+  (command).config = config;
 
   // Mock commonly used methods
   command?.log = typeof jest !== 'undefined' && typeof jest?.fn === 'function'
@@ -130,20 +130,20 @@ export async function initializeCommandForTest<T extends Command>(
   command?.warn = typeof jest !== 'undefined' && typeof jest?.fn === 'function'
     ? jest.fn() 
     : (input: string | Error) => input;
-  (command as any).error = typeof jest !== 'undefined' && typeof jest?.fn === 'function'
+  (command).error = typeof jest !== 'undefined' && typeof jest?.fn === 'function'
     ? jest.fn().mockImplementation((message: string | Error, options?: { exit?: boolean }) => {
-        const error = typeof message === 'string' ? new Error(message as any) : message;
+        const error = typeof message === 'string' ? new Error(message) : message;
         if (options?.exit) {
           throw error;
         }
-        console.error(error as any);
+        console.error(error);
       })
     : (message: string | Error, options?: { exit?: boolean }) => {
-        const error = typeof message === 'string' ? new Error(message as any) : message;
+        const error = typeof message === 'string' ? new Error(message) : message;
         if (options?.exit) {
           throw error;
         }
-        console.error(error as any);
+        console.error(error);
       };
 
   // Mock parse method if requested
@@ -160,7 +160,7 @@ export async function initializeCommandForTest<T extends Command>(
 
   // Initialize the command
   try {
-    await (command as any).init();
+    await (command).init();
   } catch (error) {
     // Some commands might fail during init in test environment, that's okay
     console.warn('Command init failed during test setup:', error);
@@ -207,7 +207,7 @@ export async function runCommandInTest<T extends Command>(
   }
 
   // Run the command using public API
-  await (command as any).run();
+  await (command).run();
 
   return { command, output, errors };
 }
@@ -259,10 +259,10 @@ export function createMockCommand<T extends Command>(
   const command = new CommandClass([], config);
 
   // Set up basic mocks
-  (command as any).config = config;
+  (command).config = config;
   command?.log = jest.fn();
   command?.warn = jest.fn();
-  (command as any).error = jest.fn();
+  (command).error = jest.fn();
   const parseMock = jest.fn().mockResolvedValue({ flags: {}, args: {} });
   Object.defineProperty(command, 'parse', {
     value: parseMock,

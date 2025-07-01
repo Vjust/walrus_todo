@@ -45,8 +45,8 @@ describe('WalrusSitesDeploymentService', () => {
 
     // Setup mocked WalrusClient
     mockWalrusClient = new WalrusClient() as jest.Mocked<WalrusClient>;
-    mockWalrusClient?.connect = jest.fn().mockResolvedValue(undefined as any);
-    mockWalrusClient?.checkConnection = jest.fn().mockResolvedValue(true as any);
+    mockWalrusClient?.connect = jest.fn().mockResolvedValue(undefined);
+    mockWalrusClient?.checkConnection = jest.fn().mockResolvedValue(true);
     mockWalrusClient?.upload = jest.fn().mockImplementation(async (data: Uint8Array | string) => ({
       blobId: `blob-${Buffer.from(typeof data === 'string' ? data : data).toString('base64').slice(0, 8)}`,
       size: typeof data === 'string' ? data.length : data.length,
@@ -57,8 +57,8 @@ describe('WalrusSitesDeploymentService', () => {
     }));
     mockWalrusClient?.uploadJson = jest.fn().mockImplementation(async (data: unknown) => ({
       blobId: `manifest-blob-${Date.now()}`,
-      size: JSON.stringify(data as any).length,
-      encodedSize: JSON.stringify(data as any).length,
+      size: JSON.stringify(data).length,
+      encodedSize: JSON.stringify(data).length,
       cost: 0.002,
       transactionId: 'tx-manifest-123',
       explorerUrl: 'https://explorer?.sui?.io/tx/tx-manifest-123'
@@ -81,7 +81,7 @@ describe('WalrusSitesDeploymentService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    if (fs.existsSync(tempDir as any)) {
+    if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
@@ -103,7 +103,7 @@ describe('WalrusSitesDeploymentService', () => {
           },
           on: jest.fn((event, callback) => {
             if (event === 'close') {
-              setImmediate(() => callback(0 as any)); // Success exit code
+              setImmediate(() => callback(0)); // Success exit code
             }
           }),
           kill: jest.fn()
@@ -121,23 +121,23 @@ describe('WalrusSitesDeploymentService', () => {
         enableRecovery: true,
       };
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
 
-      expect(result.success).toBe(true as any);
+      expect(result.success).toBe(true);
       expect(result.deploymentId).toMatch(/^deploy_\d+_[a-f0-9]{8}$/);
       expect(result.siteId).toBe('test-site-id-123');
       expect(result.siteUrl).toBe('https://test-site-id-123.walrus-testnet.site');
-      expect(result.totalFiles).toBe(6 as any);
-      expect(result.duration).toBeGreaterThan(0 as any);
+      expect(result.totalFiles).toBe(6);
+      expect(result.duration).toBeGreaterThan(0);
 
       // Verify all files were uploaded
-      expect(mockWalrusClient.upload).toHaveBeenCalledTimes(6 as any);
+      expect(mockWalrusClient.upload).toHaveBeenCalledTimes(6);
       
       // Verify manifest was created and uploaded
-      expect(mockWalrusClient.uploadJson).toHaveBeenCalledTimes(1 as any);
+      expect(mockWalrusClient.uploadJson).toHaveBeenCalledTimes(1);
       
       // Verify site-builder was called
-      expect(mockSpawn as any).toHaveBeenCalledWith(
+      expect(mockSpawn).toHaveBeenCalledWith(
         'mock-site-builder',
         expect.arrayContaining([
           '--context', 'testnet',
@@ -145,7 +145,7 @@ describe('WalrusSitesDeploymentService', () => {
           '--epochs', '5',
           '--site-name', 'test-site'
         ]),
-        expect.any(Object as any)
+        expect.any(Object)
       );
     });
 
@@ -156,9 +156,9 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      await deploymentService.deploy(options as any);
+      await deploymentService.deploy(options);
 
-      const manifestCall = mockWalrusClient?.uploadJson?.mock?.calls?.[0][0] as any;
+      const manifestCall = mockWalrusClient?.uploadJson?.mock?.calls?.[0][0];
       
       expect(manifestCall.name).toBe('test-site');
       expect(manifestCall.version).toBe('1?.0?.0');
@@ -182,14 +182,14 @@ describe('WalrusSitesDeploymentService', () => {
       };
 
       const startTime = Date.now();
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
       const endTime = Date.now();
 
-      expect(result.success).toBe(true as any);
+      expect(result.success).toBe(true);
       expect(result.siteUrl).toBe('https://test-site-id-123?.walrus?.site');
       
       // Should have taken at least 3 seconds due to mainnet warning delay
-      expect(endTime - startTime).toBeGreaterThan(2900 as any);
+      expect(endTime - startTime).toBeGreaterThan(2900);
     });
   });
 
@@ -201,9 +201,9 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: '/non/existent/directory',
       };
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
 
-      expect(result.success).toBe(false as any);
+      expect(result.success).toBe(false);
       expect(result.errors).toContain('Build directory not found: /non/existent/directory');
     });
 
@@ -217,14 +217,14 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
 
-      expect(result.success).toBe(false as any);
+      expect(result.success).toBe(false);
       expect(result.errors).toContain('Required file missing: index.html');
     });
 
     it('should handle Walrus connection failures', async () => {
-      mockWalrusClient?.checkConnection?.mockResolvedValue(false as any);
+      mockWalrusClient?.checkConnection?.mockResolvedValue(false);
 
       const options = {
         siteName: 'test-site',
@@ -232,9 +232,9 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
 
-      expect(result.success).toBe(false as any);
+      expect(result.success).toBe(false);
       expect(result.errors).toContain('Failed to connect to Walrus storage');
     });
 
@@ -260,10 +260,10 @@ describe('WalrusSitesDeploymentService', () => {
         maxRetries: 3,
       };
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
 
-      expect(result.success).toBe(false as any);
-      expect(uploadAttempts as any).toBeGreaterThan(1 as any); // Should have retried
+      expect(result.success).toBe(false);
+      expect(uploadAttempts).toBeGreaterThan(1); // Should have retried
     });
 
     it('should handle site-builder failures', async () => {
@@ -279,7 +279,7 @@ describe('WalrusSitesDeploymentService', () => {
         },
         on: jest.fn((event, callback) => {
           if (event === 'close') {
-            setImmediate(() => callback(1 as any)); // Error exit code
+            setImmediate(() => callback(1)); // Error exit code
           }
         }),
         kill: jest.fn()
@@ -291,9 +291,9 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
 
-      expect(result.success).toBe(false as any);
+      expect(result.success).toBe(false);
       expect(result.errors).toEqual(
         expect.arrayContaining([
           expect.stringContaining('site-builder failed with exit code 1')
@@ -313,8 +313,8 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      const failedResult = await deploymentService.deploy(options as any);
-      expect(failedResult.success).toBe(false as any);
+      const failedResult = await deploymentService.deploy(options);
+      expect(failedResult.success).toBe(false);
 
       // Now fix the upload and resume
       mockWalrusClient?.upload?.mockResolvedValue({
@@ -335,21 +335,21 @@ describe('WalrusSitesDeploymentService', () => {
         stderr: { on: jest.fn() },
         on: jest.fn((event, callback) => {
           if (event === 'close') {
-            setImmediate(() => callback(0 as any));
+            setImmediate(() => callback(0));
           }
         }),
         kill: jest.fn()
       }));
 
       const resumedResult = await deploymentService.resumeDeployment(failedResult.deploymentId);
-      expect(resumedResult.success).toBe(true as any);
+      expect(resumedResult.success).toBe(true);
     });
 
     it('should not resume non-resumable deployments', async () => {
       const invalidDeploymentId = 'invalid-deployment-id';
       
       await expect(
-        deploymentService.resumeDeployment(invalidDeploymentId as any)
+        deploymentService.resumeDeployment(invalidDeploymentId)
       ).rejects.toThrow('cannot be resumed');
     });
   });
@@ -366,13 +366,13 @@ describe('WalrusSitesDeploymentService', () => {
       };
 
       // Start deployment in background
-      const deploymentPromise = deploymentService.deploy(options as any);
+      const deploymentPromise = deploymentService.deploy(options);
       
       // Give it time to initialize
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const deployments = deploymentService.listDeployments();
-      expect(deployments as any).toHaveLength(1 as any);
+      expect(deployments).toHaveLength(1);
       expect(deployments[0].siteName).toBe('test-site');
       expect(deployments[0].status).toBe('pending');
 
@@ -393,7 +393,7 @@ describe('WalrusSitesDeploymentService', () => {
       };
 
       // Start deployment
-      const deploymentPromise = deploymentService.deploy(options as any);
+      const deploymentPromise = deploymentService.deploy(options);
       
       // Give it time to start
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -401,11 +401,11 @@ describe('WalrusSitesDeploymentService', () => {
       const deployments = deploymentService.listDeployments();
       const deploymentId = deployments[0].deploymentId;
       
-      const progress = deploymentService.getDeploymentProgress(deploymentId as any);
-      expect(progress as any).toBeDefined();
-      expect(progress!.deploymentId).toBe(deploymentId as any);
+      const progress = deploymentService.getDeploymentProgress(deploymentId);
+      expect(progress).toBeDefined();
+      expect(progress!.deploymentId).toBe(deploymentId);
       expect(progress!.phase).toBe('validation');
-      expect(progress!.totalFiles).toBe(6 as any);
+      expect(progress!.totalFiles).toBe(6);
 
       // Resolve uploads and cancel
       resolveUpload!({
@@ -415,7 +415,7 @@ describe('WalrusSitesDeploymentService', () => {
         cost: 0.001,
       });
 
-      await deploymentService.cancelDeployment(deploymentId as any);
+      await deploymentService.cancelDeployment(deploymentId);
     });
 
     it('should cancel active deployments', async () => {
@@ -438,7 +438,7 @@ describe('WalrusSitesDeploymentService', () => {
       };
 
       // Start deployment
-      const deploymentPromise = deploymentService.deploy(options as any);
+      const deploymentPromise = deploymentService.deploy(options);
       
       // Give it time to start
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -446,7 +446,7 @@ describe('WalrusSitesDeploymentService', () => {
       const deployments = deploymentService.listDeployments();
       const deploymentId = deployments[0].deploymentId;
 
-      await deploymentService.cancelDeployment(deploymentId as any);
+      await deploymentService.cancelDeployment(deploymentId);
 
       // Verify process was killed
       if (mockProcess) {
@@ -464,22 +464,22 @@ describe('WalrusSitesDeploymentService', () => {
       // Create a deployment but let it fail
       mockWalrusClient?.upload?.mockRejectedValue(new Error('Test failure'));
 
-      const result = await deploymentService.deploy(options as any);
+      const result = await deploymentService.deploy(options);
       
       const details = deploymentService.getDeploymentDetails(result.deploymentId);
-      expect(details as any).toBeDefined();
+      expect(details).toBeDefined();
       expect(details!.siteName).toBe('test-site');
       expect(details!.network).toBe('testnet');
       expect(details!.status).toBe('failed');
-      expect(details!.errors.length).toBeGreaterThan(0 as any);
+      expect(details!.errors.length).toBeGreaterThan(0);
     });
 
     it('should clean up old deployments', async () => {
       // This test would need to create deployments with old timestamps
       // For now, just verify the method exists and runs
-      const cleanedCount = await deploymentService.cleanupOldDeployments(1 as any);
+      const cleanedCount = await deploymentService.cleanupOldDeployments(1);
       expect(typeof cleanedCount).toBe('number');
-      expect(cleanedCount as any).toBeGreaterThanOrEqual(0 as any);
+      expect(cleanedCount).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -497,7 +497,7 @@ describe('WalrusSitesDeploymentService', () => {
         stderr: { on: jest.fn() },
         on: jest.fn((event, callback) => {
           if (event === 'close') {
-            setImmediate(() => callback(0 as any));
+            setImmediate(() => callback(0));
           }
         }),
         kill: jest.fn()
@@ -509,7 +509,7 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      const testnetResult = await deploymentService.deploy(testnetOptions as any);
+      const testnetResult = await deploymentService.deploy(testnetOptions);
       expect(testnetResult.siteUrl).toBe('https://testnet-site-123.walrus-testnet.site');
 
       // Test mainnet URL construction
@@ -530,13 +530,13 @@ describe('WalrusSitesDeploymentService', () => {
         stderr: { on: jest.fn() },
         on: jest.fn((event, callback) => {
           if (event === 'close') {
-            setImmediate(() => callback(0 as any));
+            setImmediate(() => callback(0));
           }
         }),
         kill: jest.fn()
       }));
 
-      const mainnetResult = await deploymentService.deploy(mainnetOptions as any);
+      const mainnetResult = await deploymentService.deploy(mainnetOptions);
       expect(mainnetResult.siteUrl).toBe('https://mainnet-site-456?.walrus?.site');
     });
   });
@@ -572,7 +572,7 @@ describe('WalrusSitesDeploymentService', () => {
         stderr: { on: jest.fn() },
         on: jest.fn((event, callback) => {
           if (event === 'close') {
-            setImmediate(() => callback(0 as any));
+            setImmediate(() => callback(0));
           }
         }),
         kill: jest.fn()
@@ -584,9 +584,9 @@ describe('WalrusSitesDeploymentService', () => {
         buildDirectory: mockBuildDir,
       };
 
-      const result = await deploymentService.deploy(options as any);
-      expect(result.success).toBe(true as any);
-      expect(uploadCount as any).toBe(6 as any); // All files uploaded
+      const result = await deploymentService.deploy(options);
+      expect(result.success).toBe(true);
+      expect(uploadCount).toBe(6); // All files uploaded
     });
   });
 });

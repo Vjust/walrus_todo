@@ -172,7 +172,7 @@ export class BackgroundDataRetriever extends EventEmitter {
    * Cancel a background retrieval operation
    */
   async cancelRetrieval(operationId: string): Promise<boolean> {
-    const status = await this.getRetrievalStatus(operationId as any);
+    const status = await this.getRetrievalStatus(operationId);
     if (!status || status?.phase === 'complete') {
       return false;
     }
@@ -219,7 +219,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 0,
       });
 
-      jobManager.startJob(jobId as any);
+      jobManager.startJob(jobId);
       jobManager.updateProgress(jobId, 0);
 
       // Connect to Walrus
@@ -263,7 +263,7 @@ export class BackgroundDataRetriever extends EventEmitter {
               processedItems: 0,
             });
 
-            const result = await walrusStorage.retrieveTodo(blobId as any);
+            const result = await walrusStorage.retrieveTodo(blobId);
 
             await this.updateProgress(operationId, {
               phase: 'processing',
@@ -306,7 +306,7 @@ export class BackgroundDataRetriever extends EventEmitter {
           data: todo,
           metadata: {
             totalItems: 1,
-            bytesTransferred: JSON.stringify(todo as any).length,
+            bytesTransferred: JSON.stringify(todo).length,
             duration,
             chunks: 1,
             errors: [],
@@ -344,7 +344,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         });
       } catch (retrievalError) {
         throw new CLIError(
-          `Failed to retrieve blob ${blobId}: ${retrievalError instanceof Error ? retrievalError.message : String(retrievalError as any)}`,
+          `Failed to retrieve blob ${blobId}: ${retrievalError instanceof Error ? retrievalError.message : String(retrievalError)}`,
           'WALRUS_RETRIEVAL_FAILED'
         );
       } finally {
@@ -357,11 +357,11 @@ export class BackgroundDataRetriever extends EventEmitter {
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
 
       const result: RetrievalResult = {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage as any),
+        error: error instanceof Error ? error : new Error(errorMessage),
         metadata: {
           totalItems: 1,
           bytesTransferred: 0,
@@ -409,7 +409,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 0,
       });
 
-      jobManager.startJob(jobId as any);
+      jobManager.startJob(jobId);
 
       // Connect to Sui and Walrus
       const suiClient = new SuiClient({ url: options.network || 'testnet' });
@@ -430,7 +430,7 @@ export class BackgroundDataRetriever extends EventEmitter {
 
       // Get NFT data
       const nftData = await RetryManager.retry(
-        () => suiNftStorage.getTodoNft(objectId as any),
+        () => suiNftStorage.getTodoNft(objectId),
         {
           maxRetries: options.retries || RETRY_CONFIG.ATTEMPTS,
           onRetry: (error, attempt) => {
@@ -505,7 +505,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         data: combinedData,
         metadata: {
           totalItems: 1,
-          bytesTransferred: JSON.stringify(combinedData as any).length,
+          bytesTransferred: JSON.stringify(combinedData).length,
           duration: Date.now() - Date.now(),
           chunks: 1,
           errors: [],
@@ -544,11 +544,11 @@ export class BackgroundDataRetriever extends EventEmitter {
       await walrusStorage.disconnect();
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
 
       const result: RetrievalResult = {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage as any),
+        error: error instanceof Error ? error : new Error(errorMessage),
         metadata: {
           totalItems: 1,
           bytesTransferred: 0,
@@ -592,7 +592,7 @@ export class BackgroundDataRetriever extends EventEmitter {
         processedItems: 0,
       });
 
-      jobManager.startJob(jobId as any);
+      jobManager.startJob(jobId);
 
       const batchSize = options.chunkSize || 5;
       const results: any[] = [];
@@ -641,7 +641,7 @@ export class BackgroundDataRetriever extends EventEmitter {
             }
           } catch (error) {
             const errorMessage =
-              error instanceof Error ? error.message : String(error as any);
+              error instanceof Error ? error.message : String(error);
             errors.push(`Item ${itemIndex} (${item.id}): ${errorMessage}`);
             jobManager.writeJobLog(
               jobId,
@@ -651,7 +651,7 @@ export class BackgroundDataRetriever extends EventEmitter {
           }
         });
 
-        const batchResults = await Promise.allSettled(batchPromises as any);
+        const batchResults = await Promise.allSettled(batchPromises);
         results.push(...batchResults);
 
         // Small delay between batches
@@ -726,11 +726,11 @@ export class BackgroundDataRetriever extends EventEmitter {
       );
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
 
       const result: RetrievalResult = {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage as any),
+        error: error instanceof Error ? error : new Error(errorMessage),
         metadata: {
           totalItems: items.length,
           bytesTransferred: 0,
@@ -782,13 +782,13 @@ export class BackgroundDataRetriever extends EventEmitter {
       }, timeoutMs);
 
       const checkCompletion = async () => {
-        const status = await this.getRetrievalStatus(operationId as any);
+        const status = await this.getRetrievalStatus(operationId);
 
         if (status?.phase === 'complete') {
-          clearTimeout(timeoutId as any);
-          const result = await this.getRetrievalResult(operationId as any);
+          clearTimeout(timeoutId);
+          const result = await this.getRetrievalResult(operationId);
           if (result) {
-            resolve(result as any);
+            resolve(result);
           } else {
             reject(new Error(`No result found for operation ${operationId}`));
           }

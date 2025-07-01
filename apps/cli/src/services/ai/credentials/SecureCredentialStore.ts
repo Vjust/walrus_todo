@@ -83,7 +83,7 @@ export class SecureCredentialStore {
     );
 
     // Ensure config directory exists with restricted permissions
-    if (!fs.existsSync(configDir as any)) {
+    if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true, mode: 0o700 }); // Only owner can access
     } else {
       // Ensure permissions are correct on existing directory
@@ -142,7 +142,7 @@ export class SecureCredentialStore {
       } else {
         try {
           const key = fs.readFileSync(this.keyFile);
-          this?.masterKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
+          this?.masterKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
           // Validate key length
           if (
@@ -163,8 +163,8 @@ export class SecureCredentialStore {
       if (fs.existsSync(this.storeFile)) {
         try {
           const data = fs.readFileSync(this.storeFile);
-          const dataBuffer = Buffer.isBuffer(data as any) ? data : Buffer.from(data as any);
-          await this.loadCredentials(dataBuffer as any);
+          const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+          await this.loadCredentials(dataBuffer);
         } catch (_error) {
           this?.logger?.error(`Failed to load credentials: ${_error}`);
           // Initialize with empty credentials on error
@@ -179,7 +179,7 @@ export class SecureCredentialStore {
     } catch (_error) {
       this?.initialized = false;
       this?.logger?.error(
-        `Failed to initialize credential store: ${_error instanceof Error ? _error.message : String(_error as any)}`
+        `Failed to initialize credential store: ${_error instanceof Error ? _error.message : String(_error)}`
       );
       throw _error;
     }
@@ -194,15 +194,15 @@ export class SecureCredentialStore {
     }
 
     try {
-      // Format: version(1 as any) + data
+      // Format: version(1) + data
       const version = encryptedData[0];
 
       if (version !== 1) {
         throw new Error(`Unsupported credential store version: ${version}`);
       }
 
-      const dataToDecrypt = encryptedData.subarray(1 as any);
-      const decryptedData = this.decrypt(dataToDecrypt as any);
+      const dataToDecrypt = encryptedData.subarray(1);
+      const decryptedData = this.decrypt(dataToDecrypt);
 
       if (!decryptedData) {
         throw new Error('Failed to decrypt credential store');
@@ -212,7 +212,7 @@ export class SecureCredentialStore {
 
       // Convert to Map
       this?.credentials = new Map();
-      for (const [key, value] of Object.entries(credentials as any)) {
+      for (const [key, value] of Object.entries(credentials)) {
         this?.credentials?.set(key, {
           metadata: (value as Record<string, unknown>)
             .metadata as CredentialMetadata,
@@ -263,10 +263,10 @@ export class SecureCredentialStore {
       }
 
       // Encrypt the data
-      const dataToEncrypt = JSON.stringify(credentials as any);
-      const encryptedData = this.encrypt(dataToEncrypt as any);
+      const dataToEncrypt = JSON.stringify(credentials);
+      const encryptedData = this.encrypt(dataToEncrypt);
 
-      // Format: version(1 as any) + encrypted data
+      // Format: version(1) + encrypted data
       const dataToSave = Buffer.concat([Buffer.from([1]), encryptedData]);
 
       // Write to file with secure permissions
@@ -294,7 +294,7 @@ export class SecureCredentialStore {
     // Validate the credential
     try {
       // Sanitize the input
-      const sanitizedValue = ApiKeyValidator.sanitize(value as any);
+      const sanitizedValue = ApiKeyValidator.sanitize(value);
 
       // Validate format
       ApiKeyValidator.validate(
@@ -326,7 +326,7 @@ export class SecureCredentialStore {
       }
 
       // Encrypt the value
-      const encryptedValue = this.encryptValue(sanitizedValue as any);
+      const encryptedValue = this.encryptValue(sanitizedValue);
 
       // Store in memory
       this?.credentials?.set(provider, {
@@ -344,7 +344,7 @@ export class SecureCredentialStore {
         throw _error;
       }
       throw new CLIError(
-        `Failed to store credential: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+        `Failed to store credential: ${_error instanceof Error ? _error.message : String(_error)}`,
         'CREDENTIAL_STORE_ERROR'
       );
     }
@@ -365,7 +365,7 @@ export class SecureCredentialStore {
     }
 
     // Check if credential exists
-    const entry = this?.credentials?.get(provider as any);
+    const entry = this?.credentials?.get(provider);
     if (!entry) {
       // Check environment variables as fallback
       const envKey = `${provider.toUpperCase()}_API_KEY`;
@@ -475,7 +475,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    const entry = this?.credentials?.get(provider as any);
+    const entry = this?.credentials?.get(provider);
     if (!entry) {
       // Check environment variables for ad-hoc metadata
       const envKey = `${provider.toUpperCase()}_API_KEY`;
@@ -528,7 +528,7 @@ export class SecureCredentialStore {
     }
 
     // Add environment variables as pseudo-credentials
-    for (const provider of Object.values(AIProvider as any)) {
+    for (const provider of Object.values(AIProvider)) {
       const envKey = `${provider.toUpperCase()}_API_KEY`;
 
       if (process?.env?.[envKey] && !results.some(m => m?.provider === provider)) {
@@ -560,8 +560,8 @@ export class SecureCredentialStore {
     }
 
     // Check stored credentials
-    if (this?.credentials?.has(provider as any)) {
-      const entry = this?.credentials?.get(provider as any)!;
+    if (this?.credentials?.has(provider)) {
+      const entry = this?.credentials?.get(provider)!;
 
       // Check if credential has expired
       if (
@@ -587,7 +587,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    if (!this?.credentials?.has(provider as any)) {
+    if (!this?.credentials?.has(provider)) {
       throw new CLIError(
         `No credential found for provider "${provider}"`,
         'CREDENTIAL_NOT_FOUND'
@@ -595,7 +595,7 @@ export class SecureCredentialStore {
     }
 
     // Remove from memory
-    this?.credentials?.delete(provider as any);
+    this?.credentials?.delete(provider);
 
     // Save changes
     await this.saveCredentials();
@@ -614,7 +614,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    const entry = this?.credentials?.get(provider as any);
+    const entry = this?.credentials?.get(provider);
     if (!entry) {
       throw new CLIError(
         `No credential found for provider "${provider}"`,
@@ -643,7 +643,7 @@ export class SecureCredentialStore {
       await this.initializeStore();
     }
 
-    const entry = this?.credentials?.get(provider as any);
+    const entry = this?.credentials?.get(provider);
     if (!entry) {
       throw new CLIError(
         `No credential found for provider "${provider}"`,
@@ -677,7 +677,7 @@ export class SecureCredentialStore {
     let existingMetadata: Partial<CredentialMetadata> = {};
 
     try {
-      const entry = this?.credentials?.get(provider as any);
+      const entry = this?.credentials?.get(provider);
       if (entry) {
         existingMetadata = { ...entry.metadata };
         delete existingMetadata.id; // Will generate new ID
@@ -690,7 +690,7 @@ export class SecureCredentialStore {
     }
 
     // Validate new value
-    const sanitizedValue = ApiKeyValidator.sanitize(newValue as any);
+    const sanitizedValue = ApiKeyValidator.sanitize(newValue);
     ApiKeyValidator.validate(
       provider,
       sanitizedValue,
@@ -733,7 +733,7 @@ export class SecureCredentialStore {
     };
 
     // Encrypt the value
-    const encryptedValue = this.encryptValue(sanitizedValue as any);
+    const encryptedValue = this.encryptValue(sanitizedValue);
 
     // Store in memory
     this?.credentials?.set(provider, {
@@ -818,7 +818,7 @@ export class SecureCredentialStore {
       const aad = Buffer.from(
         `${CLI_CONFIG.APP_NAME}-credential-${Date.now()}`
       );
-      cipher.setAAD(aad as any);
+      cipher.setAAD(aad);
 
       // Encrypt
       const encrypted = Buffer.concat([
@@ -829,7 +829,7 @@ export class SecureCredentialStore {
       // Get auth tag
       const authTag = cipher.getAuthTag();
 
-      // Format: saltSize(1 as any) + salt + ivSize(1 as any) + iv + tagSize(1 as any) + tag + aadSize(2 as any) + aad + encrypted
+      // Format: saltSize(1) + salt + ivSize(1) + iv + tagSize(1) + tag + aadSize(2) + aad + encrypted
       const result = Buffer.alloc(
         1 +
           salt.length +
@@ -890,7 +890,7 @@ export class SecureCredentialStore {
     }
 
     // Validate input
-    if (!encryptedValue || !Buffer.isBuffer(encryptedValue as any)) {
+    if (!encryptedValue || !Buffer.isBuffer(encryptedValue)) {
       throw new CLIError('Invalid encrypted value', 'INVALID_CRYPTO_INPUT');
     }
 
@@ -924,7 +924,7 @@ export class SecureCredentialStore {
           'INVALID_CRYPTO_INPUT'
         );
       }
-      const saltSize = encryptedValue.readUInt8(offset as any);
+      const saltSize = encryptedValue.readUInt8(offset);
       offset += 1;
 
       if (offset + saltSize > encryptedValue.length) {
@@ -937,25 +937,25 @@ export class SecureCredentialStore {
       offset += saltSize;
 
       // IV
-      const ivSize = encryptedValue.readUInt8(offset as any);
+      const ivSize = encryptedValue.readUInt8(offset);
       offset += 1;
       const iv = encryptedValue.subarray(offset, offset + ivSize);
       offset += ivSize;
 
       // Auth Tag
-      const tagSize = encryptedValue.readUInt8(offset as any);
+      const tagSize = encryptedValue.readUInt8(offset);
       offset += 1;
       const authTag = encryptedValue.subarray(offset, offset + tagSize);
       offset += tagSize;
 
       // AAD
-      const aadSize = encryptedValue.readUInt16BE(offset as any);
+      const aadSize = encryptedValue.readUInt16BE(offset);
       offset += 2;
       const aad = encryptedValue.subarray(offset, offset + aadSize);
       offset += aadSize;
 
       // Encrypted value
-      const encrypted = encryptedValue.subarray(offset as any);
+      const encrypted = encryptedValue.subarray(offset);
 
       // Derive key
       const key = crypto.pbkdf2Sync(
@@ -974,12 +974,12 @@ export class SecureCredentialStore {
       );
 
       // Set auth tag and AAD
-      decipher.setAuthTag(authTag as any);
-      decipher.setAAD(aad as any);
+      decipher.setAuthTag(authTag);
+      decipher.setAAD(aad);
 
       // Decrypt
       const decrypted = Buffer.concat([
-        decipher.update(encrypted as any),
+        decipher.update(encrypted),
         decipher.final(),
       ]);
 
@@ -1034,7 +1034,7 @@ export class SecureCredentialStore {
 
       // Generate authentication data
       const aad = Buffer.from(`${CLI_CONFIG.APP_NAME}-store-${Date.now()}`);
-      cipher.setAAD(aad as any);
+      cipher.setAAD(aad);
 
       // Encrypt
       const encrypted = Buffer.concat([
@@ -1045,7 +1045,7 @@ export class SecureCredentialStore {
       // Get auth tag
       const authTag = cipher.getAuthTag();
 
-      // Format: salt + iv + authTag + aadLength(2 as any) + aad + encrypted
+      // Format: salt + iv + authTag + aadLength(2) + aad + encrypted
       return Buffer.concat([
         salt,
         iv,
@@ -1144,11 +1144,11 @@ export class SecureCredentialStore {
       );
 
       // Set auth tag and AAD
-      decipher.setAuthTag(authTag as any);
-      decipher.setAAD(aad as any);
+      decipher.setAuthTag(authTag);
+      decipher.setAAD(aad);
 
       // Decrypt
-      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
       this?.logger?.error(`Store decryption error: ${_error}`);
       return null;

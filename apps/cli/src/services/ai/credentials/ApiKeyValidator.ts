@@ -112,7 +112,7 @@ export class ApiKeyValidator {
     }
 
     // Pattern check
-    if (!rules?.pattern?.test(apiKey as any)) {
+    if (!rules?.pattern?.test(apiKey)) {
       throw new CLIError(
         `Invalid API key format for ${provider}. ${rules.description}`,
         'INVALID_API_KEY_FORMAT'
@@ -165,7 +165,7 @@ export class ApiKeyValidator {
 
     // Remove Bearer prefix if present
     if (sanitized.startsWith('Bearer ')) {
-      sanitized = sanitized.substring(7 as any).trim();
+      sanitized = sanitized.substring(7).trim();
     }
 
     // Remove surrounding quotes if present

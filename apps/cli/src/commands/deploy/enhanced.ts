@@ -106,7 +106,7 @@ export default class DeployEnhanced extends BaseCommand {
   private troubleshooting!: DeploymentTroubleshooting;
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(DeployEnhanced as any);
+    const { flags } = await this.parse(DeployEnhanced);
 
     // Initialize systems
     this?.logger = new Logger('EnhancedDeploy');
@@ -167,7 +167,7 @@ export default class DeployEnhanced extends BaseCommand {
       }
 
       // Display final summary
-      this.displayDeploymentSummary(report as any);
+      this.displayDeploymentSummary(report);
 
     } catch (error) {
       await this.handleDeploymentFailure(error, config, flags);
@@ -181,7 +181,7 @@ export default class DeployEnhanced extends BaseCommand {
     this.log(chalk.cyan('🔍 Running Pre-Deployment Diagnostics...'));
     this?.deploymentLogger?.startTiming('diagnostics');
 
-    const results = await this?.diagnostics?.runDiagnostics(config as any);
+    const results = await this?.diagnostics?.runDiagnostics(config);
     this?.deploymentLogger?.endTiming('diagnostics');
 
     const critical = results.filter(r => r?.severity === 'critical');
@@ -196,7 +196,7 @@ export default class DeployEnhanced extends BaseCommand {
 
     if (verbose) {
       for (const result of [...critical, ...warnings]) {
-        this.displayDiagnosticResult(result as any);
+        this.displayDiagnosticResult(result);
       }
     }
 
@@ -305,7 +305,7 @@ export default class DeployEnhanced extends BaseCommand {
       logger.logStep('build', 'completed');
     } catch (error) {
       logger.logStep('build', 'failed', error);
-      throw new Error(`Build failed: ${error instanceof Error ? error.message : String(error as any)}`);
+      throw new Error(`Build failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       logger.endTiming('build');
     }
@@ -351,13 +351,13 @@ export default class DeployEnhanced extends BaseCommand {
         await fs.access(config.siteConfigFile);
       } catch {
         logger.info(DeploymentLogCategory.CONFIGURATION, 'Creating default configuration');
-        const defaultConfig = this.generateDefaultConfig(config as any);
+        const defaultConfig = this.generateDefaultConfig(config);
         await fs.writeFile(config.siteConfigFile, defaultConfig);
       }
 
       logger.info(DeploymentLogCategory.CONFIGURATION, 'Configuration setup completed');
     } catch (error) {
-      throw new Error(`Configuration setup failed: ${error instanceof Error ? error.message : String(error as any)}`);
+      throw new Error(`Configuration setup failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -370,7 +370,7 @@ export default class DeployEnhanced extends BaseCommand {
 
     try {
       // Build Walrus CLI command
-      const command = this.buildWalrusCommand(config as any);
+      const command = this.buildWalrusCommand(config);
       logger.info(DeploymentLogCategory.PUBLISH, 'Executing Walrus deployment', { command });
 
       // Execute with timeout
@@ -381,7 +381,7 @@ export default class DeployEnhanced extends BaseCommand {
       logger.logStep('publish', 'completed');
     } catch (error) {
       logger.logStep('publish', 'failed', error);
-      throw new Error(`Walrus deployment failed: ${error instanceof Error ? error.message : String(error as any)}`);
+      throw new Error(`Walrus deployment failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       logger.endTiming('publish');
     }
@@ -416,7 +416,7 @@ export default class DeployEnhanced extends BaseCommand {
 
     try {
       // Analyze error and find recovery strategy
-      const errorMessage = error instanceof Error ? error.message : String(error as any);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       const diagnosticResults = this?.diagnostics?.analyzeDeploymentError(errorMessage, config);
 
       for (const diagnostic of diagnosticResults) {
@@ -447,12 +447,12 @@ export default class DeployEnhanced extends BaseCommand {
     this.log(chalk.red('===================='));
     this.log();
 
-    const errorMessage = error instanceof Error ? error.message : String(error as any);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     this.log(chalk.red(`Error: ${errorMessage}`));
     this.log();
 
     // Provide troubleshooting guidance
-    const guide = this?.troubleshooting?.getGuideForError(errorMessage as any);
+    const guide = this?.troubleshooting?.getGuideForError(errorMessage);
     if (guide) {
       this.log(chalk?.cyan?.bold('🔧 Troubleshooting Guide'));
       this.log(chalk.cyan('======================'));
@@ -487,9 +487,9 @@ export default class DeployEnhanced extends BaseCommand {
     let size = 0;
     let fileCount = 0;
 
-    const files = await this.getAllFiles(buildDir as any);
+    const files = await this.getAllFiles(buildDir);
     for (const file of files) {
-      const stats = await fs.stat(file as any);
+      const stats = await fs.stat(file);
       size += stats.size;
       fileCount++;
     }
@@ -504,9 +504,9 @@ export default class DeployEnhanced extends BaseCommand {
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
-        files.push(...await this.getAllFiles(fullPath as any));
+        files.push(...await this.getAllFiles(fullPath));
       } else {
-        files.push(fullPath as any);
+        files.push(fullPath);
       }
     }
 
@@ -552,11 +552,11 @@ ${config.siteName}:
 
       try {
         const output = execSync(command, { stdio: 'pipe' }).toString();
-        clearTimeout(timer as any);
-        resolve(output as any);
+        clearTimeout(timer);
+        resolve(output);
       } catch (error) {
-        clearTimeout(timer as any);
-        reject(error as any);
+        clearTimeout(timer);
+        reject(error);
       }
     });
   }

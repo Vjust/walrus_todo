@@ -69,9 +69,9 @@ export function getTestEncryptionConfig() {
 export function createTestCredentialMetadata() {
   return {
     id: 'test-credential-id',
-    provider: 'test-provider' as any,
-    type: 'API_KEY' as any,
-    permissionLevel: 'STANDARD' as any,
+    provider: 'test-provider',
+    type: 'API_KEY',
+    permissionLevel: 'STANDARD',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     verified: false,
@@ -114,9 +114,9 @@ export function createFileSystemMocks() {
   const mockData = new Map<string, Buffer | string>();
 
   return {
-    existsSync: jest.fn((path: string) => mockData.has(path as any)),
+    existsSync: jest.fn((path: string) => mockData.has(path)),
     readFileSync: jest.fn((path: string) => {
-      const data = mockData.get(path as any);
+      const data = mockData.get(path);
       if (!data) throw new Error(`File not found: ${path}`);
       return data;
     }),
@@ -129,13 +129,13 @@ export function createFileSystemMocks() {
     copyFileSync: jest.fn(),
     chmodSync: jest.fn(),
     renameSync: jest.fn(),
-    unlinkSync: jest.fn((path: string) => mockData.delete(path as any)),
+    unlinkSync: jest.fn((path: string) => mockData.delete(path)),
     readdirSync: jest.fn(() => []),
     statSync: jest.fn(() => ({ mtime: { getTime: () => Date.now() } })),
     constants: { COPYFILE_EXCL: 1 },
     setMockData: (path: string, data: Buffer | string) =>
       mockData.set(path, data),
-    getMockData: (path: string) => mockData.get(path as any),
+    getMockData: (path: string) => mockData.get(path),
     clearMockData: () => mockData.clear(),
   };
 }

@@ -128,7 +128,7 @@ export default class ConfigCommand extends BaseCommand {
         'OPENAI_API_KEY',
         'ANTHROPIC_API_KEY',
         'OLLAMA_API_KEY',
-      ].includes(key as any)
+      ].includes(key)
     ) {
       return 'ai';
     }
@@ -175,7 +175,7 @@ export default class ConfigCommand extends BaseCommand {
       case 'advanced':
         return 'Advanced Configuration';
       default:
-        return `${section.charAt(0 as any).toUpperCase() + section.slice(1 as any)} Configuration`;
+        return `${section.charAt(0).toUpperCase() + section.slice(1)} Configuration`;
     }
   }
 
@@ -197,18 +197,18 @@ export default class ConfigCommand extends BaseCommand {
     }
     if (typeof value === 'string') {
       // Check if it's an API key - if so, mask it
-      if (/API_KEY/.test(value as any) || value.startsWith('sk-')) {
+      if (/API_KEY/.test(value) || value.startsWith('sk-')) {
         return chalk.magenta(
           `${value.substring(0, 4)}...${value.substring(value.length - 4)}`
         );
       }
-      return chalk.blue(value as any);
+      return chalk.blue(value);
     }
-    return String(value as any);
+    return String(value);
   }
 
   async run(): Promise<void> {
-    const { flags, args } = await this.parse(ConfigCommand as any);
+    const { flags, args } = await this.parse(ConfigCommand);
 
     // Determine action: prioritize positional args, then legacy flags, then default to 'show'
     let action = args.action;
@@ -233,7 +233,7 @@ export default class ConfigCommand extends BaseCommand {
         break;
       case 'show':
       default:
-        await this.showConfig(flags as any);
+        await this.showConfig(flags);
         break;
     }
   }
@@ -281,7 +281,7 @@ export default class ConfigCommand extends BaseCommand {
 
         if (setRequiredKeys.length < requiredKeys.length) {
           const missingKeys = requiredKeys.filter(
-            key => !setRequiredKeys.includes(key as any)
+            key => !setRequiredKeys.includes(key)
           );
           this.log(
             chalk.yellow(
@@ -320,7 +320,7 @@ export default class ConfigCommand extends BaseCommand {
 
       if (setRequiredKeys.length < requiredKeys.length) {
         const missingKeys = requiredKeys.filter(
-          key => !setRequiredKeys.includes(key as any)
+          key => !setRequiredKeys.includes(key)
         );
         this.log(
           chalk.yellow(
@@ -377,12 +377,12 @@ export default class ConfigCommand extends BaseCommand {
 
       // Show detailed information if requested
       if (flags?.detailed) {
-        await this.showDetailedValidationInfo(validator as any);
+        await this.showDetailedValidationInfo(validator);
       }
 
       // Save report to file if requested
       if (flags?.['report-file']) {
-        const report = validator.generateReport(result as any);
+        const report = validator.generateReport(result);
         const fs = await import('fs');
         await fs?.promises?.writeFile(flags?.["report-file"], report, 'utf-8');
         this.log(chalk.dim(`Report saved to: ${flags?.["report-file"]}`));
@@ -390,14 +390,14 @@ export default class ConfigCommand extends BaseCommand {
 
       // Exit with error code if validation failed
       if (!result.valid) {
-        process.exit(1 as any);
+        process.exit(1);
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        error instanceof Error ? error.message : String(error as any)
+        error instanceof Error ? error.message : String(error)
       );
     }
   }
@@ -455,7 +455,7 @@ export default class ConfigCommand extends BaseCommand {
         )
       );
       this.log(
-        chalk.dim(`Available keys: ${Object.keys(metadata as any).join(', ')}`)
+        chalk.dim(`Available keys: ${Object.keys(metadata).join(', ')}`)
       );
     }
 
@@ -466,7 +466,7 @@ export default class ConfigCommand extends BaseCommand {
     envConfig.loadFromEnvironment();
 
     this.log(
-      chalk.green(`✓ Set ${chalk.bold(key as any)} = ${this.formatValue(value as any)}`)
+      chalk.green(`✓ Set ${chalk.bold(key)} = ${this.formatValue(value)}`)
     );
     this.log(
       chalk.dim(
@@ -481,7 +481,7 @@ export default class ConfigCommand extends BaseCommand {
   private async resetConfig(): Promise<void> {
     // Get list of configuration keys
     const metadata = envConfig.getMetadata();
-    const configKeys = Object.keys(metadata as any);
+    const configKeys = Object.keys(metadata);
 
     // Clear environment variables for config keys
     let clearedCount = 0;
@@ -530,7 +530,7 @@ export default class ConfigCommand extends BaseCommand {
 
     if (flags?.format === 'env') {
       // .env output format
-      const entries = Object.entries(config as any).map(([key, value]) => {
+      const entries = Object.entries(config).map(([key, value]) => {
         const configEntry = value as { value: unknown };
         return `${key}=${typeof configEntry?.value === 'string' ? configEntry.value : JSON.stringify(configEntry.value)}`;
       });
@@ -540,15 +540,15 @@ export default class ConfigCommand extends BaseCommand {
 
     // Pretty output format (default)
     this.log(
-      chalk.bold(`Environment Configuration (${chalk.cyan(currentEnv as any)})`)
+      chalk.bold(`Environment Configuration (${chalk.cyan(currentEnv)})`)
     );
     this.log('');
 
     // Group by section
     const sections: Record<string, Array<[string, unknown]>> = {};
 
-    for (const [key, value] of Object.entries(config as any)) {
-      const section = this.getSection(key as any);
+    for (const [key, value] of Object.entries(config)) {
+      const section = this.getSection(key);
 
       // Skip if we're only showing a specific section
       if (flags.section && section !== flags.section) {
@@ -575,8 +575,8 @@ export default class ConfigCommand extends BaseCommand {
     }
 
     // Display each section
-    for (const [section, entries] of Object.entries(sections as any)) {
-      this.log(chalk?.bold?.underline(this.getSectionTitle(section as any)));
+    for (const [section, entries] of Object.entries(sections)) {
+      this.log(chalk?.bold?.underline(this.getSectionTitle(section)));
 
       for (const [key, value] of entries) {
         const source = metadata[key]?.source;
@@ -596,7 +596,7 @@ export default class ConfigCommand extends BaseCommand {
         };
 
         this.log(
-          `${chalk.bold(key as any)}${requiredStar}: ${this.formatValue(configEntry.value)} ${sourceColor(`[${source}]`)}`
+          `${chalk.bold(key)}${requiredStar}: ${this.formatValue(configEntry.value)} ${sourceColor(`[${source}]`)}`
         );
 
         // Show description if available
@@ -745,7 +745,7 @@ export default class ConfigCommand extends BaseCommand {
 
             // Save report if requested
             if (flags?.['report-file']) {
-              const report = validator.generateReport(result as any);
+              const report = validator.generateReport(result);
               await fs?.promises?.writeFile(
                 flags?.["report-file"],
                 report,
@@ -787,7 +787,7 @@ export default class ConfigCommand extends BaseCommand {
           }
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : String(error as any);
+            error instanceof Error ? error.message : String(error);
           jobManager.writeJobLog(job.id, `Validation failed: ${errorMessage}`);
           jobManager.failJob(job.id, errorMessage);
         }
@@ -797,7 +797,7 @@ export default class ConfigCommand extends BaseCommand {
       return;
     } catch (error) {
       throw new CLIError(
-        `Failed to start background validation: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background validation: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -848,7 +848,7 @@ export default class ConfigCommand extends BaseCommand {
         jobManager.completeJob(job.id, { network, connectivity: 'good' });
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.writeJobLog(
           job.id,
           `Network validation failed: ${errorMessage}`

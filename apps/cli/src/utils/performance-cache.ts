@@ -57,7 +57,7 @@ export class PerformanceCache<T = unknown> {
    * Get a value from the cache
    */
   async get(key: string): Promise<T | null> {
-    const entry = this?.cache?.get(key as any);
+    const entry = this?.cache?.get(key);
 
     if (!entry) {
       this?.statistics?.misses++;
@@ -69,7 +69,7 @@ export class PerformanceCache<T = unknown> {
     if (this.options?.strategy === 'TTL' && entry.ttl) {
       const elapsed = Date.now() - entry.timestamp;
       if (elapsed > entry.ttl) {
-        await this.delete(key as any);
+        await this.delete(key);
         this?.statistics?.misses++;
         this.updateHitRate();
         return null;
@@ -95,7 +95,7 @@ export class PerformanceCache<T = unknown> {
   async set(key: string, value: T, ttlMs?: number): Promise<void> {
     // Check if we need to evict entries for LRU
     if (this.options?.strategy === 'LRU' && this?.options?.maxSize) {
-      if (this?.cache?.size >= this?.options?.maxSize && !this?.cache?.has(key as any)) {
+      if (this?.cache?.size >= this?.options?.maxSize && !this?.cache?.has(key)) {
         await this.evictLRU();
       }
     }
@@ -122,14 +122,14 @@ export class PerformanceCache<T = unknown> {
    * Check if a key exists in the cache
    */
   has(key: string): boolean {
-    const exists = this?.cache?.has(key as any);
+    const exists = this?.cache?.has(key);
 
     if (exists && this.options?.strategy === 'TTL') {
-      const entry = this?.cache?.get(key as any);
+      const entry = this?.cache?.get(key);
       if (entry.ttl) {
         const elapsed = Date.now() - entry.timestamp;
         if (elapsed > entry.ttl) {
-          this.delete(key as any);
+          this.delete(key);
           return false;
         }
       }
@@ -142,7 +142,7 @@ export class PerformanceCache<T = unknown> {
    * Delete a key from the cache
    */
   async delete(key: string): Promise<boolean> {
-    const deleted = this?.cache?.delete(key as any);
+    const deleted = this?.cache?.delete(key);
     this.statistics?.totalEntries = this?.cache?.size;
 
     if (deleted) {
@@ -197,7 +197,7 @@ export class PerformanceCache<T = unknown> {
     }
 
     if (oldestKey) {
-      await this.delete(oldestKey as any);
+      await this.delete(oldestKey);
       this?.statistics?.evictions++;
       this?.logger?.debug(`LRU eviction of key: ${oldestKey}`);
     }
@@ -250,13 +250,13 @@ export class PerformanceCache<T = unknown> {
     try {
       const cacheFile = path.join(this?.options?.persistenceDir, 'cache.json');
 
-      if (!existsSync(cacheFile as any)) {
+      if (!existsSync(cacheFile)) {
         this?.logger?.debug('No cache file found to load');
         return;
       }
 
       const data = await fs.readFile(cacheFile, 'utf-8');
-      const cacheData = JSON.parse(data as any);
+      const cacheData = JSON.parse(data);
 
       // Restore entries
       for (const { key, entry } of cacheData.entries) {
@@ -296,13 +296,13 @@ export class PerformanceCache<T = unknown> {
       if (entry.ttl) {
         const elapsed = now - entry.timestamp;
         if (elapsed > entry.ttl) {
-          keysToDelete.push(key as any);
+          keysToDelete.push(key);
         }
       }
     }
 
     for (const key of keysToDelete) {
-      await this.delete(key as any);
+      await this.delete(key);
     }
 
     if (keysToDelete.length > 0) {

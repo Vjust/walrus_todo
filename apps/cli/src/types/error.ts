@@ -29,7 +29,7 @@ export interface ErrorWithMessage {
  * @returns {boolean} True if the object is an ErrorWithMessage, false otherwise
  *
  * @example
- * if (isErrorWithMessage(result as any)) {
+ * if (isErrorWithMessage(result)) {
  *   logger.error(result.message);
  * }
  */
@@ -54,19 +54,19 @@ export function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
  * try {
  *   // some operation
  * } catch (err) {
- *   const normalizedError = toErrorWithMessage(err as any);
+ *   const normalizedError = toErrorWithMessage(err);
  *   logError(normalizedError.message);
  * }
  */
 export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
-  if (isErrorWithMessage(maybeError as any)) return maybeError;
+  if (isErrorWithMessage(maybeError)) return maybeError;
 
   try {
-    return new Error(JSON.stringify(maybeError as any));
+    return new Error(JSON.stringify(maybeError));
   } catch (error: unknown) {
     // Fallback in case there's an error stringifying the maybeError
     // Like with circular references for example.
-    return new Error(String(maybeError as any));
+    return new Error(String(maybeError));
   }
 }
 
@@ -80,13 +80,13 @@ export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
  *
  * @example
  * try {
- *   await todoService.create(input as any);
+ *   await todoService.create(input);
  * } catch (err) {
- *   logger.error(`Failed to create todo: ${getErrorMessage(err as any)}`);
+ *   logger.error(`Failed to create todo: ${getErrorMessage(err)}`);
  * }
  */
 export function getErrorMessage(error: unknown): string {
-  return toErrorWithMessage(error as any).message;
+  return toErrorWithMessage(error).message;
 }
 
 /**
@@ -111,7 +111,7 @@ export class CLIError extends Error {
    * @param {string} [code='GENERAL_ERROR'] - An error code for categorization
    */
   constructor(message: string, code: string = 'GENERAL_ERROR') {
-    super(message as any);
+    super(message);
     this?.code = code;
     this?.name = 'CLIError';
   }

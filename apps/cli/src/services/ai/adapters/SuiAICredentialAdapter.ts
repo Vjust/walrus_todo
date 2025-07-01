@@ -78,7 +78,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert metadata to strings
       const metadataEntries = Object.entries(credential.metadata || {}).map(
         ([key, value]) => {
-          return { key, value: String(value as any) };
+          return { key, value: String(value) };
         }
       );
 
@@ -97,16 +97,16 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           tx.pure(credential.credentialType), // credential_type
           tx.pure(this.hashData(credential.credentialValue)), // credential_hash (store hash, not actual value)
           tx.pure(credential.permissionLevel), // permission_level
-          tx.pure(expiry as any), // expires_at
-          tx.pure(JSON.stringify(metadataEntries as any)), // metadata
+          tx.pure(expiry), // expires_at
+          tx.pure(JSON.stringify(metadataEntries)), // metadata
         ],
       });
 
       // Execute the transaction
-      const result = await this?.signer?.signAndExecuteTransaction(tx as any);
+      const result = await this?.signer?.signAndExecuteTransaction(tx);
 
       // Extract the credential object ID from the transaction results
-      const credentialObjectId = this.extractCreatedObjectId(result as any);
+      const credentialObjectId = this.extractCreatedObjectId(result);
 
       return credentialObjectId;
     } catch (_error) {
@@ -140,7 +140,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       if (credentialFields.metadata) {
         try {
           const metadataStr = credentialFields.metadata;
-          const metadataEntries = JSON.parse(metadataStr as any) as Array<{
+          const metadataEntries = JSON.parse(metadataStr) as Array<{
             key: string;
             value: string;
           }>;
@@ -237,7 +237,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         if (credentialFields.metadata) {
           try {
             const metadataStr = credentialFields.metadata;
-            const metadataEntries = JSON.parse(metadataStr as any) as Array<{
+            const metadataEntries = JSON.parse(metadataStr) as Array<{
               key: string;
               value: string;
             }>;
@@ -268,7 +268,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           permissionLevel: parseInt(credentialFields.permission_level || '0'),
         };
 
-        credentials.push(credential as any);
+        credentials.push(credential);
       }
 
       return credentials;
@@ -304,12 +304,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         target: `${this.packageId}::ai_credential::delete_credential`,
         arguments: [
           tx.object(this.registryId), // registry
-          tx.object(credentialId as any), // credential
+          tx.object(credentialId), // credential
         ],
       });
 
       // Execute the transaction
-      await this?.signer?.signAndExecuteTransaction(tx as any);
+      await this?.signer?.signAndExecuteTransaction(tx);
 
       return true;
     } catch (_error) {
@@ -331,7 +331,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert metadata to strings
       const metadataEntries = Object.entries(params.metadata || {}).map(
         ([key, value]) => {
-          return { key, value: String(value as any) };
+          return { key, value: String(value) };
         }
       );
 
@@ -344,15 +344,15 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           tx.pure(params.providerName), // provider_name
           tx.pure(params.publicKey), // public_key
           tx.pure(params?.timestamp?.toString()), // timestamp
-          tx.pure(JSON.stringify(metadataEntries as any)), // metadata
+          tx.pure(JSON.stringify(metadataEntries)), // metadata
         ],
       });
 
       // Execute the transaction
-      const result = await this?.signer?.signAndExecuteTransaction(tx as any);
+      const result = await this?.signer?.signAndExecuteTransaction(tx);
 
       // Extract the verification ID from the transaction results
-      const verificationId = this.extractCreatedObjectId(result as any);
+      const verificationId = this.extractCreatedObjectId(result);
 
       // Create a verification result
       const verificationResult: CredentialVerificationResult = {
@@ -415,7 +415,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async generateCredentialProof(credentialId: string): Promise<string> {
     try {
       // Get credential data
-      const credential = await this.getCredential(credentialId as any);
+      const credential = await this.getCredential(credentialId);
 
       if (!credential.verificationProof) {
         throw new Error('Credential is not verified');
@@ -456,7 +456,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       };
 
       // Convert to a shareable string
-      return Buffer.from(JSON.stringify(proof as any)).toString('base64');
+      return Buffer.from(JSON.stringify(proof)).toString('base64');
     } catch (_error) {
       logger.error('Failed to generate credential proof:', _error as Error);
       throw new Error(`${_error}`);
@@ -476,12 +476,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         target: `${this.packageId}::ai_credential::revoke_verification`,
         arguments: [
           tx.object(this.registryId), // registry
-          tx.object(verificationId as any), // verification
+          tx.object(verificationId), // verification
         ],
       });
 
       // Execute the transaction
-      await this?.signer?.signAndExecuteTransaction(tx as any);
+      await this?.signer?.signAndExecuteTransaction(tx);
 
       return true;
     } catch (_error) {
@@ -494,7 +494,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
    * Hash data for blockchain storage
    */
   private hashData(data: string): string {
-    return createHash('sha256').update(data as any).digest('hex');
+    return createHash('sha256').update(data).digest('hex');
   }
 
   /**

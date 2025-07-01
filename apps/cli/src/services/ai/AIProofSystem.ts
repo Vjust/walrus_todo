@@ -55,7 +55,7 @@ export class AIProofSystem {
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
 
     // Ensure the config directory exists
-    if (!fs.existsSync(configDir as any)) {
+    if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
@@ -74,7 +74,7 @@ export class AIProofSystem {
     try {
       // Get the verification record
       const record =
-        await this?.blockchainVerifier?.getVerification(verificationId as any);
+        await this?.blockchainVerifier?.getVerification(verificationId);
 
       // Create the proof
       const proof: AIOperationProof = {
@@ -109,7 +109,7 @@ export class AIProofSystem {
           })
         );
 
-        const signatureResult = await signer.signPersonalMessage(messageBytes as any);
+        const signatureResult = await signer.signPersonalMessage(messageBytes);
 
         proof?.signatureInfo = {
           signature: Buffer.from(signatureResult.signature).toString('base64'),
@@ -117,13 +117,13 @@ export class AIProofSystem {
         };
       } catch (_error) {
         Logger.getInstance().warn(
-          `Failed to add signature to proof: ${_error instanceof Error ? _error.message : String(_error as any)}`
+          `Failed to add signature to proof: ${_error instanceof Error ? _error.message : String(_error)}`
         );
         // Continue without signature
       }
 
       // Save proof to cache
-      this.saveProofToCache(proof as any);
+      this.saveProofToCache(proof);
 
       return proof;
     } catch (_error) {
@@ -148,12 +148,12 @@ export class AIProofSystem {
       if (typeof proof === 'string') {
         try {
           // Try to parse as JSON
-          proofObj = JSON.parse(proof as any);
+          proofObj = JSON.parse(proof);
         } catch (error: unknown) {
           // Try to parse as base64-encoded JSON
           try {
             const decodedJson = Buffer.from(proof, 'base64').toString('utf8');
-            proofObj = JSON.parse(decodedJson as any);
+            proofObj = JSON.parse(decodedJson);
           } catch (error: unknown) {
             return {
               isValid: false,
@@ -251,7 +251,7 @@ export class AIProofSystem {
    * Import a proof from a file
    */
   public async importProof(filePath: string): Promise<AIOperationProof> {
-    if (!fs.existsSync(filePath as any)) {
+    if (!fs.existsSync(filePath)) {
       throw new CLIError(
         `Proof file not found: ${filePath}`,
         'PROOF_FILE_NOT_FOUND'
@@ -265,7 +265,7 @@ export class AIProofSystem {
         typeof proofJson === 'string' ? proofJson : proofJson.toString('utf8');
 
       // Parse JSON
-      const proof = JSON.parse(proofJsonStr as any);
+      const proof = JSON.parse(proofJsonStr);
 
       // Validate proof structure
       if (!proof.id || !proof.verificationId || !proof.operation) {
@@ -285,7 +285,7 @@ export class AIProofSystem {
    * Export proof as a shareable string
    */
   public exportProofAsString(proof: AIOperationProof): string {
-    return Buffer.from(JSON.stringify(proof as any)).toString('base64');
+    return Buffer.from(JSON.stringify(proof)).toString('base64');
   }
 
   /**
@@ -294,7 +294,7 @@ export class AIProofSystem {
   public importProofFromString(proofString: string): AIOperationProof {
     try {
       const proofJson = Buffer.from(proofString, 'base64').toString('utf8');
-      const proof = JSON.parse(proofJson as any);
+      const proof = JSON.parse(proofJson);
 
       // Validate proof structure
       if (!proof.id || !proof.verificationId || !proof.operation) {
@@ -323,8 +323,8 @@ export class AIProofSystem {
 
     try {
       // Serialize proof
-      const proofJson = JSON.stringify(proof as any);
-      const proofBlob = new TextEncoder().encode(proofJson as any);
+      const proofJson = JSON.stringify(proof);
+      const proofBlob = new TextEncoder().encode(proofJson);
 
       // Get signer
       const signer = this?.blockchainVerifier?.getSigner();
@@ -368,8 +368,8 @@ export class AIProofSystem {
       const blob = await this?.walrusAdapter?.readBlob({ blobId });
 
       // Parse proof
-      const proofJson = new TextDecoder().decode(blob as any);
-      const proof = JSON.parse(proofJson as any);
+      const proofJson = new TextDecoder().decode(blob);
+      const proof = JSON.parse(proofJson);
 
       // Validate proof structure
       if (!proof.id || !proof.verificationId || !proof.operation) {
@@ -409,15 +409,15 @@ export class AIProofSystem {
             typeof proofJson === 'string'
               ? proofJson
               : proofJson.toString('utf8');
-          const proof = JSON.parse(proofJsonStr as any);
+          const proof = JSON.parse(proofJsonStr);
 
           // Validate proof structure
           if (proof.id && proof.verificationId && proof.operation) {
-            proofs.push(proof as any);
+            proofs.push(proof);
           }
         } catch (_error) {
           Logger.getInstance().warn(
-            `Failed to read proof file ${file}: ${_error instanceof Error ? _error.message : String(_error as any)}`
+            `Failed to read proof file ${file}: ${_error instanceof Error ? _error.message : String(_error)}`
           );
           // Skip invalid files
         }

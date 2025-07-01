@@ -26,7 +26,7 @@ export default class AiPermissions extends BaseCommand {
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(
-        `Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`
       );
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -73,7 +73,7 @@ export default class AiPermissions extends BaseCommand {
   };
 
   private async initializePermissionManager() {
-    const { flags } = await this.parse(AiPermissions as any);
+    const { flags } = await this.parse(AiPermissions);
 
     // Check for required blockchain flags
     if (!flags.registry || !flags.packageId) {
@@ -108,7 +108,7 @@ export default class AiPermissions extends BaseCommand {
       );
 
       // Create blockchain verifier
-      const blockchainVerifier = new BlockchainVerifier(verifierAdapter as any);
+      const blockchainVerifier = new BlockchainVerifier(verifierAdapter);
 
       // Create permission manager
       const permissionManager = initializePermissionManager(
@@ -127,7 +127,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   async run() {
-    const { flags } = await this.parse(AiPermissions as any);
+    const { flags } = await this.parse(AiPermissions);
 
     // Initialize permission manager
     const permissionManager = await this.initializePermissionManager();

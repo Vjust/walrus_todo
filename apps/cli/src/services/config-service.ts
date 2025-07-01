@@ -51,7 +51,7 @@ export class ConfigService {
       const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
 
       // Use current directory config if it exists, otherwise use home directory
-      this?.configPath = fs.existsSync(currentDirConfig as any)
+      this?.configPath = fs.existsSync(currentDirConfig)
         ? currentDirConfig
         : homeDirConfig;
     }
@@ -72,7 +72,7 @@ export class ConfigService {
     // We need to handle this properly
     this.ensureTodosDirectory().catch((error: unknown) => {
       logger.error(
-        `Error creating todos directory: ${error instanceof Error ? error.message : String(error as any)}`
+        `Error creating todos directory: ${error instanceof Error ? error.message : String(error)}`
       );
       // Not throwing here as constructor can't be async
     });
@@ -284,7 +284,7 @@ export class ConfigService {
       // Ensure the directory exists
       try {
         try {
-          await fsPromises.access(configDir as any);
+          await fsPromises.access(configDir);
         } catch (error: unknown) {
           await fsPromises.mkdir(configDir, { recursive: true });
         }
@@ -326,14 +326,14 @@ export class ConfigService {
    * @returns {Promise<TodoList | null>} The Todo list data, or null if the list doesn't exist
    */
   private async loadListData(listName: string): Promise<TodoList | null> {
-    const listPath = this.getListPath(listName as any);
+    const listPath = this.getListPath(listName);
     try {
-      if (fs.existsSync(listPath as any)) {
+      if (fs.existsSync(listPath)) {
         const data = await fsPromises.readFile(listPath, 'utf-8');
         const dataStr =
           typeof data === 'string' ? data : data.toString('utf-8');
         try {
-          return JSON.parse(dataStr as any);
+          return JSON.parse(dataStr);
         } catch (parseError: unknown) {
           if (parseError instanceof SyntaxError) {
             throw new CLIError(
@@ -344,7 +344,7 @@ export class ConfigService {
           const typedError =
             parseError instanceof Error
               ? parseError
-              : new Error(String(parseError as any));
+              : new Error(String(parseError));
           throw typedError;
         }
       }
@@ -373,7 +373,7 @@ export class ConfigService {
     listName: string,
     list: TodoList
   ): Promise<TodoList> {
-    const listPath = this.getListPath(listName as any);
+    const listPath = this.getListPath(listName);
     try {
       await fsPromises.writeFile(listPath, JSON.stringify(list, null, 2));
       return list;
@@ -393,7 +393,7 @@ export class ConfigService {
    * @returns {Promise<TodoList | null>} The Todo list, or null if it doesn't exist
    */
   public async getLocalTodos(listName: string): Promise<TodoList | null> {
-    return this.loadListData(listName as any);
+    return this.loadListData(listName);
   }
 
   /**
@@ -427,7 +427,7 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async saveLocalTodo(listName: string, todo: Todo): Promise<void> {
-    let list = await this.loadListData(listName as any);
+    let list = await this.loadListData(listName);
     if (!list) {
       // Create a new list if it doesn't exist
       list = {
@@ -440,7 +440,7 @@ export class ConfigService {
         updatedAt: new Date().toISOString(),
       };
     }
-    list?.todos?.push(todo as any);
+    list?.todos?.push(todo);
     await this.saveListData(listName, list);
   }
 
@@ -454,7 +454,7 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async updateLocalTodo(listName: string, todo: Todo): Promise<void> {
-    const list = await this.loadListData(listName as any);
+    const list = await this.loadListData(listName);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
@@ -485,7 +485,7 @@ export class ConfigService {
     listName: string,
     todoId: string
   ): Promise<void> {
-    const list = await this.loadListData(listName as any);
+    const list = await this.loadListData(listName);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
@@ -512,11 +512,11 @@ export class ConfigService {
    * @returns {Promise<void>}
    */
   public async deleteList(listName: string): Promise<void> {
-    const listPath = this.getListPath(listName as any);
+    const listPath = this.getListPath(listName);
     try {
       try {
-        await fsPromises.access(listPath as any);
-        await fsPromises.unlink(listPath as any);
+        await fsPromises.access(listPath);
+        await fsPromises.unlink(listPath);
       } catch (error: unknown) {
         // If file doesn't exist, that's fine - nothing to delete
         if (
@@ -546,7 +546,7 @@ export class ConfigService {
   public async getLocalTodoById(todoId: string): Promise<Todo | null> {
     const lists = await this.getAllLists();
     for (const listName of lists) {
-      const list = await this.loadListData(listName as any);
+      const list = await this.loadListData(listName);
       if (list) {
         const todo = list?.todos?.find(t => t?.id === todoId);
         if (todo) return todo;

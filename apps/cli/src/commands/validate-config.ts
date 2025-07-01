@@ -23,7 +23,7 @@ export default class ValidateConfigCommand extends BaseCommand {
   static flags = ConfigCommand.flags;
 
   async run(): Promise<void> {
-    const { flags, argv } = await this.parse(ValidateConfigCommand as any);
+    const { flags, argv } = await this.parse(ValidateConfigCommand);
 
     // Show deprecation notice
     this.log(
@@ -34,7 +34,7 @@ export default class ValidateConfigCommand extends BaseCommand {
 
     // Handle background mode directly for legacy support
     if (flags.background) {
-      return this.runLegacyValidationInBackground(flags as any);
+      return this.runLegacyValidationInBackground(flags);
     }
 
     // Build args for config command
@@ -92,7 +92,7 @@ export default class ValidateConfigCommand extends BaseCommand {
 
         // Run the actual validation (non-background since we're already in background)
         const modifiedFlags = { ...flags, background: false };
-        await (configCmd as any).validateConfig('comprehensive', modifiedFlags);
+        await (configCmd).validateConfig('comprehensive', modifiedFlags);
 
         jobManager.updateProgress(job.id, 100);
         jobManager.writeJobLog(
@@ -105,7 +105,7 @@ export default class ValidateConfigCommand extends BaseCommand {
         });
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.writeJobLog(
           job.id,
           `Legacy validation failed: ${errorMessage}`

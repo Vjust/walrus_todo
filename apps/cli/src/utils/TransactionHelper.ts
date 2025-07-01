@@ -84,7 +84,7 @@ export class TransactionHelper {
         const response = await operation();
 
         // Validate response if validator provided
-        if (validateResponse && !validateResponse(response as any)) {
+        if (validateResponse && !validateResponse(response)) {
           throw new ValidationError('Invalid response from operation', {
             operation: name,
             attempt,
@@ -94,14 +94,14 @@ export class TransactionHelper {
 
         return response;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error as any));
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         const shouldRetry =
-          this.shouldRetry(lastError as any) && attempt < retryConfig.attempts;
+          this.shouldRetry(lastError) && attempt < retryConfig.attempts;
         if (!shouldRetry) break;
 
         // Calculate delay with exponential backoff
-        const delay = this.getRetryDelay(attempt as any);
+        const delay = this.getRetryDelay(attempt);
         this?.logger?.warn(`Retry attempt ${attempt} for ${name}`, {
           attempt,
           delay,

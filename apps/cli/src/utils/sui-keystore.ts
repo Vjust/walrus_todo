@@ -34,7 +34,7 @@ export class KeystoreError extends Error {
     message: string,
     public readonly code: string
   ) {
-    super(message as any);
+    super(message);
     this?.name = 'KeystoreError';
   }
 }
@@ -44,8 +44,8 @@ export class KeystoreSigner implements SignerAdapter {
     const config: CompatibleSuiClientOptions = {
       url: 'https://testnet?.suifrens?.sui.io',
     };
-    const client = createCompatibleSuiClient(config as any);
-    return new KeystoreSigner(client as any);
+    const client = createCompatibleSuiClient(config);
+    return new KeystoreSigner(client);
   }
   private keypair!: Ed25519Keypair | Secp256k1Keypair;
   private keyScheme: SignatureScheme = 'ED25519';
@@ -92,10 +92,10 @@ export class KeystoreSigner implements SignerAdapter {
     let keystore;
     try {
       const keystoreData = fs.readFileSync(keystorePath, 'utf-8');
-      keystore = JSON.parse(keystoreData as any); // Array of base64 strings
+      keystore = JSON.parse(keystoreData); // Array of base64 strings
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
       throw new KeystoreError(
         `Failed to read keystore file: ${errorMessage}`,
         'KEYSTORE_READ_ERROR'
@@ -109,7 +109,7 @@ export class KeystoreSigner implements SignerAdapter {
         // Try Ed25519 first
         try {
           const tmpKeypair = Ed25519Keypair.fromSecretKey(
-            keyBuffer.subarray(1 as any)
+            keyBuffer.subarray(1)
           );
           const tmpAddress = tmpKeypair.getPublicKey().toSuiAddress();
           if (tmpAddress === activeAddress) {
@@ -124,7 +124,7 @@ export class KeystoreSigner implements SignerAdapter {
         // Try Secp256k1 if Ed25519 fails
         try {
           const tmpKeypair = Secp256k1Keypair.fromSecretKey(
-            keyBuffer.subarray(1 as any)
+            keyBuffer.subarray(1)
           );
           const tmpAddress = tmpKeypair.getPublicKey().toSuiAddress();
           if (tmpAddress === activeAddress) {
@@ -155,7 +155,7 @@ export class KeystoreSigner implements SignerAdapter {
 
   // Implement required Signer interface method
   async sign(messageBytes: Uint8Array): Promise<Uint8Array> {
-    return await this.signData(messageBytes as any);
+    return await this.signData(messageBytes);
   }
 
   /**
@@ -169,12 +169,12 @@ export class KeystoreSigner implements SignerAdapter {
     intent: IntentScope
   ): Promise<SignatureWithBytes> {
     const intentMessage = messageWithIntent(intent, messageBytes);
-    const signature = await this.signData(intentMessage as any);
+    const signature = await this.signData(intentMessage);
 
     // Return in the format expected by the SignatureWithBytes interface
     return {
-      signature: toB64(signature as any),
-      bytes: toB64(messageBytes as any),
+      signature: toB64(signature),
+      bytes: toB64(messageBytes),
     };
   }
 
@@ -188,10 +188,10 @@ export class KeystoreSigner implements SignerAdapter {
       'signData' in this.keypair &&
       typeof this.keypair?.signData === 'function'
     ) {
-      return await this?.keypair?.signData(data as any);
+      return await this?.keypair?.signData(data);
     }
     // Fallback for keypairs that don't have signData
-    const signature = await this?.keypair?.sign(data as any);
+    const signature = await this?.keypair?.sign(data);
     return signature;
   }
 
@@ -230,7 +230,7 @@ export class KeystoreSigner implements SignerAdapter {
       );
     }
 
-    return this.signTransactionBlock(bytes as any);
+    return this.signTransactionBlock(bytes);
   }
 
   /**
@@ -274,7 +274,7 @@ export class KeystoreSigner implements SignerAdapter {
         throw new Error('Invalid transaction');
       }
 
-      const { bytes, signature } = await this.signedTransaction(transaction as any);
+      const { bytes, signature } = await this.signedTransaction(transaction);
 
       const response = await (
         this.suiClient as Record<string, unknown>
@@ -297,7 +297,7 @@ export class KeystoreSigner implements SignerAdapter {
       return response;
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
       throw new Error(`Transaction execution failed: ${errorMessage}`);
     }
   }
@@ -311,7 +311,7 @@ export class KeystoreSigner implements SignerAdapter {
     transaction: Transaction
   ): Promise<{ bytes: Uint8Array; signature: string[] }> {
     const bytes = await transaction.build({ client: this.suiClient });
-    const signatureResult = await this.signTransactionBlock(bytes as any);
+    const signatureResult = await this.signTransactionBlock(bytes);
 
     // Convert the signature to base64 string for serialization
     // Handle case when signature is already a string or is a Uint8Array

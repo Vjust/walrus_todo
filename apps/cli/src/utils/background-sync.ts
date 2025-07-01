@@ -1,6 +1,6 @@
 import { Logger } from './Logger';
 import { jobManager, BackgroundJob } from './PerformanceMonitor';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { Todo, TodoList } from '../types/todo';
 import { createSpinner } from './progress-indicators';
 import * as fs from 'fs';
@@ -30,7 +30,7 @@ export class BackgroundSyncService {
       if (targetList) {
         await this.syncSpecificList(jobId, targetList);
       } else {
-        await this.syncAllLists(jobId as any);
+        await this.syncAllLists(jobId);
       }
 
       jobManager.updateProgress(jobId, 100, 100, 100);
@@ -40,7 +40,7 @@ export class BackgroundSyncService {
       );
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
       this?.logger?.error(`Blockchain sync failed for job ${jobId}:`, error);
       jobManager.writeJobLog(jobId, `Sync failed: ${errorMessage}`);
       throw error;
@@ -58,7 +58,7 @@ export class BackgroundSyncService {
     jobManager.updateProgress(jobId, 20, 1, 10);
 
     // Get current list
-    const currentList = await this?.todoService?.getList(listName as any);
+    const currentList = await this?.todoService?.getList(listName);
 
     if (!currentList) {
       jobManager.writeJobLog(
@@ -144,7 +144,7 @@ export class BackgroundSyncService {
     await new Promise(resolve => setTimeout(resolve, 200));
 
     // In a real implementation, this would merge blockchain data with local data
-    const list = await this?.todoService?.getList(listName as any);
+    const list = await this?.todoService?.getList(listName);
     if (list) {
       // Update metadata to show sync time
       list?.updatedAt = new Date().toISOString();
@@ -239,7 +239,7 @@ export class BackgroundSyncService {
 
     if (filters.tags && filters?.tags?.length > 0) {
       filteredTodos = filteredTodos.filter(todo =>
-        todo.tags?.some(tag => filters.tags!.includes(tag as any))
+        todo.tags?.some(tag => filters.tags!.includes(tag))
       );
     }
 
@@ -315,7 +315,7 @@ export class BackgroundSyncService {
     const report = {
       generatedAt: new Date().toISOString(),
       totalLists: lists.length,
-      lists: [] as any[],
+      lists: [],
       summary: {
         totalTodos: 0,
         completedTodos: 0,
@@ -327,7 +327,7 @@ export class BackgroundSyncService {
 
     for (let i = 0; i < lists.length; i++) {
       const listName = lists[i];
-      const list = await this?.todoService?.getList(listName as any);
+      const list = await this?.todoService?.getList(listName);
 
       if (list) {
         const completed = list?.todos?.filter(t => t.completed).length;
@@ -359,20 +359,20 @@ export class BackgroundSyncService {
           lastUpdated: list.updatedAt,
         };
 
-        report?.lists?.push(listReport as any);
+        report?.lists?.push(listReport);
 
         // Update summary
         report?.summary?.totalTodos += list?.todos?.length;
         report?.summary?.completedTodos += completed;
         report?.summary?.pendingTodos += pending;
 
-        Object.keys(priorities as any).forEach(priority => {
+        Object.keys(priorities).forEach(priority => {
           report.summary?.priorityBreakdown?.[
             priority as keyof typeof priorities
           ] += priorities[priority as keyof typeof priorities];
         });
 
-        Object.keys(tags as any).forEach(tag => {
+        Object.keys(tags).forEach(tag => {
           report.summary?.tagDistribution?.[tag] =
             (report.summary?.tagDistribution?.[tag] || 0) + tags[tag];
         });
@@ -410,11 +410,11 @@ export class BackgroundSyncService {
         break;
 
       case 'csv':
-        exportedData = this.convertToCSV(data as any);
+        exportedData = this.convertToCSV(data);
         break;
 
       case 'markdown':
-        exportedData = this.convertToMarkdown(data as any);
+        exportedData = this.convertToMarkdown(data);
         break;
 
       default:
@@ -452,7 +452,7 @@ export class BackgroundSyncService {
       list.totalTodos,
       list.completed,
       list.pending,
-      `${list?.completionRate?.toFixed(1 as any)}%`,
+      `${list?.completionRate?.toFixed(1)}%`,
     ]);
 
     return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
@@ -477,7 +477,7 @@ export class BackgroundSyncService {
 
     if (data.lists) {
       data?.lists?.forEach((list: any) => {
-        md += `| ${list.name} | ${list.totalTodos} | ${list.completed} | ${list.pending} | ${list?.completionRate?.toFixed(1 as any)}% |\n`;
+        md += `| ${list.name} | ${list.totalTodos} | ${list.completed} | ${list.pending} | ${list?.completionRate?.toFixed(1)}% |\n`;
       });
     }
 

@@ -23,7 +23,7 @@ const PRIORITY = {
   medium: '🟡',
   low: '🟢',
 };
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
 import { jobManager, BackgroundJob } from '../utils/PerformanceMonitor';
@@ -132,8 +132,8 @@ class ListCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(ListCommand as any);
-      this.debugLog(`Command parsed with args: ${JSON.stringify(args as any)}`);
+      const { args, flags } = await this.parse(ListCommand);
+      this.debugLog(`Command parsed with args: ${JSON.stringify(args)}`);
 
       // Check if we're querying job status
       if (flags?.["job-id"]) {
@@ -155,7 +155,7 @@ class ListCommand extends BaseCommand {
 
       // Determine if we should run in background
       const shouldRunInBackground =
-        flags.background || flags.sync || this.shouldUseBackground(targetList as any);
+        flags.background || flags.sync || this.shouldUseBackground(targetList);
 
       if (shouldRunInBackground && !flags.watch) {
         return this.runInBackground(targetList, flags);
@@ -188,7 +188,7 @@ class ListCommand extends BaseCommand {
       }
 
       throw new CLIError(
-        `Failed to list todos: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to list todos: ${error instanceof Error ? error.message : String(error)}`,
         'LIST_FAILED'
       );
     } finally {
@@ -230,7 +230,7 @@ class ListCommand extends BaseCommand {
       const lists = await this?.todoService?.getAllLists();
       const listsWithDetails = await Promise.all(
         lists.map(async listName => {
-          const list = await this?.todoService?.getList(listName as any);
+          const list = await this?.todoService?.getList(listName);
           if (!list) return null;
           return {
             name: list.name,
@@ -242,7 +242,7 @@ class ListCommand extends BaseCommand {
 
       await this.jsonOutput({
         totalLists: lists.length,
-        lists: listsWithDetails.filter(Boolean as any),
+        lists: listsWithDetails.filter(Boolean),
       });
     }
   }
@@ -267,7 +267,7 @@ class ListCommand extends BaseCommand {
     flags: Record<string, unknown>
   ): Promise<void> {
     this.debugLog(`Getting list: ${listName}`);
-    const list = await this?.todoService?.getList(listName as any);
+    const list = await this?.todoService?.getList(listName);
 
     if (!list) {
       this.debugLog(`List "${listName}" not found`);
@@ -283,7 +283,7 @@ class ListCommand extends BaseCommand {
     const progressBarWidth = 20;
     const filledCount = Math.round((percent / 100) * progressBarWidth);
     const progressBar =
-      chalk.green('█'.repeat(filledCount as any)) +
+      chalk.green('█'.repeat(filledCount)) +
       chalk.gray('░'.repeat(progressBarWidth - filledCount));
 
     // Construct a formatted box header with list name and completion statistics
@@ -292,15 +292,15 @@ class ListCommand extends BaseCommand {
     // 2. Completion ratio (completed/total) with percentage
     // 3. A visual progress bar representing completion percentage
     const headerContent = [
-      `${chalk.bold(listName as any)}`,
+      `${chalk.bold(listName)}`,
       `${chalk.blue(`${completed}/${total} completed`)} ${chalk.dim(`(${percent}%)`)}`,
     ].join('\n');
 
     const headerBox = [
-      `${ICONS.BOX_TL}${ICONS?.BOX_H?.repeat(40 as any)}${ICONS.BOX_TR}`, // Top border
+      `${ICONS.BOX_TL}${ICONS?.BOX_H?.repeat(40)}${ICONS.BOX_TR}`, // Top border
       `${ICONS.BOX_V} ${ICONS.LIST} ${headerContent}${' '.repeat(35 - listName.length)}${ICONS.BOX_V}`, // Content with padding
       `${ICONS.BOX_V} ${progressBar} ${ICONS.BOX_V}`, // Progress bar
-      `${ICONS.BOX_BL}${ICONS?.BOX_H?.repeat(40 as any)}${ICONS.BOX_BR}`, // Bottom border
+      `${ICONS.BOX_BL}${ICONS?.BOX_H?.repeat(40)}${ICONS.BOX_BR}`, // Bottom border
     ].join('\n');
 
     this.log('\n' + headerBox + '\n');
@@ -346,12 +346,12 @@ class ListCommand extends BaseCommand {
       if (useDetailedView) {
         this.log(
           chalk.dim(
-            `${' '.repeat(4 as any)}ID${' '.repeat(10 as any)}STATUS${' '.repeat(6 as any)}PRIORITY${' '.repeat(4 as any)}TITLE`
+            `${' '.repeat(4)}ID${' '.repeat(10)}STATUS${' '.repeat(6)}PRIORITY${' '.repeat(4)}TITLE`
           )
         );
         this.log(
           chalk.dim(
-            `${' '.repeat(4 as any)}${ICONS?.LINE?.repeat(10 as any)}${' '.repeat(2 as any)}${ICONS?.LINE?.repeat(8 as any)}${' '.repeat(2 as any)}${ICONS?.LINE?.repeat(10 as any)}${' '.repeat(2 as any)}${ICONS?.LINE?.repeat(30 as any)}`
+            `${' '.repeat(4)}${ICONS?.LINE?.repeat(10)}${' '.repeat(2)}${ICONS?.LINE?.repeat(8)}${' '.repeat(2)}${ICONS?.LINE?.repeat(10)}${' '.repeat(2)}${ICONS?.LINE?.repeat(30)}`
           )
         );
       }
@@ -395,12 +395,12 @@ class ListCommand extends BaseCommand {
         // Choose between compact and detailed view
         if (!useDetailedView) {
           this.log(
-            `${status} [${chalk.dim(shortId as any)}] ${priorityDisplay} ${todo.title}`
+            `${status} [${chalk.dim(shortId)}] ${priorityDisplay} ${todo.title}`
           );
         } else {
           // Full display with details
           this.log(
-            `${status} [${chalk.dim(shortId as any)}] ${priorityDisplay.padEnd(12 as any)} ${todo.title}`
+            `${status} [${chalk.dim(shortId)}] ${priorityDisplay.padEnd(12)} ${todo.title}`
           );
 
           // Show details if they exist
@@ -413,7 +413,7 @@ class ListCommand extends BaseCommand {
 
           // Add a separator between todos for better readability
           if (index < todos.length - 1) {
-            this.log(chalk.dim(`    ${ICONS?.LINE?.repeat(50 as any)}`));
+            this.log(chalk.dim(`    ${ICONS?.LINE?.repeat(50)}`));
           }
         }
       });
@@ -479,10 +479,10 @@ class ListCommand extends BaseCommand {
 
     // Format header for lists display
     const headerBox = [
-      `${ICONS.BOX_TL}${ICONS?.BOX_H?.repeat(50 as any)}${ICONS.BOX_TR}`,
-      `${ICONS.BOX_V} ${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}${' '.repeat(24 as any)}${ICONS.BOX_V}`,
+      `${ICONS.BOX_TL}${ICONS?.BOX_H?.repeat(50)}${ICONS.BOX_TR}`,
+      `${ICONS.BOX_V} ${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}${' '.repeat(24)}${ICONS.BOX_V}`,
       `${ICONS.BOX_V} ${chalk.dim(`Found ${lists.length} list${lists?.length === 1 ? '' : 's'}`)}${' '.repeat(50 - 8 - lists?.length?.toString().length - (lists?.length === 1 ? 4 : 5))}${ICONS.BOX_V}`,
-      `${ICONS.BOX_BL}${ICONS?.BOX_H?.repeat(50 as any)}${ICONS.BOX_BR}`,
+      `${ICONS.BOX_BL}${ICONS?.BOX_H?.repeat(50)}${ICONS.BOX_BR}`,
     ].join('\n');
 
     this.log('\n' + headerBox + '\n');
@@ -490,7 +490,7 @@ class ListCommand extends BaseCommand {
     // Process all lists to get more detailed information
     const listDetails = await Promise.all(
       (lists as string[]).map(async listName => {
-        const list = await this?.todoService?.getList(listName as any);
+        const list = await this?.todoService?.getList(listName);
         if (!list) return null;
 
         const total = list?.todos?.length;
@@ -502,7 +502,7 @@ class ListCommand extends BaseCommand {
         const progressWidth = 10;
         const filled = Math.round((percent / 100) * progressWidth);
         const progressBar =
-          chalk.green('█'.repeat(filled as any)) +
+          chalk.green('█'.repeat(filled)) +
           chalk.gray('░'.repeat(progressWidth - filled));
 
         // Get priority distribution
@@ -645,7 +645,7 @@ class ListCommand extends BaseCommand {
   private async shouldUseBackground(targetList?: string): Promise<boolean> {
     try {
       if (targetList) {
-        const list = await this?.todoService?.getList(targetList as any);
+        const list = await this?.todoService?.getList(targetList);
         return list ? list?.todos?.length > 100 : false;
       } else {
         const lists = await this?.todoService?.getAllLists();
@@ -705,8 +705,8 @@ class ListCommand extends BaseCommand {
     const outputFile = createWriteStream(this?.backgroundJob?.outputFile!);
     const logFile = createWriteStream(this?.backgroundJob?.logFile!);
 
-    child?.stdout?.pipe(outputFile as any);
-    child?.stderr?.pipe(logFile as any);
+    child?.stdout?.pipe(outputFile);
+    child?.stderr?.pipe(logFile);
 
     jobManager.startJob(this?.backgroundJob?.id, child.pid);
     jobManager.writeJobLog(
@@ -737,20 +737,20 @@ class ListCommand extends BaseCommand {
    * Show status of background job
    */
   private async showJobStatus(jobId: string): Promise<void> {
-    const job = jobManager.getJob(jobId as any);
+    const job = jobManager.getJob(jobId);
 
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
     }
 
-    this.log('\n' + jobManager.formatJobForDisplay(job as any));
+    this.log('\n' + jobManager.formatJobForDisplay(job));
 
     // Show recent log output if available
-    const logs = jobManager.readJobLog(jobId as any);
+    const logs = jobManager.readJobLog(jobId);
     if (logs) {
       this.log('\n' + chalk.blue('Recent Logs:'));
       const recentLogs = logs.split('\n').slice(-10).join('\n');
-      this.log(chalk.dim(recentLogs as any));
+      this.log(chalk.dim(recentLogs));
     }
 
     // Show output if job is completed
@@ -763,7 +763,7 @@ class ListCommand extends BaseCommand {
       const content = fs.readFileSync(job.outputFile, 'utf8');
       const output =
         typeof content === 'string' ? content : content.toString('utf8');
-      this.log(output as any);
+      this.log(output);
     }
   }
 
@@ -797,7 +797,7 @@ class ListCommand extends BaseCommand {
       } catch (error) {
         this.log(
           chalk.red(
-            `Error updating display: ${error instanceof Error ? error.message : String(error as any)}`
+            `Error updating display: ${error instanceof Error ? error.message : String(error)}`
           )
         );
       }
@@ -813,7 +813,7 @@ class ListCommand extends BaseCommand {
     process.on('SIGINT', () => {
       this.cleanup();
       this.log('\n' + chalk.yellow('Watch mode stopped.'));
-      process.exit(0 as any);
+      process.exit(0);
     });
 
     // Keep process alive
@@ -848,7 +848,7 @@ class ListCommand extends BaseCommand {
     listName: string,
     flags: Record<string, unknown>
   ): Promise<void> {
-    const list = await this?.todoService?.getList(listName as any);
+    const list = await this?.todoService?.getList(listName);
 
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
@@ -877,7 +877,7 @@ class ListCommand extends BaseCommand {
           PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
 
         this.log(
-          `${status} [${chalk.dim(shortId as any)}] ${priority.color(priority.label)} ${todo.title}`
+          `${status} [${chalk.dim(shortId)}] ${priority.color(priority.label)} ${todo.title}`
         );
       });
 
@@ -898,17 +898,17 @@ class ListCommand extends BaseCommand {
     this.log(''.padEnd(50, '─'));
 
     for (const listName of lists) {
-      const list = await this?.todoService?.getList(listName as any);
+      const list = await this?.todoService?.getList(listName);
       if (!list) continue;
 
       const completed = list?.todos?.filter(t => t.completed).length;
       const total = list?.todos?.length;
       const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      const progressBar = this.createMiniProgressBar(percent as any);
+      const progressBar = this.createMiniProgressBar(percent);
 
       this.log(
-        `📋 ${chalk.bold(listName as any)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`
+        `📋 ${chalk.bold(listName)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`
       );
 
       // Small delay for streaming effect
@@ -922,7 +922,7 @@ class ListCommand extends BaseCommand {
   private createMiniProgressBar(percent: number, width: number = 10): string {
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
-    return `[${chalk.green('█'.repeat(filled as any))}${chalk.gray('░'.repeat(empty as any))}]`;
+    return `[${chalk.green('█'.repeat(filled))}${chalk.gray('░'.repeat(empty))}]`;
   }
 
   /**

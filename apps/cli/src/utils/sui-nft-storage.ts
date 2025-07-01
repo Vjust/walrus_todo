@@ -73,9 +73,9 @@ export class SuiNftStorage {
   private async checkConnectionHealth(): Promise<boolean> {
     try {
       // Try to get system state with proper typing
-      const getLatestSuiSystemState = (this.client as any)
+      const getLatestSuiSystemState = (this.client)
         .getLatestSuiSystemState;
-      const getSystemState = (this.client as any).getSystemState;
+      const getSystemState = (this.client).getSystemState;
 
       let systemState: any;
       if (typeof getLatestSuiSystemState === 'function') {
@@ -93,7 +93,7 @@ export class SuiNftStorage {
       }
       return true;
     } catch (error) {
-      logger.warn('Failed to check network health:', { error: error as any });
+      logger.warn('Failed to check network health:', { error: error });
       return false;
     }
   }
@@ -115,12 +115,12 @@ export class SuiNftStorage {
     for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
       try {
         const response = await operation();
-        if (!validateResponse(response as any)) {
+        if (!validateResponse(response)) {
           throw new Error('Invalid response from network');
         }
         return response;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error as any));
+        lastError = error instanceof Error ? error : new Error(String(error));
         if (attempt < this.retryAttempts) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);
           logger.warn(
@@ -174,8 +174,8 @@ export class SuiNftStorage {
               .serialize(todo.description || '')
               .toBytes()
           ),
-          tx.pure(bcs.string().serialize(walrusBlobId as any).toBytes()),
-          tx.pure(bcs.bool().serialize(false as any).toBytes()),
+          tx.pure(bcs.string().serialize(walrusBlobId).toBytes()),
+          tx.pure(bcs.bool().serialize(false).toBytes()),
           tx.object(this?.config?.collectionId || ''),
         ],
       });
@@ -188,13 +188,13 @@ export class SuiNftStorage {
 
             // Sign the transaction block with compatibility handling
             const signature = await signTransactionCompatible(
-              this.signer as any,
+              this.signer,
               serializedTx
             );
 
             // Execute the transaction with compatibility handling
             const response = (await executeTransactionCompatible(
-              this.client as any,
+              this.client,
               {
                 transactionBlock: serializedTx,
                 signature: signature.signature,
@@ -223,7 +223,7 @@ export class SuiNftStorage {
             return response.digest || '';
           } catch (error) {
             throw new CLIError(
-              `Failed to execute transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+              `Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`,
               'TRANSACTION_EXECUTION_ERROR'
             );
           }
@@ -233,7 +233,7 @@ export class SuiNftStorage {
       );
     } catch (error) {
       throw new CLIError(
-        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
         'SUI_CREATION_FAILED'
       );
     }
@@ -250,7 +250,7 @@ export class SuiNftStorage {
       throw new CLIError('NFT object ID is required', 'INVALID_NFT_ID');
     }
 
-    const objectId = await this.normalizeObjectId(nftId as any);
+    const objectId = await this.normalizeObjectId(nftId);
     logger.info('Retrieving Todo NFT with object ID:', { objectId });
     logger.info('Retrieving NFT object data...');
 
@@ -315,8 +315,8 @@ export class SuiNftStorage {
     tx.moveCall({
       target: `${this?.config?.packageId}::todo_nft::update_completion_status`,
       arguments: [
-        tx.object(nftId as any),
-        tx.pure(bcs.bool().serialize(true as any).toBytes()),
+        tx.object(nftId),
+        tx.pure(bcs.bool().serialize(true).toBytes()),
       ],
     });
 
@@ -328,13 +328,13 @@ export class SuiNftStorage {
 
           // Sign the transaction block with compatibility handling
           const signature = await signTransactionCompatible(
-            this.signer as any,
+            this.signer,
             serializedTx
           );
 
           // Execute the transaction with compatibility handling
           const response = (await executeTransactionCompatible(
-            this.client as any,
+            this.client,
             {
               transactionBlock: serializedTx,
               signature: signature.signature,
@@ -358,7 +358,7 @@ export class SuiNftStorage {
           return response.digest || '';
         } catch (error) {
           throw new CLIError(
-            `Failed to execute transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+            `Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`,
             'TRANSACTION_EXECUTION_ERROR'
           );
         }
@@ -377,7 +377,7 @@ export class SuiNftStorage {
         'Attempting to get the actual object ID from the transaction effects...'
       );
 
-      const getTransactionBlock = (this.client as any).getTransactionBlock;
+      const getTransactionBlock = (this.client).getTransactionBlock;
       if (typeof getTransactionBlock !== 'function') {
         throw new CLIError(
           'getTransactionBlock method not available on client',

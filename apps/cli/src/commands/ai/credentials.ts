@@ -78,7 +78,7 @@ export default class Credentials extends BaseCommand {
   };
 
   async run() {
-    const { args, flags } = await this.parse(Credentials as any);
+    const { args, flags } = await this.parse(Credentials);
 
     switch (args.action) {
       case 'add':
@@ -88,7 +88,7 @@ export default class Credentials extends BaseCommand {
         return this.addCredential(args.provider, flags);
 
       case 'list':
-        return this.listCredentials(flags as any);
+        return this.listCredentials(flags);
 
       case 'remove':
         if (!args.provider) {
@@ -159,7 +159,7 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Convert string provider to AIProvider enum
-      const providerEnum = getProviderEnum(provider as any);
+      const providerEnum = getProviderEnum(provider);
 
       // Store credential using the enum value directly
       const result = await secureCredentialService.storeCredential(
@@ -176,7 +176,7 @@ export default class Credentials extends BaseCommand {
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2));
       } else {
-        this.log(`✅ API key for ${chalk.green(provider as any)} added successfully`);
+        this.log(`✅ API key for ${chalk.green(provider)} added successfully`);
 
         if (result.verified) {
           this.log(`${chalk.green('✓')} Verified on blockchain`);
@@ -206,7 +206,7 @@ export default class Credentials extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to add credential: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to add credential: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -246,14 +246,14 @@ export default class Credentials extends BaseCommand {
         // Get permission level name with null safety
         const permissionName =
           cred.permissionLevel !== undefined && cred.permissionLevel !== null
-            ? Object.entries(AIPermissionLevel as any)
+            ? Object.entries(AIPermissionLevel)
                 .find(([_, value]) => value === cred.permissionLevel)?.[0]
                 ?.toLowerCase() || 'standard'
             : 'standard';
 
         this.log(
-          `${chalk.green(cred?.provider?.padEnd(10 as any))} | ${chalk.yellow(permissionName.padEnd(10 as any))} | ` +
-            `${verified.padEnd(15 as any)} | ${chalk.blue(expiry as any)}`
+          `${chalk.green(cred?.provider?.padEnd(10))} | ${chalk.yellow(permissionName.padEnd(10))} | ` +
+            `${verified.padEnd(15)} | ${chalk.blue(expiry)}`
         );
 
         if (cred.rotationDue) {
@@ -277,7 +277,7 @@ export default class Credentials extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to list credentials: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to list credentials: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -292,10 +292,10 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Convert string provider to AIProvider enum
-      const providerEnum = getProviderEnum(provider as any);
+      const providerEnum = getProviderEnum(provider);
 
       // First check if credential exists
-      if (!(await secureCredentialService.hasCredential(providerEnum as any))) {
+      if (!(await secureCredentialService.hasCredential(providerEnum))) {
         throw new CLIError(`No credential found for ${provider}`);
       }
 
@@ -309,11 +309,11 @@ export default class Credentials extends BaseCommand {
       }
 
       const removed =
-        await secureCredentialService.removeCredential(providerEnum as any);
+        await secureCredentialService.removeCredential(providerEnum);
 
       if (removed) {
         this.log(
-          `✅ API key for ${chalk.green(provider as any)} removed successfully`
+          `✅ API key for ${chalk.green(provider)} removed successfully`
         );
       } else {
         this.log(`No API key found for ${provider}`);
@@ -323,7 +323,7 @@ export default class Credentials extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to remove credential: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to remove credential: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -338,13 +338,13 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Convert string provider to AIProvider enum
-      const providerEnum = getProviderEnum(provider as any);
+      const providerEnum = getProviderEnum(provider);
       const verified =
-        await secureCredentialService.verifyCredential(providerEnum as any);
+        await secureCredentialService.verifyCredential(providerEnum);
 
       if (verified) {
         this.log(
-          `✅ API key for ${chalk.green(provider as any)} verified successfully on blockchain`
+          `✅ API key for ${chalk.green(provider)} verified successfully on blockchain`
         );
       } else {
         this.log(`Failed to verify API key for ${provider} on blockchain`);
@@ -354,7 +354,7 @@ export default class Credentials extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Verification failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `Verification failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -381,7 +381,7 @@ export default class Credentials extends BaseCommand {
       validateApiKey(provider, newApiKey);
 
       // Convert string provider to AIProvider enum
-      const providerEnum = getProviderEnum(provider as any);
+      const providerEnum = getProviderEnum(provider);
 
       // Confirm rotation
       const confirmed = await this.confirm(
@@ -402,7 +402,7 @@ export default class Credentials extends BaseCommand {
         this.log(JSON.stringify(result, null, 2));
       } else {
         this.log(
-          `✅ API key for ${chalk.green(provider as any)} rotated successfully`
+          `✅ API key for ${chalk.green(provider)} rotated successfully`
         );
 
         if (result.verified) {
@@ -426,7 +426,7 @@ export default class Credentials extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to rotate credential: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to rotate credential: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -458,7 +458,7 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Convert string provider to AIProvider enum
-      const providerEnum = getProviderEnum(provider as any);
+      const providerEnum = getProviderEnum(provider);
       const result = await secureCredentialService.updatePermissions(
         providerEnum,
         permissionLevel
@@ -468,7 +468,7 @@ export default class Credentials extends BaseCommand {
         this.log(JSON.stringify(result, null, 2));
       } else {
         this.log(
-          `✅ Permission level for ${chalk.green(provider as any)} updated to ${chalk.yellow(flags.permission)}`
+          `✅ Permission level for ${chalk.green(provider)} updated to ${chalk.yellow(flags.permission)}`
         );
 
         if (result.verified) {
@@ -480,7 +480,7 @@ export default class Credentials extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to update permissions: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to update permissions: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

@@ -98,7 +98,7 @@ export class BlockchainVerifier {
     }
 
     // Create verification on the blockchain
-    return this?.verifierAdapter?.createVerification(params as any);
+    return this?.verifierAdapter?.createVerification(params);
   }
 
   /**
@@ -112,7 +112,7 @@ export class BlockchainVerifier {
     }
 
     // Verify credential on blockchain
-    return this?.credentialAdapter?.verifyCredential(params as any);
+    return this?.credentialAdapter?.verifyCredential(params);
   }
 
   /**
@@ -139,7 +139,7 @@ export class BlockchainVerifier {
       request,
       response
     );
-    return Boolean(result as any);
+    return Boolean(result);
   }
 
   /**
@@ -155,7 +155,7 @@ export class BlockchainVerifier {
     }
 
     const verification =
-      await this?.verifierAdapter?.getVerification(verificationId as any);
+      await this?.verifierAdapter?.getVerification(verificationId);
     if (!verification) {
       throw new Error(`Verification not found: ${verificationId}`);
     }
@@ -173,8 +173,8 @@ export class BlockchainVerifier {
     }
 
     const verifications =
-      await this?.verifierAdapter?.listVerifications(userAddress as any);
-    return Array.isArray(verifications as any) ? verifications : [];
+      await this?.verifierAdapter?.listVerifications(userAddress);
+    return Array.isArray(verifications) ? verifications : [];
   }
 
   /**
@@ -210,8 +210,8 @@ export class BlockchainVerifier {
       });
 
       // Convert Uint8Array to strings
-      const request = new TextDecoder().decode(requestBlob as any);
-      const response = new TextDecoder().decode(responseBlob as any);
+      const request = new TextDecoder().decode(requestBlob);
+      const response = new TextDecoder().decode(responseBlob);
 
       return { request, response };
     } catch (_error) {
@@ -224,7 +224,7 @@ export class BlockchainVerifier {
    */
   async generateVerificationProof(verificationId: string): Promise<string> {
     // Get the verification record
-    const record = await this?.verifierAdapter?.getVerification(verificationId as any);
+    const record = await this?.verifierAdapter?.getVerification(verificationId);
 
     // Create a JSON proof object with verification details
     const proof = {
@@ -244,7 +244,7 @@ export class BlockchainVerifier {
     };
 
     // Convert the proof to a shareable string
-    return Buffer.from(JSON.stringify(proof as any)).toString('base64');
+    return Buffer.from(JSON.stringify(proof)).toString('base64');
   }
 
   /**
@@ -256,7 +256,7 @@ export class BlockchainVerifier {
     try {
       // Parse the proof
       const proofJson = Buffer.from(proofString, 'base64').toString('utf8');
-      const proof = JSON.parse(proofJson as any) as {
+      const proof = JSON.parse(proofJson) as {
         verificationId: string;
         requestHash: string;
         responseHash: string;
@@ -294,7 +294,7 @@ export class BlockchainVerifier {
    * Generate a hash of data for blockchain storage
    */
   private hashData(data: string): string {
-    return createHash('sha256').update(data as any).digest('hex');
+    return createHash('sha256').update(data).digest('hex');
   }
 
   /**
@@ -330,7 +330,7 @@ export class BlockchainVerifier {
       throw new Error('Verification ID must be a non-empty string');
     }
 
-    const proof = await this?.verifierAdapter?.generateProof(verificationId as any);
+    const proof = await this?.verifierAdapter?.generateProof(verificationId);
     if (!proof || typeof proof !== 'string') {
       throw new Error('Failed to generate proof: invalid result');
     }
@@ -352,14 +352,14 @@ export class BlockchainVerifier {
    * Enforce data retention policy
    */
   async enforceRetentionPolicy(retentionDays?: number): Promise<number> {
-    return this?.verifierAdapter?.enforceRetentionPolicy(retentionDays as any);
+    return this?.verifierAdapter?.enforceRetentionPolicy(retentionDays);
   }
 
   /**
    * Securely destroy verification data
    */
   async securelyDestroyData(verificationId: string): Promise<boolean> {
-    return this?.verifierAdapter?.securelyDestroyData(verificationId as any);
+    return this?.verifierAdapter?.securelyDestroyData(verificationId);
   }
 
   /**
@@ -370,7 +370,7 @@ export class BlockchainVerifier {
     userAddress: string
   ): Promise<boolean> {
     // Get verification to check ownership
-    const verification = await this.getVerification(verificationId as any);
+    const verification = await this.getVerification(verificationId);
 
     // Verify ownership
     if (verification.user !== userAddress) {
@@ -378,7 +378,7 @@ export class BlockchainVerifier {
     }
 
     // Use secure destruction method for actual deletion
-    return this.securelyDestroyData(verificationId as any);
+    return this.securelyDestroyData(verificationId);
   }
 
   /**
@@ -396,7 +396,7 @@ export class BlockchainVerifier {
       }
 
       // In a real implementation, would verify the signature cryptographically
-      // const dataBuffer = new TextEncoder().encode(data as any);
+      // const dataBuffer = new TextEncoder().encode(data);
       // const signatureBuffer = Buffer.from(signature, 'base64');
       // const publicKeyBuffer = Buffer.from(publicKey, 'base64');
 

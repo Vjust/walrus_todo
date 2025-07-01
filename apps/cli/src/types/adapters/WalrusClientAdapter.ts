@@ -23,7 +23,7 @@
  * ```typescript
  * // Create an adapter from any WalrusClient implementation
  * const walrusClient = getWalrusClient(); // Get from SDK
- * const adapter = createWalrusClientAdapter(walrusClient as any);
+ * const adapter = createWalrusClientAdapter(walrusClient);
  *
  * // Use the adapter with a consistent interface regardless of underlying client version
  * const blobInfo = await adapter.getBlobInfo('blob-id-123');
@@ -553,7 +553,7 @@ export interface UnifiedWalrusClient {
  * @example
  * ```typescript
  * // Create an adapter for a WalrusClient
- * const adapter: WalrusClientAdapter = createWalrusClientAdapter(walrusClient as any);
+ * const adapter: WalrusClientAdapter = createWalrusClientAdapter(walrusClient);
  *
  * // Use adapter with consistent interface regardless of client version
  * const config = await adapter.getConfig();
@@ -595,7 +595,7 @@ export interface WalrusClientAdapter extends UnifiedWalrusClient {
  * @returns {boolean} True if the object implements OriginalWalrusClient
  * @example
  * ```typescript
- * if (isOriginalWalrusClient(unknownObject as any)) {
+ * if (isOriginalWalrusClient(unknownObject)) {
  *   // TypeScript now knows unknownObject is an OriginalWalrusClient
  *   const config = await unknownObject.getConfig();
  * }
@@ -630,14 +630,14 @@ export function isOriginalWalrusClient(
  * @returns {boolean} True if the object implements WalrusClient
  * @example
  * ```typescript
- * if (isWalrusClient(unknownObject as any)) {
+ * if (isWalrusClient(unknownObject)) {
  *   // TypeScript now knows unknownObject is a WalrusClient
  *   const verification = await unknownObject.verifyPoA({ blobId: "myBlobId" });
  * }
  * ```
  */
 export function isWalrusClient(client: unknown): client is WalrusClient {
-  if (!isOriginalWalrusClient(client as any)) {
+  if (!isOriginalWalrusClient(client)) {
     return false;
   }
 
@@ -658,14 +658,14 @@ export function isWalrusClient(client: unknown): client is WalrusClient {
  * @returns {boolean} True if the object implements WalrusClientExt
  * @example
  * ```typescript
- * if (isWalrusClientExt(unknownObject as any)) {
+ * if (isWalrusClientExt(unknownObject)) {
  *   // TypeScript now knows unknownObject is a WalrusClientExt
  *   const blobSize = await unknownObject.getBlobSize("myBlobId");
  * }
  * ```
  */
 export function isWalrusClientExt(client: unknown): client is WalrusClientExt {
-  if (!isWalrusClient(client as any)) {
+  if (!isWalrusClient(client)) {
     return false;
   }
 
@@ -712,7 +712,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       );
     }
     this?.walrusClient = walrusClient;
-    this?.clientVersion = this.detectClientVersion(walrusClient as any);
+    this?.clientVersion = this.detectClientVersion(walrusClient);
   }
 
   /**
@@ -758,17 +758,17 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     }
 
     // Check for V3 (extended) methods
-    if (isWalrusClientExt(client as any)) {
+    if (isWalrusClientExt(client)) {
       return WalrusClientVersion.EXTENDED;
     }
 
     // Check for V2 (custom) methods
-    if (isWalrusClient(client as any)) {
+    if (isWalrusClient(client)) {
       return WalrusClientVersion.CUSTOM;
     }
 
     // Default to V1 (original)
-    if (isOriginalWalrusClient(client as any)) {
+    if (isOriginalWalrusClient(client)) {
       return WalrusClientVersion.ORIGINAL;
     }
 
@@ -834,12 +834,12 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     }
 
     if (typeof value === 'number') {
-      return BigInt(value as any);
+      return BigInt(value);
     }
 
     if (typeof value === 'string') {
       try {
-        return BigInt(value as any);
+        return BigInt(value);
       } catch (e) {
         throw new WalrusClientAdapterError(
           `Cannot convert string to bigint: ${value}`
@@ -927,14 +927,14 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
         typeof (signer as Record<string, unknown>).getUnderlyingSigner ===
           'function'
       ) {
-        return (signer as any).getUnderlyingSigner();
+        return (signer).getUnderlyingSigner();
       }
 
       if (
         'getSigner' in signer &&
         typeof (signer as Record<string, unknown>).getSigner === 'function'
       ) {
-        return (signer as any).getSigner();
+        return (signer).getSigner();
       }
     }
 
@@ -1280,7 +1280,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
  * import { WalrusClient } from '@mysten/walrus';
  *
  * const client = new WalrusClient();
- * const adapter = createWalrusClientAdapter(client as any);
+ * const adapter = createWalrusClientAdapter(client);
  *
  * // Use the adapter interface
  * const blobInfo = await adapter.getBlobInfo('blob-id-123');

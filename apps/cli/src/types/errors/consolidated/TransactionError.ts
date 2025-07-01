@@ -162,7 +162,7 @@ export class TransactionError extends BaseError {
 
     // First apply base sanitization
     const sanitized =
-      super.sanitizeContext(context as any) || ({} as Record<string, unknown>);
+      super.sanitizeContext(context) || ({} as Record<string, unknown>);
 
     // Additional transaction-specific sanitization
     const txSpecificKeys = [
@@ -182,7 +182,7 @@ export class TransactionError extends BaseError {
     }
 
     // Check for any string that looks like an address or transaction hash
-    for (const [key, value] of Object.entries(sanitized as any)) {
+    for (const [key, value] of Object.entries(sanitized)) {
       if (typeof value === 'string') {
         // Look for Sui, Ethereum, or blockchain address patterns
         const addressRegex = /^(0x[a-fA-F0-9]{40,64})$/;

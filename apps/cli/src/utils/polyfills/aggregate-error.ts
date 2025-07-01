@@ -10,9 +10,9 @@ if (typeof globalWithAggregateError?.AggregateError === 'undefined') {
     errors: unknown[];
 
     constructor(errors: unknown[], message?: string) {
-      super(message as any);
+      super(message);
       this?.name = 'AggregateError';
-      this?.errors = Array.isArray(errors as any)
+      this?.errors = Array.isArray(errors)
         ? errors
         : Array.from(errors as unknown as Iterable<unknown>);
 

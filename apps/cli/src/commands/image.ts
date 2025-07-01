@@ -1,7 +1,7 @@
 import { Flags, Args } from '@oclif/core';
 import { BaseCommand } from '../base-command';
 import { CLIError } from '../types/errors/consolidated';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
@@ -91,7 +91,7 @@ export default class ImageCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const config = await configService.getConfig();
-    const { args, flags } = await this.parse(ImageCommand as any);
+    const { args, flags } = await this.parse(ImageCommand);
     const todoService = new TodoService();
 
     try {
@@ -107,7 +107,7 @@ export default class ImageCommand extends BaseCommand {
       } as unknown as typeof SuiClient;
 
       // Initialize WalrusImageStorage
-      const walrusImageStorage = new WalrusImageStorage(suiClient as any);
+      const walrusImageStorage = new WalrusImageStorage(suiClient);
 
       // For list action, we don't need a todo item or connection to Walrus
       if (args?.action === 'list') {
@@ -116,7 +116,7 @@ export default class ImageCommand extends BaseCommand {
 
         this.log('📷 Todos with associated images:');
         for (const listName of allLists) {
-          const list = await todoService.getList(listName as any);
+          const list = await todoService.getList(listName);
           if (list) {
             const todosWithImages = list?.todos?.filter(todo => todo.imageUrl);
             if (todosWithImages.length > 0) {
@@ -210,7 +210,7 @@ export default class ImageCommand extends BaseCommand {
 
         if (flags?.["show-url"]) {
           // Only show the URL if requested
-          this.log(imageUrl as any);
+          this.log(imageUrl);
           return;
         }
 
@@ -274,7 +274,7 @@ export default class ImageCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to process image: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to process image: ${error instanceof Error ? error.message : String(error)}`,
         'IMAGE_FAILED'
       );
     }
@@ -361,7 +361,7 @@ export default class ImageCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `📝 Blob ID: ${blobId}`);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(jobId, `❌ Upload failed: ${errorMessage}`);
       }
@@ -437,7 +437,7 @@ export default class ImageCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `📝 Walrus Blob ID: ${blobId}`);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(
           jobId,

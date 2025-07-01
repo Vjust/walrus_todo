@@ -133,7 +133,7 @@ export class NetworkMonitor extends EventEmitter {
     this?.monitoringTimer = setInterval(() => {
       this.performHealthCheck().catch(error => {
         this?.logger?.error('Health check failed', {
-          error: error instanceof Error ? error.message : String(error as any),
+          error: error instanceof Error ? error.message : String(error),
         });
       });
     }, this?.config?.healthCheckInterval);
@@ -173,8 +173,8 @@ export class NetworkMonitor extends EventEmitter {
       this?.currentNetworkHealth = networkHealth;
 
       // Calculate metrics
-      const metrics = this.calculateMetrics(networkHealth as any);
-      this?.metricsHistory?.push(metrics as any);
+      const metrics = this.calculateMetrics(networkHealth);
+      this?.metricsHistory?.push(metrics);
 
       // Clean old metrics
       this.cleanOldMetrics();
@@ -193,7 +193,7 @@ export class NetworkMonitor extends EventEmitter {
 
     } catch (error) {
       this?.logger?.error('Health check failed', {
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - startTime,
       });
 
@@ -202,7 +202,7 @@ export class NetworkMonitor extends EventEmitter {
         type: 'connectivity_issue',
         severity: 'error',
         message: 'Health check failed',
-        details: { error: error instanceof Error ? error.message : String(error as any) },
+        details: { error: error instanceof Error ? error.message : String(error) },
         suggestion: 'Check network connectivity and endpoint availability',
       });
     }
@@ -242,12 +242,12 @@ export class NetworkMonitor extends EventEmitter {
     );
 
     // Count active and failed endpoints
-    const suiEndpoints = [networkHealth?.sui?.primary, ...networkHealth?.sui?.fallbacks].filter(Boolean as any);
+    const suiEndpoints = [networkHealth?.sui?.primary, ...networkHealth?.sui?.fallbacks].filter(Boolean);
     const walrusEndpoints = [
       networkHealth?.walrus?.publisher,
       networkHealth?.walrus?.aggregator,
       ...networkHealth?.walrus?.fallbackPublishers,
-    ].filter(Boolean as any);
+    ].filter(Boolean);
 
     const allEndpoints = [...suiEndpoints, ...walrusEndpoints];
     const activeEndpoints = allEndpoints.filter(e => e.available).length;
@@ -305,7 +305,7 @@ export class NetworkMonitor extends EventEmitter {
    * Record response time for P95 calculation
    */
   recordResponseTime(responseTime: number): void {
-    this?.responseTimeHistory?.push(responseTime as any);
+    this?.responseTimeHistory?.push(responseTime);
     
     // Keep only recent response times (last 100)
     if (this?.responseTimeHistory?.length > 100) {
@@ -321,13 +321,13 @@ export class NetworkMonitor extends EventEmitter {
     metrics: NetworkMetrics
   ): Promise<void> {
     // Check for endpoint failures
-    this.checkEndpointFailures(networkHealth as any);
+    this.checkEndpointFailures(networkHealth);
 
     // Check for performance degradation
-    this.checkPerformanceDegradation(metrics as any);
+    this.checkPerformanceDegradation(metrics);
 
     // Check for high error rates
-    this.checkErrorRates(metrics as any);
+    this.checkErrorRates(metrics);
 
     // Detect patterns if enabled
     if (this?.config?.enablePatternDetection) {
@@ -417,7 +417,7 @@ export class NetworkMonitor extends EventEmitter {
       this.recordEvent({
         type: 'network_degradation',
         severity: metrics.errorRate > 0.3 ? 'error' : 'warning',
-        message: `High error rate: ${(metrics.errorRate * 100).toFixed(1 as any)}%`,
+        message: `High error rate: ${(metrics.errorRate * 100).toFixed(1)}%`,
         details: { 
           errorRate: metrics.errorRate,
           errorCount: metrics.errorCount,
@@ -449,7 +449,7 @@ export class NetworkMonitor extends EventEmitter {
         if (!endpointEvents.has(event.endpoint)) {
           endpointEvents.set(event.endpoint, []);
         }
-        endpointEvents.get(event.endpoint)!.push(event as any);
+        endpointEvents.get(event.endpoint)!.push(event);
       }
     }
 
@@ -496,7 +496,7 @@ export class NetworkMonitor extends EventEmitter {
           });
         } catch (error) {
           this?.logger?.error('Automatic failover failed', {
-            error: error instanceof Error ? error.message : String(error as any),
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -520,7 +520,7 @@ export class NetworkMonitor extends EventEmitter {
           });
         } catch (error) {
           this?.logger?.error('Automatic publisher failover failed', {
-            error: error instanceof Error ? error.message : String(error as any),
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -536,7 +536,7 @@ export class NetworkMonitor extends EventEmitter {
       ...event,
     };
 
-    this?.eventHistory?.push(fullEvent as any);
+    this?.eventHistory?.push(fullEvent);
 
     // Limit event history size
     if (this?.eventHistory?.length > this?.config?.maxEventHistory) {
@@ -606,7 +606,7 @@ export class NetworkMonitor extends EventEmitter {
     );
 
     // Detect patterns
-    const patterns = this.analyzeErrorPatterns(recentEvents as any);
+    const patterns = this.analyzeErrorPatterns(recentEvents);
 
     // Generate recommendations
     const recommendations = this.generateRecommendations(recentEvents, this.getCurrentMetrics());
@@ -638,13 +638,13 @@ export class NetworkMonitor extends EventEmitter {
 
     for (const event of events.filter(e => e?.severity === 'error' || e?.severity === 'warning')) {
       const pattern = this.categorizeError(event.message);
-      patterns.set(pattern, (patterns.get(pattern as any) || 0) + 1);
+      patterns.set(pattern, (patterns.get(pattern) || 0) + 1);
     }
 
     return Array.from(patterns.entries()).map(([pattern, frequency]) => ({
       errorPattern: pattern,
       frequency,
-      suggestion: this.getPatternSuggestion(pattern as any),
+      suggestion: this.getPatternSuggestion(pattern),
     }));
   }
 

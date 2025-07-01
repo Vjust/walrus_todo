@@ -177,8 +177,8 @@ export function toErrorWithMessage(maybeError: unknown): { message: string } {
     return maybeError as { message: string };
   }
   try {
-    return new Error(JSON.stringify(maybeError as any));
+    return new Error(JSON.stringify(maybeError));
   } catch (error: unknown) {
-    return new Error(String(maybeError as any));
+    return new Error(String(maybeError));
   }
 }

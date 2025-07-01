@@ -152,7 +152,7 @@ export default class VerifyCommand extends BaseCommand {
   }
 
   async run() {
-    const { args, flags } = await this.parse(VerifyCommand as any);
+    const { args, flags } = await this.parse(VerifyCommand);
 
     // Handle background job status check
     if (flags.jobId) {
@@ -162,7 +162,7 @@ export default class VerifyCommand extends BaseCommand {
     switch (args.action) {
       case 'list':
         if (flags.background) {
-          await this.listVerificationsInBackground(flags as any);
+          await this.listVerificationsInBackground(flags);
         } else {
           await this.listVerifications(flags.format);
         }
@@ -262,7 +262,7 @@ export default class VerifyCommand extends BaseCommand {
       }));
 
       this.log(chalk.bold(`Found ${verifications.length} verifications:`));
-      this.log(this.formatTable(tableData as any));
+      this.log(this.formatTable(tableData));
     } catch (error) {
       this.error(`Failed to list verifications: ${error}`);
     }
@@ -321,7 +321,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to show verification: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to show verification: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -378,8 +378,8 @@ export default class VerifyCommand extends BaseCommand {
 
       if (outputPath) {
         // Ensure directory exists
-        const outputDir = path.dirname(outputPath as any);
-        if (!fs.existsSync(outputDir as any)) {
+        const outputDir = path.dirname(outputPath);
+        if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
 
@@ -388,14 +388,14 @@ export default class VerifyCommand extends BaseCommand {
         this.log(chalk.green(`Attestation exported to ${outputPath}`));
       } else {
         // Output to console
-        this.log(json as any);
+        this.log(json);
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to export verification: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to export verification: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -411,8 +411,8 @@ export default class VerifyCommand extends BaseCommand {
         '../utils/blob-verification'
       );
       // Create mock clients for verification
-      const mockSuiClient = {} as any;
-      const mockWalrusClient = {} as any;
+      const mockSuiClient = {};
+      const mockWalrusClient = {};
       const verificationManager = new BlobVerificationManager(mockSuiClient, mockWalrusClient);
 
       // Note: verifyBlob requires expected data and attributes, this is a simplified verification
@@ -438,7 +438,7 @@ export default class VerifyCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to verify blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to verify blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -452,7 +452,7 @@ export default class VerifyCommand extends BaseCommand {
       const fs = await import('fs');
 
       // Check if file exists
-      if (!fs.existsSync(filePath as any)) {
+      if (!fs.existsSync(filePath)) {
         throw new Error(`File not found: ${filePath}`);
       }
 
@@ -461,8 +461,8 @@ export default class VerifyCommand extends BaseCommand {
         '../utils/blob-verification'
       );
       // Create mock clients for verification
-      const mockSuiClient = {} as any;
-      const mockWalrusClient = {} as any;
+      const mockSuiClient = {};
+      const mockWalrusClient = {};
       const verificationManager = new BlobVerificationManager(mockSuiClient, mockWalrusClient);
 
       // First verify the blob exists
@@ -472,7 +472,7 @@ export default class VerifyCommand extends BaseCommand {
       }
 
       // Read file content
-      const fileContent = fs.readFileSync(filePath as any);
+      const fileContent = fs.readFileSync(filePath);
 
       // For now, just report that verification completed
       // In a real implementation, we would compare checksums
@@ -482,7 +482,7 @@ export default class VerifyCommand extends BaseCommand {
       this.log(`Content matches: true`);
     } catch (error) {
       throw new CLIError(
-        `Failed to verify file: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to verify file: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -494,7 +494,7 @@ export default class VerifyCommand extends BaseCommand {
       const fs = await import('fs');
 
       // Check if file exists
-      if (!fs.existsSync(filePath as any)) {
+      if (!fs.existsSync(filePath)) {
         throw new Error(`File not found: ${filePath}`);
       }
 
@@ -503,15 +503,15 @@ export default class VerifyCommand extends BaseCommand {
         '../utils/blob-verification'
       );
       // Create mock clients for verification
-      const mockSuiClient = {} as any;
-      const mockWalrusClient = {} as any;
+      const mockSuiClient = {};
+      const mockWalrusClient = {};
       const verificationManager = new BlobVerificationManager(mockSuiClient, mockWalrusClient);
 
       // Read file content
-      const fileContent = fs.readFileSync(filePath as any);
+      const fileContent = fs.readFileSync(filePath);
       
       // Simulate upload verification
-      const result = await verificationManager.verifyUpload(fileContent as any);
+      const result = await verificationManager.verifyUpload(fileContent);
 
       this.log(chalk.green('✓ Upload and verification successful'));
       this.log(`File: ${filePath}`);
@@ -532,7 +532,7 @@ export default class VerifyCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to upload and verify file: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to upload and verify file: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -552,7 +552,7 @@ export default class VerifyCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to verify todo: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to verify todo: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -574,7 +574,7 @@ export default class VerifyCommand extends BaseCommand {
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to verify credential: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to verify credential: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -629,7 +629,7 @@ export default class VerifyCommand extends BaseCommand {
   private async handleJobStatus(jobId: string, flags: any) {
     try {
       const backgroundOps = await createBackgroundAIOperationsManager();
-      const status = await backgroundOps.getOperationStatus(jobId as any);
+      const status = await backgroundOps.getOperationStatus(jobId);
 
       if (!status) {
         this.error(`Job ${jobId} not found`);
@@ -693,7 +693,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to get verification job status: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get verification job status: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -733,7 +733,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background verification list: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background verification list: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -774,7 +774,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background verification show: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background verification show: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -817,7 +817,7 @@ export default class VerifyCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background verification export: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background verification export: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -835,7 +835,7 @@ export default class VerifyCommand extends BaseCommand {
     };
 
     return (
-      statusColors[status as keyof typeof statusColors] || chalk.white(status as any)
+      statusColors[status as keyof typeof statusColors] || chalk.white(status)
     );
   }
 }

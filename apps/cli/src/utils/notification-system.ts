@@ -78,7 +78,7 @@ export class NotificationSystem extends EventEmitter {
    * Update an existing notification
    */
   updateNotification(id: string, updates: Partial<Notification>): boolean {
-    const notification = this?.notifications?.get(id as any);
+    const notification = this?.notifications?.get(id);
     if (!notification) {
       return false;
     }
@@ -87,7 +87,7 @@ export class NotificationSystem extends EventEmitter {
     this.emit('notificationUpdated', notification);
 
     if (this?.options?.enableCLI) {
-      this.displayCLINotification(notification as any);
+      this.displayCLINotification(notification);
     }
 
     return true;
@@ -97,12 +97,12 @@ export class NotificationSystem extends EventEmitter {
    * Remove a notification
    */
   removeNotification(id: string): boolean {
-    const notification = this?.notifications?.get(id as any);
+    const notification = this?.notifications?.get(id);
     if (!notification) {
       return false;
     }
 
-    this?.notifications?.delete(id as any);
+    this?.notifications?.delete(id);
     this.emit('notificationRemoved', notification);
     return true;
   }
@@ -131,7 +131,7 @@ export class NotificationSystem extends EventEmitter {
     let cleared = 0;
     for (const [id, notification] of this.notifications) {
       if (notification?.type === type) {
-        this?.notifications?.delete(id as any);
+        this?.notifications?.delete(id);
         cleared++;
       }
     }
@@ -152,7 +152,7 @@ export class NotificationSystem extends EventEmitter {
     completed: string;
     failed: string;
   } {
-    const jobDetails = this.getJobDisplayName(job as any);
+    const jobDetails = this.getJobDisplayName(job);
 
     return {
       started: this.info('Upload Started', `Started uploading: ${jobDetails}`, {
@@ -199,7 +199,7 @@ export class NotificationSystem extends EventEmitter {
     const type =
       failed === 0 ? 'success' : successful > 0 ? 'warning' : 'error';
     const title = 'Batch Upload Complete';
-    const message = `${successful}/${totalJobs} uploads successful (${this.formatDuration(duration as any)})`;
+    const message = `${successful}/${totalJobs} uploads successful (${this.formatDuration(duration)})`;
 
     return this.createNotification(type, title, message, {
       totalJobs,
@@ -227,7 +227,7 @@ export class NotificationSystem extends EventEmitter {
     // Handle notification logging to file
     if (this?.options?.logFile) {
       this.on('notificationCreated', (notification: Notification) => {
-        this.logNotificationToFile(notification as any);
+        this.logNotificationToFile(notification);
       });
     }
   }
@@ -259,15 +259,15 @@ export class NotificationSystem extends EventEmitter {
 
     // Display notification based on options
     if (this?.options?.enableCLI) {
-      this.displayCLINotification(notification as any);
+      this.displayCLINotification(notification);
     }
 
     if (this?.options?.enableDesktop) {
-      this.displayDesktopNotification(notification as any);
+      this.displayDesktopNotification(notification);
     }
 
     if (this?.options?.enableSound) {
-      this.playNotificationSound(notification as any);
+      this.playNotificationSound(notification);
     }
 
     return id;
@@ -410,7 +410,7 @@ export class NotificationSystem extends EventEmitter {
    */
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
   }
 }

@@ -4,7 +4,7 @@
 if (typeof Array.prototype?.at === 'undefined') {
   Array.prototype?.at = function <T>(this: T[], index: number): T | undefined {
     const length = this.length;
-    const relativeIndex = Math.trunc(index as any) || 0;
+    const relativeIndex = Math.trunc(index) || 0;
     const k = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
     return k < 0 || k >= length ? undefined : this[k];
   };
@@ -57,7 +57,7 @@ if (typeof Array.prototype?.toSorted === 'undefined') {
     this: T[],
     compareFn?: (a: T, b: T) => number
   ): T[] {
-    return [...this].sort(compareFn as any);
+    return [...this].sort(compareFn);
   };
 }
 
@@ -65,7 +65,7 @@ if (typeof Array.prototype?.toSorted === 'undefined') {
 if (typeof Array.prototype?.with === 'undefined') {
   Array.prototype?.with = function <T>(this: T[], index: number, value: T): T[] {
     const length = this.length;
-    const relativeIndex = Math.trunc(index as any) || 0;
+    const relativeIndex = Math.trunc(index) || 0;
     const actualIndex =
       relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
 

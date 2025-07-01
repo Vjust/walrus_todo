@@ -70,7 +70,7 @@ export default class Verify extends BaseCommand {
   private todoAIAdapter!: TodoAIAdapter;
 
   async run() {
-    const { args, flags } = await this.parse(Verify as any);
+    const { args, flags } = await this.parse(Verify);
 
     // Initialize services
     this?.verificationService = new AIVerificationService();
@@ -128,21 +128,21 @@ export default class Verify extends BaseCommand {
 
     try {
       const isValid =
-        await this?.verificationService?.verifyExistingOperation(verificationId as any);
+        await this?.verificationService?.verifyExistingOperation(verificationId);
 
       if (isValid) {
         this.log(
-          `${chalk.green('\u2713')} Verification ${chalk.cyan(verificationId as any)} is valid`
+          `${chalk.green('\u2713')} Verification ${chalk.cyan(verificationId)} is valid`
         );
         this.log('This AI operation has been verified on the blockchain.');
       } else {
         this.log(
-          `${chalk.red('\u2717')} Verification ${chalk.cyan(verificationId as any)} is invalid or not found`
+          `${chalk.red('\u2717')} Verification ${chalk.cyan(verificationId)} is invalid or not found`
         );
         this.log('This verification ID does not exist on the blockchain.');
       }
     } catch (error) {
-      this.error(getErrorMessage(error as any));
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -154,16 +154,16 @@ export default class Verify extends BaseCommand {
 
     try {
       const verifications =
-        await this?.todoAIAdapter?.getVerificationsForTodo(todoId as any);
+        await this?.todoAIAdapter?.getVerificationsForTodo(todoId);
 
       if (verifications?.length === 0) {
         this.log(
-          `${chalk.yellow('\u26a0')} No verifications found for todo ${chalk.cyan(todoId as any)}`
+          `${chalk.yellow('\u26a0')} No verifications found for todo ${chalk.cyan(todoId)}`
         );
         return;
       }
 
-      this.log(`Verifications for todo ${chalk.cyan(todoId as any)}:`);
+      this.log(`Verifications for todo ${chalk.cyan(todoId)}:`);
 
       for (const verificationId of verifications) {
         const isValid =
@@ -174,10 +174,10 @@ export default class Verify extends BaseCommand {
           ? chalk.green('\u2713 valid')
           : chalk.red('\u2717 invalid');
 
-        this.log(`  ${chalk.cyan(verificationId as any)}: ${status}`);
+        this.log(`  ${chalk.cyan(verificationId)}: ${status}`);
       }
     } catch (error) {
-      this.error(getErrorMessage(error as any));
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -203,11 +203,11 @@ export default class Verify extends BaseCommand {
 
       if (isValid) {
         this.log(
-          `${chalk.green('\u2713')} Todo ${chalk.cyan(todoId as any)} has a verified ${chalk.cyan(operation as any)} operation`
+          `${chalk.green('\u2713')} Todo ${chalk.cyan(todoId)} has a verified ${chalk.cyan(operation)} operation`
         );
       } else {
         this.log(
-          `${chalk.red('\u2717')} Todo ${chalk.cyan(todoId as any)} does not have a verified ${chalk.cyan(operation as any)} operation`
+          `${chalk.red('\u2717')} Todo ${chalk.cyan(todoId)} does not have a verified ${chalk.cyan(operation)} operation`
         );
 
         if (provider) {
@@ -221,7 +221,7 @@ export default class Verify extends BaseCommand {
         }
       }
     } catch (error) {
-      this.error(getErrorMessage(error as any));
+      this.error(getErrorMessage(error));
     }
   }
 }

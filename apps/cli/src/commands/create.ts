@@ -56,7 +56,7 @@ export default class CreateCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(CreateCommand as any);
+    const { flags } = await this.parse(CreateCommand);
     const { title, description, image, private: isPrivate } = flags;
 
     try {
@@ -77,7 +77,7 @@ export default class CreateCommand extends BaseCommand {
       const suiClient = new SuiClient({ url: networkUrl });
 
       // Initialize Walrus image storage
-      const walrusStorage = new WalrusImageStorage(suiClient as any); // Add instantiation here
+      const walrusStorage = new WalrusImageStorage(suiClient); // Add instantiation here
       await walrusStorage.connect(); // Ensure connection is established
 
       // Upload image to Walrus with retry and error handling
@@ -85,13 +85,13 @@ export default class CreateCommand extends BaseCommand {
       try {
         if (image) {
           // Upload custom image
-          if (!fs.existsSync(image as any)) {
+          if (!fs.existsSync(image)) {
             throw new CLIError(
               `Image file not found: ${image}`,
               'IMAGE_NOT_FOUND'
             );
           }
-          imageUrl = await walrusStorage.uploadImage(image as any);
+          imageUrl = await walrusStorage.uploadImage(image);
         } else {
           // Use default image with retry and error handling
           imageUrl = await walrusStorage
@@ -112,7 +112,7 @@ export default class CreateCommand extends BaseCommand {
         }
       } catch (error) {
         throw new CLIError(
-          `Failed to upload image to Walrus: ${error instanceof Error ? error.message : String(error as any)}`,
+          `Failed to upload image to Walrus: ${error instanceof Error ? error.message : String(error)}`,
           'IMAGE_UPLOAD_FAILED'
         );
       }
@@ -130,20 +130,20 @@ export default class CreateCommand extends BaseCommand {
       const txb = new Transaction();
       const args = [
         txb.pure(isPrivate ? 'Untitled' : title),
-        txb.pure(description as any),
-        txb.pure(blobId as any),
+        txb.pure(description),
+        txb.pure(blobId),
       ];
       txb.moveCall({
         target: `${config?.lastDeployment?.packageId}::todo_nft::create_todo`,
         arguments: args,
       });
-      const signer = new KeystoreSigner(suiClient as any);
-      const tx = await signer.signAndExecuteTransaction(txb as any) as any;
-      if ((tx as any).effects?.status.status !== 'success') {
+      const signer = new KeystoreSigner(suiClient);
+      const tx = await signer.signAndExecuteTransaction(txb);
+      if ((tx).effects?.status.status !== 'success') {
         // Add optional chaining for null check
         throw new CLIError('Transaction failed', 'TX_FAILED');
       }
-      const createdObjects = (tx as any).effects.created;
+      const createdObjects = (tx).effects.created;
       if (!createdObjects || createdObjects?.length === 0) {
         throw new CLIError(
           'No objects created in transaction',
@@ -172,7 +172,7 @@ export default class CreateCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Transaction or creation failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Transaction or creation failed: ${error instanceof Error ? error.message : String(error)}`,
         'CREATE_FAILED'
       );
     }

@@ -49,7 +49,7 @@ export class CredentialVerifier {
     apiKey: string
   ): Promise<string> {
     // Create a one-way hash of the API key to store on-chain
-    const keyHash = this.hashCredential(apiKey as any);
+    const keyHash = this.hashCredential(apiKey);
 
     try {
       // Prepare keypair for transaction
@@ -62,8 +62,8 @@ export class CredentialVerifier {
       tx.moveCall({
         target: `${this.moduleAddress}::ai_verifier::register_credential`,
         arguments: [
-          tx.pure(provider as any),
-          tx.pure(keyHash as any),
+          tx.pure(provider),
+          tx.pure(keyHash),
           tx.pure(new Date().toISOString()), // registration timestamp
         ],
       });
@@ -81,10 +81,10 @@ export class CredentialVerifier {
       return result.digest;
     } catch (_error) {
       this?.logger?.error(
-        `Failed to register credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
+        `Failed to register credential: ${_error instanceof Error ? _error.message : String(_error)}`
       );
       throw new CLIError(
-        `Failed to register credential on blockchain: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+        `Failed to register credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`,
         'CREDENTIAL_REGISTRATION_FAILED'
       );
     }
@@ -97,7 +97,7 @@ export class CredentialVerifier {
     provider: AIProvider,
     apiKey: string
   ): Promise<boolean> {
-    const keyHash = this.hashCredential(apiKey as any);
+    const keyHash = this.hashCredential(apiKey);
 
     try {
       // Query the blockchain to check if this credential exists and is valid
@@ -111,14 +111,14 @@ export class CredentialVerifier {
       if (result && result.results && result?.results?.[0]) {
         const returnValue = result?.results?.[0].returnValues[0][0];
         // BCS decode the return value (should be a boolean)
-        const isValid = bcs?.Bool?.parse(Uint8Array.from(returnValue as any));
+        const isValid = bcs?.Bool?.parse(Uint8Array.from(returnValue));
         return isValid;
       }
 
       return false;
     } catch (_error) {
       this?.logger?.error(
-        `Failed to verify credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
+        `Failed to verify credential: ${_error instanceof Error ? _error.message : String(_error)}`
       );
       return false;
     }
@@ -134,7 +134,7 @@ export class CredentialVerifier {
       const tx = new TransactionBlock();
       tx.moveCall({
         target: `${this.moduleAddress}::ai_verifier::is_provider_registered`,
-        arguments: [tx.pure(provider as any)],
+        arguments: [tx.pure(provider)],
       });
 
       const result = await this?.client?.devInspectTransactionBlock({
@@ -144,13 +144,13 @@ export class CredentialVerifier {
 
       if (result && result.results && result?.results?.[0]) {
         const returnValue = result?.results?.[0].returnValues[0][0];
-        return bcs?.Bool?.parse(Uint8Array.from(returnValue as any));
+        return bcs?.Bool?.parse(Uint8Array.from(returnValue));
       }
 
       return false;
     } catch (_error) {
       this?.logger?.error(
-        `Failed to check registration status: ${_error instanceof Error ? _error.message : String(_error as any)}`
+        `Failed to check registration status: ${_error instanceof Error ? _error.message : String(_error)}`
       );
       return false;
     }
@@ -168,7 +168,7 @@ export class CredentialVerifier {
       const tx = new TransactionBlock();
       tx.moveCall({
         target: `${this.moduleAddress}::ai_verifier::revoke_credential`,
-        arguments: [tx.pure(provider as any)],
+        arguments: [tx.pure(provider)],
       });
 
       await this?.client?.signAndExecuteTransaction({
@@ -179,10 +179,10 @@ export class CredentialVerifier {
       this?.logger?.info(`Credential for ${provider} revoked successfully`);
     } catch (_error) {
       this?.logger?.error(
-        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error as any)}`
+        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error)}`
       );
       throw new CLIError(
-        `Failed to revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+        `Failed to revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`,
         'CREDENTIAL_REVOCATION_FAILED'
       );
     }
@@ -200,7 +200,7 @@ export class CredentialVerifier {
     const tx = new TransactionBlock();
     tx.moveCall({
       target: `${this.moduleAddress}::ai_verifier::verify_credential`,
-      arguments: [tx.pure(provider as any), tx.pure(keyHash as any)],
+      arguments: [tx.pure(provider), tx.pure(keyHash)],
     });
 
     return tx;
@@ -224,6 +224,6 @@ export class CredentialVerifier {
    */
   private hashCredential(apiKey: string): string {
     // Create a SHA-256 hash of the API key
-    return createHash('sha256').update(apiKey as any).digest('hex');
+    return createHash('sha256').update(apiKey).digest('hex');
   }
 }

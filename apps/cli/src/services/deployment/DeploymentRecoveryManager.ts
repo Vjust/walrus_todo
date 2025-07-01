@@ -127,8 +127,8 @@ export class DeploymentRecoveryManager {
     previousVersion?: { siteId: string; manifestBlobId: string }
   ): Promise<string> {
     const deploymentId = this.generateDeploymentId();
-    const files = await this.scanBuildDirectory(buildDirectory as any);
-    const totalSize = await this.calculateTotalSize(files as any);
+    const files = await this.scanBuildDirectory(buildDirectory);
+    const totalSize = await this.calculateTotalSize(files);
 
     const initialState: DeploymentState = {
       id: deploymentId,
@@ -155,7 +155,7 @@ export class DeploymentRecoveryManager {
       },
       metadata: {
         totalSize,
-        estimatedCost: await this.estimateDeploymentCost(totalSize as any),
+        estimatedCost: await this.estimateDeploymentCost(totalSize),
       },
       recovery: {
         canResume: true,
@@ -167,7 +167,7 @@ export class DeploymentRecoveryManager {
       errors: [],
     };
 
-    await this.saveDeploymentState(initialState as any);
+    await this.saveDeploymentState(initialState);
     await this.createCheckpoint(deploymentId, 'initialization', {
       filesToUpload: files,
       completedUploads: [],
@@ -194,7 +194,7 @@ export class DeploymentRecoveryManager {
     updates: Partial<DeploymentState>,
     createCheckpoint: boolean = false
   ): Promise<void> {
-    const currentState = this?.activeDeployments?.get(deploymentId as any);
+    const currentState = this?.activeDeployments?.get(deploymentId);
     if (!currentState) {
       throw new CLIError(`Deployment ${deploymentId} not found`, 'DEPLOYMENT_NOT_FOUND');
     }
@@ -205,7 +205,7 @@ export class DeploymentRecoveryManager {
       lastUpdate: new Date().toISOString(),
     };
 
-    await this.saveDeploymentState(updatedState as any);
+    await this.saveDeploymentState(updatedState);
     this?.activeDeployments?.set(deploymentId, updatedState);
 
     if (createCheckpoint) {
@@ -236,7 +236,7 @@ export class DeploymentRecoveryManager {
       recoverable?: boolean;
     }
   ): Promise<void> {
-    const state = this?.activeDeployments?.get(deploymentId as any);
+    const state = this?.activeDeployments?.get(deploymentId);
     if (!state) return;
 
     const errorRecord = {
@@ -247,7 +247,7 @@ export class DeploymentRecoveryManager {
       recoverable: error.recoverable !== false,
     };
 
-    state?.errors?.push(errorRecord as any);
+    state?.errors?.push(errorRecord);
     
     // Determine if deployment should be marked as failed
     const criticalErrors = state?.errors?.filter(e => !e.recoverable).length;
@@ -275,7 +275,7 @@ export class DeploymentRecoveryManager {
   async recoverDeployment(deploymentId: string): Promise<boolean> {
     this?.logger?.info('Attempting deployment recovery', { deploymentId });
 
-    const state = this?.activeDeployments?.get(deploymentId as any);
+    const state = this?.activeDeployments?.get(deploymentId);
     if (!state) {
       throw new CLIError(`Deployment ${deploymentId} not found`, 'DEPLOYMENT_NOT_FOUND');
     }
@@ -287,7 +287,7 @@ export class DeploymentRecoveryManager {
 
     try {
       // Load the latest checkpoint
-      const checkpoint = await this.loadLatestCheckpoint(deploymentId as any);
+      const checkpoint = await this.loadLatestCheckpoint(deploymentId);
       if (!checkpoint) {
         this?.logger?.warn('No checkpoint found for recovery', { deploymentId });
         return false;
@@ -336,13 +336,13 @@ export class DeploymentRecoveryManager {
     } catch (error) {
       this?.logger?.error('Deployment recovery failed', {
         deploymentId,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
       
       await this.recordError(deploymentId, {
         type: 'config',
         message: 'Recovery attempt failed',
-        details: { error: error instanceof Error ? error.message : String(error as any) },
+        details: { error: error instanceof Error ? error.message : String(error) },
         recoverable: false,
       });
 
@@ -356,7 +356,7 @@ export class DeploymentRecoveryManager {
   async rollbackDeployment(deploymentId: string): Promise<boolean> {
     this?.logger?.info('Attempting deployment rollback', { deploymentId });
 
-    const state = this?.activeDeployments?.get(deploymentId as any);
+    const state = this?.activeDeployments?.get(deploymentId);
     if (!state || !state?.recovery?.rollbackAvailable || !state?.recovery?.previousVersion) {
       this?.logger?.warn('Rollback not available', { deploymentId });
       return false;
@@ -390,13 +390,13 @@ export class DeploymentRecoveryManager {
     } catch (error) {
       this?.logger?.error('Rollback failed', {
         deploymentId,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
 
       await this.recordError(deploymentId, {
         type: 'blockchain',
         message: 'Rollback operation failed',
-        details: { error: error instanceof Error ? error.message : String(error as any) },
+        details: { error: error instanceof Error ? error.message : String(error) },
         recoverable: true,
       });
 
@@ -410,13 +410,13 @@ export class DeploymentRecoveryManager {
   async cleanupDeployment(deploymentId: string, removePartialUploads: boolean = false): Promise<void> {
     this?.logger?.info('Cleaning up deployment', { deploymentId, removePartialUploads });
 
-    const state = this?.activeDeployments?.get(deploymentId as any);
+    const state = this?.activeDeployments?.get(deploymentId);
     if (!state) return;
 
     try {
       // Clean up temporary files
       const tempDeploymentDir = path.join(this.tempDirectory, deploymentId);
-      if (fs.existsSync(tempDeploymentDir as any)) {
+      if (fs.existsSync(tempDeploymentDir)) {
         fs.rmSync(tempDeploymentDir, { recursive: true, force: true });
       }
 
@@ -431,7 +431,7 @@ export class DeploymentRecoveryManager {
             } catch (deleteError) {
               this?.logger?.warn('Failed to delete blob', {
                 blobId: upload.blobId,
-                error: deleteError instanceof Error ? deleteError.message : String(deleteError as any),
+                error: deleteError instanceof Error ? deleteError.message : String(deleteError),
               });
             }
           }
@@ -440,23 +440,23 @@ export class DeploymentRecoveryManager {
 
       // Clean up state files
       const stateFile = path.join(this.stateDirectory, `${deploymentId}.json`);
-      if (fs.existsSync(stateFile as any)) {
-        fs.unlinkSync(stateFile as any);
+      if (fs.existsSync(stateFile)) {
+        fs.unlinkSync(stateFile);
       }
 
       // Clean up checkpoints
       const checkpointDir = path.join(this.checkpointDirectory, deploymentId);
-      if (fs.existsSync(checkpointDir as any)) {
+      if (fs.existsSync(checkpointDir)) {
         fs.rmSync(checkpointDir, { recursive: true, force: true });
       }
 
-      this?.activeDeployments?.delete(deploymentId as any);
+      this?.activeDeployments?.delete(deploymentId);
 
       this?.logger?.info('Deployment cleanup completed', { deploymentId });
     } catch (error) {
       this?.logger?.error('Cleanup failed', {
         deploymentId,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -472,14 +472,14 @@ export class DeploymentRecoveryManager {
    * Get deployment state by ID
    */
   getDeploymentState(deploymentId: string): DeploymentState | undefined {
-    return this?.activeDeployments?.get(deploymentId as any);
+    return this?.activeDeployments?.get(deploymentId);
   }
 
   /**
    * Check if deployment can be resumed
    */
   canResumeDeployment(deploymentId: string): boolean {
-    const state = this?.activeDeployments?.get(deploymentId as any);
+    const state = this?.activeDeployments?.get(deploymentId);
     return state?.recovery?.canResume === true && 
            ['failed', 'pending'].includes(state.status);
   }
@@ -493,7 +493,7 @@ export class DeploymentRecoveryManager {
     totalFiles: number;
     currentOperation?: string;
   } | null {
-    const state = this?.activeDeployments?.get(deploymentId as any);
+    const state = this?.activeDeployments?.get(deploymentId);
     if (!state) return null;
 
     const percentage = state?.progress?.totalFiles > 0 
@@ -501,7 +501,7 @@ export class DeploymentRecoveryManager {
       : 0;
 
     return {
-      percentage: Math.round(percentage as any),
+      percentage: Math.round(percentage),
       uploadedFiles: state?.progress?.uploadedFiles,
       totalFiles: state?.progress?.totalFiles,
       currentOperation: state?.progress?.currentFile,
@@ -511,12 +511,12 @@ export class DeploymentRecoveryManager {
   // Private helper methods
 
   private generateDeploymentId(): string {
-    return `deploy_${Date.now()}_${crypto.randomBytes(4 as any).toString('hex')}`;
+    return `deploy_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
   }
 
   private ensureDirectories(): void {
     for (const dir of [this.stateDirectory, this.checkpointDirectory, this.tempDirectory]) {
-      if (!fs.existsSync(dir as any)) {
+      if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
     }
@@ -526,20 +526,20 @@ export class DeploymentRecoveryManager {
     const files: string[] = [];
     
     const scanDir = (dir: string, basePath: string = '') => {
-      const items = fs.readdirSync(dir as any);
+      const items = fs.readdirSync(dir);
       for (const item of items) {
         const fullPath = path.join(dir, item);
         const relativePath = path.join(basePath, item);
         
-        if (fs.statSync(fullPath as any).isDirectory()) {
+        if (fs.statSync(fullPath).isDirectory()) {
           scanDir(fullPath, relativePath);
         } else {
-          files.push(relativePath as any);
+          files.push(relativePath);
         }
       }
     };
 
-    scanDir(buildDirectory as any);
+    scanDir(buildDirectory);
     return files;
   }
 
@@ -565,7 +565,7 @@ export class DeploymentRecoveryManager {
     for (const file of stateFiles) {
       try {
         const stateData = fs.readFileSync(path.join(this.stateDirectory, file), 'utf8');
-        const state: DeploymentState = JSON.parse(stateData as any);
+        const state: DeploymentState = JSON.parse(stateData);
         
         // Only load deployments that are not completed
         if (state.status !== 'completed') {
@@ -585,13 +585,13 @@ export class DeploymentRecoveryManager {
     checkpointData: Partial<DeploymentCheckpoint>
   ): Promise<void> {
     const checkpointDir = path.join(this.checkpointDirectory, deploymentId);
-    if (!fs.existsSync(checkpointDir as any)) {
+    if (!fs.existsSync(checkpointDir)) {
       fs.mkdirSync(checkpointDir, { recursive: true });
     }
 
     const checkpoint: DeploymentCheckpoint = {
       timestamp: new Date().toISOString(),
-      state: this?.activeDeployments?.get(deploymentId as any),
+      state: this?.activeDeployments?.get(deploymentId),
       filesToUpload: [],
       completedUploads: [],
       pendingTransactions: [],
@@ -604,9 +604,9 @@ export class DeploymentRecoveryManager {
 
   private async loadLatestCheckpoint(deploymentId: string): Promise<DeploymentCheckpoint | null> {
     const checkpointDir = path.join(this.checkpointDirectory, deploymentId);
-    if (!fs.existsSync(checkpointDir as any)) return null;
+    if (!fs.existsSync(checkpointDir)) return null;
 
-    const checkpointFiles = fs.readdirSync(checkpointDir as any)
+    const checkpointFiles = fs.readdirSync(checkpointDir)
       .filter(f => f.endsWith('.json'))
       .sort()
       .reverse();
@@ -616,7 +616,7 @@ export class DeploymentRecoveryManager {
     try {
       const latestFile = path.join(checkpointDir, checkpointFiles[0]);
       const checkpointData = fs.readFileSync(latestFile, 'utf8');
-      return JSON.parse(checkpointData as any);
+      return JSON.parse(checkpointData);
     } catch (error) {
       this?.logger?.error('Failed to load checkpoint', { deploymentId, error });
       return null;
@@ -633,7 +633,7 @@ export class DeploymentRecoveryManager {
       try {
         // Here you would verify the blob still exists and is valid
         // For now, we'll assume they're all valid
-        validUploads.push(upload as any);
+        validUploads.push(upload);
       } catch (error) {
         this?.logger?.warn('Upload validation failed', {
           deploymentId,

@@ -163,7 +163,7 @@ export default class AI extends BaseCommand {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = await this.parse(AI as any);
+    const { args, flags } = await this.parse(AI);
     // Type assertion for flags to fix property access
     const typedFlags = flags as AICommandFlags;
 
@@ -173,7 +173,7 @@ export default class AI extends BaseCommand {
     }
 
     // Always set AI features flag for AI command
-    AIProviderFactory.setAIFeatureRequested(true as any);
+    AIProviderFactory.setAIFeatureRequested(true);
 
     // First ensure environment variables are loaded from .env files
     const { loadEnvironment } = await import('../utils/env-loader');
@@ -207,12 +207,12 @@ export default class AI extends BaseCommand {
 
     // Handle special status operation
     if (args?.operation === 'status') {
-      return this.showStatus(typedFlags as any);
+      return this.showStatus(typedFlags);
     }
 
     // Handle help operation
     if (args?.operation === 'help') {
-      return this.showHelp(typedFlags as any);
+      return this.showHelp(typedFlags);
     }
 
     // Configure AI provider from environment
@@ -229,7 +229,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to set AI provider: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to set AI provider: ${error instanceof Error ? error.message : String(error)}`
       );
     }
 
@@ -240,19 +240,19 @@ export default class AI extends BaseCommand {
     // Perform the requested operation
     switch (args.operation) {
       case 'summarize':
-        return this.summarizeTodos(typedFlags as any);
+        return this.summarizeTodos(typedFlags);
 
       case 'categorize':
-        return this.categorizeTodos(typedFlags as any);
+        return this.categorizeTodos(typedFlags);
 
       case 'prioritize':
-        return this.prioritizeTodos(typedFlags as any);
+        return this.prioritizeTodos(typedFlags);
 
       case 'suggest':
-        return this.suggestTodos(typedFlags as any);
+        return this.suggestTodos(typedFlags);
 
       case 'analyze':
-        return this.analyzeTodos(typedFlags as any);
+        return this.analyzeTodos(typedFlags);
 
       default:
         this.error(`Unknown AI operation: ${args.operation}`);
@@ -303,7 +303,7 @@ export default class AI extends BaseCommand {
         ? chalk.green('✓ available')
         : chalk.gray('not configured');
 
-      this.log(`${chalk.cyan(provider.padEnd(10 as any))} | ${status}`);
+      this.log(`${chalk.cyan(provider.padEnd(10))} | ${status}`);
     }
 
     // Display credential status
@@ -318,7 +318,7 @@ export default class AI extends BaseCommand {
           : chalk.gray('not verified');
 
         this.log(
-          `${chalk.cyan(cred?.provider?.padEnd(10 as any))} | ${verified.padEnd(15 as any)} | ${chalk.blue(expiry as any)}`
+          `${chalk.cyan(cred?.provider?.padEnd(10))} | ${verified.padEnd(15)} | ${chalk.blue(expiry)}`
         );
 
         if (cred.rotationDue) {
@@ -514,7 +514,7 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Generating AI summary...'));
 
     try {
-      const summaryResponse = await aiService.summarize(todos as any);
+      const summaryResponse = await aiService.summarize(todos);
 
       // Debug information only in development environment
       if (process.env?.NODE_ENV === 'development') {
@@ -582,14 +582,14 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the actual summary text
-      const summary = extractSummaryText(summaryResponse as any);
+      const summary = extractSummaryText(summaryResponse);
 
       if (flags.json) {
         this.log(JSON.stringify({ summary }, null, 2));
       } else {
         this.log('');
         this.log(chalk.cyan('📝 Summary of your todos:'));
-        this.log(chalk.yellow(summary as any));
+        this.log(chalk.yellow(summary));
       }
     } catch (error) {
       // Only log detailed error in development mode
@@ -600,7 +600,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `AI summarization failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `AI summarization failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -624,7 +624,7 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Categorizing todos...'));
 
     try {
-      const categoriesResponse = await aiService.categorize(todos as any);
+      const categoriesResponse = await aiService.categorize(todos);
 
       // Debug information only in development environment
       if (process.env?.NODE_ENV === 'development') {
@@ -642,8 +642,8 @@ export default class AI extends BaseCommand {
         if (
           response &&
           typeof response === 'object' &&
-          !Array.isArray(response as any) &&
-          Object.values(response as any).every(val => Array.isArray(val as any))
+          !Array.isArray(response) &&
+          Object.values(response).every(val => Array.isArray(val))
         ) {
           return response as Record<string, string[]>;
         }
@@ -658,10 +658,10 @@ export default class AI extends BaseCommand {
               const content = responseObj?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content as any) as unknown;
+                  const parsed = JSON.parse(content) as unknown;
                   if (
                     typeof parsed === 'object' &&
-                    !Array.isArray(parsed as any) &&
+                    !Array.isArray(parsed) &&
                     parsed !== null
                   ) {
                     return parsed as Record<string, string[]>;
@@ -707,7 +707,7 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the categories
-      const categories = extractCategoriesData(categoriesResponse as any);
+      const categories = extractCategoriesData(categoriesResponse);
 
       if (flags.json) {
         this.log(JSON.stringify({ categories }, null, 2));
@@ -717,7 +717,7 @@ export default class AI extends BaseCommand {
       this.log('');
       this.log(chalk.cyan('📂 Todo Categories:'));
 
-      for (const [category, todoIds] of Object.entries(categories as any)) {
+      for (const [category, todoIds] of Object.entries(categories)) {
         this.log(chalk.yellow(`\n${category}:`));
 
         for (const todoId of todoIds) {
@@ -736,7 +736,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `AI categorization failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `AI categorization failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -760,7 +760,7 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Prioritizing todos...'));
 
     try {
-      const prioritiesResponse = await aiService.prioritize(todos as any);
+      const prioritiesResponse = await aiService.prioritize(todos);
 
       // Debug information only in development environment
       if (process.env?.NODE_ENV === 'development') {
@@ -778,8 +778,8 @@ export default class AI extends BaseCommand {
         if (
           response &&
           typeof response === 'object' &&
-          !Array.isArray(response as any) &&
-          Object.values(response as any).every(val => typeof val === 'number')
+          !Array.isArray(response) &&
+          Object.values(response).every(val => typeof val === 'number')
         ) {
           return response as Record<string, number>;
         }
@@ -794,10 +794,10 @@ export default class AI extends BaseCommand {
               const content = responseObj?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content as any) as unknown;
+                  const parsed = JSON.parse(content) as unknown;
                   if (
                     typeof parsed === 'object' &&
-                    !Array.isArray(parsed as any) &&
+                    !Array.isArray(parsed) &&
                     parsed !== null
                   ) {
                     return parsed as Record<string, number>;
@@ -854,7 +854,7 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the priorities
-      const priorities = extractPrioritiesData(prioritiesResponse as any);
+      const priorities = extractPrioritiesData(prioritiesResponse);
 
       if (flags.json) {
         this.log(JSON.stringify({ priorities }, null, 2));
@@ -889,7 +889,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `AI prioritization failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `AI prioritization failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -913,7 +913,7 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Generating todo suggestions...'));
 
     try {
-      const suggestions = await aiService.suggest(todos as any);
+      const suggestions = await aiService.suggest(todos);
 
       // Debug information only in development environment
       if (process.env?.NODE_ENV === 'development') {
@@ -940,7 +940,7 @@ export default class AI extends BaseCommand {
       // Extract suggestions from complex LangChain response format
       const extractSuggestionsFromResponse = (obj: unknown): string[] => {
         // If it's already an array of strings, just return it
-        if (Array.isArray(obj as any) && obj.every(item => typeof item === 'string')) {
+        if (Array.isArray(obj) && obj.every(item => typeof item === 'string')) {
           return obj;
         }
 
@@ -958,8 +958,8 @@ export default class AI extends BaseCommand {
               const content = objAny?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content as any);
-                  if (Array.isArray(parsed as any)) {
+                  const parsed = JSON.parse(content);
+                  if (Array.isArray(parsed)) {
                     return parsed;
                   }
                 } catch (e) {
@@ -971,7 +971,7 @@ export default class AI extends BaseCommand {
                     return match[0]
                       .replace(/[[\]"\s]/g, '')
                       .split(',')
-                      .filter(Boolean as any);
+                      .filter(Boolean);
                   }
                 }
 
@@ -993,14 +993,14 @@ export default class AI extends BaseCommand {
 
           // Check all other properties recursively
           const objRecord = obj as Record<string, unknown>;
-          for (const key of Object.keys(objRecord as any)) {
+          for (const key of Object.keys(objRecord)) {
             if (key === 'lc' || key === 'type' || key === 'id') continue; // Skip LangChain metadata fields
 
             const value = objRecord[key];
             if (value) {
               // If value is an array of strings, return it
               if (
-                Array.isArray(value as any) &&
+                Array.isArray(value) &&
                 value.every(item => typeof item === 'string')
               ) {
                 return value;
@@ -1008,7 +1008,7 @@ export default class AI extends BaseCommand {
 
               // If value is an object, recurse
               if (typeof value === 'object') {
-                const extracted = extractSuggestionsFromResponse(value as any);
+                const extracted = extractSuggestionsFromResponse(value);
                 if (extracted.length > 0) {
                   return extracted;
                 }
@@ -1021,8 +1021,8 @@ export default class AI extends BaseCommand {
                 value.trim().endsWith(']')
               ) {
                 try {
-                  const parsed = JSON.parse(value as any);
-                  if (Array.isArray(parsed as any)) {
+                  const parsed = JSON.parse(value);
+                  if (Array.isArray(parsed)) {
                     return parsed;
                   }
                 } catch (e) {
@@ -1036,8 +1036,8 @@ export default class AI extends BaseCommand {
         // If it's a string, try to parse it as JSON
         if (typeof obj === 'string') {
           try {
-            const parsed = JSON.parse(obj as any);
-            if (Array.isArray(parsed as any)) {
+            const parsed = JSON.parse(obj);
+            if (Array.isArray(parsed)) {
               return parsed;
             }
           } catch (e) {
@@ -1053,7 +1053,7 @@ export default class AI extends BaseCommand {
       let displaySuggestions = defaultSuggestions;
 
       // Try to extract suggestions from the response
-      const extractedSuggestions = extractSuggestionsFromResponse(suggestions as any);
+      const extractedSuggestions = extractSuggestionsFromResponse(suggestions);
       if (extractedSuggestions.length > 0) {
         displaySuggestions = extractedSuggestions;
       }
@@ -1076,7 +1076,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `AI suggestion failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `AI suggestion failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -1101,7 +1101,7 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('Analyzing todos...'));
 
     try {
-      const analysisResponse = await aiService.analyze(todos as any);
+      const analysisResponse = await aiService.analyze(todos);
 
       // Debug information only in development environment
       if (process.env?.NODE_ENV === 'development') {
@@ -1119,7 +1119,7 @@ export default class AI extends BaseCommand {
         if (
           response &&
           typeof response === 'object' &&
-          !Array.isArray(response as any)
+          !Array.isArray(response)
         ) {
           const responseObj = response as AIObjectResponse;
           // Skip if it's a LangChain response object
@@ -1138,10 +1138,10 @@ export default class AI extends BaseCommand {
               const content = responseObj?.kwargs?.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content as any) as unknown;
+                  const parsed = JSON.parse(content) as unknown;
                   if (
                     typeof parsed === 'object' &&
-                    !Array.isArray(parsed as any) &&
+                    !Array.isArray(parsed) &&
                     parsed !== null
                   ) {
                     return parsed as Record<string, unknown>;
@@ -1189,7 +1189,7 @@ export default class AI extends BaseCommand {
       };
 
       // Extract the analysis
-      const analysis = extractAnalysisData(analysisResponse as any);
+      const analysis = extractAnalysisData(analysisResponse);
 
       if (flags.json) {
         this.log(JSON.stringify({ analysis }, null, 2));
@@ -1199,15 +1199,15 @@ export default class AI extends BaseCommand {
       this.log('');
       this.log(chalk.cyan('🔍 Todo Analysis:'));
 
-      for (const [category, details] of Object.entries(analysis as any)) {
+      for (const [category, details] of Object.entries(analysis)) {
         this.log(chalk.yellow(`\n${category}:`));
 
-        if (Array.isArray(details as any)) {
+        if (Array.isArray(details)) {
           details.forEach(item => {
             this.log(`  - ${item}`);
           });
         } else if (typeof details === 'object' && details !== null) {
-          for (const [key, value] of Object.entries(details as any)) {
+          for (const [key, value] of Object.entries(details)) {
             this.log(`  ${key}: ${value}`);
           }
         } else {
@@ -1223,7 +1223,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `AI analysis failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `AI analysis failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -1234,7 +1234,7 @@ export default class AI extends BaseCommand {
   private async handleJobStatus(jobId: string, flags: AICommandFlags) {
     try {
       const backgroundOps = await createBackgroundAIOperationsManager();
-      const status = await backgroundOps.getOperationStatus(jobId as any);
+      const status = await backgroundOps.getOperationStatus(jobId);
 
       if (!status) {
         this.error(`Job ${jobId} not found`);
@@ -1268,10 +1268,10 @@ export default class AI extends BaseCommand {
 
       // If completed, show results
       if (status?.status === 'completed' && !flags.json) {
-        const result = await backgroundOps.getOperationResult(jobId as any);
+        const result = await backgroundOps.getOperationResult(jobId);
         if (result) {
           this.log(chalk.bold('\nResults:'));
-          await this.displayAIResult(status.type as any, result.result, flags);
+          await this.displayAIResult(status.type, result.result, flags);
         }
       }
 
@@ -1295,7 +1295,7 @@ export default class AI extends BaseCommand {
         this.log(chalk.green('Operation completed!'));
 
         if (!flags.json) {
-          await this.displayAIResult(status.type as any, result.result, flags);
+          await this.displayAIResult(status.type, result.result, flags);
         } else {
           this.log(JSON.stringify(result, null, 2));
         }
@@ -1305,7 +1305,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to get job status: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get job status: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -1372,7 +1372,7 @@ export default class AI extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background operation: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -1466,14 +1466,14 @@ export default class AI extends BaseCommand {
     };
 
     // Extract the actual summary text
-    const summary = extractSummaryText(summaryResponse as any);
+    const summary = extractSummaryText(summaryResponse);
 
     if (flags.json) {
       this.log(JSON.stringify({ summary }, null, 2));
     } else {
       this.log('');
       this.log(chalk.cyan('📝 Summary of your todos:'));
-      this.log(chalk.yellow(summary as any));
+      this.log(chalk.yellow(summary));
     }
   }
 
@@ -1524,7 +1524,7 @@ export default class AI extends BaseCommand {
       this.log(JSON.stringify({ suggestions }, null, 2));
     } else {
       this.log(chalk.cyan('💡 Suggested Todos:'));
-      if (Array.isArray(suggestions as any)) {
+      if (Array.isArray(suggestions)) {
         suggestions.forEach((suggestion, i) => {
           this.log(`${i + 1}. ${suggestion}`);
         });
@@ -1570,7 +1570,7 @@ export default class AI extends BaseCommand {
     };
 
     return (
-      statusColors[status as keyof typeof statusColors] || chalk.white(status as any)
+      statusColors[status as keyof typeof statusColors] || chalk.white(status)
     );
   }
 }

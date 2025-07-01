@@ -46,14 +46,14 @@ export function handleSuiOperationError(
     metadata: {
       ...context.metadata,
       timestamp,
-      error: String(error as any),
+      error: String(error),
     },
   };
 
   // Log error with context for debugging
   logger.error(
     'Sui operation failed:',
-    error instanceof Error ? error : new Error(String(error as any)),
+    error instanceof Error ? error : new Error(String(error)),
     {
       context: errorContext,
     }
@@ -93,7 +93,7 @@ export async function retryOperation<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error as any));
+      lastError = error instanceof Error ? error : new Error(String(error));
 
       if (attempt === maxRetries) {
         break;
@@ -155,7 +155,7 @@ export async function createTodoSafely(
 
   try {
     // Validate parameters
-    const validationErrors = validateCreateTodoParams(params as any);
+    const validationErrors = validateCreateTodoParams(params);
     if (validationErrors.length > 0) {
       throw new CLIError(`Validation failed: ${validationErrors.join(', ')}`, {
         operation: 'validation',
@@ -173,7 +173,7 @@ export async function createTodoSafely(
     });
 
     // Execute transaction
-    const result = await signAndExecuteTransaction(txb as any);
+    const result = await signAndExecuteTransaction(txb);
 
     return {
       success: true,
@@ -195,7 +195,7 @@ export async function waitForTransactionConfirmation(
 
   while (Date.now() - startTime < maxWaitTime) {
     try {
-      const status = await getTransactionStatus(digest as any);
+      const status = await getTransactionStatus(digest);
 
       if (status?.status === 'success') {
         return true;

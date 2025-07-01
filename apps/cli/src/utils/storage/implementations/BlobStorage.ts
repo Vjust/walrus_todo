@@ -32,8 +32,8 @@ const logger = new Logger('BlobStorage');
  * Default configuration for blob storage
  */
 const DEFAULT_BLOB_STORAGE_CONFIG: StorageConfig = {
-  minWalBalance: BigInt(100 as any),
-  storageBuffer: BigInt(10240 as any),
+  minWalBalance: BigInt(100),
+  storageBuffer: BigInt(10240),
   defaultEpochDuration: 52,
   minEpochBuffer: 10,
   enableOptimization: true,
@@ -152,7 +152,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new NetworkError(
-        `Failed to connect to storage: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to connect to storage: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'connect',
           recoverable: true,
@@ -298,7 +298,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to store content: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store content: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'store content',
           recoverable: false,
@@ -332,7 +332,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       // Check cache first
-      const cached = this.getCachedContent(id as any);
+      const cached = this.getCachedContent(id);
       if (cached) {
         logger.info('Retrieved content from cache');
         return cached;
@@ -428,7 +428,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to retrieve content: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve content: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'retrieve content',
           blobId: id,
@@ -482,7 +482,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to update content: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to update content: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'update content',
           blobId: id,
@@ -558,7 +558,7 @@ export class BlobStorage extends AbstractStorage {
         async () => {
           const walrusClient = this?.client?.getWalrusClient();
           return walrusClient.storageCost(
-            Number(BigInt(sizeBytes as any) + this?.config?.storageBuffer),
+            Number(BigInt(sizeBytes) + this?.config?.storageBuffer),
             this?.config?.defaultEpochDuration
           );
         },
@@ -576,8 +576,8 @@ export class BlobStorage extends AbstractStorage {
       // Calculate required balance with 10% buffer
       const requiredBalance =
         (BigInt((costResult.data as { totalCost: number }).totalCost) *
-          BigInt(110 as any)) /
-        BigInt(100 as any);
+          BigInt(110)) /
+        BigInt(100);
 
       if (walBalance < requiredBalance) {
         throw new BlockchainError(
@@ -598,7 +598,7 @@ export class BlobStorage extends AbstractStorage {
 
       // Create and execute storage allocation transaction
       const tx = await this?.transaction?.createStorageAllocationTransaction(
-        Number(BigInt(sizeBytes as any) + this?.config?.storageBuffer),
+        Number(BigInt(sizeBytes) + this?.config?.storageBuffer),
         this?.config?.defaultEpochDuration
       );
 
@@ -698,7 +698,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to allocate storage: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to allocate storage: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'allocate storage',
           recoverable: false,
@@ -826,7 +826,7 @@ export class BlobStorage extends AbstractStorage {
       }
 
       throw new StorageError(
-        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'get storage usage',
           recoverable: true,
@@ -854,7 +854,7 @@ export class BlobStorage extends AbstractStorage {
           success: false,
           recommendedStorage: null,
           recommendation: 'allocate-new',
-          potentialSavings: BigInt(0 as any),
+          potentialSavings: BigInt(0),
           savingsPercentage: 0,
           recommendationDetails: 'Storage optimization not available',
         };
@@ -862,7 +862,7 @@ export class BlobStorage extends AbstractStorage {
 
       // Analyze with a small required size to get general inventory
       const analysis =
-        await this?.storageReuseAnalyzer?.analyzeStorageEfficiency(1024 as any);
+        await this?.storageReuseAnalyzer?.analyzeStorageEfficiency(1024);
 
       return {
         success: analysis?.analysisResult?.hasViableStorage,
@@ -882,9 +882,9 @@ export class BlobStorage extends AbstractStorage {
         success: false,
         recommendedStorage: null,
         recommendation: 'allocate-new',
-        potentialSavings: BigInt(0 as any),
+        potentialSavings: BigInt(0),
         savingsPercentage: 0,
-        recommendationDetails: `Optimization failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        recommendationDetails: `Optimization failed: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
@@ -919,7 +919,7 @@ export class BlobStorage extends AbstractStorage {
     metadata: Record<string, string>
   ): Record<string, string> {
     // Calculate checksum if not provided
-    const checksum = metadata.checksum || this.calculateChecksum(content as any);
+    const checksum = metadata.checksum || this.calculateChecksum(content);
 
     // Required fields with defaults
     const requiredFields = {

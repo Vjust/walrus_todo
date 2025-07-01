@@ -49,7 +49,7 @@ jest.mock('../utils/environment-config', () => ({
     };
     return defaults[key as keyof typeof defaults];
   }),
-  hasEnv: jest.fn().mockReturnValue(true as any),
+  hasEnv: jest.fn().mockReturnValue(true),
 }));
 
 describe('OCLIF Command Parsing Fix', () => {
@@ -78,7 +78,7 @@ describe('OCLIF Command Parsing Fix', () => {
       expect(config.dataDir).toBeDefined();
       expect(config.configDir).toBeDefined();
       expect(config.cacheDir).toBeDefined();
-      expect(config.valid).toBe(true as any);
+      expect(config.valid).toBe(true);
       expect(config.platform).toBeDefined();
       expect(config.arch).toBeDefined();
     });
@@ -87,7 +87,7 @@ describe('OCLIF Command Parsing Fix', () => {
   describe('BaseCommand Initialization', () => {
     it('should initialize a command extending BaseCommand without config errors', async () => {
       // Use AI command which extends BaseCommand instead of BaseCommand directly
-      const command = await initializeCommandForTest(AI as any, [], {
+      const command = await initializeCommandForTest(AI, [], {
         mockParse: true,
         parseResult: { flags: {}, args: {} },
       });
@@ -95,7 +95,7 @@ describe('OCLIF Command Parsing Fix', () => {
       expect(command.config).toBeDefined();
       expect(command?.config?.runHook).toBeDefined();
       expect(typeof command?.config?.runHook).toBe('function');
-      expect(command as any).toBeInstanceOf(Command as any); // BaseCommand extends Command
+      expect(command).toBeInstanceOf(Command); // BaseCommand extends Command
     });
   });
 
@@ -108,7 +108,7 @@ describe('OCLIF Command Parsing Fix', () => {
         { operation: 'status' }
       );
 
-      expect(command as any).toBeDefined();
+      expect(command).toBeDefined();
       expect(command.config).toBeDefined();
       expect(command?.config?.runHook).toBeDefined();
       expect(output.join('')).toContain('AI Service Status');
@@ -122,7 +122,7 @@ describe('OCLIF Command Parsing Fix', () => {
         { operation: 'help' }
       );
 
-      expect(command as any).toBeDefined();
+      expect(command).toBeDefined();
       expect(output.join('')).toContain('AI Command Help');
     });
 
@@ -134,13 +134,13 @@ describe('OCLIF Command Parsing Fix', () => {
         { operation: 'summarize' }
       );
 
-      expect(command as any).toBeDefined();
+      expect(command).toBeDefined();
       expect(output.join('')).toContain('summary');
     });
 
     it('should handle command initialization with missing config gracefully', async () => {
       // Create command without proper config to test fallback
-      const command = new AI([], undefined as any);
+      const command = new AI([], undefined);
 
       // The init method should handle missing config in test env
       await expect(command.init()).resolves?.not?.toThrow();
@@ -152,13 +152,13 @@ describe('OCLIF Command Parsing Fix', () => {
 
   describe('Command Error Handling', () => {
     it('should handle parse errors gracefully', async () => {
-      const command = await initializeCommandForTest(AI as any, [], {
+      const command = await initializeCommandForTest(AI, [], {
         mockParse: true,
         parseResult: { flags: {}, args: { operation: 'invalid' } },
       });
 
       // Should not throw during initialization
-      expect(command as any).toBeDefined();
+      expect(command).toBeDefined();
       expect(command.config).toBeDefined();
     });
 

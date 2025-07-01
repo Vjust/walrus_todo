@@ -45,7 +45,7 @@ import {
 export function createWalrusClientAdapter(
   client: OriginalWalrusClient | WalrusClient | WalrusClientExt | unknown
 ): WalrusClientAdapter {
-  return createVersionSpecificAdapter(client as any);
+  return createVersionSpecificAdapter(client);
 }
 
 /**
@@ -53,8 +53,8 @@ export function createWalrusClientAdapter(
  */
 class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
   constructor(client: OriginalWalrusClient) {
-    super(client as any);
-    if (!isOriginalWalrusClient(client as any)) {
+    super(client);
+    if (!isOriginalWalrusClient(client)) {
       throw new WalrusClientAdapterError(
         'Client does not implement the original WalrusClient interface'
       );
@@ -84,11 +84,11 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
           getBlobInfo: (blobId: string) => Promise<unknown>;
         }
       ).getBlobInfo;
-      const result = await getBlobInfoFn(blobId as any);
+      const result = await getBlobInfoFn(blobId);
       return this.normalizeBlobObject(result as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob info: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob info: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -103,10 +103,10 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       const client = this.walrusClient as unknown as {
         readBlob: (options: ReadBlobOptions) => Promise<Uint8Array>;
       };
-      return await client.readBlob(options as any);
+      return await client.readBlob(options);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to read blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to read blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -136,7 +136,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       const client = this.walrusClient as unknown as {
         writeBlob: (options: unknown) => Promise<unknown>;
       };
-      const result = await client.writeBlob(adaptedOptions as any);
+      const result = await client.writeBlob(adaptedOptions);
       const normalizedResult = this.normalizeWriteBlobResponse(
         result as Record<string, unknown>
       );
@@ -147,7 +147,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to write blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to write blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -177,7 +177,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get config: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get config: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -195,7 +195,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       return await client.getWalBalance();
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -218,7 +218,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -242,10 +242,10 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       typeof clientWithMetadata?.getBlobMetadata === 'function'
     ) {
       try {
-        return await clientWithMetadata.getBlobMetadata(options as any);
+        return await clientWithMetadata.getBlobMetadata(options);
       } catch (error) {
         throw new WalrusClientAdapterError(
-          `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -256,7 +256,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       return blobInfo.metadata || ({} as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `getBlobMetadata not supported and fallback failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `getBlobMetadata not supported and fallback failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -276,7 +276,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       typeof clientWithVerifyPoA?.verifyPoA === 'function'
     ) {
       try {
-        return await clientWithVerifyPoA.verifyPoA(params as any);
+        return await clientWithVerifyPoA.verifyPoA(params);
       } catch (error) {
         logger.warn('verifyPoA failed, returning true as fallback:', error);
         return true;
@@ -307,7 +307,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       typeof clientWithGetBlobObject?.getBlobObject === 'function'
     ) {
       try {
-        const result = await clientWithGetBlobObject.getBlobObject(params as any);
+        const result = await clientWithGetBlobObject.getBlobObject(params);
         return this.normalizeBlobObject(result as Record<string, unknown>);
       } catch (error) {
         // Fallback to getBlobInfo if getBlobObject fails
@@ -321,7 +321,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       return blobInfo;
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob object using fallback: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob object using fallback: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -342,9 +342,9 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
       'storageCost not implemented in original WalrusClient, returning zeros as fallback'
     );
     return {
-      storageCost: BigInt(0 as any),
-      writeCost: BigInt(0 as any),
-      totalCost: BigInt(0 as any),
+      storageCost: BigInt(0),
+      writeCost: BigInt(0),
+      totalCost: BigInt(0),
     };
   }
 }
@@ -354,8 +354,8 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
  */
 class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
   constructor(client: WalrusClient) {
-    super(client as any);
-    if (!isWalrusClient(client as any)) {
+    super(client);
+    if (!isWalrusClient(client)) {
       throw new WalrusClientAdapterError(
         'Client does not implement the custom WalrusClient interface'
       );
@@ -369,11 +369,11 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).getBlobInfo(blobId as any);
+      const result = await (this.walrusClient).getBlobInfo(blobId);
       return this.normalizeBlobObject(result as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob info: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob info: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -388,10 +388,10 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       const client = this.walrusClient as unknown as {
         readBlob: (options: ReadBlobOptions) => Promise<Uint8Array>;
       };
-      return await client.readBlob(options as any);
+      return await client.readBlob(options);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to read blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to read blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -421,7 +421,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       const client = this.walrusClient as unknown as {
         writeBlob: (options: unknown) => Promise<unknown>;
       };
-      const result = await client.writeBlob(adaptedOptions as any);
+      const result = await client.writeBlob(adaptedOptions);
       const normalizedResult = this.normalizeWriteBlobResponse(
         result as Record<string, unknown>
       );
@@ -432,7 +432,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to write blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to write blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -462,7 +462,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get config: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get config: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -480,7 +480,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       return await client.getWalBalance();
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -503,7 +503,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -517,10 +517,10 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      return await (this.walrusClient as any).getBlobMetadata(options as any);
+      return await (this.walrusClient).getBlobMetadata(options);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -532,10 +532,10 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      return await (this.walrusClient as any).verifyPoA(params as any);
+      return await (this.walrusClient).verifyPoA(params);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to verify PoA: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to verify PoA: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -549,11 +549,11 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).getBlobObject(params as any);
+      const result = await (this.walrusClient).getBlobObject(params);
       return this.normalizeBlobObject(result as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob object: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob object: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -572,7 +572,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).storageCost(size, epochs);
+      const result = await (this.walrusClient).storageCost(size, epochs);
 
       // Convert to bigint consistently
       return {
@@ -582,7 +582,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get storage cost: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get storage cost: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -593,7 +593,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
   async getBlobSize(blobId: string): Promise<number> {
     // Fallback: try to get size from blob info
     try {
-      const blobInfo = await this.getBlobInfo(blobId as any);
+      const blobInfo = await this.getBlobInfo(blobId);
       if (blobInfo.size !== undefined) {
         return typeof blobInfo?.size === 'string'
           ? parseInt(blobInfo.size, 10)
@@ -602,7 +602,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
       throw new WalrusClientAdapterError('Size not available in blob info');
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob size using fallback: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob size using fallback: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -613,9 +613,9 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
  */
 class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
   constructor(client: WalrusClientExt) {
-    super(client as any);
+    super(client);
     // We're more lenient with extended client since it might be a custom implementation
-    if (!isWalrusClient(client as any) && !('getBlobSize' in client)) {
+    if (!isWalrusClient(client) && !('getBlobSize' in client)) {
       throw new WalrusClientAdapterError(
         'Client does not implement the extended WalrusClient interface'
       );
@@ -629,11 +629,11 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).getBlobInfo(blobId as any);
+      const result = await (this.walrusClient).getBlobInfo(blobId);
       return this.normalizeBlobObject(result as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob info: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob info: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -648,10 +648,10 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       const client = this.walrusClient as unknown as {
         readBlob: (options: ReadBlobOptions) => Promise<Uint8Array>;
       };
-      return await client.readBlob(options as any);
+      return await client.readBlob(options);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to read blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to read blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -681,7 +681,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       const client = this.walrusClient as unknown as {
         writeBlob: (options: unknown) => Promise<unknown>;
       };
-      const result = await client.writeBlob(adaptedOptions as any);
+      const result = await client.writeBlob(adaptedOptions);
       const normalizedResult = this.normalizeWriteBlobResponse(
         result as Record<string, unknown>
       );
@@ -692,7 +692,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to write blob: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to write blob: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -722,7 +722,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get config: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get config: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -740,7 +740,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       return await client.getWalBalance();
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -763,7 +763,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -777,10 +777,10 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      return await (this.walrusClient as any).getBlobMetadata(options as any);
+      return await (this.walrusClient).getBlobMetadata(options);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -792,10 +792,10 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      return await (this.walrusClient as any).verifyPoA(params as any);
+      return await (this.walrusClient).verifyPoA(params);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to verify PoA: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to verify PoA: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -809,11 +809,11 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).getBlobObject(params as any);
+      const result = await (this.walrusClient).getBlobObject(params);
       return this.normalizeBlobObject(result as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get blob object: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get blob object: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -832,7 +832,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).storageCost(size, epochs);
+      const result = await (this.walrusClient).storageCost(size, epochs);
 
       // Convert to bigint consistently
       return {
@@ -842,7 +842,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       };
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get storage cost: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get storage cost: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -857,9 +857,9 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       // Type guard for the getBlobSize method
       if (
         'getBlobSize' in this.walrusClient &&
-        typeof (this.walrusClient as any).getBlobSize === 'function'
+        typeof (this.walrusClient).getBlobSize === 'function'
       ) {
-        return await (this.walrusClient as any).getBlobSize(blobId as any);
+        return await (this.walrusClient).getBlobSize(blobId);
       }
 
       // Fallback if method not available
@@ -867,7 +867,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     } catch (error) {
       // Fallback: try to get size from blob info
       try {
-        const blobInfo = await this.getBlobInfo(blobId as any);
+        const blobInfo = await this.getBlobInfo(blobId);
         if (blobInfo.size !== undefined) {
           return typeof blobInfo?.size === 'string'
             ? parseInt(blobInfo.size, 10)
@@ -876,7 +876,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
         throw new WalrusClientAdapterError('Size not available in blob info');
       } catch (secondaryError) {
         throw new WalrusClientAdapterError(
-          `Failed to get blob size: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to get blob size: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -892,16 +892,16 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       // Type guard for the getStorageProviders method
       if (
         'getStorageProviders' in this.walrusClient &&
-        typeof (this.walrusClient as any).getStorageProviders === 'function'
+        typeof (this.walrusClient).getStorageProviders === 'function'
       ) {
-        return await (this.walrusClient as any).getStorageProviders(params as any);
+        return await (this.walrusClient).getStorageProviders(params);
       }
 
       // Return empty array if method not available
       return [];
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to get storage providers: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get storage providers: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -916,13 +916,13 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       // Type guard for the reset method
       if (
         'reset' in this.walrusClient &&
-        typeof (this.walrusClient as any).reset === 'function'
+        typeof (this.walrusClient).reset === 'function'
       ) {
-        (this.walrusClient as any).reset();
+        (this.walrusClient).reset();
       }
     } catch (error) {
       throw new WalrusClientAdapterError(
-        `Failed to reset client: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to reset client: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -936,9 +936,9 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     if (
       this.walrusClient &&
       'experimental' in this.walrusClient &&
-      (this.walrusClient as any).experimental
+      (this.walrusClient).experimental
     ) {
-      return (this.walrusClient as any).experimental;
+      return (this.walrusClient).experimental;
     }
 
     return undefined;
@@ -954,7 +954,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
 
     if (
       'executeCertifyBlobTransaction' in this.walrusClient &&
-      typeof (this.walrusClient as any).executeCertifyBlobTransaction ===
+      typeof (this.walrusClient).executeCertifyBlobTransaction ===
         'function'
     ) {
       const adaptedOptions = this.extractAdapters(
@@ -962,12 +962,12 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       );
 
       try {
-        return await (this.walrusClient as any).executeCertifyBlobTransaction(
+        return await (this.walrusClient).executeCertifyBlobTransaction(
           adaptedOptions
         );
       } catch (error) {
         throw new WalrusClientAdapterError(
-          `Failed to execute certify blob transaction: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to execute certify blob transaction: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -987,7 +987,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
 
     if (
       'executeWriteBlobAttributesTransaction' in this.walrusClient &&
-      typeof (this.walrusClient as any)
+      typeof (this.walrusClient)
         .executeWriteBlobAttributesTransaction === 'function'
     ) {
       const adaptedOptions = this.extractAdapters(
@@ -996,11 +996,11 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
 
       try {
         return await (
-          this.walrusClient as any
-        ).executeWriteBlobAttributesTransaction(adaptedOptions as any);
+          this.walrusClient
+        ).executeWriteBlobAttributesTransaction(adaptedOptions);
       } catch (error) {
         throw new WalrusClientAdapterError(
-          `Failed to execute write blob attributes transaction: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to execute write blob attributes transaction: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -1031,7 +1031,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
 
     if (
       'executeCreateStorageTransaction' in this.walrusClient &&
-      typeof (this.walrusClient as any).executeCreateStorageTransaction ===
+      typeof (this.walrusClient).executeCreateStorageTransaction ===
         'function'
     ) {
       const adaptedOptions = this.extractAdapters(
@@ -1039,12 +1039,12 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       );
 
       try {
-        return await (this.walrusClient as any).executeCreateStorageTransaction(
+        return await (this.walrusClient).executeCreateStorageTransaction(
           adaptedOptions
         );
       } catch (error) {
         throw new WalrusClientAdapterError(
-          `Failed to execute create storage transaction: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to execute create storage transaction: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -1072,32 +1072,32 @@ export function createVersionSpecificAdapter(
 
   // Extended client check
   if (
-    isWalrusClientExt(client as any) ||
+    isWalrusClientExt(client) ||
     ('getBlobSize' in (client as Record<string, unknown>) &&
-      typeof (client as any).getBlobSize === 'function') ||
+      typeof (client).getBlobSize === 'function') ||
     ('experimental' in (client as Record<string, unknown>) &&
-      (client as any).experimental)
+      (client).experimental)
   ) {
     return new ExtendedWalrusClientAdapter(client as WalrusClientExt);
   }
 
   // Custom client check
   if (
-    isWalrusClient(client as any) ||
+    isWalrusClient(client) ||
     ('getBlobObject' in (client as Record<string, unknown>) &&
-      typeof (client as any).getBlobObject === 'function' &&
+      typeof (client).getBlobObject === 'function' &&
       'verifyPoA' in (client as Record<string, unknown>) &&
-      typeof (client as any).verifyPoA === 'function')
+      typeof (client).verifyPoA === 'function')
   ) {
     return new CustomWalrusClientAdapter(client as WalrusClient);
   }
 
   // Original client check
   if (
-    isOriginalWalrusClient(client as any) ||
-    (typeof (client as any)?.getBlobInfo === 'function' &&
-      typeof (client as any)?.readBlob === 'function' &&
-      typeof (client as any)?.writeBlob === 'function')
+    isOriginalWalrusClient(client) ||
+    (typeof (client)?.getBlobInfo === 'function' &&
+      typeof (client)?.readBlob === 'function' &&
+      typeof (client)?.writeBlob === 'function')
   ) {
     return new OriginalWalrusClientAdapter(client as OriginalWalrusClient);
   }
@@ -1172,7 +1172,7 @@ export function extractAdapters<T extends Record<string, any>>(options: T): T {
     result.transaction
   ) {
     // Use type assertion to specify the TransactionType
-    (result as any).transaction = extractTransaction(
+    (result).transaction = extractTransaction(
       result.transaction as TransactionType
     );
   }
@@ -1184,7 +1184,7 @@ export function extractAdapters<T extends Record<string, any>>(options: T): T {
     result.signer
   ) {
     // Use type assertion to specify the Signer type
-    (result as any).signer = extractSigner(
+    (result).signer = extractSigner(
       result.signer as Signer | Ed25519Keypair | SignerAdapter
     );
   }
@@ -1253,7 +1253,7 @@ export function normalizeWalrusBlobObject(
     const metadata = blob.metadata as Record<string, unknown>;
     const safeMetadata: Record<string, string | number | boolean> = {};
 
-    for (const [key, value] of Object.entries(metadata as any)) {
+    for (const [key, value] of Object.entries(metadata)) {
       if (
         typeof value === 'string' ||
         typeof value === 'number' ||
@@ -1353,12 +1353,12 @@ export function toBigInt(value: unknown): bigint {
   }
 
   if (typeof value === 'number') {
-    return BigInt(value as any);
+    return BigInt(value);
   }
 
   if (typeof value === 'string') {
     try {
-      return BigInt(value as any);
+      return BigInt(value);
     } catch (e) {
       throw new WalrusClientAdapterError(
         `Cannot convert string to bigint: ${value}`

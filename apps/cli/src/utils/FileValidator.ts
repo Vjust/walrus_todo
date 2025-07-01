@@ -28,17 +28,17 @@ export class FileValidator {
   constructor(private config: FileValidationConfig) {}
 
   async validateFile(filePath: string): Promise<FileMetadata> {
-    if (!fs.existsSync(filePath as any)) {
+    if (!fs.existsSync(filePath)) {
       throw new WalrusError(`File not found: ${filePath}`);
     }
 
-    const fileBuffer = fs.readFileSync(filePath as any);
+    const fileBuffer = fs.readFileSync(filePath);
     const extension = filePath.split('.').pop()?.toLowerCase() || '';
 
     const metadata: FileMetadata = {
       size: fileBuffer.length,
-      mimeType: this.detectMimeType(fileBuffer as any),
-      checksum: this.calculateChecksum(fileBuffer as any),
+      mimeType: this.detectMimeType(fileBuffer),
+      checksum: this.calculateChecksum(fileBuffer),
       extension,
     };
 
@@ -52,7 +52,7 @@ export class FileValidator {
     // Validate extension if needed
     if (
       this?.config?.allowedExtensions &&
-      !this?.config?.allowedExtensions.includes(extension as any)
+      !this?.config?.allowedExtensions.includes(extension)
     ) {
       throw new WalrusError(
         `File extension .${extension} not allowed. Allowed extensions: ${this?.config?.allowedExtensions.join(', ')}`
@@ -68,8 +68,8 @@ export class FileValidator {
 
     // Validate mime type
     // Validate file type
-    const mimeType = this.detectMimeType(fileBuffer as any);
-    if (!this?.config?.allowedTypes.includes(mimeType as any)) {
+    const mimeType = this.detectMimeType(fileBuffer);
+    if (!this?.config?.allowedTypes.includes(mimeType)) {
       throw new WalrusError(
         `File type ${mimeType} not allowed. Allowed types: ${this?.config?.allowedTypes.join(', ')}`
       );
@@ -80,7 +80,7 @@ export class FileValidator {
     // For images, validate dimensions
     if (metadata?.mimeType?.startsWith('image/')) {
       try {
-        const dimensions = sizeOf(fileBuffer as any);
+        const dimensions = sizeOf(fileBuffer);
         if (!dimensions?.width || !dimensions?.height) {
           throw new WalrusError('Invalid image dimensions');
         }
@@ -120,7 +120,7 @@ export class FileValidator {
       } catch (error) {
         if (error instanceof WalrusError) throw error;
         throw new WalrusError(
-          `Failed to validate image dimensions: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to validate image dimensions: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -129,7 +129,7 @@ export class FileValidator {
   }
 
   private calculateChecksum(data: Buffer): string {
-    return crypto.createHash('sha256').update(data as any).digest('hex');
+    return crypto.createHash('sha256').update(data).digest('hex');
   }
 
   private detectMimeType(buffer: Buffer): string {
@@ -158,32 +158,32 @@ export class FileValidator {
     filePath: string,
     options: { validateExif?: boolean; validateMetadata?: boolean } = {}
   ): Promise<void> {
-    const fileBuffer = fs.readFileSync(filePath as any);
+    const fileBuffer = fs.readFileSync(filePath);
 
     // Basic file corruption check
     if (fileBuffer.length < 24) {
       throw new WalrusError('Invalid file: too small to be valid');
     }
 
-    const mimeType = this.detectMimeType(fileBuffer as any);
+    const mimeType = this.detectMimeType(fileBuffer);
 
     // For images, perform additional checks
     if (mimeType.startsWith('image/')) {
       try {
         // Validate image parsing
-        const dimensions = sizeOf(fileBuffer as any);
+        const dimensions = sizeOf(fileBuffer);
         if (!dimensions.width || !dimensions.height) {
           throw new WalrusError('Invalid image dimensions');
         }
 
         // Optional EXIF validation for JPEG
         if (options.validateExif && mimeType === 'image/jpeg') {
-          this.validateExif(fileBuffer as any);
+          this.validateExif(fileBuffer);
         }
       } catch (error) {
         if (error instanceof WalrusError) throw error;
         throw new WalrusError(
-          `Image content validation failed: ${error instanceof Error ? error.message : String(error as any)}`
+          `Image content validation failed: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

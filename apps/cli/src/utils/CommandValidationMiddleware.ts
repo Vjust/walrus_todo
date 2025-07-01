@@ -124,7 +124,7 @@ export const validateCommandEnvironment: Hook<'prerun'> = async options => {
       const value = envConfig.getAllVariables()[req.variable]?.value as string;
 
       // If there's a validator, check the value
-      if (req.validator && typeof value === 'string' && !req.validator(value as any)) {
+      if (req.validator && typeof value === 'string' && !req.validator(value)) {
         invalidVars.push(`${req.variable}=${value} (invalid)`);
       }
     } else if (process?.env?.[req.variable]) {
@@ -132,7 +132,7 @@ export const validateCommandEnvironment: Hook<'prerun'> = async options => {
       const value = process?.env?.[req.variable];
 
       // If there's a validator, check the value
-      if (req.validator && value && !req.validator(value as any)) {
+      if (req.validator && value && !req.validator(value)) {
         invalidVars.push(`${req.variable}=${value} (invalid)`);
       }
     } else {
@@ -234,7 +234,7 @@ export function setEnvFromFlags(
   flags: Record<string, unknown>,
   mappings: Record<string, string>
 ): void {
-  for (const [flagName, envVar] of Object.entries(mappings as any)) {
+  for (const [flagName, envVar] of Object.entries(mappings)) {
     if (flags[flagName] !== undefined) {
       if (typeof process?.env?.[envVar] === 'undefined') {
         process?.env?.[envVar] = flags[flagName]?.toString();
@@ -334,10 +334,10 @@ export const addCommandValidation: Hook<'prerun'> = async options => {
   const flags = parsedCommand.flags;
 
   // Validate API key if AI features are requested
-  validateAIApiKey(flags as any);
+  validateAIApiKey(flags);
 
   // Validate blockchain config if using blockchain storage
-  validateBlockchainConfig(flags as any);
+  validateBlockchainConfig(flags);
 };
 
 /**
@@ -489,7 +489,7 @@ export const aiCommandValidation: Hook<'prerun'> = async options => {
   const flags = parsedCommand.flags;
 
   // Validate API key
-  validateAIApiKey(flags as any);
+  validateAIApiKey(flags);
 
   // Validate operation type
   if (

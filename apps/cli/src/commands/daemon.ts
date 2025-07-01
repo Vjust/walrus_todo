@@ -73,7 +73,7 @@ export default class Daemon extends BaseCommand {
   }
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(Daemon as any);
+    const { flags } = await this.parse(Daemon);
 
     // Handle stop command
     if (flags.stop) {
@@ -105,7 +105,7 @@ export default class Daemon extends BaseCommand {
         retryDelay: 1000,
       },
       syncInterval: flags?.["sync-interval"] * 1000, // Convert to milliseconds
-      conflictResolution: flags?.["conflict-resolution"] as any,
+      conflictResolution: flags?.["conflict-resolution"],
       enableRealTimeSync: !flags?.["no-real-time"],
       maxConcurrentSyncs: flags?.["max-concurrent"],
       syncDebounceMs: 2000,
@@ -131,13 +131,13 @@ export default class Daemon extends BaseCommand {
 
     try {
       // Create and initialize sync engine
-      this?.syncEngine = new SyncEngine(config as any);
+      this?.syncEngine = new SyncEngine(config);
 
       // Setup event handlers
       this.setupEventHandlers();
 
       // Initialize and start
-      await this?.syncEngine?.initialize(wallet as any);
+      await this?.syncEngine?.initialize(wallet);
       await this?.syncEngine?.start();
 
       this?.logger?.info('✅ WalTodo sync daemon started successfully');
@@ -149,7 +149,7 @@ export default class Daemon extends BaseCommand {
       // Keep the daemon running
       await this.keepAlive();
     } catch (error) {
-      this?.logger?.error('Failed to start sync daemon:', error instanceof Error ? error : new Error(String(error as any)));
+      this?.logger?.error('Failed to start sync daemon:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -208,7 +208,7 @@ export default class Daemon extends BaseCommand {
       process.kill(parseInt(pid, 10), 'SIGTERM');
 
       // Remove PID file
-      await require('fs').promises.unlink(pidFile as any);
+      await require('fs').promises.unlink(pidFile);
 
       this?.logger?.info('✅ Daemon stopped successfully');
     } catch (error: any) {
@@ -218,7 +218,7 @@ export default class Daemon extends BaseCommand {
         this?.logger?.warn('Daemon process not found');
         // Clean up stale PID file
         try {
-          await require('fs').promises.unlink(pidFile as any);
+          await require('fs').promises.unlink(pidFile);
         } catch {}
       } else {
         this?.logger?.error('Failed to stop daemon:', error);
@@ -234,7 +234,7 @@ export default class Daemon extends BaseCommand {
       const apiStatus = this?.syncEngine?.['apiClient']?.getStatus();
 
       this.log('🔄 WalTodo Sync Daemon Status');
-      this.log('─'.repeat(40 as any));
+      this.log('─'.repeat(40));
       this.log(`Status: ${status.isActive ? '🟢 Running' : '🔴 Stopped'}`);
       this.log(
         `Last Sync: ${status.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never'}`
@@ -272,7 +272,7 @@ export default class Daemon extends BaseCommand {
         } catch {
           this.log('🔴 Daemon not running (stale PID file)');
           // Clean up stale PID file
-          await require('fs').promises.unlink(pidFile as any);
+          await require('fs').promises.unlink(pidFile);
         }
       } catch (error: any) {
         if (error?.code === 'ENOENT') {
@@ -350,10 +350,10 @@ export default class Daemon extends BaseCommand {
           await this?.syncEngine?.shutdown();
         }
         this?.logger?.info('✅ Daemon shutdown complete');
-        process.exit(0 as any);
+        process.exit(0);
       } catch (error) {
         this?.logger?.error('Error during shutdown:', error);
-        process.exit(1 as any);
+        process.exit(1);
       }
     };
 
@@ -378,7 +378,7 @@ export default class Daemon extends BaseCommand {
     return new Promise(resolve => {
       const keepAliveInterval = setInterval(() => {
         if (this.isShuttingDown) {
-          clearInterval(keepAliveInterval as any);
+          clearInterval(keepAliveInterval);
           resolve();
         }
       }, 1000);

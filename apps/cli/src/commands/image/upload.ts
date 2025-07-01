@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../types/errors/consolidated';
-import { TodoService } from '../../services/todoService';
+import { TodoService } from '../../services/todo';
 import {
   createWalrusImageStorage,
   WalrusImageStorage,
@@ -88,7 +88,7 @@ export default class UploadCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const config = await configService.getConfig();
-    const { flags } = await this.parse(UploadCommand as any);
+    const { flags } = await this.parse(UploadCommand);
     const todoService = new TodoService();
     let walrusImageStorage: WalrusImageStorage | undefined; // Use correct type and allow undefined initially
 
@@ -111,7 +111,7 @@ export default class UploadCommand extends BaseCommand {
       });
 
       // Initialize WalrusImageStorage - ensuring variable is defined and assigned correctly
-      walrusImageStorage = createWalrusImageStorage(suiClient as any); // No change, but confirming assignment
+      walrusImageStorage = createWalrusImageStorage(suiClient); // No change, but confirming assignment
 
       if (flags.background) {
         return await this.handleBackgroundUpload(
@@ -138,7 +138,7 @@ export default class UploadCommand extends BaseCommand {
             todoItem.completed
           ),
         {
-          imageSize: this.getFileSize(imagePath as any),
+          imageSize: this.getFileSize(imagePath),
           imagePath: flags.image,
           todoId: flags.todo,
           listName: flags.list,
@@ -153,7 +153,7 @@ export default class UploadCommand extends BaseCommand {
       await todoService.updateTodo(flags.list, flags.todo, updatedTodo);
 
       if (flags?.["show-url"]) {
-        this.log(imageUrl as any);
+        this.log(imageUrl);
         return;
       }
 
@@ -161,14 +161,14 @@ export default class UploadCommand extends BaseCommand {
       this.log(`📝 Image URL: ${imageUrl}`);
       this.log(`📝 Blob ID: ${blobId}`);
       this.log(
-        `📝 File size: ${this.formatFileSize(this.getFileSize(imagePath as any))}`
+        `📝 File size: ${this.formatFileSize(this.getFileSize(imagePath))}`
       );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to upload image: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to upload image: ${error instanceof Error ? error.message : String(error)}`,
         'IMAGE_UPLOAD_FAILED'
       );
     } finally {
@@ -188,7 +188,7 @@ export default class UploadCommand extends BaseCommand {
     maxSizeMB: number
   ): Promise<void> {
     try {
-      const stats = fs.statSync(imagePath as any);
+      const stats = fs.statSync(imagePath);
       const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
       if (stats.size > maxSizeBytes) {
@@ -199,7 +199,7 @@ export default class UploadCommand extends BaseCommand {
       }
 
       // Check file extension
-      const ext = path.extname(imagePath as any).toLowerCase();
+      const ext = path.extname(imagePath).toLowerCase();
       const supportedExtensions = [
         '.jpg',
         '.jpeg',
@@ -209,7 +209,7 @@ export default class UploadCommand extends BaseCommand {
         '.svg',
       ];
 
-      if (!supportedExtensions.includes(ext as any)) {
+      if (!supportedExtensions.includes(ext)) {
         throw new CLIError(
           `Unsupported image format: ${ext}. Supported formats: ${supportedExtensions.join(', ')}`,
           'UNSUPPORTED_FORMAT'
@@ -220,7 +220,7 @@ export default class UploadCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Cannot access image file: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Cannot access image file: ${error instanceof Error ? error.message : String(error)}`,
         'FILE_ACCESS_ERROR'
       );
     }
@@ -228,7 +228,7 @@ export default class UploadCommand extends BaseCommand {
 
   private getFileSize(filePath: string): number {
     try {
-      return fs.statSync(filePath as any).size;
+      return fs.statSync(filePath).size;
     } catch {
       return 0;
     }
@@ -238,8 +238,8 @@ export default class UploadCommand extends BaseCommand {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1 as any))} ${sizes[i]}`;
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   }
 
   private async handleBackgroundUpload(
@@ -265,7 +265,7 @@ export default class UploadCommand extends BaseCommand {
     const imageSize = this.getFileSize(
       path.resolve(process.cwd(), flags.image)
     );
-    this.log(chalk.gray(`📏 Image size: ${this.formatFileSize(imageSize as any)}`));
+    this.log(chalk.gray(`📏 Image size: ${this.formatFileSize(imageSize)}`));
 
     // Start background process
     setImmediate(async () => {
@@ -275,7 +275,7 @@ export default class UploadCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `Image file: ${flags.image}`);
         jobManager.writeJobLog(
           jobId,
-          `Image size: ${this.formatFileSize(imageSize as any)}`
+          `Image size: ${this.formatFileSize(imageSize)}`
         );
 
         let progress = 0;
@@ -337,11 +337,11 @@ export default class UploadCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `📝 Blob ID: ${blobId}`);
         jobManager.writeJobLog(
           jobId,
-          `📏 Final size: ${this.formatFileSize(imageSize as any)}`
+          `📏 Final size: ${this.formatFileSize(imageSize)}`
         );
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(jobId, `❌ Upload failed: ${errorMessage}`);
       }

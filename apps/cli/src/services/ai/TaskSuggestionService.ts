@@ -168,7 +168,7 @@ export class TaskSuggestionService {
    * @example
    * ```typescript
    * // Basic usage
-   * const suggestions = await taskSuggestionService.suggestTasks(myTodos as any);
+   * const suggestions = await taskSuggestionService.suggestTasks(myTodos);
    *
    * // With filtering context
    * const suggestions = await taskSuggestionService.suggestTasks(myTodos, {
@@ -183,7 +183,7 @@ export class TaskSuggestionService {
     context: SuggestionContext = {}
   ): Promise<TaskSuggestionResult> {
     // Add type guards for parameters
-    if (!Array.isArray(todos as any)) {
+    if (!Array.isArray(todos)) {
       throw new Error('Todos parameter must be an array');
     }
 
@@ -218,7 +218,7 @@ export class TaskSuggestionService {
 
     try {
       // Get contextual information from existing todos
-      const contextInfo = await this.analyzeContext(todos as any);
+      const contextInfo = await this.analyzeContext(todos);
 
       // Generate different types of suggestions in parallel
       const [relatedTasks, nextStepTasks, dependencyTasks] = await Promise.all([
@@ -246,7 +246,7 @@ export class TaskSuggestionService {
       }
 
       // Calculate metrics
-      const metrics = this.calculateMetrics(allSuggestions as any);
+      const metrics = this.calculateMetrics(allSuggestions);
 
       return {
         suggestions: allSuggestions,
@@ -292,9 +292,9 @@ export class TaskSuggestionService {
     const metadata = {
       todoCount: todos?.length?.toString(),
       suggestionCount: suggestions?.suggestions?.length.toString(),
-      averageScore: suggestions?.metrics?.averageScore.toFixed(2 as any),
+      averageScore: suggestions?.metrics?.averageScore.toFixed(2),
       timestamp: Date.now().toString(),
-      contextFilters: JSON.stringify(context as any),
+      contextFilters: JSON.stringify(context),
     };
 
     // Create blockchain verification
@@ -395,7 +395,7 @@ export class TaskSuggestionService {
   ): Promise<SuggestedTask[]> {
     try {
       // First, get dependency information to understand the workflow
-      const dependencies = await this?.aiService?.detectDependencies(todos as any);
+      const dependencies = await this?.aiService?.detectDependencies(todos);
 
       // Find completed todos and their potential next steps
       const completedTodos = todos.filter(todo => todo.completed);
@@ -436,7 +436,7 @@ export class TaskSuggestionService {
       });
 
       // Get todos that could be started next based on completed dependencies
-      const todoIdsToFocus = [...new Set(potentialNextSteps as any)];
+      const todoIdsToFocus = [...new Set(potentialNextSteps)];
       const todosToFocus = todos.filter(todo =>
         todoIdsToFocus.includes(todo.id)
       );
@@ -496,7 +496,7 @@ export class TaskSuggestionService {
       const incompleteTodos = todos.filter(todo => !todo.completed);
 
       // Get dependency information to identify missing prerequisites
-      const dependencies = await this?.aiService?.detectDependencies(todos as any);
+      const dependencies = await this?.aiService?.detectDependencies(todos);
 
       // Find todos that might need prerequisites
       const todosWithoutDependencies = incompleteTodos.filter(
@@ -575,13 +575,13 @@ export class TaskSuggestionService {
       });
 
       // Sort tags by frequency and take top 5
-      const topContextualTags = Object.entries(tagCounts as any)
+      const topContextualTags = Object.entries(tagCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([tag]) => tag);
 
       // Get themes through AI analysis
-      const analysis = await this?.aiService?.analyze(todos as any);
+      const analysis = await this?.aiService?.analyze(todos);
       const detectedThemes =
         analysis.keyThemes || analysis.themes || analysis.categories || [];
 
@@ -589,7 +589,7 @@ export class TaskSuggestionService {
         analyzedTodoCount: todos.length,
         topContextualTags,
         completionPercentage,
-        detectedThemes: Array.isArray(detectedThemes as any) ? detectedThemes : [],
+        detectedThemes: Array.isArray(detectedThemes) ? detectedThemes : [],
       };
     } catch (error) {
       this?.logger?.error(`Error analyzing context: ${error}`);
@@ -658,7 +658,7 @@ export class TaskSuggestionService {
       filteredSuggestions = filteredSuggestions.filter(
         suggestion =>
           suggestion.tags &&
-          suggestion?.tags?.some(tag => context.tags?.includes(tag as any))
+          suggestion?.tags?.some(tag => context.tags?.includes(tag))
       );
     }
 

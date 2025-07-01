@@ -260,7 +260,7 @@ export class StorageReuseAnalyzer {
       }
 
       throw new ValidationError(
-        `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'storage analysis',
           recoverable: true,
@@ -294,7 +294,7 @@ export class StorageReuseAnalyzer {
   }> {
     try {
       // Find the best storage to reuse based on our best-fit algorithm
-      const analysisResult = await this.findBestStorageForReuse(requiredSize as any);
+      const analysisResult = await this.findBestStorageForReuse(requiredSize);
 
       // Get cost estimate for allocating new storage from Walrus
       // Default to 52 epochs (approximately 6 months)
@@ -323,18 +323,18 @@ export class StorageReuseAnalyzer {
       }
 
       const { storageCost, totalCost } = costResult.data;
-      const newStorageCost = BigInt(totalCost as any);
+      const newStorageCost = BigInt(totalCost);
 
       // Calculate potential savings if we reuse existing storage
-      let reuseExistingSavings = BigInt(0 as any);
+      let reuseExistingSavings = BigInt(0);
       let reuseExistingPercentSaved = 0;
 
       if (analysisResult.hasViableStorage) {
         // When reusing storage, we only pay the write cost, not the storage allocation cost
         // This is where the significant savings come from
-        reuseExistingSavings = BigInt(storageCost as any);
+        reuseExistingSavings = BigInt(storageCost);
         reuseExistingPercentSaved = Number(
-          (BigInt(100 as any) * reuseExistingSavings) / newStorageCost
+          (BigInt(100) * reuseExistingSavings) / newStorageCost
         );
       }
 
@@ -371,7 +371,7 @@ export class StorageReuseAnalyzer {
       }
 
       throw new ValidationError(
-        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'efficiency analysis',
           recoverable: true,

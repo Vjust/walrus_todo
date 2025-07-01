@@ -19,7 +19,7 @@ const getErrorMessage = (error: unknown): string => {
   }
   if (typeof error === 'object') {
     try {
-      const stringified = JSON.stringify(error as any);
+      const stringified = JSON.stringify(error);
       return stringified === '{}'
         ? 'Empty object error'
         : `Object error: ${stringified}`;
@@ -28,7 +28,7 @@ const getErrorMessage = (error: unknown): string => {
     }
   }
   try {
-    return String(error as any);
+    return String(error);
   } catch {
     return `Unknown error of type: ${typeof error}`;
   }
@@ -81,7 +81,7 @@ export function handleError(
       (error as Record<string, unknown>).message as string
     );
   } else {
-    actualError = new Error(getErrorMessage(error as any));
+    actualError = new Error(getErrorMessage(error));
   }
 
   // Add context if provided
@@ -89,7 +89,7 @@ export function handleError(
 
   // Use enhanced error display
   const friendlyError = displayFriendlyError(actualError, context);
-  logger.error(friendlyError as any);
+  logger.error(friendlyError);
 }
 
 /**
@@ -110,7 +110,7 @@ export async function withRetry<T>(
       lastError = error as Error;
 
       // Only retry on network errors or specific transient errors
-      if (!isRetryableError(lastError as any) || attempt >= maxRetries) {
+      if (!isRetryableError(lastError) || attempt >= maxRetries) {
         throw lastError;
       }
 
@@ -138,7 +138,7 @@ export async function withRetry<T>(
 
 export function assert(condition: boolean, message: string): asserts condition {
   if (!condition) {
-    throw new Error(message as any);
+    throw new Error(message);
   }
 }
 

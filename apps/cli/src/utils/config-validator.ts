@@ -78,13 +78,13 @@ export class ConfigValidator {
       this.validateDeploymentConsistency(cliConfig, result);
 
       // Check environment variables
-      this.validateEnvironmentVariables(result as any);
+      this.validateEnvironmentVariables(result);
 
       // Set overall validity
       result?.valid = result.errors?.length === 0;
     } catch (error) {
       result?.errors?.push(
-        `Configuration validation failed: ${error instanceof Error ? error.message : String(error as any)}`
+        `Configuration validation failed: ${error instanceof Error ? error.message : String(error)}`
       );
       result?.valid = false;
     }
@@ -146,7 +146,7 @@ export class ConfigValidator {
   ): Promise<void> {
     const configPath = path.join(this.frontendConfigDir, `${network}.json`);
 
-    if (!fs.existsSync(configPath as any)) {
+    if (!fs.existsSync(configPath)) {
       result?.errors?.push(
         `Frontend configuration not found for ${network} network`
       );
@@ -158,7 +158,7 @@ export class ConfigValidator {
 
     try {
       const configContent = fs.readFileSync(configPath, 'utf-8');
-      const frontendConfig = JSON.parse(configContent as any);
+      const frontendConfig = JSON.parse(configContent);
 
       // Validate required fields
       const requiredFields = [
@@ -192,7 +192,7 @@ export class ConfigValidator {
       }
     } catch (error) {
       result?.errors?.push(
-        `Invalid JSON in frontend config: ${error instanceof Error ? error.message : String(error as any)}`
+        `Invalid JSON in frontend config: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -207,13 +207,13 @@ export class ConfigValidator {
   ): Promise<void> {
     const configPath = path.join(this.frontendConfigDir, `${network}.json`);
 
-    if (!fs.existsSync(configPath as any)) {
+    if (!fs.existsSync(configPath)) {
       return; // Already handled in validateFrontendConfig
     }
 
     try {
       const frontendConfigContent = fs.readFileSync(configPath, 'utf-8');
-      const frontendConfig = JSON.parse(frontendConfigContent as any);
+      const frontendConfig = JSON.parse(frontendConfigContent);
 
       const cliPackageId =
         cliConfig.packageId ||
@@ -282,13 +282,13 @@ export class ConfigValidator {
 
       // Check if deployment is recent (within 30 days)
       if (timestamp) {
-        const deploymentDate = new Date(timestamp as any);
+        const deploymentDate = new Date(timestamp);
         const daysSinceDeployment =
           (Date.now() - deploymentDate.getTime()) / (1000 * 60 * 60 * 24);
 
         if (daysSinceDeployment > 30) {
           result?.warnings?.push(
-            `Deployment is ${Math.floor(daysSinceDeployment as any)} days old`
+            `Deployment is ${Math.floor(daysSinceDeployment)} days old`
           );
           result?.suggestions?.push(
             'Consider redeploying for latest contract improvements'
@@ -336,7 +336,7 @@ export class ConfigValidator {
   private async frontendExists(): Promise<boolean> {
     try {
       const frontendPath = path.join(this.projectRoot, 'waltodo-frontend');
-      const stats = await fs?.promises?.stat(frontendPath as any);
+      const stats = await fs?.promises?.stat(frontendPath);
       return stats.isDirectory();
     } catch (error: unknown) {
       return false;
@@ -400,5 +400,5 @@ export class ConfigValidator {
  * Creates a new configuration validator
  */
 export function createConfigValidator(projectRoot?: string): ConfigValidator {
-  return new ConfigValidator(projectRoot as any);
+  return new ConfigValidator(projectRoot);
 }

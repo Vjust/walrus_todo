@@ -58,7 +58,7 @@ export default class Provider extends BaseCommand {
   }
 
   async run() {
-    const { args, flags } = await this.parse(Provider as any);
+    const { args, flags } = await this.parse(Provider);
 
     switch (args.action) {
       case 'list':
@@ -120,13 +120,13 @@ export default class Provider extends BaseCommand {
         status: p.isActive ? chalk.green('active') : chalk.red('inactive'),
       }));
 
-      this.log(this.formatTable(tableData as any));
+      this.log(this.formatTable(tableData));
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to list providers: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to list providers: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -177,7 +177,7 @@ export default class Provider extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to fetch provider information: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to fetch provider information: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -213,7 +213,7 @@ export default class Provider extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to register provider: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to register provider: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

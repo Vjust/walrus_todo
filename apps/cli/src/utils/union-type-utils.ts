@@ -9,7 +9,7 @@
  * Generic discriminated union type guard creator
  */
 export function createDiscriminatedTypeGuard<T extends { kind: string }>(
-  kind: T?.["kind"]
+  kind: T["kind"]
 ): (obj: unknown) => obj is T {
   return (obj: unknown): obj is T => {
     return (
@@ -81,14 +81,14 @@ export function isArrayOf<T>(
   value: unknown,
   elementGuard: (item: unknown) => item is T
 ): value is T[] {
-  return Array.isArray(value as any) && value.every(elementGuard as any);
+  return Array.isArray(value) && value.every(elementGuard);
 }
 
 /**
  * Exhaustive switch helper for discriminated unions
  */
 export function exhaustiveCheck(value: never): never {
-  throw new Error(`Exhaustive check failed: ${JSON.stringify(value as any)}`);
+  throw new Error(`Exhaustive check failed: ${JSON.stringify(value)}`);
 }
 
 /**
@@ -96,9 +96,9 @@ export function exhaustiveCheck(value: never): never {
  */
 export function match<T extends { kind: string }, R>(
   value: T,
-  matchers: { [K in T?.["kind"]]: (val: Extract<T, { kind: K }>) => R }
+  matchers: { [K in T["kind"]]: (val: Extract<T, { kind: K }>) => R }
 ): R {
-  const matcher = matchers[value.kind as T?.["kind"]];
+  const matcher = matchers[value.kind as T["kind"]];
   if (!matcher) {
     throw new Error(`No matcher found for kind: ${value.kind}`);
   }
@@ -110,14 +110,14 @@ export function match<T extends { kind: string }, R>(
  */
 export function partialMatch<T extends { kind: string }, R>(
   value: T,
-  matchers: Partial<{ [K in T?.["kind"]]: (val: Extract<T, { kind: K }>) => R }>,
+  matchers: Partial<{ [K in T["kind"]]: (val: Extract<T, { kind: K }>) => R }>,
   defaultHandler: (val: T) => R
 ): R {
-  const matcher = matchers[value.kind as T?.["kind"]];
+  const matcher = matchers[value.kind as T["kind"]];
   if (matcher) {
     return matcher(value as Extract<T, { kind: typeof value.kind }>);
   }
-  return defaultHandler(value as any);
+  return defaultHandler(value);
 }
 
 /**
@@ -125,11 +125,11 @@ export function partialMatch<T extends { kind: string }, R>(
  */
 export function reduceUnion<T extends { kind: string }, R>(
   values: T[],
-  reducers: { [K in T?.["kind"]]: (acc: R, val: Extract<T, { kind: K }>) => R },
+  reducers: { [K in T["kind"]]: (acc: R, val: Extract<T, { kind: K }>) => R },
   initialValue: R
 ): R {
   return values.reduce((acc, value) => {
-    const reducer = reducers[value.kind as T?.["kind"]];
+    const reducer = reducers[value.kind as T["kind"]];
     if (!reducer) {
       throw new Error(`No reducer found for kind: ${value.kind}`);
     }
@@ -140,12 +140,12 @@ export function reduceUnion<T extends { kind: string }, R>(
 /**
  * Filter union types by kind
  */
-export function filterByKind<T extends { kind: string }, K extends T?.["kind"]>(
+export function filterByKind<T extends { kind: string }, K extends T["kind"]>(
   values: T[],
   kind: K
 ): Extract<T, { kind: K }>[] {
   return values.filter(
-    (value): value is Extract<T, { kind: K }> => value?.kind === kind
+    (value): value is Extract<T, { kind: K }> => value.kind === kind
   );
 }
 
@@ -154,8 +154,8 @@ export function filterByKind<T extends { kind: string }, K extends T?.["kind"]>(
  */
 export function groupByKind<T extends { kind: string }>(
   values: T[]
-): { [K in T?.["kind"]]: Extract<T, { kind: K }>[] } {
-  const result = {} as { [K in T?.["kind"]]: Extract<T, { kind: K }>[] };
+): { [K in T["kind"]]: Extract<T, { kind: K }>[] } {
+  const result = {} as { [K in T["kind"]]: Extract<T, { kind: K }>[] };
 
   for (const value of values) {
     const kind = value.kind;
@@ -175,7 +175,7 @@ export function groupByKind<T extends { kind: string }>(
  */
 export function transformUnion<T extends { kind: string }, R>(
   value: T,
-  transformers: { [K in T?.["kind"]]: (val: Extract<T, { kind: K }>) => R }
+  transformers: { [K in T["kind"]]: (val: Extract<T, { kind: K }>) => R }
 ): R {
   const transformer = transformers[value.kind];
   if (!transformer) {
@@ -189,7 +189,7 @@ export function transformUnion<T extends { kind: string }, R>(
  */
 export function mapUnion<T extends { kind: string }, R>(
   values: T[],
-  mappers: { [K in T?.["kind"]]: (val: Extract<T, { kind: K }>) => R }
+  mappers: { [K in T["kind"]]: (val: Extract<T, { kind: K }>) => R }
 ): R[] {
   return values.map(value => transformUnion(value, mappers));
 }
@@ -197,7 +197,7 @@ export function mapUnion<T extends { kind: string }, R>(
 /**
  * Type predicate for checking if value is one of specific union members
  */
-export function isOneOf<T extends { kind: string }, K extends T?.["kind"]>(
+export function isOneOf<T extends { kind: string }, K extends T["kind"]>(
   value: T,
   kinds: K[]
 ): value is Extract<T, { kind: K }> {
@@ -209,7 +209,7 @@ export function isOneOf<T extends { kind: string }, K extends T?.["kind"]>(
  */
 export function assertUnionType<
   T extends { kind: string },
-  K extends T?.["kind"],
+  K extends T["kind"],
 >(
   value: T,
   expectedKind: K,

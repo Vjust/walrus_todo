@@ -15,7 +15,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { Logger } from './Logger';
 
-const execAsync = promisify(exec as any);
+const execAsync = promisify(exec);
 const logger = new Logger('walrus-storage-cli');
 
 /**
@@ -140,7 +140,7 @@ export class WalrusStorage {
 
       // Store using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command as any);
+      const { stdout } = await execAsync(command);
 
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -154,8 +154,8 @@ export class WalrusStorage {
       return blobIdMatch[1];
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile as any)) {
-        fs.unlinkSync(tempFile as any);
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     }
   }
@@ -211,7 +211,7 @@ export class WalrusStorage {
       // Store using Walrus CLI with verbose output
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
       logger.info(`Executing: ${command}`);
-      const { stdout, stderr } = await execAsync(command as any);
+      const { stdout, stderr } = await execAsync(command);
 
       logger.info(`Walrus CLI output: ${stdout}`);
       if (stderr) {
@@ -242,7 +242,7 @@ export class WalrusStorage {
       ];
 
       for (const pattern of txIdPatterns) {
-        const match = stdout.match(pattern as any) || stderr?.match(pattern as any);
+        const match = stdout.match(pattern) || stderr?.match(pattern);
         if (match) {
           transactionId = match[1].trim();
           break;
@@ -276,8 +276,8 @@ export class WalrusStorage {
       };
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile as any)) {
-        fs.unlinkSync(tempFile as any);
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     }
   }
@@ -301,7 +301,7 @@ export class WalrusStorage {
 
       // Store using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command as any);
+      const { stdout } = await execAsync(command);
 
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -315,8 +315,8 @@ export class WalrusStorage {
       return blobIdMatch[1];
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile as any)) {
-        fs.unlinkSync(tempFile as any);
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     }
   }
@@ -353,7 +353,7 @@ export class WalrusStorage {
     const tempFile = path.join(this.tempDir, fileName);
 
     try {
-      if (Buffer.isBuffer(data as any)) {
+      if (Buffer.isBuffer(data)) {
         fs.writeFileSync(tempFile, data);
       } else {
         fs.writeFileSync(tempFile, data, 'utf8');
@@ -361,7 +361,7 @@ export class WalrusStorage {
 
       // Store using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
-      const { stdout } = await execAsync(command as any);
+      const { stdout } = await execAsync(command);
 
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -375,8 +375,8 @@ export class WalrusStorage {
       return blobIdMatch[1];
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile as any)) {
-        fs.unlinkSync(tempFile as any);
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     }
   }
@@ -408,15 +408,15 @@ export class WalrusStorage {
     try {
       // Retrieve using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} get ${blobId} --output ${tempFile}`;
-      await execAsync(command as any);
+      await execAsync(command);
 
       // Read and parse the file
       const data = fs.readFileSync(tempFile, 'utf8');
-      return JSON.parse(data as any);
+      return JSON.parse(data);
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile as any)) {
-        fs.unlinkSync(tempFile as any);
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     }
   }
@@ -448,15 +448,15 @@ export class WalrusStorage {
     try {
       // Retrieve using Walrus CLI
       const command = `${this.walrusPath} --config ${this.configPath} get ${blobId} --output ${tempFile}`;
-      await execAsync(command as any);
+      await execAsync(command);
 
       // Read and parse the file
       const data = fs.readFileSync(tempFile, 'utf8');
-      return JSON.parse(data as any);
+      return JSON.parse(data);
     } finally {
       // Clean up temp file
-      if (fs.existsSync(tempFile as any)) {
-        fs.unlinkSync(tempFile as any);
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     }
   }
@@ -474,7 +474,7 @@ export class WalrusStorage {
 
     try {
       const command = `${this.walrusPath} --config ${this.configPath} delete ${blobId}`;
-      await execAsync(command as any);
+      await execAsync(command);
     } catch (error) {
       // Some blobs may not be deletable
       if (error?.message?.includes('not deletable')) {
@@ -496,7 +496,7 @@ export class WalrusStorage {
 
     try {
       const command = `${this.walrusPath} --config ${this.configPath} status ${blobId}`;
-      await execAsync(command as any);
+      await execAsync(command);
       return true;
     } catch (error) {
       if (error?.message?.includes('not found')) {

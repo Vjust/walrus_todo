@@ -231,7 +231,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to connect to NFT storage: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to connect to NFT storage: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'connect NFT storage',
           recoverable: true,
@@ -368,7 +368,7 @@ export class NFTStorage extends AbstractStorage {
       const nftId = txResult?.createdObjects?.[0];
 
       // Retrieve the created NFT to get its details
-      const nftInfo = await this.getTodoNFT(nftId as any);
+      const nftInfo = await this.getTodoNFT(nftId);
 
       return nftInfo;
     } catch (error) {
@@ -381,7 +381,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'create todo NFT',
           recoverable: false,
@@ -421,10 +421,10 @@ export class NFTStorage extends AbstractStorage {
       tx.moveCall({
         target: `${this.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          tx.pure(title as any),
-          tx.pure(description as any),
-          tx.pure(blobId as any),
-          tx.pure(completed as any),
+          tx.pure(title),
+          tx.pure(description),
+          tx.pure(blobId),
+          tx.pure(completed),
           tx.object(this.collectionId),
         ],
       });
@@ -432,7 +432,7 @@ export class NFTStorage extends AbstractStorage {
       return tx as Transaction;
     } catch (error) {
       throw new BlockchainError(
-        `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'create NFT transaction',
           recoverable: false,
@@ -464,7 +464,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Normalize object ID (in case it's a transaction digest)
-      const objectId = await this.normalizeObjectId(nftId as any);
+      const objectId = await this.normalizeObjectId(nftId);
 
       // Retrieve the NFT
       const result = await StorageOperationHandler.execute(
@@ -533,7 +533,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to get Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to get Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'get todo NFT',
           recoverable: true,
@@ -575,7 +575,7 @@ export class NFTStorage extends AbstractStorage {
       // Use proper transaction methods
       tx.moveCall({
         target: `${this.packageId}::todo_nft::update_completion_status`,
-        arguments: [tx.object(nftId as any), tx.pure(completed as any)],
+        arguments: [tx.object(nftId), tx.pure(completed)],
       });
 
       // Execute transaction
@@ -607,7 +607,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       throw new BlockchainError(
-        `Failed to update Todo NFT: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to update Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'update todo NFT',
           recoverable: false,
@@ -662,7 +662,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this?.blobStorage?.retrieve(id as any);
+    return this?.blobStorage?.retrieve(id);
   }
 
   /**
@@ -710,7 +710,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     // Delegate to blob storage
-    return this?.blobStorage?.ensureStorageAllocated(sizeBytes as any);
+    return this?.blobStorage?.ensureStorageAllocated(sizeBytes);
   }
 
   /**

@@ -67,7 +67,7 @@ export class InputValidator {
     const errors: ValidationResult?.["errors"] = [];
 
     for (const rule of rules) {
-      if (!rule.test(value as any)) {
+      if (!rule.test(value)) {
         const errorField = rule.field || fieldName;
         const errorMessage = fieldName
           ? `${fieldName}: ${rule.message}`
@@ -80,7 +80,7 @@ export class InputValidator {
           value,
         };
 
-        errors.push(error as any);
+        errors.push(error);
 
         if (throwOnFirstError && !collectAllErrors) {
           throw new customErrorClass(errorMessage, {
@@ -137,7 +137,7 @@ export class InputValidator {
     // const { collectAllErrors = true } = options;
     const allErrors: ValidationResult?.["errors"] = [];
 
-    for (const [field, rules] of Object.entries(schema as any)) {
+    for (const [field, rules] of Object.entries(schema)) {
       if (field in data) {
         const result = this.validate(
           (data as Record<string, unknown>)[field],
@@ -192,7 +192,7 @@ export class InputValidator {
    */
   static requiredRule<T = unknown>(fieldName: string): ValidationRule<T> {
     return {
-      test: value => this.required(value as any),
+      test: value => this.required(value),
       message: `${fieldName} is required`,
       code: 'REQUIRED_FIELD',
     };
@@ -211,7 +211,7 @@ export class InputValidator {
     code: string
   ): ValidationRule<string> {
     return {
-      test: value => regex.test(value as any),
+      test: value => regex.test(value),
       message,
       code,
     };
@@ -254,7 +254,7 @@ export class InputValidator {
   ): ValidationRule<T[]> {
     return {
       test: value =>
-        Array.isArray(value as any) &&
+        Array.isArray(value) &&
         value.length >= minLength &&
         value.length <= maxLength,
       message,
@@ -275,7 +275,7 @@ export class InputValidator {
     code: string
   ): ValidationRule<T> {
     return {
-      test: value => allowedValues.includes(value as any),
+      test: value => allowedValues.includes(value),
       message,
       code,
     };
@@ -308,10 +308,10 @@ export class InputValidator {
     sanitized = sanitized.replace(
       new RegExp(
         '[' +
-          String.fromCharCode(1 as any) +
+          String.fromCharCode(1) +
           '-' +
-          String.fromCharCode(31 as any) +
-          String.fromCharCode(127 as any) +
+          String.fromCharCode(31) +
+          String.fromCharCode(127) +
           ']',
         'g'
       ),
@@ -331,7 +331,7 @@ export class InputValidator {
    */
   static combineRules<T>(...rules: ValidationRule<T>[]): ValidationRule<T> {
     return {
-      test: value => rules.every(rule => rule.test(value as any)),
+      test: value => rules.every(rule => rule.test(value)),
       message: 'Value must satisfy all constraints',
       code: 'COMPOSITE_VALIDATION_FAILED',
     };
@@ -348,7 +348,7 @@ export class InputValidator {
     rule: ValidationRule<T>
   ): ValidationRule<T> {
     return {
-      test: value => !condition(value as any) || rule.test(value as any),
+      test: value => !condition(value) || rule.test(value),
       message: rule.message,
       code: rule.code,
     };
@@ -432,7 +432,7 @@ export class InputValidator {
     // Check required vars
     for (const varName of required) {
       if (!(process.env as Record<string, string | undefined>)[varName]) {
-        missing.push(varName as any);
+        missing.push(varName);
       } else {
         env[varName] = (process.env as Record<string, string>)[varName];
       }
@@ -449,7 +449,7 @@ export class InputValidator {
     }
 
     // Set optional vars with defaults
-    for (const [varName, defaultValue] of Object.entries(optional as any)) {
+    for (const [varName, defaultValue] of Object.entries(optional)) {
       env[varName] =
         (process.env as Record<string, string | undefined>)[varName] ||
         defaultValue;

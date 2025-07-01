@@ -1,5 +1,6 @@
 import { Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
+import { Todo } from '../types/todo';
 import {
   TaskSuggestionService,
   SuggestionType,
@@ -14,7 +15,7 @@ import { AIPrivacyLevel } from '../types/adapters/AIVerifierAdapter';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import chalk = require('chalk');
 import { todoService } from '../services';
-import { EnhancedAIService } from '../services/ai/EnhancedAIService';
+import { group, schedule, detectDependenciesAI, estimateEffortAI } from '../services/ai';
 import { createCache } from '../utils/performance-cache';
 import crypto from 'crypto';
 import { KeystoreSigner } from '../utils/sui-keystore';
@@ -65,7 +66,7 @@ export default class Suggest extends BaseCommand {
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(
-        `Suggest command: Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error as any)}. Please check your Sui configuration and wallet setup.`
+        `Suggest command: Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}. Please check your Sui configuration and wallet setup.`
       );
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -196,7 +197,7 @@ export default class Suggest extends BaseCommand {
   };
 
   async run() {
-    const { flags } = await this.parse(Suggest as any);
+    const { flags } = await this.parse(Suggest);
 
     // Handle job status check first
     if (flags.jobId) {
@@ -205,7 +206,7 @@ export default class Suggest extends BaseCommand {
 
     // Handle background execution
     if (flags.background) {
-      return this.executeInBackground(flags as any);
+      return this.executeInBackground(flags);
     }
 
     // Enable cache debugging if requested
@@ -233,10 +234,10 @@ export default class Suggest extends BaseCommand {
     // Check API key validation cache
     const apiKeyCacheKey = crypto
       .createHash('md5')
-      .update(apiKey as any)
+      .update(apiKey)
       .digest('hex');
     const cachedApiKeyValidation =
-      await apiKeyValidationCache.get(apiKeyCacheKey as any);
+      await apiKeyValidationCache.get(apiKeyCacheKey);
 
     if (cachedApiKeyValidation !== null) {
       if (cacheDebugEnabled)
@@ -290,7 +291,7 @@ export default class Suggest extends BaseCommand {
 
         // Create verification service with all required parameters
         // Create a BlockchainVerifier instance first
-        const blockchainVerifier = new BlockchainVerifier(verifierAdapter as any);
+        const blockchainVerifier = new BlockchainVerifier(verifierAdapter);
 
         verificationService = new BlockchainAIVerificationService(
           blockchainVerifier,
@@ -305,14 +306,14 @@ export default class Suggest extends BaseCommand {
           throw error;
         }
         throw new CLIError(
-          `Suggest command: Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error as any)}. Check registry address, package ID, and Sui connection.`
+          `Suggest command: Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error)}. Check registry address, package ID, and Sui connection.`
         );
       }
     }
 
     // Check config cache for AI service initialization
     const configCacheKey = `ai-config-${flags.provider || 'default'}-${flags.model || 'default'}`;
-    let aiServiceConfig = await configCache.get(configCacheKey as any);
+    let aiServiceConfig = await configCache.get(configCacheKey);
 
     if (!aiServiceConfig) {
       // Create config and cache it
@@ -332,16 +333,27 @@ export default class Suggest extends BaseCommand {
         this.log(chalk.dim('✓ AI service config loaded from cache'));
     }
 
-    // Initialize AI service with cached config
-    const enhancedService = new EnhancedAIService(
-      aiServiceConfig.apiKey,
-      aiServiceConfig.provider,
-      aiServiceConfig.model,
-      aiServiceConfig.options,
-      verificationService
-    );
+    // Create a compatibility wrapper for the functional AI service
+    const enhancedService = {
+      group: async (todos: Todo[]) => {
+        const result = await group(todos);
+        return result.result || { sequentialTracks: {}, parallelOpportunities: [] };
+      },
+      schedule: async (todos: Todo[]) => {
+        const result = await schedule(todos);
+        return result.result || {};
+      },
+      detectDependencies: async (todos: Todo[]) => {
+        const result = await detectDependenciesAI(todos);
+        return result.result || { dependencies: {}, blockers: {} };
+      },
+      estimateEffort: async (todos: Todo[]) => {
+        const result = await estimateEffortAI(todos);
+        return result.result || {};
+      },
+    };
 
-    // Initialize TaskSuggestionService
+    // Initialize TaskSuggestionService with the compatibility wrapper
     const suggestionService = new TaskSuggestionService(
       enhancedService,
       verificationService
@@ -451,7 +463,7 @@ export default class Suggest extends BaseCommand {
         .digest('hex');
 
       // Check suggestion cache
-      let result = await suggestionCache.get(suggestionCacheKey as any);
+      let result = await suggestionCache.get(suggestionCacheKey);
 
       if (result) {
         if (cacheDebugEnabled)
@@ -511,13 +523,13 @@ export default class Suggest extends BaseCommand {
       // Display context information
       this.log(chalk.cyan('\nContext Information:'));
       this.log(
-        `Analyzed ${chalk.bold((contextInfo?.analyzedTodoCount ?? 0).toString())} todos, ${chalk.bold((contextInfo?.completionPercentage ?? 0).toFixed(0 as any))}% completed`
+        `Analyzed ${chalk.bold((contextInfo?.analyzedTodoCount ?? 0).toString())} todos, ${chalk.bold((contextInfo?.completionPercentage ?? 0).toFixed(0))}% completed`
       );
       this.log(
-        `Top tags: ${(contextInfo?.topContextualTags ?? []).map(tag => chalk.yellow(tag as any)).join(', ')}`
+        `Top tags: ${(contextInfo?.topContextualTags ?? []).map(tag => chalk.yellow(tag)).join(', ')}`
       );
       this.log(
-        `Detected themes: ${(contextInfo?.detectedThemes ?? []).map(theme => chalk.green(theme as any)).join(', ')}`
+        `Detected themes: ${(contextInfo?.detectedThemes ?? []).map(theme => chalk.green(theme)).join(', ')}`
       );
 
       // Display suggestions
@@ -567,7 +579,7 @@ export default class Suggest extends BaseCommand {
 
         if (suggestion.tags && suggestion?.tags?.length > 0) {
           this.log(
-            `   Tags: ${suggestion?.tags?.map(tag => chalk.yellow(tag as any)).join(', ')}`
+            `   Tags: ${suggestion?.tags?.map(tag => chalk.yellow(tag)).join(', ')}`
           );
         }
 
@@ -617,17 +629,17 @@ export default class Suggest extends BaseCommand {
 
         this.log(
           chalk.dim(
-            `  Suggestions: ${suggestionStats.hits} hits, ${suggestionStats.misses} misses (${(suggestionStats.hitRate * 100).toFixed(1 as any)}% hit rate)`
+            `  Suggestions: ${suggestionStats.hits} hits, ${suggestionStats.misses} misses (${(suggestionStats.hitRate * 100).toFixed(1)}% hit rate)`
           )
         );
         this.log(
           chalk.dim(
-            `  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1 as any)}% hit rate)`
+            `  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1)}% hit rate)`
           )
         );
         this.log(
           chalk.dim(
-            `  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1 as any)}% hit rate)`
+            `  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1)}% hit rate)`
           )
         );
       }
@@ -690,7 +702,7 @@ export default class Suggest extends BaseCommand {
           throw error;
         }
         throw new CLIError(
-          `Failed to add todo: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to add todo: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -709,7 +721,7 @@ export default class Suggest extends BaseCommand {
     details?: Record<string, unknown>;
   }) {
     this.log(chalk.bold('\nVerification Details:'));
-    this.log(chalk.dim('─'.repeat(50 as any)));
+    this.log(chalk.dim('─'.repeat(50)));
     this.log(
       `ID:        ${chalk.yellow(verification.verificationId || 'unknown')}`
     );
@@ -736,7 +748,7 @@ export default class Suggest extends BaseCommand {
       }
     }
 
-    this.log(chalk.dim('─'.repeat(50 as any)));
+    this.log(chalk.dim('─'.repeat(50)));
     this.log(
       chalk.dim(
         `To view detailed verification information, run: ${chalk.cyan(`walrus_todo ai:verify show --id ${verification.verificationId || 'unknown'}`)}`
@@ -750,7 +762,7 @@ export default class Suggest extends BaseCommand {
   private async handleJobStatus(jobId: string, flags: any) {
     try {
       const backgroundOps = await createBackgroundAIOperationsManager();
-      const status = await backgroundOps.getOperationStatus(jobId as any);
+      const status = await backgroundOps.getOperationStatus(jobId);
 
       if (!status) {
         this.error(`Job ${jobId} not found`);
@@ -784,7 +796,7 @@ export default class Suggest extends BaseCommand {
 
       // If completed, show results
       if (status?.status === 'completed') {
-        const result = await backgroundOps.getOperationResult(jobId as any);
+        const result = await backgroundOps.getOperationResult(jobId);
         if (result && flags.format !== 'json') {
           this.log(chalk.bold('\nResults:'));
           this.displaySuggestionResults(result.result, flags);
@@ -821,7 +833,7 @@ export default class Suggest extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to get job status: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to get job status: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -892,7 +904,7 @@ export default class Suggest extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to start background operation: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -908,7 +920,7 @@ export default class Suggest extends BaseCommand {
 
     this.log(chalk.cyan('💡 Task Suggestions:'));
 
-    if (Array.isArray(suggestions as any)) {
+    if (Array.isArray(suggestions)) {
       suggestions.forEach((suggestion, index) => {
         this.log(`${index + 1}. ${suggestion}`);
       });
@@ -941,7 +953,7 @@ export default class Suggest extends BaseCommand {
     };
 
     return (
-      statusColors[status as keyof typeof statusColors] || chalk.white(status as any)
+      statusColors[status as keyof typeof statusColors] || chalk.white(status)
     );
   }
 

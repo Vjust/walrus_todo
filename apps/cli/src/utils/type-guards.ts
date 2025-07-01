@@ -17,7 +17,7 @@ export function hasMessage(value: unknown): value is { message: string } {
     typeof value === 'object' &&
     value !== null &&
     'message' in value &&
-    typeof (value as any).message === 'string'
+    typeof (value).message === 'string'
   );
 }
 
@@ -29,7 +29,7 @@ export function hasCode(value: unknown): value is { code: string } {
     typeof value === 'object' &&
     value !== null &&
     'code' in value &&
-    typeof (value as any).code === 'string'
+    typeof (value).code === 'string'
   );
 }
 
@@ -39,18 +39,18 @@ export function hasCode(value: unknown): value is { code: string } {
 export function hasMessageAndCode(
   value: unknown
 ): value is { message: string; code: string } {
-  return hasMessage(value as any) && hasCode(value as any);
+  return hasMessage(value) && hasCode(value);
 }
 
 /**
  * Safely extracts an error message from unknown error type
  */
 export function getErrorMessage(error: unknown): string {
-  if (isError(error as any)) {
+  if (isError(error)) {
     return error.message;
   }
 
-  if (hasMessage(error as any)) {
+  if (hasMessage(error)) {
     return error.message;
   }
 
@@ -65,7 +65,7 @@ export function getErrorMessage(error: unknown): string {
  * Safely extracts an error code from unknown error type
  */
 export function getErrorCode(error: unknown): string | undefined {
-  if (hasCode(error as any)) {
+  if (hasCode(error)) {
     return error.code;
   }
 
@@ -81,7 +81,7 @@ export function isResponse(value: unknown): value is Response {
     value !== null &&
     'status' in value &&
     'statusText' in value &&
-    typeof (value as any).status === 'number'
+    typeof (value).status === 'number'
   );
 }
 
@@ -89,14 +89,14 @@ export function isResponse(value: unknown): value is Response {
  * Type guard for objects with properties
  */
 export function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value as any);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**
  * Type guard for arrays
  */
 export function isArray(value: unknown): value is unknown[] {
-  return Array.isArray(value as any);
+  return Array.isArray(value);
 }
 
 /**
@@ -110,7 +110,7 @@ export function isString(value: unknown): value is string {
  * Type guard for numbers
  */
 export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && !isNaN(value as any);
+  return typeof value === 'number' && !isNaN(value);
 }
 
 /**
@@ -124,17 +124,17 @@ export function isBoolean(value: unknown): value is boolean {
  * Safely converts unknown to Error
  */
 export function toError(value: unknown): Error {
-  if (isError(value as any)) {
+  if (isError(value)) {
     return value;
   }
 
-  const message = getErrorMessage(value as any);
-  const error = new Error(message as any);
+  const message = getErrorMessage(value);
+  const error = new Error(message);
 
   // Preserve original error code if available
-  const code = getErrorCode(value as any);
+  const code = getErrorCode(value);
   if (code) {
-    (error as any).code = code;
+    (error).code = code;
   }
 
   return error;
@@ -144,7 +144,7 @@ export function toError(value: unknown): Error {
  * Type assertion for Error objects (throws if not an error)
  */
 export function assertError(value: unknown): asserts value is Error {
-  if (!isError(value as any)) {
+  if (!isError(value)) {
     throw new Error(`Expected Error, got ${typeof value}`);
   }
 }
@@ -155,7 +155,7 @@ export function assertError(value: unknown): asserts value is Error {
 export function assertObject(
   value: unknown
 ): asserts value is Record<string, unknown> {
-  if (!isObject(value as any)) {
+  if (!isObject(value)) {
     throw new Error(`Expected object, got ${typeof value}`);
   }
 }
@@ -166,7 +166,7 @@ export function assertObject(
  * Type guard for Todo objects
  */
 export function isTodo(value: unknown): value is import('../types/todo').Todo {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -175,7 +175,7 @@ export function isTodo(value: unknown): value is import('../types/todo').Todo {
     isBoolean(obj.completed) &&
     ['high', 'medium', 'low'].includes(obj.priority as string) &&
     isArray(obj.tags) &&
-    obj?.tags?.every(tag => isString(tag as any)) &&
+    obj?.tags?.every(tag => isString(tag)) &&
     isString(obj.createdAt) &&
     isString(obj.updatedAt) &&
     isBoolean(obj.private) &&
@@ -191,7 +191,7 @@ export function isTodo(value: unknown): value is import('../types/todo').Todo {
     (obj?.listName === undefined || isString(obj.listName)) &&
     (obj?.syncedAt === undefined || isString(obj.syncedAt)) &&
     (obj?.user === undefined || isString(obj.user)) &&
-    (obj?.reminders === undefined || (isArray(obj.reminders) && obj?.reminders?.every(isTodoReminder as any))) &&
+    (obj?.reminders === undefined || (isArray(obj.reminders) && obj?.reminders?.every(isTodoReminder))) &&
     (obj?.metadata === undefined || isObject(obj.metadata))
   );
 }
@@ -200,7 +200,7 @@ export function isTodo(value: unknown): value is import('../types/todo').Todo {
  * Type guard for TodoReminder objects
  */
 export function isTodoReminder(value: unknown): value is import('../types/todo').TodoReminder {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -214,7 +214,7 @@ export function isTodoReminder(value: unknown): value is import('../types/todo')
  * Type guard for TodoList objects
  */
 export function isTodoList(value: unknown): value is import('../types/todo').TodoList {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -222,12 +222,12 @@ export function isTodoList(value: unknown): value is import('../types/todo').Tod
     isString(obj.name) &&
     isString(obj.owner) &&
     isArray(obj.todos) &&
-    obj?.todos?.every(todo => isTodo(todo as any)) &&
+    obj?.todos?.every(todo => isTodo(todo)) &&
     isNumber(obj.version) &&
     isString(obj.createdAt) &&
     isString(obj.updatedAt) &&
     // Optional properties
-    (obj?.collaborators === undefined || (isArray(obj.collaborators) && obj?.collaborators?.every(isString as any))) &&
+    (obj?.collaborators === undefined || (isArray(obj.collaborators) && obj?.collaborators?.every(isString))) &&
     (obj?.permissions === undefined || isObject(obj.permissions)) &&
     (obj?.walrusBlobId === undefined || isString(obj.walrusBlobId)) &&
     (obj?.suiObjectId === undefined || isString(obj.suiObjectId))
@@ -238,7 +238,7 @@ export function isTodoList(value: unknown): value is import('../types/todo').Tod
  * Type guard for Config objects
  */
 export function isConfig(value: unknown): value is import('../types/config').Config {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -260,7 +260,7 @@ export function isConfig(value: unknown): value is import('../types/config').Con
  * Type guard for NetworkConfig objects
  */
 export function isNetworkConfig(value: unknown): value is import('../types/config').NetworkConfig {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -277,7 +277,7 @@ export function isNetworkConfig(value: unknown): value is import('../types/confi
  * Type guard for AccountConfig objects
  */
 export function isAccountConfig(value: unknown): value is import('../types/config').AccountConfig {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -298,7 +298,7 @@ export function isAccountConfig(value: unknown): value is import('../types/confi
  * Type guard for BlobObject objects
  */
 export function isBlobObject(value: unknown): value is import('../types/walrus').BlobObject {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -328,7 +328,7 @@ export function isBlobObject(value: unknown): value is import('../types/walrus')
  * Type guard for BlobInfo objects
  */
 export function isBlobInfo(value: unknown): value is import('../types/walrus').BlobInfo {
-  if (!isBlobObject(value as any)) return false;
+  if (!isBlobObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return isNumber(obj.certified_epoch);
@@ -338,7 +338,7 @@ export function isBlobInfo(value: unknown): value is import('../types/walrus').B
  * Type guard for CreateTodoInput objects
  */
 export function isCreateTodoInput(value: unknown): value is import('../types/todo').CreateTodoInput {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -347,7 +347,7 @@ export function isCreateTodoInput(value: unknown): value is import('../types/tod
     (obj?.description === undefined || isString(obj.description)) &&
     (obj?.priority === undefined || ['high', 'medium', 'low'].includes(obj.priority as string)) &&
     (obj?.dueDate === undefined || isString(obj.dueDate)) &&
-    (obj?.tags === undefined || (isArray(obj.tags) && obj?.tags?.every(isString as any))) &&
+    (obj?.tags === undefined || (isArray(obj.tags) && obj?.tags?.every(isString))) &&
     (obj?.category === undefined || isString(obj.category)) &&
     (obj?.listName === undefined || isString(obj.listName))
   );
@@ -357,7 +357,7 @@ export function isCreateTodoInput(value: unknown): value is import('../types/tod
  * Type guard for UpdateTodoInput objects
  */
 export function isUpdateTodoInput(value: unknown): value is import('../types/todo').UpdateTodoInput {
-  if (!isObject(value as any)) return false;
+  if (!isObject(value)) return false;
   
   const obj = value as Record<string, unknown>;
   return (
@@ -367,7 +367,7 @@ export function isUpdateTodoInput(value: unknown): value is import('../types/tod
     (obj?.completed === undefined || isBoolean(obj.completed)) &&
     (obj?.priority === undefined || ['high', 'medium', 'low'].includes(obj.priority as string)) &&
     (obj?.dueDate === undefined || isString(obj.dueDate)) &&
-    (obj?.tags === undefined || (isArray(obj.tags) && obj?.tags?.every(isString as any))) &&
+    (obj?.tags === undefined || (isArray(obj.tags) && obj?.tags?.every(isString))) &&
     (obj?.category === undefined || isString(obj.category))
   );
 }
@@ -401,21 +401,21 @@ export function isNetworkType(value: unknown): value is import('../types/todo').
  * Type guard for optional properties that safely handles undefined/null
  */
 export function isOptionalString(value: unknown): value is string | undefined {
-  return value === undefined || value === null || isString(value as any);
+  return value === undefined || value === null || isString(value);
 }
 
 /**
  * Type guard for optional boolean properties
  */
 export function isOptionalBoolean(value: unknown): value is boolean | undefined {
-  return value === undefined || value === null || isBoolean(value as any);
+  return value === undefined || value === null || isBoolean(value);
 }
 
 /**
  * Type guard for optional number properties
  */
 export function isOptionalNumber(value: unknown): value is number | undefined {
-  return value === undefined || value === null || isNumber(value as any);
+  return value === undefined || value === null || isNumber(value);
 }
 
 /**
@@ -423,9 +423,9 @@ export function isOptionalNumber(value: unknown): value is number | undefined {
  */
 export function isOptionalArray<T>(value: unknown, itemGuard?: (item: unknown) => item is T): value is T[] | undefined {
   if (value === undefined || value === null) return true;
-  if (!isArray(value as any)) return false;
+  if (!isArray(value)) return false;
   if (itemGuard) {
-    return value.every(itemGuard as any);
+    return value.every(itemGuard);
   }
   return true;
 }
@@ -434,7 +434,7 @@ export function isOptionalArray<T>(value: unknown, itemGuard?: (item: unknown) =
  * Type guard for optional object properties
  */
 export function isOptionalObject(value: unknown): value is Record<string, unknown> | undefined {
-  return value === undefined || value === null || isObject(value as any);
+  return value === undefined || value === null || isObject(value);
 }
 
 /**
@@ -452,31 +452,31 @@ export function createUnionGuard<T extends string>(
  * Type assertion for domain-specific types
  */
 export function assertTodo(value: unknown): asserts value is import('../types/todo').Todo {
-  if (!isTodo(value as any)) {
+  if (!isTodo(value)) {
     throw new Error('Value is not a valid Todo object');
   }
 }
 
 export function assertTodoList(value: unknown): asserts value is import('../types/todo').TodoList {
-  if (!isTodoList(value as any)) {
+  if (!isTodoList(value)) {
     throw new Error('Value is not a valid TodoList object');
   }
 }
 
 export function assertConfig(value: unknown): asserts value is import('../types/config').Config {
-  if (!isConfig(value as any)) {
+  if (!isConfig(value)) {
     throw new Error('Value is not a valid Config object');
   }
 }
 
 export function assertBlobObject(value: unknown): asserts value is import('../types/walrus').BlobObject {
-  if (!isBlobObject(value as any)) {
+  if (!isBlobObject(value)) {
     throw new Error('Value is not a valid BlobObject');
   }
 }
 
 export function assertBlobInfo(value: unknown): asserts value is import('../types/walrus').BlobInfo {
-  if (!isBlobInfo(value as any)) {
+  if (!isBlobInfo(value)) {
     throw new Error('Value is not a valid BlobInfo object');
   }
 }

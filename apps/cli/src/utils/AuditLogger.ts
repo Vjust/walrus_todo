@@ -237,9 +237,9 @@ export class AuditLogger {
       for (const file of files) {
         try {
           const filePath = path.join(this?.config?.storage.path, file);
-          const stats = fs.statSync(filePath as any);
+          const stats = fs.statSync(filePath);
           if (stats.mtime < cutoffDate) {
-            fs.unlinkSync(filePath as any);
+            fs.unlinkSync(filePath);
           }
         } catch (error) {
           this?.logger?.warn(`Failed to delete old audit log file: ${file}`, {
@@ -262,7 +262,7 @@ export class AuditLogger {
     if (
       !this?.config?.blockchainBackup?.enabled ||
       (this?.config?.blockchainBackup.criticalEventsOnly &&
-        !this.isCriticalEvent(entry as any))
+        !this.isCriticalEvent(entry))
     ) {
       return;
     }
@@ -285,7 +285,7 @@ export class AuditLogger {
     // Add hash for tamper-evidence
     const entryWithHash = {
       ...entry,
-      hash: this.generateHash(entry as any),
+      hash: this.generateHash(entry),
     };
 
     // Update last hash
@@ -294,15 +294,15 @@ export class AuditLogger {
     // Store based on configuration
     switch (this?.config?.storage.type) {
       case AuditLogStorage.FILE:
-        await this.writeToFile(entryWithHash as any);
+        await this.writeToFile(entryWithHash);
         break;
 
       case AuditLogStorage.MEMORY:
-        this?.memoryLogs?.push(entry as any);
+        this?.memoryLogs?.push(entry);
         break;
 
       case AuditLogStorage.BLOCKCHAIN:
-        await this.backupToBlockchain(entry as any);
+        await this.backupToBlockchain(entry);
         break;
     }
 
@@ -311,7 +311,7 @@ export class AuditLogger {
       this?.config?.storage.type !== AuditLogStorage.BLOCKCHAIN &&
       this?.config?.blockchainBackup?.enabled
     ) {
-      await this.backupToBlockchain(entry as any);
+      await this.backupToBlockchain(entry);
     }
   }
 
@@ -328,11 +328,11 @@ export class AuditLogger {
       this.rotateLogFileIfNeeded();
 
       // Write entry to file
-      const entryStr = JSON.stringify(entry as any) + '\n';
+      const entryStr = JSON.stringify(entry) + '\n';
       fs.appendFileSync(this.currentLogFile, entryStr);
 
       // Update current log size
-      this.currentLogSize += Buffer.byteLength(entryStr as any) / 1024;
+      this.currentLogSize += Buffer.byteLength(entryStr) / 1024;
     } catch (error) {
       this?.logger?.error('Failed to write audit log to file', error as Error);
     }
@@ -361,7 +361,7 @@ export class AuditLogger {
       };
 
       // Write to storage
-      await this.writeToStorage(completeEntry as any);
+      await this.writeToStorage(completeEntry);
 
       // Log to regular logger for visibility (debug level)
       this?.logger?.debug(`AUDIT: ${completeEntry.action}`, {
@@ -392,10 +392,10 @@ export class AuditLogger {
   }): Promise<AuditLogEntry[]> {
     if (this?.config?.storage?.type === AuditLogStorage.MEMORY) {
       // Search in-memory logs
-      return this.searchMemoryLogs(options as any);
+      return this.searchMemoryLogs(options);
     } else if (this?.config?.storage?.type === AuditLogStorage.FILE) {
       // Search file logs
-      return this.searchFileLogs(options as any);
+      return this.searchFileLogs(options);
     }
 
     return [];
@@ -480,7 +480,7 @@ export class AuditLogger {
       // Get all log files
       const storagePath = this?.config?.storage.path || '.audit';
       const files = fs
-        .readdirSync(storagePath as any)
+        .readdirSync(storagePath)
         .filter(file => file.startsWith('audit-') && file.endsWith('.log'))
         .sort((a, b) => {
           const statA = fs.statSync(path.join(storagePath, a));
@@ -506,7 +506,7 @@ export class AuditLogger {
           }
 
           try {
-            const entry = JSON.parse(line as any) as AuditLogEntry;
+            const entry = JSON.parse(line) as AuditLogEntry;
 
             // Apply filters
             if (options.userId && entry.userId !== options.userId) continue;
@@ -526,7 +526,7 @@ export class AuditLogger {
               continue;
 
             // Add to results
-            results.push(entry as any);
+            results.push(entry);
           } catch (error) {
             this?.logger?.warn('Failed to parse audit log entry', {
               error,
@@ -555,7 +555,7 @@ export class AuditLogger {
       currentFilePath = this.currentLogFile;
     }
 
-    if (!currentFilePath || !fs.existsSync(currentFilePath as any)) {
+    if (!currentFilePath || !fs.existsSync(currentFilePath)) {
       return { valid: false, invalidEntries: 0, totalEntries: 0 };
     }
 
@@ -568,7 +568,7 @@ export class AuditLogger {
 
       for (const line of lines) {
         try {
-          const entry = JSON.parse(line as any);
+          const entry = JSON.parse(line);
 
           // Skip entries without hash
           if (!entry.hash) continue;
@@ -584,7 +584,7 @@ export class AuditLogger {
           delete entryWithoutHash.hash;
 
           const expectedHash = createHash('sha256')
-            .update(prevHash + JSON.stringify(entryWithoutHash as any))
+            .update(prevHash + JSON.stringify(entryWithoutHash))
             .digest('hex');
 
           // Verify hash

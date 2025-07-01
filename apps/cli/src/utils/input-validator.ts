@@ -115,7 +115,7 @@ export function validateInput(
   rule: ValidationRule,
   field?: string
 ): void {
-  if (!rule?.pattern?.test(input as any)) {
+  if (!rule?.pattern?.test(input)) {
     throw new ValidationError(rule.message, field, { value: input });
   }
 }
@@ -131,14 +131,14 @@ export function validateInputs<T extends Record<string, string>>(
   inputs: T,
   rules: Partial<Record<keyof T, ValidationRule>>
 ): boolean {
-  const fieldNames = Object.keys(rules as any) as Array<keyof T>;
+  const fieldNames = Object.keys(rules) as Array<keyof T>;
 
   for (const field of fieldNames) {
     const value = inputs[field];
     const rule = rules[field];
 
     if (value !== undefined && rule !== undefined) {
-      validateInput(value, rule, String(field as any));
+      validateInput(value, rule, String(field));
     }
   }
 
@@ -160,7 +160,7 @@ export function validateFilePath(
   } = {}
 ): void {
   // Normalize the path to resolve '..' and '.' segments
-  const normalizedPath = path.normalize(inputPath as any);
+  const normalizedPath = path.normalize(inputPath);
 
   // Check for shell metacharacters
   validateInput(normalizedPath, ValidationRules.FilePath, 'path');
@@ -176,8 +176,8 @@ export function validateFilePath(
 
   // Check if the path is within allowed directories
   const isPathAllowed = allowedDirectories.some(dir => {
-    const normalizedDir = path.normalize(dir as any);
-    return normalizedPath.startsWith(normalizedDir as any);
+    const normalizedDir = path.normalize(dir);
+    return normalizedPath.startsWith(normalizedDir);
   });
 
   if (!isPathAllowed) {
@@ -190,7 +190,7 @@ export function validateFilePath(
 
   // Check if the path exists if required
   if (options.mustExist) {
-    if (!fs.existsSync(normalizedPath as any)) {
+    if (!fs.existsSync(normalizedPath)) {
       throw new ValidationError(
         `Path does not exist: ${normalizedPath}`,
         'path',
@@ -200,7 +200,7 @@ export function validateFilePath(
 
     // Check if the file type matches the expected type
     if (options.fileType) {
-      const stats = fs.statSync(normalizedPath as any);
+      const stats = fs.statSync(normalizedPath);
 
       if (options?.fileType === 'file' && !stats.isFile()) {
         throw new ValidationError(
@@ -233,7 +233,7 @@ export function validateUrl(url: string, allowedDomains?: string[]): void {
 
   if (allowedDomains && allowedDomains.length > 0) {
     try {
-      const parsedUrl = new URL(url as any);
+      const parsedUrl = new URL(url);
       const hostname = parsedUrl.hostname;
 
       const isDomainAllowed = allowedDomains.some(
@@ -301,5 +301,5 @@ export function validateAndSanitizeArgument(
   validateInput(input, rule, field);
 
   // Then sanitize it to be extra safe
-  return sanitizeCommandInput(input as any);
+  return sanitizeCommandInput(input);
 }

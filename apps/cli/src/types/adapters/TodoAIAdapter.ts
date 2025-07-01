@@ -73,9 +73,9 @@ export class TodoAIAdapter {
         target: `${this.todoAIModuleAddress}::todo_ai_extension::link_verification_to_todo`,
         arguments: [
           tx.object(this.todoAIRegistry),
-          tx.pure(todoId as any),
-          tx.pure(verificationId as any),
-          tx.pure(operation as any),
+          tx.pure(todoId),
+          tx.pure(verificationId),
+          tx.pure(operation),
           tx.pure(new Date().toISOString()),
         ],
       });
@@ -117,8 +117,8 @@ export class TodoAIAdapter {
         target: `${this.todoAIModuleAddress}::todo_ai_extension::has_verification_for_operation`,
         arguments: [
           tx.object(this.todoAIRegistry),
-          tx.pure(todoId as any),
-          tx.pure(operation as any),
+          tx.pure(todoId),
+          tx.pure(operation),
         ],
       });
 
@@ -155,7 +155,7 @@ export class TodoAIAdapter {
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::get_verifications_for_todo`,
-        arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId as any)],
+        arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId)],
       });
 
       const result: SuiInspectionResult =
@@ -170,7 +170,7 @@ export class TodoAIAdapter {
         if (returnValues && returnValues.length > 0) {
           // Ensure we're handling string[] properly and not comparing with number[]
           const values = returnValues[0];
-          if (Array.isArray(values as any)) {
+          if (Array.isArray(values)) {
             // Convert all values to strings to avoid type comparison issues
             return values.map(value => String(value || ''));
           }
@@ -203,8 +203,8 @@ export class TodoAIAdapter {
         arguments: [
           tx.object(this.todoAIRegistry),
           tx.object(this.verificationRegistry),
-          tx.pure(todoId as any),
-          tx.pure(operation as any),
+          tx.pure(todoId),
+          tx.pure(operation),
         ],
       });
 
@@ -252,11 +252,11 @@ export class TodoAIAdapter {
         target: `${this.aiVerifierModuleAddress}::ai_operation_verifier::verify_operation`,
         arguments: [
           tx.object(this.verificationRegistry),
-          tx.pure(provider as any),
-          tx.pure(operation as any),
-          tx.pure(inputHash as any),
-          tx.pure(outputHash as any),
-          tx.pure(timestamp as any),
+          tx.pure(provider),
+          tx.pure(operation),
+          tx.pure(inputHash),
+          tx.pure(outputHash),
+          tx.pure(timestamp),
         ],
       });
 
@@ -273,10 +273,10 @@ export class TodoAIAdapter {
         target: `${this.todoAIModuleAddress}::todo_ai_extension::link_verification_to_todo`,
         arguments: [
           tx.object(this.todoAIRegistry),
-          tx.pure(todoId as any),
-          tx.pure(verificationId as any),
-          tx.pure(operation as any),
-          tx.pure(timestamp as any),
+          tx.pure(todoId),
+          tx.pure(verificationId),
+          tx.pure(operation),
+          tx.pure(timestamp),
         ],
       });
 

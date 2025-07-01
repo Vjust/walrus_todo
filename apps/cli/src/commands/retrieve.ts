@@ -2,7 +2,7 @@ import { Flags, Args } from '@oclif/core';
 import { BaseCommand } from '../base-command';
 import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../constants';
@@ -130,7 +130,7 @@ export default class RetrieveCommand extends BaseCommand {
     if (this.spinner) {
       this.spinner?.text = text;
     } else {
-      this.log(chalk.blue(text as any));
+      this.log(chalk.blue(text));
     }
   }
 
@@ -154,7 +154,7 @@ export default class RetrieveCommand extends BaseCommand {
     if (
       identifier.startsWith('Qm') ||
       identifier.startsWith('bafy') ||
-      (identifier.length > 32 && /^[A-Za-z0-9+/=_-]+$/.test(identifier as any))
+      (identifier.length > 32 && /^[A-Za-z0-9+/=_-]+$/.test(identifier))
     ) {
       return 'blob';
     }
@@ -169,9 +169,9 @@ export default class RetrieveCommand extends BaseCommand {
   private async retrieveAllFromList(listName: string): Promise<void> {
     this.startSpinner(`Retrieving all todos from list "${listName}"...`);
 
-    const list = await this?.todoService?.getList(listName as any);
+    const list = await this?.todoService?.getList(listName);
     if (!list || !list.todos || list.todos?.length === 0) {
-      this.stopSpinner(false as any);
+      this.stopSpinner(false);
       throw new CLIError(
         `No todos found in list "${listName}". Use "waltodo list" to see available lists.`,
         'EMPTY_LIST'
@@ -182,7 +182,7 @@ export default class RetrieveCommand extends BaseCommand {
 
     this.stopSpinner(
       true,
-      `Found ${todos.length} todo(s as any) in list "${listName}"`
+      `Found ${todos.length} todo(s) in list "${listName}"`
     );
 
     // Display the todos
@@ -214,7 +214,7 @@ export default class RetrieveCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(RetrieveCommand as any);
+      const { args, flags } = await this.parse(RetrieveCommand);
 
       // Handle background operation
       if (flags.background) {
@@ -229,7 +229,7 @@ export default class RetrieveCommand extends BaseCommand {
       // Validate network configuration
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
         throw new CLIError(
-          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS as any).join(', ')}`,
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
           'INVALID_NETWORK'
         );
       }
@@ -291,7 +291,7 @@ export default class RetrieveCommand extends BaseCommand {
 
       // Handle retrieve all case
       if (retrieveAll) {
-        await this.retrieveAllFromList(sourceList as any);
+        await this.retrieveAllFromList(sourceList);
         return;
       }
 
@@ -303,10 +303,10 @@ export default class RetrieveCommand extends BaseCommand {
           sourceList
         );
         if (!localTodo) {
-          this.stopSpinner(false as any);
+          this.stopSpinner(false);
 
           // Provide helpful suggestions
-          const list = await this?.todoService?.getList(sourceList as any);
+          const list = await this?.todoService?.getList(sourceList);
           if (list && list.todos && list?.todos?.length > 0) {
             this.log(
               chalk.yellow(
@@ -426,9 +426,9 @@ export default class RetrieveCommand extends BaseCommand {
           await suiClient.getLatestCheckpointSequenceNumber();
           this.stopSpinner(true, 'Network connection verified');
         } catch (_error) {
-          this.stopSpinner(false as any);
+          this.stopSpinner(false);
           throw new CLIError(
-            `Unable to connect to network ${network}: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+            `Unable to connect to network ${network}: ${_error instanceof Error ? _error.message : String(_error)}`,
             'NETWORK_ERROR'
           );
         }
@@ -447,9 +447,9 @@ export default class RetrieveCommand extends BaseCommand {
         }
         this.stopSpinner(true, 'Connected to Walrus storage');
       } catch (connectError) {
-        this.stopSpinner(false as any);
+        this.stopSpinner(false);
         throw new CLIError(
-          `Failed to connect to Walrus storage: ${connectError instanceof Error ? connectError.message : String(connectError as any)}`,
+          `Failed to connect to Walrus storage: ${connectError instanceof Error ? connectError.message : String(connectError)}`,
           'WALRUS_CONNECTION_FAILED'
         );
       }
@@ -463,7 +463,7 @@ export default class RetrieveCommand extends BaseCommand {
           );
 
           try {
-            const todo = await walrusStorage.retrieveTodo(blobId as any);
+            const todo = await walrusStorage.retrieveTodo(blobId);
 
             // Save to local list (use sourceList for positional, flags.list for legacy)
             const targetList =
@@ -480,17 +480,17 @@ export default class RetrieveCommand extends BaseCommand {
               `  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
             );
             this.log(`  Priority: ${getColoredPriority(todo.priority)}`);
-            this.log(`  List: ${chalk.cyan(targetList as any)}`);
-            this.log(`  Walrus Blob ID: ${chalk.dim(blobId as any)}`);
+            this.log(`  List: ${chalk.cyan(targetList)}`);
+            this.log(`  Walrus Blob ID: ${chalk.dim(blobId)}`);
 
             if (todo.tags?.length) {
               this.log(
-                `  Tags: ${todo?.tags?.map(tag => chalk.blue(tag as any)).join(', ')}`
+                `  Tags: ${todo?.tags?.map(tag => chalk.blue(tag)).join(', ')}`
               );
             }
           } catch (blobError) {
             throw new CLIError(
-              `Failed to retrieve todo from Walrus with blob ID ${blobId}: ${blobError instanceof Error ? blobError.message : String(blobError as any)}`,
+              `Failed to retrieve todo from Walrus with blob ID ${blobId}: ${blobError instanceof Error ? blobError.message : String(blobError)}`,
               'WALRUS_RETRIEVAL_FAILED'
             );
           }
@@ -509,7 +509,7 @@ export default class RetrieveCommand extends BaseCommand {
           );
 
           try {
-            const nftData = await suiNftStorage.getTodoNft(objectId as any);
+            const nftData = await suiNftStorage.getTodoNft(objectId);
 
             if (!nftData.walrusBlobId) {
               throw new CLIError(
@@ -553,8 +553,8 @@ export default class RetrieveCommand extends BaseCommand {
               `  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
             );
             this.log(`  Priority: ${getColoredPriority(todo.priority)}`);
-            this.log(`  List: ${chalk.cyan(targetList as any)}`);
-            this.log(`  NFT Object ID: ${chalk.cyan(objectId as any)}`);
+            this.log(`  List: ${chalk.cyan(targetList)}`);
+            this.log(`  NFT Object ID: ${chalk.cyan(objectId)}`);
             this.log(`  Walrus Blob ID: ${chalk.dim(nftData.walrusBlobId)}`);
 
             if (todo.dueDate) {
@@ -563,7 +563,7 @@ export default class RetrieveCommand extends BaseCommand {
 
             if (todo.tags?.length) {
               this.log(
-                `  Tags: ${todo?.tags?.map(tag => chalk.blue(tag as any)).join(', ')}`
+                `  Tags: ${todo?.tags?.map(tag => chalk.blue(tag)).join(', ')}`
               );
             }
 
@@ -581,7 +581,7 @@ export default class RetrieveCommand extends BaseCommand {
               throw nftError;
             }
             throw new CLIError(
-              `Failed to retrieve NFT with object ID ${objectId}: ${nftError instanceof Error ? nftError.message : String(nftError as any)}`,
+              `Failed to retrieve NFT with object ID ${objectId}: ${nftError instanceof Error ? nftError.message : String(nftError)}`,
               'NFT_RETRIEVAL_FAILED'
             );
           }
@@ -595,7 +595,7 @@ export default class RetrieveCommand extends BaseCommand {
         } catch (cleanupError) {
           this.stopSpinner(false, 'Resource cleanup encountered issues');
           Logger.getInstance().warn(
-            `Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError as any)}`
+            `Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`
           );
         }
       }
@@ -604,7 +604,7 @@ export default class RetrieveCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
         'RETRIEVE_FAILED'
       );
     }
@@ -623,7 +623,7 @@ export default class RetrieveCommand extends BaseCommand {
     // Create background job
     const job = jobManager.createJob(
       'retrieve',
-      [args.identifier, args.todoTitle].filter(Boolean as any),
+      [args.identifier, args.todoTitle].filter(Boolean),
       flags
     );
 
@@ -655,7 +655,7 @@ export default class RetrieveCommand extends BaseCommand {
     } catch (error) {
       jobManager.failJob(
         job.id,
-        error instanceof Error ? error.message : String(error as any)
+        error instanceof Error ? error.message : String(error)
       );
       throw error;
     }
@@ -757,7 +757,7 @@ export default class RetrieveCommand extends BaseCommand {
     const progressCallback = (progress: number) => {
       if (progress > lastProgress + 5) {
         // Update every 5%
-        const progressBar = this.createProgressBarVisual(progress as any);
+        const progressBar = this.createProgressBarVisual(progress);
         process?.stdout?.write(`\r${progressBar} ${progress}%`);
         lastProgress = progress;
       }
@@ -778,14 +778,14 @@ export default class RetrieveCommand extends BaseCommand {
       }
 
       // Show final job status
-      const job = jobManager.getJob(jobId as any);
+      const job = jobManager.getJob(jobId);
       if (job) {
-        this.displayJobSummary(job as any);
+        this.displayJobSummary(job);
       }
     } catch (error) {
       process?.stdout?.write('\n'); // New line after progress bar
       throw new CLIError(
-        `Background retrieval failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Background retrieval failed: ${error instanceof Error ? error.message : String(error)}`,
         'BACKGROUND_RETRIEVAL_FAILED'
       );
     }
@@ -802,8 +802,8 @@ export default class RetrieveCommand extends BaseCommand {
     const empty = width - filled;
     return (
       chalk.green('[') +
-      chalk.green('█'.repeat(filled as any)) +
-      chalk.gray('░'.repeat(empty as any)) +
+      chalk.green('█'.repeat(filled)) +
+      chalk.gray('░'.repeat(empty)) +
       chalk.green(']')
     );
   }
@@ -815,13 +815,13 @@ export default class RetrieveCommand extends BaseCommand {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration as any);
+    const durationStr = this.formatDuration(duration);
 
     this.log(chalk.bold('\n📊 Retrieval Summary'));
-    this.log(chalk.gray('─'.repeat(30 as any)));
+    this.log(chalk.gray('─'.repeat(30)));
     this.log(`Job ID: ${chalk.cyan(job.id)}`);
     this.log(`Status: ${this.getStatusDisplay(job.status)}`);
-    this.log(`Duration: ${chalk.yellow(durationStr as any)}`);
+    this.log(`Duration: ${chalk.yellow(durationStr)}`);
 
     if (job.metadata?.itemsRetrieved) {
       this.log(`Items Retrieved: ${chalk.green(job?.metadata?.itemsRetrieved)}`);
@@ -846,7 +846,7 @@ export default class RetrieveCommand extends BaseCommand {
       case 'pending':
         return chalk.yellow('⏳ Pending');
       default:
-        return chalk.gray(status as any);
+        return chalk.gray(status);
     }
   }
 
@@ -855,7 +855,7 @@ export default class RetrieveCommand extends BaseCommand {
    */
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;

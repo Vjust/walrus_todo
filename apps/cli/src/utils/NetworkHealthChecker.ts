@@ -119,7 +119,7 @@ export class NetworkHealthChecker {
       this?.config?.walrus.publisherUrl,
       this?.config?.walrus.aggregatorUrl,
       ...this?.config?.walrus.fallbackPublisherUrls,
-    ].filter(Boolean as any);
+    ].filter(Boolean);
 
     this?.retryManager = new RetryManager(allUrls, {
       maxRetries: this?.options?.retries,
@@ -145,9 +145,9 @@ export class NetworkHealthChecker {
     const startTime = Date.now();
 
     try {
-      let suiHealth: NetworkHealth?.["sui"];
-      let walrusHealth: NetworkHealth?.["walrus"];
-      let walletHealth: NetworkHealth?.["wallet"];
+      let suiHealth: NetworkHealth["sui"];
+      let walrusHealth: NetworkHealth["walrus"];
+      let walletHealth: NetworkHealth["wallet"];
 
       if (this?.options?.parallelChecks) {
         // Run checks in parallel for faster results
@@ -189,17 +189,17 @@ export class NetworkHealthChecker {
     } catch (error) {
       const duration = Date.now() - startTime;
       this?.logger?.error('Network health check failed', {
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
         duration,
       });
-      throw new NetworkError(`Network health check failed: ${error instanceof Error ? error.message : String(error as any)}`);
+      throw new NetworkError(`Network health check failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
   /**
    * Check Sui network health
    */
-  private async checkSuiHealth(): Promise<NetworkHealth?.["sui"]> {
+  private async checkSuiHealth(): Promise<NetworkHealth["sui"]> {
     const primary = await this.checkEndpoint(this?.config?.sui.primaryUrl, 'sui-rpc');
     const fallbacks = await Promise.allSettled(
       this?.config?.sui.fallbackUrls.map(url => this.checkEndpoint(url, 'sui-rpc'))
@@ -239,7 +239,7 @@ export class NetworkHealthChecker {
           primary?.errorMessage = `Chain ID mismatch: expected ${this?.config?.sui.expectedChainId}, got ${chainId}`;
         }
       } catch (error) {
-        this?.logger?.warn('Failed to verify chain ID', { error: error instanceof Error ? error.message : String(error as any) });
+        this?.logger?.warn('Failed to verify chain ID', { error: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -255,7 +255,7 @@ export class NetworkHealthChecker {
   /**
    * Check Walrus network health
    */
-  private async checkWalrusHealth(): Promise<NetworkHealth?.["walrus"]> {
+  private async checkWalrusHealth(): Promise<NetworkHealth["walrus"]> {
     const [publisher, aggregator] = await Promise.allSettled([
       this.checkEndpoint(this?.config?.walrus.publisherUrl, 'walrus-publisher'),
       this.checkEndpoint(this?.config?.walrus.aggregatorUrl, 'walrus-aggregator'),
@@ -301,7 +301,7 @@ export class NetworkHealthChecker {
   /**
    * Check wallet health and gas availability
    */
-  private async checkWalletHealth(): Promise<NetworkHealth?.["wallet"]> {
+  private async checkWalletHealth(): Promise<NetworkHealth["wallet"]> {
     try {
       // Check if Sui CLI is available and configured
       const activeAddress = this.getActiveWalletAddress();
@@ -319,13 +319,13 @@ export class NetworkHealthChecker {
       
       if (!this?.options?.skipGasCheck) {
         try {
-          balance = await this.getWalletBalance(activeAddress as any);
+          balance = await this.getWalletBalance(activeAddress);
           const balanceNum = parseInt(balance || '0');
           hasGas = balanceNum >= this?.config?.thresholds.minGasBalance;
         } catch (error) {
           hasGas = false;
           this?.logger?.warn('Failed to check wallet balance', { 
-            error: error instanceof Error ? error.message : String(error as any) 
+            error: error instanceof Error ? error.message : String(error) 
           });
         }
       }
@@ -340,7 +340,7 @@ export class NetworkHealthChecker {
       return {
         connected: false,
         hasGas: false,
-        errorMessage: error instanceof Error ? error.message : String(error as any),
+        errorMessage: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -380,7 +380,7 @@ export class NetworkHealthChecker {
         available: false,
         responseTime,
         lastChecked: Date.now(),
-        errorMessage: error instanceof Error ? error.message : String(error as any),
+        errorMessage: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -446,7 +446,7 @@ export class NetworkHealthChecker {
 
       return { status: response.status };
     } finally {
-      clearTimeout(timeoutId as any);
+      clearTimeout(timeoutId);
     }
   }
 
@@ -457,7 +457,7 @@ export class NetworkHealthChecker {
     const startTime = Date.now();
 
     return new Promise((resolve) => {
-      const ws = new WebSocket(url as any);
+      const ws = new WebSocket(url);
       let resolved = false;
 
       const timeout = setTimeout(() => {
@@ -477,7 +477,7 @@ export class NetworkHealthChecker {
       ws?.onopen = () => {
         if (!resolved) {
           resolved = true;
-          clearTimeout(timeout as any);
+          clearTimeout(timeout);
           ws.close();
           resolve({
             url,
@@ -491,7 +491,7 @@ export class NetworkHealthChecker {
       ws?.onerror = (error) => {
         if (!resolved) {
           resolved = true;
-          clearTimeout(timeout as any);
+          clearTimeout(timeout);
           resolve({
             url,
             available: false,
@@ -522,7 +522,7 @@ export class NetworkHealthChecker {
       return output.trim();
     } catch (error) {
       this?.logger?.debug('Failed to get active wallet address', { 
-        error: error instanceof Error ? error.message : String(error as any) 
+        error: error instanceof Error ? error.message : String(error) 
       });
       return undefined;
     }
@@ -544,7 +544,7 @@ export class NetworkHealthChecker {
     } catch (error) {
       this?.logger?.debug('Failed to get wallet balance', { 
         address,
-        error: error instanceof Error ? error.message : String(error as any) 
+        error: error instanceof Error ? error.message : String(error) 
       });
       return '0';
     }
@@ -554,10 +554,10 @@ export class NetworkHealthChecker {
    * Calculate overall network health score
    */
   private calculateOverallHealth(
-    sui: NetworkHealth?.["sui"],
-    walrus: NetworkHealth?.["walrus"],
-    wallet: NetworkHealth?.["wallet"]
-  ): NetworkHealth?.["overall"] {
+    sui: NetworkHealth["sui"],
+    walrus: NetworkHealth["walrus"],
+    wallet: NetworkHealth["wallet"]
+  ): NetworkHealth["overall"] {
     const issues: string[] = [];
     const recommendations: string[] = [];
     let score = 100;
@@ -633,11 +633,11 @@ export class NetworkHealthChecker {
       available: false,
       responseTime: 0,
       lastChecked: Date.now(),
-      errorMessage: error instanceof Error ? error.message : String(error as any),
+      errorMessage: error instanceof Error ? error.message : String(error),
     };
   }
 
-  private getFailedSuiHealth(error: unknown): NetworkHealth?.["sui"] {
+  private getFailedSuiHealth(error: unknown): NetworkHealth["sui"] {
     return {
       primary: this.getFailedEndpointHealth(this?.config?.sui.primaryUrl, error),
       fallbacks: this?.config?.sui.fallbackUrls.map(url => 
@@ -646,7 +646,7 @@ export class NetworkHealthChecker {
     };
   }
 
-  private getFailedWalrusHealth(error: unknown): NetworkHealth?.["walrus"] {
+  private getFailedWalrusHealth(error: unknown): NetworkHealth["walrus"] {
     return {
       publisher: this.getFailedEndpointHealth(this?.config?.walrus.publisherUrl, error),
       aggregator: this.getFailedEndpointHealth(this?.config?.walrus.aggregatorUrl, error),
@@ -656,15 +656,15 @@ export class NetworkHealthChecker {
     };
   }
 
-  private getFailedWalletHealth(error: unknown): NetworkHealth?.["wallet"] {
+  private getFailedWalletHealth(error: unknown): NetworkHealth["wallet"] {
     return {
       connected: false,
       hasGas: false,
-      errorMessage: error instanceof Error ? error.message : String(error as any),
+      errorMessage: error instanceof Error ? error.message : String(error),
     };
   }
 
-  private getEmptyWalletHealth(): NetworkHealth?.["wallet"] {
+  private getEmptyWalletHealth(): NetworkHealth["wallet"] {
     return {
       connected: true,
       hasGas: true,
@@ -728,7 +728,7 @@ export class NetworkHealthChecker {
    */
   static async fromConfig(configPath: string, options?: Partial<HealthCheckOptions>): Promise<NetworkHealthChecker> {
     try {
-      const configContent = await import(configPath as any);
+      const configContent = await import(configPath);
       const config = configContent.default || configContent;
 
       const networkConfig: NetworkConfig = {
@@ -754,7 +754,7 @@ export class NetworkHealthChecker {
 
       return new NetworkHealthChecker(networkConfig, options);
     } catch (error) {
-      throw new ValidationError(`Failed to load network config from ${configPath}: ${error instanceof Error ? error.message : String(error as any)}`);
+      throw new ValidationError(`Failed to load network config from ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

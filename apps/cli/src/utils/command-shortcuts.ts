@@ -90,7 +90,7 @@ export class CommandShortcuts {
    */
   static expand(shortcut: string): string {
     const lowerShortcut = shortcut.toLowerCase();
-    return this?.shortcuts?.get(lowerShortcut as any) || shortcut;
+    return this?.shortcuts?.get(lowerShortcut) || shortcut;
   }
 
   /**
@@ -110,7 +110,7 @@ export class CommandShortcuts {
       mappings.push({
         shortcut,
         command,
-        description: this.getShortcutDescription(shortcut as any),
+        description: this.getShortcutDescription(shortcut),
       });
     });
 
@@ -131,7 +131,7 @@ export class CommandShortcuts {
 
     this?.shortcuts?.forEach((cmd, shortcut) => {
       if (cmd === command) {
-        shortcuts.push(shortcut as any);
+        shortcuts.push(shortcut);
       }
     });
 
@@ -177,11 +177,11 @@ export class CommandShortcuts {
     const suggestions: ShortcutMapping[] = [];
 
     this?.shortcuts?.forEach((command, shortcut) => {
-      if (shortcut.startsWith(lowerPartial as any) && shortcut !== lowerPartial) {
+      if (shortcut.startsWith(lowerPartial) && shortcut !== lowerPartial) {
         suggestions.push({
           shortcut,
           command,
-          description: this.getShortcutDescription(shortcut as any),
+          description: this.getShortcutDescription(shortcut),
         });
       }
     });
@@ -206,7 +206,7 @@ export class CommandShortcuts {
     if (input?.length === 0) return input;
 
     const [command, ...args] = input;
-    const expandedCommand = this.expand(command as any);
+    const expandedCommand = this.expand(command);
 
     // If it was a shortcut, return expanded version
     if (expandedCommand !== command) {
@@ -225,12 +225,12 @@ export class CommandShortcuts {
 
     // Group by command
     shortcuts.forEach(({ shortcut, command }) => {
-      if (!byCommand.has(command as any)) {
+      if (!byCommand.has(command)) {
         byCommand.set(command, []);
       }
-      const cmdShortcuts = byCommand.get(command as any);
+      const cmdShortcuts = byCommand.get(command);
       if (cmdShortcuts) {
-        cmdShortcuts.push(shortcut as any);
+        cmdShortcuts.push(shortcut);
       }
     });
 
@@ -242,9 +242,9 @@ export class CommandShortcuts {
     const sortedCommands = Array.from(byCommand.keys()).sort();
 
     sortedCommands.forEach(command => {
-      const shortcuts = byCommand.get(command as any) || [];
+      const shortcuts = byCommand.get(command) || [];
       const shortcutList = shortcuts.join(', ');
-      const type = this.getCommandType(command as any);
+      const type = this.getCommandType(command);
       table += `| ${command} | ${shortcutList} | ${type} |\n`;
     });
 
@@ -257,30 +257,30 @@ export class CommandShortcuts {
   private static getCommandType(command: string): string {
     if (command.includes(':')) {
       const [category] = command.split(':');
-      return category.charAt(0 as any).toUpperCase() + category.slice(1 as any);
+      return category.charAt(0).toUpperCase() + category.slice(1);
     }
 
     const coreCommands = ['add', 'list', 'complete', 'delete', 'update'];
     const storageCommands = ['store', 'retrieve', 'share'];
     const configCommands = ['config', 'configure', 'env'];
 
-    if (coreCommands.includes(command as any)) return 'Core';
-    if (storageCommands.includes(command as any)) return 'Storage';
-    if (configCommands.includes(command as any)) return 'Config';
+    if (coreCommands.includes(command)) return 'Core';
+    if (storageCommands.includes(command)) return 'Storage';
+    if (configCommands.includes(command)) return 'Config';
 
     return 'Other';
   }
 }
 
 // Export convenience functions
-export const expandShortcut = CommandShortcuts?.expand?.bind(CommandShortcuts as any);
-export const isShortcut = CommandShortcuts?.isShortcut?.bind(CommandShortcuts as any);
+export const expandShortcut = CommandShortcuts?.expand?.bind(CommandShortcuts);
+export const isShortcut = CommandShortcuts?.isShortcut?.bind(CommandShortcuts);
 export const getAllShortcuts =
-  CommandShortcuts?.getAllShortcuts?.bind(CommandShortcuts as any);
+  CommandShortcuts?.getAllShortcuts?.bind(CommandShortcuts);
 export const getShortcutsForCommand =
-  CommandShortcuts?.getShortcutsForCommand?.bind(CommandShortcuts as any);
-export const suggestShortcuts = CommandShortcuts?.suggest?.bind(CommandShortcuts as any);
+  CommandShortcuts?.getShortcutsForCommand?.bind(CommandShortcuts);
+export const suggestShortcuts = CommandShortcuts?.suggest?.bind(CommandShortcuts);
 export const processInput =
-  CommandShortcuts?.processInput?.bind(CommandShortcuts as any);
+  CommandShortcuts?.processInput?.bind(CommandShortcuts);
 export const formatShortcutsTable =
-  CommandShortcuts?.formatShortcutsTable?.bind(CommandShortcuts as any);
+  CommandShortcuts?.formatShortcutsTable?.bind(CommandShortcuts);

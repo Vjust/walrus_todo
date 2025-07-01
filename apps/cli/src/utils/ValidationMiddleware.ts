@@ -27,7 +27,7 @@ export function createValidationMiddleware(
     try {
       const { Command: CommandClass, argv } = options;
       const command = CommandClass as unknown as CommandWithParse;
-      const parsedCommand = await command.parse(argv as any);
+      const parsedCommand = await command.parse(argv);
       const { flags, args } = parsedCommand;
 
       // Validate flags using schema
@@ -37,14 +37,14 @@ export function createValidationMiddleware(
 
       // Validate arguments if function is provided
       if (validateArgs && args) {
-        validateArgs(args as any);
+        validateArgs(args);
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Input validation failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Input validation failed: ${error instanceof Error ? error.message : String(error)}`,
         'VALIDATION_FAILED'
       );
     }
@@ -100,7 +100,7 @@ export const ArgumentValidators = {
             code: 'EMPTY_LIST_NAME',
           },
           {
-            test: value => /^[a-zA-Z0-9_-]+$/.test(value as any),
+            test: value => /^[a-zA-Z0-9_-]+$/.test(value),
             message:
               'List name can only contain letters, numbers, underscores, and hyphens',
             code: 'INVALID_LIST_NAME',
@@ -121,7 +121,7 @@ export const CommonValidationSchemas = {
       {
         test: (value: unknown) =>
           typeof value === 'string' &&
-          ['high', 'medium', 'low'].includes(value as any),
+          ['high', 'medium', 'low'].includes(value),
         message: 'Priority must be high, medium, or low',
         code: 'INVALID_PRIORITY',
       },
@@ -133,7 +133,7 @@ export const CommonValidationSchemas = {
       {
         test: (value: unknown) =>
           !value ||
-          (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value as any)),
+          (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)),
         message: 'Invalid date format. Use YYYY-MM-DD',
         code: 'INVALID_DATE_FORMAT',
       },
@@ -145,7 +145,7 @@ export const CommonValidationSchemas = {
       {
         test: (value: unknown) =>
           typeof value === 'string' &&
-          ['local', 'blockchain', 'both'].includes(value as any),
+          ['local', 'blockchain', 'both'].includes(value),
         message: 'Storage location must be local, blockchain, or both',
         code: 'INVALID_STORAGE_LOCATION',
       },
@@ -158,7 +158,7 @@ export const CommonValidationSchemas = {
         test: (value: unknown) =>
           !value ||
           (typeof value === 'string' &&
-            ['mainnet', 'testnet', 'devnet', 'local'].includes(value as any)),
+            ['mainnet', 'testnet', 'devnet', 'local'].includes(value)),
         message: 'Network must be mainnet, testnet, devnet, or local',
         code: 'INVALID_NETWORK',
       },
@@ -170,7 +170,7 @@ export const CommonValidationSchemas = {
       {
         test: (value: unknown) =>
           !value ||
-          (typeof value === 'string' && /^0x[a-fA-F0-9]{40,}$/.test(value as any)),
+          (typeof value === 'string' && /^0x[a-fA-F0-9]{40,}$/.test(value)),
         message:
           'Invalid wallet address format. Must be a valid hex address starting with 0x',
         code: 'INVALID_WALLET_ADDRESS',

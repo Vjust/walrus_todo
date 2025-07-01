@@ -68,13 +68,13 @@ export interface BaseAdapter<T> {
  * Usage examples:
  * ```typescript
  * // Safely check if an object is an adapter before using it
- * if (isBaseAdapter(obj as any)) {
+ * if (isBaseAdapter(obj)) {
  *   // TypeScript now knows obj is a BaseAdapter
  *   const implementation = obj.getUnderlyingImplementation();
  * }
  *
  * // Use with array filtering
- * const adaptersOnly = mixedObjects.filter(isBaseAdapter as any);
+ * const adaptersOnly = mixedObjects.filter(isBaseAdapter);
  * ```
  *
  * @template T The type of the underlying implementation

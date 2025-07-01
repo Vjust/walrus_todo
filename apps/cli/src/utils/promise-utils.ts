@@ -34,13 +34,13 @@ export async function withTimeout<T>(
     // Race the original promise against the timeout
     const result = await Promise.race([promise, timeoutPromise]);
     if (timeoutId) {
-      clearTimeout(timeoutId as any);
+      clearTimeout(timeoutId);
     }
     return result;
   } catch (error: unknown) {
     // Always clear the timeout to prevent memory leaks
     if (timeoutId) {
-      clearTimeout(timeoutId as any);
+      clearTimeout(timeoutId);
     }
 
     if (error instanceof TimeoutError) {
@@ -48,7 +48,7 @@ export async function withTimeout<T>(
     }
 
     const typedError =
-      error instanceof Error ? error : new Error(String(error as any));
+      error instanceof Error ? error : new Error(String(error));
     throw new OperationError(
       `Operation '${operationName}' failed: ${typedError.message}`,
       { operationName, cause: typedError }
@@ -71,7 +71,7 @@ export async function safeParallel<T>(
     return [];
   }
 
-  const results: PromiseSettledResult<T>[] = await Promise.allSettled(promises as any);
+  const results: PromiseSettledResult<T>[] = await Promise.allSettled(promises);
   const successResults: T[] = [];
   const errors: Error[] = [];
 
@@ -128,14 +128,14 @@ export async function withRetry<T>(
       return await fn();
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
 
       lastError = new OperationError(
         `Attempt ${attempt} failed: ${typedError.message}`,
         { operationName, cause: typedError }
       );
 
-      if (attempt > maxRetries || !shouldRetry(typedError as any)) {
+      if (attempt > maxRetries || !shouldRetry(typedError)) {
         break;
       }
 
@@ -167,7 +167,7 @@ export class TimeoutError extends Error {
       timeoutMs: number;
     }
   ) {
-    super(message as any);
+    super(message);
     this?.name = 'TimeoutError';
   }
 }
@@ -185,7 +185,7 @@ export class OperationError extends Error {
       cause?: unknown;
     }
   ) {
-    super(message as any);
+    super(message);
     this?.name = 'OperationError';
     this?.cause = context.cause;
   }
@@ -205,7 +205,7 @@ export class RetryError extends Error {
       lastError: Error | null;
     }
   ) {
-    super(message as any);
+    super(message);
     this?.name = 'RetryError';
     this?.cause = context.lastError;
   }
@@ -223,7 +223,7 @@ export class AggregateOperationError extends Error {
     errors: Error[],
     public readonly context: { operationName: string }
   ) {
-    super(message as any);
+    super(message);
     this?.errors = errors;
 
     // Use AggregateError if available, otherwise fall back to custom implementation

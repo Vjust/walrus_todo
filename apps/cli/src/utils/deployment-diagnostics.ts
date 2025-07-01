@@ -73,11 +73,11 @@ export class DeploymentDiagnostics {
     // Run all diagnostic checks
     await this.checkEnvironment();
     await this.checkNetworkConnectivity(config.network);
-    await this.checkConfiguration(config as any);
+    await this.checkConfiguration(config);
     await this.checkBuildOutput(config.buildDir);
-    await this.checkAuthentication(config as any);
+    await this.checkAuthentication(config);
     await this.checkBlockchainAccess(config.network);
-    await this.checkPermissions(config as any);
+    await this.checkPermissions(config);
     await this.checkResources();
 
     this?.logger?.info(`Diagnostics completed. Found ${this?.results?.length} issues.`);
@@ -226,7 +226,7 @@ export class DeploymentDiagnostics {
 
     // Analyze error output against patterns
     for (const pattern of errorPatterns) {
-      if (pattern?.pattern?.test(errorOutput as any)) {
+      if (pattern?.pattern?.test(errorOutput)) {
         errorResults.push({
           category: pattern.category,
           severity: pattern.severity,
@@ -267,7 +267,7 @@ export class DeploymentDiagnostics {
       // Check Node.js version
       const nodeVersion = process.version;
       const minNodeVersion = '18?.0?.0';
-      if (!this.isVersionValid(nodeVersion.slice(1 as any), minNodeVersion)) {
+      if (!this.isVersionValid(nodeVersion.slice(1), minNodeVersion)) {
         this.addResult({
           category: DiagnosticCategory.ENVIRONMENT,
           severity: 'critical',
@@ -333,7 +333,7 @@ export class DeploymentDiagnostics {
         category: DiagnosticCategory.ENVIRONMENT,
         severity: 'critical',
         message: 'Environment check failed',
-        details: error instanceof Error ? error.message : String(error as any)
+        details: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -379,7 +379,7 @@ export class DeploymentDiagnostics {
           category: DiagnosticCategory.NETWORK,
           severity: 'warning',
           message: `Network check failed for ${url}`,
-          details: error instanceof Error ? error.message : String(error as any)
+          details: error instanceof Error ? error.message : String(error)
         });
       }
     }
@@ -407,7 +407,7 @@ export class DeploymentDiagnostics {
       // Check for required fields
       const requiredFields = ['source', 'network'];
       for (const field of requiredFields) {
-        if (!configContent.includes(field as any)) {
+        if (!configContent.includes(field)) {
           this.addResult({
             category: DiagnosticCategory.CONFIGURATION,
             severity: 'critical',
@@ -456,10 +456,10 @@ export class DeploymentDiagnostics {
    */
   private async checkBuildOutput(buildDir: string): Promise<void> {
     try {
-      await fs.access(buildDir as any);
+      await fs.access(buildDir);
       
       // Check if build directory has content
-      const files = await fs.readdir(buildDir as any);
+      const files = await fs.readdir(buildDir);
       if (files?.length === 0) {
         this.addResult({
           category: DiagnosticCategory.BUILD,
@@ -490,7 +490,7 @@ export class DeploymentDiagnostics {
       }
 
       // Check build size
-      const stats = await this.getBuildStats(buildDir as any);
+      const stats = await this.getBuildStats(buildDir);
       if (stats.totalSize > 100 * 1024 * 1024) { // 100MB
         this.addResult({
           category: DiagnosticCategory.BUILD,
@@ -612,7 +612,7 @@ export class DeploymentDiagnostics {
           category: DiagnosticCategory.BLOCKCHAIN,
           severity: 'warning',
           message: `Blockchain connectivity check failed for ${network}`,
-          details: error instanceof Error ? error.message : String(error as any)
+          details: error instanceof Error ? error.message : String(error)
         });
       }
     }
@@ -692,7 +692,7 @@ export class DeploymentDiagnostics {
         category: DiagnosticCategory.RESOURCES,
         severity: 'info',
         message: 'Resource check unavailable',
-        details: error instanceof Error ? error.message : String(error as any)
+        details: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -718,21 +718,21 @@ export class DeploymentDiagnostics {
     if (critical.length > 0) {
       report += `## 🚨 Critical Issues (Must Fix)\n\n`;
       for (const result of critical) {
-        report += this.formatDiagnosticResult(result as any);
+        report += this.formatDiagnosticResult(result);
       }
     }
 
     if (warnings.length > 0) {
       report += `## ⚠️ Warnings (Should Fix)\n\n`;
       for (const result of warnings) {
-        report += this.formatDiagnosticResult(result as any);
+        report += this.formatDiagnosticResult(result);
       }
     }
 
     if (info.length > 0) {
       report += `## ℹ️ Information\n\n`;
       for (const result of info) {
-        report += this.formatDiagnosticResult(result as any);
+        report += this.formatDiagnosticResult(result);
       }
     }
 
@@ -743,7 +743,7 @@ export class DeploymentDiagnostics {
         .filter(r => r.recoverySteps)
         .flatMap(r => r.recoverySteps!);
       
-      const uniqueSteps = [...new Set(allRecoverySteps as any)];
+      const uniqueSteps = [...new Set(allRecoverySteps)];
       for (let i = 0; i < uniqueSteps.length; i++) {
         report += `${i + 1}. ${uniqueSteps[i]}\n`;
       }
@@ -781,10 +781,10 @@ export class DeploymentDiagnostics {
   }
 
   private extractErrorDetails(errorOutput: string, pattern: RegExp): string {
-    const match = errorOutput.match(pattern as any);
+    const match = errorOutput.match(pattern);
     if (match) {
       const lines = errorOutput.split('\n');
-      const matchLineIndex = lines.findIndex(line => pattern.test(line as any));
+      const matchLineIndex = lines.findIndex(line => pattern.test(line));
       if (matchLineIndex !== -1) {
         return lines.slice(Math.max(0, matchLineIndex - 1), matchLineIndex + 2).join('\n');
       }
@@ -793,8 +793,8 @@ export class DeploymentDiagnostics {
   }
 
   private isVersionValid(current: string, minimum: string): boolean {
-    const currentParts = current.split('.').map(Number as any);
-    const minimumParts = minimum.split('.').map(Number as any);
+    const currentParts = current.split('.').map(Number);
+    const minimumParts = minimum.split('.').map(Number);
     
     for (let i = 0; i < Math.max(currentParts.length, minimumParts.length); i++) {
       const currentPart = currentParts[i] || 0;
@@ -818,16 +818,16 @@ export class DeploymentDiagnostics {
         const fullPath = join(dir, entry.name);
         
         if (entry.isDirectory()) {
-          await traverse(fullPath as any);
+          await traverse(fullPath);
         } else {
-          const stats = await fs.stat(fullPath as any);
+          const stats = await fs.stat(fullPath);
           totalSize += stats.size;
           fileCount++;
         }
       }
     }
 
-    await traverse(buildDir as any);
+    await traverse(buildDir);
     return { totalSize, fileCount };
   }
 
@@ -835,8 +835,8 @@ export class DeploymentDiagnostics {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   private formatDiagnosticResult(result: DiagnosticResult): string {
@@ -938,7 +938,7 @@ export class DeploymentRecovery {
     if (issue?.message?.includes('not found')) {
       this?.logger?.info('Creating default configuration...');
       try {
-        const defaultConfig = this.generateDefaultSitesConfig(config as any);
+        const defaultConfig = this.generateDefaultSitesConfig(config);
         await fs.writeFile(config.siteConfigFile, defaultConfig, 'utf-8');
         return true;
       } catch (error) {

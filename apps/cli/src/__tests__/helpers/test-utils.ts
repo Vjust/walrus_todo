@@ -140,7 +140,7 @@ export async function runCommand(
   let error: Error | undefined;
 
   // Set test environment
-  Object.entries(testEnv as any).forEach(([key, value]) => {
+  Object.entries(testEnv).forEach(([key, value]) => {
     if (value !== undefined) {
       process?.env?.[key] = `${value}`;
     }

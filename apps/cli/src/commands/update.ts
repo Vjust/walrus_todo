@@ -1,7 +1,7 @@
 import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { validateDate, validatePriority } from '../utils';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
@@ -135,7 +135,7 @@ export default class UpdateCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(UpdateCommand as any);
+    const { args, flags } = await this.parse(UpdateCommand);
 
     // Check if background operation is requested
     if (flags.background) {
@@ -154,7 +154,7 @@ export default class UpdateCommand extends BaseCommand {
     // Create background job
     const job = jobManager.createJob(
       'update',
-      this.buildArgsArray(args as any),
+      this.buildArgsArray(args),
       flags
     );
 
@@ -184,7 +184,7 @@ export default class UpdateCommand extends BaseCommand {
     }
 
     // Exit immediately, leaving background process running
-    process.exit(0 as any);
+    process.exit(0);
   }
 
   /**
@@ -249,7 +249,7 @@ export default class UpdateCommand extends BaseCommand {
       if (searchAllLists) {
         // Search across all lists
         const lists = await todoService.getAllListsWithContent();
-        for (const [name, list] of Object.entries(lists as any)) {
+        for (const [name, list] of Object.entries(lists)) {
           const found = await todoService.getTodoByTitleOrId(
             todoIdentifier,
             name
@@ -268,7 +268,7 @@ export default class UpdateCommand extends BaseCommand {
         }
       } else {
         // Search in specific list
-        const list = await todoService.getList(listName as any);
+        const list = await todoService.getList(listName);
         if (!list) {
           throw new CLIError(`List "${listName}" not found`, 'INVALID_LIST');
         }
@@ -285,7 +285,7 @@ export default class UpdateCommand extends BaseCommand {
       const updatedTodo = await this.processUpdate(todo, flags, newTitle);
 
       // Save the list
-      const list = await todoService.getList(finalListName as any);
+      const list = await todoService.getList(finalListName);
       if (!list) {
         throw new CLIError(`List "${finalListName}" not found`, 'INVALID_LIST');
       }
@@ -302,7 +302,7 @@ export default class UpdateCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to update todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to update todo: ${error instanceof Error ? error.message : String(error)}`,
         'UPDATE_FAILED'
       );
     }
@@ -332,7 +332,7 @@ export default class UpdateCommand extends BaseCommand {
           'INVALID_PRIORITY'
         );
       }
-      todo?.priority = flags.priority as Todo?.["priority"];
+      todo.priority = flags.priority as Todo["priority"];
       changes++;
     }
 
@@ -411,7 +411,7 @@ export default class UpdateCommand extends BaseCommand {
         this.log(chalk.blue(`🔄 Storage sync queued: ${syncJobId}`));
       } catch (error) {
         this.warning(
-          `Failed to queue storage sync: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to queue storage sync: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -435,7 +435,7 @@ export default class UpdateCommand extends BaseCommand {
         this.log(chalk.magenta(`🤖 AI enhancement queued: ${aiJobId}`));
       } catch (error) {
         this.warning(
-          `Failed to queue AI enhancement: ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to queue AI enhancement: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -495,8 +495,8 @@ export default class UpdateCommand extends BaseCommand {
     const updateArgs = [
       scriptPath,
       job.id,
-      JSON.stringify(args as any),
-      JSON.stringify(flags as any),
+      JSON.stringify(args),
+      JSON.stringify(flags),
     ];
 
     const childProcess = spawn('node', updateArgs, {

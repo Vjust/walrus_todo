@@ -216,19 +216,19 @@ export function setupDefaultWalrusClientMocks(
   });
 
   mockClient?.getBlobMetadata?.mockImplementation(async (_params: { blobId: string; signal?: AbortSignal }) => {
-    return convertToCompatibleBlobMetadata(createMockBlobMetadata(1024 as any))!;
+    return convertToCompatibleBlobMetadata(createMockBlobMetadata(1024))!;
   });
 
   mockClient?.verifyPoA?.mockImplementation(async (_params: { blobId: string }) => {
     return true;
   });
 
-  mockClient?.getBlobSize?.mockResolvedValue(1024 as any);
+  mockClient?.getBlobSize?.mockResolvedValue(1024);
 
   mockClient?.storageCost?.mockResolvedValue({
-    storageCost: BigInt(100 as any),
-    writeCost: BigInt(50 as any),
-    totalCost: BigInt(150 as any),
+    storageCost: BigInt(100),
+    writeCost: BigInt(50),
+    totalCost: BigInt(150),
   });
 
   mockClient?.executeCreateStorageTransaction?.mockResolvedValue({
@@ -291,7 +291,7 @@ export function setupDefaultWalrusClientMocks(
 
   mockClient?.reset?.mockImplementation(() => {});
 
-  mockClient?.connect?.mockResolvedValue(undefined as any);
+  mockClient?.connect?.mockResolvedValue(undefined);
 
   if (mockClient.experimental) {
     mockClient?.experimental?.getBlobData.mockResolvedValue(
@@ -305,7 +305,7 @@ export function setupDefaultWalrusClientMocks(
  */
 export function getMockWalrusClient(): MockWalrusClient {
   const mockClient = createWalrusClientMock();
-  setupDefaultWalrusClientMocks(mockClient as any);
+  setupDefaultWalrusClientMocks(mockClient);
   return mockClient;
 }
 
@@ -314,7 +314,7 @@ export function getMockWalrusClient(): MockWalrusClient {
  */
 export function createWalrusModuleMock() {
   const mockClient = createWalrusClientMock();
-  setupDefaultWalrusClientMocks(mockClient as any);
+  setupDefaultWalrusClientMocks(mockClient);
 
   return {
     WalrusClient: jest.fn().mockImplementation(() => mockClient),

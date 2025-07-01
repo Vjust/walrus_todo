@@ -213,12 +213,12 @@ export function createErrorMessage(
   // Get base error info
   let baseError =
     ERROR_MESSAGES[error?.constructor?.name] ||
-    ERROR_MESSAGES[getErrorCode(error as any)];
+    ERROR_MESSAGES[getErrorCode(error)];
 
   // Get command-specific guidance if available
   if (context?.command) {
     const commandGuidance =
-      COMMAND_ERROR_GUIDANCE[context.command]?.[getErrorCode(error as any)];
+      COMMAND_ERROR_GUIDANCE[context.command]?.[getErrorCode(error)];
     if (commandGuidance) {
       baseError = { ...baseError, ...commandGuidance };
     }
@@ -409,7 +409,7 @@ export function displayFriendlyError(
       `\n${chalk.magenta(ICONS.INFO)} ${chalk.magenta('Quick tips:')}`
     );
     userError?.quickTips?.forEach(tip => {
-      lines.push(`  ${chalk.gray('•')} ${chalk.italic(tip as any)}`);
+      lines.push(`  ${chalk.gray('•')} ${chalk.italic(tip)}`);
     });
   }
 
@@ -432,7 +432,7 @@ export function enhanceBaseCommandError(
   const friendlyError = displayFriendlyError(error, context);
 
   // Use console.error to ensure it's displayed even in quiet mode
-  logger.error(friendlyError as any);
+  logger.error(friendlyError);
 
   // Throw the original error to maintain compatibility
   throw error;

@@ -52,7 +52,7 @@ export async function isCollaboratorOnList(
   list: TodoList
 ): Promise<boolean> {
   // Check collaborators array
-  if (list.collaborators && list?.collaborators?.includes(userId as any)) {
+  if (list.collaborators && list?.collaborators?.includes(userId)) {
     return true;
   }
 

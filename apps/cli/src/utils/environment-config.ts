@@ -122,13 +122,13 @@ export function validateRequiredEnvVars(config: EnvironmentConfig): void {
   const missingVars: string[] = [];
   const invalidVars: string[] = [];
 
-  for (const [key, value] of Object.entries(config as any)) {
+  for (const [key, value] of Object.entries(config)) {
     // Check if required variables are present
     if (
       value.required &&
       (value?.value === undefined || value?.value === null || value?.value === '')
     ) {
-      missingVars.push(key as any);
+      missingVars.push(key);
     }
 
     // Add type validation for critical environment variables
@@ -191,8 +191,8 @@ function getNumberValue(
 ): number {
   if (value === undefined) return defaultValue;
 
-  const parsed = parseFloat(value as any);
-  return isNaN(parsed as any) ? defaultValue : parsed;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? defaultValue : parsed;
 }
 
 /**
@@ -211,7 +211,7 @@ function safeTypeConversion<T>(
   }
 
   if (typeof expectedValue === 'number') {
-    if (typeof value === 'number' && !isNaN(value as any)) return value as T;
+    if (typeof value === 'number' && !isNaN(value)) return value as T;
     if (typeof value === 'string') {
       return getNumberValue(value, expectedValue as number) as T;
     }
@@ -220,7 +220,7 @@ function safeTypeConversion<T>(
 
   if (typeof expectedValue === 'string') {
     if (typeof value === 'string') return value as T;
-    if (value != null) return String(value as any) as T;
+    if (value != null) return String(value) as T;
     return expectedValue;
   }
 
@@ -404,7 +404,7 @@ export class EnvironmentConfigManager {
         description:
           'Temperature parameter for AI model output randomness (0.0-1.0)',
         example: '0.7',
-        validationFn: val => Number(val as any) >= 0 && Number(val as any) <= 1,
+        validationFn: val => Number(val) >= 0 && Number(val) <= 1,
         validationError: 'AI_TEMPERATURE must be between 0.0 and 1.0',
       },
 
@@ -415,7 +415,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.AI_MAX_TOKENS ? 'environment' : 'default',
         description: 'Maximum tokens to generate in AI responses',
         example: '2000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'AI_MAX_TOKENS must be a positive number',
       },
 
@@ -435,7 +435,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.AI_CACHE_TTL_MS ? 'environment' : 'default',
         description: 'Time-to-live for cached AI responses in milliseconds',
         example: '900000', // 15 minutes
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'AI_CACHE_TTL_MS must be a positive number',
       },
 
@@ -449,7 +449,7 @@ export class EnvironmentConfigManager {
           : 'default',
         description: 'Number of iterations for PBKDF2 key derivation',
         example: '100000',
-        validationFn: val => Number(val as any) >= 10000,
+        validationFn: val => Number(val) >= 10000,
         validationError: 'CREDENTIAL_KEY_ITERATIONS must be at least 10000',
       },
 
@@ -462,7 +462,7 @@ export class EnvironmentConfigManager {
           : 'default',
         description: 'Days before credentials are auto-rotated',
         example: '90',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError:
           'CREDENTIAL_AUTO_ROTATION_DAYS must be a positive number',
       },
@@ -476,7 +476,7 @@ export class EnvironmentConfigManager {
           : 'default',
         description: 'Days before showing credential rotation warnings',
         example: '75',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError:
           'CREDENTIAL_ROTATION_WARNING_DAYS must be a positive number',
       },
@@ -491,7 +491,7 @@ export class EnvironmentConfigManager {
         description:
           'Maximum failed authentication attempts before temporary lockout',
         example: '5',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'CREDENTIAL_MAX_FAILED_AUTH must be a positive number',
       },
 
@@ -521,7 +521,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.RETRY_ATTEMPTS ? 'environment' : 'default',
         description: 'Number of retry attempts for failed operations',
         example: '3',
-        validationFn: val => Number(val as any) >= 0,
+        validationFn: val => Number(val) >= 0,
         validationError: 'RETRY_ATTEMPTS must be a non-negative number',
       },
 
@@ -532,7 +532,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.RETRY_DELAY_MS ? 'environment' : 'default',
         description: 'Delay between retry attempts in milliseconds',
         example: '1000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'RETRY_DELAY_MS must be a positive number',
       },
 
@@ -543,7 +543,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.TIMEOUT_MS ? 'environment' : 'default',
         description: 'Timeout for network operations in milliseconds',
         example: '30000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'TIMEOUT_MS must be a positive number',
       },
 
@@ -585,7 +585,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.MAX_RETRY_DELAY_MS ? 'environment' : 'default',
         description: 'Maximum delay between retries in milliseconds',
         example: '60000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'MAX_RETRY_DELAY_MS must be a positive number',
       },
 
@@ -596,7 +596,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.MAX_RETRY_DURATION ? 'environment' : 'default',
         description: 'Maximum duration for retry attempts in milliseconds',
         example: '300000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'MAX_RETRY_DURATION must be a positive number',
       },
 
@@ -607,7 +607,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.CONNECTION_TIMEOUT_MS ? 'environment' : 'default',
         description: 'Timeout for connection operations in milliseconds',
         example: '30000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'CONNECTION_TIMEOUT_MS must be a positive number',
       },
 
@@ -629,7 +629,7 @@ export class EnvironmentConfigManager {
           : 'default',
         description: 'Maximum idle time for connections in milliseconds',
         example: '60000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError:
           'CONNECTION_MAX_IDLE_TIME_MS must be a positive number',
       },
@@ -652,7 +652,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.CONNECTION_MAX_RETRIES ? 'environment' : 'default',
         description: 'Maximum connection retry attempts',
         example: '3',
-        validationFn: val => Number(val as any) >= 0,
+        validationFn: val => Number(val) >= 0,
         validationError: 'CONNECTION_MAX_RETRIES must be a non-negative number',
       },
 
@@ -665,7 +665,7 @@ export class EnvironmentConfigManager {
           : 'default',
         description: 'Base delay for connection retries in milliseconds',
         example: '1000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'CONNECTION_BASE_DELAY_MS must be a positive number',
       },
 
@@ -676,7 +676,7 @@ export class EnvironmentConfigManager {
         source: process?.env?.CONNECTION_MAX_DELAY_MS ? 'environment' : 'default',
         description: 'Maximum delay for connection retries in milliseconds',
         example: '10000',
-        validationFn: val => Number(val as any) > 0,
+        validationFn: val => Number(val) > 0,
         validationError: 'CONNECTION_MAX_DELAY_MS must be a positive number',
       },
 
@@ -888,7 +888,7 @@ export class EnvironmentConfigManager {
           config?.value === null ||
           config?.value === '')
       ) {
-        missingExtVars.push(key as any);
+        missingExtVars.push(key);
       }
 
       // Check against custom validation function
@@ -907,7 +907,7 @@ export class EnvironmentConfigManager {
           }
         } catch (_error) {
           invalidExtVars.push(
-            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
+            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error)}`
           );
         }
       }
@@ -950,7 +950,7 @@ export class EnvironmentConfigManager {
           }
         } catch (_error) {
           invalidVars.push(
-            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error as any)}`
+            `${key} validation failed: ${_error instanceof Error ? _error.message : String(_error)}`
           );
         }
       }
@@ -1047,7 +1047,7 @@ export class EnvironmentConfigManager {
    * Load configuration from a JSON object (e.g., from a config file)
    */
   public loadFromObject(obj: Record<string, string | number | boolean>): void {
-    for (const [key, value] of Object.entries(obj as any)) {
+    for (const [key, value] of Object.entries(obj)) {
       // Check if it's a core config key
       if (key in this.config) {
         const configKey = key as keyof EnvironmentConfig;
@@ -1217,23 +1217,23 @@ export const envConfig = EnvironmentConfigManager.getInstance();
 export const getEnv = <K extends keyof EnvironmentConfig>(
   key: K
 ): EnvironmentConfig[K]['value'] => {
-  return envConfig.get(key as any);
+  return envConfig.get(key);
 };
 
 export const hasEnv = <K extends keyof EnvironmentConfig>(key: K): boolean => {
-  return envConfig.has(key as any);
+  return envConfig.has(key);
 };
 
 export const requireEnv = <K extends keyof EnvironmentConfig>(
   key: K
 ): EnvironmentConfig[K]['value'] => {
-  if (!envConfig.has(key as any)) {
+  if (!envConfig.has(key)) {
     throw new CLIError(
       `Required environment variable ${key} is missing`,
       'MISSING_ENV_VAR'
     );
   }
-  return envConfig.get(key as any);
+  return envConfig.get(key);
 };
 
 /**

@@ -49,8 +49,8 @@ export class TodoSizeCalculator {
    * @returns Formatted size string (e.g., "1.2 KB", "45 B")
    */
   calculateFormattedSize(todo: Todo): string {
-    const bytes = this.calculateBytes(todo as any);
-    return this.formatBytes(bytes as any);
+    const bytes = this.calculateBytes(todo);
+    return this.formatBytes(bytes);
   }
 
   /**
@@ -63,9 +63,9 @@ export class TodoSizeCalculator {
     if (bytes < 1024) {
       return `${bytes} B`;
     } else if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(2 as any)} KB`;
+      return `${(bytes / 1024).toFixed(2)} KB`;
     } else {
-      return `${(bytes / (1024 * 1024)).toFixed(2 as any)} MB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     }
   }
   /**
@@ -86,7 +86,7 @@ export class TodoSizeCalculator {
       options;
 
     // Serialize to determine exact size in bytes
-    const serialized = TodoSerializer.todoToBuffer(todo as any);
+    const serialized = TodoSerializer.todoToBuffer(todo);
     const exactSize = serialized.length;
 
     // If buffer is not requested, return exact size
@@ -162,7 +162,7 @@ export class TodoSizeCalculator {
       options;
 
     // Serialize to determine exact size in bytes
-    const serialized = TodoSerializer.todoListToBuffer(todoList as any);
+    const serialized = TodoSerializer.todoListToBuffer(todoList);
     const exactSize = serialized.length;
 
     // If buffer is not requested, return exact size

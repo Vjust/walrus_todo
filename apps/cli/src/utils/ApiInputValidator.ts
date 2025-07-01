@@ -35,7 +35,7 @@ export class ApiInputValidator {
       tags: todoObj.tags
         ? Array.isArray(todoObj.tags)
           ? todoObj?.tags?.map((tag: unknown) =>
-              CommandSanitizer.sanitizeString(String(tag as any))
+              CommandSanitizer.sanitizeString(String(tag))
             )
           : CommandSanitizer.sanitizeTags(String(todoObj.tags))
         : [],
@@ -100,7 +100,7 @@ export class ApiInputValidator {
       SchemaValidator.validate(sanitizedTodo, todoSchema);
     } catch (error) {
       throw new CLIError(
-        `Invalid todo object: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Invalid todo object: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_TODO'
       );
     }
@@ -128,12 +128,12 @@ export class ApiInputValidator {
       name: CommandSanitizer.sanitizeString(String(listObj.name || '')),
       owner: CommandSanitizer.sanitizeString(String(listObj.owner || '')),
       todos: Array.isArray(listObj.todos)
-        ? listObj?.todos?.map((todo: unknown) => this.validateTodo(todo as any))
+        ? listObj?.todos?.map((todo: unknown) => this.validateTodo(todo))
         : [],
       collaborators:
         listObj.collaborators && Array.isArray(listObj.collaborators)
           ? listObj?.collaborators?.map((collab: unknown) =>
-              CommandSanitizer.sanitizeString(String(collab as any))
+              CommandSanitizer.sanitizeString(String(collab))
             )
           : undefined,
       walrusBlobId: listObj.walrusBlobId
@@ -178,7 +178,7 @@ export class ApiInputValidator {
       SchemaValidator.validate(sanitizedList, todoListSchema);
     } catch (error) {
       throw new CLIError(
-        `Invalid todo list: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Invalid todo list: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_TODO_LIST'
       );
     }
@@ -238,7 +238,7 @@ export class ApiInputValidator {
       SchemaValidator.validate(sanitizedConfig, networkConfigSchema);
     } catch (error) {
       throw new CLIError(
-        `Invalid network configuration: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Invalid network configuration: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_NETWORK_CONFIG'
       );
     }
@@ -321,7 +321,7 @@ export class ApiInputValidator {
       SchemaValidator.validate(sanitizedConfig, aiConfigSchema);
     } catch (error) {
       throw new CLIError(
-        `Invalid AI configuration: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Invalid AI configuration: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_AI_CONFIG'
       );
     }
@@ -336,7 +336,7 @@ export class ApiInputValidator {
    * @throws {CLIError} if validation fails
    */
   static validateTransactionId(txId: string): string {
-    const sanitized = CommandSanitizer.sanitizeTransactionId(txId as any);
+    const sanitized = CommandSanitizer.sanitizeTransactionId(txId);
 
     if (!sanitized) {
       throw new CLIError(
@@ -355,7 +355,7 @@ export class ApiInputValidator {
    * @throws {CLIError} if validation fails
    */
   static validateWalletAddress(address: string): string {
-    const sanitized = CommandSanitizer.sanitizeWalletAddress(address as any);
+    const sanitized = CommandSanitizer.sanitizeWalletAddress(address);
 
     if (!sanitized) {
       throw new CLIError(
@@ -374,9 +374,9 @@ export class ApiInputValidator {
    * @throws {CLIError} if validation fails
    */
   static validateImagePath(path: string): string {
-    const sanitized = CommandSanitizer.sanitizePath(path as any);
+    const sanitized = CommandSanitizer.sanitizePath(path);
 
-    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(sanitized as any);
+    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(sanitized);
     if (!isImage) {
       throw new CLIError(
         'Invalid image file format. Supported formats: jpg, jpeg, png, gif, webp, svg',
@@ -394,7 +394,7 @@ export class ApiInputValidator {
    * @throws {CLIError} if validation fails
    */
   static validateUrl(url: string): string {
-    const sanitized = CommandSanitizer.sanitizeUrl(url as any);
+    const sanitized = CommandSanitizer.sanitizeUrl(url);
 
     if (!sanitized) {
       throw new CLIError('Invalid URL format', 'INVALID_URL');
@@ -410,7 +410,7 @@ export class ApiInputValidator {
    * @throws {CLIError} if validation fails
    */
   static validateApiKey(apiKey: string): string {
-    const sanitized = CommandSanitizer.sanitizeApiKey(apiKey as any);
+    const sanitized = CommandSanitizer.sanitizeApiKey(apiKey);
 
     if (!sanitized || sanitized.length < 16) {
       throw new CLIError(

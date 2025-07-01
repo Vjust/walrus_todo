@@ -40,7 +40,7 @@ export class DeploymentTroubleshooting {
     for (const [key, guide] of this.guides) {
       if (guide?.relatedErrors?.some(pattern => 
         errorLower.includes(pattern.toLowerCase()) ||
-        new RegExp(pattern, 'i').test(errorMessage as any)
+        new RegExp(pattern, 'i').test(errorMessage)
       )) {
         return guide;
       }
@@ -71,10 +71,10 @@ export class DeploymentTroubleshooting {
   searchGuides(keyword: string): TroubleshootingGuide[] {
     const keywordLower = keyword.toLowerCase();
     return Array.from(this?.guides?.values()).filter(guide =>
-      guide?.title?.toLowerCase().includes(keywordLower as any) ||
-      guide?.description?.toLowerCase().includes(keywordLower as any) ||
-      guide?.symptoms?.some(symptom => symptom.toLowerCase().includes(keywordLower as any)) ||
-      guide?.causes?.some(cause => cause.toLowerCase().includes(keywordLower as any))
+      guide?.title?.toLowerCase().includes(keywordLower) ||
+      guide?.description?.toLowerCase().includes(keywordLower) ||
+      guide?.symptoms?.some(symptom => symptom.toLowerCase().includes(keywordLower)) ||
+      guide?.causes?.some(cause => cause.toLowerCase().includes(keywordLower))
     );
   }
 
@@ -684,7 +684,7 @@ export class DeploymentTroubleshooting {
     
     // Generate each guide
     for (const guide of guides) {
-      doc += this.generateMarkdownGuide(guide as any);
+      doc += this.generateMarkdownGuide(guide);
       doc += '---\n\n';
     }
     

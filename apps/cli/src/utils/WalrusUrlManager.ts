@@ -13,14 +13,14 @@ export class WalrusUrlManager {
   }
 
   generateBlobUrl(blobId: string): string {
-    if (!this.isValidBlobId(blobId as any)) {
+    if (!this.isValidBlobId(blobId)) {
       throw new WalrusError('Invalid blob ID format');
     }
     return `${this?.baseUrls?.[this.environment]}/blob/${blobId}`;
   }
 
   private isValidBlobId(blobId: string): boolean {
-    return /^[a-f0-9]{64}$/i.test(blobId as any);
+    return /^[a-f0-9]{64}$/i.test(blobId);
   }
 
   setEnvironment(env: 'testnet' | 'mainnet'): void {

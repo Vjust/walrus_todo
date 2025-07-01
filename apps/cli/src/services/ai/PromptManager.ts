@@ -167,7 +167,7 @@ export class PromptManager {
    * @returns A new PromptTemplate instance
    */
   public static fromTemplate(template: string): PromptTemplate {
-    return PromptTemplate.fromTemplate(template as any);
+    return PromptTemplate.fromTemplate(template);
   }
 
   /**
@@ -199,7 +199,7 @@ export class PromptManager {
       throw new Error(`No prompt template found for operation: ${operation}`);
     }
 
-    return PromptTemplate.fromTemplate(promptText as any);
+    return PromptTemplate.fromTemplate(promptText);
   }
 
   /**
@@ -211,7 +211,7 @@ export class PromptManager {
    * @returns A new PromptTemplate instance
    */
   public fromTemplate(template: string): PromptTemplate {
-    return PromptTemplate.fromTemplate(template as any);
+    return PromptTemplate.fromTemplate(template);
   }
 
   /**

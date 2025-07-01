@@ -85,17 +85,17 @@ export class FileHandleManager {
 
     for (const fd of this?.openHandles?.slice()) {
       try {
-        await close(fd as any);
-        const index = this?.openHandles?.indexOf(fd as any);
+        await close(fd);
+        const index = this?.openHandles?.indexOf(fd);
         if (index !== -1) {
           this?.openHandles?.splice(index, 1);
         }
         this?.logger?.debug(`Closed file descriptor ${fd}`);
       } catch (error) {
         const errorObj =
-          error instanceof Error ? error : new Error(String(error as any));
+          error instanceof Error ? error : new Error(String(error));
         this?.logger?.error(`Error closing file descriptor ${fd}`, errorObj);
-        errors.push(errorObj as any);
+        errors.push(errorObj);
       }
     }
 
@@ -113,12 +113,12 @@ export class FileHandleManager {
    * @returns Absolute file path
    */
   resolvePath(filePath: string): string {
-    if (fs.existsSync(filePath as any)) {
+    if (fs.existsSync(filePath)) {
       return filePath;
     }
 
     // If the path is absolute, return it as is
-    if (filePath.startsWith('/') || /^[A-Z]:\\/.test(filePath as any)) {
+    if (filePath.startsWith('/') || /^[A-Z]:\\/.test(filePath)) {
       return filePath;
     }
 
@@ -139,13 +139,13 @@ export class FileHandleManager {
     flags: string,
     operation: (fd: number) => Promise<T>
   ): Promise<T> {
-    const resolvedPath = this.resolvePath(filePath as any);
+    const resolvedPath = this.resolvePath(filePath);
     let fd: number | null = null;
 
     try {
       // Create directory if needed and writing
       if (this.autoCreateDirs && (flags.includes('w') || flags.includes('a'))) {
-        const dir = path.dirname(resolvedPath as any);
+        const dir = path.dirname(resolvedPath);
         await fsPromises.mkdir(dir, { recursive: true }).catch(() => {
           // Directory creation failed, but we'll continue and let the file operation handle it
         });
@@ -153,12 +153,12 @@ export class FileHandleManager {
 
       fd = await open(resolvedPath, flags);
       // Track the open file handle
-      this?.openHandles?.push(fd as any);
+      this?.openHandles?.push(fd);
 
-      return await operation(fd as any);
+      return await operation(fd);
     } catch (error) {
       const errorObj =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       this?.logger?.error(`File operation failed on ${resolvedPath}`, errorObj);
       if (this.throwErrors) {
         throw error;
@@ -167,9 +167,9 @@ export class FileHandleManager {
     } finally {
       if (fd !== null) {
         try {
-          await close(fd as any);
+          await close(fd);
           // Remove the file handle from tracking
-          const index = this?.openHandles?.indexOf(fd as any);
+          const index = this?.openHandles?.indexOf(fd);
           if (index !== -1) {
             this?.openHandles?.splice(index, 1);
           }
@@ -179,7 +179,7 @@ export class FileHandleManager {
           const errorObj =
             closeError instanceof Error
               ? closeError
-              : new Error(String(closeError as any));
+              : new Error(String(closeError));
           this?.logger?.error(`Error closing file ${resolvedPath}`, errorObj);
         }
       }
@@ -200,7 +200,7 @@ export class FileHandleManager {
       flag?: string;
     }
   ): Promise<string> {
-    const resolvedPath = this.resolvePath(filePath as any);
+    const resolvedPath = this.resolvePath(filePath);
     const encoding = options?.encoding || this.defaultEncoding;
     const flag = options?.flag || 'r';
 
@@ -219,12 +219,12 @@ export class FileHandleManager {
         });
 
         fileStream.on('end', () => {
-          resolve(data as any);
+          resolve(data);
         });
 
         fileStream.on('error', error => {
           if (this.throwErrors) {
-            reject(error as any);
+            reject(error);
           } else {
             this?.logger?.error(`Error reading file ${resolvedPath}`, error);
             resolve('');
@@ -237,7 +237,7 @@ export class FileHandleManager {
         }
 
         if (this.throwErrors) {
-          reject(error as any);
+          reject(error);
         } else {
           this?.logger?.error(
             `Error setting up read stream for ${resolvedPath}`,
@@ -265,14 +265,14 @@ export class FileHandleManager {
       flag?: string;
     }
   ): Promise<void> {
-    const resolvedPath = this.resolvePath(filePath as any);
+    const resolvedPath = this.resolvePath(filePath);
     const encoding = options?.encoding || this.defaultEncoding;
     const mode = options?.mode || this.defaultMode;
     const flag = options?.flag || 'w';
 
     // Create directory if needed
     if (this.autoCreateDirs) {
-      const dir = path.dirname(resolvedPath as any);
+      const dir = path.dirname(resolvedPath);
       await fsPromises.mkdir(dir, { recursive: true }).catch(() => {
         // Directory creation failed, but we'll continue and let the file operation handle it
       });
@@ -294,7 +294,7 @@ export class FileHandleManager {
 
         fileStream.on('error', error => {
           if (this.throwErrors) {
-            reject(error as any);
+            reject(error);
           } else {
             this?.logger?.error(`Error writing to file ${resolvedPath}`, error);
             resolve();
@@ -302,7 +302,7 @@ export class FileHandleManager {
         });
 
         // Write and end the stream
-        fileStream.write(data as any);
+        fileStream.write(data);
         fileStream.end();
       } catch (error) {
         // Ensure we close the stream on synchronous errors
@@ -311,7 +311,7 @@ export class FileHandleManager {
         }
 
         if (this.throwErrors) {
-          reject(error as any);
+          reject(error);
         } else {
           this?.logger?.error(
             `Error setting up write stream for ${resolvedPath}`,
@@ -344,13 +344,13 @@ export class FileHandleManager {
       highWaterMark?: number;
     }
   ): fs.ReadStream {
-    const resolvedPath = this.resolvePath(filePath as any);
+    const resolvedPath = this.resolvePath(filePath);
     const stream = fs.createReadStream(resolvedPath, options);
 
     // Handle errors explicitly
     stream.on('error', error => {
       const errorObj =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       this?.logger?.error(`Error reading stream from ${resolvedPath}`, errorObj);
       stream.destroy();
     });
@@ -377,18 +377,18 @@ export class FileHandleManager {
       start?: number;
     }
   ): fs.WriteStream {
-    const resolvedPath = this.resolvePath(filePath as any);
+    const resolvedPath = this.resolvePath(filePath);
 
     // Create directory if needed
     if (this.autoCreateDirs) {
-      const dir = path.dirname(resolvedPath as any);
+      const dir = path.dirname(resolvedPath);
       try {
-        if (!fs.existsSync(dir as any)) {
+        if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
       } catch (error) {
         const errorObj =
-          error instanceof Error ? error : new Error(String(error as any));
+          error instanceof Error ? error : new Error(String(error));
         this?.logger?.error(`Failed to create directory ${dir}`, errorObj);
       }
     }
@@ -398,7 +398,7 @@ export class FileHandleManager {
     // Handle errors explicitly
     stream.on('error', error => {
       const errorObj =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       this?.logger?.error(`Error writing stream to ${resolvedPath}`, errorObj);
       stream.destroy();
     });
@@ -413,7 +413,7 @@ export class FileHandleManager {
    * @returns Promise resolving to true if file exists and is accessible
    */
   async fileExists(filePath: string): Promise<boolean> {
-    const resolvedPath = this.resolvePath(filePath as any);
+    const resolvedPath = this.resolvePath(filePath);
 
     try {
       await fsPromises.access(resolvedPath, fs?.constants?.F_OK);
@@ -437,13 +437,13 @@ export class FileHandleManager {
       mode?: number;
     }
   ): Promise<boolean> {
-    const resolvedPath = this.resolvePath(dirPath as any);
+    const resolvedPath = this.resolvePath(dirPath);
     const recursive =
       options?.recursive !== undefined ? options.recursive : true;
     const mode = options?.mode || this.defaultMode;
 
     try {
-      if (!(await this.fileExists(resolvedPath as any))) {
+      if (!(await this.fileExists(resolvedPath))) {
         await fsPromises.mkdir(resolvedPath, { recursive, mode });
       }
       return true;
@@ -462,14 +462,14 @@ const defaultManager = new FileHandleManager();
 
 // Export standalone functions for backward compatibility
 export const withFileHandle =
-  defaultManager?.withFileHandle?.bind(defaultManager as any);
-export const safeReadFile = defaultManager?.safeReadFile?.bind(defaultManager as any);
-export const safeWriteFile = defaultManager?.safeWriteFile?.bind(defaultManager as any);
+  defaultManager?.withFileHandle?.bind(defaultManager);
+export const safeReadFile = defaultManager?.safeReadFile?.bind(defaultManager);
+export const safeWriteFile = defaultManager?.safeWriteFile?.bind(defaultManager);
 export const createSafeReadStream =
-  defaultManager?.createSafeReadStream?.bind(defaultManager as any);
+  defaultManager?.createSafeReadStream?.bind(defaultManager);
 export const createSafeWriteStream =
-  defaultManager?.createSafeWriteStream?.bind(defaultManager as any);
-export const closeAll = defaultManager?.closeAll?.bind(defaultManager as any);
+  defaultManager?.createSafeWriteStream?.bind(defaultManager);
+export const closeAll = defaultManager?.closeAll?.bind(defaultManager);
 
 // Export default instance for direct usage
 export default FileHandleManager;

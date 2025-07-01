@@ -25,7 +25,7 @@ if (typeof globalThis?.structuredClone === 'undefined') {
 
     if (value instanceof Array) {
       return value.map(item =>
-        globalThis.structuredClone(item as any)
+        globalThis.structuredClone(item)
       ) as unknown as T;
     }
 
@@ -33,8 +33,8 @@ if (typeof globalThis?.structuredClone === 'undefined') {
       const cloned = {} as T;
       for (const key in value) {
         if (Object?.prototype?.hasOwnProperty.call(value, key)) {
-          (cloned as any)[key] = globalThis.structuredClone(
-            (value as any)[key]
+          (cloned)[key] = globalThis.structuredClone(
+            (value)[key]
           );
         }
       }
@@ -64,7 +64,7 @@ if (
 ) {
   AbortSignal?.abort = function (reason?: any): AbortSignal {
     const controller = new AbortController();
-    controller.abort(reason as any);
+    controller.abort(reason);
     return controller.signal;
   };
 }

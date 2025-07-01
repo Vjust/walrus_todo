@@ -184,14 +184,14 @@ export class ConnectionManager<T extends ManagedConnection> {
     } catch (error) {
       logger.error(
         'Failed to establish connection',
-        error instanceof Error ? error : new Error(String(error as any)),
+        error instanceof Error ? error : new Error(String(error)),
         { network: 'unknown' } as Record<string, unknown>
       );
       throw new NetworkError('Connection failed', {
         network: 'unknown',
         operation: 'connect',
         recoverable: !!this?.options?.autoReconnect,
-        cause: error instanceof Error ? error : new Error(String(error as any)),
+        cause: error instanceof Error ? error : new Error(String(error)),
       });
     }
   }
@@ -207,7 +207,7 @@ export class ConnectionManager<T extends ManagedConnection> {
   ): Promise<R> {
     try {
       const connection = await this.getConnection();
-      return await operation(connection as any);
+      return await operation(connection);
     } catch (error) {
       // If it's a connection error and auto-reconnect is enabled, schedule reconnection
       if (error instanceof NetworkError && this?.options?.autoReconnect) {
@@ -234,7 +234,7 @@ export class ConnectionManager<T extends ManagedConnection> {
         await this.safelyCloseConnection(this.connection);
         logger.debug('Connection closed successfully');
       } catch (error) {
-        logger.warn('Error closing connection', { error: String(error as any) });
+        logger.warn('Error closing connection', { error: String(error) });
       } finally {
         this?.connection = null;
       }
@@ -272,7 +272,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     if (idleTime > (this?.options?.maxIdleTime || 60000)) {
       logger.debug(`Closing idle connection (idle for ${idleTime}ms)`);
       void this.closeConnection().catch(_error => {
-        logger.warn('Error closing idle connection', { error: String(_error as any) });
+        logger.warn('Error closing idle connection', { error: String(_error) });
       });
     }
   }
@@ -292,7 +292,7 @@ export class ConnectionManager<T extends ManagedConnection> {
       void this.getConnection().catch(_error => {
         logger.error(
           'Reconnection failed',
-          _error instanceof Error ? _error : new Error(String(_error as any)),
+          _error instanceof Error ? _error : new Error(String(_error)),
           { network: 'unknown' } as Record<string, unknown>
         );
       });

@@ -111,12 +111,12 @@ export class PreDeploymentValidator {
       // Run all validation checks
       const checks = [
         () => this.validateDependencies(),
-        () => this.validateConfiguration(context as any),
-        () => this.validateDeploymentPath(context as any),
-        () => this.validateWallet(context as any),
-        () => this.validateNetwork(context as any),
-        () => this.validateDeploymentSize(context as any),
-        () => this.validatePermissions(context as any),
+        () => this.validateConfiguration(context),
+        () => this.validateDeploymentPath(context),
+        () => this.validateWallet(context),
+        () => this.validateNetwork(context),
+        () => this.validateDeploymentSize(context),
+        () => this.validatePermissions(context),
       ];
 
       // Execute checks based on options
@@ -129,7 +129,7 @@ export class PreDeploymentValidator {
             passed: false,
             category: 'deployment',
             name: 'Validation Error',
-            message: error instanceof Error ? error.message : String(error as any),
+            message: error instanceof Error ? error.message : String(error),
             severity: 'error',
           });
         }
@@ -149,7 +149,7 @@ export class PreDeploymentValidator {
       return summary;
     } catch (error) {
       this?.logger?.error('Pre-deployment validation failed', {
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -163,7 +163,7 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'deployment',
           name: 'Validation System Error',
-          message: error instanceof Error ? error.message : String(error as any),
+          message: error instanceof Error ? error.message : String(error),
           severity: 'error',
         }],
         recommendedActions: ['Fix validation system error and retry'],
@@ -208,7 +208,7 @@ export class PreDeploymentValidator {
     // Check Node.js version
     try {
       const nodeVersion = process.version;
-      const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0]);
+      const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
       
       if (majorVersion >= 18) {
         results.push({
@@ -289,7 +289,7 @@ export class PreDeploymentValidator {
       if (existsSync(context.configPath)) {
         try {
           const configContent = readFileSync(context.configPath, 'utf8');
-          const config = JSON.parse(configContent as any);
+          const config = JSON.parse(configContent);
           
           // Validate config structure
           const requiredFields = ['network', 'walrus'];
@@ -381,7 +381,7 @@ export class PreDeploymentValidator {
 
     // Check for index.html
     const indexPath = `${context.sitePath}/index.html`;
-    if (existsSync(indexPath as any)) {
+    if (existsSync(indexPath)) {
       results.push({
         passed: true,
         category: 'deployment',
@@ -430,14 +430,14 @@ export class PreDeploymentValidator {
       if (!this?.options?.skipGasCheck) {
         try {
           const balance = await this.getWalletBalance(activeAddress, context.network);
-          const balanceNum = parseInt(balance as any);
+          const balanceNum = parseInt(balance);
           
           if (balanceNum >= this?.options?.minGasBalance) {
             results.push({
               passed: true,
               category: 'wallet',
               name: 'Gas balance',
-              message: `Sufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3 as any)} SUI`,
+              message: `Sufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3)} SUI`,
               severity: 'info',
               details: { balance, balanceInSui: balanceNum / 1_000_000_000 },
             });
@@ -446,7 +446,7 @@ export class PreDeploymentValidator {
               passed: false,
               category: 'wallet',
               name: 'Gas balance',
-              message: `Insufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3 as any)} SUI (minimum: ${this?.options?.minGasBalance / 1_000_000_000} SUI)`,
+              message: `Insufficient gas balance: ${(balanceNum / 1_000_000_000).toFixed(3)} SUI (minimum: ${this?.options?.minGasBalance / 1_000_000_000} SUI)`,
               severity: 'error',
               suggestion: `Add gas funds to wallet address: ${activeAddress}`,
               details: { balance, required: this?.options?.minGasBalance },
@@ -490,7 +490,7 @@ export class PreDeploymentValidator {
       } catch (error) {
         // Non-critical, don't fail validation
         this?.logger?.debug('Could not check wallet activity', {
-          error: error instanceof Error ? error.message : String(error as any),
+          error: error instanceof Error ? error.message : String(error),
         });
       }
 
@@ -611,7 +611,7 @@ export class PreDeploymentValidator {
         passed: false,
         category: 'network',
         name: 'Network health check',
-        message: `Network health check failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        message: `Network health check failed: ${error instanceof Error ? error.message : String(error)}`,
         severity: 'error',
         suggestion: 'Check network connectivity and endpoint configuration',
       });
@@ -634,7 +634,7 @@ export class PreDeploymentValidator {
           passed: true,
           category: 'deployment',
           name: 'Deployment size',
-          message: `Deployment size is acceptable: ${this.formatBytes(totalSize as any)}`,
+          message: `Deployment size is acceptable: ${this.formatBytes(totalSize)}`,
           severity: 'info',
           details: { sizeBytes: totalSize, sizeMB: totalSize / (1024 * 1024) },
         });
@@ -643,7 +643,7 @@ export class PreDeploymentValidator {
           passed: false,
           category: 'deployment',
           name: 'Deployment size',
-          message: `Deployment size exceeds limit: ${this.formatBytes(totalSize as any)} (max: ${this.formatBytes(this?.options?.maxDeploymentSize)})`,
+          message: `Deployment size exceeds limit: ${this.formatBytes(totalSize)} (max: ${this.formatBytes(this?.options?.maxDeploymentSize)})`,
           severity: 'error',
           suggestion: 'Reduce deployment size by removing unnecessary files or assets',
           details: { 
@@ -672,7 +672,7 @@ export class PreDeploymentValidator {
         passed: false,
         category: 'deployment',
         name: 'Size calculation',
-        message: `Failed to calculate deployment size: ${error instanceof Error ? error.message : String(error as any)}`,
+        message: `Failed to calculate deployment size: ${error instanceof Error ? error.message : String(error)}`,
         severity: 'warning',
       });
     }
@@ -727,7 +727,7 @@ export class PreDeploymentValidator {
         passed: false,
         category: 'deployment',
         name: 'Permission check',
-        message: `Failed to check permissions: ${error instanceof Error ? error.message : String(error as any)}`,
+        message: `Failed to check permissions: ${error instanceof Error ? error.message : String(error)}`,
         severity: 'warning',
       });
     }
@@ -748,7 +748,7 @@ export class PreDeploymentValidator {
       }
       return '0';
     } catch (error) {
-      throw new NetworkError(`Failed to get wallet balance: ${error instanceof Error ? error.message : String(error as any)}`);
+      throw new NetworkError(`Failed to get wallet balance: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -760,12 +760,12 @@ export class PreDeploymentValidator {
     
     const traverse = (path: string) => {
       try {
-        const stat = statSync(path as any);
+        const stat = statSync(path);
         if (stat.isFile()) {
           totalSize += stat.size;
         } else if (stat.isDirectory()) {
           const fs = require('fs');
-          const files = fs.readdirSync(path as any);
+          const files = fs.readdirSync(path);
           for (const file of files) {
             traverse(`${path}/${file}`);
           }
@@ -775,7 +775,7 @@ export class PreDeploymentValidator {
       }
     };
 
-    traverse(dirPath as any);
+    traverse(dirPath);
     return totalSize;
   }
 
@@ -787,12 +787,12 @@ export class PreDeploymentValidator {
     
     const traverse = (path: string) => {
       try {
-        const stat = statSync(path as any);
+        const stat = statSync(path);
         if (stat.isFile() && stat.size > threshold) {
           largeFiles.push({ path, size: stat.size });
         } else if (stat.isDirectory()) {
           const fs = require('fs');
-          const files = fs.readdirSync(path as any);
+          const files = fs.readdirSync(path);
           for (const file of files) {
             traverse(`${path}/${file}`);
           }
@@ -802,7 +802,7 @@ export class PreDeploymentValidator {
       }
     };
 
-    traverse(dirPath as any);
+    traverse(dirPath);
     return largeFiles;
   }
 
@@ -814,16 +814,16 @@ export class PreDeploymentValidator {
     
     const traverse = (path: string) => {
       try {
-        const stat = statSync(path as any);
+        const stat = statSync(path);
         const filename = path.split('/').pop() || '';
         
         if (filename.startsWith('.') && filename !== '.' && filename !== '..') {
-          hiddenFiles.push(path as any);
+          hiddenFiles.push(path);
         }
         
         if (stat.isDirectory() && !filename.startsWith('.')) {
           const fs = require('fs');
-          const files = fs.readdirSync(path as any);
+          const files = fs.readdirSync(path);
           for (const file of files) {
             traverse(`${path}/${file}`);
           }
@@ -833,7 +833,7 @@ export class PreDeploymentValidator {
       }
     };
 
-    traverse(dirPath as any);
+    traverse(dirPath);
     return hiddenFiles;
   }
 
@@ -845,9 +845,9 @@ export class PreDeploymentValidator {
     
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
     
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any))} ${sizes[i]}`;
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   }
 
   /**
@@ -899,7 +899,7 @@ export class PreDeploymentValidator {
       errors,
       results,
       estimatedDeploymentTime,
-      recommendedActions: [...new Set(recommendedActions as any)], // Remove duplicates
+      recommendedActions: [...new Set(recommendedActions)], // Remove duplicates
     };
   }
 

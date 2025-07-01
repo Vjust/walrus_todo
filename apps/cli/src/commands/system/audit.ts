@@ -98,7 +98,7 @@ export default class AuditCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(AuditCommand as any);
+    const { flags } = await this.parse(AuditCommand);
 
     // Check if user has permission to manage audit logs
     const hasPermission = await this.checkAuditPermission();
@@ -108,11 +108,11 @@ export default class AuditCommand extends BaseCommand {
     }
 
     if (flags.search) {
-      await this.searchLogs(flags as any);
+      await this.searchLogs(flags);
     } else if (flags.verify) {
       await this.verifyLogs(flags.file);
     } else if (flags.configure) {
-      await this.configureLogs(flags as any);
+      await this.configureLogs(flags);
     } else {
       this.log('Please specify an action to perform. See --help for details.');
     }
@@ -230,7 +230,7 @@ export default class AuditCommand extends BaseCommand {
    */
   private async verifyLogs(filePath?: string): Promise<void> {
     try {
-      const result = await auditLogger.verifyLogs(filePath as any);
+      const result = await auditLogger.verifyLogs(filePath);
 
       if (result.valid) {
         this.log(chalk.green(`✓ Audit logs verified successfully`));
@@ -287,7 +287,7 @@ export default class AuditCommand extends BaseCommand {
       }
 
       // Apply configuration
-      auditLogger.configure(config as any);
+      auditLogger.configure(config);
 
       this.log(chalk.green('Audit logging configuration updated'));
     } catch (error) {

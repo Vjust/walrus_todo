@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
 import * as fs from 'fs';
@@ -8,7 +8,7 @@ import * as path from 'path';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 
-const execAsync = promisify(exec as any);
+const execAsync = promisify(exec);
 
 /**
  * @class StoreSimpleCommand
@@ -52,7 +52,7 @@ export default class StoreSimpleCommand extends BaseCommand {
   private todoService = new TodoService();
 
   async run() {
-    const { flags } = await this.parse(StoreSimpleCommand as any);
+    const { flags } = await this.parse(StoreSimpleCommand);
 
     try {
       // Step 1: Find the todo
@@ -76,7 +76,7 @@ export default class StoreSimpleCommand extends BaseCommand {
 
       // Step 2: Create a temporary JSON file with the todo data
       const tempDir = path.join(process.cwd(), '.walrus-temp');
-      if (!fs.existsSync(tempDir as any)) {
+      if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
@@ -115,7 +115,7 @@ export default class StoreSimpleCommand extends BaseCommand {
       const walrusCommand = `~/.local/bin/walrus --context ${flags.network} store --epochs ${flags.epochs} ${tempFile}`;
 
       try {
-        const { stdout } = await execAsync(walrusCommand as any);
+        const { stdout } = await execAsync(walrusCommand);
 
         // Parse the output to extract blob ID and transaction info
         const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -143,8 +143,8 @@ export default class StoreSimpleCommand extends BaseCommand {
         this.log('');
         this.log(chalk?.white?.bold('Storage Details:'));
         this.log(chalk.white(`  Todo: ${chalk.cyan(todo.title)}`));
-        this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId as any)}`));
-        this.log(chalk.white(`  Sui Object ID: ${chalk.yellow(suiObjectId as any)}`));
+        this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId)}`));
+        this.log(chalk.white(`  Sui Object ID: ${chalk.yellow(suiObjectId)}`));
         this.log(chalk.white(`  Network: ${chalk.cyan(flags.network)}`));
         this.log(chalk.white(`  Storage Cost: ${chalk.green(cost + ' WAL')}`));
         this.log(chalk.white(`  Epochs: ${chalk.cyan(flags.epochs)}`));
@@ -187,13 +187,13 @@ export default class StoreSimpleCommand extends BaseCommand {
       }
 
       // Clean up temp file
-      fs.unlinkSync(tempFile as any);
+      fs.unlinkSync(tempFile);
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Store failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Store failed: ${error instanceof Error ? error.message : String(error)}`,
         'STORE_FAILED'
       );
     }

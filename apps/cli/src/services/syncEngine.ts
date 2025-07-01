@@ -3,9 +3,9 @@ import { join, resolve } from 'path';
 import { Logger } from '../utils/Logger';
 import { FileWatcher, FileChangeEvent } from '../utils/fileWatcher';
 import { ApiClient, ApiSyncEvent, ApiClientConfig } from '../utils/apiClient';
-import { TodoService } from './todoService';
+import { TodoService } from './todo';
 import { Todo, TodoList } from '../types/todo';
-import { BackgroundCommandOrchestrator } from '../utils/BackgroundCommandOrchestrator';
+import { createOrchestrator, BackgroundOrchestrator } from '../utils/background';
 import { RetryManager } from '../utils/retry-manager';
 import { debounce } from 'lodash';
 import * as fs from 'fs/promises';
@@ -54,7 +54,7 @@ export class SyncEngine extends EventEmitter {
   private fileWatcher: FileWatcher;
   private apiClient: ApiClient;
   private todoService: TodoService;
-  private backgroundOrchestrator: BackgroundCommandOrchestrator;
+  private backgroundOrchestrator: BackgroundOrchestrator;
   private retryManager: RetryManager;
   private config: Required<SyncEngineConfig>;
 
@@ -85,7 +85,7 @@ export class SyncEngine extends EventEmitter {
     };
 
     this?.todoService = new TodoService();
-    this?.backgroundOrchestrator = new BackgroundCommandOrchestrator();
+    this?.backgroundOrchestrator = createOrchestrator();
 
     this?.retryManager = new RetryManager({
       maxAttempts: 3,
@@ -106,7 +106,7 @@ export class SyncEngine extends EventEmitter {
 
     // Create debounced sync function
     this?.debouncedSync = debounce(
-      this?.performSync?.bind(this as any),
+      this?.performSync?.bind(this),
       this?.config?.syncDebounceMs
     );
 
@@ -229,7 +229,7 @@ export class SyncEngine extends EventEmitter {
   private setupEventHandlers(): void {
     // File system change events
     this?.fileWatcher?.on('change', (event: FileChangeEvent) => {
-      this.handleFileChange(event as any);
+      this.handleFileChange(event);
     });
 
     this?.fileWatcher?.on('error', error => {
@@ -239,7 +239,7 @@ export class SyncEngine extends EventEmitter {
 
     // API client events
     this?.apiClient?.on('remote-change', (event: ApiSyncEvent) => {
-      this.handleRemoteChange(event as any);
+      this.handleRemoteChange(event);
     });
 
     this?.apiClient?.on('sync-requested', data => {
@@ -397,11 +397,11 @@ export class SyncEngine extends EventEmitter {
 
       for (const change of pendingChanges) {
         try {
-          await this.syncFileChange(change as any);
+          await this.syncFileChange(change);
           result.syncedFiles++;
         } catch (error) {
           const errorMsg =
-            error instanceof Error ? error.message : String(error as any);
+            error instanceof Error ? error.message : String(error);
           result?.errors?.push(
             `Failed to sync ${change.relativePath}: ${errorMsg}`
           );
@@ -431,7 +431,7 @@ export class SyncEngine extends EventEmitter {
 
       return result;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error as any);
+      const errorMsg = error instanceof Error ? error.message : String(error);
       this?.logger?.error('Synchronization failed:', error);
 
       const result: SyncResult = {
@@ -491,7 +491,7 @@ export class SyncEngine extends EventEmitter {
     listName: string
   ): Promise<void> {
     try {
-      const list = await this?.todoService?.getList(listName as any);
+      const list = await this?.todoService?.getList(listName);
       if (!list || !list.todos) {
         this?.logger?.warn(`No todos found in list: ${listName}`);
         return;
@@ -526,7 +526,7 @@ export class SyncEngine extends EventEmitter {
       let targetList: string | null = null;
 
       for (const listName of lists) {
-        const list = await this?.todoService?.getList(listName as any);
+        const list = await this?.todoService?.getList(listName);
         if (list?.todos.some(t => t?.id === remoteTodo.id)) {
           targetList = listName;
           break;
@@ -563,13 +563,13 @@ export class SyncEngine extends EventEmitter {
             remoteTimestamp,
           };
 
-          this?.conflicts?.push(conflict as any);
+          this?.conflicts?.push(conflict);
           this.emit('conflict-detected', conflict);
 
           this?.logger?.warn('Conflict detected for todo', {
             id: remoteTodo.id,
-            localTime: new Date(localTimestamp as any).toISOString(),
-            remoteTime: new Date(remoteTimestamp as any).toISOString(),
+            localTime: new Date(localTimestamp).toISOString(),
+            remoteTime: new Date(remoteTimestamp).toISOString(),
           });
 
           return; // Don't apply change, let conflict resolution handle it
@@ -628,7 +628,7 @@ export class SyncEngine extends EventEmitter {
    */
   private async applyRemoteTodoCompletion(remoteTodo: Todo): Promise<void> {
     try {
-      await this.applyRemoteTodoChange(remoteTodo as any);
+      await this.applyRemoteTodoChange(remoteTodo);
     } catch (error) {
       this?.logger?.error('Failed to apply remote todo completion:', error);
       throw error;
@@ -669,7 +669,7 @@ export class SyncEngine extends EventEmitter {
           let targetList: string | null = null;
 
           for (const listName of lists) {
-            const list = await this?.todoService?.getList(listName as any);
+            const list = await this?.todoService?.getList(listName);
             if (list?.todos.some(t => t?.id === conflict.itemId)) {
               targetList = listName;
               break;
@@ -738,7 +738,7 @@ export class SyncEngine extends EventEmitter {
     this?.wallet = wallet;
 
     if (this?.apiClient?.isClientConnected()) {
-      await this?.apiClient?.connect(wallet as any);
+      await this?.apiClient?.connect(wallet);
     }
 
     this?.logger?.info('Wallet updated for sync operations', { wallet });

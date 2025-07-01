@@ -170,7 +170,7 @@ export class AIProviderFactory {
         const credService = credentialService || secureCredentialService;
 
         // Convert enum to string for credential service
-        const providerString = getProviderString(providerEnum as any);
+        const providerString = getProviderString(providerEnum);
 
         // Verify that we have credentials for this provider
         const hasCredential = await credService.hasCredential(
@@ -186,7 +186,7 @@ export class AIProviderFactory {
           } else {
             this?.logger?.debug(`No credentials found for ${providerString}.`);
           }
-          return this.createFallbackProvider(options as any);
+          return this.createFallbackProvider(options);
         }
 
         // Get the API key for the provider
@@ -216,20 +216,20 @@ export class AIProviderFactory {
           this?.logger?.warn(
             'Anthropic adapter not yet implemented, using fallback provider'
           );
-          return this.createFallbackProvider(options as any);
+          return this.createFallbackProvider(options);
 
         default:
           this?.logger?.warn(
             `Unknown provider: ${providerEnum}, using fallback provider`
           );
-          return this.createFallbackProvider(options as any);
+          return this.createFallbackProvider(options);
       }
     } catch (_error) {
       this?.logger?.error(
         `AIProviderFactory: Failed to create provider adapter for ${provider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         _error instanceof Error ? _error : undefined
       );
-      return this.createFallbackProvider(options as any);
+      return this.createFallbackProvider(options);
     }
   }
 

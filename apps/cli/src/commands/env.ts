@@ -122,7 +122,7 @@ export default class EnvironmentCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(EnvironmentCommand as any);
+    const { args, flags } = await this.parse(EnvironmentCommand);
 
     try {
       // Load environment configuration
@@ -176,7 +176,7 @@ export default class EnvironmentCommand extends BaseCommand {
       }
     } catch (error) {
       this.error(
-        `Error processing environment command: ${error instanceof Error ? error.message : String(error as any)}`
+        `Error processing environment command: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -208,7 +208,7 @@ export default class EnvironmentCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Environment validation failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Environment validation failed: ${error instanceof Error ? error.message : String(error)}`,
         'ENV_VALIDATION_FAILED'
       );
     }
@@ -237,13 +237,13 @@ export default class EnvironmentCommand extends BaseCommand {
         );
       }
 
-      generateEnvTemplate(templatePath as any);
+      generateEnvTemplate(templatePath);
       this.log(
         chalk.green(`✓ Environment template generated at ${templatePath}`)
       );
     } catch (error) {
       throw new CLIError(
-        `Failed to generate template: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to generate template: ${error instanceof Error ? error.message : String(error)}`,
         'TEMPLATE_GENERATION_FAILED'
       );
     }
@@ -261,8 +261,8 @@ export default class EnvironmentCommand extends BaseCommand {
       const docs = generateEnvironmentDocs();
 
       // Create directory if it doesn't exist
-      const dir = path.dirname(docsPath as any);
-      if (!fs.existsSync(dir as any)) {
+      const dir = path.dirname(docsPath);
+      if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
 
@@ -272,7 +272,7 @@ export default class EnvironmentCommand extends BaseCommand {
       );
     } catch (error) {
       throw new CLIError(
-        `Failed to generate documentation: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to generate documentation: ${error instanceof Error ? error.message : String(error)}`,
         'DOCS_GENERATION_FAILED'
       );
     }
@@ -292,7 +292,7 @@ export default class EnvironmentCommand extends BaseCommand {
       const jsonConfig = envConfig.toJSON();
       // Mask sensitive values unless reveal is true
       if (!reveal) {
-        for (const [key, value] of Object.entries(jsonConfig as any)) {
+        for (const [key, value] of Object.entries(jsonConfig)) {
           const varConfig = envConfig.getAllVariables()[key];
           if (varConfig?.sensitive && value) {
             jsonConfig[key] = '********';
@@ -303,7 +303,7 @@ export default class EnvironmentCommand extends BaseCommand {
     } else if (format === 'env') {
       // Display as .env file format
       const config = envConfig.getAllVariables();
-      for (const [key, value] of Object.entries(config as any)) {
+      for (const [key, value] of Object.entries(config)) {
         // Skip printing sensitive values unless reveal is true
         if (value.sensitive && value.value && !reveal) {
           this.log(`${key}=********`);
@@ -336,7 +336,7 @@ export default class EnvironmentCommand extends BaseCommand {
         Other: [],
       };
 
-      for (const [key, value] of Object.entries(config as any)) {
+      for (const [key, value] of Object.entries(config)) {
         let category = 'Other';
         if (key.startsWith('AI_') || key.endsWith('_API_KEY')) {
           category = 'AI';
@@ -396,29 +396,29 @@ export default class EnvironmentCommand extends BaseCommand {
       }
 
       // Display each category
-      for (const [category, values] of Object.entries(categories as any)) {
+      for (const [category, values] of Object.entries(categories)) {
         if (values?.length === 0) continue;
 
-        this.log('\n' + chalk?.green?.bold(category as any));
+        this.log('\n' + chalk?.green?.bold(category));
         this.log('─'.repeat(category.length));
 
         // Create a table-like output
         this.log(
-          chalk.bold('Variable'.padEnd(30 as any)) +
-            chalk.bold('Value'.padEnd(30 as any)) +
-            chalk.bold('Source'.padEnd(15 as any)) +
-            chalk.bold('Required'.padEnd(10 as any)) +
+          chalk.bold('Variable'.padEnd(30)) +
+            chalk.bold('Value'.padEnd(30)) +
+            chalk.bold('Source'.padEnd(15)) +
+            chalk.bold('Required'.padEnd(10)) +
             chalk.bold('Sensitive')
         );
 
-        this.log('─'.repeat(100 as any));
+        this.log('─'.repeat(100));
 
         for (const item of values) {
           this.log(
-            chalk.cyan(item?.name?.padEnd(30 as any)) +
-              String(item.value).substring(0, 28).padEnd(30 as any) +
-              chalk.gray(item?.source?.padEnd(15 as any)) +
-              item?.required?.padEnd(10 as any) +
+            chalk.cyan(item?.name?.padEnd(30)) +
+              String(item.value).substring(0, 28).padEnd(30) +
+              chalk.gray(item?.source?.padEnd(15)) +
+              item?.required?.padEnd(10) +
               item.sensitive
           );
         }
@@ -559,7 +559,7 @@ export default class EnvironmentCommand extends BaseCommand {
       const envPath = path.join(process.cwd(), '.env');
       let envContent = '';
 
-      if (fs.existsSync(envPath as any)) {
+      if (fs.existsSync(envPath)) {
         const content = fs.readFileSync(envPath, 'utf-8');
         envContent =
           typeof content === 'string' ? content : content.toString('utf-8');
@@ -612,12 +612,12 @@ export default class EnvironmentCommand extends BaseCommand {
           )
         );
         this.log(
-          chalk.yellow(error instanceof Error ? error.message : String(error as any))
+          chalk.yellow(error instanceof Error ? error.message : String(error))
         );
       }
     } catch (error) {
       throw new CLIError(
-        `Failed to set environment variable: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to set environment variable: ${error instanceof Error ? error.message : String(error)}`,
         'SET_VARIABLE_FAILED'
       );
     }

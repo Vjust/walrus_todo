@@ -99,7 +99,7 @@ export class BatchUploader {
 
       // Ensure we have enough storage allocated
       const storage =
-        await this?.walrusStorage?.ensureStorageAllocated(totalSizeNeeded as any);
+        await this?.walrusStorage?.ensureStorageAllocated(totalSizeNeeded);
       if (!storage) {
         throw new CLIError(
           'Failed to allocate storage for batch upload',
@@ -143,11 +143,11 @@ export class BatchUploader {
           // Try to use detailed storage method if available
           let uploadResult;
           if (
-            typeof (this.walrusStorage as any).storeTodoWithDetails ===
+            typeof (this.walrusStorage).storeTodoWithDetails ===
             'function'
           ) {
             uploadResult = await (
-              this.walrusStorage as any
+              this.walrusStorage
             ).storeTodoWithDetails(todo, options.epochs || 5);
             result?.successful?.push({
               id: todo.id,
@@ -176,7 +176,7 @@ export class BatchUploader {
           }
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : String(error as any);
+            error instanceof Error ? error.message : String(error);
           logger.error(`Failed to upload todo "${todo.id}": ${errorMessage}`);
           result?.failed?.push({ id: todo.id, error: errorMessage });
 
@@ -199,7 +199,7 @@ export class BatchUploader {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Batch upload failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Batch upload failed: ${error instanceof Error ? error.message : String(error)}`,
         'BATCH_UPLOAD_FAILED'
       );
     }
@@ -230,7 +230,7 @@ export class BatchUploader {
 
       // Upload the todo list itself
       logger.info(`Uploading todo list "${todoList.name}"...`);
-      const listBlobId = await this?.walrusStorage?.storeTodoList(todoList as any);
+      const listBlobId = await this?.walrusStorage?.storeTodoList(todoList);
 
       return {
         listBlobId,
@@ -239,7 +239,7 @@ export class BatchUploader {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Todo list batch upload failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Todo list batch upload failed: ${error instanceof Error ? error.message : String(error)}`,
         'BATCH_UPLOAD_FAILED'
       );
     }
@@ -256,5 +256,5 @@ export class BatchUploader {
 export function createBatchUploader(
   walrusStorage: WalrusStorage
 ): BatchUploader {
-  return new BatchUploader(walrusStorage as any);
+  return new BatchUploader(walrusStorage);
 }

@@ -118,7 +118,7 @@ export class AuthenticationService {
       this?.logger = Logger.getInstance();
     } catch (_error) {
       // Fallback for test environments or initialization issues
-      this?.logger = undefined as any;
+      this?.logger = undefined;
     }
   }
 
@@ -143,7 +143,7 @@ export class AuthenticationService {
    */
   private generateSalt(): string {
     try {
-      const saltBuffer = crypto.randomBytes(16 as any);
+      const saltBuffer = crypto.randomBytes(16);
 
       // Validate generated salt buffer exists and has correct length
       if (!saltBuffer) {
@@ -275,7 +275,7 @@ export class AuthenticationService {
     roles: UserRole[] = [UserRole.USER]
   ): Promise<PermissionUser> {
     // Check if username already exists
-    const existingUser = await permissionService.getUserByUsername(username as any);
+    const existingUser = await permissionService.getUserByUsername(username);
     if (existingUser) {
       throw new CLIError('Username already exists', 'USERNAME_EXISTS');
     }
@@ -329,7 +329,7 @@ export class AuthenticationService {
     currentPassword: string,
     newPassword: string
   ): Promise<boolean> {
-    const user = await permissionService.getUser(userId as any);
+    const user = await permissionService.getUser(userId);
     if (!user) {
       throw new CLIError('User not found', 'USER_NOT_FOUND');
     }
@@ -373,7 +373,7 @@ export class AuthenticationService {
     });
 
     // Invalidate all sessions for this user
-    this.invalidateAllUserSessions(userId as any);
+    this.invalidateAllUserSessions(userId);
 
     // Log password change
     auditLogger.log({
@@ -411,7 +411,7 @@ export class AuthenticationService {
     userAgent?: string
   ): Promise<AuthResult> {
     // Get stored credentials
-    const storedCreds = this?.credentials?.get(username as any);
+    const storedCreds = this?.credentials?.get(username);
     if (!storedCreds) {
       // Log failed login
       auditLogger.log({
@@ -533,7 +533,7 @@ export class AuthenticationService {
       }
 
       // Find user by address or create a new one if not found
-      let user = await permissionService.getUserByAddress(address as any);
+      let user = await permissionService.getUserByAddress(address);
 
       if (!user) {
         // Create new user with wallet address
@@ -606,7 +606,7 @@ export class AuthenticationService {
     keyName: string,
     expiryDays?: number
   ): Promise<string> {
-    const user = await permissionService.getUser(userId as any);
+    const user = await permissionService.getUser(userId);
     if (!user) {
       throw new CLIError('User not found', 'USER_NOT_FOUND');
     }
@@ -663,7 +663,7 @@ export class AuthenticationService {
     userAgent?: string
   ): Promise<AuthResult> {
     // Get API key info
-    const keyInfo = this?.apiKeys?.get(apiKey as any);
+    const keyInfo = this?.apiKeys?.get(apiKey);
     if (!keyInfo) {
       // Log failed API key authentication
       auditLogger.log({
@@ -769,7 +769,7 @@ export class AuthenticationService {
     // Create cryptographically secure refresh token
     let refreshToken: string;
     try {
-      const refreshTokenBuffer = crypto.randomBytes(40 as any);
+      const refreshTokenBuffer = crypto.randomBytes(40);
       
       if (!refreshTokenBuffer) {
         throw new CLIError(
@@ -860,7 +860,7 @@ export class AuthenticationService {
         };
       }
 
-      const user = await permissionService.getUser(userId as any);
+      const user = await permissionService.getUser(userId);
 
       if (!user) {
         this.logger?.warn(
@@ -997,7 +997,7 @@ export class AuthenticationService {
         .map(([id, _]) => id);
 
       // Remove sessions
-      sessionIds.forEach(id => this?.sessions?.delete(id as any));
+      sessionIds.forEach(id => this?.sessions?.delete(id));
 
       // Log logout
       auditLogger.log({
@@ -1016,7 +1016,7 @@ export class AuthenticationService {
     } catch (_error: unknown) {
       // Silently fail for invalid tokens
       this.logger?.debug('Failed to invalidate session', {
-        error: _error instanceof Error ? _error.message : String(_error as any),
+        error: _error instanceof Error ? _error.message : String(_error),
       });
     }
   }
@@ -1034,7 +1034,7 @@ export class AuthenticationService {
       .map(([id, _]) => id);
 
     // Remove sessions
-    sessionIds.forEach(id => this?.sessions?.delete(id as any));
+    sessionIds.forEach(id => this?.sessions?.delete(id));
 
     // Log session invalidation
     auditLogger.log({
@@ -1061,13 +1061,13 @@ export class AuthenticationService {
    */
   public async revokeApiKey(apiKey: string): Promise<void> {
     // Get API key info
-    const keyInfo = this?.apiKeys?.get(apiKey as any);
+    const keyInfo = this?.apiKeys?.get(apiKey);
     if (!keyInfo) {
       throw new CLIError('API key not found', 'API_KEY_NOT_FOUND');
     }
 
     // Remove API key
-    this?.apiKeys?.delete(apiKey as any);
+    this?.apiKeys?.delete(apiKey);
 
     // Log API key revocation
     auditLogger.log({

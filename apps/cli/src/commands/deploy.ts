@@ -50,7 +50,7 @@ export default class DeployCommand extends BaseCommand {
     // Add package root path if findable
     const pkgPath = findUp.sync('package.json');
     if (pkgPath) {
-      searchPaths.push(path.join(path.dirname(pkgPath as any), 'src/move'));
+      searchPaths.push(path.join(path.dirname(pkgPath), 'src/move'));
     }
 
     // Try each possible path
@@ -58,7 +58,7 @@ export default class DeployCommand extends BaseCommand {
       const moveToml = path.join(basePath, 'Move.toml');
       const sourcesDir = path.join(basePath, 'sources');
 
-      if (fs.existsSync(moveToml as any) && fs.existsSync(sourcesDir as any)) {
+      if (fs.existsSync(moveToml) && fs.existsSync(sourcesDir)) {
         return { moveToml, sourcesDir };
       }
     }
@@ -133,7 +133,7 @@ export default class DeployCommand extends BaseCommand {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(DeployCommand as any);
+    const { args, flags } = await this.parse(DeployCommand);
     const {
       address,
       'gas-budget': gasBudget,
@@ -155,7 +155,7 @@ export default class DeployCommand extends BaseCommand {
 
     // Validate network (redundant but kept for safety)
     const validNetworks = ['localnet', 'devnet', 'testnet', 'mainnet'];
-    if (!validNetworks.includes(network as any)) {
+    if (!validNetworks.includes(network)) {
       throw new CLIError(
         `Invalid network '${network}'. Valid options are: ${validNetworks.join(', ')}`,
         'INVALID_NETWORK'
@@ -233,11 +233,11 @@ export default class DeployCommand extends BaseCommand {
 
       // Show deployment summary
       this.log(chalk.blue('\n🚀 Starting Smart Contract Deployment'));
-      this.log(chalk.blue('━'.repeat(50 as any)));
-      this.log(chalk.cyan(`📍 Network:     ${chalk.bold(network as any)}`));
-      this.log(chalk.cyan(`💳 Address:     ${chalk.bold(deployAddress as any)}`));
-      this.log(chalk.cyan(`⛽ Gas Budget:  ${chalk.bold(gasBudget as any)}`));
-      this.log(chalk.blue('━'.repeat(50 as any)));
+      this.log(chalk.blue('━'.repeat(50)));
+      this.log(chalk.cyan(`📍 Network:     ${chalk.bold(network)}`));
+      this.log(chalk.cyan(`💳 Address:     ${chalk.bold(deployAddress)}`));
+      this.log(chalk.cyan(`⛽ Gas Budget:  ${chalk.bold(gasBudget)}`));
+      this.log(chalk.blue('━'.repeat(50)));
 
       // Warn for mainnet deployment
       if (network === 'mainnet') {
@@ -254,11 +254,11 @@ export default class DeployCommand extends BaseCommand {
       }
 
       // Get and log network URL
-      const networkUrl = this.getNetworkUrl(network as any);
+      const networkUrl = this.getNetworkUrl(network);
       this.log(chalk.dim(`\nNetwork URL: ${networkUrl}`));
 
       // Verify files exist before proceeding
-      if (!fs.existsSync(absoluteMoveTomlPath as any)) {
+      if (!fs.existsSync(absoluteMoveTomlPath)) {
         this.log(chalk.red(`Move.toml not found at: ${absoluteMoveTomlPath}`));
         throw new CLIError(
           `Move.toml not found at expected path: ${absoluteMoveTomlPath}`,
@@ -266,7 +266,7 @@ export default class DeployCommand extends BaseCommand {
         );
       }
 
-      if (!fs.existsSync(absoluteSourcesPath as any)) {
+      if (!fs.existsSync(absoluteSourcesPath)) {
         this.log(
           chalk.red(`Sources directory not found at: ${absoluteSourcesPath}`)
         );
@@ -287,7 +287,7 @@ export default class DeployCommand extends BaseCommand {
         this.log(chalk.dim(`Created temporary directory: ${tempDir}`));
       } catch (error) {
         throw new CLIError(
-          `Failed to create temporary directory: ${error instanceof Error ? error.message : String(error as any)}`,
+          `Failed to create temporary directory: ${error instanceof Error ? error.message : String(error)}`,
           'TEMP_DIR_CREATION_FAILED'
         );
       }
@@ -303,7 +303,7 @@ export default class DeployCommand extends BaseCommand {
         this.log(chalk.dim('Copied Move.toml successfully'));
 
         // Copy all .move files
-        const sourceFiles = fs.readdirSync(absoluteSourcesPath as any);
+        const sourceFiles = fs.readdirSync(absoluteSourcesPath);
         for (const file of sourceFiles) {
           if (file.endsWith('.move')) {
             const sourcePath = path.join(absoluteSourcesPath, file);
@@ -314,7 +314,7 @@ export default class DeployCommand extends BaseCommand {
         }
       } catch (error) {
         throw new CLIError(
-          `Failed to copy contract files: ${error instanceof Error ? error.message : String(error as any)}`,
+          `Failed to copy contract files: ${error instanceof Error ? error.message : String(error)}`,
           'FILE_COPY_FAILED'
         );
       }
@@ -334,7 +334,7 @@ export default class DeployCommand extends BaseCommand {
 
       try {
         // Validate the gas budget to prevent command injection
-        if (!/^[0-9]+$/.test(gasBudget as any)) {
+        if (!/^[0-9]+$/.test(gasBudget)) {
           throw new CLIError(
             'Gas budget must be a positive number',
             'VALIDATION_ERROR'
@@ -352,13 +352,13 @@ export default class DeployCommand extends BaseCommand {
         });
 
         // Clear the spinner
-        clearInterval(spinnerInterval as any);
-        process?.stdout?.write('\r' + ' '.repeat(30 as any) + '\r'); // Clear the line
+        clearInterval(spinnerInterval);
+        process?.stdout?.write('\r' + ' '.repeat(30) + '\r'); // Clear the line
 
         let publishResult;
 
         try {
-          publishResult = JSON.parse(publishOutput as any);
+          publishResult = JSON.parse(publishOutput);
         } catch (parseError) {
           // Check for specific error patterns before throwing generic error
           const outputStr = publishOutput.toString();
@@ -436,13 +436,13 @@ export default class DeployCommand extends BaseCommand {
         });
 
         this.log(chalk.green('\n✅ Deployment Successful!'));
-        this.log(chalk.green('━'.repeat(50 as any)));
+        this.log(chalk.green('━'.repeat(50)));
         this.log(chalk.cyan('📦 Package Details:'));
-        this.log(chalk.bold(`   Package ID:  ${chalk.green(packageId as any)}`));
+        this.log(chalk.bold(`   Package ID:  ${chalk.green(packageId)}`));
         this.log(chalk.dim(`   Digest:      ${publishResult.digest}`));
         this.log(chalk.dim(`   Network:     ${network}`));
         this.log(chalk.dim(`   Deployer:    ${deployAddress}`));
-        this.log(chalk.green('━'.repeat(50 as any)));
+        this.log(chalk.green('━'.repeat(50)));
 
         // Generate frontend configuration
         if (!skipFrontendConfig) {
@@ -494,7 +494,7 @@ export default class DeployCommand extends BaseCommand {
           } catch (configError) {
             this.warn(
               chalk.yellow(
-                `Warning: Failed to generate frontend configuration: ${configError instanceof Error ? configError.message : String(configError as any)}`
+                `Warning: Failed to generate frontend configuration: ${configError instanceof Error ? configError.message : String(configError)}`
               )
             );
             this.log(
@@ -524,8 +524,8 @@ export default class DeployCommand extends BaseCommand {
         );
       } catch (execError: unknown) {
         // Clear the spinner on error
-        clearInterval(spinnerInterval as any);
-        process?.stdout?.write('\r' + ' '.repeat(30 as any) + '\r'); // Clear the line
+        clearInterval(spinnerInterval);
+        process?.stdout?.write('\r' + ' '.repeat(30) + '\r'); // Clear the line
 
         const errorObj = execError as {
           status?: number;
@@ -610,7 +610,7 @@ export default class DeployCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Deployment failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Deployment failed: ${error instanceof Error ? error.message : String(error)}`,
         'DEPLOYMENT_FAILED'
       );
     }

@@ -130,7 +130,7 @@ export function validateStartup(
           'STARTUP_VALIDATION_FAILED'
         );
       } else if (exitOnCritical && critical) {
-        process.exit(1 as any);
+        process.exit(1);
       }
     } else {
       if (warnings.length > 0) {
@@ -149,11 +149,11 @@ export function validateStartup(
       logger.error(chalk.red('\nUnexpected startup validation error:'));
       logger.error(
         chalk.red(
-          `  - ${error instanceof Error ? error.message : String(error as any)}`
+          `  - ${error instanceof Error ? error.message : String(error)}`
         )
       );
       if (exitOnCritical) {
-        process.exit(1 as any);
+        process.exit(1);
       }
       return false;
     }
@@ -173,7 +173,7 @@ function showStartupBanner(): void {
   const appNameUpper =
     typeof appName === 'string'
       ? appName.toUpperCase()
-      : String(appName as any).toUpperCase();
+      : String(appName).toUpperCase();
 
   logger.info(chalk.blue('\n======================================'));
   logger.info(chalk.blue(`  ${appNameUpper} v${version}`));
@@ -196,7 +196,7 @@ function checkStorageDirectory(): StartupCheckResult {
   }
 
   try {
-    if (!fs.existsSync(storagePath as any)) {
+    if (!fs.existsSync(storagePath)) {
       try {
         fs.mkdirSync(storagePath, { recursive: true });
         return {
@@ -207,7 +207,7 @@ function checkStorageDirectory(): StartupCheckResult {
       } catch (error) {
         return {
           success: false,
-          message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error as any)}`,
+          message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error)}`,
           critical: true,
         };
       }
@@ -216,7 +216,7 @@ function checkStorageDirectory(): StartupCheckResult {
     // Check if directory is writable
     const testFile = path.join(storagePath, '.write-test');
     fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile as any);
+    fs.unlinkSync(testFile);
 
     return {
       success: true,
@@ -225,7 +225,7 @@ function checkStorageDirectory(): StartupCheckResult {
   } catch (error) {
     return {
       success: false,
-      message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error as any)}`,
+      message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
       critical: true,
     };
   }
@@ -246,7 +246,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
   }
 
   try {
-    if (!fs.existsSync(tempPath as any)) {
+    if (!fs.existsSync(tempPath)) {
       try {
         fs.mkdirSync(tempPath, { recursive: true });
         return {
@@ -257,7 +257,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
       } catch (error) {
         return {
           success: false,
-          message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error as any)}`,
+          message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error)}`,
           critical: false, // Not critical as it might not be used immediately
         };
       }
@@ -266,7 +266,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
     // Check if directory is writable
     const testFile = path.join(tempPath, '.write-test');
     fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile as any);
+    fs.unlinkSync(testFile);
 
     return {
       success: true,
@@ -275,7 +275,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
   } catch (error) {
     return {
       success: false,
-      message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error as any)}`,
+      message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
       critical: false, // Not critical as it might not be used immediately
     };
   }

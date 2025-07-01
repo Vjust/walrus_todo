@@ -97,7 +97,7 @@ export class SecureCredentialService {
     validateApiKey(provider, apiKey);
 
     // Perform security check on the key
-    const securityCheck = performKeySecurityCheck(apiKey as any);
+    const securityCheck = performKeySecurityCheck(apiKey);
     if (!securityCheck.secure) {
       this?.logger?.warn(
         `Security issues detected with ${provider} API key: ${securityCheck?.issues?.join(', ')}`
@@ -130,7 +130,7 @@ export class SecureCredentialService {
     });
 
     // Clear from cache if exists
-    this?.credentialCache?.delete(provider as any);
+    this?.credentialCache?.delete(provider);
 
     let verified = false;
 
@@ -216,7 +216,7 @@ export class SecureCredentialService {
   ): Promise<string> {
     // Check cache first if not bypassing
     if (!options.bypassCache) {
-      const cached = this?.credentialCache?.get(provider as any);
+      const cached = this?.credentialCache?.get(provider);
       if (cached && cached.expiry > Date.now()) {
         return cached.value;
       }
@@ -295,7 +295,7 @@ export class SecureCredentialService {
       }
 
       const baseError =
-        _error instanceof Error ? _error : new Error(String(_error as any));
+        _error instanceof Error ? _error : new Error(String(_error));
       throw new CLIError(
         `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one. Original error: ${baseError.message}`,
         'CREDENTIAL_NOT_FOUND'
@@ -408,8 +408,8 @@ export class SecureCredentialService {
 
       const provider = secret.replace('-api-key', '') as AIProvider;
       try {
-        const info = await this.getCredentialInfo(provider as any);
-        credentials.push(info as any);
+        const info = await this.getCredentialInfo(provider);
+        credentials.push(info);
       } catch (_error) {
         this?.logger?.warn(
           `Failed to get info for ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`
@@ -479,7 +479,7 @@ export class SecureCredentialService {
       const removed = await this?.vault?.removeSecret(`${provider}-api-key`);
 
       // Remove from cache
-      this?.credentialCache?.delete(provider as any);
+      this?.credentialCache?.delete(provider);
 
       return removed;
     } catch (_error) {
@@ -632,10 +632,10 @@ export class SecureCredentialService {
       });
 
       // Clear cache
-      this?.credentialCache?.delete(provider as any);
+      this?.credentialCache?.delete(provider);
 
       // Return updated info
-      return await this.getCredentialInfo(provider as any);
+      return await this.getCredentialInfo(provider);
     } catch (_error) {
       throw new CLIError(
         `Failed to update permissions: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -672,7 +672,7 @@ export class SecureCredentialService {
       }
 
       // Perform security check on the new key
-      const securityCheck = performKeySecurityCheck(newApiKey as any);
+      const securityCheck = performKeySecurityCheck(newApiKey);
       if (!securityCheck.secure) {
         this?.logger?.warn(
           `Security issues detected with new ${provider} API key: ${securityCheck?.issues?.join(', ')}`
@@ -733,12 +733,12 @@ export class SecureCredentialService {
       });
 
       // Clear cache
-      this?.credentialCache?.delete(provider as any);
+      this?.credentialCache?.delete(provider);
 
       this?.logger?.info(`Rotated API key for ${provider}`);
 
       // Return updated info
-      return await this.getCredentialInfo(provider as any);
+      return await this.getCredentialInfo(provider);
     } catch (_error) {
       throw new CLIError(
         `Failed to rotate credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -760,7 +760,7 @@ export class SecureCredentialService {
       for (const key of rotationNeeded) {
         if (key.endsWith('-api-key')) {
           const provider = key.replace('-api-key', '');
-          providers.push(provider as any);
+          providers.push(provider);
           this?.logger?.warn(`API key for ${provider} is due for rotation`);
         }
       }

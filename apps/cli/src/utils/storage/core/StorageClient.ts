@@ -88,7 +88,7 @@ export class StorageClient {
       } else {
         // Re-throw the error in production environments
         throw new NetworkError(
-          `Failed to initialize SuiClient: ${error instanceof Error ? error.message : String(error as any)}`,
+          `Failed to initialize SuiClient: ${error instanceof Error ? error.message : String(error)}`,
           {
             operation: 'client initialization',
             recoverable: false,
@@ -153,7 +153,7 @@ export class StorageClient {
           reset: jest.fn(),
         } as unknown as WalrusClient;
 
-        this?.walrusClient = createWalrusClientAdapter(mockWalrusClient as any);
+        this?.walrusClient = createWalrusClientAdapter(mockWalrusClient);
       } else {
         // Create real WalrusClient
         const walrusClient = new WalrusClient({
@@ -165,7 +165,7 @@ export class StorageClient {
           },
         });
 
-        this?.walrusClient = createWalrusClientAdapter(walrusClient as any);
+        this?.walrusClient = createWalrusClientAdapter(walrusClient);
       }
 
       this?.initialized = true;
@@ -175,7 +175,7 @@ export class StorageClient {
       }
 
       throw new NetworkError(
-        `Failed to initialize storage client: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to initialize storage client: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'client initialization',
           recoverable: false,
@@ -240,7 +240,7 @@ export class StorageClient {
       }
 
       throw new ValidationError(
-        `Network verification failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'environment validation',
           cause: error instanceof Error ? error : undefined,
@@ -352,7 +352,7 @@ export class StorageClient {
       }
 
       throw new BlockchainError(
-        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'get balance',
           recoverable: true,
@@ -414,7 +414,7 @@ export class StorageClient {
       }
 
       throw new StorageError(
-        `Failed to retrieve blob: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve blob: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'blob retrieval',
           itemId: blobId,
@@ -461,7 +461,7 @@ export class StorageClient {
       };
 
       const result = await AsyncOperationHandler.execute(
-        () => walrusClient.writeBlob(writeOptions as any),
+        () => walrusClient.writeBlob(writeOptions),
         {
           operation: 'store content',
           maxRetries,
@@ -500,7 +500,7 @@ export class StorageClient {
       }
 
       throw new StorageError(
-        `Failed to store content: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store content: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'store content',
           recoverable: true,

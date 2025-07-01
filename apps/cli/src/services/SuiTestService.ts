@@ -78,7 +78,7 @@ export class SuiTestService implements ISuiService {
       this?.walletAddress = await this.getWalletAddress();
     } catch (_error) {
       throw new CLIError(
-        `Failed to initialize Sui service: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+        `Failed to initialize Sui service: ${_error instanceof Error ? _error.message : String(_error)}`,
         'INIT_FAILED'
       );
     }
@@ -134,7 +134,7 @@ export class SuiTestService implements ISuiService {
    * Add a todo item to a list
    */
   async addTodo(listId: string, text: string): Promise<string> {
-    const list = this?.todoLists?.get(listId as any);
+    const list = this?.todoLists?.get(listId);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
@@ -157,7 +157,7 @@ export class SuiTestService implements ISuiService {
    * Get all todos from a list
    */
   async getTodos(listId: string): Promise<TodoItem[]> {
-    const list = this?.todoLists?.get(listId as any);
+    const list = this?.todoLists?.get(listId);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
@@ -173,12 +173,12 @@ export class SuiTestService implements ISuiService {
     itemId: string,
     changes: Partial<Omit<TodoItem, 'id'>>
   ): Promise<void> {
-    const list = this?.todoLists?.get(listId as any);
+    const list = this?.todoLists?.get(listId);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    const item = list?.items?.get(itemId as any);
+    const item = list?.items?.get(itemId);
     if (!item) {
       throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
     }
@@ -191,16 +191,16 @@ export class SuiTestService implements ISuiService {
    * Delete a todo item
    */
   async deleteTodo(listId: string, itemId: string): Promise<void> {
-    const list = this?.todoLists?.get(listId as any);
+    const list = this?.todoLists?.get(listId);
     if (!list) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    if (!list?.items?.has(itemId as any)) {
+    if (!list?.items?.has(itemId)) {
       throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
     }
 
-    list?.items?.delete(itemId as any);
+    list?.items?.delete(itemId);
     list?.updatedAt = Date.now();
   }
 
@@ -208,11 +208,11 @@ export class SuiTestService implements ISuiService {
    * Delete a todo list
    */
   async deleteTodoList(listId: string): Promise<void> {
-    if (!this?.todoLists?.has(listId as any)) {
+    if (!this?.todoLists?.has(listId)) {
       throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    this?.todoLists?.delete(listId as any);
+    this?.todoLists?.delete(listId);
   }
 
   /**
@@ -270,7 +270,7 @@ export class SuiTestService implements ISuiService {
           retries++;
           if (retries >= SECURITY_CONFIG?.TRANSACTION_VERIFICATION?.MAX_RETRIES) {
             throw new CLIError(
-              `Transaction verification failed after ${retries} attempts: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+              `Transaction verification failed after ${retries} attempts: ${_error instanceof Error ? _error.message : String(_error)}`,
               'VERIFICATION_FAILED'
             );
           }

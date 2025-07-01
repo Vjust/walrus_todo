@@ -88,7 +88,7 @@ export default class AuthCommand extends BaseCommand {
     }),
     role: Flags.string({
       description: 'Role for the new user',
-      options: Object.values(UserRole as any),
+      options: Object.values(UserRole),
       dependsOn: ['register'],
       default: UserRole.USER,
     }),
@@ -150,11 +150,11 @@ export default class AuthCommand extends BaseCommand {
   private authTokenFilePath = path.join(os.homedir(), '.walrus', 'auth.json');
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(AuthCommand as any);
+    const { flags } = await this.parse(AuthCommand);
 
     // Create the .walrus directory if it doesn't exist
     const walrusDir = path.dirname(this.authTokenFilePath);
-    if (!fs.existsSync(walrusDir as any)) {
+    if (!fs.existsSync(walrusDir)) {
       fs.mkdirSync(walrusDir, { recursive: true });
     }
 
@@ -503,7 +503,7 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Revoke API key
-      await authenticationService.revokeApiKey(apiKey as any);
+      await authenticationService.revokeApiKey(apiKey);
 
       this.log(chalk.green(`API key revoked successfully`));
     } catch (error) {
@@ -558,7 +558,7 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       const data = fs.readFileSync(this.authTokenFilePath, 'utf-8');
-      return JSON.parse(String(data as any));
+      return JSON.parse(String(data));
     } catch (_error) {
       return null;
     }

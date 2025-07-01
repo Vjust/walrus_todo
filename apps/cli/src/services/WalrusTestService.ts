@@ -23,14 +23,14 @@ export class WalrusTestService implements IWalrusService {
       return blobId;
     } catch (error) {
       throw new CLIError(
-        `Failed to store todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
         'STORE_TODO_FAILED'
       );
     }
   }
 
   async retrieveTodo(blobId: string): Promise<Todo> {
-    const todo = this?.todos?.get(blobId as any);
+    const todo = this?.todos?.get(blobId);
     if (!todo) {
       throw new CLIError(
         `Todo with blob ID "${blobId}" not found`,
@@ -47,14 +47,14 @@ export class WalrusTestService implements IWalrusService {
       return blobId;
     } catch (error) {
       throw new CLIError(
-        `Failed to store todo list: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
         'STORE_LIST_FAILED'
       );
     }
   }
 
   async retrieveTodoList(blobId: string): Promise<TodoList> {
-    const list = this?.lists?.get(blobId as any);
+    const list = this?.lists?.get(blobId);
     if (!list) {
       throw new CLIError(
         `Todo list with blob ID "${blobId}" not found`,

@@ -48,7 +48,7 @@ export class LazyLoader {
     const startTime = Date.now();
 
     // Check memory cache first
-    const cached = this?.moduleCache?.get(modulePath as any);
+    const cached = this?.moduleCache?.get(modulePath);
     if (cached) {
       cached?.lastAccessed = Date.now();
       this?.logger?.debug(`Module loaded from memory cache: ${modulePath}`, {
@@ -59,7 +59,7 @@ export class LazyLoader {
 
     // Check persistent cache if enabled
     if (this.persistentCache) {
-      const persistentCached = await this?.persistentCache?.get(modulePath as any);
+      const persistentCached = await this?.persistentCache?.get(modulePath);
       if (persistentCached) {
         this?.moduleCache?.set(modulePath, persistentCached);
         this?.logger?.debug(
@@ -73,7 +73,7 @@ export class LazyLoader {
     }
 
     // Check if already loading
-    const existingPromise = this?.loadingPromises?.get(modulePath as any);
+    const existingPromise = this?.loadingPromises?.get(modulePath);
     if (existingPromise) {
       this?.logger?.debug(`Waiting for existing load: ${modulePath}`);
       return existingPromise as Promise<T>;
@@ -85,12 +85,12 @@ export class LazyLoader {
 
     try {
       const module = await loadPromise;
-      this?.loadingPromises?.delete(modulePath as any);
+      this?.loadingPromises?.delete(modulePath);
       return module;
     } catch (error: unknown) {
-      this?.loadingPromises?.delete(modulePath as any);
+      this?.loadingPromises?.delete(modulePath);
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       throw typedError;
     }
   }
@@ -105,7 +105,7 @@ export class LazyLoader {
     const timeout = this?.options?.loadTimeout || 5000;
 
     try {
-      const loadPromise = import(modulePath as any);
+      const loadPromise = import(modulePath);
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(
           () => reject(new Error(`Module load timeout: ${modulePath}`)),
@@ -139,7 +139,7 @@ export class LazyLoader {
       return module;
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       this?.logger?.error(`Failed to load module: ${modulePath}`, typedError);
       throw typedError;
     }
@@ -150,7 +150,7 @@ export class LazyLoader {
    */
   async preload(modulePaths: string[]): Promise<void> {
     for (const path of modulePaths) {
-      this?.preloadQueue?.add(path as any);
+      this?.preloadQueue?.add(path);
     }
 
     if (!this.preloadTimer) {
@@ -164,7 +164,7 @@ export class LazyLoader {
   private schedulePreload(hints: string[]): void {
     // Add to preload queue
     for (const hint of hints) {
-      this?.preloadQueue?.add(hint as any);
+      this?.preloadQueue?.add(hint);
     }
 
     // Start preloading after a delay
@@ -181,10 +181,10 @@ export class LazyLoader {
     }
 
     const modulePath = this?.preloadQueue?.values().next().value;
-    this?.preloadQueue?.delete(modulePath as any);
+    this?.preloadQueue?.delete(modulePath);
 
     // Preload in background
-    void this.loadModuleInBackground(modulePath as any).finally(() => {
+    void this.loadModuleInBackground(modulePath).finally(() => {
       // Schedule next preload
       this?.preloadTimer = setTimeout(
         () => this.scheduleNextPreload(),
@@ -199,7 +199,7 @@ export class LazyLoader {
   private async loadModuleInBackground(modulePath: string): Promise<void> {
     try {
       const startTime = Date.now();
-      const module = await import(modulePath as any);
+      const module = await import(modulePath);
       const loadTime = Date.now() - startTime;
 
       const moduleInfo: ModuleInfo = {
@@ -221,7 +221,7 @@ export class LazyLoader {
       });
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       this?.logger?.warn(`Failed to preload module: ${modulePath}`, typedError);
     }
   }
@@ -230,10 +230,10 @@ export class LazyLoader {
    * Clear module from cache
    */
   async clear(modulePath: string): Promise<void> {
-    this?.moduleCache?.delete(modulePath as any);
+    this?.moduleCache?.delete(modulePath);
 
     if (this.persistentCache) {
-      await this?.persistentCache?.delete(modulePath as any);
+      await this?.persistentCache?.delete(modulePath);
     }
 
     this?.logger?.debug(`Module cleared from cache: ${modulePath}`);
@@ -324,7 +324,7 @@ export async function lazyLoad<T = unknown>(modulePath: string): Promise<T> {
 
 export async function preloadModules(modulePaths: string[]): Promise<void> {
   const loader = getGlobalLazyLoader();
-  return loader.preload(modulePaths as any);
+  return loader.preload(modulePaths);
 }
 
 // Shutdown hook

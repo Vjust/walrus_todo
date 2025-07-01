@@ -80,7 +80,7 @@ export function isRetryableError(error: unknown): boolean {
     return error?.shouldRetry === true;
   }
 
-  if (isErrorWithMessage(error as any)) {
+  if (isErrorWithMessage(error)) {
     const errorMessage = error?.message?.toLowerCase();
     return (
       errorMessage.includes('timeout') ||
@@ -100,12 +100,12 @@ export function isRetryableError(error: unknown): boolean {
  * @returns A string error message
  */
 export function getErrorMessage(error: unknown): string {
-  if (isErrorWithMessage(error as any)) {
+  if (isErrorWithMessage(error)) {
     return error.message;
   }
 
   try {
-    return String(error as any);
+    return String(error);
   } catch (e) {
     return 'Unknown error';
   }
@@ -177,7 +177,7 @@ export function toBaseError(
   }
 
   return new BaseError({
-    message: isErrorWithMessage(error as any) ? error.message : defaultMessage,
+    message: isErrorWithMessage(error) ? error.message : defaultMessage,
     code: getErrorCode(error, defaultCode),
     context: { originalError: error },
   });

@@ -13,10 +13,10 @@ if (typeof String.prototype?.replaceAll === 'undefined') {
           'String?.prototype?.replaceAll called with a non-global RegExp argument'
         );
       }
-      return this.replace(searchValue, replaceValue as any);
+      return this.replace(searchValue, replaceValue);
     }
 
-    const searchStr = String(searchValue as any);
+    const searchStr = String(searchValue);
     if (searchStr === '') {
       if (typeof replaceValue === 'function') {
         const result: string[] = [];
@@ -28,7 +28,7 @@ if (typeof String.prototype?.replaceAll === 'undefined') {
         }
         return result.join('');
       } else {
-        return this.split('').join(String(replaceValue as any));
+        return this.split('').join(String(replaceValue));
       }
     }
 
@@ -39,7 +39,7 @@ if (typeof String.prototype?.replaceAll === 'undefined') {
       const replacement =
         typeof replaceValue === 'function'
           ? replaceValue(searchStr, index, result)
-          : String(replaceValue as any);
+          : String(replaceValue);
 
       result =
         result.substring(0, index) +
@@ -59,7 +59,7 @@ if (typeof String.prototype?.at === 'undefined') {
     index: number
   ): string | undefined {
     const length = this.length;
-    const relativeIndex = Math.trunc(index as any) || 0;
+    const relativeIndex = Math.trunc(index) || 0;
     const k = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
     return k < 0 || k >= length ? undefined : this[k];
   };

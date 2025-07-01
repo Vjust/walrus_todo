@@ -1,3 +1,3 @@
 export { ConfigService } from './config-service';
-export { TodoService, todoService } from './todoService.consolidated';
+export { todoService, createTodoService, TodoService } from './todo';
 export { aiService } from './ai';

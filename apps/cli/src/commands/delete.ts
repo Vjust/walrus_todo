@@ -2,7 +2,7 @@ import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
 
@@ -93,7 +93,7 @@ export default class DeleteCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(DeleteCommand as any);
+      const { args, flags } = await this.parse(DeleteCommand);
 
       // Parse input to determine what the user wants to delete
       const { listName, todoIdentifier, deleteAll } = this.parseDeleteInput(
@@ -118,13 +118,13 @@ export default class DeleteCommand extends BaseCommand {
       }
 
       // No specific action provided - show interactive help
-      return await this.showInteractiveHelp(listName as any);
+      return await this.showInteractiveHelp(listName);
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
       throw new CLIError(
-        `Failed to delete: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to delete: ${error instanceof Error ? error.message : String(error)}`,
         'DELETE_FAILED'
       );
     }
@@ -201,7 +201,7 @@ export default class DeleteCommand extends BaseCommand {
    */
   private looksLikeTodoId(str: string): boolean {
     // Check if it's numeric
-    if (/^\d+$/.test(str as any)) {
+    if (/^\d+$/.test(str)) {
       return true;
     }
 
@@ -215,7 +215,7 @@ export default class DeleteCommand extends BaseCommand {
     }
 
     // Check if it's a short hash-like ID
-    if (/^[a-f0-9]{6,}$/i.test(str as any)) {
+    if (/^[a-f0-9]{6,}$/i.test(str)) {
       return true;
     }
 
@@ -229,7 +229,7 @@ export default class DeleteCommand extends BaseCommand {
     listName: string,
     force: boolean
   ): Promise<void> {
-    const list = await this?.todoService?.getList(listName as any);
+    const list = await this?.todoService?.getList(listName);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
@@ -237,7 +237,7 @@ export default class DeleteCommand extends BaseCommand {
     if (!force) {
       const shouldDelete = await confirm({
         message:
-          chalk.red(`⚠️  Delete entire list "${chalk.bold(listName as any)}"?`) +
+          chalk.red(`⚠️  Delete entire list "${chalk.bold(listName)}"?`) +
           '\n' +
           chalk.dim(
             `   This will permanently delete ${list?.todos?.length} todo${list?.todos?.length !== 1 ? 's' : ''}.\n`
@@ -251,10 +251,10 @@ export default class DeleteCommand extends BaseCommand {
       }
     }
 
-    await this?.todoService?.deleteList(listName as any);
+    await this?.todoService?.deleteList(listName);
 
     this.log(chalk.green('✓'), chalk.green('Successfully deleted list'));
-    this.log('  ', chalk.bold(listName as any));
+    this.log('  ', chalk.bold(listName));
     this.log(
       '  ',
       chalk.dim(
@@ -282,7 +282,7 @@ export default class DeleteCommand extends BaseCommand {
 
     if (listName) {
       // Search in specific list
-      const list = await this?.todoService?.getList(listName as any);
+      const list = await this?.todoService?.getList(listName);
       if (!list) {
         throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
       }
@@ -294,7 +294,7 @@ export default class DeleteCommand extends BaseCommand {
       );
 
       // If not found, try partial ID match
-      if (!todo && this.looksLikeTodoId(todoIdentifier as any)) {
+      if (!todo && this.looksLikeTodoId(todoIdentifier)) {
         const partialMatches = list?.todos?.filter((t: Todo) =>
           t?.id?.toLowerCase().startsWith(todoIdentifier.toLowerCase())
         );
@@ -346,7 +346,7 @@ export default class DeleteCommand extends BaseCommand {
       actualListName = listName;
     } else {
       // Search all lists
-      const result = await this.findTodoInAllLists(todoIdentifier as any);
+      const result = await this.findTodoInAllLists(todoIdentifier);
       if (!result) {
         throw new CLIError(
           `Todo "${todoIdentifier}" not found in any list`,
@@ -394,7 +394,7 @@ export default class DeleteCommand extends BaseCommand {
     const lists = await this?.todoService?.getAllListsWithContent();
     const matches: Array<{ todo: Todo; listName: string }> = [];
 
-    for (const [listName, list] of Object.entries(lists as any)) {
+    for (const [listName, list] of Object.entries(lists)) {
       // First try exact match
       const exactMatch = list?.todos?.find(
         (t: Todo) => t?.id === todoIdentifier || t?.title === todoIdentifier
@@ -441,7 +441,7 @@ export default class DeleteCommand extends BaseCommand {
   private async showInteractiveHelp(listName: string | null): Promise<void> {
     if (listName) {
       // List was provided but no todo ID or --all flag
-      const list = await this?.todoService?.getList(listName as any);
+      const list = await this?.todoService?.getList(listName);
       if (!list) {
         throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
       }
@@ -538,22 +538,22 @@ export default class DeleteCommand extends BaseCommand {
       );
 
       const lists = await this?.todoService?.getAllListsWithContent();
-      if (Object.keys(lists as any).length > 0) {
+      if (Object.keys(lists).length > 0) {
         this.log(chalk.blue('\nYour todo lists:'));
         let totalTodos = 0;
-        Object.entries(lists as any).forEach(([listName, list]: [string, any]) => {
+        Object.entries(lists).forEach(([listName, list]: [string, any]) => {
           const todoCount = list?.todos?.length;
           totalTodos += todoCount;
           const icon = todoCount === 0 ? chalk.gray('○') : chalk.green('●');
           this.log(
-            `  ${icon} ${chalk.bold(listName as any)} ${chalk.dim(`(${todoCount} todo${todoCount !== 1 ? 's' : ''})`)}`
+            `  ${icon} ${chalk.bold(listName)} ${chalk.dim(`(${todoCount} todo${todoCount !== 1 ? 's' : ''})`)}`
           );
         });
 
         if (totalTodos > 0) {
           this.log(
             chalk.dim(
-              `\nTotal: ${totalTodos} todo${totalTodos !== 1 ? 's' : ''} across ${Object.keys(lists as any).length} list${Object.keys(lists as any).length !== 1 ? 's' : ''}`
+              `\nTotal: ${totalTodos} todo${totalTodos !== 1 ? 's' : ''} across ${Object.keys(lists).length} list${Object.keys(lists).length !== 1 ? 's' : ''}`
             )
           );
         }

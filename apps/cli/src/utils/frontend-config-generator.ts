@@ -156,8 +156,8 @@ export class FrontendConfigGenerator {
       await this.ensureConfigDirectory();
 
       // Get network and Walrus configurations
-      const networkConfig = this.getNetworkConfig(network as any);
-      const walrusConfig = this.getWalrusConfig(network as any);
+      const networkConfig = this.getNetworkConfig(network);
+      const walrusConfig = this.getWalrusConfig(network);
 
       // Create deployment configuration
       const deploymentConfig: DeploymentConfig = {
@@ -194,7 +194,7 @@ export class FrontendConfigGenerator {
       logger.info(`Frontend configuration generated successfully`);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error as any);
+        error instanceof Error ? error.message : String(error);
       logger.error(`Failed to generate frontend config: ${errorMessage}`);
       throw new CLIError(
         `Failed to generate frontend configuration: ${errorMessage}`,
@@ -211,7 +211,7 @@ export class FrontendConfigGenerator {
       await fs?.promises?.mkdir(this.configDir, { recursive: true });
     } catch (error) {
       throw new CLIError(
-        `Failed to create config directory: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create config directory: ${error instanceof Error ? error.message : String(error)}`,
         'CONFIG_DIR_CREATE_FAILED'
       );
     }
@@ -374,7 +374,7 @@ export function getNetworkConfig(network: NetworkName) {
  */
 export function getCurrentNetworkConfig() {
   const network = (process?.env?.NEXT_PUBLIC_NETWORK || 'testnet') as NetworkName;
-  return getNetworkConfig(network as any);
+  return getNetworkConfig(network);
 }
 `;
 
@@ -408,5 +408,5 @@ export function getCurrentNetworkConfig() {
 export function createFrontendConfigGenerator(
   projectRoot?: string
 ): FrontendConfigGenerator {
-  return new FrontendConfigGenerator(projectRoot as any);
+  return new FrontendConfigGenerator(projectRoot);
 }

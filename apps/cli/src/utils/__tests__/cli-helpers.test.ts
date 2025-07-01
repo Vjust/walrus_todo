@@ -51,10 +51,10 @@ describe('CLI Helpers', () => {
 
     it('should format errors correctly', () => {
       const error = new Error('Test error');
-      expect(ErrorHandler.formatError(error as any)).toBe('Test error');
+      expect(ErrorHandler.formatError(error)).toBe('Test error');
 
       const stringError = 'String error';
-      expect(ErrorHandler.formatError(stringError as any)).toBe('String error');
+      expect(ErrorHandler.formatError(stringError)).toBe('String error');
     });
 
     it('should exit process with error', () => {
@@ -63,10 +63,10 @@ describe('CLI Helpers', () => {
       });
 
       expect(() => ErrorHandler.exit('Exit message')).toThrow('Process exit');
-      expect(mockConsoleError as any).toHaveBeenCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringContaining('Exit message')
       );
-      expect(mockExit as any).toHaveBeenCalledWith(1 as any);
+      expect(mockExit).toHaveBeenCalledWith(1);
 
       mockExit.mockRestore();
     });
@@ -74,10 +74,10 @@ describe('CLI Helpers', () => {
 
   describe('FlagValidator', () => {
     it('should validate positive numbers', () => {
-      expect(FlagValidator.validatePositiveNumber('123', 'test')).toBe(123 as any);
+      expect(FlagValidator.validatePositiveNumber('123', 'test')).toBe(123);
       expect(() =>
         FlagValidator.validatePositiveNumber('-123', 'test')
-      ).toThrow(CLIError as any);
+      ).toThrow(CLIError);
       expect(() => FlagValidator.validatePositiveNumber('abc', 'test')).toThrow(
         CLIError
       );
@@ -104,15 +104,15 @@ describe('CLI Helpers', () => {
       );
       expect(() =>
         FlagValidator.validateEnum('invalid', validValues, 'priority')
-      ).toThrow(CLIError as any);
+      ).toThrow(CLIError);
     });
 
     it('should validate paths', () => {
       expect(FlagValidator.validatePath('/valid/path', 'path')).toBe(
         '/valid/path'
       );
-      expect(() => FlagValidator.validatePath('', 'path')).toThrow(CLIError as any);
-      expect(() => FlagValidator.validatePath('   ', 'path')).toThrow(CLIError as any);
+      expect(() => FlagValidator.validatePath('', 'path')).toThrow(CLIError);
+      expect(() => FlagValidator.validatePath('   ', 'path')).toThrow(CLIError);
     });
   });
 
@@ -132,8 +132,8 @@ describe('CLI Helpers', () => {
         initialDelay: 10,
       });
 
-      expect(result as any).toBe('Success');
-      expect(operation as any).toHaveBeenCalledTimes(3 as any);
+      expect(result).toBe('Success');
+      expect(operation).toHaveBeenCalledTimes(3);
     });
 
     it('should throw after max attempts', async () => {
@@ -148,7 +148,7 @@ describe('CLI Helpers', () => {
         })
       ).rejects.toThrow('Persistent failure');
 
-      expect(operation as any).toHaveBeenCalledTimes(2 as any);
+      expect(operation).toHaveBeenCalledTimes(2);
     });
 
     it('should call onRetry callback', async () => {
@@ -164,35 +164,35 @@ describe('CLI Helpers', () => {
         onRetry,
       });
 
-      expect(onRetry as any).toHaveBeenCalledWith(1, expect.any(Error as any));
+      expect(onRetry).toHaveBeenCalledWith(1, expect.any(Error));
     });
   });
 
   describe('Logger', () => {
     it('should log success messages', () => {
       Logger.success('Success message');
-      expect(mockConsoleLog as any).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('Success message')
       );
     });
 
     it('should log error messages', () => {
       Logger.error('Error message');
-      expect(mockConsoleError as any).toHaveBeenCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringContaining('Error message')
       );
     });
 
     it('should log warning messages', () => {
       Logger.warning('Warning message');
-      expect(mockConsoleWarn as any).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining('Warning message')
       );
     });
 
     it('should log info messages', () => {
       Logger.info('Info message');
-      expect(mockConsoleLog as any).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('Info message')
       );
     });
@@ -203,12 +203,12 @@ describe('CLI Helpers', () => {
       // Without DEBUG
       delete process?.env?.DEBUG;
       Logger.debug('Debug message');
-      expect(mockConsoleLog as any).not.toHaveBeenCalled();
+      expect(mockConsoleLog).not.toHaveBeenCalled();
 
       // With DEBUG
       process.env?.DEBUG = 'true';
       Logger.debug('Debug message');
-      expect(mockConsoleLog as any).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('Debug message')
       );
 
@@ -222,10 +222,10 @@ describe('CLI Helpers', () => {
 
     it('should log step messages', () => {
       Logger.step(1, 5, 'Step message');
-      expect(mockConsoleLog as any).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('[1/5]')
       );
-      expect(mockConsoleLog as any).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('Step message')
       );
     });
@@ -239,40 +239,40 @@ describe('CLI Helpers', () => {
         city: 'New York',
       };
 
-      const formatted = Formatter.table(data as any);
-      expect(formatted as any).toContain('name : John');
-      expect(formatted as any).toContain('age  : 30');
-      expect(formatted as any).toContain('city : New York');
+      const formatted = Formatter.table(data);
+      expect(formatted).toContain('name : John');
+      expect(formatted).toContain('age  : 30');
+      expect(formatted).toContain('city : New York');
     });
 
     it('should format lists', () => {
       const items = ['Item 1', 'Item 2', 'Item 3'];
 
-      const formatted = Formatter.list(items as any);
-      expect(formatted as any).toContain('• Item 1');
-      expect(formatted as any).toContain('• Item 2');
-      expect(formatted as any).toContain('• Item 3');
+      const formatted = Formatter.list(items);
+      expect(formatted).toContain('• Item 1');
+      expect(formatted).toContain('• Item 2');
+      expect(formatted).toContain('• Item 3');
 
       const customBullet = Formatter.list(items, '-');
-      expect(customBullet as any).toContain('- Item 1');
+      expect(customBullet).toContain('- Item 1');
     });
 
     it('should format code', () => {
       const code = 'const x = 42;';
-      const formatted = Formatter.code(code as any);
-      expect(formatted as any).toContain(code as any);
+      const formatted = Formatter.code(code);
+      expect(formatted).toContain(code);
     });
 
     it('should highlight text', () => {
       const text = 'Important';
-      const formatted = Formatter.highlight(text as any);
-      expect(formatted as any).toContain(text as any);
+      const formatted = Formatter.highlight(text);
+      expect(formatted).toContain(text);
     });
 
     it('should dim text', () => {
       const text = 'Less important';
-      const formatted = Formatter.dim(text as any);
-      expect(formatted as any).toContain(text as any);
+      const formatted = Formatter.dim(text);
+      expect(formatted).toContain(text);
     });
   });
 });

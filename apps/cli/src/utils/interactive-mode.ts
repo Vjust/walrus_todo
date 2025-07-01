@@ -2,7 +2,7 @@ import * as readline from 'readline';
 import chalk = require('chalk');
 import { ICONS } from '../base-command';
 // import { Logger } from './Logger';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { spawn } from 'child_process';
 import * as path from 'path';
 
@@ -47,7 +47,7 @@ export class InteractiveMode {
       input: process.stdin,
       output: process.stdout,
       prompt: this.getPrompt(),
-      completer: this?.completer?.bind(this as any),
+      completer: this?.completer?.bind(this),
     });
   }
 
@@ -74,7 +74,7 @@ export class InteractiveMode {
       'current-list',
     ];
 
-    const hits = commands.filter(cmd => cmd.startsWith(line as any));
+    const hits = commands.filter(cmd => cmd.startsWith(line));
     return [hits.length ? hits : commands, line];
   }
 
@@ -91,10 +91,10 @@ export class InteractiveMode {
         return;
       }
 
-      this?.context?.history.push(trimmed as any);
+      this?.context?.history.push(trimmed);
 
       try {
-        await this.handleCommand(trimmed as any);
+        await this.handleCommand(trimmed);
       } catch (error) {
         console.error(chalk.red(`${ICONS.ERROR} Error: ${error.message}`));
       }
@@ -107,18 +107,18 @@ export class InteractiveMode {
 
     this?.rl?.on('close', () => {
       this.showGoodbye();
-      process.exit(0 as any);
+      process.exit(0);
     });
 
     this?.rl?.prompt();
   }
 
   private showWelcome(): void {
-    console.log('\n' + chalk.blue('═'.repeat(50 as any)));
+    console.log('\n' + chalk.blue('═'.repeat(50)));
     console.log(
       chalk?.cyan?.bold('  🌊 Welcome to Walrus Todo Interactive Mode! 🌊')
     );
-    console.log(chalk.blue('═'.repeat(50 as any)));
+    console.log(chalk.blue('═'.repeat(50)));
     console.log();
     console.log(chalk.yellow('Quick Commands:'));
     console.log('  • ' + chalk.green('l') + ' - List todos');
@@ -142,10 +142,10 @@ export class InteractiveMode {
   private async handleCommand(input: string): Promise<void> {
     const parts = input.split(' ');
     const cmd = parts[0].toLowerCase();
-    const args = parts.slice(1 as any);
+    const args = parts.slice(1);
 
     // Expand shortcuts
-    const actualCommand = this?.commands?.get(cmd as any) || cmd;
+    const actualCommand = this?.commands?.get(cmd) || cmd;
 
     switch (actualCommand) {
       case 'exit':
@@ -205,7 +205,7 @@ export class InteractiveMode {
     // Add current list context if applicable and not specified
     if (
       this?.context?.currentList &&
-      ['add', 'list', 'complete', 'delete'].includes(command as any)
+      ['add', 'list', 'complete', 'delete'].includes(command)
     ) {
       if (
         command === 'add' &&
@@ -241,7 +241,7 @@ export class InteractiveMode {
       });
 
       child.on('error', error => {
-        reject(error as any);
+        reject(error);
       });
     });
   }

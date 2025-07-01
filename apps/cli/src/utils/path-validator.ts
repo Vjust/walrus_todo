@@ -143,7 +143,7 @@ export function validatePath(
   }
 
   // Check for shell metacharacters
-  if (/[;&|<>$`\\!]/.test(inputPath as any)) {
+  if (/[;&|<>$`\\!]/.test(inputPath)) {
     throw new PathValidationError('File path contains invalid characters', {
       path: inputPath,
       operation,
@@ -151,13 +151,13 @@ export function validatePath(
   }
 
   // Normalize and resolve the path
-  const resolvedPath = path.resolve(inputPath as any);
+  const resolvedPath = path.resolve(inputPath);
 
   // Prevent path traversal by ensuring the path is within allowed directories
   const isWithinAllowedDirectories = currentConfig?.allowedDirectories?.some(
     dir => {
-      const normalizedDir = path.normalize(dir as any);
-      return resolvedPath.startsWith(normalizedDir as any);
+      const normalizedDir = path.normalize(dir);
+      return resolvedPath.startsWith(normalizedDir);
     }
   );
 
@@ -173,7 +173,7 @@ export function validatePath(
   }
 
   // Check if the path exists if required
-  if (options.mustExist && !fs.existsSync(resolvedPath as any)) {
+  if (options.mustExist && !fs.existsSync(resolvedPath)) {
     throw new PathValidationError(`File does not exist: ${resolvedPath}`, {
       path: inputPath,
       operation,
@@ -182,10 +182,10 @@ export function validatePath(
 
   // For operations that need to check the file extension
   if (options.checkExtension && operation in currentConfig.allowedExtensions) {
-    const ext = path.extname(resolvedPath as any).toLowerCase();
+    const ext = path.extname(resolvedPath).toLowerCase();
     const allowedExts = currentConfig?.allowedExtensions?.[operation];
 
-    if (allowedExts && !allowedExts.includes(ext as any)) {
+    if (allowedExts && !allowedExts.includes(ext)) {
       throw new PathValidationError(
         `File extension "${ext}" not allowed for ${operation} operation. Allowed extensions: ${allowedExts.join(', ')}`,
         { path: inputPath, operation }
@@ -197,9 +197,9 @@ export function validatePath(
   if (
     options.checkSize &&
     operation === SafePathOperation.READ &&
-    fs.existsSync(resolvedPath as any)
+    fs.existsSync(resolvedPath)
   ) {
-    const stats = fs.statSync(resolvedPath as any);
+    const stats = fs.statSync(resolvedPath);
 
     if (stats.isFile() && stats.size > currentConfig.maxReadSize) {
       throw new PathValidationError(
@@ -279,8 +279,8 @@ export function safeWriteFile(
   }
 
   // Create the directory if it doesn't exist
-  const dirPath = path.dirname(validatedPath as any);
-  if (!fs.existsSync(dirPath as any)) {
+  const dirPath = path.dirname(validatedPath);
+  if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
 
@@ -310,7 +310,7 @@ export function safeFileExists(
       checkExtension: false,
     });
 
-    return fs.existsSync(validatedPath as any);
+    return fs.existsSync(validatedPath);
   } catch (error) {
     if (error instanceof PathValidationError) {
       throw error;
@@ -362,5 +362,5 @@ export function safeDeleteFile(
     checkExtension: true,
   });
 
-  fs.unlinkSync(validatedPath as any);
+  fs.unlinkSync(validatedPath);
 }

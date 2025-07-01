@@ -28,7 +28,7 @@ chalk?.level = chalk.level > 0 ? chalk.level : 1;
 // Ensure stdout and stderr are properly flushed
 process?.stdout?.on('error', (err: NodeJS.ErrnoException) => {
   if (err?.code === 'EPIPE') {
-    process.exit(0 as any);
+    process.exit(0);
   }
 });
 
@@ -41,7 +41,7 @@ if (require?.main === module) {
     .then(({ run }) => run())
     .catch(error => {
       // Enhanced error handling for common issues
-      const errorMessage = error instanceof Error ? error.message : String(error as any);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       
       // Handle common network errors with better messaging
       if (
@@ -65,6 +65,6 @@ if (require?.main === module) {
         console.error(chalk.gray('Debug info:'), error);
       }
 
-      process.exit(1 as any);
+      process.exit(1);
     });
 }

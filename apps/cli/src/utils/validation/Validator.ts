@@ -98,7 +98,7 @@ export class Validator<T> {
    * @returns this for method chaining
    */
   addRule(rule: ValidationRule<T>): this {
-    this?.rules?.push(rule as any);
+    this?.rules?.push(rule);
     return this;
   }
 
@@ -136,7 +136,7 @@ export class Validator<T> {
 
         throw new ValidationError(message, {
           field: validationContext.fieldName,
-          value: this.safeStringify(value as any),
+          value: this.safeStringify(value),
           recoverable: false,
         });
       }
@@ -187,8 +187,8 @@ export class Validator<T> {
           value,
           (key, val) => {
             if (typeof val === 'object' && val !== null) {
-              if (seen.has(val as any)) return '[Circular]';
-              seen.add(val as any);
+              if (seen.has(val)) return '[Circular]';
+              seen.add(val);
             }
             return val;
           },
@@ -200,7 +200,7 @@ export class Validator<T> {
           ? stringified.slice(0, 100) + '...'
           : stringified;
       }
-      return String(value as any);
+      return String(value);
     } catch (_error) {
       return '[Complex Value]';
     }

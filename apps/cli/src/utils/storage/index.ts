@@ -71,8 +71,8 @@ export function createStorage(
 // Default configuration
 export const DEFAULT_STORAGE_CONFIG: import('./core/StorageTypes').StorageConfig =
   {
-    minWalBalance: BigInt(100 as any),
-    storageBuffer: BigInt(10240 as any),
+    minWalBalance: BigInt(100),
+    storageBuffer: BigInt(10240),
     defaultEpochDuration: 52,
     minEpochBuffer: 10,
     enableOptimization: true,

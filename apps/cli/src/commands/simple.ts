@@ -1,6 +1,6 @@
 import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { CLIError } from '../types/errors/consolidated';
 // Removed unused Todo import
 import chalk = require('chalk');
@@ -78,7 +78,7 @@ export default class SimpleCommand extends BaseCommand {
   private todoService = new TodoService();
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(SimpleCommand as any);
+    const { args, flags } = await this.parse(SimpleCommand);
 
     try {
       switch (args.action) {
@@ -177,7 +177,7 @@ export default class SimpleCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed in simple command: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed in simple command: ${error instanceof Error ? error.message : String(error)}`,
         'SIMPLE_FAILED'
       );
     }

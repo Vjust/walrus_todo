@@ -59,7 +59,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(GenerateFrontendConfigCommand as any);
+    const { flags } = await this.parse(GenerateFrontendConfigCommand);
 
     try {
       // Get current configuration
@@ -122,7 +122,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
         const path = await import('path');
         const networkConfigPath = path.join(configDir, `${network}.ts`);
 
-        if (fs.existsSync(networkConfigPath as any)) {
+        if (fs.existsSync(networkConfigPath)) {
           this.log(
             chalk.yellow(`⚠ Configuration for ${network} already exists at:`)
           );
@@ -175,7 +175,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to generate frontend configuration: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to generate frontend configuration: ${error instanceof Error ? error.message : String(error)}`,
         'CONFIG_GENERATION_FAILED'
       );
     }

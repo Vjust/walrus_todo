@@ -32,9 +32,9 @@ export class ApiValidationMiddleware {
 
         next();
       } catch (error) {
-        res.status(400 as any).json({
+        res.status(400).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error as any),
+          message: error instanceof Error ? error.message : String(error),
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -63,9 +63,9 @@ export class ApiValidationMiddleware {
 
         next();
       } catch (error) {
-        res.status(400 as any).json({
+        res.status(400).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error as any),
+          message: error instanceof Error ? error.message : String(error),
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -94,9 +94,9 @@ export class ApiValidationMiddleware {
 
         next();
       } catch (error) {
-        res.status(400 as any).json({
+        res.status(400).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error as any),
+          message: error instanceof Error ? error.message : String(error),
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -140,9 +140,9 @@ export class ApiValidationMiddleware {
 
         next();
       } catch (error) {
-        res.status(400 as any).json({
+        res.status(400).json({
           error: 'Bad Request',
-          message: error instanceof Error ? error.message : String(error as any),
+          message: error instanceof Error ? error.message : String(error),
           code: 'FILE_VALIDATION_ERROR',
         });
         return;
@@ -158,7 +158,7 @@ export class ApiValidationMiddleware {
   static validateAuth(authType: 'bearer' | 'api-key' = 'bearer') {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
-        const authHeader = (req as any).headers.authorization;
+        const authHeader = (req).headers.authorization;
 
         if (!authHeader) {
           throw new Error('Authorization header is required');
@@ -170,35 +170,35 @@ export class ApiValidationMiddleware {
             throw new Error('Authorization must use Bearer scheme');
           }
 
-          const token = authHeader.substring(7 as any);
+          const token = authHeader.substring(7);
           if (!token || token.length < 10) {
             throw new Error('Invalid token format');
           }
 
           // Add sanitized token to request
           (req as AuthenticatedRequest).token =
-            CommandSanitizer.sanitizeString(token as any);
+            CommandSanitizer.sanitizeString(token);
         } else if (authType === 'api-key') {
           // Validate API key
           if (!authHeader.startsWith('ApiKey ')) {
             throw new Error('Authorization must use ApiKey scheme');
           }
 
-          const apiKey = authHeader.substring(7 as any);
+          const apiKey = authHeader.substring(7);
           if (!apiKey || apiKey.length < 16) {
             throw new Error('Invalid API key format');
           }
 
           // Add sanitized API key to request
           (req as AuthenticatedRequest).apiKey =
-            CommandSanitizer.sanitizeApiKey(apiKey as any);
+            CommandSanitizer.sanitizeApiKey(apiKey);
         }
 
         next();
       } catch (error) {
-        res.status(401 as any).json({
+        res.status(401).json({
           error: 'Unauthorized',
-          message: error instanceof Error ? error.message : String(error as any),
+          message: error instanceof Error ? error.message : String(error),
           code: 'AUTH_VALIDATION_ERROR',
         });
         return;
@@ -212,6 +212,6 @@ export class ApiValidationMiddleware {
    * @returns Sanitized object
    */
   private static sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
-    return CommandSanitizer.sanitizeForJson(obj as any) as T;
+    return CommandSanitizer.sanitizeForJson(obj) as T;
   }
 }

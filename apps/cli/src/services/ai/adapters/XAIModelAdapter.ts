@@ -181,14 +181,14 @@ class MockChatXAI
         options?: Record<string, unknown>
       ): Promise<NewOutput> => {
         const output = await this.invoke(input, options);
-        return await transformer(output as any);
+        return await transformer(output);
       },
       batch: async (
         inputs: (string | StringPromptValueInterface)[],
         options?: Record<string, unknown>
       ): Promise<NewOutput[]> => {
         const outputs = await this.batch(inputs, options);
-        return await Promise.all(outputs.map(output => transformer(output as any)));
+        return await Promise.all(outputs.map(output => transformer(output)));
       },
       stream: async (
         input: string | StringPromptValueInterface,
@@ -199,7 +199,7 @@ class MockChatXAI
         // This is a simplified mock version
         async function* generate() {
           for await (const chunk of outputStream) {
-            yield (await transformer(chunk as any)) as NewOutput;
+            yield (await transformer(chunk)) as NewOutput;
           }
         }
         return generate();
@@ -212,7 +212,7 @@ class MockChatXAI
         Record<string, unknown>
       > => {
         return this.transform(async output =>
-          nextTransformer(await transformer(output as any))
+          nextTransformer(await transformer(output))
         );
       },
       pipe: <T>(
@@ -222,7 +222,7 @@ class MockChatXAI
         T,
         Record<string, unknown>
       > => {
-        const transformed = this.transform(transformer as any);
+        const transformed = this.transform(transformer);
         return {
           lc_serializable: true,
           getName: () => `${transformed.getName()}_pipe_${runnable.getName()}`,
@@ -254,7 +254,7 @@ class MockChatXAI
             U,
             Record<string, unknown>
           > => {
-            return transformed.pipe(runnable.transform(nextTransformer as any));
+            return transformed.pipe(runnable.transform(nextTransformer));
           },
           pipe: <U>(
             nextRunnable: RunnableInterface<T, U, Record<string, unknown>>
@@ -263,7 +263,7 @@ class MockChatXAI
             U,
             Record<string, unknown>
           > => {
-            return transformed.pipe(runnable.pipe(nextRunnable as any));
+            return transformed.pipe(runnable.pipe(nextRunnable));
           },
         };
       },
@@ -308,7 +308,7 @@ class MockChatXAI
         T,
         Record<string, unknown>
       > => {
-        return this.pipe(runnable.transform(transformer as any));
+        return this.pipe(runnable.transform(transformer));
       },
       pipe: <T>(
         nextRunnable: RunnableInterface<NewOutput, T, Record<string, unknown>>
@@ -317,7 +317,7 @@ class MockChatXAI
         T,
         Record<string, unknown>
       > => {
-        return this.pipe(runnable.pipe(nextRunnable as any));
+        return this.pipe(runnable.pipe(nextRunnable));
       },
     };
   }
@@ -483,7 +483,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
         maxTokens: options.maxTokens,
       });
 
-      const baseResponse = this.createBaseResponse(response as any);
+      const baseResponse = this.createBaseResponse(response);
 
       // Add indicator in metadata when using mock
       if (this.useMock) {
@@ -532,7 +532,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
       });
 
       const parsedResult = ResponseParser.parseJson<T>(response, {} as T);
-      const baseResponse = this.createBaseResponse(parsedResult as any);
+      const baseResponse = this.createBaseResponse(parsedResult);
 
       // Add indicator in metadata when using mock
       if (this.useMock) {
@@ -569,13 +569,13 @@ export class XAIModelAdapter extends BaseModelAdapter {
       }
 
       // First format the prompt template with input values
-      const formattedPrompt = await promptTemplate.format(input as any);
+      const formattedPrompt = await promptTemplate.format(input);
 
       // Then send the formatted prompt to our model
-      const response = await this?.client?.invoke(formattedPrompt as any);
+      const response = await this?.client?.invoke(formattedPrompt);
 
       // Convert to standard response format
-      const baseResponse = this.createBaseResponse(response as any);
+      const baseResponse = this.createBaseResponse(response);
 
       // Add indicator in metadata when using mock
       if (this.useMock) {

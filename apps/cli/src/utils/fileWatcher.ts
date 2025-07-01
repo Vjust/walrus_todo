@@ -51,7 +51,7 @@ export class FileWatcher extends EventEmitter {
     };
 
     this?.debouncedEmit = debounce(
-      this?.emitChange?.bind(this as any),
+      this?.emitChange?.bind(this),
       this?.options?.debounceMs
     );
 
@@ -62,15 +62,15 @@ export class FileWatcher extends EventEmitter {
    * Start watching a directory
    */
   async startWatching(directoryPath: string): Promise<void> {
-    const resolvedPath = resolve(directoryPath as any);
+    const resolvedPath = resolve(directoryPath);
 
-    if (this?.watchedPaths?.has(resolvedPath as any)) {
+    if (this?.watchedPaths?.has(resolvedPath)) {
       this?.logger?.warn(`Already watching path: ${resolvedPath}`);
       return;
     }
 
     try {
-      await stat(resolvedPath as any);
+      await stat(resolvedPath);
     } catch (error) {
       throw new Error(`Directory does not exist: ${resolvedPath}`);
     }
@@ -97,7 +97,7 @@ export class FileWatcher extends EventEmitter {
     });
 
     this?.watchers?.set(resolvedPath, watcher);
-    this?.watchedPaths?.add(resolvedPath as any);
+    this?.watchedPaths?.add(resolvedPath);
     this?.isWatching = true;
 
     this.emit('watchStarted', { path: resolvedPath });
@@ -109,13 +109,13 @@ export class FileWatcher extends EventEmitter {
    */
   async stopWatching(directoryPath?: string): Promise<void> {
     if (directoryPath) {
-      const resolvedPath = resolve(directoryPath as any);
-      const watcher = this?.watchers?.get(resolvedPath as any);
+      const resolvedPath = resolve(directoryPath);
+      const watcher = this?.watchers?.get(resolvedPath);
 
       if (watcher) {
         watcher.close();
-        this?.watchers?.delete(resolvedPath as any);
-        this?.watchedPaths?.delete(resolvedPath as any);
+        this?.watchers?.delete(resolvedPath);
+        this?.watchedPaths?.delete(resolvedPath);
         this?.logger?.info(`Stopped watching: ${resolvedPath}`);
         this.emit('watchStopped', { path: resolvedPath });
       }
@@ -144,13 +144,13 @@ export class FileWatcher extends EventEmitter {
   ): Promise<void> {
     try {
       // Check if file should be ignored
-      if (!this.shouldProcessFile(filePath as any)) {
+      if (!this.shouldProcessFile(filePath)) {
         return;
       }
 
       // Debounce rapid changes to the same file
       const now = Date.now();
-      const lastChange = this?.lastChangeMap?.get(filePath as any) || 0;
+      const lastChange = this?.lastChangeMap?.get(filePath) || 0;
       if (now - lastChange < 100) {
         // 100ms minimum between events for same file
         return;
@@ -164,7 +164,7 @@ export class FileWatcher extends EventEmitter {
       let fileStats;
 
       try {
-        const stats = await stat(filePath as any);
+        const stats = await stat(filePath);
         fileStats = {
           size: stats.size,
           mtime: stats.mtime,
@@ -198,7 +198,7 @@ export class FileWatcher extends EventEmitter {
       });
 
       // Use debounced emit to handle rapid file changes
-      this.debouncedEmit(changeEvent as any);
+      this.debouncedEmit(changeEvent);
     } catch (error) {
       this?.logger?.error(`Error handling file change for ${filePath}:`, error);
     }
@@ -211,14 +211,14 @@ export class FileWatcher extends EventEmitter {
     const fileName = filePath.split('/').pop() || '';
 
     // Check exclude patterns
-    if (this?.options?.excludePatterns.some(pattern => pattern.test(fileName as any))) {
+    if (this?.options?.excludePatterns.some(pattern => pattern.test(fileName))) {
       return false;
     }
 
     // Check file extensions
     if (this?.options?.fileExtensions.length > 0) {
       const hasValidExtension = this?.options?.fileExtensions.some(ext =>
-        fileName.endsWith(ext as any)
+        fileName.endsWith(ext)
       );
       if (!hasValidExtension) {
         return false;
@@ -255,7 +255,7 @@ export class FileWatcher extends EventEmitter {
    * Manually trigger a file scan (useful for initial sync)
    */
   async scanDirectory(directoryPath: string): Promise<FileChangeEvent[]> {
-    const resolvedPath = resolve(directoryPath as any);
+    const resolvedPath = resolve(directoryPath);
     const changes: FileChangeEvent[] = [];
 
     this?.logger?.info(`Scanning directory: ${resolvedPath}`);
@@ -270,12 +270,12 @@ export class FileWatcher extends EventEmitter {
         const filePath = join(resolvedPath, file.toString());
         const relativePath = relative(resolvedPath, filePath);
 
-        if (!this.shouldProcessFile(filePath as any)) {
+        if (!this.shouldProcessFile(filePath)) {
           continue;
         }
 
         try {
-          const stats = await stat(filePath as any);
+          const stats = await stat(filePath);
 
           if (stats.isFile()) {
             changes.push({

@@ -81,7 +81,7 @@ export class EnhancedErrorHandler {
 
     if (typeof error === 'object') {
       try {
-        const stringified = JSON.stringify(error as any);
+        const stringified = JSON.stringify(error);
         const message =
           stringified === '{}'
             ? 'Empty object error'
@@ -106,7 +106,7 @@ export class EnhancedErrorHandler {
 
     // Last resort for unknown error types
     try {
-      const errorStr = String(error as any);
+      const errorStr = String(error);
       return {
         message: `Unknown error of type ${typeof error}: ${errorStr}${context?.operation ? ` (during ${context.operation})` : ''}`,
         type: `UnknownError_${typeof error}`,

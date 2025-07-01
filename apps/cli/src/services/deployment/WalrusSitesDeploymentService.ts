@@ -148,11 +148,11 @@ export class WalrusSitesDeploymentService {
       });
 
       // Clean up deployment tracking
-      this?.activeDeployments?.delete(deploymentId as any);
+      this?.activeDeployments?.delete(deploymentId);
 
       if (options.cleanupOnFailure !== false) {
         // Keep successful deployments for reference but mark as completed
-        setTimeout(() => this?.recoveryManager?.cleanupDeployment(deploymentId as any), 60000);
+        setTimeout(() => this?.recoveryManager?.cleanupDeployment(deploymentId), 60000);
       }
 
       return result;
@@ -162,7 +162,7 @@ export class WalrusSitesDeploymentService {
       
       await this.handleDeploymentFailure(deploymentId, error, options);
       
-      const deploymentState = this?.recoveryManager?.getDeploymentState(deploymentId as any);
+      const deploymentState = this?.recoveryManager?.getDeploymentState(deploymentId);
       const result: DeploymentResult = {
         success: false,
         deploymentId,
@@ -170,11 +170,11 @@ export class WalrusSitesDeploymentService {
         totalSize: deploymentState?.metadata.totalSize || 0,
         duration,
         errors: deploymentState?.errors.map(e => e.message) || [
-          error instanceof Error ? error.message : String(error as any)
+          error instanceof Error ? error.message : String(error)
         ],
       };
 
-      this?.activeDeployments?.delete(deploymentId as any);
+      this?.activeDeployments?.delete(deploymentId);
       return result;
     }
   }
@@ -185,7 +185,7 @@ export class WalrusSitesDeploymentService {
   async resumeDeployment(deploymentId: string): Promise<DeploymentResult> {
     this?.logger?.info('Resuming deployment', { deploymentId });
 
-    const canResume = this?.recoveryManager?.canResumeDeployment(deploymentId as any);
+    const canResume = this?.recoveryManager?.canResumeDeployment(deploymentId);
     if (!canResume) {
       throw new CLIError(
         `Deployment ${deploymentId} cannot be resumed`,
@@ -193,7 +193,7 @@ export class WalrusSitesDeploymentService {
       );
     }
 
-    const recoverySuccess = await this?.recoveryManager?.recoverDeployment(deploymentId as any);
+    const recoverySuccess = await this?.recoveryManager?.recoverDeployment(deploymentId);
     if (!recoverySuccess) {
       throw new CLIError(
         `Failed to recover deployment ${deploymentId}`,
@@ -201,7 +201,7 @@ export class WalrusSitesDeploymentService {
       );
     }
 
-    const deploymentState = this?.recoveryManager?.getDeploymentState(deploymentId as any);
+    const deploymentState = this?.recoveryManager?.getDeploymentState(deploymentId);
     if (!deploymentState) {
       throw new CLIError(
         `Deployment state not found for ${deploymentId}`,
@@ -218,7 +218,7 @@ export class WalrusSitesDeploymentService {
     };
 
     // Continue deployment from where it left off
-    return this.deploy(options as any);
+    return this.deploy(options);
   }
 
   /**
@@ -226,7 +226,7 @@ export class WalrusSitesDeploymentService {
    */
   async rollbackDeployment(deploymentId: string): Promise<boolean> {
     this?.logger?.info('Rolling back deployment', { deploymentId });
-    return this?.recoveryManager?.rollbackDeployment(deploymentId as any);
+    return this?.recoveryManager?.rollbackDeployment(deploymentId);
   }
 
   /**
@@ -235,7 +235,7 @@ export class WalrusSitesDeploymentService {
   async cancelDeployment(deploymentId: string, cleanup: boolean = true): Promise<void> {
     this?.logger?.info('Cancelling deployment', { deploymentId, cleanup });
 
-    const activeDeployment = this?.activeDeployments?.get(deploymentId as any);
+    const activeDeployment = this?.activeDeployments?.get(deploymentId);
     if (activeDeployment?.process) {
       // Kill the active process
       try {
@@ -260,19 +260,19 @@ export class WalrusSitesDeploymentService {
       await this?.recoveryManager?.cleanupDeployment(deploymentId, true);
     }
 
-    this?.activeDeployments?.delete(deploymentId as any);
+    this?.activeDeployments?.delete(deploymentId);
   }
 
   /**
    * Get deployment progress
    */
   getDeploymentProgress(deploymentId: string): DeploymentProgress | null {
-    const state = this?.recoveryManager?.getDeploymentState(deploymentId as any);
-    const progress = this?.recoveryManager?.getDeploymentProgress(deploymentId as any);
+    const state = this?.recoveryManager?.getDeploymentState(deploymentId);
+    const progress = this?.recoveryManager?.getDeploymentProgress(deploymentId);
     
     if (!state || !progress) return null;
 
-    const activeDeployment = this?.activeDeployments?.get(deploymentId as any);
+    const activeDeployment = this?.activeDeployments?.get(deploymentId);
     const estimatedTimeRemaining = this.calculateEstimatedTimeRemaining(
       activeDeployment?.startTime || 0,
       progress.percentage
@@ -315,7 +315,7 @@ export class WalrusSitesDeploymentService {
    * Get detailed deployment information
    */
   getDeploymentDetails(deploymentId: string): DeploymentState | null {
-    return this?.recoveryManager?.getDeploymentState(deploymentId as any);
+    return this?.recoveryManager?.getDeploymentState(deploymentId);
   }
 
   /**
@@ -365,7 +365,7 @@ export class WalrusSitesDeploymentService {
     const requiredFiles = ['index.html'];
     for (const file of requiredFiles) {
       const filePath = path.join(options.buildDirectory, file);
-      if (!fs.existsSync(filePath as any)) {
+      if (!fs.existsSync(filePath)) {
         throw new CLIError(
           `Required file missing: ${file}`,
           'REQUIRED_FILE_MISSING'
@@ -380,7 +380,7 @@ export class WalrusSitesDeploymentService {
       
       await new Promise((resolve, reject) => {
         process.on('close', (code) => {
-          if (code === 0) resolve(undefined as any);
+          if (code === 0) resolve(undefined);
           else reject(new Error(`site-builder exit code: ${code}`));
         });
         process.on('error', reject);
@@ -419,7 +419,7 @@ export class WalrusSitesDeploymentService {
   }> {
     this?.logger?.debug('Starting file uploads', { deploymentId });
 
-    const state = this?.recoveryManager?.getDeploymentState(deploymentId as any);
+    const state = this?.recoveryManager?.getDeploymentState(deploymentId);
     if (!state) {
       throw new CLIError(`Deployment state not found`, 'DEPLOYMENT_STATE_NOT_FOUND');
     }
@@ -459,7 +459,7 @@ export class WalrusSitesDeploymentService {
           walrusOperations: state.walrusOperations
         });
 
-        const fileData = fs.readFileSync(filePath as any);
+        const fileData = fs.readFileSync(filePath);
         const uploadResult = await this?.walrusClient?.upload(fileData, {
           epochs: options.epochs || 5,
           onProgress: (message, progress) => {
@@ -500,7 +500,7 @@ export class WalrusSitesDeploymentService {
         await this?.recoveryManager?.recordError(deploymentId, {
           type: 'storage',
           message: `Failed to upload file: ${upload.file}`,
-          details: { error: error instanceof Error ? error.message : String(error as any) },
+          details: { error: error instanceof Error ? error.message : String(error) },
           recoverable: upload.retryCount < (options.maxRetries || 3),
         });
 
@@ -623,7 +623,7 @@ export class WalrusSitesDeploymentService {
       }
 
       // Add manifest blob ID
-      args.push(manifestBlobId as any);
+      args.push(manifestBlobId);
 
       this?.logger?.debug('Executing site-builder', { args });
 
@@ -673,7 +673,7 @@ export class WalrusSitesDeploymentService {
       });
 
       // Store process reference for potential cancellation
-      const activeDeployment = this?.activeDeployments?.get(deploymentId as any);
+      const activeDeployment = this?.activeDeployments?.get(deploymentId);
       if (activeDeployment) {
         activeDeployment?.process = process;
       }
@@ -682,7 +682,7 @@ export class WalrusSitesDeploymentService {
 
   private async updateProgress(
     deploymentId: string,
-    phase: DeploymentProgress?.["phase"],
+    phase: DeploymentProgress["phase"],
     progress: number
   ): Promise<void> {
     this?.logger?.debug('Deployment progress update', { deploymentId, phase, progress });
@@ -695,7 +695,7 @@ export class WalrusSitesDeploymentService {
   ): Promise<void> {
     this?.logger?.error('Deployment failed', {
       deploymentId,
-      error: error instanceof Error ? error.message : String(error as any),
+      error: error instanceof Error ? error.message : String(error),
     });
 
     let errorType: 'network' | 'validation' | 'storage' | 'blockchain' | 'config' = 'config';
@@ -723,7 +723,7 @@ export class WalrusSitesDeploymentService {
 
     await this?.recoveryManager?.recordError(deploymentId, {
       type: errorType,
-      message: error instanceof Error ? error.message : String(error as any),
+      message: error instanceof Error ? error.message : String(error),
       details: { error },
       recoverable: errorType !== 'validation',
     });
@@ -739,7 +739,7 @@ export class WalrusSitesDeploymentService {
     });
   }
 
-  private mapStatusToPhase(status: string): DeploymentProgress?.["phase"] {
+  private mapStatusToPhase(status: string): DeploymentProgress["phase"] {
     switch (status) {
       case 'pending': return 'validation';
       case 'uploading': return 'uploading';

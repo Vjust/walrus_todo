@@ -92,7 +92,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
             verificationType: 0,
             metadata: {},
           }),
-          verifyRecord: jest.fn().mockResolvedValue(true as any),
+          verifyRecord: jest.fn().mockResolvedValue(true),
           getProviderInfo: jest.fn().mockResolvedValue({
             name: defaultProvider,
             publicKey: 'test_key',
@@ -122,8 +122,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
           }),
           generateProof: jest.fn().mockResolvedValue('test_proof'),
           exportVerifications: jest.fn().mockResolvedValue('[]'),
-          enforceRetentionPolicy: jest.fn().mockResolvedValue(0 as any),
-          securelyDestroyData: jest.fn().mockResolvedValue(true as any),
+          enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
+          securelyDestroyData: jest.fn().mockResolvedValue(true),
         };
       } else {
         throw new CLIError(
@@ -163,7 +163,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
 
     // Pass the adapter to the parent constructor
-    super(verifierAdapter as any);
+    super(verifierAdapter);
 
     this?.blockchainVerifier = blockchainVerifier;
     this?.permissionManager = permissionManager || getPermissionManager(); // Fallback to default permission manager
@@ -171,7 +171,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     this?.defaultProvider = defaultProvider;
 
     // Initialize proof system
-    this?.proofSystem = new AIProofSystem(blockchainVerifier as any);
+    this?.proofSystem = new AIProofSystem(blockchainVerifier);
   }
 
   /**
@@ -238,7 +238,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       );
     }
 
-    if (!todos || !Array.isArray(todos as any)) {
+    if (!todos || !Array.isArray(todos)) {
       throw new CLIError(
         'Invalid todos parameter: must be an array',
         'VALIDATION_ERROR'
@@ -259,8 +259,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     // Create verification on blockchain
     const verificationResult = await this?.blockchainVerifier?.verifyOperation({
       actionType: operationType,
-      request: JSON.stringify(todos as any),
-      response: JSON.stringify(result as any),
+      request: JSON.stringify(todos),
+      response: JSON.stringify(result),
       provider,
       metadata: enhancedMetadata,
       privacyLevel,
@@ -386,7 +386,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        categoryCount: Object.keys(categories as any).length.toString(),
+        categoryCount: Object.keys(categories).length.toString(),
       }
     );
   }
@@ -446,7 +446,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        analysisKeys: Object.keys(analysis as any).join(','),
+        analysisKeys: Object.keys(analysis).join(','),
       }
     );
   }
@@ -464,7 +464,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       // For path-based proofs, we need to import from a file
       // For string-based proofs, we can directly verify the string
       const verificationResult =
-        await this?.proofSystem?.verifyProof(exportedProof as any);
+        await this?.proofSystem?.verifyProof(exportedProof);
       return verificationResult.isValid;
     } catch (_error) {
       logger.error('Failed to verify proof:', _error);
@@ -502,7 +502,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     try {
       // Get verification from blockchain
       const verification =
-        await this?.blockchainVerifier?.getVerification(verificationId as any);
+        await this?.blockchainVerifier?.getVerification(verificationId);
 
       if (!verification) {
         throw new CLIError(
@@ -543,7 +543,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     try {
       const verifications = await this?.blockchainVerifier?.listVerifications();
 
-      if (!verifications || !Array.isArray(verifications as any)) {
+      if (!verifications || !Array.isArray(verifications)) {
         return [];
       }
 
@@ -591,7 +591,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     try {
       requestData =
         typeof request === 'string' && request.startsWith('[')
-          ? JSON.parse(request as any)
+          ? JSON.parse(request)
           : request;
     } catch (error) {
       // If request is not valid JSON, treat it as a string
@@ -671,7 +671,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       // Simulate verifying signature
       const verifySignatureFn = this?.blockchainVerifier?.['verifySignature'];
       if (typeof verifySignatureFn === 'function') {
-        const isValidSignature = await verifySignatureFn(signature as any);
+        const isValidSignature = await verifySignatureFn(signature);
         if (!isValidSignature) {
           throw new Error('Invalid signature for proof verification');
         }
@@ -712,7 +712,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       ).toString('base64');
 
       // Verify proof integrity using blockchain data
-      const result = await this?.proofSystem?.verifyProof(proofString as any);
+      const result = await this?.proofSystem?.verifyProof(proofString);
 
       return result.isValid;
     } catch (_error) {

@@ -1,7 +1,7 @@
 import { Args, Flags } from '@oclif/core';
 import chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
@@ -76,7 +76,7 @@ export default class UpdateStorageCommand extends BaseCommand {
   private walrusStorage = createWalrusStorage('testnet', false);
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(UpdateStorageCommand as any);
+    const { args, flags } = await this.parse(UpdateStorageCommand);
 
     try {
       const list = await this?.todoService?.getList(args.listName);
@@ -147,7 +147,7 @@ export default class UpdateStorageCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to update storage: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to update storage: ${error instanceof Error ? error.message : String(error)}`,
         'UPDATE_STORAGE_FAILED'
       );
     }
@@ -276,12 +276,12 @@ export default class UpdateStorageCommand extends BaseCommand {
     this.section(
       'Storage Update Summary',
       [
-        `${ICONS.SUCCESS} Successfully updated: ${chalk.green(successCount as any)}`,
-        failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount as any)}` : null,
-        `${ICONS.LIST} List: ${chalk.cyan(listName as any)}`,
+        `${ICONS.SUCCESS} Successfully updated: ${chalk.green(successCount)}`,
+        failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount)}` : null,
+        `${ICONS.LIST} List: ${chalk.cyan(listName)}`,
         `${STORAGE[newStorage].icon} New storage: ${STORAGE[newStorage].color(STORAGE[newStorage].label)}`,
       ]
-        .filter(Boolean as any)
+        .filter(Boolean)
         .join('\n')
     );
   }
@@ -299,7 +299,7 @@ export default class UpdateStorageCommand extends BaseCommand {
       (newStorage === 'blockchain' || newStorage === 'both')
     ) {
       // Store on blockchain
-      const blobId = await this?.walrusStorage?.storeTodo(todo as any);
+      const blobId = await this?.walrusStorage?.storeTodo(todo);
       await this?.todoService?.updateTodo(listName, todo.id, {
         walrusBlobId: blobId,
         storageLocation: newStorage,

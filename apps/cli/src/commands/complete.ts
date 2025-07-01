@@ -2,7 +2,7 @@ import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS, TODO_NFT_CONFIG } from '../constants';
@@ -152,7 +152,7 @@ class CompleteCommand extends BaseCommand {
    */
   private validateNetwork(network: string): string {
     const validNetworks = ['localnet', 'devnet', 'testnet', 'mainnet'];
-    if (!validNetworks.includes(network as any)) {
+    if (!validNetworks.includes(network)) {
       throw new CLIError(
         `Invalid network: ${network}. Valid networks are: ${validNetworks.join(', ')}`,
         'INVALID_NETWORK'
@@ -198,7 +198,7 @@ class CompleteCommand extends BaseCommand {
       return state?.protocolVersion?.toString() || 'unknown';
     } catch (error) {
       throw new CLIError(
-        `Failed to connect to network: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to connect to network: ${error instanceof Error ? error.message : String(error)}`,
         'NETWORK_CONNECTION_FAILED'
       );
     }
@@ -273,7 +273,7 @@ class CompleteCommand extends BaseCommand {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Failed to validate NFT state: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to validate NFT state: ${error instanceof Error ? error.message : String(error)}`,
         'NFT_VALIDATION_FAILED'
       );
     }
@@ -299,14 +299,14 @@ class CompleteCommand extends BaseCommand {
       const txb = new Transaction();
       txb.moveCall({
         target: `${packageId}::${TODO_NFT_CONFIG.MODULE_NAME}::complete_todo`,
-        arguments: [txb.object(nftObjectId as any)],
+        arguments: [txb.object(nftObjectId)],
       });
 
       const serialized = txb.serialize();
       const transactionBlock =
         typeof serialized === 'string'
           ? serialized
-          : Buffer.from(serialized as any).toString('base64');
+          : Buffer.from(serialized).toString('base64');
       const dryRunResult = await (
         suiClient as {
           dryRunTransactionBlock: (params: {
@@ -327,7 +327,7 @@ class CompleteCommand extends BaseCommand {
       };
     } catch (error) {
       throw new CLIError(
-        `Failed to estimate gas: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`,
         'GAS_ESTIMATION_FAILED'
       );
     }
@@ -345,12 +345,12 @@ class CompleteCommand extends BaseCommand {
       const rawConfig = await configService.getConfig();
       const config = {
         ...rawConfig,
-        logging: (rawConfig as any).logging || {
+        logging: (rawConfig).logging || {
           level: 'info' as const,
           console: true
         },
-        completedTodos: (rawConfig as any).completedTodos
-      } as any;
+        completedTodos: (rawConfig).completedTodos
+      };
 
       // Initialize completed todos tracking if not exists
       if (!config.completedTodos) {
@@ -389,11 +389,11 @@ class CompleteCommand extends BaseCommand {
       }
 
       // Write the config, using our custom wrapper to allow mocking in tests
-      await this.writeConfigSafe(config as any);
+      await this.writeConfigSafe(config);
     } catch (error) {
       // Non-blocking error - log but don't fail the command
       this.warning(
-        `Failed to update completion statistics: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to update completion statistics: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -408,7 +408,7 @@ class CompleteCommand extends BaseCommand {
     try {
       // First try the standard config service method
       if (typeof configService?.saveConfig === 'function') {
-        await configService.saveConfig(config as any);
+        await configService.saveConfig(config);
         return;
       }
 
@@ -421,7 +421,7 @@ class CompleteCommand extends BaseCommand {
       this.writeFileSafe(configPath, JSON.stringify(config, null, 2), 'utf8');
     } catch (error) {
       throw new Error(
-        `Failed to save config: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to save config: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -460,15 +460,15 @@ class CompleteCommand extends BaseCommand {
 
       // Read existing mappings or create empty object
       let mappings: Record<string, string> = {};
-      if (fs.existsSync(blobMappingsFile as any)) {
+      if (fs.existsSync(blobMappingsFile)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           const contentStr =
-            typeof content === 'string' ? content : String(content as any);
-          mappings = JSON.parse(contentStr as any);
+            typeof content === 'string' ? content : String(content);
+          mappings = JSON.parse(contentStr);
         } catch (error) {
           this.warning(
-            `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error as any)}`
+            `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`
           );
           // Continue with empty mappings
         }
@@ -487,7 +487,7 @@ class CompleteCommand extends BaseCommand {
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
     } catch (error) {
       this.warning(
-        `Failed to save blob mapping: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -551,7 +551,7 @@ class CompleteCommand extends BaseCommand {
     // Write initial log
     jobManager.writeJobLog(
       job.id,
-      `Starting completion of ${todos.length} todo(s as any) in list "${listName}"`
+      `Starting completion of ${todos.length} todo(s) in list "${listName}"`
     );
 
     // Handle process completion
@@ -559,7 +559,7 @@ class CompleteCommand extends BaseCommand {
       if (code === 0) {
         jobManager.writeJobLog(
           job.id,
-          `Successfully completed all ${todos.length} todo(s as any)`
+          `Successfully completed all ${todos.length} todo(s)`
         );
         jobManager.completeJob(job.id, {
           completedTodos: todos.length,
@@ -703,7 +703,7 @@ class CompleteCommand extends BaseCommand {
         } catch (error) {
           failed++;
           const errorMsg =
-            error instanceof Error ? error.message : String(error as any);
+            error instanceof Error ? error.message : String(error);
           errors.push(`${todo.title}: ${errorMsg}`);
           if (progressBar) progressBar.increment();
           if (!flags.quiet) {
@@ -717,7 +717,7 @@ class CompleteCommand extends BaseCommand {
         }
       });
 
-      await Promise.all(batchPromises as any);
+      await Promise.all(batchPromises);
 
       // Small delay between batches to prevent overwhelming the system
       if (i + batchSize < totalTodos.length) {
@@ -781,7 +781,7 @@ class CompleteCommand extends BaseCommand {
 
         const config = await configService.getConfig();
         const network = flags.network || config.network || 'testnet';
-        const networkUrl = this.validateNetwork(network as any);
+        const networkUrl = this.validateNetwork(network);
 
         // Initialize blockchain clients if needed
         let suiClient: unknown | undefined;
@@ -789,11 +789,11 @@ class CompleteCommand extends BaseCommand {
 
         if (todo.nftObjectId || todo.walrusBlobId) {
           // Validate deployment config first
-          await this.validateBlockchainConfig(network as any);
+          await this.validateBlockchainConfig(network);
 
           // Initialize and check network connection
           suiClient = { url: networkUrl }; // Mock SuiClient
-          const protocolVersion = await this.getNetworkStatus(suiClient as any);
+          const protocolVersion = await this.getNetworkStatus(suiClient);
           if (showOutput) {
             this.log(
               chalk.dim(
@@ -808,7 +808,7 @@ class CompleteCommand extends BaseCommand {
 
             // Initialize NFT storage
             const signer = {} as Ed25519Keypair;
-            suiNftStorage = new SuiNftStorage(suiClient as any, signer, {
+            suiNftStorage = new SuiNftStorage(suiClient, signer, {
               address: config.lastDeployment?.packageId ?? '',
               packageId: config.lastDeployment?.packageId ?? '',
             });
@@ -839,7 +839,7 @@ class CompleteCommand extends BaseCommand {
         }
 
         // Update configuration to record completion
-        await this.updateConfigWithCompletion(todo as any);
+        await this.updateConfigWithCompletion(todo);
 
         // Update NFT if exists (same as original implementation)
         if (todo.nftObjectId && suiNftStorage) {
@@ -888,7 +888,7 @@ class CompleteCommand extends BaseCommand {
                     typeof (error as Record<string, unknown>).message ===
                       'string'
                   ? ((error as Record<string, unknown>).message as string)
-                  : String(error as any);
+                  : String(error);
             if (showOutput) {
               this.log(
                 chalk.yellow(
@@ -908,7 +908,7 @@ class CompleteCommand extends BaseCommand {
       await this.verifyNFTUpdate(todo, suiClient, showOutput);
     } catch (blockchainError) {
       throw new CLIError(
-        `Failed to update NFT on blockchain: ${blockchainError instanceof Error ? blockchainError.message : String(blockchainError as any)}\nLocal update was successful, but blockchain state may be out of sync.`,
+        `Failed to update NFT on blockchain: ${blockchainError instanceof Error ? blockchainError.message : String(blockchainError)}\nLocal update was successful, but blockchain state may be out of sync.`,
         'BLOCKCHAIN_UPDATE_FAILED'
       );
     }
@@ -948,7 +948,7 @@ class CompleteCommand extends BaseCommand {
             verificationPromise,
             timeoutPromise,
           ]);
-          if (timeoutId) clearTimeout(timeoutId as any);
+          if (timeoutId) clearTimeout(timeoutId);
 
           const content = result.data?.content as {
             fields?: { completed?: boolean };
@@ -962,7 +962,7 @@ class CompleteCommand extends BaseCommand {
           const error =
             verifyError instanceof Error
               ? verifyError
-              : new Error(String(verifyError as any));
+              : new Error(String(verifyError));
 
           throw new Error(`NFT verification error: ${error.message}`);
         }
@@ -979,7 +979,7 @@ class CompleteCommand extends BaseCommand {
                   'message' in error &&
                   typeof (error as Record<string, unknown>).message === 'string'
                 ? ((error as Record<string, unknown>).message as string)
-                : String(error as any);
+                : String(error);
           if (showOutput) {
             this.log(
               chalk.yellow(
@@ -1039,9 +1039,9 @@ class CompleteCommand extends BaseCommand {
               ),
               timeout,
             ])) as string | undefined;
-            if (timeoutId) clearTimeout(timeoutId as any);
+            if (timeoutId) clearTimeout(timeoutId);
           } catch (raceError) {
-            if (timeoutId) clearTimeout(timeoutId as any);
+            if (timeoutId) clearTimeout(timeoutId);
             throw raceError;
           }
 
@@ -1069,7 +1069,7 @@ class CompleteCommand extends BaseCommand {
           }
         } catch (error) {
           lastWalrusError =
-            error instanceof Error ? error : new Error(String(error as any));
+            error instanceof Error ? error : new Error(String(error));
           if (attempt === maxRetries) {
             if (showOutput) {
               this.log(
@@ -1144,7 +1144,7 @@ class CompleteCommand extends BaseCommand {
    */
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(CompleteCommand as any);
+      const { args, flags } = await this.parse(CompleteCommand);
       // Type assertion for flags to fix property access
       const typedFlags = flags as CompleteCommandFlags;
 
@@ -1153,12 +1153,12 @@ class CompleteCommand extends BaseCommand {
 
       // Validate network
       const network = typedFlags.network || config.network || 'testnet';
-      const networkUrl = this.validateNetwork(network as any);
+      const networkUrl = this.validateNetwork(network);
 
       // Handle batch mode
       if (typedFlags.batch) {
         const listName = typedFlags.list || 'default';
-        const list = await this?.todoService?.getList(listName as any);
+        const list = await this?.todoService?.getList(listName);
         if (!list) {
           const availableLists = await this?.todoService?.getAllLists();
           const listNames = availableLists.join(', ');
@@ -1223,7 +1223,7 @@ class CompleteCommand extends BaseCommand {
 
         // Gather todos from all lists
         for (const listName of listNames) {
-          const list = await this?.todoService?.getList(listName as any);
+          const list = await this?.todoService?.getList(listName);
           if (list) {
             todos.push(...list?.todos?.filter(t => !t.completed));
           }
@@ -1246,14 +1246,14 @@ class CompleteCommand extends BaseCommand {
 
           for (const todo of todos) {
             const list = todo.listName || 'default';
-            if (!todosByList.has(list as any)) {
+            if (!todosByList.has(list)) {
               todosByList.set(list, []);
             }
-            todosByList.get(list as any)!.push(todo as any);
+            todosByList.get(list)!.push(todo);
           }
 
           for (const [list, listTodos] of Array.from(todosByList.entries())) {
-            helpMessage += `\n${chalk.bold(list as any)}:\n`;
+            helpMessage += `\n${chalk.bold(list)}:\n`;
             for (const todo of listTodos.slice(0, 5)) {
               helpMessage += `  ${chalk.dim(todo?.id?.substring(0, 8))} - ${todo.title}\n`;
             }
@@ -1267,7 +1267,7 @@ class CompleteCommand extends BaseCommand {
       }
 
       // Check list exists
-      const list = await this?.todoService?.getList(listName as any);
+      const list = await this?.todoService?.getList(listName);
       if (!list) {
         const availableLists = await this?.todoService?.getAllLists();
         const listNames = availableLists.join(', ');
@@ -1340,7 +1340,7 @@ class CompleteCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to complete todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to complete todo: ${error instanceof Error ? error.message : String(error)}`,
         'COMPLETE_FAILED'
       );
     }

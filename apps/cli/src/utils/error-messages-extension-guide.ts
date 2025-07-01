@@ -189,7 +189,7 @@ export function testAIErrorMessages() {
   });
 
   logger.info('Basic AI Error:');
-  logger.info(basicError as any);
+  logger.info(basicError);
 
   // Test rate limit error
   const rateLimitError = new AIError('Too many requests', {
@@ -197,7 +197,7 @@ export function testAIErrorMessages() {
   });
 
   logger.info('\nRate Limit Error:');
-  logger.info(rateLimitError as any);
+  logger.info(rateLimitError);
 
   // Test invalid response error
   const invalidResponseError = new AIError('Unexpected format', {
@@ -206,7 +206,7 @@ export function testAIErrorMessages() {
   });
 
   logger.info('\nInvalid Response Error:');
-  logger.info(invalidResponseError as any);
+  logger.info(invalidResponseError);
 }
 
 /**

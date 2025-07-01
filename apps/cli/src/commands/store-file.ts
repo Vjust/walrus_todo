@@ -61,7 +61,7 @@ export default class StoreFileCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(StoreFileCommand as any);
+    const { args, flags } = await this.parse(StoreFileCommand);
     const files = Array.isArray(args.files)
       ? args.files
       : args.files
@@ -76,7 +76,7 @@ export default class StoreFileCommand extends BaseCommand {
       }
 
       // Initialize Walrus storage
-      const walrusStorage = await this.initializeStorage(flags as any);
+      const walrusStorage = await this.initializeStorage(flags);
 
       // Process files
       if (files?.length === 1 && !flags.batch) {
@@ -133,14 +133,14 @@ export default class StoreFileCommand extends BaseCommand {
 
     // Check if file exists
     try {
-      await fs.access(filePath as any);
+      await fs.access(filePath);
     } catch (_error) {
       throw new CLIError(`File not found: ${filePath}`, 'FILE_NOT_FOUND');
     }
 
     // Read file data
-    const data = await fs.readFile(filePath as any);
-    const fileName = path.basename(filePath as any);
+    const data = await fs.readFile(filePath);
+    const fileName = path.basename(filePath);
 
     if (flags.verbose) {
       this.log(chalk.gray('Generating mock blob ID'));
@@ -168,7 +168,7 @@ export default class StoreFileCommand extends BaseCommand {
     } else {
       this.log('');
       this.log(chalk.green('✓') + ` Stored blob: ${fileName}`);
-      this.log(chalk.gray('Blob ID: ') + chalk.cyan(blobId as any));
+      this.log(chalk.gray('Blob ID: ') + chalk.cyan(blobId));
     }
   }
 
@@ -183,11 +183,11 @@ export default class StoreFileCommand extends BaseCommand {
     this.log('');
 
     for (const file of files) {
-      const fileName = path.basename(file as any);
+      const fileName = path.basename(file);
 
       try {
-        await fs.access(file as any);
-        const data = await fs.readFile(file as any);
+        await fs.access(file);
+        const data = await fs.readFile(file);
 
         const blobId = await walrusStorage.storeBlob(data, {
           epochs: flags.epochs,
@@ -204,7 +204,7 @@ export default class StoreFileCommand extends BaseCommand {
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         results.push({
           fileName,
           error: errorMessage,
@@ -222,9 +222,9 @@ export default class StoreFileCommand extends BaseCommand {
     this.log('');
     this.log(chalk.bold('Storage Summary:'));
     this.log(`  Total files processed: ${files.length}`);
-    this.log(`  Successfully stored: ${chalk.green(successful as any)}`);
+    this.log(`  Successfully stored: ${chalk.green(successful)}`);
     if (failed > 0) {
-      this.log(`  Failed to store: ${chalk.red(failed as any)}`);
+      this.log(`  Failed to store: ${chalk.red(failed)}`);
     }
 
     if (flags?.output === 'json') {

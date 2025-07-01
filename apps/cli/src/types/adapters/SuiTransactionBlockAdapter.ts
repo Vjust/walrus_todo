@@ -220,6 +220,6 @@ export class DefaultSuiTransactionBlockAdapter
   async dryRunTransactionBlock(
     transactionBlock: TransactionBlock
   ): Promise<unknown> {
-    return this.dryRunTransaction(transactionBlock as any);
+    return this.dryRunTransaction(transactionBlock);
   }
 }

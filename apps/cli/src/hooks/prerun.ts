@@ -9,7 +9,7 @@ import { Logger } from '../utils/Logger';
 const prerunHook: Hook<'prerun'> = async function (opts) {
   if (opts?.argv?.length > 0) {
     const originalCommand = opts?.argv?.[0];
-    const expandedCommand = CommandShortcuts.expand(originalCommand as any);
+    const expandedCommand = CommandShortcuts.expand(originalCommand);
 
     // If a shortcut was expanded, update the argv array
     if (expandedCommand !== originalCommand) {

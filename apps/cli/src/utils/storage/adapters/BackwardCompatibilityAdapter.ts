@@ -62,7 +62,7 @@ export class LegacyWalrusStorageAdapter {
    * Sets the signer for transactions.
    */
   setSigner(signer: TransactionSigner): void {
-    this?.todoStorage?.setSigner(signer as any);
+    this?.todoStorage?.setSigner(signer);
   }
 
   /**
@@ -82,14 +82,14 @@ export class LegacyWalrusStorageAdapter {
    * Stores a todo in storage.
    */
   async storeTodo(todo: Todo): Promise<string> {
-    return this?.todoStorage?.storeTodo(todo as any);
+    return this?.todoStorage?.storeTodo(todo);
   }
 
   /**
    * Retrieves a todo from storage.
    */
   async retrieveTodo(blobId: string): Promise<Todo> {
-    return this?.todoStorage?.retrieveTodo(blobId as any);
+    return this?.todoStorage?.retrieveTodo(blobId);
   }
 
   /**
@@ -103,14 +103,14 @@ export class LegacyWalrusStorageAdapter {
    * Stores a todo list in storage.
    */
   async storeTodoList(todoList: TodoList): Promise<string> {
-    return this?.todoStorage?.storeTodoList(todoList as any);
+    return this?.todoStorage?.storeTodoList(todoList);
   }
 
   /**
    * Retrieves a todo list from storage.
    */
   async retrieveTodoList(blobId: string): Promise<TodoList> {
-    return this?.todoStorage?.retrieveTodoList(blobId as any);
+    return this?.todoStorage?.retrieveTodoList(blobId);
   }
 
   /**
@@ -125,7 +125,7 @@ export class LegacyWalrusStorageAdapter {
     content: null;
     data: undefined;
   }> {
-    const result = await this?.todoStorage?.ensureStorageAllocated(sizeBytes as any);
+    const result = await this?.todoStorage?.ensureStorageAllocated(sizeBytes);
 
     // Convert to format expected by old code
     return {
@@ -220,7 +220,7 @@ export class LegacyWalrusImageStorageAdapter {
    * Sets the signer for transactions.
    */
   setSigner(signer: TransactionSigner): void {
-    this?.imageStorage?.setSigner(signer as any);
+    this?.imageStorage?.setSigner(signer);
   }
 
   /**
@@ -246,7 +246,7 @@ export class LegacyWalrusImageStorageAdapter {
   async retrieveImage(
     blobId: string
   ): Promise<{ imageData: Uint8Array; metadata: Record<string, string> }> {
-    const result = await this?.imageStorage?.retrieveImage(blobId as any);
+    const result = await this?.imageStorage?.retrieveImage(blobId);
     return {
       imageData: result.imageData,
       metadata: result.metadata,
@@ -265,7 +265,7 @@ export class LegacyWalrusImageStorageAdapter {
     content: null;
     data: undefined;
   }> {
-    const result = await this?.imageStorage?.ensureStorageAllocated(sizeBytes as any);
+    const result = await this?.imageStorage?.ensureStorageAllocated(sizeBytes);
 
     // Convert to format expected by old code
     return {
@@ -304,7 +304,7 @@ export class LegacySuiNftStorageAdapter {
     });
 
     // Set the signer
-    this?.nftStorage?.setSigner(signer as any);
+    this?.nftStorage?.setSigner(signer);
   }
 
   /**
@@ -325,7 +325,7 @@ export class LegacySuiNftStorageAdapter {
     completed: boolean;
     walrusBlobId: string;
   }> {
-    const result = await this?.nftStorage?.getTodoNFT(nftId as any);
+    const result = await this?.nftStorage?.getTodoNFT(nftId);
 
     // Convert to format expected by old code
     return {

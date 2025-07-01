@@ -26,7 +26,7 @@ export class CredentialManager {
     apiKey: string,
     verify: boolean = false
   ): Promise<void> {
-    this.validateApiKey(apiKey as any);
+    this.validateApiKey(apiKey);
 
     // First store the credential securely
     await this?.vault?.storeSecret(`${provider}-api-key`, apiKey);
@@ -46,10 +46,10 @@ export class CredentialManager {
       } catch (_error) {
         // We still keep the credential even if verification fails
         this?.logger?.error(
-          `Failed to verify credential on blockchain: ${_error instanceof Error ? _error.message : String(_error as any)}`
+          `Failed to verify credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`
         );
         throw new CLIError(
-          `API key was stored securely but blockchain verification failed: ${_error instanceof Error ? _error.message : String(_error as any)}`,
+          `API key was stored securely but blockchain verification failed: ${_error instanceof Error ? _error.message : String(_error)}`,
           'CREDENTIAL_VERIFICATION_FAILED'
         );
       }
@@ -104,11 +104,11 @@ export class CredentialManager {
 
       // Attempt to revoke on-chain if possible
       try {
-        await this?.verifier?.revokeCredential(provider as any);
+        await this?.verifier?.revokeCredential(provider);
         this?.logger?.info(`Revoked ${provider} credential on blockchain`);
       } catch (_error) {
         this?.logger?.warn(
-          `Could not revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error as any)}`
+          `Could not revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`
         );
       }
     } catch (_error) {
@@ -134,15 +134,15 @@ export class CredentialManager {
       if (match) {
         const provider = match[1] as AIProvider;
         // apiKey would be used for credential verification
-        // const apiKey = await this?.vault?.getSecret(key as any);
+        // const apiKey = await this?.vault?.getSecret(key);
 
         // Check if the credential is verified on-chain
         let verified = false;
         try {
-          verified = await this?.verifier?.isRegistered(provider as any);
+          verified = await this?.verifier?.isRegistered(provider);
         } catch (_error) {
           this?.logger?.debug(
-            `Error checking verification status: ${_error instanceof Error ? _error.message : String(_error as any)}`
+            `Error checking verification status: ${_error instanceof Error ? _error.message : String(_error)}`
           );
         }
 

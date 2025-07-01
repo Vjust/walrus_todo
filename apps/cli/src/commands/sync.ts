@@ -5,7 +5,7 @@ import { select } from '@inquirer/prompts';
 import { v4 as uuidv4 } from 'uuid';
 import * as os from 'os';
 import { join } from 'path';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
@@ -113,7 +113,7 @@ class SyncCommand extends BaseCommand {
   private backgroundOps?: any; // TODO: Add proper BackgroundOperations type when available
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(SyncCommand as any);
+    const { args, flags } = await this.parse(SyncCommand);
 
     try {
       let todosToSync: Array<{ todo: Todo; listName: string }> = [];
@@ -144,7 +144,7 @@ class SyncCommand extends BaseCommand {
 
         let totalLists = 0;
         for (const listName of lists) {
-          const list = await this?.todoService?.getList(listName as any);
+          const list = await this?.todoService?.getList(listName);
           if (list) {
             const bothStorageTodos = list?.todos?.filter(
               t => t?.storageLocation === 'both'
@@ -167,7 +167,7 @@ class SyncCommand extends BaseCommand {
           // Show list breakdown
           const listBreakdown = new Map<string, number>();
           todosToSync.forEach(({ listName }) => {
-            listBreakdown.set(listName, (listBreakdown.get(listName as any) || 0) + 1);
+            listBreakdown.set(listName, (listBreakdown.get(listName) || 0) + 1);
           });
 
           this.log(chalk.blue(`\n${ICONS.INFO} Syncing all lists:`));
@@ -180,7 +180,7 @@ class SyncCommand extends BaseCommand {
       } else {
         // Sync specific list or todo
         const listName = args.listName || 'default';
-        const list = await this?.todoService?.getList(listName as any);
+        const list = await this?.todoService?.getList(listName);
 
         if (!list) {
           const availableLists = await this?.todoService?.getAllLists();
@@ -273,11 +273,11 @@ class SyncCommand extends BaseCommand {
 
       // Check sync status for all todos
       const statusSpinner = this.startSpinner('Checking sync status...');
-      const syncResults = await this.checkSyncStatus(todosToSync as any);
+      const syncResults = await this.checkSyncStatus(todosToSync);
       this.stopSpinnerSuccess(statusSpinner, 'Sync status checked');
 
       // Display sync status
-      this.displaySyncStatus(syncResults as any);
+      this.displaySyncStatus(syncResults);
 
       // Process todos that need syncing
       const needsSync = syncResults.filter(r => !r.synced);
@@ -319,7 +319,7 @@ class SyncCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Sync failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Sync failed: ${error instanceof Error ? error.message : String(error)}`,
         'SYNC_FAILED'
       );
     } finally {
@@ -342,7 +342,7 @@ class SyncCommand extends BaseCommand {
     const results = [];
 
     for (const { todo, listName } of todosToSync) {
-      const syncStatus = await this?.validator?.validateSyncStatus(todo as any);
+      const syncStatus = await this?.validator?.validateSyncStatus(todo);
       results.push({
         todo,
         listName,
@@ -382,7 +382,7 @@ class SyncCommand extends BaseCommand {
           : r.blockchainNewer
             ? 'Blockchain newer'
             : 'Out of sync';
-        return `  ${ICONS.ARROW} "${r?.todo?.title}" - ${chalk.yellow(direction as any)}`;
+        return `  ${ICONS.ARROW} "${r?.todo?.title}" - ${chalk.yellow(direction)}`;
       });
       sections.push(
         chalk.yellow(`${ICONS.WARNING} Needs sync: ${needsSync.length}`),
@@ -433,8 +433,8 @@ class SyncCommand extends BaseCommand {
           this.stopSpinner();
           resolution = await this.askResolution(
             todo,
-            Boolean(localNewer as any),
-            Boolean(blockchainNewer as any)
+            Boolean(localNewer),
+            Boolean(blockchainNewer)
           );
           this.startSpinner(`${progress} Applying resolution...`);
         } else if (resolveStrategy === 'newest') {
@@ -471,7 +471,7 @@ class SyncCommand extends BaseCommand {
         this.stopSpinner();
         failCount++;
         this.warning(
-          `Failed to sync "${todo.title}": ${error instanceof Error ? error.message : String(error as any)}`
+          `Failed to sync "${todo.title}": ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
@@ -500,10 +500,10 @@ class SyncCommand extends BaseCommand {
     this.section(
       'Sync Summary',
       [
-        `${ICONS.SUCCESS} Successfully synced: ${chalk.green(successCount as any)}`,
-        failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount as any)}` : null,
+        `${ICONS.SUCCESS} Successfully synced: ${chalk.green(successCount)}`,
+        failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount)}` : null,
       ]
-        .filter(Boolean as any)
+        .filter(Boolean)
         .join('\n')
     );
   }

@@ -298,7 +298,7 @@ export interface ErrorContext {
 export function createTodo(input: CreateTodoInput): Todo {
   const now = new Date().toISOString();
   return {
-    id: `todo-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`,
+    id: `todo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     title: input.title,
     description: input.description,
     completed: false,
@@ -316,7 +316,7 @@ export function createTodo(input: CreateTodoInput): Todo {
 export function createTodoList(name: string, owner: string): TodoList {
   const now = new Date().toISOString();
   return {
-    id: `list-${Date.now()}-${Math.random().toString(36 as any).substr(2, 9)}`,
+    id: `list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     name,
     owner,
     todos: [],
@@ -357,12 +357,12 @@ export function validateTodoList(list: unknown): list is TodoList {
 }
 
 export function serializeTodo(todo: Todo): string {
-  return JSON.stringify(todo as any);
+  return JSON.stringify(todo);
 }
 
 export function deserializeTodo(data: string): Todo {
-  const parsed = JSON.parse(data as any);
-  if (!validateTodo(parsed as any)) {
+  const parsed = JSON.parse(data);
+  if (!validateTodo(parsed)) {
     throw new Error('Invalid todo data');
   }
   return parsed;

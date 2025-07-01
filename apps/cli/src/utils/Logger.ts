@@ -60,7 +60,7 @@ export class Logger {
       // Safely map log levels to console methods with type guards
       const consoleMethod = this.getConsoleMethod(entry.level);
       // eslint-disable-next-line no-console
-      consoleMethod(logMessage as any);
+      consoleMethod(logMessage);
     });
   }
 
@@ -82,7 +82,7 @@ export class Logger {
       process?.env?.JEST_WORKER_ID !== undefined ||
       process.env?.npm_lifecycle_event === 'test' ||
       process?.argv?.some(arg => arg.includes('jest')) ||
-      typeof (global as any).expect !== 'undefined' ||
+      typeof (global).expect !== 'undefined' ||
       typeof jest !== 'undefined'
     );
   }
@@ -110,7 +110,7 @@ export class Logger {
         LogLevel.ERROR,
       ];
       const targetIndex = logLevels.indexOf(process?.env?.LOG_LEVEL as LogLevel);
-      const currentIndex = logLevels.indexOf(level as any);
+      const currentIndex = logLevels.indexOf(level);
       return targetIndex !== -1 && currentIndex >= targetIndex;
     }
 
@@ -144,7 +144,7 @@ export class Logger {
    * @param handler Function to handle log entries
    */
   public addHandler(handler: (entry: LogEntry) => void): void {
-    this?.logHandlers?.push(handler as any);
+    this?.logHandlers?.push(handler);
   }
 
   /**
@@ -168,7 +168,7 @@ export class Logger {
     error?: Error
   ): void {
     // Validate parameters
-    if (!level || !Object.values(LogLevel as any).includes(level as any)) {
+    if (!level || !Object.values(LogLevel).includes(level)) {
       level = LogLevel.INFO; // Default fallback
     }
     if (typeof message !== 'string') {
@@ -179,7 +179,7 @@ export class Logger {
       level,
       message,
       timestamp: new Date().toISOString(),
-      context: this.sanitizeContext(context as any),
+      context: this.sanitizeContext(context),
     };
 
     if (error) {
@@ -194,7 +194,7 @@ export class Logger {
     // Safely execute handlers with error handling
     this?.logHandlers?.forEach(handler => {
       try {
-        handler(entry as any);
+        handler(entry);
       } catch (handlerError) {
         // Prevent handler errors from breaking logging
         console.error('Logger handler error:', handlerError);
@@ -221,8 +221,8 @@ export class Logger {
       /seed/i,
     ];
 
-    for (const [key, value] of Object.entries(context as any)) {
-      if (sensitivePatterns.some(pattern => pattern.test(key as any))) {
+    for (const [key, value] of Object.entries(context)) {
+      if (sensitivePatterns.some(pattern => pattern.test(key))) {
         sanitized[key] = '[REDACTED]';
       } else if (typeof value === 'object' && value !== null) {
         sanitized[key] = this.sanitizeContext(value as Record<string, unknown>);
@@ -252,7 +252,7 @@ export class Logger {
     context?: Record<string, unknown>
   ): void {
     // Convert unknown error to Error if needed
-    const errorObj = error instanceof Error ? error : (error ? new Error(String(error as any)) : undefined);
+    const errorObj = error instanceof Error ? error : (error ? new Error(String(error)) : undefined);
     this.log(LogLevel.ERROR, message, context, errorObj);
   }
 }

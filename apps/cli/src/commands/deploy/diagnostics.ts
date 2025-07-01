@@ -76,7 +76,7 @@ export default class DeployDiagnostics extends BaseCommand {
   private logger!: Logger;
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(DeployDiagnostics as any);
+    const { flags } = await this.parse(DeployDiagnostics);
 
     this?.logger = new Logger('DeployDiagnostics');
     this?.diagnostics = new DeploymentDiagnostics();
@@ -107,7 +107,7 @@ export default class DeployDiagnostics extends BaseCommand {
       this.log(chalk.cyan('Running comprehensive deployment diagnostics...'));
       this.log();
 
-      const results = await this?.diagnostics?.runDiagnostics(config as any);
+      const results = await this?.diagnostics?.runDiagnostics(config);
 
       // Display results
       await this.displayResults(results, flags.verbose);
@@ -127,11 +127,11 @@ export default class DeployDiagnostics extends BaseCommand {
       }
 
       // Provide summary and next steps
-      this.provideSummaryAndNextSteps(results as any);
+      this.provideSummaryAndNextSteps(results);
 
     } catch (error) {
       this?.logger?.error('Diagnostics failed:', error);
-      this.error(`Diagnostics failed: ${error instanceof Error ? error.message : String(error as any)}`);
+      this.error(`Diagnostics failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -147,7 +147,7 @@ export default class DeployDiagnostics extends BaseCommand {
       return;
     }
 
-    this.log(chalk.green(`✅ Identified ${results.length} potential issue(s as any):`));
+    this.log(chalk.green(`✅ Identified ${results.length} potential issue(s):`));
     this.log();
 
     for (const result of results) {

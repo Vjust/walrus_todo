@@ -34,7 +34,7 @@ const initHook: Hook<'init'> = async function () {
       } catch (validationError) {
         // Just log validation error but don't fail, individual commands will do more specific validation
         Logger.getInstance().warn(
-          `Environment validation warning: ${validationError instanceof Error ? validationError.message : String(validationError as any)}`
+          `Environment validation warning: ${validationError instanceof Error ? validationError.message : String(validationError)}`
         );
       }
 
@@ -42,7 +42,7 @@ const initHook: Hook<'init'> = async function () {
       process.env?.ENV_CONFIG_INITIALIZED = 'true';
     } catch (_error) {
       Logger.getInstance().error(
-        `Failed to initialize environment configuration: ${_error instanceof Error ? _error.message : String(_error as any)}`
+        `Failed to initialize environment configuration: ${_error instanceof Error ? _error.message : String(_error)}`
       );
 
       // Output helpful error recovery information
@@ -72,12 +72,12 @@ const commandRegistryHook: Hook<'init'> = async function (opts) {
   // Record command in history
   const command = opts?.argv?.join(' ');
   if (command) {
-    commandHistory.addCommand(command as any);
+    commandHistory.addCommand(command);
   }
 
   // Register todo commands and groups
   // TODO: Re-enable when todoGroup is available
-  // commandRegistry.registerGroup(todoGroup as any);
+  // commandRegistry.registerGroup(todoGroup);
 
   // Register basic commands manually
   const basicCommands = [
@@ -108,7 +108,7 @@ const commandRegistryHook: Hook<'init'> = async function (opts) {
   ];
 
   basicCommands.forEach(cmd => {
-    commandRegistry.registerCommand(cmd as any);
+    commandRegistry.registerCommand(cmd);
   });
 
   // Register other common commands

@@ -39,7 +39,7 @@ export class StorageValidator {
     // Validate checksum if present
     const todoWithChecksum = todo as Todo & { checksum?: string };
     if (todoWithChecksum.checksum) {
-      const calculatedChecksum = this.calculateChecksum(todo as any);
+      const calculatedChecksum = this.calculateChecksum(todo);
       if (todoWithChecksum.checksum !== calculatedChecksum) {
         errors.push('Todo checksum mismatch - data may be corrupted');
       }
@@ -66,8 +66,8 @@ export class StorageValidator {
       createdAt: todo.createdAt,
     };
 
-    const dataString = JSON.stringify(todoData, Object.keys(todoData as any).sort());
-    return crypto.createHash('sha256').update(dataString as any).digest('hex');
+    const dataString = JSON.stringify(todoData, Object.keys(todoData).sort());
+    return crypto.createHash('sha256').update(dataString).digest('hex');
   }
 
   /**
@@ -101,7 +101,7 @@ export class StorageValidator {
           }
         } catch (error) {
           errors.push(
-            `Cannot connect to blockchain: ${error instanceof Error ? error.message : String(error as any)}`
+            `Cannot connect to blockchain: ${error instanceof Error ? error.message : String(error)}`
           );
         }
         break;
@@ -197,7 +197,7 @@ export class StorageValidator {
     let totalCost = 0;
 
     for (const todo of todos) {
-      const integrityCheck = await this.validateTodoIntegrity(todo as any);
+      const integrityCheck = await this.validateTodoIntegrity(todo);
 
       if (!integrityCheck.valid) {
         invalidTodos.push({ todo, errors: integrityCheck.errors });
@@ -214,11 +214,11 @@ export class StorageValidator {
         continue;
       }
 
-      validTodos.push(todo as any);
+      validTodos.push(todo);
 
       // Estimate storage cost
       if (newStorage === 'blockchain' || newStorage === 'both') {
-        totalCost += await this.estimateStorageCost(todo as any);
+        totalCost += await this.estimateStorageCost(todo);
       }
     }
 
@@ -235,8 +235,8 @@ export class StorageValidator {
    */
   private async estimateStorageCost(todo: Todo): Promise<number> {
     // Simple size calculation
-    const todoJson = JSON.stringify(todo as any);
-    const sizeInBytes = Buffer.byteLength(todoJson as any);
+    const todoJson = JSON.stringify(todo);
+    const sizeInBytes = Buffer.byteLength(todoJson);
 
     // Rough estimate: $0.01 per KB
     return (sizeInBytes / 1024) * 0.01;
@@ -266,8 +266,8 @@ export class StorageValidator {
 
       if (localTime === blockchainTime) {
         // Check checksums to ensure data is identical
-        const localChecksum = this.calculateChecksum(todo as any);
-        const blockchainChecksum = this.calculateChecksum(blockchainTodo as any);
+        const localChecksum = this.calculateChecksum(todo);
+        const blockchainChecksum = this.calculateChecksum(blockchainTodo);
 
         return {
           synced: localChecksum === blockchainChecksum,

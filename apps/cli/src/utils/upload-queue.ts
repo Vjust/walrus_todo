@@ -64,7 +64,7 @@ export interface QueueStats {
 
 export interface UploadProgress {
   jobId: string;
-  status: QueueJob?.["status"];
+  status: QueueJob["status"];
   progress: number;
   message: string;
   estimatedTimeRemaining?: number;
@@ -101,7 +101,7 @@ export class UploadQueue extends EventEmitter {
   async addTodoJob(
     todo: Todo,
     options: {
-      priority?: QueueJob?.["priority"];
+      priority?: QueueJob["priority"];
       epochs?: number;
       network?: string;
       listName?: string;
@@ -153,7 +153,7 @@ export class UploadQueue extends EventEmitter {
   async addTodoListJob(
     todoList: TodoList,
     options: {
-      priority?: QueueJob?.["priority"];
+      priority?: QueueJob["priority"];
       epochs?: number;
       network?: string;
       maxRetries?: number;
@@ -195,7 +195,7 @@ export class UploadQueue extends EventEmitter {
     content: Buffer | string,
     options: {
       fileName?: string;
-      priority?: QueueJob?.["priority"];
+      priority?: QueueJob["priority"];
       epochs?: number;
       network?: string;
       maxRetries?: number;
@@ -224,7 +224,7 @@ export class UploadQueue extends EventEmitter {
 
     logger.info(`Added blob upload job: ${jobId}`, {
       fileName,
-      size: Buffer.isBuffer(content as any) ? content.length : content.length,
+      size: Buffer.isBuffer(content) ? content.length : content.length,
     });
 
     this.emit('jobAdded', job);
@@ -235,16 +235,16 @@ export class UploadQueue extends EventEmitter {
    * Get job status by ID
    */
   getJob(jobId: string): QueueJob | undefined {
-    return this?.jobs?.get(jobId as any);
+    return this?.jobs?.get(jobId);
   }
 
   /**
    * Get all jobs with optional filtering
    */
   getJobs(filter?: {
-    status?: QueueJob?.["status"];
-    type?: QueueJob?.["type"];
-    priority?: QueueJob?.["priority"];
+    status?: QueueJob["status"];
+    type?: QueueJob["type"];
+    priority?: QueueJob["priority"];
   }): QueueJob[] {
     let jobs = Array.from(this?.jobs?.values());
 
@@ -278,7 +278,7 @@ export class UploadQueue extends EventEmitter {
    * Cancel a job
    */
   async cancelJob(jobId: string): Promise<boolean> {
-    const job = this?.jobs?.get(jobId as any);
+    const job = this?.jobs?.get(jobId);
     if (!job) {
       return false;
     }
@@ -307,7 +307,7 @@ export class UploadQueue extends EventEmitter {
    * Retry a failed job
    */
   async retryJob(jobId: string): Promise<boolean> {
-    const job = this?.jobs?.get(jobId as any);
+    const job = this?.jobs?.get(jobId);
     if (!job || job.status !== 'failed') {
       return false;
     }
@@ -366,7 +366,7 @@ export class UploadQueue extends EventEmitter {
       // Estimate bytes for different job types
       if (job?.type === 'blob' && 'content' in job.data) {
         const content = (job.data as { content: Buffer | string }).content;
-        totalBytesUploaded += Buffer.isBuffer(content as any)
+        totalBytesUploaded += Buffer.isBuffer(content)
           ? content.length
           : content.length;
       } else {
@@ -398,7 +398,7 @@ export class UploadQueue extends EventEmitter {
   private startWorkers(): void {
     for (let i = 0; i < this?.options?.maxConcurrency; i++) {
       const worker = setInterval(() => this.processNextJob(), 1000);
-      this?.workers?.add(worker as any);
+      this?.workers?.add(worker);
     }
 
     logger.info(`Started ${this?.options?.maxConcurrency} upload workers`);
@@ -451,7 +451,7 @@ export class UploadQueue extends EventEmitter {
     });
 
     try {
-      await this.executeJob(job as any);
+      await this.executeJob(job);
     } catch (error) {
       await this.handleJobError(job, error);
     } finally {
@@ -535,7 +535,7 @@ export class UploadQueue extends EventEmitter {
 
       // Send success notification
       if (this?.options?.enableNotifications) {
-        const jobDetails = this.getJobDisplayName(job as any);
+        const jobDetails = this.getJobDisplayName(job);
         this?.notificationSystem?.success(
           'Upload Completed',
           `Successfully uploaded: ${jobDetails}`,
@@ -561,7 +561,7 @@ export class UploadQueue extends EventEmitter {
    * Handle job execution errors
    */
   private async handleJobError(job: QueueJob, error: unknown): Promise<void> {
-    const errorMessage = error instanceof Error ? error.message : String(error as any);
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
     job.retryCount++;
     job?.error = errorMessage;
@@ -599,7 +599,7 @@ export class UploadQueue extends EventEmitter {
 
       // Send failure notification
       if (this?.options?.enableNotifications) {
-        const jobDetails = this.getJobDisplayName(job as any);
+        const jobDetails = this.getJobDisplayName(job);
         this?.notificationSystem?.error(
           'Upload Failed',
           `Failed to upload: ${jobDetails} - ${errorMessage}`,
@@ -675,7 +675,7 @@ export class UploadQueue extends EventEmitter {
   private async loadQueue(): Promise<void> {
     try {
       const data = await fs.readFile(this.queueFile, 'utf-8');
-      const queueData = JSON.parse(data as any);
+      const queueData = JSON.parse(data);
 
       for (const jobData of queueData.jobs) {
         const job: QueueJob = {
@@ -701,7 +701,7 @@ export class UploadQueue extends EventEmitter {
 
       logger.info(`Loaded ${this?.jobs?.size} jobs from queue`);
     } catch (error) {
-      if ((error as any).code !== 'ENOENT') {
+      if ((error).code !== 'ENOENT') {
         logger.error('Failed to load queue', error);
       }
     }
@@ -720,7 +720,7 @@ export class UploadQueue extends EventEmitter {
         job.completedAt &&
         job?.completedAt?.getTime() < cutoffTime
       ) {
-        this?.jobs?.delete(jobId as any);
+        this?.jobs?.delete(jobId);
         cleanedCount++;
       }
     }
@@ -739,7 +739,7 @@ export class UploadQueue extends EventEmitter {
 
     // Stop all workers
     for (const worker of this.workers) {
-      clearInterval(worker as any);
+      clearInterval(worker);
     }
     this?.workers?.clear();
 
@@ -766,13 +766,13 @@ export class UploadQueue extends EventEmitter {
   private getJobDisplayName(job: QueueJob): string {
     switch (job.type) {
       case 'todo':
-        const todo = job.data as any;
+        const todo = job.data;
         return todo.title || 'Unknown Todo';
       case 'todo-list':
-        const list = job.data as any;
+        const list = job.data;
         return `${list.name} (${list.todos?.length || 0} todos)`;
       case 'blob':
-        const blob = job.data as any;
+        const blob = job.data;
         return blob.fileName || 'Unknown Blob';
       default:
         return 'Unknown Upload';

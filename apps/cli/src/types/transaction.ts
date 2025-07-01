@@ -94,7 +94,7 @@ export function isLegacyVariant(_variant: unknown): _variant is never {
  */
 export function isTransactionType(obj: unknown): obj is TransactionType {
   return (
-    isSuiTransaction(obj as any) ||
+    isSuiTransaction(obj) ||
     (obj &&
       typeof obj === 'object' &&
       obj !== null &&
@@ -108,7 +108,7 @@ export function isTransactionType(obj: unknown): obj is TransactionType {
 export function asTransaction(
   input: SuiTransaction | TransactionBlockAdapter
 ): SuiTransaction {
-  if (isSuiTransaction(input as any)) {
+  if (isSuiTransaction(input)) {
     return input;
   }
 
@@ -118,7 +118,7 @@ export function asTransaction(
     typeof input?.getUnderlyingImplementation === 'function'
   ) {
     const underlying = input.getUnderlyingImplementation();
-    if (isSuiTransaction(underlying as any)) {
+    if (isSuiTransaction(underlying)) {
       return underlying;
     }
   }
@@ -137,7 +137,7 @@ export function asUint8ArrayOrTransactionBlock(
   }
 
   if (typeof data === 'string') {
-    return new TextEncoder().encode(data as any);
+    return new TextEncoder().encode(data);
   }
 
   return data;
@@ -154,11 +154,11 @@ export function asStringUint8ArrayOrTransactionBlock(
   }
 
   if (data instanceof Uint8Array) {
-    return new TextDecoder().decode(data as any);
+    return new TextDecoder().decode(data);
   }
 
   // For Transaction objects, return a string representation
-  return JSON.stringify(data as any);
+  return JSON.stringify(data);
 }
 
 /**
@@ -198,7 +198,7 @@ export function extractTransaction(
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;
       throw new Error(
-        `Unknown transaction variant: ${JSON.stringify(_exhaustive as any)}`
+        `Unknown transaction variant: ${JSON.stringify(_exhaustive)}`
       );
     }
   }
@@ -223,7 +223,7 @@ export function processTransactionVariant<T>(
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;
       throw new Error(
-        `Unknown transaction variant: ${JSON.stringify(_exhaustive as any)}`
+        `Unknown transaction variant: ${JSON.stringify(_exhaustive)}`
       );
     }
   }

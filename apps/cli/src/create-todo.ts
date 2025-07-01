@@ -1,4 +1,4 @@
-import { TodoService } from './services/todoService';
+import { TodoService } from './services/todo';
 import { Logger } from './utils/Logger';
 
 async function main() {
@@ -7,7 +7,7 @@ async function main() {
 
   // First create or get list
   Logger.getInstance().info('Creating/getting todo list...');
-  let list = await todoService.getList(listName as any);
+  let list = await todoService.getList(listName);
   if (!list) {
     list = await todoService.createList(listName, 'test-user');
     Logger.getInstance().info('Created new list:', { list });

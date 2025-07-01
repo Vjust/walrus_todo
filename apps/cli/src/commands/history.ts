@@ -40,7 +40,7 @@ export default class HistoryCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(HistoryCommand as any);
+    const { flags } = await this.parse(HistoryCommand);
 
     if (flags.clear) {
       commandHistory.clearHistory();
@@ -62,7 +62,7 @@ export default class HistoryCommand extends BaseCommand {
   }
 
   private showRecentHistory(limit: number): void {
-    const history = commandHistory.getHistory(limit as any);
+    const history = commandHistory.getHistory(limit);
 
     if (history?.length === 0) {
       this.info('No command history found');
@@ -72,13 +72,13 @@ export default class HistoryCommand extends BaseCommand {
     this.section(
       'Recent Commands',
       history
-        .map((cmd, index) => `${chalk.dim(`${index + 1}.`)} ${chalk.cyan(cmd as any)}`)
+        .map((cmd, index) => `${chalk.dim(`${index + 1}.`)} ${chalk.cyan(cmd)}`)
         .join('\n')
     );
   }
 
   private showStatistics(): void {
-    const stats = commandHistory.getMostFrequent(10 as any);
+    const stats = commandHistory.getMostFrequent(10);
 
     if (stats?.length === 0) {
       this.info('No command statistics available');
@@ -95,16 +95,16 @@ export default class HistoryCommand extends BaseCommand {
           const percentage = (count / maxCount) * 100;
           const barLength = Math.round((count / maxCount) * barMaxLength);
           const bar =
-            '█'.repeat(barLength as any) + '▒'.repeat(barMaxLength - barLength);
+            '█'.repeat(barLength) + '▒'.repeat(barMaxLength - barLength);
 
-          return `${chalk.cyan(command.padEnd(15 as any))} ${chalk.gray(bar as any)} ${chalk.yellow(count.toString().padStart(3 as any))} (${percentage.toFixed(1 as any)}%)`;
+          return `${chalk.cyan(command.padEnd(15))} ${chalk.gray(bar)} ${chalk.yellow(count.toString().padStart(3))} (${percentage.toFixed(1)}%)`;
         })
         .join('\n')
     );
   }
 
   private showSearchResults(pattern: string): void {
-    const results = commandHistory.searchHistory(pattern as any);
+    const results = commandHistory.searchHistory(pattern);
 
     if (results?.length === 0) {
       this.info(`No commands found matching "${pattern}"`);
@@ -123,7 +123,7 @@ export default class HistoryCommand extends BaseCommand {
   }
 
   private highlightPattern(text: string, pattern: string): string {
-    const regex = new RegExp(`(${this.escapeRegex(pattern as any)})`, 'gi');
+    const regex = new RegExp(`(${this.escapeRegex(pattern)})`, 'gi');
     return text.replace(regex, chalk?.yellow?.bold('$1'));
   }
 

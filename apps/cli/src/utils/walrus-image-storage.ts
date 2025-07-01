@@ -135,7 +135,7 @@ export class WalrusImageStorage {
           blob: '', // Will be auto-discovered by WalrusClient
         },
       };
-      this?.walrusClient = createWalrusClientAdapter(compatibleConfig as any);
+      this?.walrusClient = createWalrusClientAdapter(compatibleConfig);
 
       // Initialize KeystoreSigner and adapt it to the expected interface
       const keystoreSigner = new KeystoreSigner(this.suiClient);
@@ -178,7 +178,7 @@ export class WalrusImageStorage {
       } catch (error) {
         // Log but don't throw since we're cleaning up
         const errorObj =
-          error instanceof Error ? error : new Error(String(error as any));
+          error instanceof Error ? error : new Error(String(error));
         logger.error('Error resetting Walrus client:', errorObj);
       }
     }
@@ -199,7 +199,7 @@ export class WalrusImageStorage {
       const errorObj =
         cleanupError instanceof Error
           ? cleanupError
-          : new Error(String(cleanupError as any));
+          : new Error(String(cleanupError));
       logger.error('Error during connection cleanup:', errorObj);
     }
 
@@ -211,7 +211,7 @@ export class WalrusImageStorage {
         version: string;
         maxSize: number;
       }> => ({ network: 'testnet', version: '1?.0?.0', maxSize: 0 }),
-      readBlob: async (): Promise<Uint8Array> => new Uint8Array(0 as any),
+      readBlob: async (): Promise<Uint8Array> => new Uint8Array(0),
       writeBlob: async (): Promise<{
         blobId: string;
         blobObject: { blob_id: string };
@@ -251,9 +251,9 @@ export class WalrusImageStorage {
         writeCost: bigint;
         totalCost: bigint;
       }> => ({
-        storageCost: BigInt(0 as any),
-        writeCost: BigInt(0 as any),
-        totalCost: BigInt(0 as any),
+        storageCost: BigInt(0),
+        writeCost: BigInt(0),
+        totalCost: BigInt(0),
       }),
     };
 
@@ -326,25 +326,25 @@ export class WalrusImageStorage {
       }
 
       const imagePath = getAssetPath('todo_bottle.jpeg');
-      if (!fs.existsSync(imagePath as any)) {
+      if (!fs.existsSync(imagePath)) {
         throw new Error(`Default image not found at ${imagePath}`);
       }
 
       // Read image file as buffer with proper resource handling
-      fileBuffer = fs.readFileSync(imagePath as any);
+      fileBuffer = fs.readFileSync(imagePath);
 
       // Get signer adapter to ensure compatibility with the WalrusClient interface
       const signerAdapter = await this.getTransactionSigner();
 
       // Create a clean copy of the buffer for uploading
-      const imageBuffer = Buffer.from(fileBuffer as any);
+      const imageBuffer = Buffer.from(fileBuffer);
 
       // Use the adapter-compliant method signature for writeBlob
       if (!this.walrusClient) {
         throw new Error('Walrus client not initialized');
       }
       const result = await this?.walrusClient?.writeBlob({
-        blob: new Uint8Array(imageBuffer as any),
+        blob: new Uint8Array(imageBuffer),
         deletable: false,
         epochs: 52, // Store for ~6 months
         signer: signerAdapter, // WalrusClientAdapter understands SignerAdapter
@@ -402,7 +402,7 @@ export class WalrusImageStorage {
    * Calculates SHA-256 checksum of a buffer
    */
   private calculateChecksum(data: Buffer): string {
-    return crypto.createHash('sha256').update(data as any).digest('hex');
+    return crypto.createHash('sha256').update(data).digest('hex');
   }
 
   /**
@@ -460,7 +460,7 @@ export class WalrusImageStorage {
       }
 
       // Validate mime type
-      if (!SUPPORTED_MIME_TYPES.includes(mimeType as any)) {
+      if (!SUPPORTED_MIME_TYPES.includes(mimeType)) {
         throw new CLIError(
           `Unsupported image type: ${mimeType}. Supported types: ${SUPPORTED_MIME_TYPES.join(', ')}`,
           'WALRUS_UNSUPPORTED_FORMAT'
@@ -477,7 +477,7 @@ export class WalrusImageStorage {
         }
 
         // Use image-size to validate basic format
-        const dimensions = sizeOf(buffer as any);
+        const dimensions = sizeOf(buffer);
         if (!dimensions.width || !dimensions.height) {
           throw new CLIError(
             'Invalid image dimensions',
@@ -495,7 +495,7 @@ export class WalrusImageStorage {
       } catch (error) {
         if (error instanceof CLIError) throw error;
         throw new CLIError(
-          `Invalid image file: ${error instanceof Error ? error.message : String(error as any)}`,
+          `Invalid image file: ${error instanceof Error ? error.message : String(error)}`,
           'WALRUS_INVALID_IMAGE'
         );
       }
@@ -549,18 +549,18 @@ export class WalrusImageStorage {
       }
 
       fileBuffer = fs.readFileSync(options.imagePath);
-      const imageBuffer = Buffer.from(fileBuffer as any);
-      const mimeType = this.detectMimeType(imageBuffer as any);
+      const imageBuffer = Buffer.from(fileBuffer);
+      const mimeType = this.detectMimeType(imageBuffer);
       this.validateImage(imageBuffer, mimeType);
 
       // Get image metadata
-      const dimensions = sizeOf(imageBuffer as any);
+      const dimensions = sizeOf(imageBuffer);
       const metadata: ImageMetadata = {
         width: dimensions.width || 0,
         height: dimensions.height || 0,
         mimeType,
         size: imageBuffer.length,
-        checksum: this.calculateChecksum(imageBuffer as any),
+        checksum: this.calculateChecksum(imageBuffer),
       };
 
       // Prepare upload attributes
@@ -598,7 +598,7 @@ export class WalrusImageStorage {
             throw new Error('Walrus client not initialized');
           }
           const result = await this?.walrusClient?.writeBlob({
-            blob: new Uint8Array(imageBuffer as any),
+            blob: new Uint8Array(imageBuffer),
             deletable: false,
             epochs: 52,
             signer: signerAdapter, // The adapter handles interface compatibility
@@ -658,7 +658,7 @@ export class WalrusImageStorage {
               const readOptions: ReadBlobOptions = { blobId };
               // Using Promise.race for timeout handling
               const uploadResult = (await Promise.race([
-                this.walrusClient?.readBlob(readOptions as any).then(result => ({
+                this.walrusClient?.readBlob(readOptions).then(result => ({
                   success: true,
                   data: result,
                 })),
@@ -678,7 +678,7 @@ export class WalrusImageStorage {
                   uploadResult && 'error' in uploadResult
                     ? uploadResult.error
                     : new Error('Unknown verification error');
-                throw error instanceof Error ? error : new Error(String(error as any));
+                throw error instanceof Error ? error : new Error(String(error));
               }
 
               // Type guard to safely access data property
@@ -699,8 +699,8 @@ export class WalrusImageStorage {
                 continue;
               }
 
-              const uploadedBuffer = Buffer.from(uploadedContent as any);
-              const uploadedChecksum = this.calculateChecksum(uploadedBuffer as any);
+              const uploadedBuffer = Buffer.from(uploadedContent);
+              const uploadedChecksum = this.calculateChecksum(uploadedBuffer);
 
               if (uploadedChecksum !== metadata.checksum) {
                 throw new CLIError(
@@ -720,7 +720,7 @@ export class WalrusImageStorage {
             );
           } catch (error) {
             lastError =
-              error instanceof Error ? error : new Error(String(error as any));
+              error instanceof Error ? error : new Error(String(error));
             if (attempt === maxRetries) throw lastError;
           }
         } catch (error) {
@@ -751,7 +751,7 @@ export class WalrusImageStorage {
     } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
-        `Failed to upload image: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to upload image: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_UPLOAD_FAILED'
       );
     } finally {
@@ -790,7 +790,7 @@ export class WalrusImageStorage {
       metadata: {
         title,
         // Walrus API attributes are all strings, so we convert boolean to string
-        completed: String(completed as any),
+        completed: String(completed),
       },
     });
   }

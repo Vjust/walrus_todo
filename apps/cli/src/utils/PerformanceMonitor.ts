@@ -52,7 +52,7 @@ export class PerformanceMonitor {
 
   private ensureMetricsDir(): void {
     const dir = path.dirname(this.metricsFile);
-    if (!fs.existsSync(dir as any)) {
+    if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   }
@@ -61,7 +61,7 @@ export class PerformanceMonitor {
     try {
       if (fs.existsSync(this.metricsFile)) {
         const data = fs.readFileSync(this.metricsFile, 'utf-8');
-        this?.metrics = JSON.parse(data as any);
+        this?.metrics = JSON.parse(data);
         // Keep only recent metrics to prevent memory issues
         if (this?.metrics?.length > this.maxMetrics) {
           this?.metrics = this?.metrics?.slice(-this.maxMetrics);
@@ -91,7 +91,7 @@ export class PerformanceMonitor {
     success = true,
     metadata?: Record<string, any>
   ): PerformanceMetric {
-    const activeOp = this?.activeOperations?.get(operationId as any);
+    const activeOp = this?.activeOperations?.get(operationId);
     if (!activeOp) {
       throw new Error(`No active operation found for ID: ${operationId}`);
     }
@@ -112,8 +112,8 @@ export class PerformanceMonitor {
       cpuUsage,
     };
 
-    this?.metrics?.push(metric as any);
-    this?.activeOperations?.delete(operationId as any);
+    this?.metrics?.push(metric);
+    this?.activeOperations?.delete(operationId);
 
     // Keep metrics under limit
     if (this?.metrics?.length > this.maxMetrics) {
@@ -121,7 +121,7 @@ export class PerformanceMonitor {
     }
 
     this?.logger?.debug(
-      `Completed tracking: ${operation} (${duration.toFixed(2 as any)}ms)`
+      `Completed tracking: ${operation} (${duration.toFixed(2)}ms)`
     );
 
     // Auto-save periodically
@@ -147,7 +147,7 @@ export class PerformanceMonitor {
     } catch (error) {
       this.endOperation(operationId, operation, false, {
         ...metadata,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -168,7 +168,7 @@ export class PerformanceMonitor {
     } catch (error) {
       this.endOperation(operationId, operation, false, {
         ...metadata,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -217,7 +217,7 @@ export class PerformanceMonitor {
       operationBreakdown[metric.operation].count++;
     }
 
-    for (const [operation, stats] of Object.entries(operationBreakdown as any)) {
+    for (const [operation, stats] of Object.entries(operationBreakdown)) {
       const opMetrics = relevantMetrics.filter(m => m?.operation === operation);
       stats?.avgDuration =
         opMetrics.reduce((sum, m) => sum + m.duration, 0) / opMetrics.length;
@@ -276,7 +276,7 @@ export class PerformanceMonitor {
   }
 
   exportReport(format: 'json' | 'csv' = 'json', timeRangeMs?: number): string {
-    const report = this.generateReport(timeRangeMs as any);
+    const report = this.generateReport(timeRangeMs);
 
     if (format === 'json') {
       return JSON.stringify(report, null, 2);
@@ -292,8 +292,8 @@ export class PerformanceMonitor {
         ([op, stats]) => [
           op,
           stats?.count?.toString(),
-          stats?.avgDuration?.toFixed(2 as any),
-          (stats.successRate * 100).toFixed(2 as any) + '%',
+          stats?.avgDuration?.toFixed(2),
+          (stats.successRate * 100).toFixed(2) + '%',
         ]
       );
 
@@ -346,7 +346,7 @@ export class JobManager {
     try {
       if (fs.existsSync(this.jobsFile)) {
         const data = fs.readFileSync(this.jobsFile, 'utf8');
-        const jobs: BackgroundJob[] = JSON.parse(data as any);
+        const jobs: BackgroundJob[] = JSON.parse(data);
         jobs.forEach(job => {
           this?.activeJobs?.set(job.id, job);
         });
@@ -397,7 +397,7 @@ export class JobManager {
   }
 
   public updateJob(jobId: string, updates: Partial<BackgroundJob>): void {
-    const job = this?.activeJobs?.get(jobId as any);
+    const job = this?.activeJobs?.get(jobId);
     if (!job) {
       this?.logger?.warn(`Job not found for update: ${jobId}`);
       return;
@@ -414,7 +414,7 @@ export class JobManager {
     processedItems?: number,
     totalItems?: number
   ): void {
-    const job = this?.activeJobs?.get(jobId as any);
+    const job = this?.activeJobs?.get(jobId);
     if (!job) return;
 
     job?.progress = Math.min(100, Math.max(0, progress));
@@ -437,7 +437,7 @@ export class JobManager {
       status: 'completed',
       endTime: Date.now(),
       progress: 100,
-      metadata: { ...this.getJob(jobId as any)?.metadata, ...metadata },
+      metadata: { ...this.getJob(jobId)?.metadata, ...metadata },
     });
     this?.logger?.info(`Job completed: ${jobId}`);
   }
@@ -452,7 +452,7 @@ export class JobManager {
   }
 
   public cancelJob(jobId: string): boolean {
-    const job = this?.activeJobs?.get(jobId as any);
+    const job = this?.activeJobs?.get(jobId);
     if (!job || job?.status === 'completed' || job?.status === 'failed') {
       return false;
     }
@@ -467,7 +467,7 @@ export class JobManager {
   }
 
   public getJob(jobId: string): BackgroundJob | undefined {
-    return this?.activeJobs?.get(jobId as any);
+    return this?.activeJobs?.get(jobId);
   }
 
   public getAllJobs(): BackgroundJob[] {
@@ -502,7 +502,7 @@ export class JobManager {
           job?.status === 'failed' ||
           job?.status === 'cancelled')
       ) {
-        jobsToRemove.push(id as any);
+        jobsToRemove.push(id);
 
         // Clean up log files
         if (job.logFile && fs.existsSync(job.logFile)) {
@@ -518,7 +518,7 @@ export class JobManager {
       }
     });
 
-    jobsToRemove.forEach(id => this?.activeJobs?.delete(id as any));
+    jobsToRemove.forEach(id => this?.activeJobs?.delete(id));
 
     if (jobsToRemove.length > 0) {
       this.saveJobs();
@@ -529,7 +529,7 @@ export class JobManager {
   }
 
   public writeJobLog(jobId: string, message: string): void {
-    const job = this.getJob(jobId as any);
+    const job = this.getJob(jobId);
     if (!job || !job.logFile) return;
 
     const timestamp = new Date().toISOString();
@@ -539,13 +539,13 @@ export class JobManager {
       fs.appendFileSync(job.logFile, logEntry);
     } catch (error) {
       this?.logger?.warn(
-        `Failed to write job log: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to write job log: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   public readJobLog(jobId: string): string | null {
-    const job = this.getJob(jobId as any);
+    const job = this.getJob(jobId);
     if (!job || !job.logFile || !fs.existsSync(job.logFile)) {
       return null;
     }
@@ -559,7 +559,7 @@ export class JobManager {
 
   private generateJobId(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36 as any).substring(2, 8);
+    const random = Math.random().toString(36).substring(2, 8);
     return `job_${timestamp}_${random}`;
   }
 
@@ -567,7 +567,7 @@ export class JobManager {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration as any);
+    const durationStr = this.formatDuration(duration);
     const statusIcon = this.getStatusIcon(job.status);
     const progressBar = this.createProgressBar(job.progress);
 
@@ -588,7 +588,7 @@ export class JobManager {
 
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
@@ -614,7 +614,7 @@ export class JobManager {
   private createProgressBar(progress: number, width: number = 20): string {
     const filled = Math.floor((progress / 100) * width);
     const empty = width - filled;
-    return `[${'\u2588'.repeat(filled as any)}${' '.repeat(empty as any)}]`;
+    return `[${'\u2588'.repeat(filled)}${' '.repeat(empty)}]`;
   }
 }
 

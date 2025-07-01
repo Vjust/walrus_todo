@@ -93,7 +93,7 @@ export class EndpointFallbackManager {
     } catch (error) {
       this?.logger?.warn('Current endpoint failed, attempting fallover', {
         endpoint: this?.state?.currentEndpoint.url,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return this.attemptFallover(operation, context, error);
@@ -166,11 +166,11 @@ export class EndpointFallbackManager {
     for (const endpoint of endpoints) {
       try {
         const result = await this.tryEndpoint(operation, endpoint, context);
-        this.switchToEndpoint(endpoint as any);
+        this.switchToEndpoint(endpoint);
         return result;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error as any));
-        this.markEndpointFailed(endpoint as any);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        this.markEndpointFailed(endpoint);
         
         this?.logger?.debug('Sequential fallback attempt failed', {
           endpoint: endpoint.url,
@@ -199,19 +199,19 @@ export class EndpointFallbackManager {
     const promises = concurrentEndpoints.map(async (endpoint) => {
       try {
         const result = await this.tryEndpoint(operation, endpoint, context);
-        this.switchToEndpoint(endpoint as any);
+        this.switchToEndpoint(endpoint);
         return { success: true, result, endpoint };
       } catch (error) {
-        this.markEndpointFailed(endpoint as any);
+        this.markEndpointFailed(endpoint);
         return { 
           success: false, 
-          error: error instanceof Error ? error : new Error(String(error as any)), 
+          error: error instanceof Error ? error : new Error(String(error)), 
           endpoint 
         };
       }
     });
 
-    const results = await Promise.allSettled(promises as any);
+    const results = await Promise.allSettled(promises);
     
     // Find first successful result
     for (const settledResult of results) {
@@ -272,7 +272,7 @@ export class EndpointFallbackManager {
 
     try {
       const result = await Promise.race([
-        operation(endpoint as any),
+        operation(endpoint),
         new Promise<never>((_, reject) => {
           setTimeout(() => {
             reject(new Error(`Endpoint timeout after ${this?.config?.fallbackTimeout}ms`));
@@ -388,23 +388,23 @@ export class EndpointFallbackManager {
         // Simple health check
         const response = await fetch(endpoint.url, {
           method: 'HEAD',
-          signal: AbortSignal.timeout(5000 as any),
+          signal: AbortSignal.timeout(5000),
         });
 
         if (response.ok) {
-          this?.state?.failedEndpoints.delete(url as any);
+          this?.state?.failedEndpoints.delete(url);
           this?.logger?.info('Endpoint recovered', { url });
         }
       } catch (error) {
         // Still failed, keep in failed set
         this?.logger?.debug('Endpoint still failing health check', {
           url,
-          error: error instanceof Error ? error.message : String(error as any),
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     });
 
-    await Promise.allSettled(checkPromises as any);
+    await Promise.allSettled(checkPromises);
   }
 
   /**
@@ -452,7 +452,7 @@ export class EndpointFallbackManager {
       // Simple health check on primary
       const response = await fetch(this?.config?.primary.url, {
         method: 'HEAD',
-        signal: AbortSignal.timeout(5000 as any),
+        signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
@@ -463,7 +463,7 @@ export class EndpointFallbackManager {
     } catch (error) {
       this?.logger?.debug('Primary recovery attempt failed', {
         attempt: this?.state?.recoveryAttempts,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -502,8 +502,8 @@ export class EndpointFallbackManager {
       throw new ValidationError(`Endpoint not found: ${endpointUrl}`);
     }
 
-    this.switchToEndpoint(endpoint as any);
-    this?.state?.failedEndpoints.delete(endpointUrl as any); // Clear any failure status
+    this.switchToEndpoint(endpoint);
+    this?.state?.failedEndpoints.delete(endpointUrl); // Clear any failure status
   }
 
   /**

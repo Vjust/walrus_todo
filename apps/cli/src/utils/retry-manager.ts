@@ -101,7 +101,7 @@ export class RetryManager {
     success: boolean,
     responseTime?: number
   ): void {
-    const node = this?.nodes?.get(nodeUrl as any);
+    const node = this?.nodes?.get(nodeUrl);
     if (!node) return;
 
     if (success) {
@@ -228,7 +228,7 @@ export class RetryManager {
     }
 
     // Circuit breaker penalty
-    if (this.isCircuitOpen(node as any)) {
+    if (this.isCircuitOpen(node)) {
       score *= 0.1;
     }
 
@@ -243,7 +243,7 @@ export class RetryManager {
     const nodes = Array.from(this?.nodes?.values());
 
     // Filter out nodes with open circuits
-    const availableNodes = nodes.filter(node => !this.isCircuitOpen(node as any));
+    const availableNodes = nodes.filter(node => !this.isCircuitOpen(node));
 
     // Check if we have enough healthy nodes BEFORE filtering by health threshold
     if (availableNodes.length < options.minNodes) {
@@ -279,8 +279,8 @@ export class RetryManager {
       default:
         // Use weighted scoring
         return candidateNodes.sort((a, b) => {
-          const scoreA = this.getNodeScore(a as any);
-          const scoreB = this.getNodeScore(b as any);
+          const scoreA = this.getNodeScore(a);
+          const scoreB = this.getNodeScore(b);
           return scoreB - scoreA;
         })[0];
     }
@@ -301,16 +301,16 @@ export class RetryManager {
       const status =
         (error as { status?: number; statusCode?: number }).status ||
         (error as { status?: number; statusCode?: number }).statusCode;
-      if (status && options?.retryableStatuses?.includes(status as any)) {
+      if (status && options?.retryableStatuses?.includes(status)) {
         return true;
       }
     }
 
     // Check error message against patterns
-    const errorString = error instanceof Error ? error.message : String(error as any);
+    const errorString = error instanceof Error ? error.message : String(error);
     return options?.retryableErrors?.some(pattern => {
       if (pattern instanceof RegExp) {
-        return pattern.test(errorString as any);
+        return pattern.test(errorString);
       }
       return errorString.toLowerCase().includes(pattern.toLowerCase());
     });
@@ -387,14 +387,14 @@ export class RetryManager {
 
     if (options.adaptiveDelay) {
       // Apply network condition multiplier (capped)
-      const networkScore = this.getNetworkScore(context as any);
+      const networkScore = this.getNetworkScore(context);
       const networkMultiplier = Math.min(2.0, 2 - networkScore);
       delay *= networkMultiplier;
 
       // Apply error-specific multiplier if available
       if (context?.errors?.length > 0) {
         const lastError = context?.errors?.[context?.errors?.length - 1].error;
-        const errorMultiplier = this.getErrorMultiplier(lastError as any);
+        const errorMultiplier = this.getErrorMultiplier(lastError);
         delay *= Math.min(2.0, errorMultiplier); // Cap multiplier
       }
     }
@@ -443,7 +443,7 @@ export class RetryManager {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       // Check if all circuits are open BEFORE incrementing attempt - prevent infinite loops
-      const availableNodes = Array.from(this?.nodes?.values()).filter(node => !this.isCircuitOpen(node as any));
+      const availableNodes = Array.from(this?.nodes?.values()).filter(node => !this.isCircuitOpen(node));
       if (availableNodes.length < options.minNodes) {
         throw new CLIError(
           `Insufficient healthy nodes (found ${availableNodes.length}, need ${options.minNodes})`,
@@ -507,7 +507,7 @@ export class RetryManager {
         lastNode = node;
         
         // Skip closed circuits early to avoid unnecessary operations
-        if (this.isCircuitOpen(node as any)) {
+        if (this.isCircuitOpen(node)) {
           const circuit = this?.circuitBreakers?.get(node.url);
           throw new Error(`Circuit breaker is open for node ${node.url} (${circuit?.failureCount} failures)`);
         }
@@ -518,7 +518,7 @@ export class RetryManager {
         // Execute with timeout and network quality monitoring
         try {
           const result = await Promise.race([
-            operation(node as any),
+            operation(node),
             // Timeout promise
             new Promise<never>((_, reject) => {
               timeoutId = setTimeout(() => {
@@ -526,7 +526,7 @@ export class RetryManager {
                   `Operation timed out after ${options.timeout}ms during ${context} on node ${node.url}`
                 );
                 this.updateNodeHealth(node.url, false, options.timeout);
-                reject(timeoutError as any);
+                reject(timeoutError);
               }, options.timeout);
             }),
           ]);
@@ -551,7 +551,7 @@ export class RetryManager {
         }
       } catch (error) {
         const errorObj =
-          error instanceof Error ? error : new Error(String(error as any));
+          error instanceof Error ? error : new Error(String(error));
         const node = lastNode || { url: 'unknown', priority: 1 };
 
         // Update node health and circuit breaker
@@ -564,9 +564,9 @@ export class RetryManager {
           error: errorObj,
           timestamp: Date.now(),
           node: node.url,
-          type: this.categorizeError(errorObj as any),
+          type: this.categorizeError(errorObj),
         };
-        retryContext?.errors?.push(errorInfo as any);
+        retryContext?.errors?.push(errorInfo);
 
         // Handle specific error types that should not be retried
         if (errorObj instanceof CLIError && errorObj?.code === 'RETRY_INSUFFICIENT_NODES') {
@@ -574,7 +574,7 @@ export class RetryManager {
         }
 
         // Check if error is retryable
-        if (!this.isRetryableError(error as any)) {
+        if (!this.isRetryableError(error)) {
           throw new CLIError(
             `Non-retryable error during ${context} with node ${node.url}: ${errorObj.message}`,
             'RETRY_NON_RETRYABLE'
@@ -582,7 +582,7 @@ export class RetryManager {
         }
 
         // Calculate next delay with adaptivity FIRST
-        const delay = this.getNextDelay(retryContext as any);
+        const delay = this.getNextDelay(retryContext);
         retryContext?.lastDelay = delay;
 
         // Check for circuit breaker conditions and log appropriately
@@ -610,7 +610,7 @@ export class RetryManager {
             {
               context,
               error: errorObj.message,
-              networkScore: this.getNetworkScore(retryContext as any),
+              networkScore: this.getNetworkScore(retryContext),
             }
           );
         }

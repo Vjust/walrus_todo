@@ -35,7 +35,7 @@ export class AuditLogger {
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
 
     // Ensure the config directory exists
-    if (!fs.existsSync(configDir as any)) {
+    if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
@@ -53,14 +53,14 @@ export class AuditLogger {
       if (fs.existsSync(this.logFilePath)) {
         // Read the last line of the log file to get the previous hash
         const fileContent = fs.readFileSync(this.logFilePath, 'utf8');
-        const lines = String(fileContent as any)
+        const lines = String(fileContent)
           .split('\n')
           .filter(line => line.trim().length > 0);
 
         if (lines.length > 0) {
           const lastLine = lines[lines.length - 1];
           try {
-            const lastEntry = JSON.parse(lastLine as any) as { hash?: string };
+            const lastEntry = JSON.parse(lastLine) as { hash?: string };
             if (lastEntry && typeof lastEntry?.hash === 'string') {
               this?.hashChain = lastEntry.hash;
             }
@@ -85,7 +85,7 @@ export class AuditLogger {
    */
   private generateInitialHash(): string {
     const timestamp = Date.now().toString();
-    const random = crypto.randomBytes(16 as any).toString('hex');
+    const random = crypto.randomBytes(16).toString('hex');
     return crypto
       .createHash('sha256')
       .update(`${timestamp}:${random}`)
@@ -101,7 +101,7 @@ export class AuditLogger {
     try {
       // Create log entry with sanitized details
       const timestamp = Date.now();
-      const sanitizedDetails = this.sanitize(details as any);
+      const sanitizedDetails = this.sanitize(details);
 
       // Create the log entry
       const entry = {
@@ -111,7 +111,7 @@ export class AuditLogger {
       };
 
       // Calculate the hash for this entry
-      const entryString = JSON.stringify(entry as any);
+      const entryString = JSON.stringify(entry);
       const entryHash = crypto
         .createHash('sha256')
         .update(`${this.hashChain}:${entryString}`)
@@ -127,10 +127,10 @@ export class AuditLogger {
       this?.hashChain = entryHash;
 
       // Add to in-memory log
-      this?.logEntries?.push(entryWithHash as any);
+      this?.logEntries?.push(entryWithHash);
 
       // Write to file
-      this.writeToFile(entryWithHash as any);
+      this.writeToFile(entryWithHash);
     } catch (_error) {
       logger.error('Failed to log audit event:', _error);
     }
@@ -152,12 +152,12 @@ export class AuditLogger {
       this.checkRotation();
 
       // Append log entry
-      const line = JSON.stringify(entry as any) + '\n';
+      const line = JSON.stringify(entry) + '\n';
       fs.appendFileSync(this.logFilePath, line, { mode: 0o600 }); // Restrict file permissions
     } catch (error: unknown) {
       logger.error(
         'Failed to write audit log:',
-        error instanceof Error ? error : new Error(String(error as any))
+        error instanceof Error ? error : new Error(String(error))
       );
     }
   }
@@ -185,7 +185,7 @@ export class AuditLogger {
             previousHash: this.hashChain,
           };
 
-          const entryString = JSON.stringify(initialEntry as any);
+          const entryString = JSON.stringify(initialEntry);
           const entryHash = crypto
             .createHash('sha256')
             .update(`${this.hashChain}:${entryString}`)
@@ -200,7 +200,7 @@ export class AuditLogger {
           this?.hashChain = entryHash;
 
           // Write initial entry to the new log file
-          const line = JSON.stringify(entryWithHash as any) + '\n';
+          const line = JSON.stringify(entryWithHash) + '\n';
           fs.writeFileSync(this.logFilePath, line, { mode: 0o600 });
         }
       }
@@ -258,20 +258,20 @@ export class AuditLogger {
         return obj;
       }
 
-      if (Array.isArray(obj as any)) {
-        return obj.map(item => sanitizeObject(item as any));
+      if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeObject(item));
       }
 
       const result: Record<string, unknown> = {};
 
-      for (const [key, value] of Object.entries(obj as any)) {
+      for (const [key, value] of Object.entries(obj)) {
         // Check if the key is sensitive
-        if (sensitiveFields.some(field => key.toLowerCase().includes(field as any))) {
+        if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
           result[key] = typeof value === 'string' ? '[REDACTED]' : null;
         }
         // Recurse for objects and arrays
         else if (typeof value === 'object' && value !== null) {
-          result[key] = sanitizeObject(value as any);
+          result[key] = sanitizeObject(value);
         }
         // Handle strings for PII
         else if (typeof value === 'string') {
@@ -293,7 +293,7 @@ export class AuditLogger {
       return result;
     };
 
-    return sanitizeObject(sanitized as any) as Record<string, unknown>;
+    return sanitizeObject(sanitized) as Record<string, unknown>;
   }
 
   /**
@@ -306,7 +306,7 @@ export class AuditLogger {
       }
 
       const fileContent = fs.readFileSync(this.logFilePath, 'utf8');
-      const lines = String(fileContent as any)
+      const lines = String(fileContent)
         .split('\n')
         .filter(line => line.trim().length > 0);
 
@@ -319,7 +319,7 @@ export class AuditLogger {
 
       for (const line of lines) {
         try {
-          const entry = JSON.parse(line as any) as {
+          const entry = JSON.parse(line) as {
             hash?: string;
             [key: string]: unknown;
           };
@@ -340,7 +340,7 @@ export class AuditLogger {
           delete entryWithoutHash.hash;
 
           // Calculate expected hash
-          const entryString = JSON.stringify(entryWithoutHash as any);
+          const entryString = JSON.stringify(entryWithoutHash);
           const expectedHash = crypto
             .createHash('sha256')
             .update(`${previousHash}:${entryString}`)

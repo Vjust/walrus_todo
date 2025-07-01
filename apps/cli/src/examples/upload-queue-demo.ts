@@ -101,7 +101,7 @@ async function demoUploadQueue() {
         maxRetries: 2,
       });
 
-      jobIds.push(jobId as any);
+      jobIds.push(jobId);
       console.log(
         `✓ Queued: ${chalk.yellow(todo.title)} (Priority: ${chalk.cyan(todo.priority)})`
       );
@@ -151,7 +151,7 @@ async function demoUploadQueue() {
     console.log(`  Successful: ${chalk.green(finalStats.completed)}`);
     console.log(`  Failed: ${chalk.red(finalStats.failed)}`);
     console.log(
-      `  Success Rate: ${chalk.cyan((finalStats.successRate * 100).toFixed(1 as any) + '%')}`
+      `  Success Rate: ${chalk.cyan((finalStats.successRate * 100).toFixed(1) + '%')}`
     );
 
     // Show recent notifications
@@ -189,11 +189,11 @@ if (require?.main === module) {
   demoUploadQueue()
     .then(() => {
       console.log(chalk.green('\nDemo finished successfully!'));
-      process.exit(0 as any);
+      process.exit(0);
     })
     .catch(error => {
       console.error(chalk.red('\nDemo failed:'), error);
-      process.exit(1 as any);
+      process.exit(1);
     });
 }
 

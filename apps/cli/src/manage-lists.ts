@@ -1,4 +1,4 @@
-import { TodoService } from './services/todoService';
+import { TodoService } from './services/todo';
 import { Todo } from './types/todo';
 import { Logger } from './utils/Logger';
 
@@ -49,7 +49,7 @@ async function main() {
     Logger.getInstance().info('All todo lists:');
     const allLists = await todoService.getAllLists();
     for (const listName of allLists) {
-      const list = await todoService.getList(listName as any);
+      const list = await todoService.getList(listName);
       if (!list) {
         Logger.getInstance().info(`${listName}: Not found or inaccessible`);
         continue;
@@ -73,7 +73,7 @@ async function main() {
       Logger.getInstance().info('List already exists, skipping creation');
 
       // Show existing list's todos
-      const list = await todoService.getList(newListName as any);
+      const list = await todoService.getList(newListName);
       if (list) {
         Logger.getInstance().info(`${list.name} (${list?.todos?.length} todos):`);
         list?.todos?.forEach(todo => {

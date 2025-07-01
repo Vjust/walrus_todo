@@ -87,7 +87,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       // Convert metadata to strings
       const metadataEntries = Object.entries(params.metadata || {}).map(
         ([key, value]) => {
-          return { key, value: String(value as any) };
+          return { key, value: String(value) };
         }
       );
 
@@ -98,15 +98,15 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
           tx.object(this.registryId), // registry
           tx.pure(params.name), // name
           tx.pure(params.publicKey), // public_key
-          tx.pure(JSON.stringify(metadataEntries as any)), // metadata
+          tx.pure(JSON.stringify(metadataEntries)), // metadata
         ],
       });
 
       // Execute the transaction
-      const result = await this?.signer?.signAndExecuteTransaction(tx as any);
+      const result = await this?.signer?.signAndExecuteTransaction(tx);
 
       // Extract the provider object ID from the transaction results
-      const providerId = this.extractCreatedObjectId(result as any);
+      const providerId = this.extractCreatedObjectId(result);
 
       return providerId;
     } catch (_error) {
@@ -149,7 +149,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       // Convert metadata to strings
       const metadataEntries = Object.entries(params.metadata || {}).map(
         ([key, value]) => {
-          return { key, value: String(value as any) };
+          return { key, value: String(value) };
         }
       );
 
@@ -162,18 +162,18 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         arguments: [
           tx.object(this.registryId), // registry
           tx.pure(params.actionType), // action_type
-          tx.pure(requestHash as any), // request_hash
-          tx.pure(responseHash as any), // response_hash
+          tx.pure(requestHash), // request_hash
+          tx.pure(responseHash), // response_hash
           tx.pure(params.provider || 'unknown'), // provider
-          tx.pure(JSON.stringify(metadataEntries as any)), // metadata
+          tx.pure(JSON.stringify(metadataEntries)), // metadata
         ],
       });
 
       // Execute the transaction
-      const result = await this?.signer?.signAndExecuteTransaction(tx as any);
+      const result = await this?.signer?.signAndExecuteTransaction(tx);
 
       // Extract the verification ID from the transaction results
-      const verificationId = this.extractCreatedObjectId(result as any);
+      const verificationId = this.extractCreatedObjectId(result);
 
       // Create a verification record
       const verificationRecord: VerificationRecord = {
@@ -204,13 +204,13 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   ): Promise<boolean> {
     try {
       // Calculate hashes of the provided request and response using secure algorithms
-      const calculatedRequestHash = this.hashData(request as any);
-      const calculatedResponseHash = this.hashData(response as any);
+      const calculatedRequestHash = this.hashData(request);
+      const calculatedResponseHash = this.hashData(response);
 
       // Validate hash format and length for collision resistance
       if (
-        !this.isValidHashFormat(calculatedRequestHash as any) ||
-        !this.isValidHashFormat(calculatedResponseHash as any)
+        !this.isValidHashFormat(calculatedRequestHash) ||
+        !this.isValidHashFormat(calculatedResponseHash)
       ) {
         logger.error('Invalid hash format detected during verification');
         return false;
@@ -297,7 +297,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       if (fields.metadata) {
         try {
           const metadataStr = fields.metadata;
-          const metadataEntries = JSON.parse(metadataStr as any) as Array<{
+          const metadataEntries = JSON.parse(metadataStr) as Array<{
             key: string;
             value: string;
           }>;
@@ -352,7 +352,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
             const metadataStr = (
               (content as SuiObjectContent).fields as SuiVerificationFields
             ).metadata;
-            const metadataEntries = JSON.parse(metadataStr as any) as Array<{
+            const metadataEntries = JSON.parse(metadataStr) as Array<{
               key: string;
               value: string;
             }>;
@@ -380,7 +380,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
           metadata,
         };
 
-        verifications.push(verification as any);
+        verifications.push(verification);
       }
 
       return verifications;
@@ -422,7 +422,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
           const metadataStr = (
             (content as SuiObjectContent).fields as SuiVerificationFields
           ).metadata;
-          const metadataEntries = JSON.parse(metadataStr as any);
+          const metadataEntries = JSON.parse(metadataStr);
 
           // Convert array of {key, value} objects to a Record
           metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -462,7 +462,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     const hash = createHash('sha256').update(data, 'utf8').digest('hex');
 
     // Validate hash output format
-    if (!this.isValidHashFormat(hash as any)) {
+    if (!this.isValidHashFormat(hash)) {
       throw new Error('Hash generation failed - invalid output format');
     }
 
@@ -475,7 +475,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   private isValidHashFormat(hash: string): boolean {
     // SHA-256 should produce exactly 64 hexadecimal characters
     const sha256Pattern = /^[a-fA-F0-9]{64}$/;
-    return sha256Pattern.test(hash as any);
+    return sha256Pattern.test(hash);
   }
 
   /**
@@ -506,7 +506,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   async generateProof(verificationId: string): Promise<string> {
     try {
       // Get the verification record
-      const record = await this.getVerification(verificationId as any);
+      const record = await this.getVerification(verificationId);
 
       // Create proof data structure
       const proofData = {
@@ -530,9 +530,9 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       };
 
       // Sign the proof data with the signer's key
-      const dataToSign = JSON.stringify(proofData as any);
+      const dataToSign = JSON.stringify(proofData);
       const signatureBytes = await this?.signer?.signPersonalMessage(
-        new TextEncoder().encode(dataToSign as any)
+        new TextEncoder().encode(dataToSign)
       );
 
       // Add signature to the proof
@@ -545,7 +545,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       };
 
       // Return the proof as a base64-encoded string
-      return Buffer.from(JSON.stringify(signedProof as any)).toString('base64');
+      return Buffer.from(JSON.stringify(signedProof)).toString('base64');
     } catch (_error) {
       logger.error('Failed to generate proof:', _error);
       throw new CLIError(
@@ -567,7 +567,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   ): Promise<string> {
     try {
       // Get all verifications for the user
-      const verifications = await this.listVerifications(userAddress as any);
+      const verifications = await this.listVerifications(userAddress);
 
       if (verifications?.length === 0) {
         return format === 'json' ? '[]' : '';
@@ -628,7 +628,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
 
       // Get all verifications for the current user
       const userAddress = this?.signer?.toSuiAddress();
-      const verifications = await this.listVerifications(userAddress as any);
+      const verifications = await this.listVerifications(userAddress);
 
       // Filter for records older than the retention threshold with timestamp validation
       const expiredRecords = verifications.filter(record => {
@@ -668,7 +668,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       }
 
       // Execute the transaction
-      await this?.signer?.signAndExecuteTransaction(tx as any);
+      await this?.signer?.signAndExecuteTransaction(tx);
 
       return expiredRecords.length;
     } catch (_error) {
@@ -688,7 +688,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   async securelyDestroyData(verificationId: string): Promise<boolean> {
     try {
       // Get the verification record to check ownership
-      const record = await this.getVerification(verificationId as any);
+      const record = await this.getVerification(verificationId);
 
       // Verify the current signer is the owner of the verification
       const userAddress = this?.signer?.toSuiAddress();
@@ -723,12 +723,12 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         target: `${this.packageId}::ai_verifier::delete_verification`,
         arguments: [
           tx.object(this.registryId), // registry
-          tx.object(verificationId as any), // verification ID
+          tx.object(verificationId), // verification ID
         ],
       });
 
       // Execute the transaction
-      await this?.signer?.signAndExecuteTransaction(tx as any);
+      await this?.signer?.signAndExecuteTransaction(tx);
 
       return true;
     } catch (_error) {
@@ -760,18 +760,18 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         // The deleteBlob method expects different options based on the WalrusClientAdapter interface
         const deleteFunction = this?.walrusAdapter?.deleteBlob({
           blobId: blobId, // Use explicit property name
-        } as Parameters<typeof this?.walrusAdapter?.deleteBlob>[0]); // Proper type assertion
-        await deleteFunction(tx as any);
+        } as any); // Proper type assertion
+        await deleteFunction(tx);
       } else {
         // Fallback to direct transaction call if method doesn't exist
         tx.moveCall({
           target: 'walrus::storage::delete_blob',
-          arguments: [tx.pure(blobId as any)],
+          arguments: [tx.pure(blobId)],
         });
       }
 
       // Execute the transaction
-      await this?.signer?.signAndExecuteTransaction(tx as any);
+      await this?.signer?.signAndExecuteTransaction(tx);
 
       return true;
     } catch (_error) {

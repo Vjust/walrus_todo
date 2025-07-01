@@ -69,14 +69,14 @@ export class CommandRegistry {
    * Resolve command name from alias
    */
   resolveAlias(input: string): string {
-    return this?.aliases?.get(input as any) || input;
+    return this?.aliases?.get(input) || input;
   }
 
   /**
    * Get command metadata
    */
   getCommand(name: string): CommandMetadata | undefined {
-    return this?.commands?.get(name as any);
+    return this?.commands?.get(name);
   }
 
   /**
@@ -90,11 +90,11 @@ export class CommandRegistry {
    * Get commands in a specific group
    */
   getGroupCommands(groupName: string): CommandMetadata[] {
-    const group = this?.groups?.get(groupName as any);
+    const group = this?.groups?.get(groupName);
     if (!group) return [];
 
     return Object.keys(group.commands)
-      .map(cmdName => this?.commands?.get(cmdName as any))
+      .map(cmdName => this?.commands?.get(cmdName))
       .filter((cmd): cmd is CommandMetadata => cmd !== undefined);
   }
 
@@ -103,13 +103,13 @@ export class CommandRegistry {
    */
   addToHistory(command: string): void {
     // Remove duplicate if exists
-    const index = this?.commandHistory?.indexOf(command as any);
+    const index = this?.commandHistory?.indexOf(command);
     if (index !== -1) {
       this?.commandHistory?.splice(index, 1);
     }
 
     // Add to beginning
-    this?.commandHistory?.unshift(command as any);
+    this?.commandHistory?.unshift(command);
 
     // Maintain max size
     if (this?.commandHistory?.length > this.maxHistorySize) {
@@ -134,15 +134,15 @@ export class CommandRegistry {
     const suggestions: Array<{ command: CommandMetadata; score: number }> = [];
 
     // Check exact matches first
-    const exactMatch = this?.commands?.get(input as any);
+    const exactMatch = this?.commands?.get(input);
     if (exactMatch) {
       return [exactMatch];
     }
 
     // Check alias matches
-    const aliasedCommand = this.resolveAlias(input as any);
+    const aliasedCommand = this.resolveAlias(input);
     if (aliasedCommand !== input) {
-      const cmd = this?.commands?.get(aliasedCommand as any);
+      const cmd = this?.commands?.get(aliasedCommand);
       if (cmd) return [cmd];
     }
 
@@ -225,20 +225,20 @@ export class CommandRegistry {
 
     // Check command names
     this?.commands?.forEach(command => {
-      if (command?.name?.toLowerCase().startsWith(lowerPartial as any)) {
+      if (command?.name?.toLowerCase().startsWith(lowerPartial)) {
         completions.push(command.name);
       }
     });
 
     // Check aliases
     this?.aliases?.forEach((commandName, alias) => {
-      if (alias.toLowerCase().startsWith(lowerPartial as any)) {
-        completions.push(alias as any);
+      if (alias.toLowerCase().startsWith(lowerPartial)) {
+        completions.push(alias);
       }
     });
 
     // Sort alphabetically and remove duplicates
-    return [...new Set(completions as any)].sort();
+    return [...new Set(completions)].sort();
   }
 
   /**
@@ -251,7 +251,7 @@ export class CommandRegistry {
       lines.push(`\n${group?.name?.toUpperCase()} - ${group.description}`);
 
       Object.entries(group.commands).forEach(([cmdName, _cmdInfo]) => {
-        const command = this?.commands?.get(cmdName as any);
+        const command = this?.commands?.get(cmdName);
         if (command) {
           const aliases = command.aliases
             ? ` (${command?.aliases?.join(', ')})`

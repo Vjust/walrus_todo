@@ -41,7 +41,7 @@ export default class HelpCommand extends BaseCommand {
   static aliases = ['h', '?'];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(HelpCommand as any);
+    const { args, flags } = await this.parse(HelpCommand);
 
     // Show shortcuts if flag is set
     if (flags.shortcuts) {
@@ -54,11 +54,11 @@ export default class HelpCommand extends BaseCommand {
       const expandedCommand = CommandShortcuts.expand(args.command);
 
       // Show help for specific command
-      const command = commandRegistry.resolveAlias(expandedCommand as any);
-      const metadata = commandRegistry.getCommand(command as any);
+      const command = commandRegistry.resolveAlias(expandedCommand);
+      const metadata = commandRegistry.getCommand(command);
 
       if (metadata) {
-        this.showCommandHelp(metadata as any);
+        this.showCommandHelp(metadata);
       } else {
         // Suggest commands if not found
         const suggestions = commandRegistry.suggestCommands(args.command);

@@ -1,7 +1,7 @@
 import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
 import chalk = require('chalk');
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { CLIError } from '../types/errors/consolidated';
 
 /**
@@ -77,7 +77,7 @@ export default class ShareCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(ShareCommand as any);
+      const { args, flags } = await this.parse(ShareCommand);
 
       // Parse input to support both positional and flag syntax
       let listName: string | undefined;
@@ -116,7 +116,7 @@ export default class ShareCommand extends BaseCommand {
       }
 
       // Get the list
-      const todoList = await this?.todoService?.getList(listName as any);
+      const todoList = await this?.todoService?.getList(listName);
       if (!todoList) {
         const availableLists = await this?.todoService?.getAllLists();
         throw new CLIError(
@@ -135,7 +135,7 @@ export default class ShareCommand extends BaseCommand {
       todoList?.permissions = todoList.permissions || {};
 
       // Check if already shared
-      if (todoList?.collaborators?.includes(recipient as any)) {
+      if (todoList?.collaborators?.includes(recipient)) {
         const currentPermission = todoList?.permissions?.[recipient] || 'edit';
         if (currentPermission === permissionLevel) {
           throw new CLIError(
@@ -147,7 +147,7 @@ export default class ShareCommand extends BaseCommand {
           todoList?.permissions?.[recipient] = permissionLevel;
           this.log(
             chalk.green('✓'),
-            `Updated ${chalk.cyan(recipient as any)}'s permissions to ${chalk.bold(permissionLevel as any)} for list "${chalk.bold(listName as any)}"`
+            `Updated ${chalk.cyan(recipient)}'s permissions to ${chalk.bold(permissionLevel)} for list "${chalk.bold(listName)}"`
           );
           await this?.todoService?.saveList(listName, todoList);
           return;
@@ -155,7 +155,7 @@ export default class ShareCommand extends BaseCommand {
       }
 
       // Add new collaborator
-      todoList?.collaborators?.push(recipient as any);
+      todoList?.collaborators?.push(recipient);
       todoList?.permissions?.[recipient] = permissionLevel;
       todoList?.updatedAt = new Date().toISOString();
 
@@ -164,7 +164,7 @@ export default class ShareCommand extends BaseCommand {
       // Success message with permission info
       this.log(
         chalk.green('✓'),
-        `Todo list "${chalk.bold(listName as any)}" shared with ${chalk.cyan(recipient as any)}`
+        `Todo list "${chalk.bold(listName)}" shared with ${chalk.cyan(recipient)}`
       );
       this.log('  ', chalk.dim(`Permission level: ${permissionLevel}`));
 
@@ -186,7 +186,7 @@ export default class ShareCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to share list: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to share list: ${error instanceof Error ? error.message : String(error)}`,
         'SHARE_FAILED'
       );
     }

@@ -6,7 +6,7 @@
 
 import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base-command';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
 import dotenv from 'dotenv';
@@ -57,7 +57,7 @@ export default class CheckCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(CheckCommand as any);
+    const { args, flags } = await this.parse(CheckCommand);
     const todoService = new TodoService();
 
     try {
@@ -90,7 +90,7 @@ export default class CheckCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to check todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to check todo: ${error instanceof Error ? error.message : String(error)}`,
         'CHECK_FAILED'
       );
     }

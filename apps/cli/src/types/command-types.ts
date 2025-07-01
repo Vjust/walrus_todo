@@ -317,7 +317,7 @@ export interface ValidationResult {
  * Type guards for runtime type checking
  */
 export function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value as any) && value.every(item => typeof item === 'string');
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
 }
 
 export function isString(value: unknown): value is string {
@@ -337,7 +337,7 @@ export function isNumber(value: unknown): value is number {
  */
 export function ensureArray<T>(value: T | T[] | undefined): T[] {
   if (value === undefined) return [];
-  return Array.isArray(value as any) ? value : [value];
+  return Array.isArray(value) ? value : [value];
 }
 
 /**
@@ -348,5 +348,5 @@ export function ensureString(
   defaultValue = ''
 ): string {
   if (value === undefined) return defaultValue;
-  return Array.isArray(value as any) ? value[0] : value;
+  return Array.isArray(value) ? value[0] : value;
 }

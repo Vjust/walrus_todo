@@ -38,10 +38,10 @@ export function validateEnvironmentFull(): ValidationResult {
   const allVars = envConfig.getAllVariables();
 
   // Check each environment variable
-  for (const [key, config] of Object.entries(allVars as any)) {
+  for (const [key, config] of Object.entries(allVars)) {
     // Check for required variables
     if (config.required && !hasValue(config.value)) {
-      result?.missingVars?.push(key as any);
+      result?.missingVars?.push(key);
       result?.isValid = false;
     }
 
@@ -56,7 +56,7 @@ export function validateEnvironmentFull(): ValidationResult {
         }
       } catch (error) {
         result?.invalidVars?.push(
-          `${key}: ${error instanceof Error ? error.message : String(error as any)}`
+          `${key}: ${error instanceof Error ? error.message : String(error)}`
         );
         result?.isValid = false;
       }
@@ -75,7 +75,7 @@ export function validateEnvironmentFull(): ValidationResult {
       hasValue(config.value) &&
       config?.source === 'config'
     ) {
-      result?.insecureVars?.push(key as any);
+      result?.insecureVars?.push(key);
       result?.warnings?.push(
         `Sensitive value ${key} should be stored in environment variables, not config files`
       );
@@ -174,7 +174,7 @@ export function generateEnvironmentDocs(): string {
     Other: [],
   };
 
-  for (const [key, config] of Object.entries(allVars as any)) {
+  for (const [key, config] of Object.entries(allVars)) {
     if (key.startsWith('AI_') || key.endsWith('_API_KEY')) {
       categories?.["AI"].push({ ...config, name: key });
     } else if (
@@ -209,7 +209,7 @@ export function generateEnvironmentDocs(): string {
   }
 
   // Add each category to documentation
-  for (const [category, vars] of Object.entries(categories as any)) {
+  for (const [category, vars] of Object.entries(categories)) {
     if (vars?.length === 0) continue;
 
     documentation += `## ${category}\n\n`;
@@ -258,12 +258,12 @@ function formatValue(value: unknown): string {
   } else if (typeof value === 'string') {
     return value === '' ? '""' : value;
   } else if (typeof value === 'boolean' || typeof value === 'number') {
-    return String(value as any);
+    return String(value);
   } else {
     try {
-      return JSON.stringify(value as any);
+      return JSON.stringify(value);
     } catch (error: unknown) {
-      return String(value as any);
+      return String(value);
     }
   }
 }

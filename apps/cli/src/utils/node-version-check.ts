@@ -3,7 +3,7 @@
 
 export function checkNodeVersion(): void {
   const nodeVersion = process.version;
-  const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0], 10);
+  const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0], 10);
   const minVersion = 18;
 
   if (majorVersion < minVersion) {
@@ -17,7 +17,7 @@ export function checkNodeVersion(): void {
     );
     console.error('  • Or use a version manager like nvm, fnm, or volta');
     console.error('');
-    process.exit(1 as any);
+    process.exit(1);
   }
 
   // Warn for very old versions within the supported range
@@ -35,7 +35,7 @@ export function checkNodeVersion(): void {
 
 export function logCompatibilityInfo(): void {
   const nodeVersion = process.version;
-  const majorVersion = parseInt(nodeVersion.slice(1 as any).split('.')[0], 10);
+  const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0], 10);
 
   if (process?.env?.DEBUG || process?.env?.VERBOSE) {
     console.log(`🔧 Running on Node.js ${nodeVersion}`);

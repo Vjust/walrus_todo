@@ -103,7 +103,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
   public cancelAllRequests(reason: string = 'User cancelled operation'): void {
     this?.activeRequests?.forEach(controller => {
       if (!controller?.signal?.aborted) {
-        controller.abort(reason as any);
+        controller.abort(reason);
       }
     });
 
@@ -203,7 +203,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     await this.enforceRateLimit();
 
     const controller = new AbortController();
-    this?.activeRequests?.push(controller as any);
+    this?.activeRequests?.push(controller);
 
     try {
       const fetchOptions: EnhancedFetchOptions = {
@@ -237,7 +237,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       return response.data as T;
     } finally {
       // Remove this controller from active requests
-      const index = this?.activeRequests?.indexOf(controller as any);
+      const index = this?.activeRequests?.indexOf(controller);
       if (index !== -1) {
         this?.activeRequests?.splice(index, 1);
       }
@@ -268,7 +268,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     }
 
     try {
-      return await promptInput.format(input as any);
+      return await promptInput.format(input);
     } catch (_error) {
       throw new Error(
         `Error formatting prompt template: ${_error instanceof Error ? _error.message : 'Unknown error'}`

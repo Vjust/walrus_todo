@@ -59,7 +59,7 @@ export const TodoSchema = z.object(
           .min(1, 'Tag cannot be empty')
           .max(50, 'Tag too long (max 50 characters)')
           .refine(
-            tag => !/[<>"'&]/.test(tag as any),
+            tag => !/[<>"'&]/.test(tag),
             'Tag contains invalid characters'
           )
       )
@@ -85,7 +85,7 @@ export const TodoSchema = z.object(
       .datetime('Invalid completed date format (must be ISO 8601)')
       .optional(),
 
-    private: z.boolean().default(false as any),
+    private: z.boolean().default(false),
 
     storageLocation: StorageLocationSchema.optional(),
 
@@ -144,7 +144,7 @@ export const TodoListSchema = z.object(
         'TodoList name cannot be only whitespace'
       )
       .refine(
-        name => !/[<>"'&\\/:]/.test(name as any),
+        name => !/[<>"'&\\/:]/.test(name),
         'TodoList name contains invalid characters'
       ),
 
@@ -154,7 +154,7 @@ export const TodoListSchema = z.object(
       .max(100, 'TodoList owner too long (max 100 characters)'),
 
     todos: z
-      .array(TodoSchema as any)
+      .array(TodoSchema)
       .max(1000, 'Too many todos in list (max 1000)')
       .default([]),
 
@@ -162,7 +162,7 @@ export const TodoListSchema = z.object(
       .number()
       .int('Version must be an integer')
       .min(0, 'Version cannot be negative')
-      .default(1 as any),
+      .default(1),
 
     collaborators: z
       .array(
@@ -212,7 +212,7 @@ export const TodoListSchema = z.object(
  * Schema for bulk operations
  */
 export const TodoListArraySchema = z
-  .array(TodoListSchema as any)
+  .array(TodoListSchema)
   .max(100, 'Too many todo lists (max 100)');
 
 /**
@@ -232,7 +232,7 @@ export type StorageLocationType = z.infer<typeof StorageLocationSchema>;
  */
 export function validateTodo(todo: unknown): TodoSchemaType {
   try {
-    return TodoSchema.parse(todo as any);
+    return TodoSchema.parse(todo);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
@@ -249,7 +249,7 @@ export function validateTodo(todo: unknown): TodoSchemaType {
  */
 export function validateTodoList(todoList: unknown): TodoListSchemaType {
   try {
-    return TodoListSchema.parse(todoList as any);
+    return TodoListSchema.parse(todoList);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
@@ -268,7 +268,7 @@ export function validateTodoListArray(
   todoLists: unknown
 ): TodoListSchemaType[] {
   try {
-    return TodoListArraySchema.parse(todoLists as any);
+    return TodoListArraySchema.parse(todoLists);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors
@@ -287,7 +287,7 @@ export function validateTodoSafe(
   todo: unknown
 ): { success: true; data: TodoSchemaType } | { success: false; error: string } {
   try {
-    const validated = TodoSchema.parse(todo as any);
+    const validated = TodoSchema.parse(todo);
     return { success: true, data: validated };
   } catch (_error) {
     if (_error instanceof z.ZodError) {
@@ -312,7 +312,7 @@ export function validateTodoListSafe(
   | { success: true; data: TodoListSchemaType }
   | { success: false; error: string } {
   try {
-    const validated = TodoListSchema.parse(todoList as any);
+    const validated = TodoListSchema.parse(todoList);
     return { success: true, data: validated };
   } catch (_error) {
     if (_error instanceof z.ZodError) {
@@ -342,7 +342,7 @@ export type PartialTodoType = z.infer<typeof PartialTodoSchema>;
 
 export function validatePartialTodo(todo: unknown): PartialTodoType {
   try {
-    return PartialTodoSchema.parse(todo as any);
+    return PartialTodoSchema.parse(todo);
   } catch (_error) {
     if (_error instanceof z.ZodError) {
       const formattedErrors = _error.errors

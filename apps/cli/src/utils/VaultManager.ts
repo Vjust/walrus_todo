@@ -53,7 +53,7 @@ export class VaultManager {
 
   constructor(baseDir: string) {
     // Ensure baseDir is absolute
-    this?.baseDir = path.isAbsolute(baseDir as any)
+    this?.baseDir = path.isAbsolute(baseDir)
       ? baseDir
       : path.join(
           process?.env?.HOME || process?.env?.USERPROFILE || '',
@@ -99,12 +99,12 @@ export class VaultManager {
 
     // Generate or load master encryption key
     const keyFile = path.join(this.baseDir, '.master.key');
-    if (!fs.existsSync(keyFile as any)) {
-      this?.encryptionKey = crypto.randomBytes(32 as any); // 256-bit key
+    if (!fs.existsSync(keyFile)) {
+      this?.encryptionKey = crypto.randomBytes(32); // 256-bit key
       fs.writeFileSync(keyFile, this.encryptionKey, { mode: 0o600 }); // Only owner can read/write
     } else {
       try {
-        this?.encryptionKey = fs.readFileSync(keyFile as any);
+        this?.encryptionKey = fs.readFileSync(keyFile);
       } catch (error) {
         throw new CLIError(
           'Failed to read encryption key',
@@ -121,13 +121,13 @@ export class VaultManager {
     if (!fs.existsSync(this.secretsDir)) return;
 
     const indexFile = path.join(this.secretsDir, 'index.json');
-    if (fs.existsSync(indexFile as any)) {
+    if (fs.existsSync(indexFile)) {
       try {
-        const encryptedIndex = fs.readFileSync(indexFile as any);
-        const decryptedIndex = this.decrypt(encryptedIndex as any);
+        const encryptedIndex = fs.readFileSync(indexFile);
+        const decryptedIndex = this.decrypt(encryptedIndex);
         if (decryptedIndex) {
           const secretsIndex = JSON.parse(decryptedIndex.toString());
-          this?.secretsMap = new Map(Object.entries(secretsIndex as any));
+          this?.secretsMap = new Map(Object.entries(secretsIndex));
         }
       } catch (error) {
         logger.error('Failed to load secrets index:', error);
@@ -140,8 +140,8 @@ export class VaultManager {
   private saveSecretIndex(): void {
     // Convert map to object for serialization
     const secretsObject = Object.fromEntries(this.secretsMap);
-    const indexJson = JSON.stringify(secretsObject as any);
-    const encryptedIndex = this.encrypt(indexJson as any);
+    const indexJson = JSON.stringify(secretsObject);
+    const encryptedIndex = this.encrypt(indexJson);
 
     const indexFile = path.join(this.secretsDir, 'index.json');
     fs.writeFileSync(indexFile, encryptedIndex, { mode: 0o600 }); // Only owner can read/write
@@ -164,7 +164,7 @@ export class VaultManager {
 
     // Create secret record
     const secret: Secret = {
-      id: crypto.randomBytes(16 as any).toString('hex'),
+      id: crypto.randomBytes(16).toString('hex'),
       value: value,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -172,7 +172,7 @@ export class VaultManager {
     };
 
     // Encrypt the secret value and store it
-    const encryptedValue = this.encrypt(JSON.stringify(secret as any));
+    const encryptedValue = this.encrypt(JSON.stringify(secret));
 
     const secretFile = path.join(this.secretsDir, `${secret.id}.enc`);
     fs.writeFileSync(secretFile, encryptedValue, { mode: 0o600 }); // Only owner can read/write
@@ -190,13 +190,13 @@ export class VaultManager {
    * Retrieve a secret from the vault
    */
   async getSecret(key: string): Promise<string> {
-    const secretMeta = this?.secretsMap?.get(key as any);
+    const secretMeta = this?.secretsMap?.get(key);
     if (!secretMeta) {
       throw new CLIError(`Secret not found: ${key}`, 'SECRET_NOT_FOUND');
     }
 
     const secretFile = path.join(this.secretsDir, `${secretMeta.id}.enc`);
-    if (!fs.existsSync(secretFile as any)) {
+    if (!fs.existsSync(secretFile)) {
       throw new CLIError(
         `Secret file not found: ${key}`,
         'SECRET_FILE_NOT_FOUND'
@@ -204,8 +204,8 @@ export class VaultManager {
     }
 
     try {
-      const encryptedData = fs.readFileSync(secretFile as any);
-      const decryptedData = this.decrypt(encryptedData as any);
+      const encryptedData = fs.readFileSync(secretFile);
+      const decryptedData = this.decrypt(encryptedData);
       if (!decryptedData) {
         throw new CLIError(
           `Failed to decrypt secret: ${key}`,
@@ -228,7 +228,7 @@ export class VaultManager {
    * Check if a secret exists
    */
   async hasSecret(key: string): Promise<boolean> {
-    return this?.secretsMap?.has(key as any);
+    return this?.secretsMap?.has(key);
   }
 
   /**
@@ -242,17 +242,17 @@ export class VaultManager {
    * Remove a secret from the vault
    */
   async removeSecret(key: string): Promise<void> {
-    const secretMeta = this?.secretsMap?.get(key as any);
+    const secretMeta = this?.secretsMap?.get(key);
     if (!secretMeta) {
       throw new CLIError(`Secret not found: ${key}`, 'SECRET_NOT_FOUND');
     }
 
     const secretFile = path.join(this.secretsDir, `${secretMeta.id}.enc`);
-    if (fs.existsSync(secretFile as any)) {
-      fs.unlinkSync(secretFile as any);
+    if (fs.existsSync(secretFile)) {
+      fs.unlinkSync(secretFile);
     }
 
-    this?.secretsMap?.delete(key as any);
+    this?.secretsMap?.delete(key);
     this.saveSecretIndex();
   }
 
@@ -269,10 +269,10 @@ export class VaultManager {
     }
 
     // Generate a random initialization vector for each encryption
-    const iv = crypto.randomBytes(16 as any);
+    const iv = crypto.randomBytes(16);
 
     // Generate a random salt for key derivation
-    const salt = crypto.randomBytes(16 as any);
+    const salt = crypto.randomBytes(16);
 
     // Derive an encryption key using PBKDF2
     const key = crypto.pbkdf2Sync(
@@ -288,7 +288,7 @@ export class VaultManager {
 
     // Add additional authentication data (AAD) for integrity checks
     const aad = Buffer.from('walrus-secure-credential');
-    cipher.setAAD(aad as any);
+    cipher.setAAD(aad);
 
     // Encrypt the data
     const encrypted = Buffer.concat([
@@ -326,7 +326,7 @@ export class VaultManager {
       const salt = data.subarray(0, 16);
       const iv = data.subarray(16, 32);
       const tag = data.subarray(32, 48);
-      const aadLength = data.readUInt8(48 as any);
+      const aadLength = data.readUInt8(48);
       const aad = data.subarray(49, 49 + aadLength);
       const encrypted = data.subarray(49 + aadLength);
 
@@ -343,11 +343,11 @@ export class VaultManager {
       const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
 
       // Set the authentication tag and AAD
-      decipher.setAuthTag(tag as any);
-      decipher.setAAD(aad as any);
+      decipher.setAuthTag(tag);
+      decipher.setAAD(aad);
 
       // Decrypt the data
-      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (error) {
       logger.error('Decryption failed:', error);
       return null;
@@ -370,7 +370,7 @@ export class VaultManager {
   }
 
   createVault(config: VaultConfig): string {
-    const vaultId = crypto.randomBytes(16 as any).toString('hex');
+    const vaultId = crypto.randomBytes(16).toString('hex');
     const vault: VaultMetadata = {
       id: vaultId,
       name: config.name,
@@ -381,7 +381,7 @@ export class VaultManager {
     };
 
     const vaultDir = path.join(this.baseDir, vaultId);
-    fs.mkdirSync(vaultDir as any);
+    fs.mkdirSync(vaultDir);
     fs.mkdirSync(path.join(vaultDir, 'metadata'));
     fs.mkdirSync(path.join(vaultDir, 'blobs'));
 
@@ -421,7 +421,7 @@ export class VaultManager {
       `${blobId}.json`
     );
 
-    if (!fs.existsSync(metadataPath as any)) {
+    if (!fs.existsSync(metadataPath)) {
       throw new WalrusError(`Blob record not found: ${blobId}`);
     }
 
@@ -429,7 +429,7 @@ export class VaultManager {
   }
 
   getVaultMetadata(vaultId: string): VaultMetadata {
-    const vault = this?.vaults?.get(vaultId as any);
+    const vault = this?.vaults?.get(vaultId);
     if (!vault) {
       throw new WalrusError(`Vault ${vaultId} not found`);
     }
@@ -437,7 +437,7 @@ export class VaultManager {
   }
 
   validateFileForVault(vaultId: string, size: number, mimeType: string): void {
-    const vault = this?.vaults?.get(vaultId as any);
+    const vault = this?.vaults?.get(vaultId);
     if (!vault) {
       throw new WalrusError(`Vault ${vaultId} not found`);
     }
@@ -448,7 +448,7 @@ export class VaultManager {
       );
     }
 
-    if (!vault?.config?.allowedTypes.includes(mimeType as any)) {
+    if (!vault?.config?.allowedTypes.includes(mimeType)) {
       throw new WalrusError(
         `File type ${mimeType} not allowed in vault. Allowed types: ${vault?.config?.allowedTypes.join(
           ', '
@@ -468,9 +468,9 @@ export class VaultManager {
 
     for (const vault of Array.from(this?.vaults?.values())) {
       const metadataDir = path.join(this.baseDir, vault.id, 'metadata');
-      if (!fs.existsSync(metadataDir as any)) continue;
+      if (!fs.existsSync(metadataDir)) continue;
 
-      const files = fs.readdirSync(metadataDir as any);
+      const files = fs.readdirSync(metadataDir);
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
 
@@ -480,7 +480,7 @@ export class VaultManager {
 
         const expiryDate = new Date(record.expiresAt);
         if (expiryDate <= threshold) {
-          expiringBlobs.push(record as any);
+          expiringBlobs.push(record);
         }
       }
     }

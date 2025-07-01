@@ -46,11 +46,11 @@ export function createCompatibleSuiClient(
   options?: CompatibleSuiClientOptions
 ): SuiClientClass {
   try {
-    return new SuiClient(options as any);
+    return new SuiClient(options);
   } catch (error) {
     logger.error('Failed to create SuiClient:', error);
     throw new Error(
-      `Failed to create SuiClient: ${error instanceof Error ? error.message : String(error as any)}`
+      `Failed to create SuiClient: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

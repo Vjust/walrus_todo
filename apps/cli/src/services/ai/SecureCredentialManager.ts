@@ -60,7 +60,7 @@ export class SecureCredentialManager {
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
 
     // Ensure the config directory exists
-    if (!fs.existsSync(configDir as any)) {
+    if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
@@ -98,7 +98,7 @@ export class SecureCredentialManager {
     try {
       if (!fs.existsSync(this.keyPath)) {
         // Generate a new key
-        const newKey = crypto.randomBytes(32 as any);
+        const newKey = crypto.randomBytes(32);
         fs.writeFileSync(this.keyPath, newKey, { mode: 0o600 }); // Restrict file permissions
 
         // Create key metadata
@@ -111,7 +111,7 @@ export class SecureCredentialManager {
           backupLocations: [],
         };
 
-        fs.writeFileSync(this.keyMetadataPath, JSON.stringify(keyMetadata as any), {
+        fs.writeFileSync(this.keyMetadataPath, JSON.stringify(keyMetadata), {
           mode: 0o600,
         });
 
@@ -121,7 +121,7 @@ export class SecureCredentialManager {
 
       // Load the key
       const key = fs.readFileSync(this.keyPath);
-      this?.encryptionKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
+      this?.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
     } catch (_error) {
       throw new CLIError(
         `Failed to initialize encryption key: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -141,7 +141,7 @@ export class SecureCredentialManager {
           typeof metadataRaw === 'string'
             ? metadataRaw
             : metadataRaw.toString('utf8');
-        const metadata = JSON.parse(metadataStr as any);
+        const metadata = JSON.parse(metadataStr);
 
         // Validate metadata structure
         if (typeof metadata === 'object' && metadata !== null) {
@@ -165,7 +165,7 @@ export class SecureCredentialManager {
       return null;
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error as any);
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Failed to read key metadata:', errorMessage);
       return null;
     }
@@ -210,14 +210,14 @@ export class SecureCredentialManager {
       fs.renameSync(tempMetadataPath, this.keyMetadataPath);
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error as any);
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Failed to update key metadata:', errorMessage);
 
       // Clean up temporary file if it exists
       const tempMetadataPath = `${this.keyMetadataPath}.tmp`;
       try {
-        if (fs.existsSync(tempMetadataPath as any)) {
-          fs.unlinkSync(tempMetadataPath as any);
+        if (fs.existsSync(tempMetadataPath)) {
+          fs.unlinkSync(tempMetadataPath);
         }
       } catch (cleanupError: unknown) {
         logger.warn(
@@ -262,7 +262,7 @@ export class SecureCredentialManager {
       }
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error as any);
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Failed to check key rotation status:', errorMessage);
       // Don't throw here as this runs during initialization
     }
@@ -275,10 +275,10 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const dataBuffer = Buffer.isBuffer(encryptedData as any)
+        const dataBuffer = Buffer.isBuffer(encryptedData)
           ? encryptedData
-          : Buffer.from(encryptedData as any);
-        const credentials = this.decrypt(dataBuffer as any);
+          : Buffer.from(encryptedData);
+        const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this?.credentials = JSON.parse(credentials.toString());
         }
@@ -309,7 +309,7 @@ export class SecureCredentialManager {
     try {
       // Serialize and encrypt the credentials
       const data = JSON.stringify(this.credentials);
-      const encryptedData = this.encrypt(data as any);
+      const encryptedData = this.encrypt(data);
 
       // Create a temporary file first for atomic update
       const tempPath = `${this.credentialsPath}.tmp`;
@@ -412,7 +412,7 @@ export class SecureCredentialManager {
 
       // Keep only the 5 most recent backups
       if (backupFiles.length > 5) {
-        backupFiles.slice(5 as any).forEach(file => {
+        backupFiles.slice(5).forEach(file => {
           fs.unlinkSync(file.path);
         });
       }
@@ -565,7 +565,7 @@ export class SecureCredentialManager {
         (credential.expiresAt - Date.now()) / (1000 * 60 * 60 * 24)
       );
       logger.warn(
-        `WARNING: Credential for provider "${providerName}" will expire in ${daysRemaining} day(s as any)`
+        `WARNING: Credential for provider "${providerName}" will expire in ${daysRemaining} day(s)`
       );
     }
 
@@ -938,7 +938,7 @@ export class SecureCredentialManager {
       }
 
       // Generate a new key
-      const newKey = crypto.randomBytes(32 as any);
+      const newKey = crypto.randomBytes(32);
       logger.info('New encryption key generated');
 
       // Re-encrypt all credentials with the new key
@@ -950,10 +950,10 @@ export class SecureCredentialManager {
         credentialsExisted = true;
         try {
           const encryptedData = fs.readFileSync(this.credentialsPath);
-          const dataBuffer = Buffer.isBuffer(encryptedData as any)
+          const dataBuffer = Buffer.isBuffer(encryptedData)
             ? encryptedData
-            : Buffer.from(encryptedData as any);
-          decryptedData = this.decrypt(dataBuffer as any);
+            : Buffer.from(encryptedData);
+          decryptedData = this.decrypt(dataBuffer);
 
           if (!decryptedData) {
             throw new Error(
@@ -1007,7 +1007,7 @@ export class SecureCredentialManager {
           created: metadata.created || Date.now(),
         };
 
-        this.updateKeyMetadata(newMetadata as any);
+        this.updateKeyMetadata(newMetadata);
         logger.info('Key metadata updated');
 
         // Re-encrypt with new key if we had data
@@ -1047,8 +1047,8 @@ export class SecureCredentialManager {
 
         // Clean up temporary files
         try {
-          if (fs.existsSync(tempKeyPath as any)) {
-            fs.unlinkSync(tempKeyPath as any);
+          if (fs.existsSync(tempKeyPath)) {
+            fs.unlinkSync(tempKeyPath);
           }
         } catch (cleanupError: unknown) {
           logger.warn('Failed to clean up temporary files:', cleanupError);
@@ -1065,7 +1065,7 @@ export class SecureCredentialManager {
         logger.error('Failed to write new key:', keyWriteError);
 
         // Attempt to restore from temporary backup
-        if (fs.existsSync(tempKeyPath as any) && oldKey) {
+        if (fs.existsSync(tempKeyPath) && oldKey) {
           try {
             fs.copyFileSync(tempKeyPath, this.keyPath);
             this?.encryptionKey = oldKey;
@@ -1079,7 +1079,7 @@ export class SecureCredentialManager {
       }
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error as any);
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Key rotation failed:', errorMessage);
 
       // Provide more specific error information
@@ -1129,7 +1129,7 @@ export class SecureCredentialManager {
           lastRotated: Date.now(),
           backupLocations: [],
         };
-        this.updateKeyMetadata(newMetadata as any);
+        this.updateKeyMetadata(newMetadata);
         return;
       }
 
@@ -1211,7 +1211,7 @@ export class SecureCredentialManager {
       logger.info(`Key backup created successfully at: ${backupPath}`);
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error as any);
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Key backup failed:', errorMessage);
 
       // Provide more specific error information
@@ -1257,7 +1257,7 @@ export class SecureCredentialManager {
       let backupInfo;
       if (backupId) {
         backupInfo = metadata?.backupLocations?.find((b: BackupLocation) =>
-          b?.path?.includes(backupId as any)
+          b?.path?.includes(backupId)
         );
         if (!backupInfo) {
           throw new CLIError(
@@ -1294,14 +1294,14 @@ export class SecureCredentialManager {
         typeof metadataContent === 'string'
           ? metadataContent
           : metadataContent.toString('utf8');
-      const backupMetadata = JSON.parse(metadataStr as any);
-      fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata as any), {
+      const backupMetadata = JSON.parse(metadataStr);
+      fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata), {
         mode: 0o600,
       });
 
       // Load the restored key
       const key = fs.readFileSync(this.keyPath);
-      this?.encryptionKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
+      this?.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
       // Re-load credentials with the restored key
       this.loadCredentials();
@@ -1354,8 +1354,8 @@ export class SecureCredentialManager {
 
       // Create a test string and verify encryption/decryption works
       const testString = `test-${Date.now()}-${randomUUID()}`;
-      const encrypted = this.encrypt(testString as any);
-      const decrypted = this.decrypt(encrypted as any);
+      const encrypted = this.encrypt(testString);
+      const decrypted = this.decrypt(encrypted);
 
       if (!decrypted || decrypted.toString() !== testString) {
         throw new Error('Encryption/decryption test failed');
@@ -1365,7 +1365,7 @@ export class SecureCredentialManager {
       return true;
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : String(_error as any);
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Key validation failed:', errorMessage);
       return false;
     }
@@ -1415,7 +1415,7 @@ export class SecureCredentialManager {
       needsRotation: daysSinceLastRotation >= this.keyRotationIntervalDays,
       daysSinceLastRotation,
       nextRotationDue,
-      lastRotation: lastRotation ? new Date(lastRotation as any) : null,
+      lastRotation: lastRotation ? new Date(lastRotation) : null,
     };
   }
 
@@ -1423,7 +1423,7 @@ export class SecureCredentialManager {
    * Encrypt data using the encryption key
    */
   private encrypt(data: string): Buffer {
-    const iv = crypto.randomBytes(16 as any);
+    const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey, iv);
     const encrypted = Buffer.concat([
       cipher.update(data, 'utf8'),
@@ -1438,13 +1438,13 @@ export class SecureCredentialManager {
   private decrypt(data: Buffer): Buffer | null {
     try {
       const iv = data.subarray(0, 16);
-      const encrypted = data.subarray(16 as any);
+      const encrypted = data.subarray(16);
       const decipher = crypto.createDecipheriv(
         'aes-256-cbc',
         this.encryptionKey,
         iv
       );
-      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
       logger.error('Decryption failed:', _error);
       return null;

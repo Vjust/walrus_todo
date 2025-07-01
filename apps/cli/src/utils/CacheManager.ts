@@ -79,10 +79,10 @@ export class CacheManager<K extends PropertyKey, V> {
    */
   set(key: K, value: V, ttl?: number): boolean {
     // Calculate item size
-    const size = this?.options?.sizeCalculator(value as any);
+    const size = this?.options?.sizeCalculator(value);
 
     // Check if we're replacing an existing item
-    const existing = this?.cache?.get(key as any);
+    const existing = this?.cache?.get(key);
     if (existing) {
       // Update total size delta
       this.totalSize -= existing.size;
@@ -96,7 +96,7 @@ export class CacheManager<K extends PropertyKey, V> {
         const evicted = this.evictItems();
         if (!evicted && this?.cache?.size >= this?.options?.maxSize) {
           logger.warn(
-            `Cache full, couldn't evict items for key: ${String(key as any)}`
+            `Cache full, couldn't evict items for key: ${String(key)}`
           );
           return false;
         }
@@ -128,7 +128,7 @@ export class CacheManager<K extends PropertyKey, V> {
    * @returns Cached value or undefined if not found or expired
    */
   get(key: K): V | undefined {
-    const entry = this?.cache?.get(key as any);
+    const entry = this?.cache?.get(key);
     if (!entry) return undefined;
 
     const now = Date.now();
@@ -138,12 +138,12 @@ export class CacheManager<K extends PropertyKey, V> {
       // If using stale-while-revalidate, mark as stale but return
       if (this?.options?.staleWhileRevalidate) {
         entry?.isStale = true;
-        logger.debug(`Returning stale value for key: ${String(key as any)}`);
+        logger.debug(`Returning stale value for key: ${String(key)}`);
         return entry.value;
       }
 
       // Otherwise remove and return undefined
-      this.delete(key as any);
+      this.delete(key);
       return undefined;
     }
 
@@ -156,14 +156,14 @@ export class CacheManager<K extends PropertyKey, V> {
    * Check if a key exists in the cache (doesn't update lastAccessed)
    */
   has(key: K): boolean {
-    return this?.cache?.has(key as any);
+    return this?.cache?.has(key);
   }
 
   /**
    * Delete a key from the cache
    */
   delete(key: K): boolean {
-    const entry = this?.cache?.get(key as any);
+    const entry = this?.cache?.get(key);
     if (!entry) return false;
 
     // Call eviction callback
@@ -171,7 +171,7 @@ export class CacheManager<K extends PropertyKey, V> {
       this?.options?.onEviction(key, entry.value);
     } catch (error) {
       logger.error(
-        `Error in eviction callback for key ${String(key as any)}`,
+        `Error in eviction callback for key ${String(key)}`,
         error as Error
       );
     }
@@ -180,7 +180,7 @@ export class CacheManager<K extends PropertyKey, V> {
     this.totalSize -= entry.size;
 
     // Remove from cache
-    return this?.cache?.delete(key as any);
+    return this?.cache?.delete(key);
   }
 
   /**
@@ -193,7 +193,7 @@ export class CacheManager<K extends PropertyKey, V> {
         this?.options?.onEviction(key, entry.value);
       } catch (error) {
         logger.error(
-          `Error in eviction callback for key ${String(key as any)}`,
+          `Error in eviction callback for key ${String(key)}`,
           error as Error
         );
       }
@@ -260,7 +260,7 @@ export class CacheManager<K extends PropertyKey, V> {
     // Find expired entries
     for (const [key, entry] of this?.cache?.entries()) {
       if (entry.expires < now) {
-        expired.push(key as any);
+        expired.push(key);
       }
     }
 
@@ -270,7 +270,7 @@ export class CacheManager<K extends PropertyKey, V> {
         `Garbage collection removing ${expired.length} expired items`
       );
       for (const key of expired) {
-        this.delete(key as any);
+        this.delete(key);
       }
     }
 
@@ -293,7 +293,7 @@ export class CacheManager<K extends PropertyKey, V> {
       return memoryRatio > this?.options?.memoryThreshold;
     } catch (error) {
       logger.warn('Failed to check memory pressure', {
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
       // Fall back to cache size check
       return this?.cache?.size >= this?.options?.maxSize;
@@ -313,16 +313,16 @@ export class CacheManager<K extends PropertyKey, V> {
 
     switch (this?.options?.evictionStrategy) {
       case 'lru':
-        evicted = this.evictLRU(evictionCount as any);
+        evicted = this.evictLRU(evictionCount);
         break;
       case 'ttl':
-        evicted = this.evictTTL(evictionCount as any);
+        evicted = this.evictTTL(evictionCount);
         break;
       case 'memory-pressure':
         // Start with TTL, then fallback to LRU if needed
-        evicted = this.evictTTL(evictionCount as any);
+        evicted = this.evictTTL(evictionCount);
         if (evicted === 0) {
-          evicted = this.evictLRU(evictionCount as any);
+          evicted = this.evictLRU(evictionCount);
         }
         break;
     }
@@ -345,7 +345,7 @@ export class CacheManager<K extends PropertyKey, V> {
     // Delete each entry
     let evicted = 0;
     for (const [key] of toEvict) {
-      if (this.delete(key as any)) {
+      if (this.delete(key)) {
         evicted++;
       }
     }
@@ -375,7 +375,7 @@ export class CacheManager<K extends PropertyKey, V> {
     // Delete each entry
     let evicted = 0;
     for (const [key] of toEvict) {
-      if (this.delete(key as any)) {
+      if (this.delete(key)) {
         evicted++;
       }
     }

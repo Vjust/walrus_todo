@@ -99,8 +99,8 @@ export class StorageTransaction {
       tx.moveCall({
         target: '0x2::storage::create_storage',
         arguments: [
-          tx.pure(size as any),
-          tx.pure(epochs as any),
+          tx.pure(size),
+          tx.pure(epochs),
           tx.object('0x6'), // Use explicit gas object reference
         ],
       });
@@ -108,7 +108,7 @@ export class StorageTransaction {
       return tx;
     } catch (error) {
       throw new BlockchainError(
-        `Failed to create storage allocation transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create storage allocation transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'create storage transaction',
           recoverable: false,
@@ -138,16 +138,16 @@ export class StorageTransaction {
       tx.moveCall({
         target: '0x2::storage::extend_storage',
         arguments: [
-          tx.object(storageId as any),
-          tx.pure(additionalSize as any),
-          tx.pure(additionalEpochs as any),
+          tx.object(storageId),
+          tx.pure(additionalSize),
+          tx.pure(additionalEpochs),
         ],
       });
 
       return tx;
     } catch (error) {
       throw new BlockchainError(
-        `Failed to create storage extension transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create storage extension transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'extend storage transaction',
           recoverable: false,
@@ -184,7 +184,7 @@ export class StorageTransaction {
         async () => {
           try {
             // Use adapter for transaction compatibility
-            const txAdapter = createTransactionBlockAdapter(transaction as any);
+            const txAdapter = createTransactionBlockAdapter(transaction);
 
             // Build and serialize transaction for execution
             const serializedTx = await txAdapter.build({
@@ -192,7 +192,7 @@ export class StorageTransaction {
             });
 
             // Sign the transaction
-            const signature = await this?.signer?.signTransaction(serializedTx as any);
+            const signature = await this?.signer?.signTransaction(serializedTx);
 
             // Get transaction bytes for execution
             const txBytes = await txAdapter.serialize();
@@ -275,10 +275,10 @@ export class StorageTransaction {
             };
           } catch (error) {
             throw new TransactionError(
-              `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+              `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error)}`,
               {
                 operation: `execute ${operationType}`,
-                recoverable: this.isTransientError(error as any),
+                recoverable: this.isTransientError(error),
                 cause: error instanceof Error ? error : undefined,
               }
             );
@@ -302,7 +302,7 @@ export class StorageTransaction {
       }
 
       throw new TransactionError(
-        `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: `execute ${operationType}`,
           recoverable: false,
@@ -319,7 +319,7 @@ export class StorageTransaction {
    * @returns Whether the error is likely transient
    */
   private isTransientError(error: unknown): boolean {
-    const errorMsg = error instanceof Error ? error.message : String(error as any);
+    const errorMsg = error instanceof Error ? error.message : String(error);
 
     // Common transient errors to retry
     const transientPatterns = [

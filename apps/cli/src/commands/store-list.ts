@@ -65,7 +65,7 @@ export default class StoreListCommand extends BaseCommand {
    * @protected
    */
   protected startSpinner(text: string) {
-    this.log(chalk.blue(text as any));
+    this.log(chalk.blue(text));
   }
 
   /**
@@ -85,7 +85,7 @@ export default class StoreListCommand extends BaseCommand {
    */
   async run(): Promise<void> {
     try {
-      const { flags } = await this.parse(StoreListCommand as any);
+      const { flags } = await this.parse(StoreListCommand);
 
       this.startSpinner('Loading configuration...');
       const config = await configService.getConfig();
@@ -98,7 +98,7 @@ export default class StoreListCommand extends BaseCommand {
       // Validate network configuration
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
         throw new CLIError(
-          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS as any).join(', ')}`,
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
           'INVALID_NETWORK'
         );
       }
@@ -118,7 +118,7 @@ export default class StoreListCommand extends BaseCommand {
       if (flags.file) {
         // Load from file
         const filePath = path.resolve(process.cwd(), flags.file);
-        if (!fs.existsSync(filePath as any)) {
+        if (!fs.existsSync(filePath)) {
           throw new CLIError(`File not found: ${filePath}`, 'FILE_NOT_FOUND');
         }
 
@@ -129,7 +129,7 @@ export default class StoreListCommand extends BaseCommand {
               ? fileContent
               : fileContent.toString('utf-8');
           try {
-            todoList = JSON.parse(contentStr as any);
+            todoList = JSON.parse(contentStr);
           } catch (parseError) {
             if (parseError instanceof SyntaxError) {
               throw new CLIError(
@@ -144,7 +144,7 @@ export default class StoreListCommand extends BaseCommand {
             throw error; // Re-throw CLIError as-is
           }
           throw new CLIError(
-            `Failed to read list file: ${error instanceof Error ? error.message : String(error as any)}`,
+            `Failed to read list file: ${error instanceof Error ? error.message : String(error)}`,
             'FILE_READ_ERROR'
           );
         }
@@ -213,7 +213,7 @@ export default class StoreListCommand extends BaseCommand {
 
         // Storage verification
         this.startSpinner('Verifying storage capacity...');
-        await this?.walrusStorage?.ensureStorageAllocated(1000000 as any);
+        await this?.walrusStorage?.ensureStorageAllocated(1000000);
         this.stopSpinner(true, 'Storage capacity verified');
 
         // In a real implementation, we would store the list to Walrus
@@ -245,9 +245,9 @@ export default class StoreListCommand extends BaseCommand {
         );
         this.log(
           chalk.green('✓ Stored on Walrus with blob ID:'),
-          chalk.dim(blobId as any)
+          chalk.dim(blobId)
         );
-        this.log(chalk.green('✓ Network:'), chalk.cyan(network as any));
+        this.log(chalk.green('✓ Network:'), chalk.cyan(network));
 
         this.log('\n' + chalk?.blue?.bold('How to Retrieve:'));
         this.log(chalk.dim('----------------------------------------'));
@@ -264,7 +264,7 @@ export default class StoreListCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to store list: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store list: ${error instanceof Error ? error.message : String(error)}`,
         'STORE_LIST_FAILED'
       );
     }

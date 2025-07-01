@@ -51,7 +51,7 @@ describe('EnvironmentConfigManager', () => {
       const instance1 = EnvironmentConfigManager.getInstance();
       const instance2 = EnvironmentConfigManager.getInstance();
 
-      expect(instance1 as any).toBe(instance2 as any);
+      expect(instance1).toBe(instance2);
     });
   });
 
@@ -62,7 +62,7 @@ describe('EnvironmentConfigManager', () => {
       expect(manager.get('LOG_LEVEL')).toBe('info');
       expect(manager.get('NETWORK')).toBe('testnet');
       expect(manager.get('AI_TEMPERATURE')).toBe(0.7);
-      expect(manager.get('AI_CACHE_ENABLED')).toBe(true as any);
+      expect(manager.get('AI_CACHE_ENABLED')).toBe(true);
     });
 
     it('should get values from environment variables when they are set', () => {
@@ -77,19 +77,19 @@ describe('EnvironmentConfigManager', () => {
       expect(manager.get('LOG_LEVEL')).toBe('debug');
       expect(manager.get('NETWORK')).toBe('mainnet');
       expect(manager.get('AI_TEMPERATURE')).toBe(0.9);
-      expect(manager.get('AI_CACHE_ENABLED')).toBe(false as any);
+      expect(manager.get('AI_CACHE_ENABLED')).toBe(false);
     });
 
     it('should check if a configuration value exists', () => {
       const manager = EnvironmentConfigManager.getInstance();
 
-      expect(manager.has('LOG_LEVEL')).toBe(true as any);
-      expect(manager.has('XAI_API_KEY')).toBe(false as any); // Default is empty string
+      expect(manager.has('LOG_LEVEL')).toBe(true);
+      expect(manager.has('XAI_API_KEY')).toBe(false); // Default is empty string
 
       process.env?.XAI_API_KEY = 'test-key';
       manager.loadFromEnvironment();
 
-      expect(manager.has('XAI_API_KEY')).toBe(true as any);
+      expect(manager.has('XAI_API_KEY')).toBe(true);
     });
   });
 
@@ -154,8 +154,8 @@ describe('EnvironmentConfigManager', () => {
       manager.loadFromEnvironment();
       manager.getEnvSpecificConfig();
 
-      expect(manager.get('REQUIRE_SIGNATURE_VERIFICATION')).toBe(true as any);
-      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(true as any);
+      expect(manager.get('REQUIRE_SIGNATURE_VERIFICATION')).toBe(true);
+      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(true);
       expect(manager.get('LOG_LEVEL')).toBe('info');
     });
 
@@ -166,7 +166,7 @@ describe('EnvironmentConfigManager', () => {
       manager.getEnvSpecificConfig();
 
       expect(manager.get('LOG_LEVEL')).toBe('debug');
-      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(false as any);
+      expect(manager.get('ENABLE_BLOCKCHAIN_VERIFICATION')).toBe(false);
     });
   });
 
@@ -175,9 +175,9 @@ describe('EnvironmentConfigManager', () => {
       const manager = EnvironmentConfigManager.getInstance();
       const json = manager.toJSON();
 
-      expect(json as any).toHaveProperty('LOG_LEVEL');
-      expect(json as any).toHaveProperty('NETWORK');
-      expect(json as any).toHaveProperty('AI_TEMPERATURE');
+      expect(json).toHaveProperty('LOG_LEVEL');
+      expect(json).toHaveProperty('NETWORK');
+      expect(json).toHaveProperty('AI_TEMPERATURE');
     });
 
     it('should return metadata about configuration variables', () => {
@@ -186,9 +186,9 @@ describe('EnvironmentConfigManager', () => {
 
       const metadata = manager.getMetadata();
 
-      expect(metadata as any).toHaveProperty('XAI_API_KEY');
-      expect(metadata.XAI_API_KEY?.required).toBe(true as any);
-      expect(metadata.LOG_LEVEL?.required).toBe(false as any);
+      expect(metadata).toHaveProperty('XAI_API_KEY');
+      expect(metadata.XAI_API_KEY?.required).toBe(true);
+      expect(metadata.LOG_LEVEL?.required).toBe(false);
     });
   });
 });

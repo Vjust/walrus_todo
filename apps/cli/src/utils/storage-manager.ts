@@ -36,8 +36,8 @@ interface StorageVerification {
 }
 
 export class StorageManager {
-  private readonly MIN_WAL_BALANCE = BigInt(100 as any); // Minimum WAL tokens needed
-  private readonly MIN_STORAGE_BUFFER = BigInt(10240 as any); // 10KB minimum buffer
+  private readonly MIN_WAL_BALANCE = BigInt(100); // Minimum WAL tokens needed
+  private readonly MIN_STORAGE_BUFFER = BigInt(10240); // 10KB minimum buffer
   private readonly DEFAULT_EPOCH_DURATION = 52; // ~6 months
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs
 
@@ -72,7 +72,7 @@ export class StorageManager {
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Network verification failed: ${typedError.message}`,
         'WALRUS_NETWORK_ERROR'
@@ -121,7 +121,7 @@ export class StorageManager {
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Failed to check balances: ${typedError.message}`,
         'WALRUS_BALANCE_CHECK_FAILED'
@@ -137,28 +137,28 @@ export class StorageManager {
   ): Promise<StorageCostEstimate> {
     try {
       // Add buffer to requested size
-      const sizeWithBuffer = BigInt(sizeBytes as any) + this.MIN_STORAGE_BUFFER;
+      const sizeWithBuffer = BigInt(sizeBytes) + this.MIN_STORAGE_BUFFER;
 
       // Calculate costs with default epoch duration
       const { storageCost, writeCost, totalCost } =
         await this?.walrusClient?.storageCost(
-          Number(sizeWithBuffer as any),
+          Number(sizeWithBuffer),
           this.DEFAULT_EPOCH_DURATION
         );
 
       // Add 10% buffer to total cost for gas fees and price fluctuations
-      const requiredBalance = (BigInt(totalCost as any) * BigInt(110 as any)) / BigInt(100 as any);
+      const requiredBalance = (BigInt(totalCost) * BigInt(110)) / BigInt(100);
 
       return {
-        storageCost: BigInt(storageCost as any),
-        writeCost: BigInt(writeCost as any),
-        totalCost: BigInt(totalCost as any),
+        storageCost: BigInt(storageCost),
+        writeCost: BigInt(writeCost),
+        totalCost: BigInt(totalCost),
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION,
       };
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Failed to estimate storage cost: ${typedError.message}`,
         'WALRUS_COST_ESTIMATION_FAILED'
@@ -257,7 +257,7 @@ export class StorageManager {
 
       // 3. Get current epoch
       const { epoch } = await this?.suiClient?.getLatestSuiSystemState();
-      const currentEpoch = Number(epoch as any);
+      const currentEpoch = Number(epoch);
 
       // 4. Check existing storage
       const existingStorage = await this.verifyExistingStorage(
@@ -273,7 +273,7 @@ export class StorageManager {
       }
 
       // 5. Estimate new storage cost
-      const requiredCost = await this.estimateStorageCost(sizeBytes as any);
+      const requiredCost = await this.estimateStorageCost(sizeBytes);
 
       // 6. Verify sufficient balance for new storage
       const canProceed = balances.walBalance >= requiredCost.requiredBalance;
@@ -287,7 +287,7 @@ export class StorageManager {
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Storage validation failed: ${typedError.message}`,
         'WALRUS_STORAGE_VALIDATION_FAILED'

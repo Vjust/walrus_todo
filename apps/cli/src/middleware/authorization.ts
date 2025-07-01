@@ -22,14 +22,14 @@ import * as os from 'os';
 async function getAuthenticatedUser() {
   const tokenPath = path.join(os.homedir(), '.walrus', 'auth.json');
 
-  if (!fs.existsSync(tokenPath as any)) {
+  if (!fs.existsSync(tokenPath)) {
     return null;
   }
 
   try {
     const data = fs.readFileSync(tokenPath, 'utf-8');
     const dataStr = typeof data === 'string' ? data : data.toString('utf-8');
-    const authInfo = JSON.parse(dataStr as any);
+    const authInfo = JSON.parse(dataStr);
 
     // Validate token - check for token property safely
     if (
@@ -106,7 +106,7 @@ export function requirePermission(
     // If resourceId is a function, call it with args to get the actual resourceId
     let resourceId: string | undefined;
     if (typeof args?.resourceId === 'function') {
-      resourceId = await args.resourceId(args as any);
+      resourceId = await args.resourceId(args);
     } else if (args.id) {
       resourceId = args.id;
     } else if (args.todoId) {
@@ -220,7 +220,7 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
   if (user) {
     const resource =
       typeof requiredPermissions?.resource === 'function'
-        ? await requiredPermissions.resource(argv as any)
+        ? await requiredPermissions.resource(argv)
         : requiredPermissions.resource;
 
     const action = requiredPermissions.action;
@@ -246,7 +246,7 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
         if (i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
           const value = argv[i + 1];
           if (value) {
-            parsedFlags[argv[i].substring(2 as any)] = value;
+            parsedFlags[argv[i].substring(2)] = value;
           }
         }
       }
@@ -256,7 +256,7 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
     args?.flags = parsedFlags;
 
     if (typeof requiredPermissions?.resourceId === 'function') {
-      resourceId = await requiredPermissions.resourceId(args as any);
+      resourceId = await requiredPermissions.resourceId(args);
     } else if (parsedFlags.id) {
       resourceId = parsedFlags.id;
     } else if (parsedFlags.todoId) {

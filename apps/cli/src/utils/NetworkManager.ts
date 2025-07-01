@@ -137,7 +137,7 @@ export class NetworkManager {
 
         // Clear timeout if it was set
         if (timeoutId) {
-          clearTimeout(timeoutId as any);
+          clearTimeout(timeoutId);
         }
 
         // Check if we should retry based on status code
@@ -160,7 +160,7 @@ export class NetworkManager {
           } catch (parseError) {
             if (throwErrors) {
               throw new Error(
-                `Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError as any)}`
+                `Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}`
               );
             }
           }
@@ -179,7 +179,7 @@ export class NetworkManager {
       } catch (error) {
         // Clear timeout if it was set
         if (timeoutId) {
-          clearTimeout(timeoutId as any);
+          clearTimeout(timeoutId);
         }
 
         // Check if operation was aborted due to timeout
@@ -238,7 +238,7 @@ export class NetworkManager {
       // This will only be reached if AsyncOperationHandler has an internal error
       const errorResponse: EnhancedFetchResponse<T> = {
         ok: false,
-        error: error instanceof Error ? error : new Error(String(error as any)),
+        error: error instanceof Error ? error : new Error(String(error)),
         attempts: 1,
         timeTaken: 0,
       };
@@ -339,7 +339,7 @@ export class NetworkManager {
         }
       } else {
         // Execute all in parallel
-        results = (await Promise.all(promises as any)) as EnhancedFetchResponse<T>[];
+        results = (await Promise.all(promises)) as EnhancedFetchResponse<T>[];
       }
 
       // Add total time information
@@ -364,14 +364,14 @@ export class NetworkManager {
       // Return error responses if not throwing
       return operations.map(() => ({
         ok: false,
-        error: error instanceof Error ? error : new Error(String(error as any)),
+        error: error instanceof Error ? error : new Error(String(error)),
         attempts: 0,
         timeTaken: 0,
       }));
     } finally {
       // Clear timeout if it was set
       if (timeoutId) {
-        clearTimeout(timeoutId as any);
+        clearTimeout(timeoutId);
       }
 
       // Ensure we abort the controller to clean up resources
@@ -396,7 +396,7 @@ export class NetworkManager {
     return {
       execute: () =>
         this.fetch<T>(url, { ...options, signal: controller.signal }),
-      abort: (reason?: unknown) => controller.abort(reason as any),
+      abort: (reason?: unknown) => controller.abort(reason),
     };
   }
 }

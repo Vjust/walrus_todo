@@ -109,11 +109,11 @@ export class BlobVerificationManager {
     // Use only cryptographically secure, collision-resistant hash algorithms
     const checksums = {
       // SHA-256: Collision-resistant and widely standardized
-      sha256: crypto.createHash('sha256').update(data as any).digest('hex'),
+      sha256: crypto.createHash('sha256').update(data).digest('hex'),
       // SHA-512: Higher security variant with longer output
-      sha512: crypto.createHash('sha512').update(data as any).digest('hex'),
+      sha512: crypto.createHash('sha512').update(data).digest('hex'),
       // BLAKE2b: Modern, faster alternative with proven security
-      blake2b: crypto.createHash('blake2b512').update(data as any).digest('hex'),
+      blake2b: crypto.createHash('blake2b512').update(data).digest('hex'),
     };
 
     // Validate hash outputs for corruption detection
@@ -148,7 +148,7 @@ export class BlobVerificationManager {
     providers: number;
   }> {
     try {
-      const blobInfo = await this?.walrusClient?.getBlobInfo(blobId as any);
+      const blobInfo = await this?.walrusClient?.getBlobInfo(blobId);
 
       if (!blobInfo) {
         throw new CLIError(
@@ -284,13 +284,13 @@ export class BlobVerificationManager {
       }> = [];
 
       // Type-safe attribute comparison
-      for (const [key, expectedValue] of Object.entries(expectedAttributes as any)) {
+      for (const [key, expectedValue] of Object.entries(expectedAttributes)) {
         const actualValue = actualAttributes[key];
         // Handle different types appropriately
         const match =
           typeof expectedValue === 'object'
-            ? JSON.stringify(actualValue as any) === JSON.stringify(expectedValue as any)
-            : String(actualValue as any) === String(expectedValue as any);
+            ? JSON.stringify(actualValue) === JSON.stringify(expectedValue)
+            : String(actualValue) === String(expectedValue);
 
         if (!match) {
           mismatches.push({
@@ -351,7 +351,7 @@ export class BlobVerificationManager {
       if (!content) {
         throw new Error('Retrieved content is empty');
       }
-      return Buffer.from(content as any);
+      return Buffer.from(content);
     }, 'blob retrieval');
   }
 
@@ -377,7 +377,7 @@ export class BlobVerificationManager {
     let attempts = 0;
     let lastError: Error | null = null;
     const expectedSize = expectedData.length;
-    const expectedChecksums = this.calculateChecksums(expectedData as any);
+    const expectedChecksums = this.calculateChecksums(expectedData);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       attempts = attempt;
@@ -401,7 +401,7 @@ export class BlobVerificationManager {
         }
 
         // 3. Verify checksums with tamper detection
-        const actualChecksums = this.calculateChecksums(retrievedContent as any);
+        const actualChecksums = this.calculateChecksums(retrievedContent);
 
         // Track tampering detection results
         const tamperingDetected = [];
@@ -435,10 +435,10 @@ export class BlobVerificationManager {
         // Log successful verification for audit trail
         if (tamperingDetected?.length === 0) {
           logger.info(
-            `Hash verification PASSED: All ${Object.keys(expectedChecksums as any).length} checksums match`,
+            `Hash verification PASSED: All ${Object.keys(expectedChecksums).length} checksums match`,
             {
               blobId,
-              algorithms: Object.keys(expectedChecksums as any),
+              algorithms: Object.keys(expectedChecksums),
               verified: true,
             }
           );
@@ -467,7 +467,7 @@ export class BlobVerificationManager {
             throw new Error('Failed to get system state or epoch information');
           }
           const { epoch } = systemState as { epoch: string };
-          const result = await this.verifySmartContract(blobId, BigInt(epoch as any), {
+          const result = await this.verifySmartContract(blobId, BigInt(epoch), {
             requirePoA: true,
             minProviders: 1,
           });
@@ -493,7 +493,7 @@ export class BlobVerificationManager {
               throw new Error('Epoch validation failed: Failed to get system state or epoch information');
             }
             const { epoch } = systemState as { epoch: string };
-            const currentEpoch = BigInt(epoch as any);
+            const currentEpoch = BigInt(epoch);
             
             // Validate that certification epoch is not in the future
             if (contractVerification.certificateEpoch !== undefined) {
@@ -579,7 +579,7 @@ export class BlobVerificationManager {
             metadataVerification.metadata || this.createDefaultMetadata(),
         };
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error as any));
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt === maxRetries) {
           break;
@@ -627,12 +627,12 @@ export class BlobVerificationManager {
           timeout,
           attempts
         );
-        const actualChecksums = this.calculateChecksums(content as any);
+        const actualChecksums = this.calculateChecksums(content);
 
         // 2. Verify all checksums with tamper detection
         let tamperingDetectedInMonitoring = false;
 
-        for (const [algorithm, expectedHash] of Object.entries(checksums as any)) {
+        for (const [algorithm, expectedHash] of Object.entries(checksums)) {
           const actualHash =
             actualChecksums[algorithm as keyof typeof actualChecksums];
 
@@ -668,7 +668,7 @@ export class BlobVerificationManager {
         const { epoch } = systemState as { epoch: string };
         const { certified } = await this.verifySmartContract(
           blobId,
-          BigInt(epoch as any),
+          BigInt(epoch),
           {
             requirePoA: false,
             minProviders: 1,
@@ -686,7 +686,7 @@ export class BlobVerificationManager {
         );
         return;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error as any));
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempts === maxAttempts) {
           break;
@@ -735,7 +735,7 @@ export class BlobVerificationManager {
     // Upload the blob
     const signer = await this.getTransactionSigner();
     const uploadResult = await this?.walrusClient?.writeBlob({
-      blob: new Uint8Array(data as any),
+      blob: new Uint8Array(data),
       deletable: false,
       epochs: 52,
       signer,
@@ -743,7 +743,7 @@ export class BlobVerificationManager {
     const blobId = uploadResult?.blobObject?.blob_id;
 
     // Calculate checksums
-    const checksums = this.calculateChecksums(data as any);
+    const checksums = this.calculateChecksums(data);
 
     // Get storage providers
     const providers = await this?.walrusClient?.getStorageProviders({ blobId });
@@ -761,7 +761,7 @@ export class BlobVerificationManager {
     const { epoch } = systemState as { epoch: string };
     let verificationResult = await this.verifySmartContract(
       blobId,
-      BigInt(epoch as any),
+      BigInt(epoch),
       {
         requirePoA: true,
         minProviders,
@@ -786,7 +786,7 @@ export class BlobVerificationManager {
         const { epoch: newEpoch } = newSystemState as { epoch: string };
         verificationResult = await this.verifySmartContract(
           blobId,
-          BigInt(newEpoch as any),
+          BigInt(newEpoch),
           {
             requirePoA: true,
             minProviders,

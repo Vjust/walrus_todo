@@ -110,7 +110,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestOptions as any),
+          body: JSON.stringify(requestOptions),
         },
         {
           timeout: options.timeout,
@@ -203,7 +203,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestOptions as any),
+          body: JSON.stringify(requestOptions),
         },
         {
           timeout: options.timeout,
@@ -260,7 +260,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
     await this.enforceRateLimit();
 
     try {
-      const formattedPrompt = await promptTemplate.format(input as any);
+      const formattedPrompt = await promptTemplate.format(input);
 
       // Use the complete method internally
       return this.complete({

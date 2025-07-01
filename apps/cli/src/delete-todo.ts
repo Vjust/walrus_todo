@@ -1,4 +1,4 @@
-import { TodoService } from './services/todoService';
+import { TodoService } from './services/todo';
 import { Logger } from './utils/Logger';
 
 async function main() {
@@ -7,7 +7,7 @@ async function main() {
 
   // Get the todo list
   Logger.getInstance().info('Getting todo list...');
-  const list = await todoService.getList(listName as any);
+  const list = await todoService.getList(listName);
   if (!list) {
     Logger.getInstance().error('List not found');
     return;
@@ -35,7 +35,7 @@ async function main() {
 
   // Show updated list
   Logger.getInstance().info('Updated todos:');
-  const updatedList = await todoService.getList(listName as any);
+  const updatedList = await todoService.getList(listName);
   updatedList?.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
     const priority =

@@ -14,7 +14,7 @@ export class CommandHistory {
   private constructor() {
     // Store history in user's home directory
     const configDir = path.join(os.homedir(), '.waltodo');
-    if (!fs.existsSync(configDir as any)) {
+    if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
     this?.historyFile = path.join(configDir, 'command_history.json');
@@ -35,7 +35,7 @@ export class CommandHistory {
     try {
       if (fs.existsSync(this.historyFile)) {
         const data = fs.readFileSync(this.historyFile, 'utf-8');
-        this?.history = JSON.parse(data as any);
+        this?.history = JSON.parse(data);
       }
     } catch (_error) {
       // If there's an error reading history, start fresh
@@ -59,13 +59,13 @@ export class CommandHistory {
    */
   addCommand(command: string): void {
     // Remove duplicate if exists
-    const index = this?.history?.indexOf(command as any);
+    const index = this?.history?.indexOf(command);
     if (index !== -1) {
       this?.history?.splice(index, 1);
     }
 
     // Add to beginning
-    this?.history?.unshift(command as any);
+    this?.history?.unshift(command);
 
     // Maintain max size
     if (this?.history?.length > this.maxHistorySize) {
@@ -88,7 +88,7 @@ export class CommandHistory {
   searchHistory(pattern: string): string[] {
     const lowercasePattern = pattern.toLowerCase();
     return this?.history?.filter(cmd =>
-      cmd.toLowerCase().includes(lowercasePattern as any)
+      cmd.toLowerCase().includes(lowercasePattern)
     );
   }
 
@@ -129,7 +129,7 @@ export class CommandHistory {
   ): Array<{ command: string; count: number }> {
     const stats = this.getStatistics();
 
-    return Object.entries(stats as any)
+    return Object.entries(stats)
       .map(([command, count]) => ({ command, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, limit);

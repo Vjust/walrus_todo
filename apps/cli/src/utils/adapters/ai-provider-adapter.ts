@@ -53,7 +53,7 @@ export function getProviderEnum(providerString: string): AIProvider {
  * This is an alias for getProviderEnum with clearer naming
  */
 export function getProviderEnumFromString(providerString: string): AIProvider {
-  return getProviderEnum(providerString as any);
+  return getProviderEnum(providerString);
 }
 
 /**
@@ -61,5 +61,5 @@ export function getProviderEnumFromString(providerString: string): AIProvider {
  */
 export function isValidProvider(providerString: string): boolean {
   const normalizedProvider = providerString.toLowerCase();
-  return Object.values(AIProvider as any).includes(normalizedProvider as AIProvider);
+  return Object.values(AIProvider).includes(normalizedProvider as AIProvider);
 }

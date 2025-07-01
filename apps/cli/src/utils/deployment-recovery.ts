@@ -75,7 +75,7 @@ export class DeploymentRecoverySystem {
     });
 
     // Find applicable recovery strategies
-    const strategies = this.findApplicableStrategies(diagnostic as any);
+    const strategies = this.findApplicableStrategies(diagnostic);
     
     if (strategies?.length === 0) {
       const result: RecoveryResult = {
@@ -165,7 +165,7 @@ export class DeploymentRecoverySystem {
         strategy: strategy.name,
         stepsCompleted,
         totalSteps: strategy?.steps?.length,
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
         message: `Recovery strategy '${strategy.name}' failed at step ${stepsCompleted + 1}`
       };
 
@@ -223,11 +223,11 @@ export class DeploymentRecoverySystem {
 
       try {
         execSync(command, { stdio: 'pipe' });
-        clearTimeout(timer as any);
+        clearTimeout(timer);
         resolve();
       } catch (error) {
-        clearTimeout(timer as any);
-        reject(error as any);
+        clearTimeout(timer);
+        reject(error);
       }
     });
   }
@@ -249,7 +249,7 @@ export class DeploymentRecoverySystem {
         break;
 
       case 'delete':
-        await fs.unlink(resolvedTarget as any).catch(() => {}); // Ignore if file doesn't exist
+        await fs.unlink(resolvedTarget).catch(() => {}); // Ignore if file doesn't exist
         break;
 
       case 'modify':
@@ -302,7 +302,7 @@ export class DeploymentRecoverySystem {
       );
       
       if (messageMatch) {
-        strategies.push(strategy as any);
+        strategies.push(strategy);
       }
     }
     
@@ -314,8 +314,8 @@ export class DeploymentRecoverySystem {
    */
   private resolvePath(path: string, config: DeploymentConfig): string {
     if (path.startsWith('/')) return path; // Absolute path
-    if (path.startsWith('~/')) return join(process?.env?.HOME || '~', path.slice(2 as any));
-    if (path.startsWith('./')) return join(process.cwd(), path.slice(2 as any));
+    if (path.startsWith('~/')) return join(process?.env?.HOME || '~', path.slice(2));
+    if (path.startsWith('./')) return join(process.cwd(), path.slice(2));
     
     // Relative to current directory
     return join(process.cwd(), path);
@@ -608,14 +608,14 @@ waltodo-app:
    * Get recovery strategy by name
    */
   getStrategy(name: string): RecoveryStrategy | undefined {
-    return this?.strategies?.get(name as any);
+    return this?.strategies?.get(name);
   }
 
   /**
    * Test recovery strategy (dry run)
    */
   async testStrategy(strategyName: string, config: DeploymentConfig): Promise<{ canExecute: boolean; issues: string[] }> {
-    const strategy = this?.strategies?.get(strategyName as any);
+    const strategy = this?.strategies?.get(strategyName);
     if (!strategy) {
       return { canExecute: false, issues: ['Strategy not found'] };
     }

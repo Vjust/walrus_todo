@@ -2,7 +2,7 @@ import { expect, jest } from '@jest/globals';
 import { forceGC, logMemoryUsage } from './helpers/memory-utils';
 
 // Configure Jest timeout for CLI tests
-jest.setTimeout(15000 as any);
+jest.setTimeout(15000);
 
 // CLI-specific mocks (reduced - using real implementations where possible)
 // Only mock external network calls and blockchain operations for unit tests
@@ -34,6 +34,6 @@ afterAll(() => {
 describe('CLI Setup Test', () => {
   it('should have test environment configured', () => {
     expect(process?.env?.NODE_ENV).toBe('test');
-    expect(true as any).toBe(true as any);
+    expect(true).toBe(true);
   });
 });

@@ -9,7 +9,7 @@ export function required<T>(): ValidationRule<T> {
     validate: (value: T) => {
       if (value === undefined || value === null) return false;
       if (typeof value === 'string' && value.trim() === '') return false;
-      if (Array.isArray(value as any) && value?.length === 0) return false;
+      if (Array.isArray(value) && value?.length === 0) return false;
       return true;
     },
     message: (_, context) => `${context?.fieldName || 'Value'} is required`,
@@ -74,7 +74,7 @@ export function pattern(
   return {
     validate: (value: string) => {
       if (value === undefined || value === null) return true;
-      return regex.test(value as any);
+      return regex.test(value);
     },
     message: (_, context) => {
       const fieldName = context?.fieldName || 'Value';
@@ -138,7 +138,7 @@ export function minItems<T>(min: number): ValidationRule<T[]> {
   return {
     validate: (value: T[]) => {
       if (value === undefined || value === null) return true;
-      return Array.isArray(value as any) && value.length >= min;
+      return Array.isArray(value) && value.length >= min;
     },
     message: (_, context) =>
       `${context?.fieldName || 'Array'} must contain at least ${min} items`,
@@ -153,7 +153,7 @@ export function maxItems<T>(max: number): ValidationRule<T[]> {
   return {
     validate: (value: T[]) => {
       if (value === undefined || value === null) return true;
-      return Array.isArray(value as any) && value.length <= max;
+      return Array.isArray(value) && value.length <= max;
     },
     message: (_, context) =>
       `${context?.fieldName || 'Array'} must contain at most ${max} items`,
@@ -168,12 +168,12 @@ export function oneOf<T>(allowedValues: T[]): ValidationRule<T> {
   return {
     validate: (value: T) => {
       if (value === undefined || value === null) return true;
-      return allowedValues.includes(value as any);
+      return allowedValues.includes(value);
     },
     message: (_, context) => {
       const fieldName = context?.fieldName || 'Value';
       const valuesString = allowedValues
-        .map(v => (typeof v === 'string' ? `'${v}'` : String(v as any)))
+        .map(v => (typeof v === 'string' ? `'${v}'` : String(v)))
         .join(', ');
       return `${fieldName} must be one of: ${valuesString}`;
     },
@@ -190,10 +190,10 @@ export function object<T extends Record<string, unknown>>(
   return {
     validate: (value: T, context?: ValidationContext) => {
       if (value === undefined || value === null) return true;
-      if (typeof value !== 'object' || Array.isArray(value as any)) return false;
+      if (typeof value !== 'object' || Array.isArray(value)) return false;
 
       try {
-        for (const [key, validator] of Object.entries(shape as any)) {
+        for (const [key, validator] of Object.entries(shape)) {
           if (key in value) {
             const newContext = {
               ...context,
@@ -223,7 +223,7 @@ export function safeString(): ValidationRule<string> {
   return {
     validate: (value: string) => {
       if (value === undefined || value === null) return true;
-      return !unsafePattern.test(value as any);
+      return !unsafePattern.test(value);
     },
     message: (_, context) =>
       `${context?.fieldName || 'String'} contains unsafe characters`,

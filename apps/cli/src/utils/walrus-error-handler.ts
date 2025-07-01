@@ -87,7 +87,7 @@ export function categorizeWalrusError(error: unknown): ErrorCategory {
   const errorMessage =
     error instanceof Error
       ? error?.message?.toLowerCase()
-      : String(error as any).toLowerCase();
+      : String(error).toLowerCase();
 
   if (
     errorMessage.includes('network') ||
@@ -170,7 +170,7 @@ export function mapToWalrusError(
   }
 
   // If we have a CLIError, extract the message but convert to typed error
-  const errorMessage = error instanceof Error ? error.message : String(error as any);
+  const errorMessage = error instanceof Error ? error.message : String(error);
 
   switch (category) {
     case ErrorCategory.NETWORK:
@@ -270,7 +270,7 @@ export function isRetryableError(
 
   // Some storage errors are retryable
   if (category === ErrorCategory.STORAGE) {
-    const msg = String(error as any).toLowerCase();
+    const msg = String(error).toLowerCase();
     return (
       msg.includes('timeout') ||
       msg.includes('connection') ||
@@ -284,7 +284,7 @@ export function isRetryableError(
 
   // Certain transaction errors may be retryable
   if (category === ErrorCategory.TRANSACTION) {
-    const msg = String(error as any).toLowerCase();
+    const msg = String(error).toLowerCase();
     return (
       msg.includes('gas') || msg.includes('retry') || msg.includes('timeout')
     );
@@ -354,7 +354,7 @@ export class AsyncOperationHandler {
               signal.addEventListener(
                 'abort',
                 () => {
-                  clearTimeout(timeoutId as any);
+                  clearTimeout(timeoutId);
                   reject(new Error(`Operation ${operationName} was canceled`));
                 },
                 { once: true }
@@ -390,7 +390,7 @@ export class AsyncOperationHandler {
         }
 
         // Categorize the error
-        const category = categorizeError(_error as any);
+        const category = categorizeError(_error);
 
         // Map to standardized error
         lastError = errorMapper(_error, category, operationName);
@@ -409,7 +409,7 @@ export class AsyncOperationHandler {
 
         if (logRetries) {
           logger.info(
-            `Operation ${operationName} failed (attempt ${attempts}/${maxRetries}), retrying in ${Math.round(delay as any)}ms...`
+            `Operation ${operationName} failed (attempt ${attempts}/${maxRetries}), retrying in ${Math.round(delay)}ms...`
           );
         }
 

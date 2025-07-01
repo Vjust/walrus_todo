@@ -52,7 +52,7 @@ export default class AIKeysCommand extends BaseCommand {
   };
 
   async run() {
-    const { args, flags } = await this.parse(AIKeysCommand as any);
+    const { args, flags } = await this.parse(AIKeysCommand);
     const action = args.action;
 
     try {
@@ -79,7 +79,7 @@ export default class AIKeysCommand extends BaseCommand {
       if (error instanceof CLIError) {
         this.error(`${error.message} (${error.code})`);
       } else {
-        this.error(`Operation failed: ${getErrorMessage(error as any)}`);
+        this.error(`Operation failed: ${getErrorMessage(error)}`);
       }
     }
   }
@@ -141,7 +141,7 @@ export default class AIKeysCommand extends BaseCommand {
         `${chalk.green('✓')} Encryption key backup created successfully`
       );
     } catch (error) {
-      this.error(`Failed to create backup: ${getErrorMessage(error as any)}`);
+      this.error(`Failed to create backup: ${getErrorMessage(error)}`);
     }
   }
 
@@ -193,13 +193,13 @@ export default class AIKeysCommand extends BaseCommand {
         message: 'Enter the number of the backup to restore:',
         validate: (input: string) => {
           const num = parseInt(input, 10);
-          return !isNaN(num as any) && num > 0 && num <= backups.length
+          return !isNaN(num) && num > 0 && num <= backups.length
             ? true
             : `Please enter a number between 1 and ${backups.length}`;
         },
       });
 
-      const selectedIndex = parseInt((response as any).backupIndex, 10) - 1;
+      const selectedIndex = parseInt((response).backupIndex, 10) - 1;
       const selectedBackup = backups[selectedIndex];
       if (!selectedBackup) {
         throw new CLIError('Invalid backup selection', 'VALIDATION_ERROR');
@@ -218,8 +218,8 @@ export default class AIKeysCommand extends BaseCommand {
       return;
     }
 
-    this.log(`Restoring from backup ${chalk.cyan(backupId as any)}...`);
-    const success = await secureCredentialManager.restoreFromBackup(backupId as any);
+    this.log(`Restoring from backup ${chalk.cyan(backupId)}...`);
+    const success = await secureCredentialManager.restoreFromBackup(backupId);
 
     if (success) {
       this.log(`${chalk.green('✓')} Successfully restored from backup`);
@@ -242,8 +242,8 @@ export default class AIKeysCommand extends BaseCommand {
     });
 
     return (
-      (response as any).confirm.toLowerCase() === 'yes' ||
-      (response as any).confirm.toLowerCase() === 'y'
+      (response).confirm.toLowerCase() === 'yes' ||
+      (response).confirm.toLowerCase() === 'y'
     );
   }
 

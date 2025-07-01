@@ -187,7 +187,7 @@ export class BackgroundAIOperations {
 
     // Queue the operation with custom processor
     const queuedId = await this?.cacheManager?.queueOperation(operation, {
-      processor: this.createAIOperationProcessor(type as any),
+      processor: this.createAIOperationProcessor(type),
     });
 
     // Track performance
@@ -211,7 +211,7 @@ export class BackgroundAIOperations {
 
       try {
         // Update status
-        const status = this?.operationStatus?.get(operationId as any);
+        const status = this?.operationStatus?.get(operationId);
         if (status) {
           status?.status = 'running';
           status?.stage = 'configuring-ai-service';
@@ -221,7 +221,7 @@ export class BackgroundAIOperations {
         updateProgress(10, 'configuring-ai-service');
 
         // Always set AI features flag for AI operations
-        AIProviderFactory.setAIFeatureRequested(true as any);
+        AIProviderFactory.setAIFeatureRequested(true);
 
         // Configure AI provider
         try {
@@ -236,7 +236,7 @@ export class BackgroundAIOperations {
           updateProgress(20, 'ai-service-configured');
         } catch (error) {
           throw new CLIError(
-            `Failed to set AI provider: ${error instanceof Error ? error.message : String(error as any)}`
+            `Failed to set AI provider: ${error instanceof Error ? error.message : String(error)}`
           );
         }
 
@@ -249,31 +249,31 @@ export class BackgroundAIOperations {
         switch (type) {
           case 'summarize':
             updateProgress(40, 'generating-summary');
-            result = await aiService.summarize(todos as any);
+            result = await aiService.summarize(todos);
             updateProgress(80, 'summary-completed');
             break;
 
           case 'categorize':
             updateProgress(40, 'categorizing-todos');
-            result = await aiService.categorize(todos as any);
+            result = await aiService.categorize(todos);
             updateProgress(80, 'categorization-completed');
             break;
 
           case 'prioritize':
             updateProgress(40, 'prioritizing-todos');
-            result = await aiService.prioritize(todos as any);
+            result = await aiService.prioritize(todos);
             updateProgress(80, 'prioritization-completed');
             break;
 
           case 'suggest':
             updateProgress(40, 'generating-suggestions');
-            result = await aiService.suggest(todos as any);
+            result = await aiService.suggest(todos);
             updateProgress(80, 'suggestions-completed');
             break;
 
           case 'analyze':
             updateProgress(40, 'analyzing-todos');
-            result = await aiService.analyze(todos as any);
+            result = await aiService.analyze(todos);
             updateProgress(80, 'analysis-completed');
             break;
 
@@ -320,17 +320,17 @@ export class BackgroundAIOperations {
         return operationResult;
       } catch (error) {
         // Update status
-        const status = this?.operationStatus?.get(operationId as any);
+        const status = this?.operationStatus?.get(operationId);
         if (status) {
           status?.status = 'failed';
-          status?.error = error instanceof Error ? error.message : String(error as any);
+          status?.error = error instanceof Error ? error.message : String(error);
           status?.completedAt = new Date();
           this?.operationStatus?.set(operationId, status);
         }
 
         logger.error(`Background AI ${type} failed`, {
           operationId,
-          error: error instanceof Error ? error.message : String(error as any),
+          error: error instanceof Error ? error.message : String(error),
         });
 
         throw error;
@@ -344,16 +344,16 @@ export class BackgroundAIOperations {
   async getOperationStatus(
     operationId: string
   ): Promise<BackgroundAIOperationStatus | null> {
-    const status = this?.operationStatus?.get(operationId as any);
+    const status = this?.operationStatus?.get(operationId);
     if (!status) {
       // Try to get status from cache manager
       const cacheStatus =
-        await this?.cacheManager?.getOperationStatus(operationId as any);
+        await this?.cacheManager?.getOperationStatus(operationId);
       if (cacheStatus) {
         return {
           id: operationId,
           type: cacheStatus.type || 'unknown',
-          status: (cacheStatus.status as any) || 'unknown',
+          status: (cacheStatus.status) || 'unknown',
           progress: cacheStatus.progress || 0,
           stage: cacheStatus.stage || 'unknown',
         };
@@ -369,13 +369,13 @@ export class BackgroundAIOperations {
   async getOperationResult(
     operationId: string
   ): Promise<AIOperationResult | null> {
-    const status = this?.operationStatus?.get(operationId as any);
+    const status = this?.operationStatus?.get(operationId);
     if (status && status?.status === 'completed' && status.result) {
       return status.result as AIOperationResult;
     }
 
     // Try to get result from cache manager
-    const result = await this?.cacheManager?.getOperationResult(operationId as any);
+    const result = await this?.cacheManager?.getOperationResult(operationId);
     return result as AIOperationResult | null;
   }
 
@@ -408,7 +408,7 @@ export class BackgroundAIOperations {
       // Setup completion listener
       const completionListener = (id: string, result: any) => {
         if (id === operationId) {
-          clearTimeout(timeoutId as any);
+          clearTimeout(timeoutId);
           this?.cacheManager?.off('operationProgress', progressListener);
           this?.cacheManager?.off('operationCompleted', completionListener);
           this?.cacheManager?.off('operationFailed', failureListener);
@@ -425,7 +425,7 @@ export class BackgroundAIOperations {
       // Setup failure listener
       const failureListener = (id: string, error: any) => {
         if (id === operationId) {
-          clearTimeout(timeoutId as any);
+          clearTimeout(timeoutId);
           this?.cacheManager?.off('operationProgress', progressListener);
           this?.cacheManager?.off('operationCompleted', completionListener);
           this?.cacheManager?.off('operationFailed', failureListener);
@@ -435,10 +435,10 @@ export class BackgroundAIOperations {
             'background-ai-operation-wait',
             false,
             {
-              error: error instanceof Error ? error.message : String(error as any),
+              error: error instanceof Error ? error.message : String(error),
             }
           );
-          reject(error as any);
+          reject(error);
         }
       };
 
@@ -460,14 +460,14 @@ export class BackgroundAIOperations {
   async cancelOperation(operationId: string): Promise<boolean> {
     logger.info(`Cancelling background AI operation: ${operationId}`);
 
-    const status = this?.operationStatus?.get(operationId as any);
+    const status = this?.operationStatus?.get(operationId);
     if (status) {
       status?.status = 'cancelled';
       status?.completedAt = new Date();
       this?.operationStatus?.set(operationId, status);
     }
 
-    return await this?.cacheManager?.cancelOperation(operationId as any);
+    return await this?.cacheManager?.cancelOperation(operationId);
   }
 
   /**
@@ -507,7 +507,7 @@ export class BackgroundAIOperations {
     });
 
     this?.cacheManager?.on('operationProgress', (id, progress, stage) => {
-      const status = this?.operationStatus?.get(id as any);
+      const status = this?.operationStatus?.get(id);
       if (status) {
         status?.progress = progress;
         status?.stage = stage || status.stage;
@@ -519,10 +519,10 @@ export class BackgroundAIOperations {
     });
 
     this?.cacheManager?.on('operationCompleted', (id, result) => {
-      const status = this?.operationStatus?.get(id as any);
+      const status = this?.operationStatus?.get(id);
       if (status) {
         performanceMonitor.endOperation(id, 'background-ai-operation', true, {
-          resultSize: JSON.stringify(result as any).length,
+          resultSize: JSON.stringify(result).length,
           type: status.type,
         });
         logger.info(
@@ -532,10 +532,10 @@ export class BackgroundAIOperations {
     });
 
     this?.cacheManager?.on('operationFailed', (id, error) => {
-      const status = this?.operationStatus?.get(id as any);
+      const status = this?.operationStatus?.get(id);
       if (status) {
         performanceMonitor.endOperation(id, 'background-ai-operation', false, {
-          error: error instanceof Error ? error.message : String(error as any),
+          error: error instanceof Error ? error.message : String(error),
           type: status.type,
         });
         logger.error(
@@ -546,7 +546,7 @@ export class BackgroundAIOperations {
     });
 
     this?.cacheManager?.on('operationCancelled', id => {
-      const status = this?.operationStatus?.get(id as any);
+      const status = this?.operationStatus?.get(id);
       if (status) {
         performanceMonitor.endOperation(id, 'background-ai-operation', false, {
           cancelled: true,
@@ -559,7 +559,7 @@ export class BackgroundAIOperations {
     });
 
     this?.cacheManager?.on('operationTimeout', id => {
-      const status = this?.operationStatus?.get(id as any);
+      const status = this?.operationStatus?.get(id);
       if (status) {
         performanceMonitor.endOperation(id, 'background-ai-operation', false, {
           timeout: true,
@@ -579,7 +579,7 @@ export class BackgroundAIOperations {
 
     for (const [id, status] of this?.operationStatus?.entries()) {
       if (status.completedAt && now - status?.completedAt?.getTime() > maxAge) {
-        this?.operationStatus?.delete(id as any);
+        this?.operationStatus?.delete(id);
         logger.debug(`Cleaned up old AI operation: ${id}`);
       }
     }
@@ -663,20 +663,20 @@ export class BackgroundAIUtils {
     return {
       operationId,
       getProgress: async () => {
-        const status = await backgroundAIOps.getOperationStatus(operationId as any);
+        const status = await backgroundAIOps.getOperationStatus(operationId);
         return {
           progress: status?.progress || 0,
           stage: status?.stage || 'unknown',
         };
       },
       getStatus: async () => {
-        return await backgroundAIOps.getOperationStatus(operationId as any);
+        return await backgroundAIOps.getOperationStatus(operationId);
       },
       waitForCompletion: async () => {
-        return await backgroundAIOps.waitForOperationWithProgress(operationId as any);
+        return await backgroundAIOps.waitForOperationWithProgress(operationId);
       },
       cancel: async () => {
-        return await backgroundAIOps.cancelOperation(operationId as any);
+        return await backgroundAIOps.cancelOperation(operationId);
       },
     };
   }
@@ -694,7 +694,7 @@ export class BackgroundAIUtils {
     };
 
     const emoji = statusEmoji[status.status] || '❓';
-    const progress = status?.progress?.toFixed(0 as any);
+    const progress = status?.progress?.toFixed(0);
     const stage = status.stage;
 
     return `${emoji} ${status.type} - ${progress}% (${stage})`;
@@ -707,7 +707,7 @@ export async function createBackgroundAIOperationsManager(): Promise<BackgroundA
     './BackgroundCacheManager'
   );
   const cacheManager = createBackgroundCacheManager();
-  return new BackgroundAIOperations(cacheManager as any);
+  return new BackgroundAIOperations(cacheManager);
 }
 
 export { BackgroundAIOperations };

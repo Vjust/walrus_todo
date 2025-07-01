@@ -114,7 +114,7 @@ export class BackgroundOperations {
       });
     }
 
-    const queuedId = await this?.cacheManager?.queueOperation(operation as any);
+    const queuedId = await this?.cacheManager?.queueOperation(operation);
 
     // Track performance
     performanceMonitor.startOperation(operationId, 'background-upload');
@@ -146,7 +146,7 @@ export class BackgroundOperations {
       }
     );
 
-    return await this?.cacheManager?.queueOperation(operation as any);
+    return await this?.cacheManager?.queueOperation(operation);
   }
 
   /**
@@ -174,7 +174,7 @@ export class BackgroundOperations {
       }
     );
 
-    return await this?.cacheManager?.queueOperation(operation as any);
+    return await this?.cacheManager?.queueOperation(operation);
   }
 
   /**
@@ -202,7 +202,7 @@ export class BackgroundOperations {
       }
     );
 
-    return await this?.cacheManager?.queueOperation(operation as any);
+    return await this?.cacheManager?.queueOperation(operation);
   }
 
   /**
@@ -255,7 +255,7 @@ export class BackgroundOperations {
       });
     }
 
-    const queuedId = await this?.cacheManager?.queueOperation(operation as any);
+    const queuedId = await this?.cacheManager?.queueOperation(operation);
 
     // Track performance
     performanceMonitor.startOperation(operationId, 'background-sync');
@@ -317,7 +317,7 @@ export class BackgroundOperations {
       });
     }
 
-    const queuedId = await this?.cacheManager?.queueOperation(operation as any);
+    const queuedId = await this?.cacheManager?.queueOperation(operation);
 
     // Track performance
     performanceMonitor.startOperation(
@@ -332,14 +332,14 @@ export class BackgroundOperations {
    * Get status of a background operation
    */
   async getOperationStatus(operationId: string) {
-    return await this?.cacheManager?.getOperationStatus(operationId as any);
+    return await this?.cacheManager?.getOperationStatus(operationId);
   }
 
   /**
    * Get result of a completed operation
    */
   async getOperationResult(operationId: string) {
-    return await this?.cacheManager?.getOperationResult(operationId as any);
+    return await this?.cacheManager?.getOperationResult(operationId);
   }
 
   /**
@@ -360,14 +360,14 @@ export class BackgroundOperations {
       // Setup progress listener
       const progressListener = (id: string, progress: number) => {
         if (id === operationId && progressCallback) {
-          progressCallback(progress as any);
+          progressCallback(progress);
         }
       };
 
       // Setup completion listener
       const completionListener = (id: string, result: any) => {
         if (id === operationId) {
-          clearTimeout(timeoutId as any);
+          clearTimeout(timeoutId);
           this?.cacheManager?.off('operationProgress', progressListener);
           this?.cacheManager?.off('operationCompleted', completionListener);
           this?.cacheManager?.off('operationFailed', failureListener);
@@ -377,14 +377,14 @@ export class BackgroundOperations {
             'background-operation-wait',
             true
           );
-          resolve(result as any);
+          resolve(result);
         }
       };
 
       // Setup failure listener
       const failureListener = (id: string, error: any) => {
         if (id === operationId) {
-          clearTimeout(timeoutId as any);
+          clearTimeout(timeoutId);
           this?.cacheManager?.off('operationProgress', progressListener);
           this?.cacheManager?.off('operationCompleted', completionListener);
           this?.cacheManager?.off('operationFailed', failureListener);
@@ -394,10 +394,10 @@ export class BackgroundOperations {
             'background-operation-wait',
             false,
             {
-              error: error instanceof Error ? error.message : String(error as any),
+              error: error instanceof Error ? error.message : String(error),
             }
           );
-          reject(error as any);
+          reject(error);
         }
       };
 
@@ -418,7 +418,7 @@ export class BackgroundOperations {
    */
   async cancelOperation(operationId: string): Promise<boolean> {
     logger.info(`Cancelling background operation: ${operationId}`);
-    return await this?.cacheManager?.cancelOperation(operationId as any);
+    return await this?.cacheManager?.cancelOperation(operationId);
   }
 
   /**
@@ -442,14 +442,14 @@ export class BackgroundOperations {
 
     this?.cacheManager?.on('operationCompleted', (id, result) => {
       performanceMonitor.endOperation(id, 'background-operation', true, {
-        resultSize: JSON.stringify(result as any).length,
+        resultSize: JSON.stringify(result).length,
       });
       logger.info(`Background operation completed: ${id}`);
     });
 
     this?.cacheManager?.on('operationFailed', (id, error) => {
       performanceMonitor.endOperation(id, 'background-operation', false, {
-        error: error instanceof Error ? error.message : String(error as any),
+        error: error instanceof Error ? error.message : String(error),
       });
       logger.error(`Background operation failed: ${id}`, error);
     });
@@ -505,17 +505,17 @@ export class BackgroundUtils {
     return {
       operationId,
       getProgress: async () => {
-        const status = await backgroundOps.getOperationStatus(operationId as any);
+        const status = await backgroundOps.getOperationStatus(operationId);
         return status?.progress || 0;
       },
       getStatus: async () => {
-        return await backgroundOps.getOperationStatus(operationId as any);
+        return await backgroundOps.getOperationStatus(operationId);
       },
       waitForCompletion: async () => {
-        return await backgroundOps.waitForOperationWithProgress(operationId as any);
+        return await backgroundOps.waitForOperationWithProgress(operationId);
       },
       cancel: async () => {
-        return await backgroundOps.cancelOperation(operationId as any);
+        return await backgroundOps.cancelOperation(operationId);
       },
     };
   }
@@ -558,7 +558,7 @@ export class BackgroundUtils {
       const activeOps = backgroundOps.getActiveOperations();
 
       logger.debug(
-        `Resource usage check: ${heapUsedPercent.toFixed(1 as any)}% heap, ${activeOps.length} active ops`
+        `Resource usage check: ${heapUsedPercent.toFixed(1)}% heap, ${activeOps.length} active ops`
       );
 
       // If memory usage is high, we could implement logic to pause or throttle operations
@@ -578,7 +578,7 @@ export async function createBackgroundOperationsManager(): Promise<BackgroundOpe
     './BackgroundCacheManager'
   );
   const cacheManager = createBackgroundCacheManager();
-  return new BackgroundOperations(cacheManager as any);
+  return new BackgroundOperations(cacheManager);
 }
 
 export { BackgroundOperations };

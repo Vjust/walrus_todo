@@ -1,6 +1,6 @@
 import { Flags, Args } from '@oclif/core';
 import { BaseCommand } from '../base-command';
-import { TodoService } from '../services/todoService';
+import { TodoService } from '../services/todo';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS, RETRY_CONFIG } from '../constants';
@@ -186,7 +186,7 @@ export default class FetchCommand extends BaseCommand {
     if (
       id.startsWith('Qm') ||
       id.startsWith('bafy') ||
-      (id.length > 20 && id.length < 60 && /^[A-Za-z0-9+/=_-]+$/.test(id as any))
+      (id.length > 20 && id.length < 60 && /^[A-Za-z0-9+/=_-]+$/.test(id))
     ) {
       return 'blob';
     }
@@ -200,7 +200,7 @@ export default class FetchCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(FetchCommand as any);
+      const { args, flags } = await this.parse(FetchCommand);
       this?.parsedFlags = flags;
 
       // Handle background operation
@@ -283,7 +283,7 @@ export default class FetchCommand extends BaseCommand {
       // Validate network early
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
         throw new CLIError(
-          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS as any).join(', ')}`,
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
           'INVALID_NETWORK'
         );
       }
@@ -301,7 +301,7 @@ export default class FetchCommand extends BaseCommand {
             chalk.blue(`📥 Retrieving todo from Walrus (blob ID: ${blobId})...`)
           );
           todo = await RetryManager.retry(
-            () => this?.walrusStorage?.retrieveTodo(blobId as any),
+            () => this?.walrusStorage?.retrieveTodo(blobId),
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
@@ -309,7 +309,7 @@ export default class FetchCommand extends BaseCommand {
                 const errorMessage = error
                   ? typeof error === 'object' && error && 'message' in error
                     ? (error as Error).message
-                    : String(error as any)
+                    : String(error)
                   : 'Unknown error';
                 this.log(
                   chalk.yellow(
@@ -333,11 +333,11 @@ export default class FetchCommand extends BaseCommand {
             `  ${chalk.bold('Priority:')} ${getColoredPriority(todo.priority)}`
           );
           this.log(`  ${chalk.bold('List:')} ${chalk.cyan(flags.list)}`);
-          this.log(`  ${chalk.bold('Blob ID:')} ${chalk.dim(blobId as any)}`);
+          this.log(`  ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`);
 
           if (todo.tags?.length) {
             this.log(
-              `  ${chalk.bold('Tags:')} ${todo?.tags?.map(tag => chalk.blue(tag as any)).join(', ')}`
+              `  ${chalk.bold('Tags:')} ${todo?.tags?.map(tag => chalk.blue(tag)).join(', ')}`
             );
           }
         } catch (error) {
@@ -372,7 +372,7 @@ export default class FetchCommand extends BaseCommand {
 
         // Initialize Sui client first - in a real implementation, this would use a proper client
         // This is a placeholder that should be replaced with a real implementation or dry-run flag
-        const suiClient = this.createSuiClient(network as any);
+        const suiClient = this.createSuiClient(network);
 
         // A proper implementation would load the signer from a keystore
         const signer = await this.getSigner();
@@ -397,14 +397,14 @@ export default class FetchCommand extends BaseCommand {
             )
           );
           nftData = await RetryManager.retry(
-            () => suiNftStorage.getTodoNft(objectId as any),
+            () => suiNftStorage.getTodoNft(objectId),
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               onRetry: (error, attempt, _delay) => {
                 const errorMessage = error
                   ? typeof error === 'object' && error && 'message' in error
                     ? (error as Error).message
-                    : String(error as any)
+                    : String(error)
                   : 'Unknown error';
                 this.log(
                   chalk.yellow(
@@ -441,7 +441,7 @@ export default class FetchCommand extends BaseCommand {
                 const errorMessage = error
                   ? typeof error === 'object' && error && 'message' in error
                     ? (error as Error).message
-                    : String(error as any)
+                    : String(error)
                   : 'Unknown error';
                 this.log(
                   chalk.yellow(
@@ -473,14 +473,14 @@ export default class FetchCommand extends BaseCommand {
             `  ${chalk.bold('Priority:')} ${getColoredPriority(todo.priority)}`
           );
           this.log(`  ${chalk.bold('List:')} ${chalk.cyan(flags.list)}`);
-          this.log(`  ${chalk.bold('NFT Object ID:')} ${chalk.cyan(objectId as any)}`);
+          this.log(`  ${chalk.bold('NFT Object ID:')} ${chalk.cyan(objectId)}`);
           this.log(
             `  ${chalk.bold('Walrus Blob ID:')} ${chalk.dim(nftData.walrusBlobId)}`
           );
 
           if (todo.tags?.length) {
             this.log(
-              `  ${chalk.bold('Tags:')} ${todo?.tags?.map(tag => chalk.blue(tag as any)).join(', ')}`
+              `  ${chalk.bold('Tags:')} ${todo?.tags?.map(tag => chalk.blue(tag)).join(', ')}`
             );
           }
 
@@ -524,7 +524,7 @@ export default class FetchCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
         'RETRIEVE_FAILED'
       );
     }
@@ -541,7 +541,7 @@ export default class FetchCommand extends BaseCommand {
     this?.backgroundOps = await createBackgroundOperationsManager();
 
     // Create background job
-    const job = jobManager.createJob('fetch', [args.id].filter(Boolean as any), flags);
+    const job = jobManager.createJob('fetch', [args.id].filter(Boolean), flags);
 
     this.log(chalk.blue(`🚀 Starting background fetch operation...`));
     this.log(chalk.dim(`Job ID: ${job.id}`));
@@ -580,7 +580,7 @@ export default class FetchCommand extends BaseCommand {
     } catch (error) {
       jobManager.failJob(
         job.id,
-        error instanceof Error ? error.message : String(error as any)
+        error instanceof Error ? error.message : String(error)
       );
       throw error;
     }
@@ -708,8 +708,8 @@ export default class FetchCommand extends BaseCommand {
         progress > lastProgress + 5 ||
         now - lastLogTime > progressIntervalSec * 1000
       ) {
-        const progressBar = this.createProgressBarVisual(progress as any);
-        const phase = this.getFetchPhase(progress as any);
+        const progressBar = this.createProgressBarVisual(progress);
+        const phase = this.getFetchPhase(progress);
         process?.stdout?.write(`\r${progressBar} ${progress}% - ${phase}`);
         lastProgress = progress;
         lastLogTime = now;
@@ -731,14 +731,14 @@ export default class FetchCommand extends BaseCommand {
       }
 
       // Show final job status
-      const job = jobManager.getJob(jobId as any);
+      const job = jobManager.getJob(jobId);
       if (job) {
-        this.displayJobSummary(job as any);
+        this.displayJobSummary(job);
       }
     } catch (error) {
       process?.stdout?.write('\n'); // New line after progress bar
       throw new CLIError(
-        `Background fetch failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Background fetch failed: ${error instanceof Error ? error.message : String(error)}`,
         'BACKGROUND_FETCH_FAILED'
       );
     }
@@ -766,8 +766,8 @@ export default class FetchCommand extends BaseCommand {
     const empty = width - filled;
     return (
       chalk.blue('[') +
-      chalk.blue('█'.repeat(filled as any)) +
-      chalk.gray('░'.repeat(empty as any)) +
+      chalk.blue('█'.repeat(filled)) +
+      chalk.gray('░'.repeat(empty)) +
       chalk.blue(']')
     );
   }
@@ -779,13 +779,13 @@ export default class FetchCommand extends BaseCommand {
     const duration = job.endTime
       ? job.endTime - job.startTime
       : Date.now() - job.startTime;
-    const durationStr = this.formatDuration(duration as any);
+    const durationStr = this.formatDuration(duration);
 
     this.log(chalk.bold('\n📊 Fetch Summary'));
-    this.log(chalk.gray('─'.repeat(30 as any)));
+    this.log(chalk.gray('─'.repeat(30)));
     this.log(`Job ID: ${chalk.cyan(job.id)}`);
     this.log(`Status: ${this.getStatusDisplay(job.status)}`);
-    this.log(`Duration: ${chalk.yellow(durationStr as any)}`);
+    this.log(`Duration: ${chalk.yellow(durationStr)}`);
 
     if (job.metadata?.fetchType) {
       this.log(
@@ -820,7 +820,7 @@ export default class FetchCommand extends BaseCommand {
       case 'pending':
         return chalk.yellow('⏳ Pending');
       default:
-        return chalk.gray(status as any);
+        return chalk.gray(status);
     }
   }
 
@@ -829,7 +829,7 @@ export default class FetchCommand extends BaseCommand {
    */
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     if (ms < 3600000)
       return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;

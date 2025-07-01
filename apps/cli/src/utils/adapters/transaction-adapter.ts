@@ -19,7 +19,7 @@
  *
  * // Or wrap an existing transaction
  * const existingTx = new Transaction();
- * const adapter = createTransactionBlockAdapter(existingTx as any);
+ * const adapter = createTransactionBlockAdapter(existingTx);
  *
  * // Use the adapter's methods
  * adapter.moveCall({
@@ -153,7 +153,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       throw new TransactionAdapterError('Null Transaction provided to adapter');
     }
 
-    if (!isTransaction(transactionBlock as any)) {
+    if (!isTransaction(transactionBlock)) {
       throw new TransactionAdapterError(
         `Invalid Transaction provided to adapter: ${typeof transactionBlock}. ` +
           'Expected a valid Transaction instance.'
@@ -204,7 +204,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       this?._isDisposed = true;
     } catch (error) {
       throw new TransactionAdapterError(
-        `Failed to dispose TransactionBlockAdapter: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to dispose TransactionBlockAdapter: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -225,13 +225,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   setGasBudget(budget: bigint | number): void {
     try {
       this.checkDisposed();
-      this?.transactionBlock?.setGasBudget(budget as any);
+      this?.transactionBlock?.setGasBudget(budget);
     } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error setting gas budget: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error setting gas budget: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -240,13 +240,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   setGasPrice(price: bigint | number): void {
     try {
       this.checkDisposed();
-      this?.transactionBlock?.setGasPrice(price as any);
+      this?.transactionBlock?.setGasPrice(price);
     } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error setting gas price: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error setting gas price: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -259,13 +259,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   }): TransactionObjectArgument {
     try {
       this.checkDisposed();
-      return this?.transactionBlock?.moveCall(options as any);
+      return this?.transactionBlock?.moveCall(options);
     } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error in moveCall: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in moveCall: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -285,7 +285,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       // Validate inputs
-      if (!Array.isArray(objects as any)) {
+      if (!Array.isArray(objects)) {
         throw new TransactionAdapterError(
           `Invalid objects argument: expected array, got ${typeof objects}`
         );
@@ -303,13 +303,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       const processedObjects: TransactionObjectArgument[] = [];
 
       for (const obj of objects) {
-        if (isString(obj as any)) {
-          processedObjects.push(this?.transactionBlock?.object(obj as any));
-        } else if (isTransactionObjectArgument(obj as any)) {
-          processedObjects.push(obj as any);
+        if (isString(obj)) {
+          processedObjects.push(this?.transactionBlock?.object(obj));
+        } else if (isTransactionObjectArgument(obj)) {
+          processedObjects.push(obj);
         } else {
           throw new TransactionAdapterError(
-            `Invalid object argument: ${JSON.stringify(obj as any)}`
+            `Invalid object argument: ${JSON.stringify(obj)}`
           );
         }
       }
@@ -317,13 +317,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       // Process address
       let processedAddress: TransactionObjectArgument;
 
-      if (isString(address as any)) {
-        processedAddress = this?.transactionBlock?.object(address as any);
-      } else if (isTransactionObjectArgument(address as any)) {
+      if (isString(address)) {
+        processedAddress = this?.transactionBlock?.object(address);
+      } else if (isTransactionObjectArgument(address)) {
         processedAddress = address;
       } else {
         throw new TransactionAdapterError(
-          `Invalid address argument: ${JSON.stringify(address as any)}`
+          `Invalid address argument: ${JSON.stringify(address)}`
         );
       }
 
@@ -337,7 +337,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error in transferObjects: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in transferObjects: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -355,10 +355,10 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       // Apply a type assertion to ensure compatibility with TransactionObjectArgument
-      return this?.transactionBlock?.object(value as any) as TransactionObjectArgument;
+      return this?.transactionBlock?.object(value) as TransactionObjectArgument;
     } catch (error) {
       throw new TransactionAdapterError(
-        `Error in object conversion: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in object conversion: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -374,7 +374,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       ) as TransactionObjectArgument;
     } catch (error) {
       throw new TransactionAdapterError(
-        `Error in pure value conversion: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in pure value conversion: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -415,13 +415,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       const processedObjects: TransactionObjectArgument[] = [];
 
       for (const obj of options.objects) {
-        if (isString(obj as any)) {
-          processedObjects.push(this?.transactionBlock?.object(obj as any));
-        } else if (isTransactionObjectArgument(obj as any)) {
-          processedObjects.push(obj as any);
+        if (isString(obj)) {
+          processedObjects.push(this?.transactionBlock?.object(obj));
+        } else if (isTransactionObjectArgument(obj)) {
+          processedObjects.push(obj);
         } else {
           throw new TransactionAdapterError(
-            `Invalid object in makeMoveVec: ${JSON.stringify(obj as any)}`
+            `Invalid object in makeMoveVec: ${JSON.stringify(obj)}`
           );
         }
       }
@@ -435,7 +435,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error in makeMoveVec: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in makeMoveVec: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -457,13 +457,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       // Process the coin input
       let processedCoin: TransactionObjectArgument;
 
-      if (isString(coin as any)) {
-        processedCoin = this?.transactionBlock?.object(coin as any);
-      } else if (isTransactionObjectArgument(coin as any)) {
+      if (isString(coin)) {
+        processedCoin = this?.transactionBlock?.object(coin);
+      } else if (isTransactionObjectArgument(coin)) {
         processedCoin = coin;
       } else {
         throw new TransactionAdapterError(
-          `Invalid coin argument: ${JSON.stringify(coin as any)}`
+          `Invalid coin argument: ${JSON.stringify(coin)}`
         );
       }
 
@@ -478,21 +478,21 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         ) {
           // Convert primitive types to pure values (which are TransactionObjectArguments)
           processedAmounts.push(
-            this?.transactionBlock?.pure(amount as any) as TransactionObjectArgument
+            this?.transactionBlock?.pure(amount) as TransactionObjectArgument
           );
-        } else if (isTransactionObjectArgument(amount as any)) {
+        } else if (isTransactionObjectArgument(amount)) {
           // Already a TransactionObjectArgument
-          processedAmounts.push(amount as any);
-        } else if (isTransactionArgument(amount as any)) {
+          processedAmounts.push(amount);
+        } else if (isTransactionArgument(amount)) {
           // Handle TransactionArgument that is not a TransactionObjectArgument
           // We need to explicitly convert it to a TransactionObjectArgument since they're not compatible
           // This ensures that we're always passing TransactionObjectArgument to splitCoins
           processedAmounts.push(
-            this?.transactionBlock?.pure(amount as any) as TransactionObjectArgument
+            this?.transactionBlock?.pure(amount) as TransactionObjectArgument
           );
         } else {
           throw new TransactionAdapterError(
-            `Invalid amount in splitCoins: ${JSON.stringify(amount as any)}`
+            `Invalid amount in splitCoins: ${JSON.stringify(amount)}`
           );
         }
       }
@@ -503,7 +503,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error in splitCoins: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in splitCoins: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -524,13 +524,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       // Process the destination input
       let processedDestination: TransactionObjectArgument;
 
-      if (isString(destination as any)) {
-        processedDestination = this?.transactionBlock?.object(destination as any);
-      } else if (isTransactionObjectArgument(destination as any)) {
+      if (isString(destination)) {
+        processedDestination = this?.transactionBlock?.object(destination);
+      } else if (isTransactionObjectArgument(destination)) {
         processedDestination = destination;
       } else {
         throw new TransactionAdapterError(
-          `Invalid destination argument: ${JSON.stringify(destination as any)}`
+          `Invalid destination argument: ${JSON.stringify(destination)}`
         );
       }
 
@@ -538,13 +538,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       const processedSources: TransactionObjectArgument[] = [];
 
       for (const source of sources) {
-        if (isString(source as any)) {
-          processedSources.push(this?.transactionBlock?.object(source as any));
-        } else if (isTransactionObjectArgument(source as any)) {
-          processedSources.push(source as any);
+        if (isString(source)) {
+          processedSources.push(this?.transactionBlock?.object(source));
+        } else if (isTransactionObjectArgument(source)) {
+          processedSources.push(source);
         } else {
           throw new TransactionAdapterError(
-            `Invalid source in mergeCoins: ${JSON.stringify(source as any)}`
+            `Invalid source in mergeCoins: ${JSON.stringify(source)}`
           );
         }
       }
@@ -555,7 +555,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error in mergeCoins: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in mergeCoins: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -564,10 +564,10 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   gas(objectId?: string): TransactionObjectArgument {
     try {
       this.checkDisposed();
-      return this?.transactionBlock?.gas(objectId as any);
+      return this?.transactionBlock?.gas(objectId);
     } catch (error) {
       throw new TransactionAdapterError(
-        `Error getting gas object: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error getting gas object: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -579,10 +579,10 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   }): TransactionObjectArgument {
     try {
       this.checkDisposed();
-      return this?.transactionBlock?.publish(options as any);
+      return this?.transactionBlock?.publish(options);
     } catch (error) {
       throw new TransactionAdapterError(
-        `Error in publish: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in publish: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -646,7 +646,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error in upgrade: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error in upgrade: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -655,10 +655,10 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   async build(options?: Record<string, unknown>): Promise<Uint8Array> {
     try {
       this.checkDisposed();
-      return await this?.transactionBlock?.build(options as any);
+      return await this?.transactionBlock?.build(options);
     } catch (error) {
       throw new TransactionAdapterError(
-        `Error building transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error building transaction: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -675,7 +675,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
           'Serialization returned null or undefined'
         );
       } else if (typeof serialized === 'object') {
-        return JSON.stringify(serialized as any);
+        return JSON.stringify(serialized);
       } else {
         // Add type guard before potential toString conversion that's done by String()
         if (
@@ -687,14 +687,14 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         ) {
           return (serialized as { toString(): string }).toString();
         }
-        return String(serialized as any);
+        return String(serialized);
       }
     } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error serializing transaction: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error serializing transaction: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -749,10 +749,10 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
           ) {
             return (resolvedDigest as { toString(): string }).toString();
           }
-          return String(resolvedDigest as any);
+          return String(resolvedDigest);
         } catch (promiseError) {
           throw new TransactionAdapterError(
-            `Failed to resolve digest promise: ${promiseError instanceof Error ? promiseError.message : String(promiseError as any)}`,
+            `Failed to resolve digest promise: ${promiseError instanceof Error ? promiseError.message : String(promiseError)}`,
             promiseError instanceof Error ? promiseError : undefined
           );
         }
@@ -773,13 +773,13 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       }
 
       // Last resort: convert anything else to a string
-      return String(digest as any);
+      return String(digest);
     } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
       throw new TransactionAdapterError(
-        `Error getting transaction digest: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Error getting transaction digest: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
       );
     }
@@ -793,7 +793,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   static isTransactionBlockAdapter(
     obj: unknown
   ): obj is TransactionBlockAdapterImpl {
-    return isBaseAdapter(obj as any) && obj instanceof TransactionBlockAdapterImpl;
+    return isBaseAdapter(obj) && obj instanceof TransactionBlockAdapterImpl;
   }
 }
 
@@ -814,7 +814,7 @@ export function createTransactionBlockAdapter(
   }
 
   // Validate input if provided
-  if (!isTransaction(transactionBlock as any)) {
+  if (!isTransaction(transactionBlock)) {
     throw new TransactionAdapterError(
       `Invalid transaction provided to adapter factory: ${typeof transactionBlock}. ` +
         'Expected a valid Transaction instance.'
@@ -822,5 +822,5 @@ export function createTransactionBlockAdapter(
   }
 
   // Now we can safely create adapter since we've verified the type
-  return new TransactionBlockAdapterImpl(transactionBlock as any);
+  return new TransactionBlockAdapterImpl(transactionBlock);
 }

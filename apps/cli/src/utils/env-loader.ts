@@ -68,7 +68,7 @@ export function loadEnvironment(options: EnvLoaderOptions = {}): void {
       throw error;
     } else {
       logger.error(
-        `Error loading environment: ${error instanceof Error ? error.message : String(error as any)}`
+        `Error loading environment: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -86,7 +86,7 @@ function loadDotEnvFile(
     // First check in current directory
     let envPath = path.resolve(process.cwd(), envFile);
 
-    if (!fs.existsSync(envPath as any)) {
+    if (!fs.existsSync(envPath)) {
       // Then check in user's home directory
       const homeDir = process?.env?.HOME || process?.env?.USERPROFILE;
       if (homeDir) {
@@ -94,20 +94,20 @@ function loadDotEnvFile(
       }
     }
 
-    if (fs.existsSync(envPath as any)) {
+    if (fs.existsSync(envPath)) {
       // Only log in development mode
       if (process.env?.NODE_ENV === 'development') {
         logger.info(`Loading environment variables from ${envPath}`);
       }
 
       const envContent = fs.readFileSync(envPath, 'utf8');
-      const envConfig = dotenv.parse(envContent as any);
+      const envConfig = dotenv.parse(envContent);
 
       // Set environment variables, allowing .env to take precedence
-      Object.entries(envConfig as any).forEach(([key, value]) => {
+      Object.entries(envConfig).forEach(([key, value]) => {
         // Only skip overwriting for certain system variables that should not be changed
         const systemVars = ['NODE_ENV', 'PATH', 'HOME', 'USER', 'SHELL'];
-        if (!systemVars.includes(key as any)) {
+        if (!systemVars.includes(key)) {
           // Only log in development mode
           if (process.env?.NODE_ENV === 'development') {
             logger.info(
@@ -139,7 +139,7 @@ function loadDotEnvFile(
       throw error;
     } else {
       logger.error(
-        `Error loading .env file: ${error instanceof Error ? error.message : String(error as any)}`
+        `Error loading .env file: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -157,7 +157,7 @@ function loadConfigFile(
     // First check in current directory
     let configPath = path.resolve(process.cwd(), configFile);
 
-    if (!fs.existsSync(configPath as any)) {
+    if (!fs.existsSync(configPath)) {
       // Then check in user's home directory
       const homeDir = process?.env?.HOME || process?.env?.USERPROFILE;
       if (homeDir) {
@@ -165,9 +165,9 @@ function loadConfigFile(
       }
     }
 
-    if (fs.existsSync(configPath as any)) {
+    if (fs.existsSync(configPath)) {
       const configJson = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      envConfig.loadFromObject(configJson as any);
+      envConfig.loadFromObject(configJson);
     } else if (required) {
       throw new Error(`Required config file not found: ${configFile}`);
     }
@@ -176,7 +176,7 @@ function loadConfigFile(
       throw error;
     } else {
       logger.error(
-        `Error loading config file: ${error instanceof Error ? error.message : String(error as any)}`
+        `Error loading config file: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -191,7 +191,7 @@ export function saveConfigToFile(configFile: string): void {
 
     // Don't save sensitive values
     const metadata = envConfig.getMetadata();
-    for (const [key, meta] of Object.entries(metadata as any)) {
+    for (const [key, meta] of Object.entries(metadata)) {
       if (meta.sensitive) {
         // If it's sensitive, save an empty string or asterisks to indicate the value exists
         if (key in configData && configData[key]) {
@@ -203,7 +203,7 @@ export function saveConfigToFile(configFile: string): void {
     fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));
   } catch (error) {
     logger.error(
-      `Error saving config file: ${error instanceof Error ? error.message : String(error as any)}`
+      `Error saving config file: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -229,38 +229,38 @@ export function generateEnvTemplate(
       Advanced: [],
     };
 
-    for (const [key, config] of Object.entries(allVars as any)) {
+    for (const [key, config] of Object.entries(allVars)) {
       const line = `${key}=${config.example || ''} # ${config.description || ''}${config.required ? ' (Required)' : ''}`;
 
       if (key.startsWith('AI_') || key.endsWith('_API_KEY')) {
-        categories?.["AI"].push(line as any);
+        categories["AI"].push(line);
       } else if (
         key.includes('STORAGE') ||
         key.includes('FILE') ||
         key.includes('DIR')
       ) {
-        categories?.["Storage"].push(line as any);
+        categories["Storage"].push(line);
       } else if (
         key.includes('NETWORK') ||
         key.includes('BLOCKCHAIN') ||
         key.includes('WALLET')
       ) {
-        categories?.["Blockchain"].push(line as any);
+        categories["Blockchain"].push(line);
       } else if (
         key.includes('SECURITY') ||
         key.includes('VERIFICATION') ||
         key.includes('CRYPTO')
       ) {
-        categories?.["Security"].push(line as any);
+        categories["Security"].push(line);
       } else if (key === 'NODE_ENV' || key === 'LOG_LEVEL') {
-        categories?.["Common"].push(line as any);
+        categories["Common"].push(line);
       } else {
-        categories?.["Advanced"].push(line as any);
+        categories["Advanced"].push(line);
       }
     }
 
     // Add each category to template
-    for (const [category, lines] of Object.entries(categories as any)) {
+    for (const [category, lines] of Object.entries(categories)) {
       if (lines?.length === 0) continue;
 
       template += `# ${category}\n`;
@@ -271,7 +271,7 @@ export function generateEnvTemplate(
     fs.writeFileSync(templateFile, template);
   } catch (error) {
     logger.error(
-      `Error generating .env template: ${error instanceof Error ? error.message : String(error as any)}`
+      `Error generating .env template: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

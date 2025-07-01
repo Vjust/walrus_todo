@@ -294,7 +294,7 @@ export class SpinnerManager {
         | 'cyan'
         | 'white'
         | 'gray',
-      spinner: spinnerStyle as any,
+      spinner: spinnerStyle,
       prefixText: this?.options?.prefixText,
       indent: this?.options?.indent,
       discardStdin: this?.options?.discardStdin,
@@ -410,9 +410,9 @@ export class SpinnerManager {
       indent: (this?.options?.indent || 0) + 2,
     };
 
-    const nested = new SpinnerManager(nestedOptions as any);
+    const nested = new SpinnerManager(nestedOptions);
     nested?.parent = this;
-    this?.nestedSpinners?.push(nested as any);
+    this?.nestedSpinners?.push(nested);
 
     return nested;
   }
@@ -421,7 +421,7 @@ export class SpinnerManager {
    * Remove a nested spinner
    */
   removeNested(spinner: SpinnerManager): void {
-    const index = this?.nestedSpinners?.indexOf(spinner as any);
+    const index = this?.nestedSpinners?.indexOf(spinner);
     if (index > -1) {
       this?.nestedSpinners?.splice(index, 1);
     }
@@ -482,7 +482,7 @@ export class ProgressBar {
 
     // Create custom formatter if not provided
     if (!this?.options?.formatBar) {
-      this.options?.formatBar = this?.createGradientBar?.bind(this as any);
+      this.options?.formatBar = this?.createGradientBar?.bind(this);
     }
 
     this?.bar = new cliProgress.SingleBar({
@@ -588,7 +588,7 @@ export class ProgressBar {
       }
     }
 
-    bar += chalk.gray(this?.options?.barIncompleteChar?.repeat(incompleteSize as any));
+    bar += chalk.gray(this?.options?.barIncompleteChar?.repeat(incompleteSize));
 
     return bar;
   }
@@ -639,7 +639,7 @@ export class MultiProgress {
    * Update a specific bar
    */
   update(name: string, value: number, payload?: Record<string, unknown>): void {
-    const bar = this?.bars?.get(name as any);
+    const bar = this?.bars?.get(name);
     if (bar) {
       bar.update(value, payload);
     }
@@ -649,10 +649,10 @@ export class MultiProgress {
    * Remove a bar
    */
   remove(name: string): void {
-    const bar = this?.bars?.get(name as any);
+    const bar = this?.bars?.get(name);
     if (bar) {
-      this?.multiBar?.remove(bar as any);
-      this?.bars?.delete(name as any);
+      this?.multiBar?.remove(bar);
+      this?.bars?.delete(name);
     }
   }
 
@@ -667,7 +667,7 @@ export class MultiProgress {
    * Get a specific bar
    */
   getBar(name: string): cliProgress.SingleBar | undefined {
-    return this?.bars?.get(name as any);
+    return this?.bars?.get(name);
   }
 }
 
@@ -706,7 +706,7 @@ export function createProgressBar(
 export function createMultiProgress(
   options: ProgressBarOptions = {}
 ): MultiProgress {
-  return new MultiProgress(options as any);
+  return new MultiProgress(options);
 }
 
 /**
@@ -738,11 +738,11 @@ export async function withProgressBar<T>(
   operation: (progress: ProgressBar) => Promise<T>,
   options: ProgressBarOptions = {}
 ): Promise<T> {
-  const progress = createProgressBar(options as any);
-  progress.start(total as any);
+  const progress = createProgressBar(options);
+  progress.start(total);
 
   try {
-    const result = await operation(progress as any);
+    const result = await operation(progress);
     progress.stop();
     return result;
   } catch (error) {

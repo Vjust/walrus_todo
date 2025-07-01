@@ -148,7 +148,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
   private progressInterval?: NodeJS.Timeout;
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(DeploySiteCommand as any);
+    const { args, flags } = await this.parse(DeploySiteCommand);
 
     // Initialize deployment service
     await this.initializeDeploymentService(flags.network as 'testnet' | 'mainnet');
@@ -198,7 +198,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
       }
 
       throw new CLIError(
-        `Deployment failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Deployment failed: ${error instanceof Error ? error.message : String(error)}`,
         'DEPLOYMENT_FAILED'
       );
     }
@@ -238,12 +238,12 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     const buildDirectory = path.resolve(args.buildDirectory);
 
     this.log(chalk.blue('\n🚀 Starting Walrus Sites Deployment'));
-    this.log(chalk.blue('━'.repeat(50 as any)));
-    this.log(chalk.cyan(`📁 Build Directory: ${chalk.bold(buildDirectory as any)}`));
+    this.log(chalk.blue('━'.repeat(50)));
+    this.log(chalk.cyan(`📁 Build Directory: ${chalk.bold(buildDirectory)}`));
     this.log(chalk.cyan(`🏷️  Site Name:       ${chalk.bold(flags?.["site-name"])}`));
     this.log(chalk.cyan(`🌐 Network:         ${chalk.bold(flags.network)}`));
     this.log(chalk.cyan(`⏱️  Epochs:          ${chalk.bold(flags.epochs)}`));
-    this.log(chalk.blue('━'.repeat(50 as any)));
+    this.log(chalk.blue('━'.repeat(50)));
 
     // Warn for mainnet deployment
     if (flags?.network === 'mainnet') {
@@ -266,47 +266,47 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
       epochs: flags.epochs,
     };
 
-    const result = await this?.deploymentService?.deploy(deploymentOptions as any);
+    const result = await this?.deploymentService?.deploy(deploymentOptions);
 
     if (flags.progress) {
       this.startProgressTracking(result.deploymentId);
     }
 
     if (result.success) {
-      this.displaySuccessResult(result as any);
+      this.displaySuccessResult(result);
     } else {
-      this.displayFailureResult(result as any);
+      this.displayFailureResult(result);
     }
   }
 
   private async resumeDeployment(deploymentId: string, flags: Record<string, any>): Promise<void> {
     this.log(chalk.blue(`\n🔄 Resuming Deployment: ${deploymentId}`));
-    this.log(chalk.blue('━'.repeat(50 as any)));
+    this.log(chalk.blue('━'.repeat(50)));
 
     try {
-      const result = await this?.deploymentService?.resumeDeployment(deploymentId as any);
+      const result = await this?.deploymentService?.resumeDeployment(deploymentId);
       
       if (flags.progress) {
-        this.startProgressTracking(deploymentId as any);
+        this.startProgressTracking(deploymentId);
       }
 
       if (result.success) {
         this.log(chalk.green('\n✅ Deployment resumed and completed successfully!'));
-        this.displaySuccessResult(result as any);
+        this.displaySuccessResult(result);
       } else {
         this.log(chalk.red('\n❌ Deployment resume failed'));
-        this.displayFailureResult(result as any);
+        this.displayFailureResult(result);
       }
     } catch (error) {
-      this.log(chalk.red(`\n❌ Failed to resume deployment: ${error instanceof Error ? error.message : String(error as any)}`));
+      this.log(chalk.red(`\n❌ Failed to resume deployment: ${error instanceof Error ? error.message : String(error)}`));
     }
   }
 
   private async rollbackDeployment(deploymentId: string): Promise<void> {
     this.log(chalk.yellow(`\n↩️  Rolling back Deployment: ${deploymentId}`));
-    this.log(chalk.yellow('━'.repeat(50 as any)));
+    this.log(chalk.yellow('━'.repeat(50)));
 
-    const success = await this?.deploymentService?.rollbackDeployment(deploymentId as any);
+    const success = await this?.deploymentService?.rollbackDeployment(deploymentId);
     
     if (success) {
       this.log(chalk.green('✅ Deployment rolled back successfully!'));
@@ -324,7 +324,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
 
   private async listDeployments(): Promise<void> {
     this.log(chalk.blue('\n📋 Active and Recent Deployments'));
-    this.log(chalk.blue('━'.repeat(60 as any)));
+    this.log(chalk.blue('━'.repeat(60)));
 
     const deployments = this?.deploymentService?.listDeployments();
     
@@ -339,7 +339,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
         ? ` (${deployment.progress}%)` 
         : '';
       
-      this.log(`${statusColor(deployment?.status?.toUpperCase().padEnd(12 as any))} ${deployment.deploymentId}`);
+      this.log(`${statusColor(deployment?.status?.toUpperCase().padEnd(12))} ${deployment.deploymentId}`);
       this.log(`   Site: ${chalk.cyan(deployment.siteName)}`);
       this.log(`   Started: ${chalk.dim(new Date(deployment.startTime).toLocaleString())}${progressText}`);
       this.log('');
@@ -348,10 +348,10 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
 
   private async showDeploymentStatus(deploymentId: string): Promise<void> {
     this.log(chalk.blue(`\n📊 Deployment Status: ${deploymentId}`));
-    this.log(chalk.blue('━'.repeat(60 as any)));
+    this.log(chalk.blue('━'.repeat(60)));
 
-    const details = this?.deploymentService?.getDeploymentDetails(deploymentId as any);
-    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
+    const details = this?.deploymentService?.getDeploymentDetails(deploymentId);
+    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId);
 
     if (!details) {
       this.log(chalk.red('Deployment not found'));
@@ -406,7 +406,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
   private async cleanupOldDeployments(days: number): Promise<void> {
     this.log(chalk.blue(`\n🧹 Cleaning up deployments older than ${days} days`));
     
-    const cleaned = await this?.deploymentService?.cleanupOldDeployments(days as any);
+    const cleaned = await this?.deploymentService?.cleanupOldDeployments(days);
     this.log(chalk.green(`✅ Cleaned up ${cleaned} old deployments`));
   }
 
@@ -414,7 +414,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     let lastProgress = -1;
     
     this?.progressInterval = setInterval(() => {
-      const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
+      const progress = this?.deploymentService?.getDeploymentProgress(deploymentId);
       
       if (progress && progress.progress !== lastProgress) {
         lastProgress = progress.progress;
@@ -435,12 +435,12 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
   private createProgressBar(progress: number, width: number = 30): string {
     const filled = Math.round((progress / 100) * width);
     const empty = width - filled;
-    return chalk.green('█'.repeat(filled as any)) + chalk.gray('░'.repeat(empty as any));
+    return chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
   }
 
   private displaySuccessResult(result: any): void {
     this.log(chalk.green('\n✅ Deployment Completed Successfully!'));
-    this.log(chalk.green('━'.repeat(50 as any)));
+    this.log(chalk.green('━'.repeat(50)));
     
     if (result.siteUrl) {
       this.log(chalk.cyan(`🌐 Site URL: ${chalk?.bold?.underline(result.siteUrl)}`));
@@ -462,7 +462,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
 
   private displayFailureResult(result: any): void {
     this.log(chalk.red('\n❌ Deployment Failed'));
-    this.log(chalk.red('━'.repeat(50 as any)));
+    this.log(chalk.red('━'.repeat(50)));
     
     this.log(chalk.cyan(`📁 Files Processed: ${result.totalFiles || 0}`));
     this.log(chalk.cyan(`⏱️  Duration: ${Math.round(result.duration / 1000)}s`));
@@ -495,7 +495,7 @@ Failed deployments can be resumed using the --resume flag with the deployment ID
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }

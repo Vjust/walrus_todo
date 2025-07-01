@@ -21,7 +21,7 @@ export default class TestOclifCommand extends Command {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(TestOclifCommand as any);
+    const { flags } = await this.parse(TestOclifCommand);
 
     this.log(chalk.green('✅ OCLIF integration is working correctly!'));
     

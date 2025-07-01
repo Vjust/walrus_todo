@@ -25,7 +25,7 @@ export default class AccountSwitchCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { args } = await this.parse(AccountSwitchCommand as any);
+    const { args } = await this.parse(AccountSwitchCommand);
     try {
       // Validate the address format first
       validateInput(args.address, ValidationRules.SuiAddress, 'address');
@@ -39,7 +39,7 @@ export default class AccountSwitchCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to switch address: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to switch address: ${error instanceof Error ? error.message : String(error)}`,
         'CLI_ERROR'
       );
     }

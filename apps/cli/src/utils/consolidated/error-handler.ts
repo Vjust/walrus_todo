@@ -114,7 +114,7 @@ export function handleError(
   } = handlerOptions;
 
   // Normalize the error
-  const baseError = toBaseError(error as any);
+  const baseError = toBaseError(error);
 
   // Get exit code (CLI errors have their own exit code)
   const exitCode =
@@ -144,7 +144,7 @@ export function handleError(
 
     // Display context if available and requested
     const combinedContext = { ...baseError.context, ...additionalContext };
-    if (Object.keys(combinedContext as any).length > 0) {
+    if (Object.keys(combinedContext).length > 0) {
       getLogger().error(
         `${chalk.dim('Context:')} ${JSON.stringify(combinedContext, null, 2)}`
       );
@@ -167,7 +167,7 @@ export function handleError(
 
   // Exit if requested
   if (exit) {
-    process.exit(exitCode as any);
+    process.exit(exitCode);
   }
 }
 
@@ -223,7 +223,7 @@ export async function withRetry<T>(
       lastError = error;
 
       // Don't retry on the last attempt
-      if (attempt > maxRetries || !retryIf(error as any)) {
+      if (attempt > maxRetries || !retryIf(error)) {
         throw error;
       }
 
@@ -254,7 +254,7 @@ export async function withRetry<T>(
 function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
   getLogger().info(
     chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
-    { error: error instanceof Error ? error.message : String(error as any) }
+    { error: error instanceof Error ? error.message : String(error) }
   );
 }
 

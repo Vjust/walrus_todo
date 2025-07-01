@@ -78,7 +78,7 @@ export class EnhancedVaultManager {
         } catch (error) {
           logger.warn(
             'Could not set restrictive permissions on vault directory:',
-            error instanceof Error ? error.message : String(error as any)
+            error instanceof Error ? error.message : String(error)
           );
         }
       }
@@ -101,7 +101,7 @@ export class EnhancedVaultManager {
 
       logger.error(
         'Vault initialization failed:',
-        error instanceof Error ? error : new Error(String(error as any))
+        error instanceof Error ? error : new Error(String(error))
       );
       throw error;
     }
@@ -124,7 +124,7 @@ export class EnhancedVaultManager {
       } catch (writeError) {
         logger.warn(
           'Failed to write encryption key to file:',
-          writeError instanceof Error ? writeError.message : String(writeError as any)
+          writeError instanceof Error ? writeError.message : String(writeError)
         );
         // In test environments, we can continue with in-memory key
         if (
@@ -143,7 +143,7 @@ export class EnhancedVaultManager {
       try {
         // Load existing key
         const keyData = fs.readFileSync(this.keyFile);
-        this?.encryptionKey = Buffer.isBuffer(keyData as any)
+        this?.encryptionKey = Buffer.isBuffer(keyData)
           ? keyData
           : Buffer.from(keyData, 'utf-8');
 
@@ -179,7 +179,7 @@ export class EnhancedVaultManager {
 
         logger.warn(
           'Failed to read encryption key:',
-          error instanceof Error ? error.message : String(error as any)
+          error instanceof Error ? error.message : String(error)
         );
 
         // In test environments, try to recover by regenerating
@@ -198,7 +198,7 @@ export class EnhancedVaultManager {
               'Failed to regenerate encryption key:',
               regenerateError instanceof Error
                 ? regenerateError.message
-                : String(regenerateError as any)
+                : String(regenerateError)
             );
           }
         }
@@ -219,7 +219,7 @@ export class EnhancedVaultManager {
       try {
         // Read and decrypt metadata file
         const encryptedData = fs.readFileSync(this.metadataFile);
-        const encryptedBuffer = Buffer.isBuffer(encryptedData as any)
+        const encryptedBuffer = Buffer.isBuffer(encryptedData)
           ? encryptedData
           : Buffer.from(encryptedData, 'utf-8');
 
@@ -230,12 +230,12 @@ export class EnhancedVaultManager {
           return;
         }
 
-        const decryptedData = this.decrypt(encryptedBuffer as any);
+        const decryptedData = this.decrypt(encryptedBuffer);
 
         if (decryptedData) {
           // Parse metadata
           const metadataObj = JSON.parse(decryptedData.toString());
-          this?.metadata = new Map(Object.entries(metadataObj as any));
+          this?.metadata = new Map(Object.entries(metadataObj));
 
           // Check for and handle expired credentials
           this.checkExpiredSecrets();
@@ -248,7 +248,7 @@ export class EnhancedVaultManager {
       } catch (error) {
         logger.error(
           'Failed to load vault metadata:',
-          error instanceof Error ? error : new Error(String(error as any))
+          error instanceof Error ? error : new Error(String(error))
         );
 
         // In test environments, be more permissive
@@ -281,7 +281,7 @@ export class EnhancedVaultManager {
       const metadataObj = Object.fromEntries(this.metadata);
 
       // Encrypt and save
-      const encryptedData = this.encrypt(JSON.stringify(metadataObj as any));
+      const encryptedData = this.encrypt(JSON.stringify(metadataObj));
       fs.writeFileSync(this.metadataFile, encryptedData, { mode: 0o600 }); // Only owner can read/write
     } catch (error) {
       throw new CLIError(
@@ -303,12 +303,12 @@ export class EnhancedVaultManager {
       if (metadata.expiresAt && metadata.expiresAt < now) {
         // Delete the secret file
         const secretFile = path.join(this.vaultDir, `${metadata.id}.enc`);
-        if (fs.existsSync(secretFile as any)) {
-          fs.unlinkSync(secretFile as any);
+        if (fs.existsSync(secretFile)) {
+          fs.unlinkSync(secretFile);
         }
 
         // Remove from metadata
-        this?.metadata?.delete(key as any);
+        this?.metadata?.delete(key);
         needsSave = true;
       }
     }
@@ -331,7 +331,7 @@ export class EnhancedVaultManager {
     for (const [key, metadata] of this?.metadata?.entries()) {
       // Check if rotation is due
       if (metadata.rotationDue && metadata.rotationDue < now) {
-        rotationNeeded.push(key as any);
+        rotationNeeded.push(key);
       }
     }
 
@@ -356,10 +356,10 @@ export class EnhancedVaultManager {
     } = {}
   ): Promise<string> {
     // Check for lockout
-    this.checkLockout(name as any);
+    this.checkLockout(name);
 
     // Generate a unique ID for the secret
-    const secretId = crypto.randomBytes(16 as any).toString('hex');
+    const secretId = crypto.randomBytes(16).toString('hex');
     const now = Date.now();
 
     // Calculate expiry and rotation times
@@ -386,7 +386,7 @@ export class EnhancedVaultManager {
     };
 
     // Encrypt the secret value
-    const encryptedData = this.encrypt(value as any);
+    const encryptedData = this.encrypt(value);
 
     // Save the encrypted secret
     const secretPath = path.join(this.vaultDir, `${secretId}.enc`);
@@ -407,13 +407,13 @@ export class EnhancedVaultManager {
    */
   public async getSecret(name: string): Promise<string> {
     // Check for lockout
-    this.checkLockout(name as any);
+    this.checkLockout(name);
 
     // Get metadata for the secret
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
     if (!metadata) {
       // Record failed attempt
-      this.recordFailedAttempt(name as any);
+      this.recordFailedAttempt(name);
       throw new CLIError(`Secret not found: ${name}`, 'SECRET_NOT_FOUND');
     }
 
@@ -424,21 +424,21 @@ export class EnhancedVaultManager {
 
     // Construct path to the secret file
     const secretPath = path.join(this.vaultDir, `${metadata.id}.enc`);
-    if (!fs.existsSync(secretPath as any)) {
+    if (!fs.existsSync(secretPath)) {
       throw new CLIError(`Secret file missing: ${name}`, 'SECRET_FILE_MISSING');
     }
 
     try {
       // Read and decrypt the secret
-      const encryptedData = fs.readFileSync(secretPath as any);
-      const encryptedBuffer = Buffer.isBuffer(encryptedData as any)
+      const encryptedData = fs.readFileSync(secretPath);
+      const encryptedBuffer = Buffer.isBuffer(encryptedData)
         ? encryptedData
         : Buffer.from(encryptedData, 'utf-8');
-      const decryptedData = this.decrypt(encryptedBuffer as any);
+      const decryptedData = this.decrypt(encryptedBuffer);
 
       if (!decryptedData) {
         // Record failed attempt
-        this.recordFailedAttempt(name as any);
+        this.recordFailedAttempt(name);
         throw new CLIError(
           `Failed to decrypt secret: ${name}`,
           'DECRYPTION_FAILED'
@@ -452,7 +452,7 @@ export class EnhancedVaultManager {
       this.saveMetadata();
 
       // Reset failed attempts since successful decryption
-      this?.failedAttempts?.delete(name as any);
+      this?.failedAttempts?.delete(name);
 
       return decryptedData.toString();
     } catch (error) {
@@ -461,7 +461,7 @@ export class EnhancedVaultManager {
       }
 
       // Record failed attempt
-      this.recordFailedAttempt(name as any);
+      this.recordFailedAttempt(name);
       throw new CLIError(
         `Error retrieving secret: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'SECRET_READ_ERROR'
@@ -476,7 +476,7 @@ export class EnhancedVaultManager {
    * @returns True if the secret exists and is not expired
    */
   public async hasSecret(name: string): Promise<boolean> {
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
 
     if (!metadata) {
       return false;
@@ -489,7 +489,7 @@ export class EnhancedVaultManager {
 
     // Check if the secret file exists
     const secretPath = path.join(this.vaultDir, `${metadata.id}.enc`);
-    return fs.existsSync(secretPath as any);
+    return fs.existsSync(secretPath);
   }
 
   /**
@@ -516,7 +516,7 @@ export class EnhancedVaultManager {
   public async getSecretMetadata(
     name: string
   ): Promise<Omit<SecretMetadata, 'id'> | null> {
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
 
     if (!metadata) {
       return null;
@@ -535,7 +535,7 @@ export class EnhancedVaultManager {
    * @returns True if the secret was removed, false if it didn't exist
    */
   public async removeSecret(name: string): Promise<boolean> {
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
 
     if (!metadata) {
       return false;
@@ -543,12 +543,12 @@ export class EnhancedVaultManager {
 
     // Delete the secret file
     const secretPath = path.join(this.vaultDir, `${metadata.id}.enc`);
-    if (fs.existsSync(secretPath as any)) {
-      fs.unlinkSync(secretPath as any);
+    if (fs.existsSync(secretPath)) {
+      fs.unlinkSync(secretPath);
     }
 
     // Remove from metadata
-    this?.metadata?.delete(name as any);
+    this?.metadata?.delete(name);
     this.saveMetadata();
 
     return true;
@@ -565,7 +565,7 @@ export class EnhancedVaultManager {
     name: string,
     status: boolean
   ): Promise<boolean> {
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
 
     if (!metadata) {
       return false;
@@ -590,7 +590,7 @@ export class EnhancedVaultManager {
     name: string,
     expiryDays: number
   ): Promise<boolean> {
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
 
     if (!metadata) {
       return false;
@@ -612,7 +612,7 @@ export class EnhancedVaultManager {
    * @returns True if successful
    */
   public async rotateSecret(name: string, newValue: string): Promise<boolean> {
-    const metadata = this?.metadata?.get(name as any);
+    const metadata = this?.metadata?.get(name);
 
     if (!metadata) {
       return false;
@@ -626,7 +626,7 @@ export class EnhancedVaultManager {
       AI_CONFIG?.CREDENTIAL_SECURITY?.AUTO_ROTATION_DAYS * 24 * 60 * 60 * 1000;
 
     // Encrypt and save the new secret value
-    const encryptedData = this.encrypt(newValue as any);
+    const encryptedData = this.encrypt(newValue);
     const secretPath = path.join(this.vaultDir, `${metadata.id}.enc`);
     fs.writeFileSync(secretPath, encryptedData, { mode: 0o600 }); // Only owner can read/write
 
@@ -643,7 +643,7 @@ export class EnhancedVaultManager {
    * @param name - Secret name/identifier
    */
   private recordFailedAttempt(name: string): void {
-    const currentFailures = this?.failedAttempts?.get(name as any) || 0;
+    const currentFailures = this?.failedAttempts?.get(name) || 0;
     const newFailures = currentFailures + 1;
 
     this?.failedAttempts?.set(name, newFailures);
@@ -666,7 +666,7 @@ export class EnhancedVaultManager {
    * @param name - Secret name/identifier
    */
   private checkLockout(name: string): void {
-    const lockUntil = this?.lockoutUntil?.get(name as any);
+    const lockUntil = this?.lockoutUntil?.get(name);
 
     if (lockUntil && lockUntil > Date.now()) {
       const minutesLeft = Math.ceil((lockUntil - Date.now()) / (60 * 1000));
@@ -678,8 +678,8 @@ export class EnhancedVaultManager {
 
     // Clear expired lockout
     if (lockUntil && lockUntil <= Date.now()) {
-      this?.lockoutUntil?.delete(name as any);
-      this?.failedAttempts?.delete(name as any);
+      this?.lockoutUntil?.delete(name);
+      this?.failedAttempts?.delete(name);
     }
   }
 
@@ -738,7 +738,7 @@ export class EnhancedVaultManager {
 
       // Associate additional data for integrity
       const aad = Buffer.from('walrus-secure-vault');
-      cipher.setAAD(aad as any);
+      cipher.setAAD(aad);
 
       // Encrypt data
       const encrypted = Buffer.concat([
@@ -797,7 +797,7 @@ export class EnhancedVaultManager {
         AI_CONFIG?.CREDENTIAL_ENCRYPTION?.SALT_SIZE +
         AI_CONFIG?.CREDENTIAL_ENCRYPTION?.IV_SIZE +
         16;
-      const aadLength = data.readUInt8(aadLengthPos as any);
+      const aadLength = data.readUInt8(aadLengthPos);
       const aad = data.subarray(aadLengthPos + 1, aadLengthPos + 1 + aadLength);
       const encrypted = data.subarray(aadLengthPos + 1 + aadLength);
 
@@ -818,15 +818,15 @@ export class EnhancedVaultManager {
       );
 
       // Set authentication tag and AAD
-      decipher.setAuthTag(tag as any);
-      decipher.setAAD(aad as any);
+      decipher.setAuthTag(tag);
+      decipher.setAAD(aad);
 
       // Decrypt data
-      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (error) {
       logger.error(
         'Decryption failed:',
-        error instanceof Error ? error : new Error(String(error as any))
+        error instanceof Error ? error : new Error(String(error))
       );
       return null;
     }

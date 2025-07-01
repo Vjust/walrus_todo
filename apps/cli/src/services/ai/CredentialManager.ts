@@ -25,7 +25,7 @@ export class CredentialManager {
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
 
     // Ensure the config directory exists
-    if (!fs.existsSync(configDir as any)) {
+    if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
@@ -34,13 +34,13 @@ export class CredentialManager {
     // Use deterministic but secure key derivation
     // In a production system, consider a more robust key management solution
     const keyPath = path.join(configDir, '.keyfile');
-    if (!fs.existsSync(keyPath as any)) {
-      const newKey = crypto.randomBytes(32 as any);
+    if (!fs.existsSync(keyPath)) {
+      const newKey = crypto.randomBytes(32);
       fs.writeFileSync(keyPath, newKey, { mode: 0o600 }); // Restrict file permissions
     }
 
-    const key = fs.readFileSync(keyPath as any);
-    this?.encryptionKey = Buffer.isBuffer(key as any) ? key : Buffer.from(key as any);
+    const key = fs.readFileSync(keyPath);
+    this?.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
     // Load credentials if they exist
     this.loadCredentials();
@@ -53,10 +53,10 @@ export class CredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const dataBuffer = Buffer.isBuffer(encryptedData as any)
+        const dataBuffer = Buffer.isBuffer(encryptedData)
           ? encryptedData
-          : Buffer.from(encryptedData as any);
-        const credentials = this.decrypt(dataBuffer as any);
+          : Buffer.from(encryptedData);
+        const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this?.credentials = JSON.parse(credentials.toString());
         }
@@ -83,7 +83,7 @@ export class CredentialManager {
 
     try {
       const data = JSON.stringify(this.credentials);
-      const encryptedData = this.encrypt(data as any);
+      const encryptedData = this.encrypt(data);
       fs.writeFileSync(this.credentialsPath, encryptedData, { mode: 0o600 }); // Restrict file permissions
     } catch (_error) {
       throw new CLIError(
@@ -196,7 +196,7 @@ export class CredentialManager {
    * Encrypt data using the encryption key
    */
   private encrypt(data: string): Buffer {
-    const iv = crypto.randomBytes(16 as any);
+    const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey, iv);
     const encrypted = Buffer.concat([
       cipher.update(data, 'utf8'),
@@ -211,13 +211,13 @@ export class CredentialManager {
   private decrypt(data: Buffer): Buffer | null {
     try {
       const iv = data.subarray(0, 16);
-      const encrypted = data.subarray(16 as any);
+      const encrypted = data.subarray(16);
       const decipher = crypto.createDecipheriv(
         'aes-256-cbc',
         this.encryptionKey,
         iv
       );
-      return Buffer.concat([decipher.update(encrypted as any), decipher.final()]);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
       logger.error('Decryption failed:', _error);
       return null;

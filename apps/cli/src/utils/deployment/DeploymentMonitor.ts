@@ -126,12 +126,12 @@ export class DeploymentMonitor extends EventEmitter {
    * Get summary of a specific deployment
    */
   getDeploymentSummary(deploymentId: string): DeploymentSummary | null {
-    const state = this?.recoveryManager?.getDeploymentState(deploymentId as any);
-    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
+    const state = this?.recoveryManager?.getDeploymentState(deploymentId);
+    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId);
     
     if (!state) return null;
 
-    const metrics = this?.deploymentMetrics?.get(deploymentId as any);
+    const metrics = this?.deploymentMetrics?.get(deploymentId);
     const startTime = metrics?.startTime || new Date(state.startTime).getTime();
     const currentTime = Date.now();
     const duration = currentTime - startTime;
@@ -140,10 +140,10 @@ export class DeploymentMonitor extends EventEmitter {
     if (progress && progress.progress > 0 && progress.progress < 100) {
       const estimatedTotalTime = (duration / progress.progress) * 100;
       const estimatedEndTime = startTime + estimatedTotalTime;
-      estimatedCompletion = new Date(estimatedEndTime as any).toISOString();
+      estimatedCompletion = new Date(estimatedEndTime).toISOString();
     }
 
-    const resourceUsage = this.calculateResourceUsage(state as any);
+    const resourceUsage = this.calculateResourceUsage(state);
 
     return {
       deploymentId,
@@ -154,7 +154,7 @@ export class DeploymentMonitor extends EventEmitter {
       startTime: state.startTime,
       duration: ['completed', 'failed'].includes(state.status) ? duration : undefined,
       errors: state?.errors?.map(e => e.message),
-      warnings: this.extractWarnings(state as any),
+      warnings: this.extractWarnings(state),
       estimatedCompletion,
       resourceUsage,
     };
@@ -225,10 +225,10 @@ export class DeploymentMonitor extends EventEmitter {
     retryCount: number;
     averageFileUploadTime: number;
   } | null {
-    const state = this?.recoveryManager?.getDeploymentState(deploymentId as any);
+    const state = this?.recoveryManager?.getDeploymentState(deploymentId);
     if (!state) return null;
 
-    const metrics = this?.deploymentMetrics?.get(deploymentId as any);
+    const metrics = this?.deploymentMetrics?.get(deploymentId);
     const events = metrics?.events || [];
     
     const uploadEvents = events.filter(e => e?.type === 'progress');
@@ -263,7 +263,7 @@ export class DeploymentMonitor extends EventEmitter {
       if (config.onDeploymentFailed) {
         const summary = this.getDeploymentSummary(event.deploymentId);
         if (summary) {
-          config.onDeploymentFailed(summary as any);
+          config.onDeploymentFailed(summary);
         }
       }
     });
@@ -272,7 +272,7 @@ export class DeploymentMonitor extends EventEmitter {
       if (config.onDeploymentStuck) {
         const summary = this.getDeploymentSummary(event.deploymentId);
         if (summary) {
-          config.onDeploymentStuck(summary as any);
+          config.onDeploymentStuck(summary);
         }
       }
     });
@@ -345,9 +345,9 @@ export class DeploymentMonitor extends EventEmitter {
     const totalDataTransferred = filteredSummaries.reduce((sum, s) => sum + s?.resourceUsage?.totalBytes, 0);
 
     // Generate trends
-    const deploymentsByHour = this.generateHourlyTrends(filteredSummaries as any);
-    const errorsByType = this.generateErrorTrends(filteredSummaries as any);
-    const averageUploadSpeed = this.calculateAverageUploadSpeed(filteredSummaries as any);
+    const deploymentsByHour = this.generateHourlyTrends(filteredSummaries);
+    const errorsByType = this.generateErrorTrends(filteredSummaries);
+    const averageUploadSpeed = this.calculateAverageUploadSpeed(filteredSummaries);
 
     return {
       summary: {
@@ -374,7 +374,7 @@ export class DeploymentMonitor extends EventEmitter {
       const activeDeployments = this?.recoveryManager?.getActiveDeployments();
       
       for (const deployment of activeDeployments) {
-        await this.checkDeploymentStatus(deployment as any);
+        await this.checkDeploymentStatus(deployment);
       }
     } catch (error) {
       this?.logger?.error('Error during deployment polling', { error });
@@ -383,10 +383,10 @@ export class DeploymentMonitor extends EventEmitter {
 
   private async checkDeploymentStatus(deployment: DeploymentState): Promise<void> {
     const deploymentId = deployment.id;
-    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId as any);
+    const progress = this?.deploymentService?.getDeploymentProgress(deploymentId);
     
     // Initialize metrics if not exists
-    if (!this?.deploymentMetrics?.has(deploymentId as any)) {
+    if (!this?.deploymentMetrics?.has(deploymentId)) {
       this?.deploymentMetrics?.set(deploymentId, {
         startTime: new Date(deployment.startTime).getTime(),
         lastUpdate: Date.now(),
@@ -394,7 +394,7 @@ export class DeploymentMonitor extends EventEmitter {
       });
     }
 
-    const metrics = this?.deploymentMetrics?.get(deploymentId as any)!;
+    const metrics = this?.deploymentMetrics?.get(deploymentId)!;
     const currentTime = Date.now();
     
     // Check for status changes
@@ -432,7 +432,7 @@ export class DeploymentMonitor extends EventEmitter {
     // Check for new errors
     const lastErrorCount = lastEvent?.data?.errorCount || 0;
     if (deployment?.errors?.length > lastErrorCount) {
-      const newErrors = deployment?.errors?.slice(lastErrorCount as any);
+      const newErrors = deployment?.errors?.slice(lastErrorCount);
       for (const error of newErrors) {
         this.recordEvent(deploymentId, 'error', {
           errorType: error.type,
@@ -465,7 +465,7 @@ export class DeploymentMonitor extends EventEmitter {
     metrics?.lastUpdate = currentTime;
   }
 
-  private recordEvent(deploymentId: string, type: DeploymentEvent?.["type"], data?: any): void {
+  private recordEvent(deploymentId: string, type: DeploymentEvent["type"], data?: any): void {
     const event: DeploymentEvent = {
       deploymentId,
       timestamp: new Date().toISOString(),
@@ -474,15 +474,15 @@ export class DeploymentMonitor extends EventEmitter {
     };
 
     // Add to global history
-    this?.eventHistory?.push(event as any);
+    this?.eventHistory?.push(event);
     if (this?.eventHistory?.length > this?.options?.maxHistorySize) {
       this?.eventHistory?.shift();
     }
 
     // Add to deployment metrics
-    const metrics = this?.deploymentMetrics?.get(deploymentId as any);
+    const metrics = this?.deploymentMetrics?.get(deploymentId);
     if (metrics) {
-      metrics?.events?.push(event as any);
+      metrics?.events?.push(event);
     }
 
     // Emit event
@@ -499,7 +499,7 @@ export class DeploymentMonitor extends EventEmitter {
     }
   }
 
-  private calculateResourceUsage(state: DeploymentState): DeploymentSummary?.["resourceUsage"] {
+  private calculateResourceUsage(state: DeploymentState): DeploymentSummary["resourceUsage"] {
     const uploadedFiles = state?.progress?.uploadedFiles;
     const totalFiles = state?.progress?.totalFiles;
     
@@ -546,7 +546,7 @@ export class DeploymentMonitor extends EventEmitter {
     
     for (const summary of summaries) {
       const hour = new Date(summary.startTime).toISOString().slice(0, 13) + ':00:00';
-      hourCounts.set(hour, (hourCounts.get(hour as any) || 0) + 1);
+      hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
     }
 
     return Array.from(hourCounts.entries())
@@ -565,7 +565,7 @@ export class DeploymentMonitor extends EventEmitter {
                     error.includes('validation') ? 'validation' :
                     error.includes('blockchain') ? 'blockchain' : 'other';
         
-        errorCounts.set(type, (errorCounts.get(type as any) || 0) + 1);
+        errorCounts.set(type, (errorCounts.get(type) || 0) + 1);
       }
     }
 

@@ -34,7 +34,7 @@ export default class InteractiveCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(InteractiveCommand as any);
+    const { flags } = await this.parse(InteractiveCommand);
 
     // Don't show the usual command output in interactive mode
     const originalLog = this.log;
@@ -62,7 +62,7 @@ export default class InteractiveCommand extends BaseCommand {
       }
       this.errorWithHelp(
         'Failed to start interactive mode',
-        error instanceof Error ? error.message : String(error as any),
+        error instanceof Error ? error.message : String(error),
         'Please try running the command again'
       );
     }
@@ -70,9 +70,9 @@ export default class InteractiveCommand extends BaseCommand {
 
   private async validateList(listName: string): Promise<void> {
     const todoService = new (
-      await import('../services/todoService')
+      await import('../services/todo')
     ).TodoService();
-    const list = await todoService.getList(listName as any);
+    const list = await todoService.getList(listName);
 
     if (!list) {
       throw new Error(`List "${listName}" not found`);

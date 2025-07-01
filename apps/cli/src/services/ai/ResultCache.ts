@@ -86,20 +86,20 @@ export class ResultCache {
     const hash = this.createHash(operation, todos, additionalParams);
     const cacheKey = `${operation}:${hash}`;
 
-    const entry = this?.cache?.get(cacheKey as any);
+    const entry = this?.cache?.get(cacheKey);
     if (!entry) {
       return null;
     }
 
     // Check if entry is expired
     if (Date.now() - entry.timestamp > this?.config?.ttlMs) {
-      this?.cache?.delete(cacheKey as any);
+      this?.cache?.delete(cacheKey);
       this?.accessOrder = this?.accessOrder?.filter(key => key !== cacheKey);
       return null;
     }
 
     // Update LRU tracking
-    this.updateAccessOrder(cacheKey as any);
+    this.updateAccessOrder(cacheKey);
 
     return entry.result;
   }
@@ -122,7 +122,7 @@ export class ResultCache {
       // Remove least recently used entry
       const lruKey = this?.accessOrder?.[0];
       if (lruKey) {
-        this?.cache?.delete(lruKey as any);
+        this?.cache?.delete(lruKey);
         this?.accessOrder?.shift();
       }
     }
@@ -138,7 +138,7 @@ export class ResultCache {
     });
 
     // Update LRU tracking
-    this.updateAccessOrder(cacheKey as any);
+    this.updateAccessOrder(cacheKey);
   }
 
   /**
@@ -158,12 +158,12 @@ export class ResultCache {
 
     this?.cache?.forEach((entry, key) => {
       if (key.startsWith(`${operation}:`)) {
-        keysToRemove.push(key as any);
+        keysToRemove.push(key);
       }
     });
 
     keysToRemove.forEach(key => {
-      this?.cache?.delete(key as any);
+      this?.cache?.delete(key);
       this?.accessOrder = this?.accessOrder?.filter(k => k !== key);
     });
   }
@@ -236,7 +236,7 @@ export class ResultCache {
 
     // Create hash
     const hash = createHash('sha256')
-      .update(JSON.stringify(input as any))
+      .update(JSON.stringify(input))
       .digest('hex');
 
     return hash;
@@ -250,6 +250,6 @@ export class ResultCache {
     this?.accessOrder = this?.accessOrder?.filter(k => k !== key);
 
     // Add key to the end (most recently used)
-    this?.accessOrder?.push(key as any);
+    this?.accessOrder?.push(key);
   }
 }

@@ -89,7 +89,7 @@ export default class ConfigureCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       // Parse and validate input
-      const { flags } = await this.parse(ConfigureCommand as any);
+      const { flags } = await this.parse(ConfigureCommand);
 
       // View current configuration
       if (flags.view) {
@@ -105,7 +105,7 @@ export default class ConfigureCommand extends BaseCommand {
 
       // Handle background mode
       if (flags.background) {
-        return this.runConfigurationInBackground(flags as any);
+        return this.runConfigurationInBackground(flags);
       }
 
       // Configure specific section or everything
@@ -114,7 +114,7 @@ export default class ConfigureCommand extends BaseCommand {
       } else if (flags?.["env-only"]) {
         await this.configureEnvironment();
       } else {
-        await this.configureAll(flags as any);
+        await this.configureAll(flags);
       }
 
       // Optionally trigger background validation
@@ -127,7 +127,7 @@ export default class ConfigureCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Configuration failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Configuration failed: ${error instanceof Error ? error.message : String(error)}`,
         'CONFIG_FAILED'
       );
     }
@@ -157,7 +157,7 @@ export default class ConfigureCommand extends BaseCommand {
     // Reset environment configuration
     const config = envConfig.toJSON();
     const defaultConfig = Object.fromEntries(
-      Object.entries(config as any).map(([key, _]) => [key, undefined])
+      Object.entries(config).map(([key, _]) => [key, undefined])
     );
 
     // Get home directory
@@ -242,8 +242,8 @@ export default class ConfigureCommand extends BaseCommand {
     this.logEnvVar('TIMEOUT_MS', envVars);
 
     // Show extension variables if any
-    const extensionVars = Object.entries(envVars as any).filter(
-      ([key]) => !Object.keys(envConfig.getConfig()).includes(key as any)
+    const extensionVars = Object.entries(envVars).filter(
+      ([key]) => !Object.keys(envConfig.getConfig()).includes(key)
     );
 
     if (extensionVars.length > 0) {
@@ -351,12 +351,12 @@ export default class ConfigureCommand extends BaseCommand {
     });
 
     // Sanitize and validate inputs
-    const sanitizedNetwork = CommandSanitizer.sanitizeString(network as any);
-    const sanitizedFullnodeUrl = CommandSanitizer.sanitizeUrl(fullnodeUrl as any);
+    const sanitizedNetwork = CommandSanitizer.sanitizeString(network);
+    const sanitizedFullnodeUrl = CommandSanitizer.sanitizeUrl(fullnodeUrl);
     const sanitizedPackageId =
-      CommandSanitizer.sanitizeWalletAddress(todoPackageId as any);
+      CommandSanitizer.sanitizeWalletAddress(todoPackageId);
     const sanitizedWalletAddress =
-      CommandSanitizer.sanitizeWalletAddress(walletAddress as any);
+      CommandSanitizer.sanitizeWalletAddress(walletAddress);
 
     // Save to config
     const configObj: Record<string, string | boolean> = {
@@ -379,7 +379,7 @@ export default class ConfigureCommand extends BaseCommand {
     });
 
     // Reload environment configuration
-    envConfig.loadFromObject(configObj as any);
+    envConfig.loadFromObject(configObj);
 
     this.log(chalk.green('\n✓ Network configuration saved successfully'));
   }
@@ -406,8 +406,8 @@ export default class ConfigureCommand extends BaseCommand {
     });
 
     // Sanitize inputs
-    const sanitizedStoragePath = CommandSanitizer.sanitizePath(storagePath as any);
-    const sanitizedTempStorage = CommandSanitizer.sanitizePath(tempStorage as any);
+    const sanitizedStoragePath = CommandSanitizer.sanitizePath(storagePath);
+    const sanitizedTempStorage = CommandSanitizer.sanitizePath(tempStorage);
 
     // Save to config
     const configObj: Record<string, string | boolean> = {
@@ -427,7 +427,7 @@ export default class ConfigureCommand extends BaseCommand {
     });
 
     // Reload environment configuration
-    envConfig.loadFromObject(configObj as any);
+    envConfig.loadFromObject(configObj);
 
     this.log(chalk.green('\n✓ Storage configuration saved successfully'));
   }
@@ -538,7 +538,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Enter temperature (0.0-1.0):',
       default: getEnv('AI_TEMPERATURE').toString(),
       validate: input => {
-        const num = parseFloat(input as any);
+        const num = parseFloat(input);
         return (
           (num >= 0 && num <= 1) || 'Temperature must be between 0.0 and 1.0'
         );
@@ -549,7 +549,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Enter maximum tokens:',
       default: getEnv('AI_MAX_TOKENS').toString(),
       validate: input => {
-        const num = parseInt(input as any);
+        const num = parseInt(input);
         return num > 0 || 'Maximum tokens must be greater than 0';
       },
     });
@@ -563,7 +563,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Enter cache TTL in milliseconds:',
       default: getEnv('AI_CACHE_TTL_MS').toString(),
       validate: input => {
-        const num = parseInt(input as any);
+        const num = parseInt(input);
         return num > 0 || 'Cache TTL must be greater than 0';
       },
     });
@@ -579,10 +579,10 @@ export default class ConfigureCommand extends BaseCommand {
     const configObj: Record<string, string | number | boolean> = {
       AI_DEFAULT_PROVIDER: provider,
       AI_DEFAULT_MODEL: model,
-      AI_TEMPERATURE: parseFloat(temperature as any),
-      AI_MAX_TOKENS: parseInt(maxTokens as any),
+      AI_TEMPERATURE: parseFloat(temperature),
+      AI_MAX_TOKENS: parseInt(maxTokens),
       AI_CACHE_ENABLED: cacheEnabled,
-      AI_CACHE_TTL_MS: parseInt(cacheTtl as any),
+      AI_CACHE_TTL_MS: parseInt(cacheTtl),
     };
 
     // Only save API keys if they were actually entered
@@ -599,14 +599,14 @@ export default class ConfigureCommand extends BaseCommand {
     const sensitiveConfig: Record<string, string | number | boolean> = {};
     const standardConfig: Record<string, string | number | boolean> = {};
 
-    for (const [key, value] of Object.entries(configObj as any)) {
+    for (const [key, value] of Object.entries(configObj)) {
       if (
         [
           'XAI_API_KEY',
           'OPENAI_API_KEY',
           'ANTHROPIC_API_KEY',
           'OLLAMA_API_KEY',
-        ].includes(key as any)
+        ].includes(key)
       ) {
         sensitiveConfig[key] = value;
       } else {
@@ -618,13 +618,13 @@ export default class ConfigureCommand extends BaseCommand {
     await saveConfigToFile(standardConfig, configPath);
 
     // Suggest exporting sensitive values to environment
-    if (Object.keys(sensitiveConfig as any).length > 0) {
+    if (Object.keys(sensitiveConfig).length > 0) {
       this.log(
         chalk.yellow(
           '\nFor better security, consider adding these to your environment variables:'
         )
       );
-      for (const [key, value] of Object.entries(sensitiveConfig as any)) {
+      for (const [key, value] of Object.entries(sensitiveConfig)) {
         this.log(`export ${key}="${value}"`);
 
         // Set for the current session
@@ -633,7 +633,7 @@ export default class ConfigureCommand extends BaseCommand {
     }
 
     // Reload environment configuration
-    envConfig.loadFromObject(standardConfig as any);
+    envConfig.loadFromObject(standardConfig);
 
     this.log(chalk.green('\n✓ AI configuration saved successfully'));
   }
@@ -658,7 +658,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Number of iterations for PBKDF2 key derivation:',
       default: getEnv('CREDENTIAL_KEY_ITERATIONS').toString(),
       validate: input => {
-        const num = parseInt(input as any);
+        const num = parseInt(input);
         return num >= 10000 || 'Iterations must be at least 10000 for security';
       },
     });
@@ -667,7 +667,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Days before credentials are auto-rotated:',
       default: getEnv('CREDENTIAL_AUTO_ROTATION_DAYS').toString(),
       validate: input => {
-        const num = parseInt(input as any);
+        const num = parseInt(input);
         return num > 0 || 'Must be a positive number';
       },
     });
@@ -676,7 +676,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Days before showing credential rotation warnings:',
       default: getEnv('CREDENTIAL_ROTATION_WARNING_DAYS').toString(),
       validate: input => {
-        const num = parseInt(input as any);
+        const num = parseInt(input);
         return num > 0 || 'Must be a positive number';
       },
     });
@@ -685,7 +685,7 @@ export default class ConfigureCommand extends BaseCommand {
       message: 'Maximum failed authentication attempts before lockout:',
       default: getEnv('CREDENTIAL_MAX_FAILED_AUTH').toString(),
       validate: input => {
-        const num = parseInt(input as any);
+        const num = parseInt(input);
         return num > 0 || 'Must be a positive number';
       },
     });
@@ -694,10 +694,10 @@ export default class ConfigureCommand extends BaseCommand {
     const configObj: Record<string, string | number | boolean> = {
       REQUIRE_SIGNATURE_VERIFICATION: signatureVerification,
       ENABLE_BLOCKCHAIN_VERIFICATION: blockchainVerification,
-      CREDENTIAL_KEY_ITERATIONS: parseInt(keyIterations as any),
-      CREDENTIAL_AUTO_ROTATION_DAYS: parseInt(autoRotationDays as any),
-      CREDENTIAL_ROTATION_WARNING_DAYS: parseInt(rotationWarningDays as any),
-      CREDENTIAL_MAX_FAILED_AUTH: parseInt(maxFailedAuth as any),
+      CREDENTIAL_KEY_ITERATIONS: parseInt(keyIterations),
+      CREDENTIAL_AUTO_ROTATION_DAYS: parseInt(autoRotationDays),
+      CREDENTIAL_ROTATION_WARNING_DAYS: parseInt(rotationWarningDays),
+      CREDENTIAL_MAX_FAILED_AUTH: parseInt(maxFailedAuth),
     };
 
     // Save to config file
@@ -706,7 +706,7 @@ export default class ConfigureCommand extends BaseCommand {
     await saveConfigToFile(configObj, configPath);
 
     // Reload environment configuration
-    envConfig.loadFromObject(configObj as any);
+    envConfig.loadFromObject(configObj);
 
     this.log(chalk.green('\n✓ Security configuration saved successfully'));
   }
@@ -775,7 +775,7 @@ export default class ConfigureCommand extends BaseCommand {
       });
 
       // Sanitize user input
-      network = CommandSanitizer.sanitizeString(network as any);
+      network = CommandSanitizer.sanitizeString(network);
     }
 
     if (!walletAddress) {
@@ -785,9 +785,9 @@ export default class ConfigureCommand extends BaseCommand {
       });
 
       // Sanitize user input
-      walletAddress = CommandSanitizer.sanitizeWalletAddress(walletAddress as any);
+      walletAddress = CommandSanitizer.sanitizeWalletAddress(walletAddress);
 
-      if (!CommonValidationRules?.walletAddress?.test(walletAddress as any)) {
+      if (!CommonValidationRules?.walletAddress?.test(walletAddress)) {
         throw new CLIError(
           CommonValidationRules?.walletAddress?.message,
           CommonValidationRules?.walletAddress?.code
@@ -840,7 +840,7 @@ export default class ConfigureCommand extends BaseCommand {
       // Create background job
       const job = jobManager.createJob(
         'configure',
-        Object.keys(flags as any).filter((key): key is string => key in flags && flags[key as keyof typeof flags]).map(String as any),
+        Object.keys(flags).filter((key): key is string => key in flags && flags[key as keyof typeof flags]).map(String),
         flags
       );
       jobManager.startJob(job.id);
@@ -897,7 +897,7 @@ export default class ConfigureCommand extends BaseCommand {
           });
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : String(error as any);
+            error instanceof Error ? error.message : String(error);
           jobManager.writeJobLog(
             job.id,
             `Configuration failed: ${errorMessage}`
@@ -909,7 +909,7 @@ export default class ConfigureCommand extends BaseCommand {
       return;
     } catch (error) {
       throw new CLIError(
-        `Failed to start background configuration: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to start background configuration: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -1086,12 +1086,12 @@ export default class ConfigureCommand extends BaseCommand {
       }
 
       // Reload environment configuration
-      envConfig.loadFromObject(config as any);
+      envConfig.loadFromObject(config);
 
       jobManager.writeJobLog(jobId, 'Configuration saved successfully');
     } catch (error) {
       throw new Error(
-        `Failed to save configuration: ${error instanceof Error ? error.message : String(error as any)}`
+        `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -1113,7 +1113,7 @@ export default class ConfigureCommand extends BaseCommand {
     } catch (error) {
       jobManager.writeJobLog(
         jobId,
-        `Validation warning: ${error instanceof Error ? error.message : String(error as any)}`
+        `Validation warning: ${error instanceof Error ? error.message : String(error)}`
       );
       // Don't fail the job for validation warnings
     }
@@ -1153,7 +1153,7 @@ export default class ConfigureCommand extends BaseCommand {
         });
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.writeJobLog(
           validationJob.id,
           `Validation failed: ${errorMessage}`

@@ -42,7 +42,7 @@ describe('DeploymentRecoveryManager', () => {
 
   afterEach(() => {
     // Clean up temporary directory
-    if (fs.existsSync(tempDir as any)) {
+    if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
@@ -55,15 +55,15 @@ describe('DeploymentRecoveryManager', () => {
         mockBuildDir
       );
 
-      expect(deploymentId as any).toMatch(/^deploy_\d+_[a-f0-9]{8}$/);
+      expect(deploymentId).toMatch(/^deploy_\d+_[a-f0-9]{8}$/);
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
-      expect(state as any).toBeDefined();
+      const state = recoveryManager.getDeploymentState(deploymentId);
+      expect(state).toBeDefined();
       expect(state!.siteName).toBe('test-site');
       expect(state!.network).toBe('testnet');
       expect(state!.status).toBe('pending');
-      expect(state!.progress.totalFiles).toBe(4 as any); // index.html, app.js, style.css, assets/logo.png
-      expect(state!.recovery.canResume).toBe(true as any);
+      expect(state!.progress.totalFiles).toBe(4); // index.html, app.js, style.css, assets/logo.png
+      expect(state!.recovery.canResume).toBe(true);
     });
 
     it('should scan build directory and create file inventory', async () => {
@@ -73,10 +73,10 @@ describe('DeploymentRecoveryManager', () => {
         mockBuildDir
       );
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
       const uploadOperations = state!.walrusOperations.uploads;
       
-      expect(uploadOperations as any).toHaveLength(4 as any);
+      expect(uploadOperations).toHaveLength(4);
       expect(uploadOperations.map(u => u.file)).toEqual(
         expect.arrayContaining([
           'index.html',
@@ -87,7 +87,7 @@ describe('DeploymentRecoveryManager', () => {
       );
 
       // All uploads should start as pending
-      expect(uploadOperations.every(u => u?.status === 'pending')).toBe(true as any);
+      expect(uploadOperations.every(u => u?.status === 'pending')).toBe(true);
     });
 
     it('should support rollback initialization with previous version', async () => {
@@ -103,9 +103,9 @@ describe('DeploymentRecoveryManager', () => {
         previousVersion
       );
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
-      expect(state!.recovery.rollbackAvailable).toBe(true as any);
-      expect(state!.recovery.previousVersion).toEqual(previousVersion as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
+      expect(state!.recovery.rollbackAvailable).toBe(true);
+      expect(state!.recovery.previousVersion).toEqual(previousVersion);
     });
   });
 
@@ -132,9 +132,9 @@ describe('DeploymentRecoveryManager', () => {
         }
       });
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
       expect(state!.status).toBe('uploading');
-      expect(state!.progress.uploadedFiles).toBe(2 as any);
+      expect(state!.progress.uploadedFiles).toBe(2);
       expect(state!.progress.currentFile).toBe('style.css');
     });
 
@@ -145,10 +145,10 @@ describe('DeploymentRecoveryManager', () => {
 
       // Verify checkpoint was created by checking if directory exists
       const checkpointDir = path.join(tempDir, 'checkpoints', deploymentId);
-      expect(fs.existsSync(checkpointDir as any)).toBe(true as any);
+      expect(fs.existsSync(checkpointDir)).toBe(true);
       
-      const checkpointFiles = fs.readdirSync(checkpointDir as any).filter(f => f.endsWith('.json'));
-      expect(checkpointFiles.length).toBeGreaterThan(0 as any);
+      const checkpointFiles = fs.readdirSync(checkpointDir).filter(f => f.endsWith('.json'));
+      expect(checkpointFiles.length).toBeGreaterThan(0);
     });
 
     it('should persist state to disk', async () => {
@@ -157,11 +157,11 @@ describe('DeploymentRecoveryManager', () => {
       });
 
       const stateFile = path.join(tempDir, 'state', `${deploymentId}.json`);
-      expect(fs.existsSync(stateFile as any)).toBe(true as any);
+      expect(fs.existsSync(stateFile)).toBe(true);
 
       const savedState = JSON.parse(fs.readFileSync(stateFile, 'utf8') as string);
       expect(savedState.status).toBe('uploading');
-      expect(savedState.id).toBe(deploymentId as any);
+      expect(savedState.id).toBe(deploymentId);
     });
   });
 
@@ -184,10 +184,10 @@ describe('DeploymentRecoveryManager', () => {
         recoverable: true
       });
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
-      expect(state!.errors).toHaveLength(1 as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
+      expect(state!.errors).toHaveLength(1);
       expect(state!.errors[0].type).toBe('network');
-      expect(state!.errors[0].recoverable).toBe(true as any);
+      expect(state!.errors[0].recoverable).toBe(true);
       expect(state!.status).toBe('pending'); // Should not change status for recoverable errors
     });
 
@@ -198,9 +198,9 @@ describe('DeploymentRecoveryManager', () => {
         recoverable: false
       });
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
       expect(state!.status).toBe('failed');
-      expect(state!.recovery.cleanupRequired).toBe(true as any);
+      expect(state!.recovery.cleanupRequired).toBe(true);
     });
 
     it('should mark deployment as failed after too many errors', async () => {
@@ -213,7 +213,7 @@ describe('DeploymentRecoveryManager', () => {
         });
       }
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
       expect(state!.status).toBe('failed');
     });
   });
@@ -231,7 +231,7 @@ describe('DeploymentRecoveryManager', () => {
 
     it('should successfully recover a resumable deployment', async () => {
       // Simulate partial upload completion
-      const state = recoveryManager.getDeploymentState(deploymentId as any)!;
+      const state = recoveryManager.getDeploymentState(deploymentId)!;
       state.walrusOperations?.uploads?.[0].status = 'completed';
       state.walrusOperations?.uploads?.[0].blobId = 'test-blob-id-1';
       state.walrusOperations?.uploads?.[1].status = 'completed';
@@ -247,12 +247,12 @@ describe('DeploymentRecoveryManager', () => {
         }
       }, true);
 
-      const recovered = await recoveryManager.recoverDeployment(deploymentId as any);
-      expect(recovered as any).toBe(true as any);
+      const recovered = await recoveryManager.recoverDeployment(deploymentId);
+      expect(recovered).toBe(true);
 
-      const recoveredState = recoveryManager.getDeploymentState(deploymentId as any);
+      const recoveredState = recoveryManager.getDeploymentState(deploymentId);
       expect(recoveredState!.status).toBe('pending');
-      expect(recoveredState!.progress.uploadedFiles).toBe(2 as any);
+      expect(recoveredState!.progress.uploadedFiles).toBe(2);
     });
 
     it('should not recover non-resumable deployments', async () => {
@@ -266,13 +266,13 @@ describe('DeploymentRecoveryManager', () => {
         }
       });
 
-      const recovered = await recoveryManager.recoverDeployment(deploymentId as any);
-      expect(recovered as any).toBe(false as any);
+      const recovered = await recoveryManager.recoverDeployment(deploymentId);
+      expect(recovered).toBe(false);
     });
 
     it('should validate partial uploads during recovery', async () => {
       // Mock completed uploads with invalid blob IDs
-      const state = recoveryManager.getDeploymentState(deploymentId as any)!;
+      const state = recoveryManager.getDeploymentState(deploymentId)!;
       state.walrusOperations?.uploads?.[0].status = 'completed';
       state.walrusOperations?.uploads?.[0].blobId = 'invalid-blob-id';
       
@@ -281,11 +281,11 @@ describe('DeploymentRecoveryManager', () => {
         walrusOperations: state.walrusOperations
       }, true);
 
-      const recovered = await recoveryManager.recoverDeployment(deploymentId as any);
-      expect(recovered as any).toBe(true as any);
+      const recovered = await recoveryManager.recoverDeployment(deploymentId);
+      expect(recovered).toBe(true);
 
       // The upload with invalid blob ID should be reset to pending
-      const recoveredState = recoveryManager.getDeploymentState(deploymentId as any);
+      const recoveredState = recoveryManager.getDeploymentState(deploymentId);
       const upload = recoveredState!.walrusOperations?.uploads?.[0];
       expect(upload.status).toBe('pending');
       expect(upload.blobId).toBeUndefined();
@@ -314,10 +314,10 @@ describe('DeploymentRecoveryManager', () => {
         status: 'failed'
       });
 
-      const rollbackSuccess = await recoveryManager.rollbackDeployment(deploymentId as any);
-      expect(rollbackSuccess as any).toBe(true as any);
+      const rollbackSuccess = await recoveryManager.rollbackDeployment(deploymentId);
+      expect(rollbackSuccess).toBe(true);
 
-      const state = recoveryManager.getDeploymentState(deploymentId as any);
+      const state = recoveryManager.getDeploymentState(deploymentId);
       expect(state!.status).toBe('completed');
       expect(state!.metadata.siteId).toBe('prev-site-id-123');
       expect(state!.metadata.manifestBlobId).toBe('prev-manifest-blob-456');
@@ -331,8 +331,8 @@ describe('DeploymentRecoveryManager', () => {
         // No previous version
       );
 
-      const rollbackSuccess = await recoveryManager.rollbackDeployment(deploymentIdNoRollback as any);
-      expect(rollbackSuccess as any).toBe(false as any);
+      const rollbackSuccess = await recoveryManager.rollbackDeployment(deploymentIdNoRollback);
+      expect(rollbackSuccess).toBe(false);
     });
   });
 
@@ -357,18 +357,18 @@ describe('DeploymentRecoveryManager', () => {
 
       // Check that state file is removed
       const stateFile = path.join(tempDir, 'state', `${deploymentId}.json`);
-      expect(fs.existsSync(stateFile as any)).toBe(false as any);
+      expect(fs.existsSync(stateFile)).toBe(false);
 
       // Check that temp directory is removed
-      expect(fs.existsSync(tempDeploymentDir as any)).toBe(false as any);
+      expect(fs.existsSync(tempDeploymentDir)).toBe(false);
 
       // Check that deployment is removed from active deployments
-      expect(recoveryManager.getDeploymentState(deploymentId as any)).toBeUndefined();
+      expect(recoveryManager.getDeploymentState(deploymentId)).toBeUndefined();
     });
 
     it('should clean up partial uploads when requested', async () => {
       // Mock some completed uploads
-      const state = recoveryManager.getDeploymentState(deploymentId as any)!;
+      const state = recoveryManager.getDeploymentState(deploymentId)!;
       state.walrusOperations?.uploads?.[0].status = 'completed';
       state.walrusOperations?.uploads?.[0].blobId = 'test-blob-to-delete';
       
@@ -394,14 +394,14 @@ describe('DeploymentRecoveryManager', () => {
     });
 
     it('should calculate progress percentage correctly', () => {
-      const canResume = recoveryManager.canResumeDeployment(deploymentId as any);
-      expect(canResume as any).toBe(true as any);
+      const canResume = recoveryManager.canResumeDeployment(deploymentId);
+      expect(canResume).toBe(true);
 
-      const progress = recoveryManager.getDeploymentProgress(deploymentId as any);
-      expect(progress as any).toBeDefined();
-      expect(progress!.percentage).toBe(0 as any);
-      expect(progress!.totalFiles).toBe(4 as any);
-      expect(progress!.uploadedFiles).toBe(0 as any);
+      const progress = recoveryManager.getDeploymentProgress(deploymentId);
+      expect(progress).toBeDefined();
+      expect(progress!.percentage).toBe(0);
+      expect(progress!.totalFiles).toBe(4);
+      expect(progress!.uploadedFiles).toBe(0);
     });
 
     it('should update progress as files are uploaded', async () => {
@@ -415,9 +415,9 @@ describe('DeploymentRecoveryManager', () => {
         }
       });
 
-      const progress = recoveryManager.getDeploymentProgress(deploymentId as any);
-      expect(progress!.percentage).toBe(50 as any);
-      expect(progress!.uploadedFiles).toBe(2 as any);
+      const progress = recoveryManager.getDeploymentProgress(deploymentId);
+      expect(progress!.percentage).toBe(50);
+      expect(progress!.uploadedFiles).toBe(2);
       expect(progress!.currentOperation).toBe('style.css');
     });
   });
@@ -437,11 +437,11 @@ describe('DeploymentRecoveryManager', () => {
       );
 
       const activeDeployments = recoveryManager.getActiveDeployments();
-      expect(activeDeployments as any).toHaveLength(2 as any);
+      expect(activeDeployments).toHaveLength(2);
       
       const deploymentIds = activeDeployments.map(d => d.id);
-      expect(deploymentIds as any).toContain(deployment1 as any);
-      expect(deploymentIds as any).toContain(deployment2 as any);
+      expect(deploymentIds).toContain(deployment1);
+      expect(deploymentIds).toContain(deployment2);
     });
 
     it('should not include completed deployments in active list', async () => {
@@ -456,7 +456,7 @@ describe('DeploymentRecoveryManager', () => {
       });
 
       // Simulate loading deployments (completed ones are filtered out)
-      const newManager = new DeploymentRecoveryManager(tempDir as any);
+      const newManager = new DeploymentRecoveryManager(tempDir);
       const activeDeployments = newManager.getActiveDeployments();
       
       expect(activeDeployments.find(d => d?.id === deploymentId)).toBeUndefined();
@@ -468,7 +468,7 @@ describe('DeploymentRecoveryManager', () => {
       expect(() => recoveryManager.getDeploymentState('non-existent-id')).not.toThrow();
       expect(recoveryManager.getDeploymentState('non-existent-id')).toBeUndefined();
       
-      expect(recoveryManager.canResumeDeployment('non-existent-id')).toBe(false as any);
+      expect(recoveryManager.canResumeDeployment('non-existent-id')).toBe(false);
       expect(recoveryManager.getDeploymentProgress('non-existent-id')).toBeNull();
     });
 
@@ -484,7 +484,7 @@ describe('DeploymentRecoveryManager', () => {
       fs.writeFileSync(stateFile, 'invalid json content');
 
       // Create a new manager that will try to load the corrupted state
-      const newManager = new DeploymentRecoveryManager(tempDir as any);
+      const newManager = new DeploymentRecoveryManager(tempDir);
       
       // Should handle the corruption gracefully and not include the corrupted deployment
       const activeDeployments = newManager.getActiveDeployments();

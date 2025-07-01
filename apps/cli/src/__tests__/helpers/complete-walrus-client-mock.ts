@@ -114,7 +114,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       const data = params.blob || params.data || new Uint8Array([1, 2, 3, 4]);
       const size = data.length;
 
-      const metadata = createMockBlobMetadata(size as any);
+      const metadata = createMockBlobMetadata(size);
       const storage = {
         id: { id: 'storage1' },
         start_epoch: currentEpoch,
@@ -179,7 +179,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         size: '1024',
         encoding_type: 1,
         deletable: true,
-        metadata: createMockBlobMetadata(1024 as any),
+        metadata: createMockBlobMetadata(1024),
       } as BlobInfo;
     }),
 
@@ -232,7 +232,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         }
 
         // Default fallback
-        return createMockBlobMetadata(1024 as any);
+        return createMockBlobMetadata(1024);
       }),
     // Improved verifyPoA that checks certification status
     verifyPoA: jest
@@ -258,9 +258,9 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       return 1024; // Default size
     }),
     storageCost: jest.fn().mockResolvedValue({
-      storageCost: BigInt(100 as any),
-      writeCost: BigInt(50 as any),
-      totalCost: BigInt(150 as any),
+      storageCost: BigInt(100),
+      writeCost: BigInt(50),
+      totalCost: BigInt(150),
     }),
     executeCreateStorageTransaction: jest.fn().mockResolvedValue({
       digest: 'mock-transaction-digest',
@@ -339,11 +339,11 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     // Improved reset that clears mock storage
     reset: jest.fn().mockImplementation(() => {
       // Clear all mock storage when reset is called
-      Object.keys(mockBlobStorage as any).forEach(key => delete mockBlobStorage[key]);
+      Object.keys(mockBlobStorage).forEach(key => delete mockBlobStorage[key]);
       currentEpoch = 100; // Reset epoch
     }),
 
-    connect: jest.fn().mockResolvedValue(undefined as any),
+    connect: jest.fn().mockResolvedValue(undefined),
     experimental: {
       getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
     },
@@ -363,7 +363,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     _simulateEpochProgress: (epochs: number) => {
       currentEpoch += epochs;
       // Update certification for blobs that should be certified
-      Object.values(mockBlobStorage as any).forEach(record => {
+      Object.values(mockBlobStorage).forEach(record => {
         if (
           record.certificationInProgress &&
           record.registered_epoch + 50 <= currentEpoch
@@ -380,7 +380,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       options?: Partial<MockBlobRecord>
     ) => {
       const size = data.length;
-      const metadata = createMockBlobMetadata(size as any);
+      const metadata = createMockBlobMetadata(size);
       const storage = {
         id: { id: 'storage1' },
         start_epoch: currentEpoch,
@@ -441,7 +441,7 @@ export function cleanupWalrusClientMocks(
     connect: client.connect,
   };
 
-  cleanupMocks(mocks as any);
+  cleanupMocks(mocks);
 
   if (client.experimental?.getBlobData) {
     cleanupMocks({ getBlobData: client?.experimental?.getBlobData });
@@ -483,7 +483,7 @@ export function createConfiguredMockClient(
         // 30% failure rate
         throw new Error('Network error');
       }
-      return originalReadBlob(params as any);
+      return originalReadBlob(params);
     });
   }
 
@@ -492,7 +492,7 @@ export function createConfiguredMockClient(
       { length: config.providerCount },
       (_, i) => `provider${i + 1}`
     );
-    client?.getStorageProviders?.mockResolvedValue(providers as any);
+    client?.getStorageProviders?.mockResolvedValue(providers);
   }
 
   return client;
@@ -509,7 +509,7 @@ export function createWalrusModuleMock() {
     // Add other exports from @mysten/walrus that might be needed
     createWalrusClient: jest.fn().mockImplementation(() => mockClient),
     // Cleanup function for tests
-    cleanup: () => cleanupWalrusClientMocks(mockClient as any),
+    cleanup: () => cleanupWalrusClientMocks(mockClient),
   };
 }
 

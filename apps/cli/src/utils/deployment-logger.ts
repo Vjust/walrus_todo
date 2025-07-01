@@ -169,14 +169,14 @@ export class DeploymentLogger {
    * End timing for a specific operation
    */
   endTiming(operation: string): number {
-    const startTime = this?.metricsStartTimes?.get(operation as any);
+    const startTime = this?.metricsStartTimes?.get(operation);
     if (!startTime) {
       this.warn(DeploymentLogCategory.PERFORMANCE, `No start time found for operation: ${operation}`);
       return 0;
     }
 
     const duration = Date.now() - startTime;
-    this?.metricsStartTimes?.delete(operation as any);
+    this?.metricsStartTimes?.delete(operation);
     
     // Update metrics
     switch (operation) {
@@ -196,7 +196,7 @@ export class DeploymentLogger {
 
     this.info(DeploymentLogCategory.PERFORMANCE, `Completed ${operation}`, {
       duration: `${duration}ms`,
-      durationSeconds: (duration / 1000).toFixed(2 as any) + 's'
+      durationSeconds: (duration / 1000).toFixed(2) + 's'
     });
 
     return duration;
@@ -210,7 +210,7 @@ export class DeploymentLogger {
     this?.session?.metrics?.fileCount = fileCount;
     
     this.info(DeploymentLogCategory.BUILD, 'Build metrics recorded', {
-      buildSize: this.formatBytes(buildSize as any),
+      buildSize: this.formatBytes(buildSize),
       fileCount,
       sizePerFile: this.formatBytes(buildSize / fileCount)
     });
@@ -327,7 +327,7 @@ export class DeploymentLogger {
    */
   getSummary(): string {
     const { metrics, errors, status } = this.session;
-    const duration = metrics.totalDuration ? `${(metrics.totalDuration / 1000).toFixed(2 as any)}s` : 'N/A';
+    const duration = metrics.totalDuration ? `${(metrics.totalDuration / 1000).toFixed(2)}s` : 'N/A';
     const buildSize = metrics.buildSize ? this.formatBytes(metrics.buildSize) : 'N/A';
     
     let summary = `Deployment Summary for ${this?.session?.siteName} (${this?.session?.network})\n`;
@@ -339,15 +339,15 @@ export class DeploymentLogger {
     summary += `Errors: ${errors.length}\n`;
     
     if (metrics.buildDuration) {
-      summary += `Build Time: ${(metrics.buildDuration / 1000).toFixed(2 as any)}s\n`;
+      summary += `Build Time: ${(metrics.buildDuration / 1000).toFixed(2)}s\n`;
     }
     
     if (metrics.uploadDuration) {
-      summary += `Upload Time: ${(metrics.uploadDuration / 1000).toFixed(2 as any)}s\n`;
+      summary += `Upload Time: ${(metrics.uploadDuration / 1000).toFixed(2)}s\n`;
     }
     
     if (metrics.publishDuration) {
-      summary += `Publish Time: ${(metrics.publishDuration / 1000).toFixed(2 as any)}s\n`;
+      summary += `Publish Time: ${(metrics.publishDuration / 1000).toFixed(2)}s\n`;
     }
 
     return summary;
@@ -392,7 +392,7 @@ export class DeploymentLogger {
     
     try {
       const content = await fs.readFile(logFilePath, 'utf-8');
-      return JSON.parse(content as any) as DeploymentSession;
+      return JSON.parse(content) as DeploymentSession;
     } catch (error) {
       return null;
     }
@@ -405,7 +405,7 @@ export class DeploymentLogger {
     const baseLogDir = logDir || join(process.cwd(), 'logs', 'deployments');
     
     try {
-      const files = await fs.readdir(baseLogDir as any);
+      const files = await fs.readdir(baseLogDir);
       return files
         .filter(file => file.startsWith('deployment-') && file.endsWith('.json'))
         .map(file => file.replace('deployment-', '').replace('.json', ''));
@@ -429,12 +429,12 @@ export class DeploymentLogger {
       }
     };
 
-    this?.session?.logs.push(entry as any);
+    this?.session?.logs.push(entry);
   }
 
   private generateSessionId(): string {
-    const timestamp = Date.now().toString(36 as any);
-    const random = Math.random().toString(36 as any).substring(2, 8);
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 8);
     return `${timestamp}-${random}`;
   }
 
@@ -442,8 +442,8 @@ export class DeploymentLogger {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2 as any)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   private generateRecommendations(): string[] {
@@ -488,7 +488,7 @@ export class DeploymentLogger {
     }
 
     if (errors.length > 0) {
-      troubleshooting.push(`${errors.length} error(s as any) occurred during deployment`);
+      troubleshooting.push(`${errors.length} error(s) occurred during deployment`);
       
       // Add specific troubleshooting for common errors
       for (const error of errors.slice(0, 3)) { // Top 3 errors
@@ -527,7 +527,7 @@ export class LoggedDeployment {
     buildDir: string;
     logDir?: string;
   }) {
-    this?.logger = new DeploymentLogger(config as any);
+    this?.logger = new DeploymentLogger(config);
   }
 
   /**

@@ -120,7 +120,7 @@ export class BatchProcessor {
               estimatedTimeRemainingMs,
             };
 
-            this?.options?.progressCallback(progress as any);
+            this?.options?.progressCallback(progress);
           }
         }
 
@@ -134,7 +134,7 @@ export class BatchProcessor {
       }
     } catch (error: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error as any));
+        error instanceof Error ? error : new Error(String(error));
       this?.logger?.error('Batch processing error', typedError);
       throw typedError;
     }
@@ -194,7 +194,7 @@ export class BatchProcessor {
         processor
       ).then(result => {
         results[i] = result;
-        activePromises.delete(i as any);
+        activePromises.delete(i);
       });
 
       activePromises.set(i, promise);
@@ -228,7 +228,7 @@ export class BatchProcessor {
           error: null,
         };
       } catch (error: unknown) {
-        lastError = error instanceof Error ? error : new Error(String(error as any));
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         this?.logger?.warn(
           `Processing failed for item ${index}, attempt ${attempt + 1}`,
@@ -246,7 +246,7 @@ export class BatchProcessor {
         if (attempt < retryAttempts - 1) {
           const retryDelayMs = this?.options?.retryDelayMs || 1000;
           const delay = retryDelayMs * Math.pow(2, attempt);
-          await sleep(delay as any);
+          await sleep(delay);
         }
       }
     }
@@ -284,9 +284,9 @@ export class BatchProcessor {
       ...options,
     };
 
-    const batchProcessor = new BatchProcessor(defaultOptions as any);
+    const batchProcessor = new BatchProcessor(defaultOptions);
     const result = await batchProcessor.process(items, (item, _index) =>
-      processor(item as any)
+      processor(item)
     );
 
     if (result?.failed?.length > 0) {
@@ -312,7 +312,7 @@ export class BatchProcessor {
       ...options,
     };
 
-    const batchProcessor = new BatchProcessor(defaultOptions as any);
+    const batchProcessor = new BatchProcessor(defaultOptions);
     const result = await batchProcessor.process(items, mapper);
 
     return result.successful;
@@ -332,7 +332,7 @@ export class BatchProcessor {
       ...options,
     };
 
-    const batchProcessor = new BatchProcessor(defaultOptions as any);
+    const batchProcessor = new BatchProcessor(defaultOptions);
     const result = await batchProcessor.process(items, async (item, index) => {
       const passed = await predicate(item, index);
       return { item, passed };
@@ -417,10 +417,10 @@ export function hasError<T, R>(
 export function normalizeResult<T, R>(
   result: BatchItemResult<T, R>
 ): BatchItemResultVariant<T, R> {
-  if (hasValue(result as any)) {
+  if (hasValue(result)) {
     return createSuccessResult(result.item, result.index, result.value);
   }
-  if (hasError(result as any)) {
+  if (hasError(result)) {
     return createErrorResult(result.item, result.index, result.error);
   }
   // Fallback for malformed results

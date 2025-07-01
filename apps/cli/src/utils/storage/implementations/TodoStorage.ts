@@ -57,14 +57,14 @@ export class TodoStorage extends BlobStorage {
   public async storeTodo(todo: Todo): Promise<string> {
     try {
       // Validate todo data
-      this.validateTodoData(todo as any);
+      this.validateTodoData(todo);
 
       // Serialize todo to binary format
-      const buffer = TodoSerializer.todoToBuffer(todo as any);
+      const buffer = TodoSerializer.todoToBuffer(todo);
 
       // Calculate size with accurate calculator
       const exactSize = buffer.length;
-      const calculatedSize = TodoSizeCalculator.calculateTodoSize(todo as any);
+      const calculatedSize = TodoSizeCalculator.calculateTodoSize(todo);
 
       logger.info(
         `Todo size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`
@@ -105,7 +105,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to store todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
         'store todo'
       );
     }
@@ -122,10 +122,10 @@ export class TodoStorage extends BlobStorage {
   public async retrieveTodo(blobId: string): Promise<Todo> {
     try {
       // Retrieve the blob
-      const { content } = await this.retrieve(blobId as any);
+      const { content } = await this.retrieve(blobId);
 
       // Parse and validate the todo data
-      const todo = this.parseTodoData(content as any);
+      const todo = this.parseTodoData(content);
 
       // Add the blob ID to the todo for reference
       todo?.walrusBlobId = blobId;
@@ -137,7 +137,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to retrieve todo from blob ${blobId}: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve todo from blob ${blobId}: ${error instanceof Error ? error.message : String(error)}`,
         'retrieve todo'
       );
     }
@@ -155,7 +155,7 @@ export class TodoStorage extends BlobStorage {
   public async updateTodo(todo: Todo, originalBlobId: string): Promise<string> {
     try {
       // Validate todo data
-      this.validateTodoData(todo as any);
+      this.validateTodoData(todo);
 
       // Store updated todo (creates new blob since Walrus blobs are immutable)
       const metadata = {
@@ -173,7 +173,7 @@ export class TodoStorage extends BlobStorage {
       };
 
       // Serialize and store
-      const buffer = TodoSerializer.todoToBuffer(todo as any);
+      const buffer = TodoSerializer.todoToBuffer(todo);
       const blobId = await this.store(buffer, metadata);
 
       logger.info(`Todo updated with new blob ID: ${blobId}`);
@@ -188,7 +188,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to update todo: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to update todo: ${error instanceof Error ? error.message : String(error)}`,
         'update todo'
       );
     }
@@ -205,14 +205,14 @@ export class TodoStorage extends BlobStorage {
   public async storeTodoList(todoList: TodoList): Promise<string> {
     try {
       // Validate todo list data
-      this.validateTodoListData(todoList as any);
+      this.validateTodoListData(todoList);
 
       // Serialize the list
-      const buffer = TodoSerializer.todoListToBuffer(todoList as any);
+      const buffer = TodoSerializer.todoListToBuffer(todoList);
 
       // Calculate size
       const exactSize = buffer.length;
-      const calculatedSize = TodoSizeCalculator.calculateTodoListSize(todoList as any);
+      const calculatedSize = TodoSizeCalculator.calculateTodoListSize(todoList);
 
       logger.info(
         `Todo list size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`
@@ -245,7 +245,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to store todo list: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
         'store todo list'
       );
     }
@@ -262,10 +262,10 @@ export class TodoStorage extends BlobStorage {
   public async retrieveTodoList(blobId: string): Promise<TodoList> {
     try {
       // Retrieve the blob
-      const { content } = await this.retrieve(blobId as any);
+      const { content } = await this.retrieve(blobId);
 
       // Parse and validate the todo list data
-      const todoList = this.parseTodoListData(content as any);
+      const todoList = this.parseTodoListData(content);
 
       // Add the blob ID to the list for reference
       todoList?.walrusBlobId = blobId;
@@ -277,7 +277,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to retrieve todo list from blob ${blobId}: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve todo list from blob ${blobId}: ${error instanceof Error ? error.message : String(error)}`,
         'retrieve todo list'
       );
     }
@@ -401,7 +401,7 @@ export class TodoStorage extends BlobStorage {
 
     // Validate each todo in the list
     try {
-      todoList?.todos?.forEach(todo => this.validateTodoData(todo as any));
+      todoList?.todos?.forEach(todo => this.validateTodoData(todo));
     } catch (error) {
       // Wrap the error with list context
       if (error instanceof ValidationError) {
@@ -426,15 +426,15 @@ export class TodoStorage extends BlobStorage {
   private parseTodoData(data: Uint8Array): Todo {
     try {
       // Convert binary to text
-      const todoData = new TextDecoder().decode(data as any);
+      const todoData = new TextDecoder().decode(data);
 
       // Parse JSON
       let todo: Todo;
       try {
-        todo = JSON.parse(todoData as any) as Todo;
+        todo = JSON.parse(todoData) as Todo;
       } catch (parseError) {
         throw new ValidationError(
-          `Failed to parse todo JSON: ${parseError instanceof Error ? parseError.message : String(parseError as any)}`,
+          `Failed to parse todo JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
           {
             operation: 'todo parsing',
             recoverable: false,
@@ -444,7 +444,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       // Validate parsed data
-      this.validateTodoData(todo as any);
+      this.validateTodoData(todo);
 
       return todo;
     } catch (error) {
@@ -453,7 +453,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new ValidationError(
-        `Failed to parse todo data: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to parse todo data: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'todo parsing',
           recoverable: false,
@@ -473,15 +473,15 @@ export class TodoStorage extends BlobStorage {
   private parseTodoListData(data: Uint8Array): TodoList {
     try {
       // Convert binary to text
-      const listData = new TextDecoder().decode(data as any);
+      const listData = new TextDecoder().decode(data);
 
       // Parse JSON
       let todoList: TodoList;
       try {
-        todoList = JSON.parse(listData as any) as TodoList;
+        todoList = JSON.parse(listData) as TodoList;
       } catch (parseError) {
         throw new ValidationError(
-          `Failed to parse todo list JSON: ${parseError instanceof Error ? parseError.message : String(parseError as any)}`,
+          `Failed to parse todo list JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
           {
             operation: 'list parsing',
             recoverable: false,
@@ -491,7 +491,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       // Validate parsed data
-      this.validateTodoListData(todoList as any);
+      this.validateTodoListData(todoList);
 
       return todoList;
     } catch (error) {
@@ -500,7 +500,7 @@ export class TodoStorage extends BlobStorage {
       }
 
       throw new ValidationError(
-        `Failed to parse todo list data: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to parse todo list data: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'list parsing',
           recoverable: false,

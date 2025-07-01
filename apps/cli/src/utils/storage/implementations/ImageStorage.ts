@@ -105,7 +105,7 @@ export class ImageStorage extends BlobStorage {
       const imageId = additionalMetadata.imageId || this.generateImageId();
 
       // Calculate SHA-256 hash of the image data
-      const checksum = this.calculateChecksum(imageData as any);
+      const checksum = this.calculateChecksum(imageData);
 
       // Prepare comprehensive metadata
       const metadata = {
@@ -141,7 +141,7 @@ export class ImageStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to store image: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to store image: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'store image',
           recoverable: false,
@@ -166,7 +166,7 @@ export class ImageStorage extends BlobStorage {
   }> {
     try {
       // Retrieve the blob
-      const { content, metadata } = await this.retrieve(blobId as any);
+      const { content, metadata } = await this.retrieve(blobId);
 
       // Extract image info from metadata
       const imageInfo: ImageInfo = {
@@ -182,7 +182,7 @@ export class ImageStorage extends BlobStorage {
 
       // Validate the checksum if available
       if (metadata.checksum) {
-        const calculatedChecksum = this.calculateChecksum(content as any);
+        const calculatedChecksum = this.calculateChecksum(content);
         if (calculatedChecksum !== metadata.checksum) {
           logger.warn(`Image checksum verification failed for blob ${blobId}`);
         }
@@ -199,7 +199,7 @@ export class ImageStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to retrieve image: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to retrieve image: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'retrieve image',
           blobId,
@@ -229,7 +229,7 @@ export class ImageStorage extends BlobStorage {
   ): Promise<string> {
     try {
       // First retrieve the original image to get its metadata
-      const { metadata: originalMetadata } = await this.retrieveImage(blobId as any);
+      const { metadata: originalMetadata } = await this.retrieveImage(blobId);
 
       // Validate the new image data
       this.validateImageData(imageData, contentType);
@@ -245,7 +245,7 @@ export class ImageStorage extends BlobStorage {
         height: imageInfo?.height?.toString(),
         format: imageInfo.format,
         size: imageData?.length?.toString(),
-        checksum: this.calculateChecksum(imageData as any),
+        checksum: this.calculateChecksum(imageData),
         aspectRatio: imageInfo?.aspectRatio?.toString(),
         updatedAt: new Date().toISOString(),
         originalBlobId: blobId,
@@ -265,7 +265,7 @@ export class ImageStorage extends BlobStorage {
       }
 
       throw new StorageError(
-        `Failed to update image: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to update image: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'update image',
           blobId,
@@ -304,8 +304,8 @@ export class ImageStorage extends BlobStorage {
     }
 
     // Validate content type
-    const format = this.getFormatFromContentType(contentType as any);
-    if (!this?.supportedFormats?.includes(format as any)) {
+    const format = this.getFormatFromContentType(contentType);
+    if (!this?.supportedFormats?.includes(format)) {
       throw new ValidationError(
         `Unsupported image format: ${format}. Supported formats: ${this?.supportedFormats?.join(', ')}`,
         {
@@ -425,7 +425,7 @@ export class ImageStorage extends BlobStorage {
     try {
       // In a real implementation, you would use an image processing library
       // to extract dimensions and other metadata. This is a simplified version.
-      const format = this.getFormatFromContentType(contentType as any);
+      const format = this.getFormatFromContentType(contentType);
 
       // For now, we'll provide basic information and simulate some values
       const defaultInfo: ImageInfo = {
@@ -439,7 +439,7 @@ export class ImageStorage extends BlobStorage {
       // If we had an image library, we would use code like this:
       /*
       import sharp from 'sharp';
-      const metadata = await sharp(imageData as any).metadata();
+      const metadata = await sharp(imageData).metadata();
       return {
         width: metadata.width,
         height: metadata.height,
@@ -458,7 +458,7 @@ export class ImageStorage extends BlobStorage {
       return {
         width: 0,
         height: 0,
-        format: this.getFormatFromContentType(contentType as any),
+        format: this.getFormatFromContentType(contentType),
         size: imageData.length,
         aspectRatio: 1,
       };
@@ -471,7 +471,7 @@ export class ImageStorage extends BlobStorage {
    * @returns A unique image ID
    */
   private generateImageId(): string {
-    return `img_${Date.now()}_${crypto.randomBytes(4 as any).toString('hex')}`;
+    return `img_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
   }
 
   /**
@@ -481,6 +481,6 @@ export class ImageStorage extends BlobStorage {
    * @returns Hexadecimal representation of the hash
    */
   protected calculateChecksum(data: Uint8Array): string {
-    return crypto.createHash('sha256').update(Buffer.from(data as any)).digest('hex');
+    return crypto.createHash('sha256').update(Buffer.from(data)).digest('hex');
   }
 }

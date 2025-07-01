@@ -174,7 +174,7 @@ export abstract class AbstractStorage implements IStorage {
       success: false,
       recommendedStorage: null,
       recommendation: 'allocate-new',
-      potentialSavings: BigInt(0 as any),
+      potentialSavings: BigInt(0),
       savingsPercentage: 0,
       recommendationDetails:
         'Storage optimization not implemented for this storage type',
@@ -192,7 +192,7 @@ export abstract class AbstractStorage implements IStorage {
   public async verify(id: string, expectedChecksum?: string): Promise<boolean> {
     try {
       // Retrieve the content
-      const { content, metadata } = await this.retrieve(id as any);
+      const { content, metadata } = await this.retrieve(id);
 
       // Extract checksum from metadata or use provided one
       const storedChecksum = metadata.checksum || expectedChecksum;
@@ -225,7 +225,7 @@ export abstract class AbstractStorage implements IStorage {
     data: Uint8Array,
     algorithm: string = 'sha256'
   ): string {
-    return crypto.createHash(algorithm as any).update(Buffer.from(data as any)).digest('hex');
+    return crypto.createHash(algorithm).update(Buffer.from(data)).digest('hex');
   }
 
   /**
@@ -261,7 +261,7 @@ export abstract class AbstractStorage implements IStorage {
   protected getCachedContent(
     id: string
   ): { content: Uint8Array; metadata: Record<string, string> } | null {
-    const cached = AbstractStorage?.cache?.get(id as any);
+    const cached = AbstractStorage?.cache?.get(id);
     if (cached && cached.expires > Date.now()) {
       return {
         content: cached.data,
@@ -278,7 +278,7 @@ export abstract class AbstractStorage implements IStorage {
     const now = Date.now();
     for (const [key, value] of AbstractStorage?.cache?.entries()) {
       if (value.expires <= now) {
-        AbstractStorage?.cache?.delete(key as any);
+        AbstractStorage?.cache?.delete(key);
       }
     }
   }

@@ -105,12 +105,12 @@ export class EnhancedCredentialManager {
 
       for (const key of metadataKeys) {
         try {
-          const metadataJson = await this?.vault?.getSecret(key as any);
-          const metadata = JSON.parse(metadataJson as any) as CredentialMetadata;
+          const metadataJson = await this?.vault?.getSecret(key);
+          const metadata = JSON.parse(metadataJson) as CredentialMetadata;
           this?.metadataCache?.set(metadata.provider, metadata);
         } catch (error) {
           this?.logger?.warn(
-            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error as any)}`
+            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error)}`
           );
         }
       }
@@ -183,7 +183,7 @@ export class EnhancedCredentialManager {
     // Store metadata separately
     await this?.vault?.storeSecret(
       `${this.METADATA_PREFIX}${provider}`,
-      JSON.stringify(metadata as any)
+      JSON.stringify(metadata)
     );
 
     // Update in-memory cache
@@ -208,7 +208,7 @@ export class EnhancedCredentialManager {
         // Update stored metadata with verification info
         await this?.vault?.storeSecret(
           `${this.METADATA_PREFIX}${provider}`,
-          JSON.stringify(metadata as any)
+          JSON.stringify(metadata)
         );
 
         // Update in-memory cache
@@ -245,7 +245,7 @@ export class EnhancedCredentialManager {
   ): Promise<string> {
     try {
       // First check for expired credentials
-      const metadata = await this.getCredentialMetadata(provider as any);
+      const metadata = await this.getCredentialMetadata(provider);
       if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
         throw new CLIError(
           `API key for ${provider} has expired. Please generate a new one.`,
@@ -304,7 +304,7 @@ export class EnhancedCredentialManager {
       metadata?.lastUsed = new Date().toISOString();
       await this?.vault?.storeSecret(
         `${this.METADATA_PREFIX}${provider}`,
-        JSON.stringify(metadata as any)
+        JSON.stringify(metadata)
       );
 
       // Update in-memory cache
@@ -342,8 +342,8 @@ export class EnhancedCredentialManager {
     provider: AIProvider
   ): Promise<CredentialMetadata> {
     // Try first from cache
-    if (this?.metadataCache?.has(provider as any)) {
-      return this?.metadataCache?.get(provider as any)!;
+    if (this?.metadataCache?.has(provider)) {
+      return this?.metadataCache?.get(provider)!;
     }
 
     // If not in cache, try to get from storage
@@ -351,7 +351,7 @@ export class EnhancedCredentialManager {
       const metadataJson = await this?.vault?.getSecret(
         `${this.METADATA_PREFIX}${provider}`
       );
-      const metadata = JSON.parse(metadataJson as any) as CredentialMetadata;
+      const metadata = JSON.parse(metadataJson) as CredentialMetadata;
 
       // Update cache
       this?.metadataCache?.set(provider, metadata);
@@ -394,7 +394,7 @@ export class EnhancedCredentialManager {
       // Get metadata first to check if it's blockchain verified
       let metadata: CredentialMetadata | null = null;
       try {
-        metadata = await this.getCredentialMetadata(provider as any);
+        metadata = await this.getCredentialMetadata(provider);
       } catch (error) {
         // If metadata doesn't exist, still try to remove the credential
         this?.logger?.debug(`No metadata found for ${provider} during removal`);
@@ -403,7 +403,7 @@ export class EnhancedCredentialManager {
       // If credential is verified, revoke on blockchain
       if (metadata?.verified && metadata?.verificationId) {
         try {
-          await this?.verifier?.revokeCredential(provider as any);
+          await this?.verifier?.revokeCredential(provider);
           this?.logger?.info(`Revoked ${provider} credential on blockchain`);
         } catch (error) {
           this?.logger?.warn(
@@ -417,7 +417,7 @@ export class EnhancedCredentialManager {
       await this?.vault?.removeSecret(`${this.METADATA_PREFIX}${provider}`);
 
       // Remove from cache
-      this?.metadataCache?.delete(provider as any);
+      this?.metadataCache?.delete(provider);
 
       this?.logger?.info(`Removed API key for ${provider}`);
     } catch (error) {
@@ -440,7 +440,7 @@ export class EnhancedCredentialManager {
     provider: AIProvider,
     permissionLevel: AIPermissionLevel
   ): Promise<CredentialMetadata> {
-    const metadata = await this.getCredentialMetadata(provider as any);
+    const metadata = await this.getCredentialMetadata(provider);
 
     // Update permission level
     metadata?.permissionLevel = permissionLevel;
@@ -449,7 +449,7 @@ export class EnhancedCredentialManager {
     // Save updated metadata
     await this?.vault?.storeSecret(
       `${this.METADATA_PREFIX}${provider}`,
-      JSON.stringify(metadata as any)
+      JSON.stringify(metadata)
     );
 
     // Update cache
@@ -478,18 +478,18 @@ export class EnhancedCredentialManager {
       // Get metadata for each credential
       for (const key of metadataKeys) {
         try {
-          const metadataJson = await this?.vault?.getSecret(key as any);
-          const metadata = JSON.parse(metadataJson as any) as CredentialMetadata;
+          const metadataJson = await this?.vault?.getSecret(key);
+          const metadata = JSON.parse(metadataJson) as CredentialMetadata;
 
           // Filter out expired credentials
           if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
             continue;
           }
 
-          results.push(metadata as any);
+          results.push(metadata);
         } catch (error) {
           this?.logger?.warn(
-            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error as any)}`
+            `Failed to load metadata for ${key}: ${error instanceof Error ? error.message : String(error)}`
           );
         }
       }
@@ -530,8 +530,8 @@ export class EnhancedCredentialManager {
   async hasCredential(provider: AIProvider): Promise<boolean> {
     try {
       // Check in-memory cache first
-      if (this?.metadataCache?.has(provider as any)) {
-        const metadata = this?.metadataCache?.get(provider as any)!;
+      if (this?.metadataCache?.has(provider)) {
+        const metadata = this?.metadataCache?.get(provider)!;
 
         // Check if credential has expired
         if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
@@ -570,7 +570,7 @@ export class EnhancedCredentialManager {
     let existingMetadata: CredentialMetadata | null = null;
 
     try {
-      existingMetadata = await this.getCredentialMetadata(provider as any);
+      existingMetadata = await this.getCredentialMetadata(provider);
     } catch (error) {
       // If no existing metadata, that's fine for rotation
       this?.logger?.debug(`No existing metadata for ${provider} during rotation`);
@@ -582,7 +582,7 @@ export class EnhancedCredentialManager {
     // If existing and verified, try to revoke on blockchain first
     if (existingMetadata?.verified && existingMetadata?.verificationId) {
       try {
-        await this?.verifier?.revokeCredential(provider as any);
+        await this?.verifier?.revokeCredential(provider);
         this?.logger?.info(
           `Revoked previous ${provider} credential on blockchain`
         );
@@ -624,7 +624,7 @@ export class EnhancedCredentialManager {
     // Store metadata
     await this?.vault?.storeSecret(
       `${this.METADATA_PREFIX}${provider}`,
-      JSON.stringify(newMetadata as any)
+      JSON.stringify(newMetadata)
     );
 
     // Update cache
@@ -648,7 +648,7 @@ export class EnhancedCredentialManager {
         // Update stored metadata
         await this?.vault?.storeSecret(
           `${this.METADATA_PREFIX}${provider}`,
-          JSON.stringify(newMetadata as any)
+          JSON.stringify(newMetadata)
         );
 
         // Update cache
@@ -699,7 +699,7 @@ export class EnhancedCredentialManager {
     }
 
     // Pattern check
-    if (!rules?.pattern?.test(apiKey as any)) {
+    if (!rules?.pattern?.test(apiKey)) {
       throw new CLIError(
         `Invalid API key format for ${provider}. ${rules.description}`,
         'INVALID_API_KEY_FORMAT'

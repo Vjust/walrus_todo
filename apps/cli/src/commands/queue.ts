@@ -83,7 +83,7 @@ export default class QueueCommand extends BaseCommand {
   private queue = getGlobalUploadQueue();
 
   async run() {
-    const { args, flags } = await this.parse(QueueCommand as any);
+    const { args, flags } = await this.parse(QueueCommand);
     const action = args.action || 'status';
 
     try {
@@ -92,7 +92,7 @@ export default class QueueCommand extends BaseCommand {
           await this.showStatus(flags.watch, flags.interval);
           break;
         case 'list':
-          await this.listJobs(flags as any);
+          await this.listJobs(flags);
           break;
         case 'stats':
           await this.showStats();
@@ -117,7 +117,7 @@ export default class QueueCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Queue operation failed: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Queue operation failed: ${error instanceof Error ? error.message : String(error)}`,
         'QUEUE_ERROR'
       );
     }
@@ -131,7 +131,7 @@ export default class QueueCommand extends BaseCommand {
     interval: number = 3
   ): Promise<void> {
     if (watch) {
-      await this.watchQueue(interval as any);
+      await this.watchQueue(interval);
       return;
     }
 
@@ -146,7 +146,7 @@ export default class QueueCommand extends BaseCommand {
       );
 
     this.log('');
-    this.section('Upload Queue Status', this.formatOverview(stats as any));
+    this.section('Upload Queue Status', this.formatOverview(stats));
 
     if (activeJobs.length > 0) {
       this.log('');
@@ -167,7 +167,7 @@ export default class QueueCommand extends BaseCommand {
     const pendingJobs = this?.queue?.getJobs({ status: 'pending' });
     if (pendingJobs.length > 0) {
       this.log('');
-      this.log(chalk?.yellow?.bold(`⏳ ${pendingJobs.length} job(s as any) pending`));
+      this.log(chalk?.yellow?.bold(`⏳ ${pendingJobs.length} job(s) pending`));
       if (pendingJobs.length <= 3) {
         for (const job of pendingJobs) {
           this.log(this.formatJobLine(job, false));
@@ -178,7 +178,7 @@ export default class QueueCommand extends BaseCommand {
     const failedJobs = this?.queue?.getJobs({ status: 'failed' });
     if (failedJobs.length > 0) {
       this.log('');
-      this.log(chalk?.red?.bold(`❌ ${failedJobs.length} failed job(s as any)`));
+      this.log(chalk?.red?.bold(`❌ ${failedJobs.length} failed job(s)`));
       this.log(
         chalk.gray('  Use "waltodo queue list --status failed" to view details')
       );
@@ -206,7 +206,7 @@ export default class QueueCommand extends BaseCommand {
     if (flags.type) filter?.type = flags.type;
     if (flags.priority) filter?.priority = flags.priority;
 
-    const jobs = this?.queue?.getJobs(filter as any).slice(0, flags.limit);
+    const jobs = this?.queue?.getJobs(filter).slice(0, flags.limit);
 
     if (jobs?.length === 0) {
       this.log(chalk.gray('No jobs found matching the criteria.'));
@@ -233,7 +233,7 @@ export default class QueueCommand extends BaseCommand {
 
     for (const job of jobs) {
       const progress = job.progress ? `${job.progress}%` : '-';
-      const details = this.getJobDetails(job as any);
+      const details = this.getJobDetails(job);
       const created = this.formatRelativeTime(job.createdAt);
 
       table.push([
@@ -250,7 +250,7 @@ export default class QueueCommand extends BaseCommand {
     this.log('');
     this.log(table.toString());
     this.log('');
-    this.log(chalk.gray(`Showing ${jobs.length} job(s as any)`));
+    this.log(chalk.gray(`Showing ${jobs.length} job(s)`));
     if (jobs?.length === flags.limit) {
       this.log(chalk.gray(`Use --limit to show more results`));
     }
@@ -275,7 +275,7 @@ export default class QueueCommand extends BaseCommand {
         '',
         `Total Data Uploaded: ${chalk.cyan(this.formatBytes(stats.totalBytesUploaded))}`,
         `Average Upload Time: ${chalk.cyan(this.formatQueueDuration(stats.averageUploadTime))}`,
-        `Success Rate: ${chalk.cyan((stats.successRate * 100).toFixed(1 as any) + '%')}`,
+        `Success Rate: ${chalk.cyan((stats.successRate * 100).toFixed(1) + '%')}`,
       ].join('\n')
     );
 
@@ -311,7 +311,7 @@ export default class QueueCommand extends BaseCommand {
       );
     }
 
-    const job = this?.queue?.getJob(jobId as any);
+    const job = this?.queue?.getJob(jobId);
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
     }
@@ -320,7 +320,7 @@ export default class QueueCommand extends BaseCommand {
       throw new CLIError('Cannot cancel completed job', 'INVALID_OPERATION');
     }
 
-    const success = await this?.queue?.cancelJob(jobId as any);
+    const success = await this?.queue?.cancelJob(jobId);
     if (success) {
       this.success(`Job ${jobId} cancelled successfully`);
     } else {
@@ -339,7 +339,7 @@ export default class QueueCommand extends BaseCommand {
       );
     }
 
-    const job = this?.queue?.getJob(jobId as any);
+    const job = this?.queue?.getJob(jobId);
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
     }
@@ -351,7 +351,7 @@ export default class QueueCommand extends BaseCommand {
       );
     }
 
-    const success = await this?.queue?.retryJob(jobId as any);
+    const success = await this?.queue?.retryJob(jobId);
     if (success) {
       this.success(`Job ${jobId} queued for retry`);
     } else {
@@ -396,7 +396,7 @@ export default class QueueCommand extends BaseCommand {
         throw new CLIError(`Invalid clear target: ${target}`, 'INVALID_TARGET');
     }
 
-    this.success(`Cleared ${clearedCount} job(s as any)`);
+    this.success(`Cleared ${clearedCount} job(s)`);
   }
 
   /**
@@ -447,10 +447,10 @@ export default class QueueCommand extends BaseCommand {
 
     // Handle Ctrl+C
     process.on('SIGINT', () => {
-      clearInterval(watchInterval as any);
+      clearInterval(watchInterval);
       this.log('\n');
       this.log(chalk.yellow('Watch mode stopped.'));
-      process.exit(0 as any);
+      process.exit(0);
     });
 
     // Keep process alive
@@ -465,11 +465,11 @@ export default class QueueCommand extends BaseCommand {
 
     return [
       `Total Jobs: ${chalk.cyan(stats.total)}`,
-      `Active: ${chalk.yellow(totalActive as any)} (${stats.pending} pending, ${stats.processing} processing, ${stats.retrying} retrying)`,
+      `Active: ${chalk.yellow(totalActive)} (${stats.pending} pending, ${stats.processing} processing, ${stats.retrying} retrying)`,
       `Completed: ${chalk.green(stats.completed)}`,
       `Failed: ${chalk.red(stats.failed)}`,
       '',
-      `Success Rate: ${chalk.cyan((stats.successRate * 100).toFixed(1 as any) + '%')}`,
+      `Success Rate: ${chalk.cyan((stats.successRate * 100).toFixed(1) + '%')}`,
       `Data Uploaded: ${chalk.cyan(this.formatBytes(stats.totalBytesUploaded))}`,
     ].join('\n');
   }
@@ -478,7 +478,7 @@ export default class QueueCommand extends BaseCommand {
    * Format job line for display
    */
   private formatJobLine(job: QueueJob, showProgress: boolean): string {
-    const details = this.getJobDetails(job as any);
+    const details = this.getJobDetails(job);
     const time = this.formatRelativeTime(job.updatedAt);
     const progress = showProgress && job.progress ? ` (${job.progress}%)` : '';
 
@@ -491,13 +491,13 @@ export default class QueueCommand extends BaseCommand {
   private getJobDetails(job: QueueJob): string {
     switch (job.type) {
       case 'todo':
-        const todo = job.data as any;
+        const todo = job.data;
         return todo.title?.substring(0, 20) || 'Unknown todo';
       case 'todo-list':
-        const list = job.data as any;
+        const list = job.data;
         return `${list.name} (${list.todos?.length || 0} todos)`;
       case 'blob':
-        const blob = job.data as any;
+        const blob = job.data;
         return blob.fileName || 'Unknown blob';
       default:
         return 'Unknown';
@@ -507,18 +507,18 @@ export default class QueueCommand extends BaseCommand {
   /**
    * Format job status with color
    */
-  private formatStatus(status: QueueJob?.["status"]): string {
+  private formatStatus(status: QueueJob["status"]): string {
     switch (status) {
       case 'pending':
-        return chalk.yellow(status as any);
+        return chalk.yellow(status);
       case 'processing':
-        return chalk.blue(status as any);
+        return chalk.blue(status);
       case 'completed':
-        return chalk.green(status as any);
+        return chalk.green(status);
       case 'failed':
-        return chalk.red(status as any);
+        return chalk.red(status);
       case 'retrying':
-        return chalk.magenta(status as any);
+        return chalk.magenta(status);
       default:
         return status;
     }
@@ -527,14 +527,14 @@ export default class QueueCommand extends BaseCommand {
   /**
    * Format priority with color
    */
-  private formatPriority(priority: QueueJob?.["priority"]): string {
+  private formatPriority(priority: QueueJob["priority"]): string {
     switch (priority) {
       case 'high':
-        return chalk.red(priority as any);
+        return chalk.red(priority);
       case 'medium':
-        return chalk.yellow(priority as any);
+        return chalk.yellow(priority);
       case 'low':
-        return chalk.gray(priority as any);
+        return chalk.gray(priority);
       default:
         return priority;
     }
@@ -563,7 +563,7 @@ export default class QueueCommand extends BaseCommand {
    */
   private formatQueueDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1 as any)}s`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
   }
 
@@ -574,7 +574,7 @@ export default class QueueCommand extends BaseCommand {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes as any) / Math.log(k as any));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1 as any))} ${sizes[i]}`;
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   }
 }

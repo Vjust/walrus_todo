@@ -62,7 +62,7 @@ export function categorizeStorageError(
     return 'blockchain';
   }
 
-  const errorMsg = error instanceof Error ? error.message : String(error as any);
+  const errorMsg = error instanceof Error ? error.message : String(error);
 
   // Check for network-related errors
   if (
@@ -127,7 +127,7 @@ export function mapToStorageError(
     return error;
   }
 
-  const errorMsg = error instanceof Error ? error.message : String(error as any);
+  const errorMsg = error instanceof Error ? error.message : String(error);
 
   switch (category) {
     case 'validation':
@@ -228,11 +228,11 @@ export class StorageOperationHandler {
         signal: options.signal,
         // Custom mapper for error categorization
         errorMapper: (error, _, context) => {
-          const category = categorizeStorageError(error as any);
+          const category = categorizeStorageError(error);
           return mapToStorageError(error, category, context);
         },
         categorizeError: error => {
-          const category = categorizeStorageError(error as any);
+          const category = categorizeStorageError(error);
           // Map our categories to ErrorCategory enum
           const mappedCategory = (() => {
             switch (category) {
@@ -280,7 +280,7 @@ export class StorageOperationHandler {
    * @returns The mapped error
    */
   private static mapError(error: unknown, operation: string): Error {
-    const category = categorizeStorageError(error as any);
+    const category = categorizeStorageError(error);
     return mapToStorageError(error, category, operation);
   }
 

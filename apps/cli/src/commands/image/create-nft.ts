@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../types/errors/consolidated';
-import { TodoService } from '../../services/todoService';
+import { TodoService } from '../../services/todo';
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../../constants';
 import { SuiClient } from '../../utils/adapters/sui-client-compatibility';
@@ -71,7 +71,7 @@ export default class CreateNftCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const config = await configService.getConfig();
-    const { flags } = await this.parse(CreateNftCommand as any);
+    const { flags } = await this.parse(CreateNftCommand);
     const todoService = new TodoService();
 
     try {
@@ -149,7 +149,7 @@ export default class CreateNftCommand extends BaseCommand {
         throw error;
       }
       throw new CLIError(
-        `Failed to create NFT: ${error instanceof Error ? error.message : String(error as any)}`,
+        `Failed to create NFT: ${error instanceof Error ? error.message : String(error)}`,
         'NFT_CREATE_FAILED'
       );
     }
@@ -249,7 +249,7 @@ export default class CreateNftCommand extends BaseCommand {
         );
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error as any);
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(
           jobId,

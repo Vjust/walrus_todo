@@ -31,7 +31,7 @@ export const CLI_CONFIG = {
 // Safe getEnv wrapper for test environments
 const safeGetEnv = (key: string, defaultValue: unknown = '') => {
   try {
-    return getEnv(key as any);
+    return getEnv(key);
   } catch {
     return defaultValue;
   }

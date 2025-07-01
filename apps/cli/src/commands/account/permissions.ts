@@ -35,7 +35,7 @@ export default class PermissionsCommand extends BaseCommand {
     }),
     'grant-role': Flags.string({
       description: 'Grant a role to a user',
-      options: Object.values(UserRole as any),
+      options: Object.values(UserRole),
       exclusive: [
         'list-roles',
         'revoke-role',
@@ -47,7 +47,7 @@ export default class PermissionsCommand extends BaseCommand {
     }),
     'revoke-role': Flags.string({
       description: 'Revoke a role from a user',
-      options: Object.values(UserRole as any),
+      options: Object.values(UserRole),
       exclusive: [
         'list-roles',
         'grant-role',
@@ -102,7 +102,7 @@ export default class PermissionsCommand extends BaseCommand {
     }),
     action: Flags.string({
       description: 'Action for permission grant/revoke',
-      options: Object.values(ActionType as any),
+      options: Object.values(ActionType),
       dependsOn: ['grant-permission', 'revoke-permission'],
     }),
     verify: Flags.boolean({
@@ -124,7 +124,7 @@ export default class PermissionsCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(PermissionsCommand as any);
+    const { flags } = await this.parse(PermissionsCommand);
 
     if (flags?.["list-roles"]) {
       await this.listRoles();
@@ -195,7 +195,7 @@ export default class PermissionsCommand extends BaseCommand {
   private async grantRole(username: string, role: UserRole): Promise<void> {
     try {
       // Find user by username
-      const user = await permissionService.getUserByUsername(username as any);
+      const user = await permissionService.getUserByUsername(username);
       if (!user) {
         throw new CLIError(`User ${username} not found`, 'USER_NOT_FOUND');
       }
@@ -220,7 +220,7 @@ export default class PermissionsCommand extends BaseCommand {
   private async revokeRole(username: string, role: UserRole): Promise<void> {
     try {
       // Find user by username
-      const user = await permissionService.getUserByUsername(username as any);
+      const user = await permissionService.getUserByUsername(username);
       if (!user) {
         throw new CLIError(`User ${username} not found`, 'USER_NOT_FOUND');
       }
@@ -245,7 +245,7 @@ export default class PermissionsCommand extends BaseCommand {
   private async listPermissions(username: string): Promise<void> {
     try {
       // Find user by username
-      const user = await permissionService.getUserByUsername(username as any);
+      const user = await permissionService.getUserByUsername(username);
       if (!user) {
         throw new CLIError(`User ${username} not found`, 'USER_NOT_FOUND');
       }
@@ -270,8 +270,8 @@ export default class PermissionsCommand extends BaseCommand {
       }
 
       // Display permissions
-      for (const [resource, actions] of Object.entries(byResource as any)) {
-        this.log(`${chalk.green(resource as any)}: ${actions.join(', ')}`);
+      for (const [resource, actions] of Object.entries(byResource)) {
+        this.log(`${chalk.green(resource)}: ${actions.join(', ')}`);
       }
     } catch (error) {
       if (error instanceof CLIError) {
@@ -294,7 +294,7 @@ export default class PermissionsCommand extends BaseCommand {
   ): Promise<void> {
     try {
       // Find user by username
-      const user = await permissionService.getUserByUsername(username as any);
+      const user = await permissionService.getUserByUsername(username);
       if (!user) {
         throw new CLIError(`User ${username} not found`, 'USER_NOT_FOUND');
       }
@@ -331,7 +331,7 @@ export default class PermissionsCommand extends BaseCommand {
   ): Promise<void> {
     try {
       // Find user by username
-      const user = await permissionService.getUserByUsername(username as any);
+      const user = await permissionService.getUserByUsername(username);
       if (!user) {
         throw new CLIError(`User ${username} not found`, 'USER_NOT_FOUND');
       }
@@ -365,7 +365,7 @@ export default class PermissionsCommand extends BaseCommand {
   ): Promise<void> {
     try {
       // Find user by username
-      const user = await permissionService.getUserByUsername(username as any);
+      const user = await permissionService.getUserByUsername(username);
       if (!user) {
         throw new CLIError(`User ${username} not found`, 'USER_NOT_FOUND');
       }

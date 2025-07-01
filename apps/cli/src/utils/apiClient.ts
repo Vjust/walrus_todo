@@ -111,7 +111,7 @@ export class ApiClient extends EventEmitter {
       },
       error => {
         this?.logger?.error('HTTP Request Error', error);
-        return Promise.reject(error as any);
+        return Promise.reject(error);
       }
     );
 
@@ -138,7 +138,7 @@ export class ApiClient extends EventEmitter {
           url: error.config?.url,
         });
 
-        return Promise.reject(this.normalizeError(error as any));
+        return Promise.reject(this.normalizeError(error));
       }
     );
   }
@@ -228,7 +228,7 @@ export class ApiClient extends EventEmitter {
 
       this?.websocket?.on('connect_error', error => {
         this?.logger?.error('WebSocket connection error:', error);
-        reject(error as any);
+        reject(error);
       });
 
       this?.websocket?.on('disconnect', reason => {
@@ -441,8 +441,8 @@ export class ApiClient extends EventEmitter {
       // Server responded with error status
       const message = error?.response?.data?.message || error.message;
       const enhancedError = new Error(`API Error: ${message}`);
-      (enhancedError as any).status = error?.response?.status;
-      (enhancedError as any).code = error?.response?.data?.code;
+      (enhancedError).status = error?.response?.status;
+      (enhancedError).code = error?.response?.data?.code;
       return enhancedError;
     } else if (error.request) {
       // Network error

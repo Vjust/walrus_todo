@@ -108,8 +108,8 @@ export class AIConfigManager {
     this?.globalConfig = { ...DEFAULT_GLOBAL_CONFIG };
 
     // Initialize operation configs with defaults
-    Object.entries(DEFAULT_OPERATION_CONFIGS as any).forEach(([operation, config]) => {
-      this?.operationConfigs?.set(operation, this.createOperationConfig(config as any));
+    Object.entries(DEFAULT_OPERATION_CONFIGS).forEach(([operation, config]) => {
+      this?.operationConfigs?.set(operation, this.createOperationConfig(config));
     });
   }
 
@@ -132,7 +132,7 @@ export class AIConfigManager {
 
     // Update operation configs that use global defaults
     this?.operationConfigs?.forEach((opConfig, operation) => {
-      const updatedConfig = this.createOperationConfig(opConfig as any);
+      const updatedConfig = this.createOperationConfig(opConfig);
       this?.operationConfigs?.set(operation, updatedConfig);
     });
   }
@@ -152,7 +152,7 @@ export class AIConfigManager {
     config: Partial<AIOperationConfig>
   ): void {
     const currentConfig =
-      this?.operationConfigs?.get(operation as any) || this.createOperationConfig();
+      this?.operationConfigs?.get(operation) || this.createOperationConfig();
     this?.operationConfigs?.set(operation, { ...currentConfig, ...config });
   }
 
@@ -160,7 +160,7 @@ export class AIConfigManager {
    * Get configuration for a specific operation
    */
   public getOperationConfig(operation: string): AIOperationConfig {
-    return this?.operationConfigs?.get(operation as any) || this.createOperationConfig();
+    return this?.operationConfigs?.get(operation) || this.createOperationConfig();
   }
 
   /**
@@ -178,7 +178,7 @@ export class AIConfigManager {
    * Convert operation config to AIModelOptions
    */
   public getModelOptions(operation: string): AIModelOptions {
-    const config = this.getOperationConfig(operation as any);
+    const config = this.getOperationConfig(operation);
 
     return {
       temperature: config.temperature,
@@ -193,8 +193,8 @@ export class AIConfigManager {
     this?.globalConfig = { ...DEFAULT_GLOBAL_CONFIG };
     this?.operationConfigs?.clear();
 
-    Object.entries(DEFAULT_OPERATION_CONFIGS as any).forEach(([operation, config]) => {
-      this?.operationConfigs?.set(operation, this.createOperationConfig(config as any));
+    Object.entries(DEFAULT_OPERATION_CONFIGS).forEach(([operation, config]) => {
+      this?.operationConfigs?.set(operation, this.createOperationConfig(config));
     });
   }
 
