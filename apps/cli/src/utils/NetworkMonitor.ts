@@ -100,11 +100,11 @@ export class NetworkMonitor extends EventEmitter {
   ) {
     super();
     
-    this?.logger = new Logger('NetworkMonitor');
-    this?.config = { ...NetworkMonitor.DEFAULT_CONFIG, ...config };
-    this?.healthChecker = healthChecker;
-    this?.retryManager = retryManager;
-    this?.fallbackManager = fallbackManager;
+    this.logger = new Logger('NetworkMonitor');
+    this.config = { ...NetworkMonitor.DEFAULT_CONFIG, ...config };
+    this.healthChecker = healthChecker;
+    this.retryManager = retryManager;
+    this.fallbackManager = fallbackManager;
 
     // Set up event listeners for external components
     this.setupEventListeners();
@@ -115,28 +115,28 @@ export class NetworkMonitor extends EventEmitter {
    */
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring) {
-      this?.logger?.warn('Monitoring already active');
+      this.logger.warn('Monitoring already active');
       return;
     }
 
-    this?.logger?.info('Starting network monitoring', {
-      interval: this?.config?.healthCheckInterval,
-      enableRemediation: this?.config?.enableAutomaticRemediation,
+    this.logger.info('Starting network monitoring', {
+      interval: this.config.healthCheckInterval,
+      enableRemediation: this.config.enableAutomaticRemediation,
     });
 
-    this?.isMonitoring = true;
+    this.isMonitoring = true;
 
     // Perform initial health check
     await this.performHealthCheck();
 
     // Start periodic monitoring
-    this?.monitoringTimer = setInterval(() => {
+    this.monitoringTimer = setInterval(() => {
       this.performHealthCheck().catch(error => {
-        this?.logger?.error('Health check failed', {
+        this.logger.error('Health check failed', {
           error: error instanceof Error ? error.message : String(error),
         });
       });
-    }, this?.config?.healthCheckInterval);
+    }, this.config.healthCheckInterval);
 
     this.emit('monitoring_started');
   }
@@ -149,13 +149,13 @@ export class NetworkMonitor extends EventEmitter {
       return;
     }
 
-    this?.logger?.info('Stopping network monitoring');
+    this.logger.info('Stopping network monitoring');
 
-    this?.isMonitoring = false;
+    this.isMonitoring = false;
 
     if (this.monitoringTimer) {
       clearInterval(this.monitoringTimer);
-      this?.monitoringTimer = undefined;
+      this.monitoringTimer = undefined;
     }
 
     this.emit('monitoring_stopped');
@@ -169,12 +169,12 @@ export class NetworkMonitor extends EventEmitter {
 
     try {
       // Get current network health
-      const networkHealth = await this?.healthChecker?.checkHealth();
-      this?.currentNetworkHealth = networkHealth;
+      const networkHealth = await this.healthChecker.checkHealth();
+      this.currentNetworkHealth = networkHealth;
 
       // Calculate metrics
       const metrics = this.calculateMetrics(networkHealth);
-      this?.metricsHistory?.push(metrics);
+      this.metricsHistory.push(metrics);
 
       // Clean old metrics
       this.cleanOldMetrics();
@@ -185,14 +185,14 @@ export class NetworkMonitor extends EventEmitter {
       // Emit metrics update
       this.emit('metrics_updated', metrics);
 
-      this?.logger?.debug('Health check completed', {
+      this.logger.debug('Health check completed', {
         duration: Date.now() - startTime,
         score: networkHealth?.overall?.score,
         condition: metrics.networkCondition,
       });
 
     } catch (error) {
-      this?.logger?.error('Health check failed', {
+      this.logger.error('Health check failed', {
         error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - startTime,
       });
@@ -221,7 +221,7 @@ export class NetworkMonitor extends EventEmitter {
     let averageResponseTime = 0;
 
     if (this.retryManager) {
-      const stats = this?.retryManager?.getNetworkStats();
+      const stats = this.retryManager.getNetworkStats();
       requestCount = stats?.metrics?.totalRequests;
       successCount = stats?.metrics?.successfulRequests;
       errorCount = requestCount - successCount;
@@ -242,11 +242,11 @@ export class NetworkMonitor extends EventEmitter {
     );
 
     // Count active and failed endpoints
-    const suiEndpoints = [networkHealth?.sui?.primary, ...networkHealth?.sui?.fallbacks].filter(Boolean);
+    const suiEndpoints = [networkHealth?.sui?.primary, ...(networkHealth?.sui?.fallbacks || [])].filter(Boolean);
     const walrusEndpoints = [
       networkHealth?.walrus?.publisher,
       networkHealth?.walrus?.aggregator,
-      ...networkHealth?.walrus?.fallbackPublishers,
+      ...(networkHealth?.walrus?.fallbackPublishers || []),
     ].filter(Boolean);
 
     const allEndpoints = [...suiEndpoints, ...walrusEndpoints];
@@ -274,7 +274,7 @@ export class NetworkMonitor extends EventEmitter {
     healthScore: number,
     errorRate: number,
     responseTime: number
-  ): NetworkMetrics?.["networkCondition"] {
+  ): NetworkMetrics["networkCondition"] {
     if (healthScore >= 95 && errorRate < 0.01 && responseTime < 1000) {
       return 'excellent';
     } else if (healthScore >= 80 && errorRate < 0.05 && responseTime < 2000) {
@@ -305,11 +305,11 @@ export class NetworkMonitor extends EventEmitter {
    * Record response time for P95 calculation
    */
   recordResponseTime(responseTime: number): void {
-    this?.responseTimeHistory?.push(responseTime);
+    this.responseTimeHistory.push(responseTime);
     
     // Keep only recent response times (last 100)
-    if (this?.responseTimeHistory?.length > 100) {
-      this?.responseTimeHistory = this?.responseTimeHistory?.slice(-100);
+    if (this.responseTimeHistory.length > 100) {
+      this.responseTimeHistory = this.responseTimeHistory.slice(-100);
     }
   }
 
@@ -330,12 +330,12 @@ export class NetworkMonitor extends EventEmitter {
     this.checkErrorRates(metrics);
 
     // Detect patterns if enabled
-    if (this?.config?.enablePatternDetection) {
+    if (this.config.enablePatternDetection) {
       this.detectErrorPatterns();
     }
 
     // Attempt automatic remediation if enabled
-    if (this?.config?.enableAutomaticRemediation) {
+    if (this.config.enableAutomaticRemediation) {
       await this.attemptAutomaticRemediation(networkHealth, metrics);
     }
   }
@@ -346,10 +346,10 @@ export class NetworkMonitor extends EventEmitter {
   private checkEndpointFailures(networkHealth: NetworkHealth): void {
     const allEndpoints = [
       { ...networkHealth?.sui?.primary, type: 'sui-rpc' },
-      ...networkHealth?.sui?.fallbacks.map(e => ({ ...e, type: 'sui-rpc-fallback' })),
+      ...(networkHealth?.sui?.fallbacks || []).map(e => ({ ...e, type: 'sui-rpc-fallback' })),
       { ...networkHealth?.walrus?.publisher, type: 'walrus-publisher' },
       { ...networkHealth?.walrus?.aggregator, type: 'walrus-aggregator' },
-      ...networkHealth?.walrus?.fallbackPublishers.map(e => ({ ...e, type: 'walrus-publisher-fallback' })),
+      ...(networkHealth?.walrus?.fallbackPublishers || []).map(e => ({ ...e, type: 'walrus-publisher-fallback' })),
     ];
 
     for (const endpoint of allEndpoints) {
@@ -374,14 +374,14 @@ export class NetworkMonitor extends EventEmitter {
    * Check for performance degradation
    */
   private checkPerformanceDegradation(metrics: NetworkMetrics): void {
-    if (metrics.averageResponseTime > this?.config?.alertThresholds.responseTime) {
+    if (metrics.averageResponseTime > this.config.alertThresholds.responseTime) {
       this.recordEvent({
         type: 'performance_alert',
         severity: 'warning',
         message: `High average response time: ${metrics.averageResponseTime}ms`,
         details: { 
           averageResponseTime: metrics.averageResponseTime,
-          threshold: this?.config?.alertThresholds.responseTime,
+          threshold: this.config.alertThresholds.responseTime,
           p95ResponseTime: metrics.p95ResponseTime,
         },
         suggestion: 'Consider using fallback endpoints or checking network connectivity',
@@ -389,8 +389,8 @@ export class NetworkMonitor extends EventEmitter {
     }
 
     // Check for sudden response time spikes
-    if (this?.metricsHistory?.length >= 2) {
-      const previousMetrics = this?.metricsHistory?.[this?.metricsHistory?.length - 2];
+    if (this.metricsHistory.length >= 2) {
+      const previousMetrics = this.metricsHistory[this.metricsHistory.length - 2];
       const responseTimeIncrease = metrics.averageResponseTime - previousMetrics.averageResponseTime;
       
       if (responseTimeIncrease > 2000) { // 2 second increase
@@ -413,7 +413,7 @@ export class NetworkMonitor extends EventEmitter {
    * Check for high error rates
    */
   private checkErrorRates(metrics: NetworkMetrics): void {
-    if (metrics.errorRate > this?.config?.alertThresholds.errorRate) {
+    if (metrics.errorRate > this.config.alertThresholds.errorRate) {
       this.recordEvent({
         type: 'network_degradation',
         severity: metrics.errorRate > 0.3 ? 'error' : 'warning',
@@ -422,7 +422,7 @@ export class NetworkMonitor extends EventEmitter {
           errorRate: metrics.errorRate,
           errorCount: metrics.errorCount,
           requestCount: metrics.requestCount,
-          threshold: this?.config?.alertThresholds.errorRate,
+          threshold: this.config.alertThresholds.errorRate,
         },
         suggestion: 'Check network stability and endpoint health',
       });
@@ -433,12 +433,12 @@ export class NetworkMonitor extends EventEmitter {
    * Detect error patterns
    */
   private detectErrorPatterns(): void {
-    if (this?.eventHistory?.length < 5) {
+    if (this.eventHistory.length < 5) {
       return;
     }
 
     // Look for patterns in recent events (last 10 minutes)
-    const recentEvents = this?.eventHistory?.filter(
+    const recentEvents = this.eventHistory.filter(
       event => Date.now() - event.timestamp < 600000
     );
 
@@ -449,12 +449,15 @@ export class NetworkMonitor extends EventEmitter {
         if (!endpointEvents.has(event.endpoint)) {
           endpointEvents.set(event.endpoint, []);
         }
-        endpointEvents.get(event.endpoint)!.push(event);
+        const endpointEventList = endpointEvents.get(event.endpoint);
+        if (endpointEventList) {
+          endpointEventList.push(event);
+        }
       }
     }
 
     // Detect flapping endpoints
-    for (const [endpoint, events] of endpointEvents) {
+    for (const [endpoint, events] of Array.from(endpointEvents.entries())) {
       const failures = events.filter(e => e?.type === 'endpoint_failure');
       const recoveries = events.filter(e => e?.type === 'endpoint_recovery');
       
@@ -476,18 +479,18 @@ export class NetworkMonitor extends EventEmitter {
    */
   private async attemptAutomaticRemediation(
     networkHealth: NetworkHealth,
-    metrics: NetworkMetrics
+    _metrics: NetworkMetrics
   ): Promise<void> {
     // If primary Sui endpoint is down but fallbacks are available
     if (!networkHealth?.sui?.primary.available) {
       const healthyFallbacks = networkHealth?.sui?.fallbacks.filter(f => f.available);
       if (healthyFallbacks.length > 0 && this.fallbackManager) {
-        this?.logger?.info('Attempting automatic failover for Sui RPC', {
+        this.logger.info('Attempting automatic failover for Sui RPC', {
           healthyFallbacks: healthyFallbacks.length,
         });
         
         try {
-          this?.fallbackManager?.forceSwitchTo(healthyFallbacks[0].url);
+          this.fallbackManager.forceSwitchTo(healthyFallbacks[0].url);
           this.recordEvent({
             type: 'endpoint_recovery',
             severity: 'info',
@@ -495,7 +498,7 @@ export class NetworkMonitor extends EventEmitter {
             suggestion: 'Monitor primary endpoint for recovery',
           });
         } catch (error) {
-          this?.logger?.error('Automatic failover failed', {
+          this.logger.error('Automatic failover failed', {
             error: error instanceof Error ? error.message : String(error),
           });
         }
@@ -506,12 +509,12 @@ export class NetworkMonitor extends EventEmitter {
     if (!networkHealth?.walrus?.publisher.available) {
       const healthyFallbacks = networkHealth?.walrus?.fallbackPublishers.filter(f => f.available);
       if (healthyFallbacks.length > 0 && this.fallbackManager) {
-        this?.logger?.info('Attempting automatic failover for Walrus publisher', {
+        this.logger.info('Attempting automatic failover for Walrus publisher', {
           healthyFallbacks: healthyFallbacks.length,
         });
         
         try {
-          this?.fallbackManager?.forceSwitchTo(healthyFallbacks[0].url);
+          this.fallbackManager.forceSwitchTo(healthyFallbacks[0].url);
           this.recordEvent({
             type: 'endpoint_recovery',
             severity: 'info',
@@ -519,7 +522,7 @@ export class NetworkMonitor extends EventEmitter {
             suggestion: 'Monitor primary publisher for recovery',
           });
         } catch (error) {
-          this?.logger?.error('Automatic publisher failover failed', {
+          this.logger.error('Automatic publisher failover failed', {
             error: error instanceof Error ? error.message : String(error),
           });
         }
@@ -536,11 +539,11 @@ export class NetworkMonitor extends EventEmitter {
       ...event,
     };
 
-    this?.eventHistory?.push(fullEvent);
+    this.eventHistory.push(fullEvent);
 
     // Limit event history size
-    if (this?.eventHistory?.length > this?.config?.maxEventHistory) {
-      this?.eventHistory = this?.eventHistory?.slice(-this?.config?.maxEventHistory);
+    if (this.eventHistory.length > this.config.maxEventHistory) {
+      this.eventHistory = this.eventHistory.slice(-this.config.maxEventHistory);
     }
 
     this.emit('network_event', fullEvent);
@@ -549,14 +552,14 @@ export class NetworkMonitor extends EventEmitter {
     switch (event.severity) {
       case 'critical':
       case 'error':
-        this?.logger?.error(event.message, event.details);
+        this.logger.error(event.message, event.details);
         break;
       case 'warning':
-        this?.logger?.warn(event.message, event.details);
+        this.logger.warn(event.message, event.details);
         break;
       case 'info':
       default:
-        this?.logger?.info(event.message, event.details);
+        this.logger.info(event.message, event.details);
         break;
     }
   }
@@ -581,8 +584,8 @@ export class NetworkMonitor extends EventEmitter {
    * Clean old metrics to prevent memory growth
    */
   private cleanOldMetrics(): void {
-    const cutoffTime = Date.now() - this?.config?.metricsRetentionPeriod;
-    this?.metricsHistory = this?.metricsHistory?.filter(m => m.timestamp > cutoffTime);
+    const cutoffTime = Date.now() - this.config.metricsRetentionPeriod;
+    this.metricsHistory = this.metricsHistory.filter(m => m.timestamp > cutoffTime);
   }
 
   /**
@@ -601,7 +604,7 @@ export class NetworkMonitor extends EventEmitter {
    */
   generateDiagnosticReport(): DiagnosticReport {
     const timestamp = Date.now();
-    const recentEvents = this?.eventHistory?.filter(
+    const recentEvents = this.eventHistory.filter(
       event => timestamp - event.timestamp < 3600000 // Last hour
     );
 
@@ -616,7 +619,7 @@ export class NetworkMonitor extends EventEmitter {
 
     return {
       timestamp,
-      duration: this?.config?.metricsRetentionPeriod,
+      duration: this.config.metricsRetentionPeriod,
       networkHealth: this.currentNetworkHealth || {} as NetworkHealth,
       metrics: this.getCurrentMetrics(),
       events: recentEvents,
@@ -716,7 +719,7 @@ export class NetworkMonitor extends EventEmitter {
   /**
    * Estimate network impact on operations
    */
-  private estimateNetworkImpact(events: NetworkEvent[], metrics: NetworkMetrics): DiagnosticReport?.["estimatedImpact"] {
+  private estimateNetworkImpact(events: NetworkEvent[], metrics: NetworkMetrics): DiagnosticReport["estimatedImpact"] {
     const criticalEvents = events.filter(e => e?.severity === 'critical').length;
     const errorEvents = events.filter(e => e?.severity === 'error').length;
 
@@ -737,7 +740,7 @@ export class NetworkMonitor extends EventEmitter {
    * Get current metrics (latest or default)
    */
   private getCurrentMetrics(): NetworkMetrics {
-    return this?.metricsHistory?.[this?.metricsHistory?.length - 1] || {
+    return this.metricsHistory[this.metricsHistory.length - 1] || {
       timestamp: Date.now(),
       requestCount: 0,
       successCount: 0,
@@ -759,13 +762,13 @@ export class NetworkMonitor extends EventEmitter {
     uptime: number;
     metricsCount: number;
     eventCount: number;
-    currentCondition: NetworkMetrics?.["networkCondition"];
+    currentCondition: NetworkMetrics["networkCondition"];
   } {
     return {
       isMonitoring: this.isMonitoring,
-      uptime: this.isMonitoring ? Date.now() - (this?.metricsHistory?.[0]?.timestamp || Date.now()) : 0,
-      metricsCount: this?.metricsHistory?.length,
-      eventCount: this?.eventHistory?.length,
+      uptime: this.isMonitoring ? Date.now() - (this.metricsHistory[0]?.timestamp || Date.now()) : 0,
+      metricsCount: this.metricsHistory.length,
+      eventCount: this.eventHistory.length,
       currentCondition: this.getCurrentMetrics().networkCondition,
     };
   }
@@ -774,23 +777,23 @@ export class NetworkMonitor extends EventEmitter {
    * Get recent metrics
    */
   getRecentMetrics(count = 10): NetworkMetrics[] {
-    return this?.metricsHistory?.slice(-count);
+    return this.metricsHistory.slice(-count);
   }
 
   /**
    * Get recent events
    */
   getRecentEvents(count = 50): NetworkEvent[] {
-    return this?.eventHistory?.slice(-count);
+    return this.eventHistory.slice(-count);
   }
 
   /**
    * Clear monitoring data
    */
   clearData(): void {
-    this?.metricsHistory = [];
-    this?.eventHistory = [];
-    this?.responseTimeHistory = [];
+    this.metricsHistory = [];
+    this.eventHistory = [];
+    this.responseTimeHistory = [];
     this.emit('data_cleared');
   }
 

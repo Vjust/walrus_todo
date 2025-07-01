@@ -11,7 +11,7 @@ import {
   SuggestionType,
   SuggestionContext,
 } from '../../../../apps/cli/src/services/ai/TaskSuggestionService';
-import { EnhancedAIService } from '../../../../apps/cli/src/services/ai/EnhancedAIService';
+import { aiService } from '../../../../apps/cli/src/services/ai';
 import { AIVerificationService } from '../../../../apps/cli/src/services/ai/AIVerificationService';
 import { Todo } from '../../../../apps/cli/src/types/todo';
 import {
@@ -21,13 +21,13 @@ import {
 import { Logger } from '../../../../apps/cli/src/utils/Logger';
 
 // Mock the dependencies
-jest.mock('../../../../apps/cli/src/services/ai/EnhancedAIService');
+jest.mock('../../../../apps/cli/src/services/ai');
 jest.mock('../../../../apps/cli/src/services/ai/AIVerificationService');
 jest.mock('../../../../apps/cli/src/utils/Logger');
 
 describe('TaskSuggestionService', () => {
   let taskSuggestionService: TaskSuggestionService;
-  let mockAiService: jest.Mocked<EnhancedAIService>;
+  let mockAiService: jest.Mocked<typeof aiService>;
   let mockVerificationService: jest.Mocked<AIVerificationService>;
   let mockLogger: jest.Mocked<Logger>;
 
@@ -148,7 +148,7 @@ describe('TaskSuggestionService', () => {
       getProvider: jest.fn().mockReturnValue(mockProvider as any),
       detectDependencies: jest.fn(),
       analyze: jest.fn(),
-    } as unknown as jest.Mocked<EnhancedAIService>;
+    } as unknown as jest.Mocked<typeof aiService>;
 
     mockVerificationService = {
       createVerification: jest.fn(),
@@ -310,7 +310,7 @@ describe('TaskSuggestionService', () => {
       };
 
       const failingTaskSuggestionService = new TaskSuggestionService(
-        failingAiService as jest.Mocked<EnhancedAIService>,
+        failingAiService as jest.Mocked<typeof aiService>,
         undefined,
         mockLogger
       );

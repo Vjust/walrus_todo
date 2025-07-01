@@ -78,7 +78,7 @@ export class NotificationSystem extends EventEmitter {
    * Update an existing notification
    */
   updateNotification(id: string, updates: Partial<Notification>): boolean {
-    const notification = this?.notifications?.get(id);
+    const notification = this.notifications.get(id);
     if (!notification) {
       return false;
     }
@@ -86,7 +86,7 @@ export class NotificationSystem extends EventEmitter {
     Object.assign(notification, updates, { timestamp: new Date() });
     this.emit('notificationUpdated', notification);
 
-    if (this?.options?.enableCLI) {
+    if (this.options.enableCLI) {
       this.displayCLINotification(notification);
     }
 
@@ -97,12 +97,12 @@ export class NotificationSystem extends EventEmitter {
    * Remove a notification
    */
   removeNotification(id: string): boolean {
-    const notification = this?.notifications?.get(id);
+    const notification = this.notifications.get(id);
     if (!notification) {
       return false;
     }
 
-    this?.notifications?.delete(id);
+    this.notifications.delete(id);
     this.emit('notificationRemoved', notification);
     return true;
   }
@@ -111,8 +111,8 @@ export class NotificationSystem extends EventEmitter {
    * Get all notifications
    */
   getNotifications(): Notification[] {
-    return Array.from(this?.notifications?.values()).sort(
-      (a, b) => b?.timestamp?.getTime() - a?.timestamp?.getTime()
+    return Array.from(this.notifications.values()).sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
     );
   }
 
@@ -120,18 +120,18 @@ export class NotificationSystem extends EventEmitter {
    * Clear all notifications
    */
   clearNotifications(): void {
-    this?.notifications?.clear();
+    this.notifications.clear();
     this.emit('notificationsCleared');
   }
 
   /**
    * Clear notifications by type
    */
-  clearNotificationsByType(type: Notification?.["type"]): number {
+  clearNotificationsByType(type: Notification["type"]): number {
     let cleared = 0;
-    for (const [id, notification] of this.notifications) {
-      if (notification?.type === type) {
-        this?.notifications?.delete(id);
+    for (const [id, notification] of Array.from(this.notifications.entries())) {
+      if (notification.type === type) {
+        this.notifications.delete(id);
         cleared++;
       }
     }
@@ -182,7 +182,7 @@ export class NotificationSystem extends EventEmitter {
     if (notification) {
       this.updateNotification(notification.id, {
         message: `${progress.message} (${progress.progress}%)`,
-        data: { ...notification.data, progress: progress.progress },
+        data: Object.assign({}, notification.data, { progress: progress.progress }),
       });
     }
   }
@@ -215,7 +215,7 @@ export class NotificationSystem extends EventEmitter {
   private setupEventHandlers(): void {
     // Log all notifications if verbose
     this.on('notificationCreated', (notification: Notification) => {
-      if (this.options?.verbosity === 'verbose') {
+      if (this.options.verbosity === 'verbose') {
         logger.info('Notification created', {
           id: notification.id,
           type: notification.type,
@@ -225,7 +225,7 @@ export class NotificationSystem extends EventEmitter {
     });
 
     // Handle notification logging to file
-    if (this?.options?.logFile) {
+    if (this.options.logFile) {
       this.on('notificationCreated', (notification: Notification) => {
         this.logNotificationToFile(notification);
       });
@@ -236,7 +236,7 @@ export class NotificationSystem extends EventEmitter {
    * Create a notification
    */
   private createNotification(
-    type: Notification?.["type"],
+    type: Notification["type"],
     title: string,
     message: string,
     data?: unknown,
@@ -254,19 +254,19 @@ export class NotificationSystem extends EventEmitter {
       persistent,
     };
 
-    this?.notifications?.set(id, notification);
+    this.notifications.set(id, notification);
     this.emit('notificationCreated', notification);
 
     // Display notification based on options
-    if (this?.options?.enableCLI) {
+    if (this.options.enableCLI) {
       this.displayCLINotification(notification);
     }
 
-    if (this?.options?.enableDesktop) {
+    if (this.options.enableDesktop) {
       this.displayDesktopNotification(notification);
     }
 
-    if (this?.options?.enableSound) {
+    if (this.options.enableSound) {
       this.playNotificationSound(notification);
     }
 
@@ -277,11 +277,11 @@ export class NotificationSystem extends EventEmitter {
    * Display CLI notification
    */
   private displayCLINotification(notification: Notification): void {
-    if (this.options?.verbosity === 'minimal' && notification?.type === 'info') {
+    if (this.options.verbosity === 'minimal' && notification.type === 'info') {
       return; // Skip info notifications in minimal mode
     }
 
-    const timestamp = notification?.timestamp?.toLocaleTimeString();
+    const timestamp = notification.timestamp.toLocaleTimeString();
     const icon = this.getNotificationIcon(notification.type);
     const colorFn = this.getNotificationColor(notification.type);
 
@@ -311,8 +311,8 @@ export class NotificationSystem extends EventEmitter {
   private playNotificationSound(notification: Notification): void {
     // Note: Sound notifications would require additional dependencies
     // For now, we'll use the terminal bell character for basic audio feedback
-    if (notification?.type === 'error' || notification?.type === 'success') {
-      process?.stdout?.write('\u0007'); // Terminal bell
+    if (notification.type === 'error' || notification.type === 'success') {
+      process.stdout.write('\u0007'); // Terminal bell
     }
   }
 
@@ -321,7 +321,7 @@ export class NotificationSystem extends EventEmitter {
    */
   private logNotificationToFile(notification: Notification): void {
     const logEntry = {
-      timestamp: notification?.timestamp?.toISOString(),
+      timestamp: notification.timestamp.toISOString(),
       type: notification.type,
       title: notification.title,
       message: notification.message,
@@ -335,7 +335,7 @@ export class NotificationSystem extends EventEmitter {
   /**
    * Get notification icon based on type
    */
-  private getNotificationIcon(type: Notification?.["type"]): string {
+  private getNotificationIcon(type: Notification["type"]): string {
     switch (type) {
       case 'info':
         return 'ℹ️';
@@ -356,7 +356,7 @@ export class NotificationSystem extends EventEmitter {
    * Get notification color function based on type
    */
   private getNotificationColor(
-    type: Notification?.["type"]
+    type: Notification["type"]
   ): (text: string) => string {
     switch (type) {
       case 'info':
@@ -397,8 +397,8 @@ export class NotificationSystem extends EventEmitter {
    * Find notification by job ID
    */
   private findNotificationByJobId(jobId: string): Notification | undefined {
-    for (const notification of this?.notifications?.values()) {
-      if (notification.data?.jobId === jobId) {
+    for (const notification of Array.from(this.notifications.values())) {
+      if (notification.data && typeof notification.data === 'object' && 'jobId' in notification.data && notification.data.jobId === jobId) {
         return notification;
       }
     }

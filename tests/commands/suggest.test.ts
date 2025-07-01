@@ -13,7 +13,7 @@ import {
   TaskSuggestionService,
   SuggestionType,
 } from '../../apps/cli/src/services/ai/TaskSuggestionService';
-import { EnhancedAIService } from '../../apps/cli/src/services/ai/EnhancedAIService';
+import { aiService } from '../../apps/cli/src/services/ai';
 
 describe('suggest command (Sinon conflict test)', () => {
   // Sample suggested tasks for testing
@@ -98,7 +98,7 @@ describe('suggest command (Sinon conflict test)', () => {
       });
 
     const mockGetProvider = jest
-      .spyOn(EnhancedAIService.prototype, 'getProvider')
+      .spyOn(aiService, 'getProvider')
       .mockReturnValue({} as any);
 
     // Verify mocks are set up
@@ -154,7 +154,7 @@ describe('suggest command (Sinon conflict test)', () => {
       'suggestTasks'
     );
     const mockGetProvider = jest.spyOn(
-      EnhancedAIService.prototype,
+      aiService,
       'getProvider'
     );
 

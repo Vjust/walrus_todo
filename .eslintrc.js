@@ -15,7 +15,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2021,
     sourceType: 'module',
-    project: './tsconfig.json',
+    project: ['./tsconfig.json', './tsconfig.eslint.json'],
   },
   rules: {
     '@typescript-eslint/no-explicit-any': 'warn',

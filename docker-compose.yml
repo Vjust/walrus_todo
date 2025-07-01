@@ -1,0 +1,326 @@
+# Docker Compose for WalTodo CLI Testing Environment
+# Supports development and testing profiles with comprehensive logging
+
+services:
+  # Main CLI testing service
+  waltodo-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      args:
+        - NODE_ENV=${NODE_ENV:-test}
+        - BUILD_MODE=${BUILD_MODE:-dev}
+    container_name: waltodo-cli-test
+    profiles:
+      - development
+      - testing
+      - default
+    environment:
+      # Core Environment
+      - NODE_ENV=${NODE_ENV:-test}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - WALTODO_TEST_MODE=true
+      - WALTODO_SUPPRESS_WARNINGS=true
+      - NODE_OPTIONS=--max-old-space-size=4096
+      
+      # Network Configuration
+      - NETWORK=${NETWORK:-testnet}
+      - FULLNODE_URL=${FULLNODE_URL:-https://fullnode.testnet.sui.io:443}
+      - TODO_PACKAGE_ID=${TODO_PACKAGE_ID:-0x25a04efc88188231b2f9eb35310a5025c293c4211d2482fd24fe2c8e2dbc9f74}
+      - WALLET_ADDRESS=${WALLET_ADDRESS:-}
+      
+      # Storage Configuration
+      - STORAGE_PATH=/home/testuser/waltodo/Todos
+      - TODO_DATA_PATH=/home/testuser/waltodo/test-data
+      - TEMPORARY_STORAGE=/tmp/waltodo
+      - ENCRYPTED_STORAGE=${ENCRYPTED_STORAGE:-false}
+      
+      # AI Configuration
+      - AI_DEFAULT_PROVIDER=${AI_DEFAULT_PROVIDER:-xai}
+      - AI_DEFAULT_MODEL=${AI_DEFAULT_MODEL:-grok-3-mini-beta}
+      - AI_TEMPERATURE=${AI_TEMPERATURE:-0.7}
+      - AI_MAX_TOKENS=${AI_MAX_TOKENS:-2000}
+      - AI_CACHE_ENABLED=${AI_CACHE_ENABLED:-true}
+      - AI_CACHE_TTL_MS=${AI_CACHE_TTL_MS:-900000}
+      
+      # Security Configuration
+      - REQUIRE_SIGNATURE_VERIFICATION=${REQUIRE_SIGNATURE_VERIFICATION:-false}
+      - ENABLE_BLOCKCHAIN_VERIFICATION=${ENABLE_BLOCKCHAIN_VERIFICATION:-false}
+      - CREDENTIAL_KEY_ITERATIONS=${CREDENTIAL_KEY_ITERATIONS:-100000}
+      - CREDENTIAL_AUTO_ROTATION_DAYS=${CREDENTIAL_AUTO_ROTATION_DAYS:-90}
+      
+      # Retry Configuration
+      - RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
+      - RETRY_DELAY_MS=${RETRY_DELAY_MS:-1000}
+      - TIMEOUT_MS=${TIMEOUT_MS:-30000}
+      
+      # Docker-specific settings
+      - DOCKER_ENVIRONMENT=true
+      - CI=${CI:-false}
+      - FORCE_COLOR=1
+      
+    volumes:
+      # Development source mounting (for development profile)
+      - ./:/home/testuser/waltodo:cached
+      - cli_node_modules:/home/testuser/waltodo/node_modules
+      - frontend_node_modules:/home/testuser/waltodo/waltodo-frontend/node_modules
+      
+      # Configuration and data persistence
+      - todo_data:/home/testuser/waltodo/Todos
+      - test_data:/home/testuser/waltodo/test-data-docker
+      - test_results:/home/testuser/waltodo/test-results
+      - logs_data:/home/testuser/waltodo/logs-docker
+      
+      # Walrus and Sui configuration
+      - walrus_config:/home/testuser/.walrus
+      - sui_config:/home/testuser/.sui
+      
+      # Cache directories for performance
+      - build_cache:/home/testuser/waltodo/dist
+      - pnpm_cache:/home/testuser/.local/share/pnpm
+      
+    working_dir: /home/testuser/waltodo
+    
+    # Comprehensive logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service,environment,version"
+        tag: "waltodo-cli-{{.Name}}"
+    
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cd /home/testuser/waltodo && timeout 30s ./bin/waltodo --help >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    
+    # Network configuration
+    networks:
+      - waltodo-test-network
+    
+    # Default command for testing
+    command: ["bash", "-c", "echo 'WalTodo CLI Test Environment Ready' && tail -f /dev/null"]
+
+  # Optimized CLI service for performance testing
+  waltodo-cli-optimized:
+    build:
+      context: .
+      dockerfile: Dockerfile.test.optimized
+    container_name: waltodo-cli-optimized
+    profiles:
+      - performance
+      - testing
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - WALTODO_TEST_MODE=false
+      - NODE_OPTIONS=--max-old-space-size=8192
+      - NETWORK=${NETWORK:-testnet}
+      - DOCKER_ENVIRONMENT=true
+    volumes:
+      - todo_data:/home/testuser/waltodo/Todos
+      - test_results:/home/testuser/waltodo/test-results
+      - logs_data:/home/testuser/waltodo/logs-docker
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+        labels: "service,performance"
+        tag: "waltodo-optimized-{{.Name}}"
+    healthcheck:
+      test: ["CMD", "timeout", "15s", "./bin/waltodo", "--version"]
+      interval: 20s
+      timeout: 15s
+      retries: 2
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    networks:
+      - waltodo-test-network
+    command: ["bash", "-c", "echo 'WalTodo Optimized Environment Ready' && tail -f /dev/null"]
+
+  # Log aggregation service for centralized logging
+  log-aggregator:
+    image: fluent/fluent-bit:3.0
+    container_name: waltodo-log-aggregator
+    profiles:
+      - testing
+      - monitoring
+    volumes:
+      - ./docker/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - logs_data:/logs:ro
+      - aggregated_logs:/output
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    networks:
+      - waltodo-test-network
+    # Remove dependency for monitoring profile to work independently
+    # depends_on:
+    #   - waltodo-cli
+
+  # Test runner service for automated testing
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: waltodo-test-runner
+    profiles:
+      - testing
+      - ci
+    environment:
+      - NODE_ENV=test
+      - LOG_LEVEL=info
+      - WALTODO_TEST_MODE=true
+      - NODE_OPTIONS=--max-old-space-size=6144
+      - CI=true
+      - JEST_WORKERS=2
+      - FORCE_COLOR=1
+    volumes:
+      - ./:/home/testuser/waltodo:ro
+      - test_results:/home/testuser/waltodo/test-results
+      - logs_data:/home/testuser/waltodo/logs-docker
+      - coverage_reports:/home/testuser/waltodo/coverage
+    working_dir: /home/testuser/waltodo
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service,test-runner"
+        tag: "waltodo-tests-{{.Name}}"
+    networks:
+      - waltodo-test-network
+    depends_on:
+      waltodo-cli:
+        condition: service_healthy
+    command: ["bash", "-c", "pnpm test:unit && pnpm test:integration && pnpm test:security"]
+
+  # Development service for interactive development
+  waltodo-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: waltodo-dev
+    profiles:
+      - development
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - WALTODO_TEST_MODE=false
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - NETWORK=${NETWORK:-testnet}
+      - DOCKER_ENVIRONMENT=true
+    volumes:
+      # Live source code mounting for development
+      - ./:/home/testuser/waltodo
+      - cli_node_modules:/home/testuser/waltodo/node_modules
+      - todo_data:/home/testuser/waltodo/Todos
+      - dev_logs:/home/testuser/waltodo/logs
+    ports:
+      # Expose debug ports if needed
+      - "9229:9229"  # Node.js debug port
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "15m"
+        max-file: "3"
+        labels: "service,development"
+        tag: "waltodo-dev-{{.Name}}"
+    networks:
+      - waltodo-test-network
+    command: ["bash", "-c", "echo 'WalTodo Development Environment Ready' && bash"]
+    tty: true
+    stdin_open: true
+
+# Volumes for data persistence and performance
+volumes:
+  # Node modules volumes for cache performance
+  cli_node_modules:
+    driver: local
+  frontend_node_modules:
+    driver: local
+    
+  # Data persistence volumes
+  todo_data:
+    driver: local
+  test_data:
+    driver: local
+  test_results:
+    driver: local
+  
+  # Configuration volumes
+  walrus_config:
+    driver: local
+  sui_config:
+    driver: local
+    
+  # Logging volumes
+  logs_data:
+    driver: local
+  aggregated_logs:
+    driver: local
+  dev_logs:
+    driver: local
+    
+  # Cache and build volumes
+  build_cache:
+    driver: local
+  pnpm_cache:
+    driver: local
+  coverage_reports:
+    driver: local
+
+# Network configuration for service isolation
+networks:
+  waltodo-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    labels:
+      - "com.waltodo.network=test"
+      - "com.waltodo.environment=${NODE_ENV:-test}"
+
+# Additional configurations
+x-common-variables: &common-variables
+  NODE_ENV: ${NODE_ENV:-test}
+  LOG_LEVEL: ${LOG_LEVEL:-debug}
+  NETWORK: ${NETWORK:-testnet}
+  DOCKER_ENVIRONMENT: "true"
+
+x-common-logging: &common-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+    labels: "service,environment"
+
+x-common-healthcheck: &common-healthcheck
+  interval: 30s
+  timeout: 30s
+  retries: 3
+  start_period: 60s

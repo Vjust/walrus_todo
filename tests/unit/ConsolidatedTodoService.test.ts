@@ -3,7 +3,7 @@ import * as fsPromises from 'fs/promises';
 import {
   TodoService,
   todoService,
-} from '../../apps/cli/src/services/todoService.consolidated';
+} from '../../apps/cli/src/services/todo';
 import { STORAGE_CONFIG } from '../../apps/cli/src/constants';
 
 // Mock the filesystem operations

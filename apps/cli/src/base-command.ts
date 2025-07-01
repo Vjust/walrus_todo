@@ -31,8 +31,8 @@ import {
 } from './utils/background';
 
 // Fix for undefined columns in non-TTY environments
-if (process.stdout && !process?.stdout?.columns) {
-  process.stdout?.columns = 80;
+if (process.stdout && !process.stdout.columns) {
+  (process.stdout as any).columns = 80;
 }
 
 // Chalk is imported directly above
@@ -150,15 +150,15 @@ export abstract class BaseCommand extends Command {
     await super.init();
 
     // Parse flags into our configuration
-    const { flags } = await this.parse(this.constructor);
-    this?.flagsConfig = flags as BaseFlags;
+    const { flags } = await this.parse(this.constructor as any);
+    this.flagsConfig = flags as BaseFlags;
 
     // Resolve background/foreground aliases
-    if (this?.flagsConfig?.bg) {
-      this.flagsConfig?.background = true;
+    if (this.flagsConfig?.bg) {
+      this.flagsConfig.background = true;
     }
-    if (this?.flagsConfig?.fg) {
-      this.flagsConfig?.foreground = true;
+    if (this.flagsConfig?.fg) {
+      this.flagsConfig.foreground = true;
     }
 
     // Setup error handlers
@@ -220,7 +220,7 @@ export abstract class BaseCommand extends Command {
       
       process.exit(0);
     } catch (error) {
-      this.warn(`Failed to submit to background: ${error.message}`);
+      this.warn(`Failed to submit to background: ${(error as Error).message}`);
       this.log('Continuing in foreground...');
       // Continue with normal execution
     }
@@ -698,7 +698,7 @@ export abstract class BaseCommand extends Command {
         !job.notified
       );
     } catch (error) {
-      this.debug(`Error checking job notifications: ${error.message}`);
+      this.debug(`Error checking job notifications: ${(error as Error).message}`);
       return [];
     }
   }
@@ -716,11 +716,11 @@ export abstract class BaseCommand extends Command {
       const jobs = JSON.parse(fs.readFileSync(jobsFile, 'utf-8'));
       const job = jobs.find((j: any) => j?.id === jobId);
       if (job) {
-        job?.notified = true;
+        job.notified = true;
         fs.writeFileSync(jobsFile, JSON.stringify(jobs, null, 2));
       }
     } catch (error) {
-      this.debug(`Error marking job as notified: ${error.message}`);
+      this.debug(`Error marking job as notified: ${(error as Error).message}`);
     }
   }
 
@@ -753,7 +753,7 @@ export abstract class BaseCommand extends Command {
         this.log('');
       }
     } catch (error) {
-      this.debug(`Error checking job notifications: ${error.message}`);
+      this.debug(`Error checking job notifications: ${(error as Error).message}`);
     }
   }
 

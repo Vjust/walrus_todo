@@ -1,0 +1,94 @@
+# Production Docker Compose configuration for WalTodo CLI
+
+version: '3.8'
+
+services:
+  # Production CLI service (requires local build first)
+  waltodo-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    image: waltodo-cli:latest
+    container_name: waltodo-cli-prod
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - WALTODO_CONFIG_DIR=/app/config
+    
+    # Volume mounts for persistent data
+    volumes:
+      - waltodo_data:/app/Todos
+      - waltodo_config:/home/waltodo/.config/waltodo
+    
+    # Network configuration
+    networks:
+      - waltodo-network
+    
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "/app/bin/waltodo --version || /app/docker-waltodo --version || node /app/dist/src/index.js --version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+  # Alternative service using the complex multi-stage Dockerfile
+  waltodo-cli-complex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: waltodo-cli:complex
+    container_name: waltodo-cli-complex
+    
+    environment:
+      - NODE_ENV=production
+    
+    volumes:
+      - waltodo_data:/app/Todos
+      - waltodo_config:/home/waltodo/.config/waltodo
+    
+    networks:
+      - waltodo-network
+    
+    profiles:
+      - complex
+
+# Named volumes for data persistence
+volumes:
+  waltodo_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker-data/production/todos
+  
+  waltodo_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker-data/production/config
+
+# Networks
+networks:
+  waltodo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

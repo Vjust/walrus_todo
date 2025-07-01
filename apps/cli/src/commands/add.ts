@@ -267,13 +267,13 @@ class AddCommand extends BaseCommand {
       // If list doesn't exist, create it and set the flag
       if(!listExists) {
         await this?.todoService?.createList(listName, 'default-owner');
-        this?.isNewList = true; // Set flag for new list creation
+        this.isNewList = true; // Set flag for new list creation
         this.stopSpinnerSuccess(
           listSpinner,
           `Created new list: ${chalk.cyan(listName)}`
         );
       } else {
-        this?.isNewList = false; // Reset flag for existing list
+        this.isNewList = false; // Reset flag for existing list
         this.stopSpinnerSuccess(
           listSpinner,
           `Found list: ${chalk.cyan(listName)}`
@@ -294,7 +294,7 @@ class AddCommand extends BaseCommand {
         // Only the first task gets "New List" text if a new list was created
         // After the first task, always use "New Task Added" even if the list is new
         if(i > 0) {
-          this?.isNewList = false;
+          this.isNewList = false;
         }
 
         // Map attributes to this todo using intelligent distribution pattern:
@@ -483,9 +483,9 @@ class AddCommand extends BaseCommand {
     const listExists = await this?.todoService?.getList(listName);
     if(!listExists) {
       await this?.todoService?.createList(listName, 'default-owner');
-      this?.isNewList = true; // Set flag for new list creation
+      this.isNewList = true; // Set flag for new list creation
     } else {
-      this?.isNewList = false; // Reset flag for existing list
+      this.isNewList = false; // Reset flag for existing list
     }
 
     const addedTodos: Todo[] = [];
@@ -497,7 +497,7 @@ class AddCommand extends BaseCommand {
       // Only the first task gets "New List" text if a new list was created
       // After the first task, always use "New Task Added" even if the list is new
       if(i > 0) {
-        this?.isNewList = false;
+        this.isNewList = false;
       }
 
       // Map attributes to this todo
@@ -575,8 +575,8 @@ class AddCommand extends BaseCommand {
         ? CommandSanitizer.sanitizeApiKey(flags.apiKey as string)
         : undefined;
       if(sanitizedApiKey) {
-        process.env?.XAI_API_KEY = sanitizedApiKey;
-        await this?.aiServiceInstance?.setProvider(AIProvider.XAI);
+        process.env.XAI_API_KEY = sanitizedApiKey;
+        await this.aiServiceInstance?.setProvider(AIProvider.XAI);
       }
       this.debugLog('AiService configured successfully');
 
@@ -606,7 +606,7 @@ class AddCommand extends BaseCommand {
           if(isBackground) {
             console.log('Progress: 50%'); // Report progress for background job
           }
-          return results;
+          return [results[0] || [], results[1] || 'medium'] as [string[], 'high' | 'medium' | 'low'];
         },
         {
           maxRetries: 3,
@@ -648,8 +648,8 @@ class AddCommand extends BaseCommand {
       const allTags = Array.from(uniqueTags);
 
       // Update todo with AI suggestions
-      todo?.tags = allTags;
-      todo?.priority = suggestedPriority;
+      todo.tags = allTags;
+      todo.priority = suggestedPriority;
 
       this.debugLog('Todo updated with AI suggestions');
 
@@ -752,7 +752,7 @@ class AddCommand extends BaseCommand {
       this.section(
         'Blockchain Storage',
         [
-          `${chalk.yellow(ICONS.warning)} ${chalk.yellow('Public Access Warning')}`,
+          `${chalk.yellow(ICONS.WARNING)} ${chalk.yellow('Public Access Warning')}`,
           `Blockchain storage will make the todo data publicly accessible.`,
           `This cannot be undone once the data is stored on the blockchain.`,
         ].join('\n')
@@ -890,7 +890,7 @@ class AddCommand extends BaseCommand {
           'Blockchain Storage Info',
           [
             `${ICONS.blockchain} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
-            `${ICONS.info} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet?.wal?.app/blob/${blobId}`)}`,
+            `${ICONS.INFO} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`,
           ].join('\n')
         );
       } else {
@@ -909,7 +909,7 @@ class AddCommand extends BaseCommand {
       // If blockchain-only storage failed, keep it locally
       if(storageLocation === 'blockchain') {
         this.warning('Storage failed - keeping todo locally instead');
-        todo?.storageLocation = 'local';
+        todo.storageLocation = 'local';
       } else {
         throw new CLIError(
           `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
@@ -926,7 +926,7 @@ class AddCommand extends BaseCommand {
    */
   private saveBlobMapping(todoId: string, blobId: string) {
     try {
-      const configDir = this.getConfigDir();
+      const configDir = require('os').homedir();
       const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
 
       // Read existing mappings or create empty object
@@ -988,18 +988,18 @@ class AddCommand extends BaseCommand {
     if (!isBackground) {
       // Create a more compact display format
       this.log(
-        `${chalk.green(ICONS.success)} ${chalk?.bold?.green(headerText)}: ${chalk.bold(todo.title)}`
+        `${chalk.green(ICONS.SUCCESS)} ${chalk.bold.green(headerText)}: ${chalk.bold(todo.title)}`
       );
 
       // Display essential details in a compact single-line format
       const compactDetails = [
-        `${ICONS.list} List: ${chalk.cyan(listName)}`,
+        `📋 List: ${chalk.cyan(listName)}`,
         `${ICONS.priority} Priority: ${this.formatPriority(todo.priority)}`,
-        todo.dueDate && `${ICONS.date} Due: ${chalk.blue(todo.dueDate)}`,
-        todo.tags &&
-          todo?.tags?.length > 0 &&
-          `${ICONS.tag} Tags: ${chalk.cyan(todo?.tags?.join(', '))}`,
-        `${ICONS.storage} Storage: ${this.formatStorage(todo.storageLocation || 'local')}`,
+        todo.dueDate && `📅 Due: ${chalk.blue(todo.dueDate)}`,
+        todo.tags && todo?.tags?.length > 0 
+          ? `${ICONS.tag} Tags: ${chalk.cyan(todo?.tags?.join(', '))}`
+          : null,
+        `💾 Storage: ${todo.storageLocation || 'local'}`,
       ].filter(Boolean);
 
       // Display compact details on a single line
@@ -1431,7 +1431,7 @@ class AddCommand extends BaseCommand {
     try {
       // Initialize background operations if needed
       if (!this.backgroundOps) {
-        this?.backgroundOps = await createBackgroundOperationsManager();
+        this.backgroundOps = await createBackgroundOperationsManager();
       }
 
       const { listName, todoTitles } = this.parseInputArguments(args, flags);
@@ -1685,9 +1685,9 @@ class AddCommand extends BaseCommand {
    * Clean flags to remove help property for compatibility
    */
   private cleanFlags(
-    flags: unknown
+    flags: any
   ): Record<string, string | boolean | string[] | undefined> {
-    const { help, ...cleanedFlags } = flags;
+    const { help, ...cleanedFlags } = flags as any;
     return cleanedFlags;
   }
 }

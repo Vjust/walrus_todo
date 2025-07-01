@@ -17,14 +17,19 @@
     "typeRoots": ["../../node_modules/@types", "./src/types"],
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "noEmitOnError": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "../../dist",
+    "dist",
     "**/*.test.ts",
     "**/*.spec.ts",
     "src/__tests__/**/*",

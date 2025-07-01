@@ -64,7 +64,7 @@ export class InputValidator {
       customErrorClass = ValidationError,
     } = options;
 
-    const errors: ValidationResult?.["errors"] = [];
+    const errors: ValidationResult["errors"] = [];
 
     for (const rule of rules) {
       if (!rule.test(value)) {
@@ -94,7 +94,7 @@ export class InputValidator {
     }
 
     const result: ValidationResult = {
-      valid: errors?.length === 0,
+      valid: errors.length === 0,
       errors,
     };
 
@@ -135,7 +135,7 @@ export class InputValidator {
   ): ValidationResult {
     // collectAllErrors would be used for error accumulation
     // const { collectAllErrors = true } = options;
-    const allErrors: ValidationResult?.["errors"] = [];
+    const allErrors: ValidationResult["errors"] = [];
 
     for (const [field, rules] of Object.entries(schema)) {
       if (field in data) {
@@ -157,7 +157,7 @@ export class InputValidator {
     }
 
     const result: ValidationResult = {
-      valid: allErrors?.length === 0,
+      valid: allErrors.length === 0,
       errors: allErrors,
     };
 

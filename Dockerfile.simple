@@ -1,0 +1,61 @@
+# Simple Dockerfile for WalTodo CLI (after local build)
+# Use this after building the project locally with: pnpm run build:dev
+
+FROM node:18-alpine
+
+# Install runtime dependencies
+RUN apk update && apk add --no-cache \
+    bash \
+    tini \
+    git && \
+    rm -rf /var/cache/apk/*
+
+# Create non-root user
+RUN addgroup -g 1001 -S waltodo && \
+    adduser -S waltodo -u 1001 -G waltodo
+
+WORKDIR /app
+
+# Copy package.json first for better caching
+COPY package.json package-lock.json* ./
+
+# Install production dependencies only
+RUN npm ci --only=production 2>/dev/null || \
+    (corepack enable && corepack prepare pnpm@latest --activate && \
+     pnpm install --prod --frozen-lockfile) || \
+    npm install --production
+
+# Copy the entire built project
+COPY --chown=waltodo:waltodo . .
+
+# Create required directories
+RUN mkdir -p /app/Todos /home/waltodo/.config/waltodo && \
+    chown -R waltodo:waltodo /app /home/waltodo
+
+# Make CLI executable
+RUN chmod +x /app/bin/waltodo 2>/dev/null || \
+    chmod +x /app/docker-waltodo 2>/dev/null || \
+    echo "CLI executable setup complete"
+
+USER waltodo
+
+# Environment setup
+ENV NODE_ENV=production
+ENV PATH="/app/bin:$PATH"
+ENV HOME="/home/waltodo"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD /app/bin/waltodo --version || /app/docker-waltodo --version || \
+        node /app/dist/src/index.js --version || exit 1
+
+# Use tini for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Try different CLI entry points
+CMD ["/bin/sh", "-c", "if [ -x /app/bin/waltodo ]; then /app/bin/waltodo --help; elif [ -x /app/docker-waltodo ]; then /app/docker-waltodo --help; else node /app/dist/src/index.js --help; fi"]
+
+# Labels
+LABEL maintainer="WalTodo Team"
+LABEL description="WalTodo CLI - Blockchain-powered todo management"
+LABEL version="1.0.0"

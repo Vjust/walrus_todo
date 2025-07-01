@@ -1,0 +1,124 @@
+# Docker ignore file for WalTodo CLI
+# Excludes unnecessary files to optimize build context size
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime and cache directories
+.npm
+.eslintcache
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.nyc_output/
+
+# Build outputs (keep dist/ for deployment, exclude others)
+build/
+out/
+
+# Test files and coverage
+coverage/
+*.lcov
+test-results/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+jest.config.*
+playwright.config.*
+codecov.yml
+
+# Development and debugging
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Logs
+logs/
+*.log
+logs-docker/
+test-data-docker/
+
+# Environment files (security)
+.env*
+!.env.example
+
+# Documentation
+docs/
+README.md
+CLAUDE.md
+*.md
+!package.json
+
+# Demo and example files
+demo/
+examples/
+frontend-demo/
+frontend-homepage.png
+
+# Backup and temporary files
+backup/
+*.backup
+*.tmp
+*.temp
+final-validation-*/
+ts-autofix-analysis-*/
+ts-fix-automation/
+
+# Development scripts (keep scripts/ for build)
+pnpm-dev*.sh
+run-*.sh
+setup-*.sh
+validate-*.sh
+verify-*.sh
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Testing and CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Workspace specific
+waltodo-frontend/
+apps/api/
+# Note: packages/ needed for monorepo build
+
+# Large assets
+assets/
+*.jpeg
+*.jpg
+*.png
+*.gif
+*.svg
+
+# Temporary files
+tmp/
+temp/

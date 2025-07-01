@@ -5,7 +5,7 @@
  * the functionality of both the original aiService and EnhancedAIService classes.
  */
 
-import { AIService, aiService } from '../../apps/cli/src/services/ai';
+import { aiService } from '../../apps/cli/src/services/ai';
 import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
@@ -331,15 +331,13 @@ describe('Consolidated AIService', () => {
     ];
   });
 
-  it('should be a singleton', () => {
-    // Get multiple instances and confirm they're the same
-    const instance1 = AIService.getInstance();
-    const instance2 = AIService.getInstance();
+  it('should export a consistent aiService object', () => {
+    // The consolidated AI service is a functional API, not a singleton class
+    // Verify that the main aiService export is available
+    expect(aiService).toBeDefined();
+    expect(typeof aiService.summarize).toBe('function');
+    expect(typeof aiService.categorize).toBe('function');
 
-    expect(instance1 as any).toBe(instance2 as any);
-
-    // Verify the exported singleton instance
-    expect(aiService as any).toBe(instance1 as any);
   });
 
   it('should provide access to the provider', () => {

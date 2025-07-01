@@ -16,7 +16,7 @@
  */
 
 import { Todo } from '../../types/todo';
-import { EnhancedAIService } from './EnhancedAIService';
+import { aiService } from './index';
 import {
   AIVerificationService,
   VerifiedAIResult,
@@ -123,19 +123,19 @@ export interface TaskSuggestionResult {
  * contextually relevant task suggestions with relevance scoring.
  */
 export class TaskSuggestionService {
-  private aiService: EnhancedAIService;
+  private aiService: typeof aiService;
   private verificationService?: AIVerificationService;
   private logger: Logger;
 
   /**
    * Creates a new TaskSuggestionService instance
    *
-   * @param aiService - The EnhancedAIService used for task analysis and generation, or API key string for backward compatibility
+   * @param aiService - The AI service used for task analysis and generation, or API key string for backward compatibility
    * @param verificationService - Optional service for blockchain verification of suggestions
    * @param logger - Optional Logger instance for Jest isolation (if not provided, creates new Logger)
    */
   constructor(
-    aiService: EnhancedAIService | string,
+    aiService: typeof aiService | string,
     verificationService?: AIVerificationService,
     logger?: Logger
   ) {
@@ -144,7 +144,7 @@ export class TaskSuggestionService {
       // This path is for backward compatibility with tests that pass API key
       // In practice, this would create a real EnhancedAIService instance
       throw new Error(
-        'TaskSuggestionService constructor: String API key parameter is deprecated. Please pass EnhancedAIService instance directly. Received type: string'
+        'TaskSuggestionService constructor: String API key parameter is deprecated. Please pass AI service instance directly. Received type: string'
       );
     }
 
