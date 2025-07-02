@@ -100,6 +100,7 @@ sui.keystore
 .aider*
 .cody/
 **/.claude/
+CLAUDE.md
 
 # Cache and temporary directories
 .waltodo-cache/
