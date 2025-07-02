@@ -100,8 +100,20 @@ sui.keystore
 .aider*
 .cody/
 **/.claude/
-CLAUDE.md
-node_modules
+
+# Cache and temporary directories
+.waltodo-cache/
+.pnpm-store/
+*-docker/
+logs-docker/
+test-data-docker/
+
+# Development artifacts
+*.backup
+ts-autofix-analysis-*/
+ts-fix-automation/
+final-validation-*/
+backup/
 
 # Environment configuration
 .env
