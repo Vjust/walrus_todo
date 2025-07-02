@@ -63,7 +63,6 @@ services:
       # Development source mounting (for development profile)
       - ./:/home/testuser/waltodo:cached
       - cli_node_modules:/home/testuser/waltodo/node_modules
-      - frontend_node_modules:/home/testuser/waltodo/waltodo-frontend/node_modules
       
       # Configuration and data persistence
       - todo_data:/home/testuser/waltodo/Todos
@@ -260,8 +259,6 @@ services:
 volumes:
   # Node modules volumes for cache performance
   cli_node_modules:
-    driver: local
-  frontend_node_modules:
     driver: local
     
   # Data persistence volumes

@@ -38,7 +38,6 @@ WORKDIR /home/testuser/waltodo
 # Copy package files first for better layer caching
 COPY --chown=testuser:testuser package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=testuser:testuser apps/cli/package.json ./apps/cli/
-COPY --chown=testuser:testuser waltodo-frontend/package.json ./waltodo-frontend/
 
 # Copy package sources to satisfy workspace dependencies
 COPY --chown=testuser:testuser packages/ ./packages/
