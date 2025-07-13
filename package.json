@@ -1,0 +1,49 @@
+{
+  "name": "waltodo",
+  "version": "0.1.0",
+  "description": "A CLI for managing TODOs on Walrus decentralized storage",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "waltodo": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "node scripts/build.js",
+    "build:prod": "NODE_ENV=production node scripts/build.js",
+    "setup": "node scripts/setup.js",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src/**/*.ts",
+    "clean": "rm -rf dist",
+    "prepack": "npm run build:prod",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "@mysten/sui.js": "^0.54.1",
+    "@mysten/wallet-standard": "^0.16.5",
+    "axios": "^1.7.9",
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^11.1.0",
+    "inquirer": "^9.3.7",
+    "ora": "^7.0.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.8",
+    "@types/node": "^20.19.7",
+    "@types/uuid": "^9.0.8",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "esbuild": "^0.19.12",
+    "eslint": "^8.57.1",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

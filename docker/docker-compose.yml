@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  waltodo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: waltodo:latest
+    container_name: waltodo-app
+    restart: unless-stopped
+    environment:
+      # Walrus configuration
+      - WALRUS_AGGREGATOR_URL=${WALRUS_AGGREGATOR_URL:-https://aggregator.walrus-testnet.walrus.space}
+      - WALRUS_PUBLISHER_URL=${WALRUS_PUBLISHER_URL:-https://publisher.walrus-testnet.walrus.space}
+      - WALRUS_TESTNET_URL=${WALRUS_TESTNET_URL:-https://api.suiscan.xyz/testnet}
+      
+      # Application configuration
+      - NODE_ENV=${NODE_ENV:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - WALTODO_DATA_DIR=/app/data
+      - WALTODO_CONFIG_DIR=/app/config
+      
+      # Test configuration
+      - E2E_TEST_MODE=${E2E_TEST_MODE:-false}
+      - TEST_USER_ID=${TEST_USER_ID:-test-user}
+    volumes:
+      # Persistent data storage
+      - waltodo-data:/app/data
+      - waltodo-config:/app/config
+      
+      # Mount local files for development (optional)
+      # - ./dist:/app/dist:ro
+      # - ./src:/app/src:ro
+    networks:
+      - waltodo-network
+    ports:
+      # Expose port for health checks or future API
+      - "3030:3030"
+    command: ["--help"]
+    stdin_open: true
+    tty: true
+
+  # Local Walrus simulator service (uncomment for local testing)
+  # walrus-simulator:
+  #   image: walrus/simulator:latest
+  #   container_name: walrus-simulator
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"  # Aggregator port
+  #     - "8081:8081"  # Publisher port
+  #   environment:
+  #     - SIMULATOR_MODE=testnet
+  #     - ENABLE_METRICS=true
+  #   volumes:
+  #     - walrus-data:/data
+  #   networks:
+  #     - waltodo-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
+
+volumes:
+  waltodo-data:
+    driver: local
+  waltodo-config:
+    driver: local
+  # walrus-data:
+  #   driver: local
+
+networks:
+  waltodo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,81 @@
+version: '3.8'
+
+# Development override configuration
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  waltodo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder  # Use builder stage for development
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - DEBUG_MODE=true
+      - VERBOSE_ERRORS=true
+    volumes:
+      # Mount source code for development
+      - ../src:/app/src:ro
+      - ../dist:/app/dist
+      - ../scripts:/app/scripts:ro
+      - ../tsconfig.json:/app/tsconfig.json:ro
+      
+      # Mount node_modules from container to avoid conflicts
+      - /app/node_modules
+    command: ["pnpm", "run", "dev"]
+    stdin_open: true
+    tty: true
+
+  # Development tools container
+  waltodo-dev-tools:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    container_name: waltodo-dev-tools
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/dist
+    command: tail -f /dev/null  # Keep container running
+    networks:
+      - waltodo-network
+
+  # Local Walrus simulator for development
+  walrus-simulator:
+    image: busybox:latest  # Placeholder - replace with actual Walrus simulator image
+    container_name: walrus-simulator-dev
+    command: |
+      sh -c "
+      echo 'Walrus simulator placeholder';
+      echo 'Replace with actual Walrus simulator when available';
+      mkdir -p /data;
+      while true; do
+        echo 'Simulator running...';
+        sleep 60;
+      done
+      "
+    ports:
+      - "8080:8080"  # Aggregator port
+      - "8081:8081"  # Publisher port
+      - "8082:8082"  # API port
+    environment:
+      - SIMULATOR_MODE=development
+      - ENABLE_METRICS=true
+      - LOG_LEVEL=debug
+    volumes:
+      - walrus-dev-data:/data
+    networks:
+      - waltodo-network
+    healthcheck:
+      test: ["CMD", "echo", "healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  walrus-dev-data:
+    driver: local
