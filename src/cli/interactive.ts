@@ -3,7 +3,7 @@
  * Provides a menu-driven interface for managing TODOs
  */
 
-import inquirer, { Separator } from 'inquirer';
+import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { info, error, success, warning, createTodoTable, formatTodo, spinner } from './ui';
 import { logger } from '../utils/logger';
@@ -122,17 +122,17 @@ async function showMainMenu(state: InteractiveState): Promise<string> {
     { name: '⚡ Quick Add', value: 'quick-add' },
     { name: '🔍 Search', value: 'search' },
     { name: '📊 Statistics', value: 'stats' },
-    new Separator(),
+    new inquirer.Separator(),
     { name: '✏️  Edit TODO', value: 'edit' },
     { name: '✅ Mark as Done', value: 'done' },
     { name: '🗑️  Delete TODO', value: 'delete' },
     { name: '📦 Batch Operations', value: 'batch' },
-    new Separator(),
+    new inquirer.Separator(),
     { name: '🧹 Clear Filter', value: 'clear-filter' },
     { name: '🗂️  Filter/Sort', value: 'filter' },
     { name: '💾 Export', value: 'export' },
     { name: '📥 Import', value: 'import' },
-    new Separator(),
+    new inquirer.Separator(),
     { name: '🔄 Refresh', value: 'refresh' },
     { name: '❌ Clear All', value: 'clear-all' },
     { name: '🚪 Exit', value: 'exit' }
@@ -282,7 +282,7 @@ async function showTodoList(state: InteractiveState): Promise<void> {
     }
     
     choices.push(
-      new Separator(),
+      new inquirer.Separator(),
       { name: '↩️  Back to main menu', value: 'back' }
     );
 

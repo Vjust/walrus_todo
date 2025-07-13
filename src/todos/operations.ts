@@ -4,7 +4,7 @@
  */
 
 import { Todo, TodoStore, generateId, validateTodo, createTodo as createTodoModel, TodoFilter, filterTodos, sortTodos, TodoSortField } from './todo';
-import { WalrusStore } from '../storage/walrus-store';
+import { PersistentTodoStore } from '../storage/persistence';
 import { WalrusJsonMetadata } from '../storage/walrus';
 import { TodoPublisher } from '../storage/publisher';
 import { getConfig } from '../config/manager';
@@ -19,7 +19,7 @@ let storeInstance: TodoStore | null = null;
 async function getStore(): Promise<TodoStore> {
   if (!storeInstance) {
     const config = await getConfig();
-    storeInstance = new WalrusStore(config.walrus);
+    storeInstance = new PersistentTodoStore(config);
   }
   return storeInstance;
 }

@@ -465,7 +465,10 @@ export function publishCommand(program: Command): void {
           const walrusClient = new WalrusClient();
           
           // Store the data
-          const result = await walrusClient.store(jsonData);
+          const result = await walrusClient.store(jsonData, {
+            epochs: options.epochs,
+            deletable: options.deletable
+          });
           
           spin.stop();
           

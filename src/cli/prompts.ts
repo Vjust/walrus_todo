@@ -3,7 +3,7 @@
  * Provides user-friendly prompts for various operations
  */
 
-import inquirer, { Separator } from 'inquirer';
+import inquirer from 'inquirer';
 import { Todo, Priority } from '../todos/todo';
 import chalk from 'chalk';
 
@@ -646,12 +646,12 @@ export async function promptSmartSearch(existingTags: string[] = [], recentSearc
 
   if (recentSearches.length > 0) {
     choices.unshift(
-      new Separator('Recent searches:'),
+      new inquirer.Separator('Recent searches:'),
       ...recentSearches.slice(0, 5).map(search => ({
         name: `"${search}"`,
         value: `recent:${search}`
       })),
-      new Separator()
+      new inquirer.Separator()
     );
   }
 
@@ -760,7 +760,7 @@ export async function promptSelectBlob(blobs: any[]): Promise<string | null> {
     short: blob.id.substring(0, 12)
   }));
 
-  choices.push(new Separator(), { name: 'Cancel', value: null });
+  choices.push(new inquirer.Separator(), { name: 'Cancel', value: null });
 
   const { selectedBlob } = await inquirer.prompt([
     {

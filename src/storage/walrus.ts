@@ -50,14 +50,49 @@ export interface WalrusCostEstimate {
 }
 
 /**
- * Walrus CLI store output structure
+ * New Walrus CLI JSON output format (v1.27+)
  */
 interface WalrusCliStoreOutput {
-  blob_id: string;
-  total_blob_size: number;
-  sui_cost: number;
-  upload_method: string;
-  is_newly_stored: boolean;
+  blobStoreResult: {
+    newlyCreated?: {
+      blobObject: {
+        id: string;
+        registeredEpoch: number;
+        blobId: string;
+        size: number;
+        encodingType: string;
+        certifiedEpoch: number | null;
+        storage: {
+          id: string;
+          startEpoch: number;
+          endEpoch: number;
+          storageSize: number;
+        };
+        deletable: boolean;
+      };
+      resourceOperation: any;
+      cost: number;
+    };
+    alreadyExists?: {
+      blobObject: {
+        id: string;
+        registeredEpoch: number;
+        blobId: string;
+        size: number;
+        encodingType: string;
+        certifiedEpoch: number | null;
+        storage: {
+          id: string;
+          startEpoch: number;
+          endEpoch: number;
+          storageSize: number;
+        };
+        deletable: boolean;
+      };
+      cost: number;
+    };
+  };
+  path: string;
 }
 
 /**
@@ -188,9 +223,9 @@ export class WalrusClient {
   /**
    * Store data in Walrus
    */
-  async store(data: string | Buffer): Promise<WalrusStoreResponse> {
+  async store(data: string | Buffer, options?: { epochs?: number; deletable?: boolean }): Promise<WalrusStoreResponse> {
     try {
-      logger.debug('Storing data in Walrus', { size: data.length });
+      logger.debug('Storing data in Walrus', { size: data.length, options });
 
       // Ensure temp directory exists
       await this.ensureTempDir();
@@ -200,27 +235,61 @@ export class WalrusClient {
       await fs.writeFile(tempFile, data);
 
       try {
-        // Execute walrus store command
-        const { stdout, stderr } = await this.executeCommand(['store', tempFile]);
+        // Build command arguments
+        const args = ['store'];
+        
+        // Add JSON output flag for machine-readable response
+        args.push('--json');
+        
+        // Add epochs parameter (required)
+        const epochs = options?.epochs || 5;
+        args.push('--epochs', epochs.toString());
+        
+        // Add deletable flag if specified
+        if (options?.deletable) {
+          args.push('--deletable');
+        }
+        
+        // Add the file path
+        args.push(tempFile);
 
-        // Parse the JSON output
-        let storeResult: WalrusCliStoreOutput;
+        // Execute walrus store command
+        const { stdout, stderr } = await this.executeCommand(args);
+
+        // Parse the JSON output (it's an array in the new format)
+        let storeResults: WalrusCliStoreOutput[];
         try {
-          storeResult = JSON.parse(stdout);
+          storeResults = JSON.parse(stdout);
         } catch (parseError) {
           logger.error('Failed to parse Walrus CLI output:', { stdout, stderr });
           throw new WalrusError(`Failed to parse Walrus response: ${parseError}`);
         }
 
+        if (!Array.isArray(storeResults) || storeResults.length === 0) {
+          throw new WalrusError('Unexpected Walrus response format: no results returned');
+        }
+
+        const storeResult = storeResults[0];
+        
+        // Extract blob information from either newlyCreated or alreadyExists
+        const blobInfo = storeResult.blobStoreResult.newlyCreated?.blobObject || 
+                        storeResult.blobStoreResult.alreadyExists?.blobObject;
+        const cost = storeResult.blobStoreResult.newlyCreated?.cost || 
+                     storeResult.blobStoreResult.alreadyExists?.cost || 0;
+
+        if (!blobInfo) {
+          throw new WalrusError('No blob information found in Walrus response');
+        }
+
         logger.debug('Data stored successfully', { 
-          blobId: storeResult.blob_id,
-          isNewlyStored: storeResult.is_newly_stored,
+          blobId: blobInfo.blobId,
+          isNewlyStored: !!storeResult.blobStoreResult.newlyCreated,
         });
 
         return {
-          blobId: storeResult.blob_id,
-          size: storeResult.total_blob_size,
-          cost: storeResult.sui_cost,
+          blobId: blobInfo.blobId,
+          size: blobInfo.size,
+          cost: cost,
         };
       } finally {
         // Clean up temporary file
@@ -244,7 +313,7 @@ export class WalrusClient {
   async storeJson(
     data: any, 
     metadata: Partial<WalrusJsonMetadata> = {},
-    options: { estimateCost?: boolean } = {}
+    options: { estimateCost?: boolean; epochs?: number; deletable?: boolean } = {}
   ): Promise<WalrusStoreResponse> {
     try {
       logger.debug('Storing JSON data in Walrus', { 
@@ -283,7 +352,10 @@ export class WalrusClient {
       }
 
       // Store the JSON data
-      const result = await this.store(jsonBuffer);
+      const result = await this.store(jsonBuffer, {
+        epochs: options.epochs,
+        deletable: options.deletable
+      });
       
       logger.info('JSON data stored successfully', { 
         blobId: result.blobId,
