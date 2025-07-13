@@ -50,6 +50,10 @@ pids/
 .waltodo/
 walrus-cache/
 todo-data/
+todos/
+*.todos
+todos.json
+todo-backup/
 
 # Docker
 .docker/
