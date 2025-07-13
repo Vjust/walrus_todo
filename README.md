@@ -57,6 +57,7 @@ The initial TypeScript module files have been created with the following structu
 
 ## Available Commands
 
+### Basic TODO Management
 ```bash
 waltodo add <description>    # Add a new TODO item
 waltodo list                 # List all TODO items
@@ -65,6 +66,54 @@ waltodo delete <id>         # Delete a TODO
 waltodo clear               # Clear all TODOs
 waltodo export <file>       # Export TODOs to JSON
 waltodo import <file>       # Import TODOs from JSON
+```
+
+### Publishing and Sharing (New!)
+```bash
+waltodo publish              # Publish TODOs to Walrus
+waltodo share                # Share TODOs and get blob ID
+waltodo import-blob <id>     # Import from Walrus blob
+waltodo retrieve <id>        # Retrieve shared TODOs
+waltodo list-blobs           # List published blobs
+waltodo blob-info <id>       # Get blob information
+waltodo estimate-cost <epochs> # Estimate publishing costs
+```
+
+## Quick Start with Publishing
+
+### Basic Publishing Example
+```bash
+# Add some TODOs
+waltodo add "Review documentation"
+waltodo add "Test new features"
+
+# Publish to Walrus for 100 epochs (~4 days on testnet)
+waltodo publish --epochs 100
+
+# Get output like:
+# ✓ TODOs published to Walrus successfully!
+# Blob ID: bEiB5KWZkIhOr7Rx_Qp5VxQlJl7_example_blob_id
+# Share this ID with others to import your TODOs
+```
+
+### Sharing Example
+```bash
+# Share your TODOs (includes completed ones)
+waltodo share --include-done
+
+# Someone else can import them:
+waltodo import-blob bEiB5KWZkIhOr7Rx_Qp5VxQlJl7_example_blob_id
+```
+
+### Cost Management
+```bash
+# Estimate costs before publishing
+waltodo estimate-cost 50
+# Output: Estimated cost: 0.0005 SUI for 50 epochs
+
+# Check your published blobs
+waltodo list-blobs
+# Shows all your blobs with expiration dates
 ```
 
 ## Development
@@ -89,16 +138,29 @@ npm run format
 ## Configuration
 
 Configuration is stored in `~/.waltodo/config.json` and includes:
-- Walrus network endpoints
+- Walrus network endpoints (publisher/aggregator URLs)
 - Storage options (encryption, compression)
+- Publishing preferences (default epochs, cost limits)
 - UI preferences
 - Sync settings
+
+### Walrus Decentralized Storage Benefits
+
+- **Decentralized**: No single point of failure, distributed across multiple nodes
+- **Cost-Effective**: Pay only for the storage duration you need (epochs)
+- **Permanent**: Data stored for the duration you specify, with predictable costs
+- **Accessible**: Retrieve data from any node in the Walrus network
+- **Censorship Resistant**: Decentralized storage prevents data takedowns
+- **Shareable**: Simple blob IDs enable easy sharing without complex permissions
 
 ## Next Steps
 
 The basic structure is in place. The next steps would be to:
-1. Implement the actual Walrus storage integration
-2. Add encryption support for private TODOs
-3. Implement the command logic
-4. Add tests
-5. Set up CI/CD
+1. ✅ Implement the actual Walrus storage integration
+2. ✅ Add publishing and sharing functionality via Walrus blobs
+3. Add encryption support for private TODOs
+4. Implement the remaining command logic (publish, share, import-blob, etc.)
+5. Add comprehensive tests for publishing features
+6. Set up CI/CD
+7. Add blob lifecycle management (expiration notifications, renewal)
+8. Implement cost optimization features

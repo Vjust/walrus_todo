@@ -7,7 +7,24 @@
  */
 
 import { Command } from 'commander';
-import { addCommand, listCommand, doneCommand, deleteCommand, clearCommand, exportCommand, importCommand, searchCommand, statsCommand } from './cli/commands';
+import { 
+  addCommand, 
+  listCommand, 
+  doneCommand, 
+  deleteCommand, 
+  clearCommand, 
+  exportCommand, 
+  importCommand, 
+  searchCommand, 
+  statsCommand, 
+  publishCommand,
+  listPublishedCommand,
+  blobStatusCommand,
+  fetchCommand,
+  downloadBlobCommand,
+  blobStatsCommand,
+  deleteBlobCommand
+} from './cli/commands';
 import { runInteractiveMode } from './cli/interactive';
 import { error, info } from './cli/ui';
 import { logger, LogLevel } from './utils/logger';
@@ -36,6 +53,15 @@ exportCommand(program);
 importCommand(program);
 searchCommand(program);
 statsCommand(program);
+publishCommand(program);
+
+// Blob management commands
+listPublishedCommand(program);
+blobStatusCommand(program);
+fetchCommand(program);
+downloadBlobCommand(program);
+blobStatsCommand(program);
+deleteBlobCommand(program);
 
 // Add shell completion command
 program
@@ -58,7 +84,7 @@ _waltodo() {
     COMPREPLY=()
     cur="\${COMP_WORDS[COMP_CWORD]}"
     prev="\${COMP_WORDS[COMP_CWORD-1]}"
-    commands="add list ls done delete rm clear export import search find stats completion -i --interactive --no-sync --offline --debug --help --version"
+    commands="add list ls done delete rm clear export import search find stats publish blobs list-blobs blob-status fetch download blob-stats delete-blob completion -i --interactive --no-sync --offline --debug --help --version"
     
     if [[ \${cur} == -* ]]; then
         COMPREPLY=( \$(compgen -W "--interactive --no-sync --offline --debug --help --version" -- \${cur}) )
@@ -98,6 +124,14 @@ _waltodo() {
                 'search[Search TODOs by text]' \
                 'find[Search TODOs by text]' \
                 'stats[Show TODO statistics]' \
+                'publish[Publish TODOs to Walrus]' \
+                'blobs[List published blobs]' \
+                'list-blobs[List published blobs]' \
+                'blob-status[Check blob status]' \
+                'fetch[Fetch TODOs from Walrus blobs]' \
+                'download[Download TODOs from a specific blob]' \
+                'blob-stats[Show blob statistics]' \
+                'delete-blob[Delete a blob from tracking]' \
                 'completion[Generate shell completion scripts]'
             ;;
     esac
@@ -125,6 +159,14 @@ complete -c waltodo -f -a "import" -d "Import TODOs from a JSON file"
 complete -c waltodo -f -a "search" -d "Search TODOs by text"
 complete -c waltodo -f -a "find" -d "Search TODOs by text"
 complete -c waltodo -f -a "stats" -d "Show TODO statistics"
+complete -c waltodo -f -a "publish" -d "Publish TODOs to Walrus"
+complete -c waltodo -f -a "blobs" -d "List published blobs"
+complete -c waltodo -f -a "list-blobs" -d "List published blobs"
+complete -c waltodo -f -a "blob-status" -d "Check blob status"
+complete -c waltodo -f -a "fetch" -d "Fetch TODOs from Walrus blobs"
+complete -c waltodo -f -a "download" -d "Download TODOs from a specific blob"
+complete -c waltodo -f -a "blob-stats" -d "Show blob statistics"
+complete -c waltodo -f -a "delete-blob" -d "Delete a blob from tracking"
 complete -c waltodo -f -a "completion" -d "Generate shell completion scripts"
 `
   };
@@ -234,6 +276,10 @@ function showWelcomeMessage(): void {
   console.log('  waltodo export todos.json --include-done');
   console.log('  waltodo import backup.json --merge');
   console.log('  waltodo stats');
+  console.log('  waltodo publish --epochs 10 --deletable');
+  console.log('  waltodo fetch                                # Interactive blob search and fetch');
+  console.log('  waltodo blobs --status active                # List active blobs');
+  console.log('  waltodo blob-stats                           # Show blob statistics');
   console.log('  waltodo -i                                   # Interactive mode');
   console.log('  waltodo --offline add "Work offline task"    # Offline mode');
   console.log('  waltodo --debug list                         # Debug logging');

@@ -31,7 +31,12 @@ export {
   markTodoAsDone,
   clearAllTodos,
   TodoStats,
-  getTodoStats
+  getTodoStats,
+  WalrusExportData,
+  WalrusExportOptions,
+  exportForWalrus,
+  exportAndPublishToWalrus,
+  validateTodosForWalrus
 } from './operations.js';
 
 // Filtering and sorting utilities

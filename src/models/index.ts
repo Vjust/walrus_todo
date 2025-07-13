@@ -10,3 +10,15 @@ export {
   Priority,
   TodoStatus
 } from './todo.js';
+
+// Blob model types
+export {
+  BlobStatus,
+  PublishedBlob,
+  BlobStats,
+  BlobSearchCriteria,
+  BlobSearchResult,
+  PublishConfig,
+  BlobValidator,
+  BlobUtils
+} from './blob.js';

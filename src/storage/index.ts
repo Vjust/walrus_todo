@@ -10,11 +10,26 @@ export {
   WalrusClient,
   WalrusStoreResponse,
   WalrusRetrieveOptions,
-  WalrusConfig
+  WalrusConfig,
+  WalrusJsonMetadata,
+  WalrusJsonData,
+  WalrusCostEstimate
 } from './walrus.js';
+
+// Blob manager for tracking published blobs
+export { BlobManager } from './blob-manager.js';
 
 // Walrus store implementation
 export { WalrusStore } from './walrus-store.js';
+
+// TODO Publisher for Walrus
+export {
+  TodoPublisher,
+  TodoPublishOptions,
+  TodoPublishResult,
+  PublishHistoryEntry,
+  BatchPublishResult
+} from './publisher.js';
 
 // Persistence layer
 export {

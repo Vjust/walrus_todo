@@ -34,6 +34,27 @@ export interface WaltodoConfig {
     conflictStrategy?: 'local-wins' | 'remote-wins' | 'last-write-wins' | 'manual';
     batchSize?: number;
   };
+  blobs: {
+    publish: {
+      defaultEpochs: number;
+      defaultDeletable: boolean;
+      enableCompression: boolean;
+      enableEncryption: boolean;
+      defaultTags: string[];
+      maxBlobSize: number; // in bytes
+    };
+    history: {
+      maxEntries: number; // Maximum number of blob entries to keep in history
+      autoCleanup: boolean; // Whether to automatically clean up expired/deleted blobs
+      cleanupInterval: number; // Days between cleanup runs
+    };
+    tracking: {
+      statusCheckInterval: number; // Hours between automatic status checks
+      enableAutoRefresh: boolean; // Whether to automatically refresh blob statuses
+      retainExpired: boolean; // Whether to keep expired blobs in tracking
+      retainDeleted: boolean; // Whether to keep deleted blobs in tracking
+    };
+  };
 }
 
 /**
@@ -60,6 +81,27 @@ export const defaultConfig: WaltodoConfig = {
     syncInterval: 300, // 5 minutes
     conflictStrategy: 'last-write-wins',
     batchSize: 10,
+  },
+  blobs: {
+    publish: {
+      defaultEpochs: 5,
+      defaultDeletable: true,
+      enableCompression: true,
+      enableEncryption: false,
+      defaultTags: ['waltodo'],
+      maxBlobSize: 10 * 1024 * 1024, // 10 MB
+    },
+    history: {
+      maxEntries: 1000, // Keep track of up to 1000 published blobs
+      autoCleanup: true,
+      cleanupInterval: 7, // Clean up every 7 days
+    },
+    tracking: {
+      statusCheckInterval: 24, // Check blob status every 24 hours
+      enableAutoRefresh: false, // Manual refresh by default
+      retainExpired: true, // Keep expired blobs for reference
+      retainDeleted: false, // Remove deleted blobs from tracking
+    },
   },
 };
 
@@ -206,6 +248,42 @@ export class ConfigManager {
     // Validate table style
     if (!['compact', 'normal', 'expanded'].includes(config.ui.tableStyle)) {
       throw new ValidationError('Invalid table style');
+    }
+
+    // Validate blob configuration
+    if (config.blobs) {
+      // Validate publish settings
+      if (config.blobs.publish) {
+        if (config.blobs.publish.defaultEpochs < 1) {
+          throw new ValidationError('Default epochs must be at least 1');
+        }
+        
+        if (config.blobs.publish.maxBlobSize < 1024) {
+          throw new ValidationError('Maximum blob size must be at least 1KB');
+        }
+        
+        if (!Array.isArray(config.blobs.publish.defaultTags)) {
+          throw new ValidationError('Default tags must be an array');
+        }
+      }
+
+      // Validate history settings
+      if (config.blobs.history) {
+        if (config.blobs.history.maxEntries < 1) {
+          throw new ValidationError('Max history entries must be at least 1');
+        }
+        
+        if (config.blobs.history.cleanupInterval < 1) {
+          throw new ValidationError('Cleanup interval must be at least 1 day');
+        }
+      }
+
+      // Validate tracking settings
+      if (config.blobs.tracking) {
+        if (config.blobs.tracking.statusCheckInterval < 1) {
+          throw new ValidationError('Status check interval must be at least 1 hour');
+        }
+      }
     }
   }
 

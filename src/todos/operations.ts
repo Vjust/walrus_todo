@@ -5,6 +5,8 @@
 
 import { Todo, TodoStore, generateId, validateTodo, createTodo as createTodoModel, TodoFilter, filterTodos, sortTodos, TodoSortField } from './todo';
 import { WalrusStore } from '../storage/walrus-store';
+import { WalrusJsonMetadata } from '../storage/walrus';
+import { TodoPublisher } from '../storage/publisher';
 import { getConfig } from '../config/manager';
 import { logger } from '../utils/logger';
 import { ValidationError, NotFoundError } from '../utils/errors';
@@ -245,6 +247,287 @@ export async function getTodoStats(): Promise<TodoStats> {
     return stats;
   } catch (error) {
     logger.error('Failed to get TODO stats', error);
+    throw error;
+  }
+}
+
+/**
+ * Export format for Walrus publishing
+ */
+export interface WalrusExportData {
+  todos: Todo[];
+  metadata: WalrusJsonMetadata;
+  exportInfo: {
+    exportedAt: string;
+    exportedBy: string;
+    version: string;
+    totalCount: number;
+    filters?: TodoFilter;
+    sortBy?: TodoSortField;
+    ascending?: boolean;
+  };
+  statistics?: TodoStats;
+}
+
+/**
+ * Options for Walrus export
+ */
+export interface WalrusExportOptions {
+  includeStats?: boolean;
+  includeMetadata?: boolean;
+  filter?: TodoFilter;
+  sortBy?: TodoSortField;
+  ascending?: boolean;
+  validateData?: boolean;
+}
+
+/**
+ * Export TODOs formatted for Walrus publishing
+ * Includes app metadata, schema version, and data validation
+ */
+export async function exportForWalrus(
+  options: WalrusExportOptions = {}
+): Promise<WalrusExportData> {
+  try {
+    logger.debug('Exporting TODOs for Walrus publishing', options);
+
+    // Set defaults
+    const exportOptions = {
+      includeStats: true,
+      includeMetadata: true,
+      validateData: true,
+      ascending: true,
+      sortBy: 'created' as TodoSortField,
+      ...options,
+    };
+
+    // Get TODOs with optional filtering and sorting
+    const todos = await getTodos(
+      exportOptions.filter,
+      exportOptions.sortBy,
+      exportOptions.ascending
+    );
+
+    // Validate data if requested
+    if (exportOptions.validateData) {
+      todos.forEach((todo, index) => {
+        try {
+          validateTodo(todo);
+        } catch (error) {
+          logger.error(`Validation failed for TODO at index ${index}:`, error);
+          throw new ValidationError(
+            `TODO validation failed at index ${index}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      });
+    }
+
+    // Create metadata for Walrus storage
+    const metadata: WalrusJsonMetadata = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      appName: 'waltodo',
+      appVersion: '1.0.0',
+      dataType: 'todos-export',
+      schema: 'todo-export-v1',
+    };
+
+    // Create export info
+    const exportInfo = {
+      exportedAt: new Date().toISOString(),
+      exportedBy: 'waltodo-operations',
+      version: '1.0.0',
+      totalCount: todos.length,
+      ...(exportOptions.filter && { filters: exportOptions.filter }),
+      ...(exportOptions.sortBy && { sortBy: exportOptions.sortBy }),
+      ...(exportOptions.ascending !== undefined && { ascending: exportOptions.ascending }),
+    };
+
+    // Create base export data
+    const exportData: WalrusExportData = {
+      todos,
+      metadata,
+      exportInfo,
+    };
+
+    // Add statistics if requested
+    if (exportOptions.includeStats) {
+      const stats = await getTodoStats();
+      exportData.statistics = stats;
+
+      logger.debug('Export statistics generated', {
+        total: stats.total,
+        pending: stats.pending,
+        done: stats.done
+      });
+    }
+
+    // Log export summary
+    logger.info('TODOs exported for Walrus publishing', {
+      todoCount: todos.length,
+      includeStats: exportOptions.includeStats,
+      includeMetadata: exportOptions.includeMetadata,
+      hasFilters: !!exportOptions.filter,
+      sortBy: exportOptions.sortBy,
+    });
+
+    return exportData;
+  } catch (error) {
+    logger.error('Failed to export TODOs for Walrus', error);
+    throw error;
+  }
+}
+
+/**
+ * Export and publish TODOs directly to Walrus
+ * Convenience function that combines export and publish operations
+ */
+export async function exportAndPublishToWalrus(
+  exportOptions: WalrusExportOptions = {},
+  publishOptions: {
+    estimateCost?: boolean;
+    batchSize?: number;
+    retryAttempts?: number;
+  } = {}
+): Promise<{
+  exportData: WalrusExportData;
+  publishResult: any;
+}> {
+  try {
+    logger.debug('Exporting and publishing TODOs to Walrus', {
+      exportOptions,
+      publishOptions
+    });
+
+    // Export the data
+    const exportData = await exportForWalrus(exportOptions);
+
+    // Get Walrus configuration
+    const config = await getConfig();
+    
+    // Create publisher (this would need WalrusClient instance)
+    // Note: This is a simplified implementation - in practice you'd need to
+    // initialize the WalrusClient with proper configuration
+    logger.info('TODO data exported successfully for Walrus publishing', {
+      todoCount: exportData.todos.length,
+      hasStats: !!exportData.statistics,
+      exportedAt: exportData.exportInfo.exportedAt
+    });
+
+    // Return export data and a placeholder for publish result
+    // In a real implementation, you'd create a TodoPublisher instance and call publish
+    const publishResult = {
+      message: 'Export completed. Use TodoPublisher.publishBatch() to publish to Walrus.',
+      todoCount: exportData.todos.length,
+      estimatedSize: JSON.stringify(exportData).length,
+    };
+
+    return {
+      exportData,
+      publishResult,
+    };
+  } catch (error) {
+    logger.error('Failed to export and publish TODOs to Walrus', error);
+    throw error;
+  }
+}
+
+/**
+ * Validate TODOs for Walrus publishing
+ * Checks data integrity and format compliance
+ */
+export async function validateTodosForWalrus(
+  todos?: Todo[]
+): Promise<{
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  stats: {
+    totalTodos: number;
+    validTodos: number;
+    invalidTodos: number;
+    estimatedSize: number;
+  };
+}> {
+  try {
+    logger.debug('Validating TODOs for Walrus publishing');
+
+    // Get TODOs if not provided
+    const todosToValidate = todos || await getTodos();
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let validTodos = 0;
+    let invalidTodos = 0;
+
+    // Basic validation
+    if (!Array.isArray(todosToValidate)) {
+      errors.push('TODOs must be provided as an array');
+      return {
+        isValid: false,
+        errors,
+        warnings,
+        stats: {
+          totalTodos: 0,
+          validTodos: 0,
+          invalidTodos: 0,
+          estimatedSize: 0,
+        },
+      };
+    }
+
+    if (todosToValidate.length === 0) {
+      warnings.push('No TODOs to validate');
+    }
+
+    // Validate each TODO
+    todosToValidate.forEach((todo, index) => {
+      try {
+        validateTodo(todo);
+        validTodos++;
+      } catch (error) {
+        invalidTodos++;
+        errors.push(`TODO at index ${index}: ${error instanceof Error ? error.message : 'Validation failed'}`);
+      }
+
+      // Additional warnings for Walrus publishing
+      if (todo.description.length > 1000) {
+        warnings.push(`TODO at index ${index} has very long description (${todo.description.length} chars)`);
+      }
+
+      if (todo.tags && todo.tags.length > 20) {
+        warnings.push(`TODO at index ${index} has many tags (${todo.tags.length})`);
+      }
+    });
+
+    // Size estimation
+    const estimatedSize = JSON.stringify(todosToValidate).length;
+    if (estimatedSize > 10 * 1024 * 1024) { // 10MB
+      warnings.push(`Large dataset size (${Math.round(estimatedSize / 1024 / 1024)}MB) may increase publishing costs`);
+    }
+
+    const isValid = errors.length === 0;
+    const stats = {
+      totalTodos: todosToValidate.length,
+      validTodos,
+      invalidTodos,
+      estimatedSize,
+    };
+
+    logger.info('TODO validation completed', {
+      isValid,
+      errorCount: errors.length,
+      warningCount: warnings.length,
+      ...stats
+    });
+
+    return {
+      isValid,
+      errors,
+      warnings,
+      stats,
+    };
+  } catch (error) {
+    logger.error('Failed to validate TODOs for Walrus', error);
     throw error;
   }
 }

@@ -21,6 +21,35 @@ export interface WalrusStoreResponse {
 }
 
 /**
+ * Metadata for stored JSON data
+ */
+export interface WalrusJsonMetadata {
+  version: string;
+  timestamp: string;
+  appName: string;
+  appVersion: string;
+  dataType: string;
+  schema?: string;
+}
+
+/**
+ * JSON data wrapper for Walrus storage
+ */
+export interface WalrusJsonData {
+  metadata: WalrusJsonMetadata;
+  data: any;
+}
+
+/**
+ * Cost estimation for Walrus operations
+ */
+export interface WalrusCostEstimate {
+  estimatedSize: number;
+  estimatedCost: number;
+  warning?: string;
+}
+
+/**
  * Walrus CLI store output structure
  */
 interface WalrusCliStoreOutput {
@@ -133,6 +162,30 @@ export class WalrusClient {
   }
 
   /**
+   * Estimate the cost of storing data
+   */
+  async estimateCost(data: string | Buffer): Promise<WalrusCostEstimate> {
+    const size = data.length;
+    
+    // Basic cost estimation (this is a rough estimate)
+    // Actual costs depend on Walrus network conditions
+    const baseCostPerKB = 0.001; // SUI tokens per KB
+    const estimatedCost = Math.ceil(size / 1024) * baseCostPerKB;
+    
+    const result: WalrusCostEstimate = {
+      estimatedSize: size,
+      estimatedCost,
+    };
+
+    // Add warnings for large data
+    if (size > 10 * 1024 * 1024) { // 10MB
+      result.warning = 'Large data size may result in higher costs and longer upload times';
+    }
+
+    return result;
+  }
+
+  /**
    * Store data in Walrus
    */
   async store(data: string | Buffer): Promise<WalrusStoreResponse> {
@@ -182,6 +235,179 @@ export class WalrusClient {
         throw error;
       }
       throw new WalrusError(`Failed to store data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Store a JavaScript object as JSON in Walrus with metadata
+   */
+  async storeJson(
+    data: any, 
+    metadata: Partial<WalrusJsonMetadata> = {},
+    options: { estimateCost?: boolean } = {}
+  ): Promise<WalrusStoreResponse> {
+    try {
+      logger.debug('Storing JSON data in Walrus', { 
+        dataType: metadata.dataType, 
+        estimateCost: options.estimateCost 
+      });
+
+      // Create metadata with defaults
+      const fullMetadata: WalrusJsonMetadata = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        appName: 'waltodo',
+        appVersion: '1.0.0',
+        dataType: 'unknown',
+        ...metadata,
+      };
+
+      // Wrap data with metadata
+      const wrappedData: WalrusJsonData = {
+        metadata: fullMetadata,
+        data,
+      };
+
+      // Convert to JSON string
+      const jsonString = JSON.stringify(wrappedData, null, 2);
+      const jsonBuffer = Buffer.from(jsonString, 'utf-8');
+
+      // Estimate cost if requested
+      if (options.estimateCost) {
+        const estimate = await this.estimateCost(jsonBuffer);
+        logger.info('Cost estimate for JSON storage:', estimate);
+        
+        if (estimate.warning) {
+          logger.warn('Storage warning:', estimate.warning);
+        }
+      }
+
+      // Store the JSON data
+      const result = await this.store(jsonBuffer);
+      
+      logger.info('JSON data stored successfully', { 
+        blobId: result.blobId,
+        size: result.size,
+        actualCost: result.cost,
+        dataType: fullMetadata.dataType
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof WalrusError) {
+        throw error;
+      }
+      throw new WalrusError(`Failed to store JSON data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Retrieve and parse JSON data from Walrus
+   */
+  async retrieveJson(blobId: string, options?: WalrusRetrieveOptions): Promise<WalrusJsonData> {
+    try {
+      logger.debug('Retrieving JSON data from Walrus', { blobId });
+
+      const jsonString = await this.retrieve(blobId, options);
+      
+      try {
+        const parsedData = JSON.parse(jsonString) as WalrusJsonData;
+        
+        // Validate structure
+        if (!parsedData.metadata || !parsedData.data) {
+          throw new WalrusError('Invalid JSON data structure: missing metadata or data');
+        }
+
+        logger.debug('JSON data retrieved successfully', { 
+          blobId,
+          dataType: parsedData.metadata.dataType,
+          timestamp: parsedData.metadata.timestamp
+        });
+
+        return parsedData;
+      } catch (parseError) {
+        throw new WalrusError(`Failed to parse JSON data: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
+      }
+    } catch (error) {
+      if (error instanceof WalrusError) {
+        throw error;
+      }
+      throw new WalrusError(`Failed to retrieve JSON data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Publish TODO data to Walrus with proper formatting and metadata
+   */
+  async publishTodos(
+    todos: any[],
+    options: {
+      includeStats?: boolean;
+      estimateCost?: boolean;
+      batchSize?: number;
+    } = {}
+  ): Promise<WalrusStoreResponse> {
+    try {
+      logger.debug('Publishing TODO data to Walrus', { 
+        todoCount: todos.length,
+        options 
+      });
+
+      // Prepare metadata specific to TODO data
+      const metadata: WalrusJsonMetadata = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        appName: 'waltodo',
+        appVersion: '1.0.0',
+        dataType: 'todos',
+        schema: 'todo-v1',
+      };
+
+      // Prepare the data payload
+      const payload: any = {
+        todos,
+        count: todos.length,
+      };
+
+      // Add statistics if requested
+      if (options.includeStats) {
+        const stats = {
+          total: todos.length,
+          pending: todos.filter((t: any) => t.status === 'pending').length,
+          done: todos.filter((t: any) => t.status === 'done').length,
+          priorities: {
+            high: todos.filter((t: any) => t.priority === 'high').length,
+            medium: todos.filter((t: any) => t.priority === 'medium').length,
+            low: todos.filter((t: any) => t.priority === 'low').length,
+          },
+          publishedAt: new Date().toISOString(),
+        };
+        payload.statistics = stats;
+      }
+
+      // Handle large datasets with batching
+      if (options.batchSize && todos.length > options.batchSize) {
+        logger.warn(`Large TODO dataset (${todos.length} items) exceeds batch size (${options.batchSize}). Consider using TodoPublisher for batch processing.`);
+      }
+
+      // Store the TODO data
+      const result = await this.storeJson(payload, metadata, {
+        estimateCost: options.estimateCost
+      });
+
+      logger.info('TODO data published successfully', {
+        blobId: result.blobId,
+        todoCount: todos.length,
+        size: result.size,
+        cost: result.cost
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof WalrusError) {
+        throw error;
+      }
+      throw new WalrusError(`Failed to publish TODO data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

@@ -15,7 +15,14 @@ export {
   exportCommand,
   importCommand,
   searchCommand,
-  statsCommand
+  statsCommand,
+  publishCommand,
+  listPublishedCommand,
+  blobStatusCommand,
+  fetchCommand,
+  downloadBlobCommand,
+  blobStatsCommand,
+  deleteBlobCommand
 } from './commands.js';
 
 // Interactive mode
@@ -48,5 +55,10 @@ export {
   promptAddTodoInteractive,
   promptQuickAdd,
   promptBatchOperation,
-  promptSmartSearch
+  promptSmartSearch,
+  promptSelectBlob,
+  promptBlobSearch,
+  promptPublishConfig,
+  confirmBlobDelete,
+  promptImportOptions
 } from './prompts.js';

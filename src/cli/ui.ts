@@ -177,3 +177,51 @@ export async function confirm(message: string): Promise<boolean> {
   console.log(chalk.yellow(`${message} [y/N]`));
   return true;
 }
+
+/**
+ * Format publish result for display
+ */
+export function formatPublishResult(result: {
+  blobId: string;
+  size: number;
+  cost: number;
+  totalTodos: number;
+}): void {
+  success('TODOs published successfully to Walrus!');
+  console.log('');
+  
+  // Blob information
+  info(`Blob ID: ${chalk.cyan(result.blobId)}`);
+  info(`Data Size: ${chalk.white(formatBytes(result.size))}`);
+  info(`Storage Cost: ${chalk.yellow(result.cost)} SUI`);
+  info(`Total TODOs: ${chalk.white(result.totalTodos)}`);
+  console.log('');
+  
+  // Access information
+  const walrusUrl = `https://aggregator.walrus-testnet.walrus.space/v1/${result.blobId}`;
+  info(`Access URL: ${chalk.blue(walrusUrl)}`);
+  console.log('');
+  
+  // Important note
+  warning('Save the Blob ID to retrieve your TODOs later!');
+  console.log('');
+  
+  // Additional tips
+  console.log(chalk.gray('💡 Tips:'));
+  console.log(chalk.gray('  • Share the Blob ID to let others access your TODOs'));
+  console.log(chalk.gray('  • Use the Access URL to view the data in a browser'));
+  console.log(chalk.gray('  • Store the Blob ID safely for future retrieval'));
+}
+
+/**
+ * Format bytes for human-readable display
+ */
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}

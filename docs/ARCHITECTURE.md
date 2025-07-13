@@ -9,12 +9,12 @@ Waltodo follows a modular architecture designed for maintainability and extensib
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    CLI Interface                         │
-│                  (Commander.js)                          │
+│         (Commander.js + Publishing Commands)             │
 └────────────────────┬────────────────────────────────────┘
                      │
 ┌────────────────────┴────────────────────────────────────┐
 │                  Command Handlers                        │
-│         (add, list, complete, delete, etc.)             │
+│    (add, list, complete, delete, publish, share, etc.)  │
 └────────────────────┬────────────────────────────────────┘
                      │
 ┌────────────────────┼────────────────────────────────────┐
@@ -24,16 +24,17 @@ Waltodo follows a modular architecture designed for maintainability and extensib
                      │
 ┌────────────────────┼────────────────────────────────────┐
 │              Storage Abstraction                         │
-│                 (Storage API)                            │
+│           (Storage API + Blob Management)               │
 └────────────────────┬────────────────────────────────────┘
                      │
 ┌────────────────────┼────────────────────────────────────┐
 │             Walrus Storage Adapter                       │
-│           (Sui.js Integration)                           │
+│        (Sui.js Integration + Publishing API)            │
 └────────────────────┬────────────────────────────────────┘
                      │
 ┌────────────────────┴────────────────────────────────────┐
 │            Walrus Decentralized Network                  │
+│                (Blob Storage + Metadata)                 │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -108,6 +109,21 @@ CLI Command → TODO Service → Cache Check → Storage Adapter → Walrus Quer
                             Return Cached     Fetch from Network   ↓
                                  ↓                   ↓              ↓
 Terminal ← Format & Display ← Merge Results ← Update Cache ← Network Response
+
+### Publishing TODOs to Walrus
+
+```
+CLI Command → TODO Service → Serialize Data → Publishing API → Walrus CLI
+     ↓                                                               ↓
+Terminal ← Format Response ← Blob Metadata ← Store Blob ID ← Walrus Network
+```
+
+### Importing from Published Blobs
+
+```
+CLI Command → Validate Blob ID → Walrus Retrieval → Deserialize → Merge/Replace
+     ↓                                ↓                               ↓
+Terminal ← Success Message ← Update Local Storage ← Validate Data ← TODO Service
 ```
 
 ## Storage Patterns
@@ -131,6 +147,17 @@ interface Todo {
     [key: string]: any;
   };
 }
+
+interface BlobMetadata {
+  blobId: string;       // Walrus blob identifier
+  publishedAt: string;  // When blob was published
+  expiresAt: string;    // When blob expires
+  epochs: number;       // Storage duration in epochs
+  size: number;         // Blob size in bytes
+  cost: string;         // Publishing cost in SUI
+  todoCount: number;    // Number of TODOs in blob
+  checksum: string;     // Data integrity checksum
+}
 ```
 
 ### Storage Operations
@@ -139,6 +166,8 @@ interface Todo {
 2. **Read**: Queries Walrus, applies filters, returns formatted data
 3. **Update**: Fetches current state, applies changes, stores updated version
 4. **Delete**: Marks as deleted (soft delete) or removes from storage (hard delete)
+5. **Publish**: Serializes TODOs to JSON, publishes to Walrus, stores blob metadata
+6. **Import**: Retrieves blob from Walrus, validates data, merges or replaces local TODOs
 
 ### Caching Strategy
 
@@ -146,6 +175,167 @@ interface Todo {
 - **Read-through**: Cache misses trigger storage reads
 - **TTL-based expiry**: Cached items expire after configurable duration
 - **Invalidation**: Cache cleared on updates/deletes
+
+## Publishing Workflow
+
+### Publishing Architecture
+
+The publishing system enables sharing TODO lists via Walrus decentralized storage:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 Publishing Layer                         │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│  │   Publish   │  │    Share    │  │   Import    │      │
+│  │  Commands   │  │  Commands   │  │  Commands   │      │
+│  └─────────────┘  └─────────────┘  └─────────────┘      │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────┐
+│                Blob Management                           │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│  │ Serializer  │  │ Validator   │  │  Metadata   │      │
+│  │             │  │             │  │   Tracker   │      │
+│  └─────────────┘  └─────────────┘  └─────────────┘      │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────┐
+│              Walrus CLI Integration                      │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│  │   Store     │  │  Retrieve   │  │    Info     │      │
+│  │  (publish)  │  │   (read)    │  │ (metadata)  │      │
+│  └─────────────┘  └─────────────┘  └─────────────┘      │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────┐
+│              Walrus Network                              │
+│         (Decentralized Blob Storage)                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Publishing Process
+
+1. **Data Preparation**
+   - Serialize TODOs to JSON format
+   - Generate checksum for integrity
+   - Apply optional compression
+   - Validate data structure
+
+2. **Cost Estimation**
+   - Calculate blob size
+   - Estimate storage cost based on epochs
+   - Check user's SUI balance
+   - Provide cost confirmation
+
+3. **Walrus CLI Execution**
+   - Execute `walrus store` command
+   - Monitor publishing progress
+   - Handle network errors and retries
+   - Parse response for blob ID
+
+4. **Metadata Tracking**
+   - Store blob metadata locally
+   - Track expiration dates
+   - Maintain blob registry
+   - Enable blob lifecycle management
+
+### Blob Metadata Tracking
+
+The system maintains a local registry of published blobs:
+
+```typescript
+interface BlobRegistry {
+  blobs: Map<string, BlobMetadata>;
+  lastUpdated: string;
+  userAddress: string;
+}
+
+interface BlobMetadata {
+  blobId: string;
+  publishedAt: string;
+  expiresAt: string;
+  epochs: number;
+  size: number;
+  cost: string;
+  todoCount: number;
+  checksum: string;
+  tags?: string[];
+  description?: string;
+}
+```
+
+### Walrus CLI Integration
+
+The system integrates with Walrus CLI through command execution:
+
+#### Publishing Commands
+```typescript
+class WalrusPublisher {
+  async publish(data: string, epochs: number): Promise<PublishResult> {
+    const command = [
+      'walrus', 'store',
+      '--file', tempFile,
+      '--epochs', epochs.toString(),
+      '--json'
+    ];
+    
+    const result = await executeCommand(command);
+    return parsePublishResult(result);
+  }
+}
+```
+
+#### Retrieval Commands
+```typescript
+class WalrusRetriever {
+  async retrieve(blobId: string): Promise<string> {
+    const command = [
+      'walrus', 'read',
+      blobId,
+      '--output', tempFile
+    ];
+    
+    await executeCommand(command);
+    return readFileContent(tempFile);
+  }
+}
+```
+
+#### Information Commands
+```typescript
+class WalrusInfo {
+  async getBlobInfo(blobId: string): Promise<BlobInfo> {
+    const command = [
+      'walrus', 'info',
+      blobId,
+      '--json'
+    ];
+    
+    const result = await executeCommand(command);
+    return parseBlobInfo(result);
+  }
+}
+```
+
+### Error Handling and Retries
+
+The publishing system implements robust error handling:
+
+1. **Network Errors**: Automatic retries with exponential backoff
+2. **Insufficient Funds**: Clear error messages with balance checking
+3. **Blob Expiration**: Warnings and automatic cleanup of expired blobs
+4. **Data Corruption**: Checksum validation on import/export
+5. **CLI Errors**: Detailed error parsing and user-friendly messages
+
+### Security Considerations
+
+1. **Data Privacy**: Optional client-side encryption before publishing
+2. **Access Control**: Blob IDs act as bearer tokens for access
+3. **Cost Protection**: Cost estimation and confirmation before publishing
+4. **Data Integrity**: Checksums prevent data corruption
 
 ## Module Responsibilities
 
