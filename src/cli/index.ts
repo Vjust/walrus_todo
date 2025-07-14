@@ -61,4 +61,4 @@ export {
   promptPublishConfig,
   confirmBlobDelete,
   promptImportOptions
-} from './prompts.js';
+} from './prompts/index.js';

@@ -16,7 +16,7 @@ import {
   promptSmartSearch,
   confirmDelete,
   confirmClearAll
-} from './prompts';
+} from './prompts/index';
 import {
   getTodos,
   createTodo,

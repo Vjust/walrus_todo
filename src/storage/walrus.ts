@@ -126,7 +126,7 @@ export class WalrusClient {
       cliPath: config.cliPath || 'walrus',
       aggregatorUrl: config.aggregatorUrl || '',
       publisherUrl: config.publisherUrl || '',
-      timeout: config.timeout || 30000,
+      timeout: config.timeout || 60000, // Increased to 60 seconds for store operations
       maxRetries: config.maxRetries || 3,
     };
 
@@ -238,6 +238,9 @@ export class WalrusClient {
         // Build command arguments
         const args = ['store'];
         
+        // Add context for testnet (faster than mainnet)
+        args.push('--context', 'testnet');
+        
         // Add JSON output flag for machine-readable response
         args.push('--json');
         
@@ -253,8 +256,8 @@ export class WalrusClient {
         // Add the file path
         args.push(tempFile);
 
-        // Execute walrus store command
-        const { stdout, stderr } = await this.executeCommand(args);
+        // Execute walrus store command with extended timeout for publishing
+        const { stdout, stderr } = await this.executeCommand(args, { timeout: 120000 }); // 2 minutes for store operations
 
         // Parse the JSON output (it's an array in the new format)
         let storeResults: WalrusCliStoreOutput[];
@@ -503,7 +506,7 @@ export class WalrusClient {
         try {
           // Execute walrus read command
           const { stderr } = await this.executeCommand(
-            ['read', blobId, '--out', outputFile],
+            ['read', '--context', 'testnet', blobId, '--out', outputFile],
             { timeout: options?.timeout }
           );
 
@@ -587,7 +590,7 @@ export class WalrusClient {
 
       try {
         await this.executeCommand(
-          ['read', blobId, '--out', outputFile],
+          ['read', '--context', 'testnet', blobId, '--out', outputFile],
           { timeout: 5000 } // Short timeout for existence check
         );
 
