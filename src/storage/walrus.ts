@@ -503,7 +503,7 @@ export class WalrusClient {
         try {
           // Execute walrus read command
           const { stderr } = await this.executeCommand(
-            ['read', blobId, '--output', outputFile],
+            ['read', blobId, '--out', outputFile],
             { timeout: options?.timeout }
           );
 
@@ -587,7 +587,7 @@ export class WalrusClient {
 
       try {
         await this.executeCommand(
-          ['read', blobId, '--output', outputFile],
+          ['read', blobId, '--out', outputFile],
           { timeout: 5000 } // Short timeout for existence check
         );
 

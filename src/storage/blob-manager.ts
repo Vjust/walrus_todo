@@ -280,12 +280,27 @@ export class BlobManager {
         todoData = rawData;
       }
       
-      // Parse TODOs
-      const todos: Todo[] = JSON.parse(todoData);
+      // Parse the JSON data
+      const parsedData = JSON.parse(todoData);
       
-      // Validate the data structure
-      if (!Array.isArray(todos)) {
-        throw new WalrusError('Invalid TODO data format in blob');
+      let todos: Todo[];
+      
+      // Handle different data formats
+      if (Array.isArray(parsedData)) {
+        // Direct array of TODOs
+        todos = parsedData;
+      } else if (parsedData.todos && Array.isArray(parsedData.todos)) {
+        // Export format with metadata wrapper
+        todos = parsedData.todos;
+        logger.debug('Parsed TODO export data:', {
+          totalTodos: parsedData.metadata?.totalTodos || todos.length,
+          exportedAt: parsedData.metadata?.exportedAt
+        });
+      } else if (parsedData.data && Array.isArray(parsedData.data)) {
+        // Walrus JSON format with metadata wrapper
+        todos = parsedData.data;
+      } else {
+        throw new WalrusError('Invalid TODO data format in blob - expected array of TODOs or wrapped format');
       }
       
       // Verify data integrity if hash is available
